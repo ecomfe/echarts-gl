@@ -1,0 +1,80 @@
+<!Doctype html>
+<html>
+    <head>    
+    <script src="http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-8/esl.js"></script>
+    <meta charset="utf-8">
+    <style>
+        html, body, #main {
+            height: 100%;
+        }
+        body {
+            margin: 0px;
+            background: -webkit-linear-gradient(#22466F, #452525);
+            background: -o-linear-gradient(#22466F, #452525);
+            background: linear-gradient(#22466F, #452525);
+        }
+    </style>
+    </head>
+    <body>
+        <div id="main"></div>
+        <script>
+            require.config({
+                packages: [{
+                    name: 'echarts-x',
+                    location: '../src',
+                    main: 'echarts-x'
+                }, {
+                    name: 'echarts',
+                    location: '../../echarts/src',
+                    main: 'echarts'
+                }, {
+                    name: 'zrender',
+                    location: '../../zrender/src',
+                    main: 'zrender'
+                }, {
+                    name: 'qtek',
+                    location: '../../qtek/src',
+                    main: 'qtek.amd'
+                }]
+            });
+
+            require([
+                'echarts',
+                'qtek/core/request',
+                'echarts/component/dataRange',
+                'echarts-x',
+                'echarts-x/chart/map3d'
+            ], function (echarts, request) {
+
+                var chart = echarts.init(document.getElementById('main'));
+
+                var option = {
+                    tooltip: {
+                        formatter: '{b}'
+                    },
+                    series: [{
+                        type: 'map3d',
+                        mapType: 'world',
+                        mapBackgroundColor: '',
+                        mapBackgroundImage: '../doc/example/asset/earth.jpg',
+
+                        itemStyle: {
+                            normal: {
+                                label: {
+                                    show: true
+                                },
+                                borderWidth: 1,
+                                borderColor: 'yellow',
+                                areaStyle: {
+                                    color: 'rgba(0, 0, 0, 0)'
+                                }
+                            }
+                        },
+                        data: [{}]
+                    }]
+                };
+                chart.setOption(option);
+            });
+        </script>
+    </body>
+</html>
