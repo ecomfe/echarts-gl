@@ -1,3 +1,14 @@
+/**
+ * ECharts-X
+ * Extension pack of ECharts providing 3d plots and globe visualization  
+ * 
+ * Copyright (c) 2015, ECharts-X.
+ * All rights reserved.
+ * 
+ * LICENSE
+ * https://github.com/pissang/echarts-x/blob/master/LICENSE
+ */
+
 define(function (require) {
 
     var ecConfig = require('echarts/config');

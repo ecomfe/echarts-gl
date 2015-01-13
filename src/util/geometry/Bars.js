@@ -1,3 +1,10 @@
+/**
+ * Geometry collecting bars data
+ * 
+ * @module echarts-x/util/geometry/Bars
+ * @author Yi Shen(http://github.com/pissang)
+ */
+
 define(function (require) {
 
     var DynamicGeometry = require('qtek/DynamicGeometry');
@@ -26,18 +33,35 @@ define(function (require) {
         [4, 6, 5], [4, 7, 6]
     ];
 
+    /**
+     * @constructor
+     * @alias module:echarts-x/util/geometry/Bars
+     * @extends qtek.DynamicGeometry
+     */
     var BarsGeometry = DynamicGeometry.derive(function () {
         return {
             _barMat: new Matrix4(),
             _barScaleVec: new Vector3()
         }
-    }, {
+    },
+    /** @lends module:echarts-x/util/geometry/Bars.prototype */
+    {
+        /**
+         * Clear all bars
+         */
         clearBars: function () {
             this.attributes.position.value.length = 0;
             this.attributes.color.value.length = 0;
             this.faces.length = 0;
         },
 
+        /**
+         * Add a bar
+         * @param {qtek.math.Vector3} start 
+         * @param {qtek.math.Vector3} end
+         * @param {number} size
+         * @param {Array.<number>} color
+         */
         addBar: function (start, end, size, color) {
             var cubeGeo = this._cubeGeometry;
             var barMat = this._barMat;

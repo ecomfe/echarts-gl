@@ -1,24 +1,39 @@
+/**
+ * Bar rendering with basic color shading
+ *
+ * @module echarts-x/entity/marker/MarkBar
+ * @author Yi Shen(https://github.com/pissang)
+ */
 define(function (require) {
     
     var zrUtil = require('zrender/tool/util');
     var MarkBase = require('./Base');
-    var Mesh = require('qtek/Mesh');
+    var Renderable = require('qtek/Renderable');
     var Material = require('qtek/Material');
     var Shader = require('qtek/Shader');
     var BarsGeometry = require('../../util/geometry/Bars');
     var Vector3 = require('qtek/math/Vector3');
 
+    /**
+     * @constructor
+     * @alias module:echarts-x/entity/marker/MarkBar
+     * @extends module:echarts-x/entity/marker/Base
+     * @param {module:echarts-xchart/base3d} chart
+     */
     var MarkBar = function (chart) {
         MarkBase.call(this, chart);
 
-        this._markBarMesh = null;
+        /**
+         * @type {qtek.Renderable}
+         */
+        this._markBarRenderable = null;
     };
 
     MarkBar.prototype = {
         
         constructor: MarkBar,
 
-        _createMarkBarMesh: function () {
+        _createMarkBarRenderable: function () {
             var material = new Material({
                 shader: new Shader({
                     vertex: Shader.source('ecx.albedo.vertex'),
@@ -26,14 +41,14 @@ define(function (require) {
                 })
             });
             material.shader.define('both', 'VERTEX_COLOR');
-            this._markBarMesh = new Mesh({
+            this._markBarRenderable = new Renderable({
                 geometry: new BarsGeometry(),
                 material: material,
                 ignorePicking: true
             });
         },
 
-        setSerie: function (serie, seriesIndex) {
+        setSeries: function (serie, seriesIndex) {
             if (! serie.markBar || ! serie.markBar.data) {
                 return;
             }
@@ -43,12 +58,12 @@ define(function (require) {
             var legend = component.legend;
             var dataRange = component.dataRange;
 
-            if (! this._markBarMesh) {
-                this._createMarkBarMesh();
+            if (! this._markBarRenderable) {
+                this._createMarkBarRenderable();
             }
 
             var dataList = serie.markBar.data;
-            var geometry = this._markBarMesh.geometry;
+            var geometry = this._markBarRenderable.geometry;
 
             var serieColor;
             if (legend) {
@@ -92,23 +107,23 @@ define(function (require) {
                 }
 
                 chart.getMarkBarPoints(seriesIndex, dataItem, start, end);
-                this._markBarMesh.geometry.addBar(start, end, barSize, colorArr);
+                this._markBarRenderable.geometry.addBar(start, end, barSize, colorArr);
             }
 
-            this._markBarMesh.geometry.dirty();
+            this._markBarRenderable.geometry.dirty();
         },
 
+        // Implement getSceneNode
         getSceneNode: function () {
-            return this._markBarMesh;
+            return this._markBarRenderable;
         },
 
+        // Implement clear
         clear: function () {
-            if (this._markBarMesh) {
-                this._markBarMesh.geometry.clearBars();
+            if (this._markBarRenderable) {
+                this._markBarRenderable.geometry.clearBars();
             }
-        },
-
-        onframe: function (deltaTime) {}
+        }
     };
 
     zrUtil.inherits(MarkBar, MarkBase);

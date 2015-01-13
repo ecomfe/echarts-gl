@@ -1,15 +1,30 @@
-// Surface texture which rendered with zrender
+/**
+ * Surface texture in the 3D scene.
+ * Provide management and rendering of zrender shapes and groups
+ *
+ * @module echarts-x/core/ZRenderSurface
+ * @author Yi Shen(http://github.com/pissang)
+ */
+
 define(function (require) {
 
     var Storage = require('zrender/Storage');
     var Texture = require('qtek/texture/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
     var Vector2 = require('qtek/math/Vector2');
-    var zrConfig = require('zrender/config');
 
-    var ZRenderSurface = function (zr, width, height) {
-
-        this._zr = zr;
+    /**
+     * @constructor
+     * @alias echarts-x/core/ZRenderSurface
+     * @param {number} width
+     * @param {number} height
+     */
+    var ZRenderSurface = function (width, height) {
+        /**
+         * Callback after refreshing
+         * @type {Function}
+         */
+        this.onrefresh = function () {};
 
         this._storage = new Storage();
 
@@ -24,7 +39,8 @@ define(function (require) {
 
         this._texture = new Texture({
             image: this._canvas,
-            anisotropic: 32
+            anisotropic: 32,
+            flipY: false
         });
     }
 
@@ -32,7 +48,7 @@ define(function (require) {
 
         constructor: ZRenderSurface,
 
-        clearColor: '',
+        backgroundColor: '',
 
         backgroundImage: null,
 
@@ -64,19 +80,14 @@ define(function (require) {
             var ctx = this._ctx;
 
             ctx.clearRect(0, 0, this._width, this._height);
-            if (this.clearColor) {
-                ctx.fillStyle = this.clearColor;
+            if (this.backgroundColor) {
+                ctx.fillStyle = this.backgroundColor;
                 ctx.fillRect(0, 0, this._width, this._height);
             }
 
             var bg = this.backgroundImage;
             if (bg && bg.width && bg.height) {
-                // flipY
-                ctx.translate(0, this._height);
-                ctx.scale(1, -1);
                 ctx.drawImage(this.backgroundImage, 0, 0, this._width, this._height);
-                ctx.scale(1, -1);
-                ctx.translate(0, -this._height);
             }
 
             var list = this._storage.getShapeList(true);
@@ -89,7 +100,7 @@ define(function (require) {
 
             this._texture.dirty();
 
-            this._zr.refreshNextFrame();
+            this.onrefresh && this.onrefresh();
         },
 
         _refreshNextTick: (function () {
@@ -123,17 +134,13 @@ define(function (require) {
             if (shape) {
                 shape.isHighlight = true;
                 shape.zlevel = 10;
-                // Trigger a global zr event to tooltip
-                this._zr.handler.dispatch(zrConfig.EVENT.MOUSEMOVE, {
-                    target: shape,
-                    event: e.event,
-                    type: zrConfig.EVENT.MOUSEMOVE
-                });
             }
 
             if (needsRefresh) {
                 this.refresh();
             }
+
+            return shape;
         },
 
         pick: (function () {
@@ -173,7 +180,7 @@ define(function (require) {
                 Vector2.scaleAndAdd(uv, uv, uv2, v);
 
                 var x = uv.x * this._width;
-                var y = (1 - uv.y) * this._height;
+                var y = uv.y * this._height;
 
                 var list = list || this._storage.getShapeList();
                 for (var i = list.length - 1; i >= 0; i--) {

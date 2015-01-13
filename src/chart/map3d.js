@@ -1,6 +1,12 @@
+/**
+ * @module echarts-x/chart/map3d
+ * @author Yi Shen(https://github.com/pissang)
+ */
+
 define(function (require) {
 
     var zrUtil = require('zrender/tool/util');
+    var zrConfig = require('zrender/config');
 
     var ecData = require('echarts/util/ecData');
 
@@ -26,21 +32,56 @@ define(function (require) {
 
     var ZRenderSurface = require('../core/ZRenderSurface');
 
+    /**
+     * @constructor
+     * @extends module:echarts-x/chart/base3d
+     * @alias module:echarts-x/chart/map3d
+     * @param {Object} ecTheme
+     * @param {Object} messageCenter
+     * @param {module:zrender~ZRender} zr
+     * @param {Object} option
+     * @param {module:echarts~ECharts} myChart
+     */
     function Map3D(ecTheme, messageCenter, zr, option, myChart) {
 
         ChartBase3D.call(this, ecTheme, messageCenter, zr, option, myChart);
 
+        /**
+         * Radius of earth sphere mesh
+         * @type {number}
+         * @private
+         */
         this._earthRadius = 100;
+
+        /**
+         * Size of base texture mapped on the earth, which is drawed from geoJSON data
+         * @type {number}
+         * @private
+         */
         this._baseTextureSize = 2048;
 
+        /**
+         * Root scene node of globe. Children contains earth mesh, markers mesh etc.
+         * @type {qtek.Node}
+         * @private
+         */
         this._globeNode = null;
 
+        /**
+         * @type {module:echarts-x/util/OrbitControl}
+         * @private
+         */
         this._orbitControl = null;
 
-        this._rotateGlobe = false;
-
+        /**
+         * Cached map data, key is map type
+         * @type {Object}
+         */
         this._mapDataMap = {};
 
+        /**
+         * @type {module:echarts-x/core/ZRenderSurface}
+         */
         this._globeSurface = null;
 
         this.refresh(option);
@@ -48,10 +89,17 @@ define(function (require) {
 
     Map3D.prototype = {
 
+        /**
+         * @type {string}
+         */
         type: ecConfig.CHART_TYPE_MAP3D,
 
         constructor: Map3D,
 
+        /**
+         * Initialize map3d chart
+         * @private
+         */
         _init: function () {
             var legend = this.component.legend;
             var series = this.series;
@@ -86,7 +134,7 @@ define(function (require) {
                 if (!this._globeNode) {
                     this._createGlob(seriesGroupByMapType[mapType]);
                 }
-                this._buildGlobe(mapType, dataMap[mapType], seriesGroupByMapType[mapType]);
+                this._updateGlobe(mapType, dataMap[mapType], seriesGroupByMapType[mapType]);
                 //TODO Only support one mapType here
                 break;
             }
@@ -100,6 +148,12 @@ define(function (require) {
             this.afterBuildMark();
         },
 
+        /**
+         * Group series by mapType
+         * @param  {Array.<Object>} series
+         * @return {Object}
+         * @private
+         */
         _groupSeriesByMapType: function (series) {
             var seriesGroupByMapType = {};
             for (var i = 0; i < series.length; i++) {
@@ -115,6 +169,12 @@ define(function (require) {
             return seriesGroupByMapType;
         },
 
+        /**
+         * Merge the series data from same mapType
+         * @param  {Array.<Object>} series
+         * @return {Object}
+         * @private
+         */
         _mergeSeriesData: function (series) {
 
             var dataMap = {};
@@ -153,11 +213,18 @@ define(function (require) {
             return dataMap;
         },
 
-        _buildGlobe: function (mapType, data, seriesGroup) {
+        /**
+         * Build globe in each refresh operation.
+         * Draw base map from geoJSON data. Build markers.
+         * @param  {string} mapType
+         * @param  {Array.<Object>} data Data preprocessed in _mergeSeriesData
+         * @param  {Array.<Object>} seriesGroup seriesGroup created in _groupSeriesByMapType
+         */
+        _updateGlobe: function (mapType, data, seriesGroup) {
 
             if (this._mapDataMap[mapType]) {
                 this._updateMapPolygonShapes(data, this._mapDataMap[mapType], seriesGroup);
-                this._updateBaseTexture(seriesGroup);
+                this._globeSurface.refresh();
                 this.zr.refreshNextFrame();
             }
             else if (mapParams[mapType].getGeoJson) {
@@ -169,7 +236,7 @@ define(function (require) {
                     }
                     self._mapDataMap[mapType] = mapData;
                     self._updateMapPolygonShapes(data, mapData, seriesGroup);
-                    self._updateBaseTexture(seriesGroup);
+                    self._globeSurface.refresh();
                     self.zr.refreshNextFrame();
                 });
             }
@@ -182,7 +249,15 @@ define(function (require) {
             }, this);
         },
 
+        /**
+         * Create globe mesh, and surface canvas, mouse control instance.
+         * Stuff only need to create once and used each refresh.
+         * @param  {Array.<Object>} seriesGroup
+         * @private
+         */
         _createGlob: function (seriesGroup) {
+            var zr = this.zr;
+            var self = this;
             this._globeNode = new Node({
                 name: 'globe'
             });
@@ -212,21 +287,19 @@ define(function (require) {
 
             this._orbitControl = new OrbitControl(this._globeNode, this.zr, this.baseLayer);
             this._orbitControl.init();
-            // If auto rotating globe
             this._orbitControl.autoRotate = this.deepQuery(seriesGroup, 'autoRotate');
 
             var globeSurface = new ZRenderSurface(
-                this.zr, this._baseTextureSize, this._baseTextureSize
+                this._baseTextureSize, this._baseTextureSize
             );
             this._globeSurface = globeSurface;
             globeMesh.material.set('diffuseMap', globeSurface.getTexture());
 
             var bgColor = this.deepQuery(seriesGroup, 'mapBackgroundColor');
             var bgImage = this.deepQuery(seriesGroup, 'mapBackgroundImage');
-            globeSurface.clearColor = bgColor || '';
+            globeSurface.backgroundColor = bgColor || '';
             if (bgImage) {
                  var img = new Image();
-                 var zr = this.zr;
                  img.onload = function () {
                     globeSurface.backgroundImage = img;
                     globeSurface.refresh();
@@ -236,34 +309,27 @@ define(function (require) {
             } else {
                 globeSurface.backgroundImage = null;
             }
+
+            globeSurface.onrefresh = function () {
+                zr.refreshNextFrame();
+            };
         },
 
-        _updateBaseTexture: function (seriesGroup) {
-            var width = this._baseTextureSize;
-            var height = this._baseTextureSize;
-
-            // Draw latitude and longitude grid
-            // this._drawLatitude(ctx, seriesGroup, width, height);
-            // this._drawLongitude(ctx, seriesGroup, width, height);
-
-            this._globeSurface.refresh();
-        },
-
+        /**
+         * Create polygon shapes from geoJSON data. Shapes will be added to ZRenderSurface
+         * and drawed on the canvas(which is attached on the sphere surface).
+         * @param  {Array.<Object>} data
+         * @param  {Object} mapData map geoJSON data
+         * @param  {Array.} seriesGroup
+         */
         _updateMapPolygonShapes: function (data, mapData, seriesGroup) {
             this._globeSurface.clearElements();
 
             var self = this;
             var dataRange = this.component.dataRange;
 
-            var bbox = {
-                x: -180,
-                y: -90,
-                width: 360,
-                height: 180
-            };
-
-            var scaleX = this._baseTextureSize / bbox.width;
-            var scaleY = this._baseTextureSize / bbox.height;
+            var scaleX = this._baseTextureSize / 360;
+            var scaleY = this._baseTextureSize / 180;
 
             // Draw map
             // TODO Special area
@@ -348,7 +414,7 @@ define(function (require) {
                 var textShape = new TextShape({
                     zlevel: 1,
                     position: cp,
-                    scale: [0.5 * textScaleX * baseScale, -baseScale],
+                    scale: [0.5 * textScaleX * baseScale, baseScale],
                     style: {
                         x: 0,
                         y: 0,
@@ -397,8 +463,8 @@ define(function (require) {
                     for (var i = 0; i < coordinates[k].length; i++) {
                         var point = self._formatPoint(coordinates[k][i]);
                         // Format point
-                        var x = (point[0] - bbox.x) * scaleX;
-                        var y = (point[1] - bbox.y) * scaleY;
+                        var x = (point[0] + 180) * scaleX;
+                        var y = (90 - point[1]) * scaleY;
                         polygon.style.pointList.push([x, y]);
                     }
                     bundleShape.style.shapeList.push(polygon);
@@ -406,18 +472,28 @@ define(function (require) {
             }
         },
 
+        /**
+         * Get label position of each polygon.
+         * @param  {module:zrender/shape/Polygon} polygonShape
+         * @return {Array.<number>}
+         * @private
+         */
         _getTextPosition: function (polygonShape) {
             var textPosition;
             var name = polygonShape.name;
             var textFixed = textFixedMap[name] || [0, 0];
+            var size = this._baseTextureSize;
             if (geoCoordMap[name]) {
-                textPosition = Array.prototype.slice.call(geoCoordMap[name])
+                textPosition = [
+                    (geoCoordMap[name][0] + 180)  / 360 * size,
+                    (90 - geoCoordMap[name][1]) / 180 * size
+                ];
             }
             else if (polygonShape.cp) {
                 textPosition = [
-                    polygonShape.cp[0] + textFixed[0],
-                    polygonShape.cp[1] + textFixed[1]
-                ]
+                    (polygonShape.cp[0] + textFixed[0] + 180) / 360 * size,
+                    (90 - (polygonShape.cp[1] + textFixed[1])) / 180 * size
+                ];
             }
             else {
                 var bbox = polygonShape.getRect(polygonShape.style);
@@ -437,32 +513,20 @@ define(function (require) {
             ];
         },
 
-        _drawLatitude: function(ctx, seriesGroup, width, height) {
-            ctx.strokeStyle = this.deepQuery(seriesGroup, 'mapGridColor');
-            ctx.beginPath();
-            for (var i = 0; i < 18; i++) {
-                var y = Math.round(height * i / 18) + 0.5;
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-            }
-            ctx.lineWidth = 1;
-            ctx.stroke();
-        },
-
-        _drawLongitude: function(ctx, seriesGroup, width, height) {
-            ctx.strokeStyle = this.deepQuery(seriesGroup, 'mapGridColor');
-            ctx.beginPath();
-            for (var i = 0; i < 36; i++) {
-                var x = Math.round(width * i / 36) + 0.5;
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-            }
-            ctx.lineWidth = 1;
-            ctx.stroke();
-        },
-
+        /**
+         * Handle mousemove events like hover
+         * @param {Object} e
+         */
         _mouseMoveHandler: function (e) {
-            this._globeSurface.hover(e);
+            var shape = this._globeSurface.hover(e);
+            if (shape) {
+                // Trigger a global zr event to tooltip
+                this.zr.handler.dispatch(zrConfig.EVENT.MOUSEMOVE, {
+                    target: shape,
+                    event: e.event,
+                    type: zrConfig.EVENT.MOUSEMOVE
+                });
+            }
         },
 
         _eulerToSphere: function (x, y, z) {
@@ -498,7 +562,13 @@ define(function (require) {
             point._array[2] = r0 * Math.sin(log + Math.PI);
         },
 
-        // 根据 lablel.formatter 计算 label text
+        /**
+         * @param  {string} name
+         * @param  {number} value
+         * @param  {Array.<Object?} queryTarget
+         * @param  {string} status 'normal' | 'emphasis'
+         * @return {string}
+         */
         getLabelText : function (name, value, queryTarget, status) {
             var formatter = this.deepQuery(
                 queryTarget,
@@ -591,12 +661,14 @@ define(function (require) {
             }
         })(),
 
+        // Overwrite onframe
         onframe: function (deltaTime) {
             ChartBase3D.prototype.onframe.call(this, deltaTime);
 
             this._orbitControl.update(deltaTime);
         },
 
+        // Overwrite refresh
         refresh: function(newOption) {
             if (newOption) {
                 this.option = newOption;
@@ -606,6 +678,7 @@ define(function (require) {
             this._init();
         },
 
+        // Overwrite ondataRange
         ondataRange: function (param, status) {
             if (this.component.dataRange) {
                 this.refresh();
@@ -613,6 +686,7 @@ define(function (require) {
             }
         },
 
+        // Overwrite dispose
         dispose: function () {
 
             ChartBase3D.prototype.dispose.call(this);

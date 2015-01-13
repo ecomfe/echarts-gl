@@ -1,8 +1,20 @@
+/**
+ * Geometry collecting cloud points data
+ *
+ * @module echarts-x/util/geometry/Points
+ * @author Yi Shen(http://github.com/pissang)
+ */
+
 define(function (require) {
     
     var DynamicGeometry = require('qtek/DynamicGeometry');
     var Geometry = require('qtek/Geometry');
 
+    /**
+     * @constructor
+     * @alias module:echarts-x/util/geometry/Points
+     * @extends qtek.DynamicGeometry
+     */
     var PointsGeometry = DynamicGeometry.derive(function () {
         return {
             attributes: {
@@ -11,8 +23,13 @@ define(function (require) {
                 color: new Geometry.Attribute('color', 'float', 4, 'COLOR', true)
             }
         }
-    }, {
+    },
+    /** @lends module:echarts-x/util/geometry/Points.prototype */
+    {
 
+        /**
+         * Clear all points
+         */
         clearPoints: function () {
             var attributes = this.attributes;
             attributes.position.value.length = 0;
@@ -20,6 +37,12 @@ define(function (require) {
             attributes.size.value.length = 0;
         },
 
+        /**
+         * Add a point
+         * @param {qtek.math.Vector3} position
+         * @param {Array.<number>} color
+         * @param {number} size
+         */
         addPoint: function (position, color, size) {
             var attributes = this.attributes;
 

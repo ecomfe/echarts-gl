@@ -1,8 +1,14 @@
+/**
+ * Mark line rendering
+ *
+ * @module echarts-x/entity/marker/MarkLine
+ * @author Yi Shen(https://github.com/pissang)
+ */
 define(function (require) {
     
     var zrUtil = require('zrender/tool/util');
     var MarkBase = require('./Base');
-    var Mesh = require('qtek/Mesh');
+    var Renderable = require('qtek/Renderable');
     var Material = require('qtek/Material');
     var Shader = require('qtek/Shader');
     var Node = require('qtek/Node');
@@ -12,14 +18,33 @@ define(function (require) {
     var spriteUtil = require('../../util/sprite');
     var Vector3 = require('qtek/math/Vector3');
 
+    /**
+     * @constructor
+     * @alias module:echarts-x/entity/marker/MarkLine
+     * @extends module:echarts-x/entity/marker/Base
+     * @param {module:echarts-x/chart/base3d} chart
+     */
     var MarkLine = function (chart) {
         MarkBase.call(this, chart);
-
+        /**
+         * Root scene node
+         * @type {qtek.Node}
+         */
         this._sceneNode = new Node();
 
-        this._markLineMesh = null;
-        this._curveAnimatingPointsMesh = null;
+        /**
+         * @type {qtek.Renderable}
+         */
+        this._markLineRenderable = null;
 
+        /**
+         * @type {qtek.Renderable}
+         */
+        this._curveAnimatingPointsRenderable = null;
+
+        /**
+         * @type {number}
+         */
         this._elapsedTime = 0;
     };
 
@@ -27,7 +52,7 @@ define(function (require) {
         
         constructor: MarkLine,
 
-        _createMarkLineMesh: function () {
+        _createMarkLineRenderable: function () {
             var material = new Material({
                 shader: new Shader({
                     vertex: Shader.source('ecx.albedo.vertex'),
@@ -37,30 +62,31 @@ define(function (require) {
                 depthMask: false
             });
             material.shader.define('both', 'VERTEX_COLOR');
-            this._markLineMesh = new Mesh({
+            this._markLineRenderable = new Renderable({
                 geometry: new LinesGeometry(),
                 material: material,
-                mode: Mesh.LINES
+                mode: Renderable.LINES
             });
-            this._sceneNode.add(this._markLineMesh);
+            this._sceneNode.add(this._markLineRenderable);
         },
 
-        _createCurveAnimatingPointsMesh: function () {
+        _createCurveAnimatingPointsRenderable: function () {
             var material = new Material({
                 shader: new Shader({
                     vertex: Shader.source('ecx.curveAnimatingPoints.vertex'),
                     fragment: Shader.source('ecx.curveAnimatingPoints.fragment')
                 })
             });
-            this._curveAnimatingPointsMesh = new Mesh({
+            this._curveAnimatingPointsRenderable = new Renderable({
                 material: material,
-                mode: Mesh.POINTS,
+                mode: Renderable.POINTS,
                 geometry: new CurveAnimatingPointsGeometry()
             });
-            this._sceneNode.add(this._curveAnimatingPointsMesh);
+            this._sceneNode.add(this._curveAnimatingPointsRenderable);
         },
 
-        setSerie: function (serie, seriesIndex) {
+        // Implement setSeries
+        setSeries: function (serie, seriesIndex) {
             if (! serie.markLine || !serie.markLine.data) {
                 return;
             }
@@ -72,27 +98,27 @@ define(function (require) {
             var markLine = serie.markLine;
             var devicePixelRatio = window.devicePixelRatio || 1;
 
-            if (! this._markLineMesh) {
-                this._createMarkLineMesh();
+            if (! this._markLineRenderable) {
+                this._createMarkLineRenderable();
             }
             var width = chart.query(markLine, 'itemStyle.normal.lineStyle.width');
             var opacity = chart.query(markLine, 'itemStyle.normal.lineStyle.opacity');
-            var lineMesh = this._markLineMesh;
-            lineMesh.lineWidth = width * devicePixelRatio;
-            lineMesh.material.set('alpha', opacity);
+            var lineRenderable = this._markLineRenderable;
+            lineRenderable.lineWidth = width * devicePixelRatio;
+            lineRenderable.material.set('alpha', opacity);
 
             var showMarkLineEffect = chart.query(serie.markLine, 'effect.show');
-            var pointsMesh;
+            var pointsRenderable;
             if (showMarkLineEffect) {
                 var scaleSize = chart.query(markLine, 'effect.scaleSize');
-                if (! this._curveAnimatingPointsMesh) {
-                    this._createCurveAnimatingPointsMesh();
+                if (! this._curveAnimatingPointsRenderable) {
+                    this._createCurveAnimatingPointsRenderable();
                 }
-                pointsMesh = this._curveAnimatingPointsMesh;
-                pointsMesh.material.set(
+                pointsRenderable = this._curveAnimatingPointsRenderable;
+                pointsRenderable.material.set(
                     'pointSize', scaleSize * devicePixelRatio
                 );
-                pointsMesh.geometry.dirty();
+                pointsRenderable.geometry.dirty();
             }
 
             var serieColor;
@@ -120,38 +146,40 @@ define(function (require) {
 
                 chart.getMarkLinePoints(seriesIndex, dataItem, p0, p1, p2, p3);
 
-                lineMesh.geometry.addCubicCurve(p0, p1, p2, p3, colorArr);
+                lineRenderable.geometry.addCubicCurve(p0, p1, p2, p3, colorArr);
 
                 if (showMarkLineEffect) {
-                    pointsMesh.geometry.addPoint(p0, p1, p2, p3, colorArr);
+                    pointsRenderable.geometry.addPoint(p0, p1, p2, p3, colorArr);
                 }
             }
 
-            lineMesh.geometry.dirty();
+            lineRenderable.geometry.dirty();
         },
 
         clear: function () {
             this._elapsedTime = 0;
-            if (this._markLineMesh) {
-                this._markLineMesh.geometry.clearLines();
+            if (this._markLineRenderable) {
+                this._markLineRenderable.geometry.clearLines();
             }
-            if (this._curveAnimatingPointsMesh) {
-                this._curveAnimatingPointsMesh.geometry.clearPoints();
+            if (this._curveAnimatingPointsRenderable) {
+                this._curveAnimatingPointsRenderable.geometry.clearPoints();
             }
         },
 
+        // Implement getSceneNode
         getSceneNode: function () {
             return this._sceneNode;
         },
 
+        // Implement onframe
         onframe: function (deltaTime) {
-            var mesh = this._curveAnimatingPointsMesh;
-            if (mesh.geometry.getVertexNumber() > 0) {
+            var renderable = this._curveAnimatingPointsRenderable;
+            if (renderable.geometry.getVertexNumber() > 0) {
                 this._elapsedTime += deltaTime / 1000;
                 // 3 s
                 var t = this._elapsedTime / 3;
                 t %= 1;
-                mesh.material.set('percent', t);
+                renderable.material.set('percent', t);
 
                 this.chart.zr.refreshNextFrame();
             }

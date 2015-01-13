@@ -1,3 +1,10 @@
+/**
+ * Provide 3D layer to zrender. Which is rendered on top of qtek
+ * 
+ * @module echarts-x/core/Layer3D
+ * @author Yi Shen(http://github.com/pissang)
+ */
+
 define(function (require) {
     
     var Renderer = require('qtek/Renderer');
@@ -9,10 +16,20 @@ define(function (require) {
     var Eventful = require('zrender/mixin/Eventful');
     var zrUtil = require('zrender/tool/util');
 
+    /**
+     * @constructor
+     * @alias module:echarts-x/core/Layer3D
+     * @param {string} id Layer ID
+     * @param {module:zrender/Painter} painter
+     */
     var Layer3D = function (id, painter) {
 
         Eventful.call(this);
 
+        /**
+         * Layer ID
+         * @type {string}
+         */
         this.id = id;
 
         /**
@@ -44,6 +61,9 @@ define(function (require) {
         this._initHandlers();
     }
 
+    /**
+     * Register event handling functions
+     */
     Layer3D.prototype._initHandlers = function () {
 
         // Mouse event handling
@@ -60,7 +80,7 @@ define(function (require) {
     };
 
     /**
-     * Resize the canvas and viewport
+     * Resize the canvas and viewport, will be invoked by zrender
      * @param  {number} width
      * @param  {number} height
      */
@@ -71,10 +91,16 @@ define(function (require) {
         }
     };
 
+    /**
+     * Refresh the layer, will be invoked by zrender
+     */
     Layer3D.prototype.refresh = function () {
         this.renderer.render(this.scene, this.camera);
     };
 
+    /**
+     * Dispose the layer
+     */
     Layer3D.prototype.dispose = function () {
         this.renderer.disposeScene(this.scene);
     };

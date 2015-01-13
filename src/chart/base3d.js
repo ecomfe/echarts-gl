@@ -118,7 +118,7 @@ define(function (require) {
                 list[count] = new MarkerCtor(this);
             }
             var marker = list[count];
-            marker.setSerie(serie, seriesIndex);
+            marker.setSeries(serie, seriesIndex);
             var sceneNode = marker.getSceneNode();
             if (sceneNode.getParent() !== parentNode) {
                 parentNode.add(sceneNode);

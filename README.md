@@ -1,4 +1,4 @@
 ECharts-X
 =======
 
-##### Extension pack of echarts providing 3d plots and globe visualization
+Extension pack of ECharts providing 3d plots and globe visualization

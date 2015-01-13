@@ -1,6 +1,6 @@
 {
     "name": "echarts-x",
-    "description": "Extension pack of echarts providing 3d plots and globe visualization",
+    "description": "Extension pack of ECharts providing 3d plots and globe visualization",
     "version": "0.1",
     "maintainers": [
         { "name": "Yi Shen", "email": "shenyi.914@gmail.com" }

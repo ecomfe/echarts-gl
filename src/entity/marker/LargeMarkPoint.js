@@ -1,8 +1,15 @@
+/**
+ * Large scale markPoint rendering with point cloud
+ * 
+ * @module echarts-x/entity/marker/LargeMarkPoint
+ * @author Yi Shen(https://github.com/pissang)
+ */
+
 define(function (require) {
     
     var zrUtil = require('zrender/tool/util');
     var MarkBase = require('./Base');
-    var Mesh = require('qtek/Mesh');
+    var Renderable = require('qtek/Renderable');
     var Material = require('qtek/Material');
     var Shader = require('qtek/Shader');
     var Node = require('qtek/Node');
@@ -12,15 +19,39 @@ define(function (require) {
     var spriteUtil = require('../../util/sprite');
     var Vector3 = require('qtek/math/Vector3');
 
+    /**
+     * @constructor
+     * @alias module:echarts-x/entity/marker/LargeMarkPoint
+     * @extends module:echarts-x/entity/marker/Base
+     * @param {module:echarts-x/chart/base3d} chart
+     */
     var LargeMarkPoint = function (chart) {
 
         MarkBase.call(this, chart);
 
+        /**
+         * Root scene node
+         * @type {qtek.Node}
+         * @private
+         */
         this._sceneNode = new Node();
-        this._markPointMesh = null;
-        this._animatingMarkPointMesh = null;
+
+        /**
+         * @type {qtek.Renderable}
+         */
+        this._markPointRenderable = null;
+        /**
+         * @type {qtek.Renderable}
+         */
+        this._animatingMarkPointRenderable = null;
+        /**
+         * @type {qtek.texture.Texture2D}
+         */
         this._spriteTexture = null;
 
+        /**
+         * @type {number}
+         */
         this._elapsedTime = 0;
     };
 
@@ -28,7 +59,7 @@ define(function (require) {
         
         constructor: LargeMarkPoint,
 
-        _createMarkPointMesh: function () {
+        _createMarkPointRenderable: function () {
             var mat = new Material({
                 shader: new Shader({
                     vertex: Shader.source('ecx.points.vertex'),
@@ -39,20 +70,20 @@ define(function (require) {
             });
             mat.shader.enableTexture('sprite');
 
-            this._markPointMesh = new Mesh({
+            this._markPointRenderable = new Renderable({
                 geometry: new PointsGeometry(),
                 material: mat,
-                mode: Mesh.POINTS
+                mode: Renderable.POINTS
             });
 
             if (this._spriteTexture) {
                 mat.set('sprite', this._spriteTexture);
             }
 
-            this._sceneNode.add(this._markPointMesh);
+            this._sceneNode.add(this._markPointRenderable);
         },
 
-        _createAnimatingMarkPointMesh: function () {
+        _createAnimatingMarkPointRenderable: function () {
             var mat = new Material({
                 shader: new Shader({
                     vertex: Shader.source('ecx.points.vertex'),
@@ -64,17 +95,17 @@ define(function (require) {
             mat.shader.enableTexture('sprite');
             mat.shader.define('vertex', 'ANIMATING');
 
-            this._animatingMarkPointMesh = new Mesh({
+            this._animatingMarkPointRenderable = new Renderable({
                 geometry: new AnimatingPointsGeometry(),
                 material: mat,
-                mode: Mesh.POINTS
+                mode: Renderable.POINTS
             });
 
             if (this._spriteTexture) {
                 mat.set('sprite', this._spriteTexture);
             }
 
-            this._sceneNode.add(this._animatingMarkPointMesh);
+            this._sceneNode.add(this._animatingMarkPointRenderable);
         },
 
         _updateSpriteTexture: function (style) {
@@ -88,18 +119,20 @@ define(function (require) {
             spriteTexture.dirty();
         },
 
+        // Implement clear
         clear: function () {
-            if (this._markPointMesh) {
-                this._markPointMesh.geometry.clearPoints();
+            if (this._markPointRenderable) {
+                this._markPointRenderable.geometry.clearPoints();
             }
-            if (this._animatingMarkPointMesh) {
-                this._animatingMarkPointMesh.geometry.clearPoints();
+            if (this._animatingMarkPointRenderable) {
+                this._animatingMarkPointRenderable.geometry.clearPoints();
             }
 
             this._elapsedTime = 0;
         },
 
-        setSerie: function (serie, seriesIndex) {
+        // Implement setSeries
+        setSeries: function (serie, seriesIndex) {
             if (! serie.markPoint || ! serie.markPoint.data) {
                 return;
             }
@@ -119,15 +152,15 @@ define(function (require) {
             });
 
             if (showMarkPointEffect) {
-                if (! this._animatingMarkPointMesh) {
-                    this._createAnimatingMarkPointMesh();
+                if (! this._animatingMarkPointRenderable) {
+                    this._createAnimatingMarkPointRenderable();
                 }
-                this._animatingMarkPointMesh.geometry.dirty();
+                this._animatingMarkPointRenderable.geometry.dirty();
             } else {
-                if (! this._markPointMesh) {
-                    this._createMarkPointMesh();
+                if (! this._markPointRenderable) {
+                    this._createMarkPointRenderable();
                 }
-                this._markPointMesh.geometry.dirty();
+                this._markPointRenderable.geometry.dirty();
             }
 
             var dataList = markPoint.data;
@@ -175,26 +208,28 @@ define(function (require) {
                 var coord = new Vector3();
                 chart.getMarkCoord(seriesIndex, dataItem, coord);
                 if (showMarkPointEffect) {
-                    this._animatingMarkPointMesh.geometry.addPoint(
+                    this._animatingMarkPointRenderable.geometry.addPoint(
                         coord, colorArr, size, Math.random() * 2
                     );
                 } else {
-                    this._markPointMesh.geometry.addPoint(coord, colorArr, size);
+                    this._markPointRenderable.geometry.addPoint(coord, colorArr, size);
                 }
             }
         },
 
+        // Implement getSceneNode
         getSceneNode: function () {
             return this._sceneNode;
         },
 
+        // Implement onframe
         onframe: function (deltaTime) {
-            if (this._animatingMarkPointMesh) {
-                var mesh = this._animatingMarkPointMesh;
+            if (this._animatingMarkPointRenderable) {
+                var renderable = this._animatingMarkPointRenderable;
                 // Have markpoint animation
-                if (mesh.geometry.getVertexNumber() > 0) {
+                if (renderable.geometry.getVertexNumber() > 0) {
                     this._elapsedTime += deltaTime / 1000;
-                    mesh.material.set('elapsedTime', this._elapsedTime);
+                    renderable.material.set('elapsedTime', this._elapsedTime);
                     this.chart.zr.refreshNextFrame();
                 }
             }
