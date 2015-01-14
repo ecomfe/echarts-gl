@@ -1,3 +1,10 @@
+/**
+ * Provide orbit control for 3D objects
+ * 
+ * @module echarts-x/util/OrbitControl
+ * @author Yi Shen(http://github.com/pissang)
+ */
+
 define(function (require) {
 
     'use strict';
@@ -7,17 +14,48 @@ define(function (require) {
 
     var EVENT = zrConfig.EVENT;
 
+    /**
+     * @alias module:echarts-x/util/OrbitControl
+     * @param {qtek.Node} target Target scene node
+     * @param {module:zrender~ZRender} zr
+     * @param {module:echarts-x/core/Layer3D} layer
+     */
     var OrbitControl = function (target, zr, layer) {
         
+        /**
+         * @type {module:zrender~ZRender}
+         */
         this.zr = zr;
 
+        /**
+         * @type {module:echarts-x/core/Layer3D}
+         */
         this.layer = layer;
 
+        /**
+         * @type {qtek.Node}
+         */
         this.target = target;
 
+        /**
+         * If auto rotate the target
+         * @type {boolean}
+         * @default false
+         */
         this.autoRotate = false;
 
+        /**
+         * Minimum zoom rate
+         * @type {number}
+         * @default 0.5
+         */
         this.minZoom = 0.5;
+
+        /**
+         * Maximum zoom rate
+         * @type {number}
+         * @default 2
+         */
         this.maxZoom = 2;
 
         this._zoom = 1;
@@ -37,11 +75,19 @@ define(function (require) {
         
         constructor: OrbitControl,
 
+        /**
+         * Initialize.
+         * Mouse event binding
+         */
         init: function () {
             this.layer.bind(EVENT.MOUSEDOWN, this._mouseDownHandler, this);
             this.layer.bind(EVENT.MOUSEWHEEL, this._mouseWheelHandler, this);
         },
 
+        /**
+         * Dispose.
+         * Mouse event unbinding
+         */
         dispose: function () {
             this.layer.unbind(EVENT.MOUSEDOWN, this._mouseDownHandler); 
             this.layer.unbind(EVENT.MOUSEMOVE, this._mouseMoveHandler);
@@ -49,6 +95,10 @@ define(function (require) {
             this.layer.unbind(EVENT.MOUSEWHEEL, this._mouseWheelHandler);
         },
 
+        /**
+         * Call update each frame
+         * @param  {number} deltaTime Frame time
+         */
         update: function (deltaTime) {
             this._rotateY = (this._rotateVelocity.y + this._rotateY) % (Math.PI * 2);
             this._rotateX = (this._rotateVelocity.x + this._rotateX) % (Math.PI * 2);

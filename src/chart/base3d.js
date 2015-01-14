@@ -1,15 +1,18 @@
+/**
+ * Base class for 3d charts
+ * 
+ * @module echarts-x/chart/base3d
+ * @author Yi Shen(http://github.com/pissang)
+ */
 define(function (require) {
+
+    'use strict';
 
     var zrUtil = require('zrender/tool/util');
 
-    var ComponentBase = require('echarts/component/base');
     var ComponentBase3D = require('../component/base3d');
 
     var colorUtil = require('../util/color');
-
-    var MarkBar = require('../entity/marker/MarkBar');
-    var MarkLine = require('../entity/marker/MarkLine');
-    var LargeMarkPoint = require('../entity/marker/LargeMarkPoint');
 
     var Mesh = require('qtek/Mesh');
     var Material = require('qtek/Material');
@@ -20,9 +23,24 @@ define(function (require) {
     var vec3 = require('qtek/dep/glmatrix').vec3;
     var vec4 = require('qtek/dep/glmatrix').vec4;
 
-    function Base3D(ecTheme, messageCenter, zr, option, myChart) {
+    var MarkerCtorMap = {
+        markLine: require('../entity/marker/MarkLine'),
+        markBar: require('../entity/marker/MarkBar'),
+        largeMarkPoint: require('../entity/marker/LargeMarkPoint')
+    }
 
-        ComponentBase.call(this, ecTheme, messageCenter, zr, option, myChart);
+    /**
+     * @constructor
+     * @alias module:echarts-x/chart/base3d
+     * @extends module:echarts-x/component/base3d
+     * 
+     * @param {Object} ecTheme
+     * @param {Object} messageCenter
+     * @param {module:zrender~ZRender} zr
+     * @param {Object} option
+     * @param {module:echarts~ECharts} myChart
+     */
+    function Base3D(ecTheme, messageCenter, zr, option, myChart) {
 
         ComponentBase3D.call(this, ecTheme, messageCenter, zr, option, myChart);
 
@@ -46,6 +64,12 @@ define(function (require) {
 
         constructor: Base3D,
 
+        /**
+         * Call before building mark of each series.
+         * Marker construction in ecx is costly. So we use the instance cached in last update as much as possible.
+         * Only dynamic data like geometry vertices will be updated every time.
+         * Instances which is no longer used will be disposed in the afterBuildMark method
+         */
         beforeBuildMark: function () {
             for (var i = 0; i < this._markList.length; i++) {
                 this._markList[i].clear();
@@ -58,31 +82,40 @@ define(function (require) {
             this._largeMarkPointCount = 0;
         },
 
+        /**
+         * Build marker of each series.
+         * @param  {number} seriesIndex
+         * @param  {qtek.Node} parentNode
+         *         Parent scene node where marker renderable will be mounted
+         */
         buildMark: function (seriesIndex, parentNode) {
             var serie = this.series[seriesIndex];
 
             if (serie.markPoint) {
                 zrUtil.merge(serie.markPoint, this.ecTheme.markPoint);
-                this._buildMarkSingleType(
-                    'markPoint', LargeMarkPoint, seriesIndex, parentNode
+                this._buildSingleMarker(
+                    'largeMarkPoint', seriesIndex, parentNode
                 );
             }
             if (serie.markLine) {
                 zrUtil.merge(serie.markLine, this.ecTheme.markLine);
-                this._buildMarkSingleType(
-                    'markLine', MarkLine, seriesIndex, parentNode
+                this._buildSingleMarker(
+                    'markLine', seriesIndex, parentNode
                 );
             }
             if (serie.markBar) {
                 zrUtil.merge(serie.markBar, this.ecTheme.markBar);
-                this._buildMarkSingleType(
-                    'markBar', MarkBar, seriesIndex, parentNode
+                this._buildSingleMarker(
+                    'markBar', seriesIndex, parentNode
                 );
             }
         },
 
-        // TODO Memory leak test
+        /**
+         * Call after built mark of all series.
+         */
         afterBuildMark: function () {
+            // TODO Memory leak test
             for (var i = this._markPointCount; i < this._markPointList.length; i++) {
                 this._disposeSingleMark(this._markPointList[i]);
             }
@@ -101,6 +134,10 @@ define(function (require) {
             this._markBarList.length = this._markBarCount;
         },
 
+        /**
+         * Dispose a singler marker
+         * @param  {module:echarts-x/entity/marker/Base} marker
+         */
         _disposeSingleMark: function (marker) {
             var sceneNode = marker.getSceneNode();
             if (sceneNode.getParent()) {
@@ -109,10 +146,22 @@ define(function (require) {
             marker.dispose();
         },
 
-        _buildMarkSingleType: function (markerType, MarkerCtor, seriesIndex, parentNode) {
+        /**
+         * Build a single marker
+         * @param  {string} markerType
+         *         Marker type can be 'markPoint', 'largeMarkPoint', 'markLine', 'markBar'
+         * @param  {number} seriesIndex
+         * @param  {qtek.Node} parentNode
+         */
+        _buildSingleMarker: function (markerType, seriesIndex, parentNode) {
             var serie = this.series[seriesIndex];
             var list = this['_' + markerType + 'List'];
             var count = this['_' + markerType + 'Count'];
+            var MarkerCtor = MarkerCtorMap[markerType];
+            if (! list || ! MarkerCtor) {
+                // Invalid marker type
+                return;
+            }
             // Using the cached markpoint instance if possible
             if (! list[count]) {
                 list[count] = new MarkerCtor(this);
@@ -156,12 +205,28 @@ define(function (require) {
             return colorArr;
         },
 
+        /**
+         * Map a mark coord to 3D cartesian coordinates vector.
+         * Default it is a simply copy. Each chart can overwrite it and implement its own 
+         * Mapping algorithm
+         * @param  {number} seriesIndex
+         * @param  {Object} data Given marker data
+         * @param  {qtek.math.Vector3} point Output 3d vector
+         */
         getMarkCoord: function (seriesIndex, data, point) {
             out._array[0] = data.x;
             out._array[1] = data.y;
             out._array[2] = data.z;
         },
 
+        /**
+         * Calculate the bar start and end point in 3d cartesian coordinates from a given barHeight parameter
+         * Each chart can overwrite it and implement its own algorithm
+         * @param  {number} seriesIndex
+         * @param  {Object} data Given marker data
+         * @param  {qtek.math.Vector3} start Output start 3d vector
+         * @param  {qtek.math.Vector3} end Output end 3d vector
+         */
         getMarkBarPoints: function (seriesIndex, data, start, end) {
             var barHeight = data.barHeight != null ? data.barHeight : 1;
             if (typeof(barHeight) == 'function') {
@@ -171,6 +236,17 @@ define(function (require) {
             Vector3.scaleAndAdd(end, end, start, 1);
         },
 
+        /**
+         * Calculate line points.
+         * It is a straight line if p2 and p3 is not given. Else it is a cubic curve
+         * Each chart can overwrite it and implement its own algorithm
+         * @param  {number} seriesIndex
+         * @param  {Object} data
+         * @param  {qtek.math.Vector3} p0
+         * @param  {qtek.math.Vector3} p1
+         * @param  {qtek.math.Vector3} [p2]
+         * @param  {qtek.math.Vector3} [p3]
+         */
         getMarkLinePoints: function (seriesIndex, data, p0, p1, p2, p3) {
             var isCurve = !!p2;
             if (!isCurve) { // Mark line is not a curve
@@ -184,14 +260,11 @@ define(function (require) {
             }
         },
 
-        /**
-         * 图例选择
-         */
+        // Overwrite onlegendSelected
         onlegendSelected: function (param, status) {
             var legendSelected = param.selected;
             for (var itemName in this.selectedMap) {
                 if (this.selectedMap[itemName] != legendSelected[itemName]) {
-                    // 有一项不一致都需要重绘
                     status.needRefresh = true;
                 }
                 this.selectedMap[itemName] = legendSelected[itemName];
@@ -199,6 +272,17 @@ define(function (require) {
             return;
         },
 
+        // Overwrite dispose
+        dispose: function () {
+            ComponentBase3D.prototype.dispose.call(this);
+
+            // Dispose all the markers
+            for (var i = 0; i < this._markList.length; i++) {
+                this._disposeSingleMark(this._markList[i]);
+            }
+        },
+
+        // Overwrite onframe
         onframe: function (deltaTime) {
             for (var i = 0; i < this._markList.length; i++) {
                 this._markList[i].onframe(deltaTime);
@@ -206,7 +290,6 @@ define(function (require) {
         }
     }
 
-    zrUtil.inherits(Base3D, ComponentBase);
     zrUtil.inherits(Base3D, ComponentBase3D);
 
     return Base3D;
