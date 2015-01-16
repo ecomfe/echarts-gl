@@ -91,8 +91,8 @@ define(function (require) {
                 var itemColor = chart.query(dataItem, 'itemStyle.normal.color');
 
                 // 0. Use the color of itemStyle in single data
-                // 2. Color in user customized itemStyle
                 // 1. Use the color provided by data range component
+                // 2. Color in user customized itemStyle
                 // 3. Use the color provided by legend component
                 // 4. Use series default color
                 var color = itemColor || dataRangeColor || serieColor || serieDefaultColor;

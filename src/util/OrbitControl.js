@@ -56,7 +56,7 @@ define(function (require) {
          * @type {number}
          * @default 2
          */
-        this.maxZoom = 2;
+        this.maxZoom = 1.5;
 
         this._zoom = 1;
 

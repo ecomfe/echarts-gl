@@ -19,6 +19,7 @@ define(function (require) {
     var Shader = require('qtek/Shader');
     var LRUCache = require('qtek/core/LRU');
     var Vector3 = require('qtek/math/Vector3');
+    var Matrix4 = require('qtek/math/Matrix4');
 
     var vec3 = require('qtek/dep/glmatrix').vec3;
     var vec4 = require('qtek/dep/glmatrix').vec4;
@@ -26,6 +27,7 @@ define(function (require) {
     var MarkerCtorMap = {
         markLine: require('../entity/marker/MarkLine'),
         markBar: require('../entity/marker/MarkBar'),
+        markPoint: require('../entity/marker/MarkPoint'),
         largeMarkPoint: require('../entity/marker/LargeMarkPoint')
     }
 
@@ -93,19 +95,25 @@ define(function (require) {
 
             if (serie.markPoint) {
                 zrUtil.merge(serie.markPoint, this.ecTheme.markPoint);
-                this._buildSingleMarker(
-                    'largeMarkPoint', seriesIndex, parentNode
-                );
+                if (serie.markPoint.large) {
+                    this._buildSingleTypeMarker(
+                        'largeMarkPoint', seriesIndex, parentNode
+                    );
+                } else {
+                    this._buildSingleTypeMarker(
+                        'markPoint', seriesIndex, parentNode
+                    );
+                }
             }
             if (serie.markLine) {
                 zrUtil.merge(serie.markLine, this.ecTheme.markLine);
-                this._buildSingleMarker(
+                this._buildSingleTypeMarker(
                     'markLine', seriesIndex, parentNode
                 );
             }
             if (serie.markBar) {
                 zrUtil.merge(serie.markBar, this.ecTheme.markBar);
-                this._buildSingleMarker(
+                this._buildSingleTypeMarker(
                     'markBar', seriesIndex, parentNode
                 );
             }
@@ -117,19 +125,19 @@ define(function (require) {
         afterBuildMark: function () {
             // TODO Memory leak test
             for (var i = this._markPointCount; i < this._markPointList.length; i++) {
-                this._disposeSingleMark(this._markPointList[i]);
+                this._disposeSingleSerieMark(this._markPointList[i]);
             }
             this._markPointList.length = this._markPointCount;
             for (var i = this._largeMarkPointCount; i < this._largeMarkPointList.length; i++) {
-                this._disposeSingleMark(this._largeMarkPointList[i]);
+                this._disposeSingleSerieMark(this._largeMarkPointList[i]);
             }
             this._largeMarkPointList.length = this._largeMarkPointCount;
             for (var i = this._markLineCount; i < this._markLineList.length; i++) {
-                this._disposeSingleMark(this._markLineList[i]);
+                this._disposeSingleSerieMark(this._markLineList[i]);
             }
             this._markLineList.length = this._markLineCount;
             for (var i = this._markBarCount; i < this._markBarList.length; i++) {
-                this._disposeSingleMark(this._markBarList[i]);
+                this._disposeSingleSerieMark(this._markBarList[i]);
             }
             this._markBarList.length = this._markBarCount;
         },
@@ -138,7 +146,7 @@ define(function (require) {
          * Dispose a singler marker
          * @param  {module:echarts-x/entity/marker/Base} marker
          */
-        _disposeSingleMark: function (marker) {
+        _disposeSingleSerieMark: function (marker) {
             var sceneNode = marker.getSceneNode();
             if (sceneNode.getParent()) {
                 sceneNode.getParent().remove(sceneNode);
@@ -153,7 +161,7 @@ define(function (require) {
          * @param  {number} seriesIndex
          * @param  {qtek.Node} parentNode
          */
-        _buildSingleMarker: function (markerType, seriesIndex, parentNode) {
+        _buildSingleTypeMarker: function (markerType, seriesIndex, parentNode) {
             var serie = this.series[seriesIndex];
             var list = this['_' + markerType + 'List'];
             var count = this['_' + markerType + 'Count'];
@@ -217,6 +225,24 @@ define(function (require) {
             out._array[0] = data.x;
             out._array[1] = data.y;
             out._array[2] = data.z;
+        },
+
+        /**
+         * Calculate mark point transform according to its orientation
+         * Each chart can overwrite it and implement its own algorithm
+         * @param  {number} seriesIndex
+         * @param  {Object} data Given marker data
+         * @param  {qtek.math.Matrix4} matrix
+         */
+        getMarkPointTransform: function (seriesIndex, data, matrix) {
+            Matrix4.identity(matrix);
+            var position = new Vector3();
+            this.getMarkCoord(seriesIndex, data, position);
+            // Simply set the position
+            var arr = matrix._array;
+            arr[12] = position.x;
+            arr[13] = position.y;
+            arr[14] = position.z;
         },
 
         /**

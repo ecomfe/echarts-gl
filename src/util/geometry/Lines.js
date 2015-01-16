@@ -66,7 +66,7 @@ define(function (require) {
             var x3 = p3[0], y3 = p3[1], z3 = p3[2];
 
             var len = (vec3.dist(p0, p1) + vec3.len(p2, p1) + vec3.len(p3, p2));
-            var step = 1 / (len + 1) * 10;
+            var step = 1 / (len + 1) * 15;
 
             var step2 = step * step;
             var step3 = step2 * step;

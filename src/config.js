@@ -10,7 +10,13 @@ define({
         mapBackgroundColor: 'black',
         mapBackgroundImage: '',
 
-        mapGridColor: '#17192e',
+        // Map texture resolution
+        // 'low': 1024x1024
+        // 'medium': 2048x2048
+        // 'high': 4096x4096
+        // 
+        // Or directly give the size like 512
+        mapQuality: 'medium',
 
         itemStyle: {
             normal: {
@@ -49,7 +55,10 @@ define({
     },
 
     markPoint: {
-        symbolSize: 4
+        symbolSize: 4,
+        // Marker orientation in 3D space. Only available when large is false.
+        // Value can be 'normal', 'tangent', 'eye'.
+        orientation: 'tangent'
     },
 
     markLine: {

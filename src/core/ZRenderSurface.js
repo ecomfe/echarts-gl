@@ -9,7 +9,7 @@
 define(function (require) {
 
     var Storage = require('zrender/Storage');
-    var Texture = require('qtek/texture/Texture2D');
+    var Texture = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
     var Vector2 = require('qtek/math/Vector2');
 
@@ -48,8 +48,14 @@ define(function (require) {
 
         constructor: ZRenderSurface,
 
+        /**
+         * @type {string}
+         */
         backgroundColor: '',
 
+        /**
+         * @type {HTMLImageElement|HTMLCanvasElement}
+         */
         backgroundImage: null,
 
         addElement: function (el) {
@@ -69,11 +75,23 @@ define(function (require) {
         },
 
         resize: function (width, height) {
+            if (this._width === width && this._height === height) {
+                return;
+            }
+
             this._width = width;
             this._height = height;
             this._canvas.width = width;
             this._canvas.height = height;
             this.refresh();
+        },
+
+        getWidth: function () {
+            return this._width;
+        },
+
+        getHeight: function () {
+            return this._height;
         },
 
         refresh: function () {

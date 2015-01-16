@@ -23,7 +23,7 @@ define(function (require) {
     var SphereGeometry = require('qtek/geometry/Sphere');
     var Material = require('qtek/Material');
     var Shader = require('qtek/Shader');
-    var Texture2D = require('qtek/texture/Texture2D');
+    var Texture2D = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
 
     var ecConfig = require('../config');
@@ -131,10 +131,29 @@ define(function (require) {
             var dataMap = this._mergeSeriesData(series);
 
             for (var mapType in dataMap) {
+                var seriesGroup = seriesGroupByMapType[mapType];
+                var mapQuality = this.deepQuery(seriesGroup, 'mapQuality');
+                if (isNaN(mapQuality)) {
+                    switch (mapQuality) {
+                        case 'low':
+                            this._baseTextureSize = 1024;
+                            break;
+                        case 'high':
+                            this._baseTextureSize = 4096;
+                            break;
+                        case 'medium':
+                        default:
+                            this._baseTextureSize = 2048;
+                            break;
+                    }   
+                } else {
+                    this._baseTextureSize = mapQuality;
+                }
+
                 if (!this._globeNode) {
                     this._createGlob(seriesGroupByMapType[mapType]);
                 }
-                this._updateGlobe(mapType, dataMap[mapType], seriesGroupByMapType[mapType]);
+                this._updateGlobe(mapType, dataMap[mapType], seriesGroup);
                 //TODO Only support one mapType here
                 break;
             }
@@ -221,6 +240,9 @@ define(function (require) {
          * @param  {Array.<Object>} seriesGroup seriesGroup created in _groupSeriesByMapType
          */
         _updateGlobe: function (mapType, data, seriesGroup) {
+            this._globeSurface.resize(
+                this._baseTextureSize, this._baseTextureSize
+            );
 
             if (this._mapDataMap[mapType]) {
                 this._updateMapPolygonShapes(data, this._mapDataMap[mapType], seriesGroup);
@@ -540,28 +562,6 @@ define(function (require) {
             var lat = phi * 180 / Math.PI;
         },
 
-        // Overwrite getMarkCoord
-        getMarkCoord: function (seriesIdx, data, point) {
-            var geoCoord = data.geoCoord;
-            var coords = [];
-            coords[0] = geoCoord.x == null ? geoCoord[0] : geoCoord.x;
-            coords[1] = geoCoord.y == null ? geoCoord[1] : geoCoord.y;
-            coords = this._formatPoint(coords);
-
-            var log = coords[0];
-            var lat = coords[1];
-
-            log = Math.PI * log / 180;
-            lat = Math.PI * lat / 180;
-
-            var r = this._earthRadius + 0.1;
-            var r0 = Math.cos(lat) * r;
-            point._array[1] = Math.sin(lat) * r;
-            // TODO
-            point._array[0] = -r0 * Math.cos(log + Math.PI);
-            point._array[2] = r0 * Math.sin(log + Math.PI);
-        },
-
         /**
          * @param  {string} name
          * @param  {number} value
@@ -595,6 +595,70 @@ define(function (require) {
             }
         },
 
+        // Overwrite getMarkCoord
+        getMarkCoord: function (seriesIdx, data, point) {
+            var geoCoord = data.geoCoord;
+            var coords = [];
+            coords[0] = geoCoord.x == null ? geoCoord[0] : geoCoord.x;
+            coords[1] = geoCoord.y == null ? geoCoord[1] : geoCoord.y;
+            coords = this._formatPoint(coords);
+
+            var log = coords[0];
+            var lat = coords[1];
+
+            log = Math.PI * log / 180;
+            lat = Math.PI * lat / 180;
+
+            var r = this._earthRadius + 1;
+            var r0 = Math.cos(lat) * r;
+            point._array[1] = Math.sin(lat) * r;
+            // TODO
+            point._array[0] = -r0 * Math.cos(log + Math.PI);
+            point._array[2] = r0 * Math.sin(log + Math.PI);
+        },
+
+        // Overwrite getMarkPointTransform
+        getMarkPointTransform: function (seriesIndex, data, matrix) {
+            var xAxis = new Vector3();
+            var yAxis = new Vector3();
+            var zAxis = new Vector3();
+            var position = new Vector3();
+            var series = this.series[seriesIndex];
+            var queryTarget = [data, series.markPoint];
+            var symbolSize = this.deepQuery(queryTarget, 'symbolSize');
+            var orientation = this.deepQuery(queryTarget, 'orientation');
+
+            this.getMarkCoord(seriesIndex, data, position);
+            Vector3.normalize(zAxis, position);
+            Vector3.cross(xAxis, Vector3.UP, zAxis);
+            Vector3.normalize(xAxis, xAxis);
+            Vector3.cross(yAxis, zAxis, xAxis);
+
+            // Scaling
+            if (!isNaN(symbolSize)) {
+                symbolSize = [symbolSize, symbolSize];
+            }
+            if (orientation === 'tangent') {
+                var tmp = zAxis;
+                zAxis = yAxis;
+                yAxis = tmp;
+                Vector3.negate(zAxis, zAxis);
+                // Move along y axis half size
+                Vector3.scaleAndAdd(position, position, yAxis, symbolSize[1]);
+            }
+            Vector3.scale(xAxis, xAxis, symbolSize[0]);
+            Vector3.scale(yAxis, yAxis, symbolSize[1]);
+
+            matrix.x = xAxis;
+            matrix.y = yAxis;
+            matrix.z = zAxis;
+            // Set the position
+            var arr = matrix._array;
+            arr[12] = position.x;
+            arr[13] = position.y;
+            arr[14] = position.z;
+        },
+
         // Overwrite getMarkBarPoints
         getMarkBarPoints: (function () {
             var normal = new Vector3();
@@ -623,33 +687,38 @@ define(function (require) {
                 }
                 this.getMarkCoord(seriesIndex, data[0], p0);
                 this.getMarkCoord(seriesIndex, data[1], p3);
+
+                var normalize = Vector3.normalize;
+                var cross = Vector3.cross;
+                var sub = Vector3.sub;
+                var add = Vector3.add;
                 if (isCurve) {
                     // Get p1
-                    Vector3.normalize(normal, p0);
+                    normalize(normal, p0);
                     // TODO p0-p3 is parallel with normal
-                    Vector3.sub(tangent, p3, p0);
-                    Vector3.normalize(tangent, tangent);
-                    Vector3.cross(bitangent, tangent, normal);
-                    Vector3.normalize(bitangent, bitangent);
-                    Vector3.cross(tangent, normal, bitangent);
+                    sub(tangent, p3, p0);
+                    normalize(tangent, tangent);
+                    cross(bitangent, tangent, normal);
+                    normalize(bitangent, bitangent);
+                    cross(tangent, normal, bitangent);
                     // p1 is half vector of p0 and tangent on p0
-                    Vector3.add(p1, normal, tangent);
-                    Vector3.normalize(p1, p1);
+                    add(p1, normal, tangent);
+                    normalize(p1, p1);
 
                     // Get p2
-                    Vector3.normalize(normal, p3);
-                    Vector3.sub(tangent, p0, p3);
-                    Vector3.normalize(tangent, tangent);
-                    Vector3.cross(bitangent, tangent, normal);
-                    Vector3.normalize(bitangent, bitangent);
-                    Vector3.cross(tangent, normal, bitangent);
+                    normalize(normal, p3);
+                    sub(tangent, p0, p3);
+                    normalize(tangent, tangent);
+                    cross(bitangent, tangent, normal);
+                    normalize(bitangent, bitangent);
+                    cross(tangent, normal, bitangent);
                     // p2 is half vector of p3 and tangent on p3
-                    Vector3.add(p2, normal, tangent);
-                    Vector3.normalize(p2, p2);
+                    add(p2, normal, tangent);
+                    normalize(p2, p2);
 
                     // Project distance of p0 on haflVector
-                    Vector3.add(halfVector, p0, p3);
-                    Vector3.normalize(halfVector, halfVector);
+                    add(halfVector, p0, p3);
+                    normalize(halfVector, halfVector);
                     var projDist = Vector3.dot(p0, halfVector);
                     // Angle of halfVector and p1
                     var cosTheta = Vector3.dot(halfVector, p1);

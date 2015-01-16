@@ -78,7 +78,7 @@ define(function (require) {
 
             var nVertexBase = this.getVertexNumber();
             for (var i = 0; i < cubeFaces.length; i++) {
-                var face = vec3.clone(cubeFaces[i])
+                var face = vec3.clone(cubeFaces[i]);
                 face[0] += nVertexBase;
                 face[1] += nVertexBase;
                 face[2] += nVertexBase;

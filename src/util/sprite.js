@@ -16,13 +16,26 @@ define(function (require) {
     }
 
     var spriteUtil = {
-        makeCircle: function (style, inCanvas) {
-            var size = style.size;
+        makeSpriteFromShape: function (size, shape, inCanvas) {
+            // Fit to the canvas
+            var rect = shape.getRect(shape.style);
+            var lineWidth = shape.style.lineWidth || 0;
+            var shadowBlur = shape.style.shadowBlur || 0;
+            var margin = lineWidth + shadowBlur;
+            rect.x -= margin;
+            rect.y -= margin;
+            rect.width += margin * 2;
+            rect.height += margin * 2;
+            var scaleX = size / rect.width;
+            var scaleY = size / rect.height;
+            var x = rect.x;
+            var y = rect.y;
+            shape.position = [-rect.x * scaleX, -rect.y * scaleY];
+            shape.scale = [scaleX, scaleY];
+            shape.updateTransform();
+
             return makeSprite(size, inCanvas, function (ctx) {
-                ctx.fillStyle = style.color || 'white';
-                ctx.beginPath();
-                ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-                ctx.fill();
+                shape.brush(ctx);
             });
         }
     };

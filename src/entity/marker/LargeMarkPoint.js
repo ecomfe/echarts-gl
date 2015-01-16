@@ -15,9 +15,10 @@ define(function (require) {
     var Node = require('qtek/Node');
     var PointsGeometry = require('../../util/geometry/Points');
     var AnimatingPointsGeometry = require('../../util/geometry/AnimatingPoints');
-    var Texture2D = require('qtek/texture/Texture2D');
+    var Texture2D = require('qtek/Texture2D');
     var spriteUtil = require('../../util/sprite');
     var Vector3 = require('qtek/math/Vector3');
+    var IconShape = require('echarts/util/shape/Icon');
 
     /**
      * @constructor
@@ -38,19 +39,24 @@ define(function (require) {
 
         /**
          * @type {qtek.Renderable}
+         * @private
          */
         this._markPointRenderable = null;
         /**
          * @type {qtek.Renderable}
+         * @private
          */
         this._animatingMarkPointRenderable = null;
+
         /**
          * @type {qtek.texture.Texture2D}
+         * @private
          */
         this._spriteTexture = null;
 
         /**
          * @type {number}
+         * @private
          */
         this._elapsedTime = 0;
     };
@@ -108,13 +114,15 @@ define(function (require) {
             this._sceneNode.add(this._animatingMarkPointRenderable);
         },
 
-        _updateSpriteTexture: function (style) {
+        _updateSpriteTexture: function (size, shape) {
             if (! this._spriteTexture) {
-                this._spriteTexture = new Texture2D();
+                this._spriteTexture = new Texture2D({
+                    flipY: false
+                });
             }
             var spriteTexture = this._spriteTexture;
-            spriteTexture.image = spriteUtil.makeCircle(
-                style, spriteTexture.image
+            spriteTexture.image = spriteUtil.makeSpriteFromShape(
+                size, shape, spriteTexture.image
             );
             spriteTexture.dirty();
         },
@@ -145,11 +153,24 @@ define(function (require) {
             var markPoint = serie.markPoint;
             var zr = chart.zr;
 
+            var symbol = chart.query(markPoint, 'symbol')
             var showMarkPointEffect = chart.query(markPoint, 'effect.show');
-            this._updateSpriteTexture({
-                size: 128,
-                color: 'white'
+            // Shadow blur scale from 0 - 1
+            var shadowBlur = chart.query(markPoint, 'effect.shadowBlur') || 0;
+
+            var shape = new IconShape({
+                style: {
+                    x: 0,
+                    y: 0,
+                    width: 128,
+                    height: 128,
+                    iconType: symbol,
+                    color: 'white',
+                    shadowBlur: shadowBlur * 128,
+                    shadowColor: 'white'
+                }
             });
+            this._updateSpriteTexture(128, shape);
 
             if (showMarkPointEffect) {
                 if (! this._animatingMarkPointRenderable) {
@@ -169,7 +190,7 @@ define(function (require) {
             if (legend) {
                 serieColor = legend.getColor(serie.name);
             }
-            serieColor = chart.query(serie.markBar, 'itemStyle.normal.color') || serieColor;
+            serieColor = chart.query(markPoint, 'itemStyle.normal.color') || serieColor;
             var serieDefaultColor = chart.zr.getColor(seriesIndex);
 
             var globalSize = chart.query(markPoint, 'symbolSize') || 2;
@@ -189,8 +210,8 @@ define(function (require) {
                 var itemColor = chart.query(dataItem, 'itemStyle.normal.color');
 
                 // 0. Use the color of itemStyle in single data
-                // 2. Color in user customized itemStyle
                 // 1. Use the color provided by data range component
+                // 2. Color in user customized itemStyle
                 // 3. Use the color provided by legend component
                 // 4. Use series default color
                 var color = itemColor || dataRangeColor || serieColor || serieDefaultColor;

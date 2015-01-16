@@ -14,7 +14,7 @@ define(function (require) {
     var Node = require('qtek/Node');
     var LinesGeometry = require('../../util/geometry/Lines');
     var CurveAnimatingPointsGeometry = require('../../util/geometry/CurveAnimatingPoints');
-    var Texture2D = require('qtek/texture/Texture2D');
+    var Texture2D = require('qtek/Texture2D');
     var spriteUtil = require('../../util/sprite');
     var Vector3 = require('qtek/math/Vector3');
 

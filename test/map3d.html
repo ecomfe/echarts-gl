@@ -63,8 +63,8 @@
                             }
                         });
                         data.forEach(function (dataItem) {
-                            // Map symbol size to 2 - 20
-                            dataItem.symbolSize = (dataItem.value - min) / (max - min) * 18 + 2;
+                            // Map symbol size to 4 - 20
+                            dataItem.symbolSize = (dataItem.value - min) / (max - min) * 18 + 4;
                         });
                         chart.setOption({
                             title : {
@@ -96,8 +96,10 @@
                                     }
                                 },
                                 markPoint: {
+                                    large: true,
                                     effect: {
-                                        show: true
+                                        show: true,
+                                        shadowBlur: 0.4
                                     },
                                     data: data
                                 },
