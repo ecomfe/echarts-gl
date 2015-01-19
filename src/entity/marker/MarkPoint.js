@@ -163,7 +163,10 @@ define(function (require) {
         },
 
         clear: function () {
-
+            var renderer = this.chart.baseLayer.renderer;
+            renderer.disposeNode(this._sceneNode, true, true);
+            this._spritesRenderables = [];
+            this._textureAtlas = [];
         },
 
         getSceneNode: function () {

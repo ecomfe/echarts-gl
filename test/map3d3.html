@@ -49,6 +49,13 @@
                 var chart = echarts.init(document.getElementById('main'));
 
                 var option = {
+                    title: {
+                        text: 'Map with texture',
+                        x: 'center',
+                        textStyle: {
+                            color: 'white'
+                        }
+                    },
                     tooltip: {
                         formatter: '{b}'
                     },
@@ -58,6 +65,12 @@
                         mapBackgroundColor: '',
                         mapBackgroundImage: '../doc/example/asset/earth.jpg',
                         mapQuality: 'high',
+
+                        surfaceLayers: [{
+                            type: 'texture',
+                            distance: 3,
+                            image: '../doc/example/asset/clouds.png'
+                        }],
 
                         itemStyle: {
                             normal: {

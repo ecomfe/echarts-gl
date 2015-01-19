@@ -32,6 +32,7 @@ define(function (require) {
 
     var ZRenderSurface = require('../core/ZRenderSurface');
 
+    var LRU = require('qtek/core/LRU');
     /**
      * @constructor
      * @extends module:echarts-x/chart/base3d
@@ -83,6 +84,35 @@ define(function (require) {
          * @type {module:echarts-x/core/ZRenderSurface}
          */
         this._globeSurface = null;
+
+        /**
+         * Root scene node of all surface layers.
+         * Mounted under globe node
+         * @type {qtek.Node}
+         */
+        this._surfaceLayerRoot = null;
+
+        /**
+         * @type {qtek.Shader}
+         */
+        this._albedoShader = new Shader({
+            vertex: Shader.source('ecx.albedo.vertex'),
+            fragment: Shader.source('ecx.albedo.fragment')
+        });
+        this._albedoShader.enableTexture('diffuseMap');;
+
+        /**
+         * @type {qtek.DynamicGeoemtry}
+         */
+        this._sphereGeometry = new SphereGeometry({
+            widthSegments: 40,
+            heightSegments: 40,
+        });
+
+        /**
+         * @type {qtek.core.LRU}
+         */
+        this._imageCache = new LRU(5);
 
         this.refresh(option);
     }
@@ -240,17 +270,38 @@ define(function (require) {
          * @param  {Array.<Object>} seriesGroup seriesGroup created in _groupSeriesByMapType
          */
         _updateGlobe: function (mapType, data, seriesGroup) {
-            this._globeSurface.resize(
+            var globeSurface = this._globeSurface;
+            var self = this;
+
+            globeSurface.resize(
                 this._baseTextureSize, this._baseTextureSize
             );
 
+            // Update earth base texture background image and color
+            var bgColor = this.deepQuery(seriesGroup, 'mapBackgroundColor');
+            var bgImage = this.deepQuery(seriesGroup, 'mapBackgroundImage');
+            globeSurface.backgroundColor = bgColor || '';
+            if (bgImage) {
+                if (typeof(bgImage) == 'string') {
+                    var img = new Image();
+                    img.onload = function () {
+                        globeSurface.backgroundImage = img;
+                        globeSurface.refresh();
+                    }
+                    img.src = bgImage;
+                } else {
+                    // mapBackgroundImage is a image|canvas object
+                    globeSurface.backgroundImage = bgImage;
+                }
+            } else {
+                globeSurface.backgroundImage = null;
+            }
+
             if (this._mapDataMap[mapType]) {
                 this._updateMapPolygonShapes(data, this._mapDataMap[mapType], seriesGroup);
-                this._globeSurface.refresh();
-                this.zr.refreshNextFrame();
+                globeSurface.refresh();
             }
             else if (mapParams[mapType].getGeoJson) {
-                var self = this;
                 // Load geo json and draw the map on the base texture
                 mapParams[mapType].getGeoJson(function (mapData) {
                     if (self._disposed) {
@@ -258,17 +309,103 @@ define(function (require) {
                     }
                     self._mapDataMap[mapType] = mapData;
                     self._updateMapPolygonShapes(data, mapData, seriesGroup);
-                    self._globeSurface.refresh();
-                    self.zr.refreshNextFrame();
+                    globeSurface.refresh();
                 });
             }
 
             // Init mark points
-            seriesGroup.forEach(function (serie) {
-                this.buildMark(
-                    this.series.indexOf(serie), this._globeNode
+            if (this._surfaceLayerRoot) {
+                this.baseLayer.renderer.disposeNode(
+                    this._surfaceLayerRoot, false, true
                 );
+            }
+            this._surfaceLayerRoot = new Node({
+                name: 'surfaceLayers'
+            });
+            this._globeNode.add(this._surfaceLayerRoot);
+
+            seriesGroup.forEach(function (serie) {
+                var sIdx = this.series.indexOf(serie);
+                this.buildMark(sIdx, this._globeNode);
+                this._createSurfaceLayers(sIdx);
             }, this);
+        },
+
+        _createSurfaceLayers: function (seriesIdx) {
+            var serie = this.series[seriesIdx];
+            for (var i = 0; i < serie.surfaceLayers.length; i++) {
+                var surfaceLayer = serie.surfaceLayers[i];
+                var surfaceMesh = new Mesh({
+                    name: 'surfaceLayer' + i,
+                    geometry: this._sphereGeometry,
+                    ignorePicking: true
+                });
+                var distance = surfaceLayer.distance;
+                // Default distance
+                if (distance == null) {
+                    distance = i + 1;
+                }
+                var r = this._earthRadius + distance;
+                surfaceMesh.scale.set(r, r, r);
+                switch (surfaceLayer.type) {
+                    case 'field':
+                        break;
+                    case "texture":
+                    default:
+                        this._createTextureSurfaceLayer(
+                            seriesIdx, surfaceLayer, surfaceMesh
+                        );
+                        break;
+                }
+
+                this._surfaceLayerRoot.add(surfaceMesh);
+            }
+        },
+
+        _createTextureSurfaceLayer: function (
+            seriesIdx, surfaceLayer, surfaceMesh
+        ) {
+            var self = this;
+            surfaceMesh.material =  new Material({
+                shader: this._albedoShader,
+                transparent: true,
+                depthMask: false
+            });
+
+            var serie = this.series[seriesIdx];
+            var image = surfaceLayer.image;
+
+            var canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 1;
+            var texture = new Texture2D({
+                flipY: false,
+                anisotropic: 32,
+                // Use a blank place-holder canvas
+                image: canvas
+            });
+            surfaceMesh.material.set('diffuseMap', texture);
+
+            if (typeof(image) === 'string') {
+                var src = image;
+                image = this._imageCache.get(src);
+                if (!image) {
+                    image = new Image();
+                    image.onload = function () {
+                        texture.image = image;
+                        texture.dirty();
+                        self.zr.refreshNextFrame();
+                        self._imageCache.put(src, image);
+                    }
+                    image.src = src;
+                }
+            } else if (
+                // Check if valid
+                image instanceof HTMLCanvasElement
+                || image instanceof Image
+            ) {
+                texture.image = image;
+            }
         },
 
         /**
@@ -285,20 +422,14 @@ define(function (require) {
             });
             var globeMesh = new Mesh({
                 name: 'earth',
-                geometry: new SphereGeometry({
-                    widthSegments: 40,
-                    heightSegments: 40,
-                    radius: this._earthRadius
-                }),
+                geometry: this._sphereGeometry,
                 material: new Material({
-                    shader: new Shader({
-                        vertex: Shader.source('ecx.albedo.vertex'),
-                        fragment: Shader.source('ecx.albedo.fragment')
-                    }),
+                    shader: this._albedoShader,
                     transparent: true
                 })
             });
-            globeMesh.material.shader.enableTexture('diffuseMap');
+            var radius = this._earthRadius;
+            globeMesh.scale.set(radius, radius, radius);
 
             this._globeNode.add(globeMesh);
 
@@ -316,21 +447,6 @@ define(function (require) {
             );
             this._globeSurface = globeSurface;
             globeMesh.material.set('diffuseMap', globeSurface.getTexture());
-
-            var bgColor = this.deepQuery(seriesGroup, 'mapBackgroundColor');
-            var bgImage = this.deepQuery(seriesGroup, 'mapBackgroundImage');
-            globeSurface.backgroundColor = bgColor || '';
-            if (bgImage) {
-                 var img = new Image();
-                 img.onload = function () {
-                    globeSurface.backgroundImage = img;
-                    globeSurface.refresh();
-                    zr.refreshNextFrame();
-                 }
-                 img.src = bgImage;
-            } else {
-                globeSurface.backgroundImage = null;
-            }
 
             globeSurface.onrefresh = function () {
                 zr.refreshNextFrame();
@@ -538,6 +654,7 @@ define(function (require) {
         /**
          * Handle mousemove events like hover
          * @param {Object} e
+         * @private
          */
         _mouseMoveHandler: function (e) {
             var shape = this._globeSurface.hover(e);
@@ -597,8 +714,12 @@ define(function (require) {
 
         // Overwrite getMarkCoord
         getMarkCoord: function (seriesIdx, data, point) {
-            var geoCoord = data.geoCoord;
+            var geoCoord = data.geoCoord || geoCoordMap[data.name];
             var coords = [];
+            var serie = this.series[seriesIdx];
+            var distance = this.deepQuery([
+                data, serie.markPoint || serie.markLine || serie.markBar
+            ], 'distance');
             coords[0] = geoCoord.x == null ? geoCoord[0] : geoCoord.x;
             coords[1] = geoCoord.y == null ? geoCoord[1] : geoCoord.y;
             coords = this._formatPoint(coords);
@@ -609,7 +730,7 @@ define(function (require) {
             log = Math.PI * log / 180;
             lat = Math.PI * lat / 180;
 
-            var r = this._earthRadius + 1;
+            var r = this._earthRadius + distance;
             var r0 = Math.cos(lat) * r;
             point._array[1] = Math.sin(lat) * r;
             // TODO
@@ -618,17 +739,17 @@ define(function (require) {
         },
 
         // Overwrite getMarkPointTransform
-        getMarkPointTransform: function (seriesIndex, data, matrix) {
+        getMarkPointTransform: function (seriesIdx, data, matrix) {
             var xAxis = new Vector3();
             var yAxis = new Vector3();
             var zAxis = new Vector3();
             var position = new Vector3();
-            var series = this.series[seriesIndex];
+            var series = this.series[seriesIdx];
             var queryTarget = [data, series.markPoint];
             var symbolSize = this.deepQuery(queryTarget, 'symbolSize');
             var orientation = this.deepQuery(queryTarget, 'orientation');
 
-            this.getMarkCoord(seriesIndex, data, position);
+            this.getMarkCoord(seriesIdx, data, position);
             Vector3.normalize(zAxis, position);
             Vector3.cross(xAxis, Vector3.UP, zAxis);
             Vector3.normalize(xAxis, xAxis);
@@ -662,12 +783,12 @@ define(function (require) {
         // Overwrite getMarkBarPoints
         getMarkBarPoints: (function () {
             var normal = new Vector3();
-            return function (seriesIndex, data, start, end) {
+            return function (seriesIdx, data, start, end) {
                 var barHeight = data.barHeight != null ? data.barHeight : 1;
                 if (typeof(barHeight) == 'function') {
                     barHeight = barHeight(data);
                 }
-                this.getMarkCoord(seriesIndex, data, start);
+                this.getMarkCoord(seriesIdx, data, start);
                 Vector3.copy(normal, start);
                 Vector3.normalize(normal, normal);
                 Vector3.scaleAndAdd(end, start, normal, barHeight);
@@ -680,13 +801,13 @@ define(function (require) {
             var tangent = new Vector3();
             var bitangent = new Vector3();
             var halfVector = new Vector3();
-            return function (seriesIndex, data, p0, p1, p2, p3) {
+            return function (seriesIdx, data, p0, p1, p2, p3) {
                 var isCurve = !!p2;
                 if (!isCurve) { // Mark line is not a curve
                     p3 = p1;
                 }
-                this.getMarkCoord(seriesIndex, data[0], p0);
-                this.getMarkCoord(seriesIndex, data[1], p3);
+                this.getMarkCoord(seriesIdx, data[0], p0);
+                this.getMarkCoord(seriesIdx, data[1], p3);
 
                 var normalize = Vector3.normalize;
                 var cross = Vector3.cross;

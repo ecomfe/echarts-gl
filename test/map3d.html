@@ -59,12 +59,13 @@
                             min = Math.min(dataItem[2], min);
                             return {
                                 geoCoord: dataItem.slice(0, 2),
-                                value: dataItem[2]
+                                value: dataItem[2],
+                                distance: Math.random()
                             }
                         });
                         data.forEach(function (dataItem) {
-                            // Map symbol size to 4 - 20
-                            dataItem.symbolSize = (dataItem.value - min) / (max - min) * 18 + 4;
+                            // Map symbol size to 2 - 20
+                            dataItem.symbolSize = (dataItem.value - min) / (max - min) * 18 + 2;
                         });
                         chart.setOption({
                             title : {

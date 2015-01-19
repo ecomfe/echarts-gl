@@ -5,18 +5,33 @@ define({
     map3d: {
         zlevel: 0,
 
-        // TODO
+        // Base map configuration
         mapType: 'world',
+        // Base map background color
         mapBackgroundColor: 'black',
+        // Base map background image
         mapBackgroundImage: '',
 
-        // Map texture resolution
+        // Base map texture resolution
         // 'low': 1024x1024
         // 'medium': 2048x2048
         // 'high': 4096x4096
         // 
         // Or directly give the size like 512
         mapQuality: 'medium',
+
+        // Distance to the earth surface
+        // {
+        //     name: 'cloud',
+        //     type: 'texture|field',
+        //     distance: 3,
+        //     image: 'cloud.png',
+        //     field: {
+        //         data: [],
+        //         color: '#ffffff'    
+        //     }
+        // }
+        surfaceLayers: [],
 
         itemStyle: {
             normal: {
@@ -47,6 +62,8 @@ define({
 
     markBar: {
         barSize: 1,
+        // Distance to the surface
+        distance: 1,
         itemStyle: {
             normal: {
                 // color: '#000'
@@ -56,12 +73,16 @@ define({
 
     markPoint: {
         symbolSize: 4,
+        // Distance to the surface
+        distance: 1,
         // Marker orientation in 3D space. Only available when large is false.
         // Value can be 'normal', 'tangent', 'eye'.
         orientation: 'tangent'
     },
 
     markLine: {
+        // Distance to the surface
+        distance: 1,
         itemStyle: {
             normal: {
                 lineStyle: {
