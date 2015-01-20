@@ -329,6 +329,9 @@ define(function (require) {
                     globeSurface.refresh();
                 });
             }
+            else {
+                globeSurface.refresh();
+            }
 
             if (this._surfaceLayerRoot) {
                 this.baseLayer.renderer.disposeNode(
@@ -473,7 +476,7 @@ define(function (require) {
                 if (! vfImage) {
                     return false;
                 }
-            }  else if (this._isValueImage(data)) {
+            } else if (this._isValueImage(data)) {
                 width = data.width;
                 height = data.height;
                 vfImage = data;
@@ -500,11 +503,17 @@ define(function (require) {
                 particleSpeedScaling = 1;
             }
             var particleColor = this.query(surfaceLayerCfg, 'particle.color') || 'white';
+            var particleNumber = this.query(surfaceLayerCfg, 'particle.number');
+            if (particleNumber == null) {
+                // Default 256 x 256
+                particleNumber = 256 * 256;
+            };
+            var motionBlurFactor = this.query(surfaceLayerCfg, 'particle.motionBlurFactor');
+            if (motionBlurFactor == null) {
+                motionBlurFactor = 0.99;
+            }
 
             vfParticleSurface.vectorFieldTexture = new Texture2D({
-                minFilter: glenum.NEAREST,
-                magFilter: glenum.NEAREST,
-                useMipmap: false,
                 image: vfImage
             });
             vfParticleSurface.surfaceTexture = new Texture2D({
@@ -515,9 +524,12 @@ define(function (require) {
             vfParticleSurface.particleSizeScaling = particleSizeScaling;
             vfParticleSurface.particleSpeedScaling = particleSpeedScaling;
             vfParticleSurface.particleColor = this.parseColor(particleColor);
-            vfParticleSurface.init(256, 256);
+            vfParticleSurface.motionBlurFactor = motionBlurFactor;
 
-            surfaceMesh.material.set('diffuseMap', vfParticleSurface.surfaceTexture);
+            var size = Math.round(Math.sqrt(particleNumber));
+            vfParticleSurface.init(size, size);
+
+            vfParticleSurface.surfaceMesh = surfaceMesh;
 
             this._vfParticleSurfaceList.push(vfParticleSurface);
         },

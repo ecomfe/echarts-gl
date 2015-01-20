@@ -42,7 +42,11 @@ define({
         //         sizeScaling: 5,
         //         // Particle speed scaling
         //         // Basicly it ranges from [-1, -1] to [1, 1]
-        //         speedScaling: 1
+        //         speedScaling: 1,
+        //         // Particle number
+        //         number: 256 * 256,
+        //         // Motion blur factor
+        //         motionBlurFactor: 0.99
         //     }
         // }
         surfaceLayers: [],

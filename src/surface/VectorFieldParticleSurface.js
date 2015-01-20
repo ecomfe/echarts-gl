@@ -63,6 +63,11 @@ define(function (require) {
          */
         this.surfaceTexture = null;
 
+        /**
+         * @type {qtek.Mesh}
+         */
+        this.surfaceMesh = null;
+
         this._particlePass = null;
         this._spawnTexture = null;
         this._particleTexture0 = null;
@@ -207,6 +212,10 @@ define(function (require) {
 
             this._swapTexture();
 
+            if (this.surfaceMesh) {
+                this.surfaceMesh.material.set('diffuseMap', this.surfaceTexture)
+            }
+
             this._elapsedTime += deltaTime;
         },
 
@@ -223,8 +232,14 @@ define(function (require) {
         dispose: function () {
             var renderer = this.renderer;
             renderer.disposeFrameBuffer(this._frameBuffer);
+            // Dispose textures
+            renderer.disposeTexture(this.vectorFieldTexture);
+            renderer.disposeTexture(this._spawnTexture);
             renderer.disposeTexture(this._particleTexture0);
             renderer.disposeTexture(this._particleTexture1);
+            renderer.disposeTexture(this._thisFrameTexture);
+            renderer.disposeTexture(this._lastFrameTexture);
+
             renderer.disposeScene(this._scene);
         }
     }
