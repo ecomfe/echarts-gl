@@ -25,12 +25,14 @@ define(function (require) {
     var Shader = require('qtek/Shader');
     var Texture2D = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
+    var glenum = require('qtek/core/glenum');
 
     var ecConfig = require('../config');
     var ChartBase3D = require('./base3d');
     var OrbitControl = require('../util/OrbitControl');
 
-    var ZRenderSurface = require('../core/ZRenderSurface');
+    var ZRenderSurface = require('../surface/ZRenderSurface');
+    var VectorFieldParticleSurface = require('../surface/VectorFieldParticleSurface');
 
     var LRU = require('qtek/core/LRU');
     /**
@@ -113,6 +115,13 @@ define(function (require) {
          * @type {qtek.core.LRU}
          */
         this._imageCache = new LRU(5);
+
+        /**
+         * List of all vector field particle surfaces
+         * Needs update each frame
+         * @type {Array}
+         */
+        this._vfParticleSurfaceList = [];
 
         this.refresh(option);
     }
@@ -331,6 +340,11 @@ define(function (require) {
             }, this);
         },
 
+        /**
+         * Create surface layers on the globe
+         * @param  {number} seriesIdx
+         * @private
+         */
         _createSurfaceLayers: function (seriesIdx) {
             var serie = this.series[seriesIdx];
             for (var i = 0; i < serie.surfaceLayers.length; i++) {
@@ -348,7 +362,10 @@ define(function (require) {
                 var r = this._earthRadius + distance;
                 surfaceMesh.scale.set(r, r, r);
                 switch (surfaceLayer.type) {
-                    case 'field':
+                    case 'particle':
+                        this._createParticleSurfaceLayer(
+                            seriesIdx, surfaceLayer, surfaceMesh
+                        );
                         break;
                     case "texture":
                     default:
@@ -362,8 +379,15 @@ define(function (require) {
             }
         },
 
+        /**
+         * Create single texture layer on the globe
+         * @param {number} seriesIdx
+         * @param {Object} surfaceLayerCfg
+         * @param {qtek.Mesh} surfaceMesh
+         * @private
+         */
         _createTextureSurfaceLayer: function (
-            seriesIdx, surfaceLayer, surfaceMesh
+            seriesIdx, surfaceLayerCfg, surfaceMesh
         ) {
             var self = this;
             surfaceMesh.material =  new Material({
@@ -373,13 +397,12 @@ define(function (require) {
             });
 
             var serie = this.series[seriesIdx];
-            var image = surfaceLayer.image;
+            var image = surfaceLayerCfg.image;
 
             var canvas = document.createElement('canvas');
             canvas.width = 1;
             canvas.height = 1;
             var texture = new Texture2D({
-                flipY: false,
                 anisotropic: 32,
                 // Use a blank place-holder canvas
                 image: canvas
@@ -399,13 +422,108 @@ define(function (require) {
                     }
                     image.src = src;
                 }
-            } else if (
-                // Check if valid
-                image instanceof HTMLCanvasElement
-                || image instanceof Image
-            ) {
+            } else if (this._isValueImage(image)) {
                 texture.image = image;
             }
+        },
+
+        /**
+         * Create single vector field layer on the globe
+         * @param {number} seriesIdx
+         * @param {Object} surfaceLayerCfg
+         * @param {qtek.Mesh} surfaceMesh
+         * @private
+         */
+        _createParticleSurfaceLayer: function (
+            seriesIdx, surfaceLayerCfg, surfaceMesh
+        ) {
+            var self = this;
+            var serie = this.series[seriesIdx];
+            var data = this.query(surfaceLayerCfg, 'particle.vectorField');
+            // var name = surfaceLayerCfg.name || serie.name;
+
+            surfaceMesh.material =  new Material({
+                shader: this._albedoShader,
+                transparent: true,
+                depthMask: false
+            });
+
+            var vfParticleSurface = new VectorFieldParticleSurface(
+                this.baseLayer.renderer, data
+            );
+            var width = 0;
+            var height = 0;
+            var vfImage;
+            if (data instanceof Array) {
+                vfImage = this._createCanvasFromDataMatrix(data);
+                width = vfImage.width;
+                height = vfImage.height;
+                if (! vfImage) {
+                    return false;
+                }
+            }  else if (this._isValueImage(data)) {
+                width = data.width;
+                height = data.height;
+                vfImage = data;
+            } else {
+                // Invalid data
+                return false;
+            }
+            if (! width || ! height) {
+                // Empty data
+                return;
+            }
+
+            vfParticleSurface.vectorFieldTexture = new Texture2D({
+                minFilter: glenum.NEAREST,
+                magFilter: glenum.NEAREST,
+                useMipmap: false,
+                image: vfImage
+            });
+            vfParticleSurface.surfaceTexture = new Texture2D({
+                width: 2048,
+                height: 2048,
+                anisotropic: 32
+            });
+            vfParticleSurface.init(512, 512);
+
+            surfaceMesh.material.set('diffuseMap', vfParticleSurface.surfaceTexture);
+
+            this._vfParticleSurfaceList.push(vfParticleSurface);
+        },
+
+        _createCanvasFromDataMatrix: function (data) {
+            var height = data.length;
+            if (!(data[0] instanceof Array)) {
+                // Invalid data
+                return null;
+            }
+            var width = data[0].length;
+            if (!(data[0][0] instanceof Array)) {
+                // Invalid data
+                return null;
+            }
+
+            var vfImage = document.createElement('canvas');
+            vfImage.width = width;
+            vfImage.height = height;
+            var ctx = vfImage.getContext('2d');
+            var imageData = ctx.getImageData(0, 0, width, height);
+            var p = 0;
+            for (var j = 0; j < height; j++) {
+                for (var i = 0; i < width; i++) {
+                    var u = data[j][i][0];
+                    var v = data[j][i][1];
+                    imageData.data[p++] = u * 128 + 128;
+                    imageData.data[p++] = v * 128 + 128;
+                    imageData.data[p++] = 0;
+                    imageData.data[p++] = 255;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            // document.body.appendChild(vfImage);
+            return vfImage;
         },
 
         /**
@@ -679,6 +797,12 @@ define(function (require) {
             var lat = phi * 180 / Math.PI;
         },
 
+        _isValueImage: function (value) {
+            return value instanceof HTMLCanvasElement
+                || value instanceof HTMLImageElement
+                || value instanceof Image;
+        },
+
         /**
          * @param  {string} name
          * @param  {number} value
@@ -724,18 +848,18 @@ define(function (require) {
             coords[1] = geoCoord.y == null ? geoCoord[1] : geoCoord.y;
             coords = this._formatPoint(coords);
 
-            var log = coords[0];
+            var lon = coords[0];
             var lat = coords[1];
 
-            log = Math.PI * log / 180;
+            lon = Math.PI * lon / 180;
             lat = Math.PI * lat / 180;
 
             var r = this._earthRadius + distance;
             var r0 = Math.cos(lat) * r;
             point._array[1] = Math.sin(lat) * r;
             // TODO
-            point._array[0] = -r0 * Math.cos(log + Math.PI);
-            point._array[2] = r0 * Math.sin(log + Math.PI);
+            point._array[0] = -r0 * Math.cos(lon + Math.PI);
+            point._array[2] = r0 * Math.sin(lon + Math.PI);
         },
 
         // Overwrite getMarkPointTransform
@@ -856,6 +980,11 @@ define(function (require) {
             ChartBase3D.prototype.onframe.call(this, deltaTime);
 
             this._orbitControl.update(deltaTime);
+
+            for (var i = 0; i < this._vfParticleSurfaceList.length; i++) {
+                this._vfParticleSurfaceList[i].update(deltaTime / 1000);
+                this.zr.refreshNextFrame();
+            }
         },
 
         // Overwrite refresh
@@ -890,6 +1019,10 @@ define(function (require) {
             this._orbitControl = null;
 
             this._disposed = true;
+
+            for (var i = 0; i < this._vfParticleSurfaceList.length; i++) {
+                this._vfParticleSurfaceList[i].dispose();
+            }
         }
     }
 

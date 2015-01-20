@@ -2,7 +2,7 @@
  * Surface texture in the 3D scene.
  * Provide management and rendering of zrender shapes and groups
  *
- * @module echarts-x/core/ZRenderSurface
+ * @module echarts-x/surface/ZRenderSurface
  * @author Yi Shen(http://github.com/pissang)
  */
 
@@ -15,7 +15,7 @@ define(function (require) {
 
     /**
      * @constructor
-     * @alias echarts-x/core/ZRenderSurface
+     * @alias echarts-x/surface/ZRenderSurface
      * @param {number} width
      * @param {number} height
      */

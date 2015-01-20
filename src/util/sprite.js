@@ -37,6 +37,24 @@ define(function (require) {
             return makeSprite(size, inCanvas, function (ctx) {
                 shape.brush(ctx);
             });
+        },
+
+        makeSimpleSprite: function (size, inCanvas) {
+            return makeSprite(size, inCanvas, function (ctx) {
+                var halfSize = size / 2;
+                ctx.beginPath();
+                ctx.arc(halfSize, halfSize, 60, 0, Math.PI * 2, false) ;
+                ctx.closePath();
+
+                var gradient = ctx.createRadialGradient(
+                    halfSize, halfSize, 0, halfSize, halfSize, halfSize
+                );
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            });
         }
     };
 

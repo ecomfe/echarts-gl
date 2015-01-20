@@ -43,7 +43,9 @@ define(function (require) {
 
     // Import basic shaders
     var Shader = require('qtek/Shader');
-    Shader.import(require('text!./util/shader/albedo.essl'));
+    Shader['import'](require('text!./util/shader/albedo.essl'));
     Shader['import'](require('text!./util/shader/points.essl'));
     Shader['import'](require('text!./util/shader/curveAnimatingPoints.essl'));
+    Shader['import'](require('text!./util/shader/vectorFieldParticle.essl'));
+    Shader['import'](require('text!./util/shader/motionBlur.essl'));
 });

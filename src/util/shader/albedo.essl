@@ -45,6 +45,8 @@ void main()
     #endif
     #ifdef DIFFUSEMAP_ENABLED
         vec4 tex = texture2D(diffuseMap, v_Texcoord);
+        // Premultiplied alpha
+        tex.rgb /= tex.a;
         gl_FragColor *= tex;
     #endif
 }

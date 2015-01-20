@@ -1,0 +1,78 @@
+@export ecx.vfParticle.particle.fragment
+
+uniform sampler2D particleTexture;
+uniform sampler2D spawnTexture;
+uniform sampler2D velocityTexture;
+
+uniform float deltaTime;
+uniform float elapsedTime;
+
+varying vec2 v_Texcoord;
+
+void main()
+{
+    vec4 p = texture2D(particleTexture, v_Texcoord);
+    if (p.w > 0.0) {
+        vec4 vTex = texture2D(velocityTexture, p.xy);
+        vec2 v = vTex.xy;
+        p.z = length(v);
+        v = (v - 0.5) * 2.0;
+        p.xy += v * deltaTime / 50.0;
+        // Make the particle surface seamless 
+        p.xy = fract(p.xy);
+        p.w -= deltaTime;
+    }
+    else {
+        p = texture2D(spawnTexture, fract(v_Texcoord + elapsedTime / 10.0));
+    }
+    gl_FragColor = p;
+}
+@end
+
+@export ecx.vfParticle.renderPoints.vertex
+
+#define PI 3.1415926
+
+attribute vec2 texcoord : TEXCOORD_0;
+
+uniform float radius: 100;
+uniform sampler2D particleTexture;
+uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
+
+void main()
+{
+    vec4 p = texture2D(particleTexture, texcoord);
+
+    // float lon = (p.x - 0.5) * 2.0 * PI;
+    // float lat = (0.5 - p.y) * PI;
+
+    // vec3 position;
+    // float r0 = cos(lat) * radius;
+    // position.y = sin(lat) * radius;
+    // position.x = - r0 * cos(lon + PI);
+    // position.z = r0 * sin(lon + PI);
+
+    // if (p.w > 0.0) {
+    //     gl_Position = worldViewProjection * vec4(position, 1.0);
+    // } else {
+    //     gl_Position = worldViewProjection * vec4(10000.0, 1000.0, 1000.0, 1.0);
+    // }
+    // 
+    gl_Position = worldViewProjection * vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
+
+    gl_PointSize = 2.0 * p.z;
+}
+
+@end
+
+@export ecx.vfParticle.renderPoints.fragment
+
+uniform sampler2D spriteTexture;
+uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
+
+void main()
+{
+    gl_FragColor = color * texture2D(spriteTexture, gl_PointCoord);
+}
+
+@end

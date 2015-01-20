@@ -23,12 +23,15 @@ define({
         // Distance to the earth surface
         // {
         //     name: 'cloud',
-        //     type: 'texture|field',
+        //     type: 'texture|particle',
         //     distance: 3,
         //     image: 'cloud.png',
-        //     field: {
-        //         data: [],
-        //         color: '#ffffff'    
+        //     particle: {
+        //         // Can be 3D Data matrix Or image
+        //         // Which row is longitude, range [-180, 180].
+        //         // Column is lattitude range [-90, 90].
+        //         // Value range [-1, 1]
+        //         vectorField: []
         //     }
         // }
         surfaceLayers: [],
