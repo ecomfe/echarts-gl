@@ -20,18 +20,29 @@ define({
         // Or directly give the size like 512
         mapQuality: 'medium',
 
-        // Distance to the earth surface
         // {
         //     name: 'cloud',
         //     type: 'texture|particle',
+        //     // Distance to the ground surface
         //     distance: 3,
+        //     // Only if type is texture
         //     image: 'cloud.png',
+        //     // Surface texture size
+        //     size: [2048, 1048],
+        //     // Only if type is particle
         //     particle: {
         //         // Can be 3D Data matrix Or image
         //         // Which row is longitude, range [-180, 180].
         //         // Column is lattitude range [-90, 90].
         //         // Value range [-1, 1]
-        //         vectorField: []
+        //         vectorField: [],
+        //         color: '#fff',
+        //         // Particle size scaling
+        //         // Basicly it ranges from 0 to 1
+        //         sizeScaling: 5,
+        //         // Particle speed scaling
+        //         // Basicly it ranges from [-1, -1] to [1, 1]
+        //         speedScaling: 1
         //     }
         // }
         surfaceLayers: [],

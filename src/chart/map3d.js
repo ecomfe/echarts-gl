@@ -91,20 +91,26 @@ define(function (require) {
          * Root scene node of all surface layers.
          * Mounted under globe node
          * @type {qtek.Node}
+         * @private
          */
         this._surfaceLayerRoot = null;
 
         /**
          * @type {qtek.Shader}
+         * @private
          */
         this._albedoShader = new Shader({
             vertex: Shader.source('ecx.albedo.vertex'),
             fragment: Shader.source('ecx.albedo.fragment')
         });
-        this._albedoShader.enableTexture('diffuseMap');;
+        this._albedoShader.enableTexture('diffuseMap');
+        
+        this._albedoShaderWithPA = this._albedoShader.clone();
+        this._albedoShaderWithPA.define('fragment', 'PREMULTIPLIED_ALPHA')
 
         /**
          * @type {qtek.DynamicGeoemtry}
+         * @private
          */
         this._sphereGeometry = new SphereGeometry({
             widthSegments: 40,
@@ -113,6 +119,7 @@ define(function (require) {
 
         /**
          * @type {qtek.core.LRU}
+         * @private
          */
         this._imageCache = new LRU(5);
 
@@ -120,6 +127,7 @@ define(function (require) {
          * List of all vector field particle surfaces
          * Needs update each frame
          * @type {Array}
+         * @private
          */
         this._vfParticleSurfaceList = [];
 
@@ -322,7 +330,6 @@ define(function (require) {
                 });
             }
 
-            // Init mark points
             if (this._surfaceLayerRoot) {
                 this.baseLayer.renderer.disposeNode(
                     this._surfaceLayerRoot, false, true
@@ -332,6 +339,11 @@ define(function (require) {
                 name: 'surfaceLayers'
             });
             this._globeNode.add(this._surfaceLayerRoot);
+
+            for (var i = 0; i < this._vfParticleSurfaceList.length; i++) {
+                this._vfParticleSurfaceList[i].dispose();
+            }
+            this._vfParticleSurfaceList = [];
 
             seriesGroup.forEach(function (serie) {
                 var sIdx = this.series.indexOf(serie);
@@ -443,7 +455,7 @@ define(function (require) {
             // var name = surfaceLayerCfg.name || serie.name;
 
             surfaceMesh.material =  new Material({
-                shader: this._albedoShader,
+                shader: this._albedoShaderWithPA,
                 transparent: true,
                 depthMask: false
             });
@@ -474,6 +486,21 @@ define(function (require) {
                 return;
             }
 
+            var textureSize = this.query(surfaceLayerCfg, 'size');
+            if (typeof(textureSize) === 'number') {
+                textureSize = [textureSize, textureSize];
+            } else if (! textureSize) {
+                // Default texture size
+                textureSize = [2048, 1024];
+            }
+            // Particle configuration
+            var particleSizeScaling = this.query(surfaceLayerCfg, 'particle.sizeScaling') || 1;
+            var particleSpeedScaling = this.query(surfaceLayerCfg, 'particle.speedScaling');
+            if (particleSpeedScaling == null) {
+                particleSpeedScaling = 1;
+            }
+            var particleColor = this.query(surfaceLayerCfg, 'particle.color') || 'white';
+
             vfParticleSurface.vectorFieldTexture = new Texture2D({
                 minFilter: glenum.NEAREST,
                 magFilter: glenum.NEAREST,
@@ -481,11 +508,14 @@ define(function (require) {
                 image: vfImage
             });
             vfParticleSurface.surfaceTexture = new Texture2D({
-                width: 2048,
-                height: 2048,
+                width: textureSize[0],
+                height: textureSize[1],
                 anisotropic: 32
             });
-            vfParticleSurface.init(512, 512);
+            vfParticleSurface.particleSizeScaling = particleSizeScaling;
+            vfParticleSurface.particleSpeedScaling = particleSpeedScaling;
+            vfParticleSurface.particleColor = this.parseColor(particleColor);
+            vfParticleSurface.init(256, 256);
 
             surfaceMesh.material.set('diffuseMap', vfParticleSurface.surfaceTexture);
 
@@ -982,7 +1012,7 @@ define(function (require) {
             this._orbitControl.update(deltaTime);
 
             for (var i = 0; i < this._vfParticleSurfaceList.length; i++) {
-                this._vfParticleSurfaceList[i].update(deltaTime / 1000);
+                this._vfParticleSurfaceList[i].update(Math.min(deltaTime / 1000, 0.5));
                 this.zr.refreshNextFrame();
             }
         },

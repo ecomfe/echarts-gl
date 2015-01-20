@@ -27,7 +27,10 @@ define(function (require) {
 
         this.renderer = renderer;
 
-        this.motionBlurFactor = 0.96;
+        /**
+         * @type {number}
+         */
+        this.motionBlurFactor = 0.99;
         /**
          * Vector field lookup image
          * @type {qtek.Texture2D}
@@ -40,6 +43,24 @@ define(function (require) {
          */
         this.particleLife = [10, 20];
 
+        /**
+         * @type {number}
+         */
+        this.particleSizeScaling = 1;
+
+        /**
+         * @type {Array.<number>}
+         */
+        this.particleColor = [1, 1, 1, 1];
+
+        /**
+         * @type {number}
+         */
+        this.particleSpeedScaling = 1.0;
+
+        /**
+         * @type {qtek.Texture2D}
+         */
         this.surfaceTexture = null;
 
         this._particlePass = null;
@@ -114,13 +135,14 @@ define(function (require) {
             });
             this._particlePass.setUniform('velocityTexture', this.vectorFieldTexture);
             this._particlePass.setUniform('spawnTexture', this._spawnTexture);
+            this._particlePass.setUniform('speedScaling', this.particleSpeedScaling);
 
             this._motionBlurPass = new Pass({
                 fragment: Shader.source('ecx.motionBlur.fragment')
             });
             this._motionBlurPass.setUniform('percent', this.motionBlurFactor);
 
-            this._particleMesh = new Mesh({
+            var particleMesh = new Mesh({
                 material: new Material({
                     shader: new Shader({
                         vertex: Shader.source('ecx.vfParticle.renderPoints.vertex'),
@@ -130,9 +152,15 @@ define(function (require) {
                 mode: glenum.POINTS,
                 geometry: geometry
             });
-            this._particleMesh.material.set('spriteTexture', new Texture2D({
+            particleMesh.material.set('spriteTexture', new Texture2D({
                 image: spriteUtil.makeSimpleSprite(128)
             }));
+            particleMesh.material.set(
+                'sizeScaling', this.particleSizeScaling * this.renderer.devicePixelRatio
+            );
+            particleMesh.material.set('color', this.particleColor);
+
+            this._particleMesh = particleMesh;
 
             this._scene = new Scene();
             this._scene.add(this._particleMesh);
