@@ -106,6 +106,9 @@ define(function (require) {
                     color = color(dataItem);
                 }
                 var symbol = chart.deepQuery(queryTarget, 'symbol');
+                var symbolSize = chart.deepQuery(queryTarget, 'symbolSize');
+                var strokeColor = chart.deepQuery(queryTarget, 'itemStyle.normal.borderColor');
+                var lineWidth = chart.deepQuery(queryTarget, 'itemStyle.normal.borderWidth');
 
                 // Draw symbol shape
                 var shape = new IconShape({
@@ -115,9 +118,27 @@ define(function (require) {
                         width: this._spriteSize,
                         height: this._spriteSize,
                         iconType: symbol,
-                        color: color
-                    }  
+                        color: color,
+                        brushType: 'both',
+                        strokeColor: strokeColor,
+                        lineWidth: lineWidth / symbolSize * this._spriteSize
+                    }
                 });
+                if (chart.deepQuery(
+                    queryTarget, 'itemStyle.normal.label.show'
+                )) {
+                    shape.style.text = value;
+                    shape.style.textPosition = 'inside';
+                    shape.style.textColor = chart.deepQuery(
+                        queryTarget, 'itemStyle.normal.label.textStyle.color'
+                    );
+                    shape.style.textFont = chart.getFont(
+                        chart.deepQuery(
+                            queryTarget, 'itemStyle.normal.label.textStyle'
+                        )
+                    );
+                }
+
                 this._spriteCanvas = spriteUtil.makeSpriteFromShape(
                     this._spriteSize, shape, this._spriteCanvas
                 );

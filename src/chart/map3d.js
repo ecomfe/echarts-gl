@@ -297,8 +297,8 @@ define(function (require) {
             // Update earth base texture background image and color
             var bgColor = this.deepQuery(seriesGroup, 'mapBackgroundColor');
             var bgImage = this.deepQuery(seriesGroup, 'mapBackgroundImage');
-            globeSurface.backgroundColor = bgColor || '';
-            if (bgImage) {
+            globeSurface.backgroundColor = this._isValueNone(bgColor) ? '' : bgColor;
+            if (! this._isValueNone(bgImage)) {
                 if (typeof(bgImage) == 'string') {
                     var img = new Image();
                     img.onload = function () {
@@ -514,7 +514,9 @@ define(function (require) {
             }
 
             vfParticleSurface.vectorFieldTexture = new Texture2D({
-                image: vfImage
+                image: vfImage,
+                // Vector data column ranges -90 to 90
+                flipY: false
             });
             vfParticleSurface.surfaceTexture = new Texture2D({
                 width: textureSize[0],
@@ -554,8 +556,9 @@ define(function (require) {
             var p = 0;
             for (var j = 0; j < height; j++) {
                 for (var i = 0; i < width; i++) {
-                    var u = data[j][i][0];
-                    var v = data[j][i][1];
+                    var item = data[j][i];
+                    var u = item.x == null ? item[0] : item.x;
+                    var v = item.y == null ? item[1] : item.y;
                     imageData.data[p++] = u * 128 + 128;
                     imageData.data[p++] = v * 128 + 128;
                     imageData.data[p++] = 0;
@@ -837,6 +840,11 @@ define(function (require) {
 
             var log = theta * 180 / Math.PI + 90;
             var lat = phi * 180 / Math.PI;
+        },
+
+        _isValueNone: function (value) {
+            return value == null || value === ''
+                || (typeof value == 'string' && value.toLowerCase() == 'none');
         },
 
         _isValueImage: function (value) {

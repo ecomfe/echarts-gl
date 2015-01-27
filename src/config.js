@@ -28,7 +28,7 @@ define({
         //     // Only if type is texture
         //     image: 'cloud.png',
         //     // Surface texture size
-        //     size: [2048, 1048],
+        //     size: [2048, 1024],
         //     // Only if type is particle
         //     particle: {
         //         // Can be 3D Data matrix Or image
@@ -95,7 +95,21 @@ define({
         distance: 1,
         // Marker orientation in 3D space. Only available when large is false.
         // Value can be 'normal', 'tangent', 'eye'.
-        orientation: 'tangent'
+        orientation: 'tangent',
+        itemStyle: {
+            normal: {
+                borderWidth: 1,
+                borderColor: '#000',
+                label: {
+                    show: true,
+                    // Text poisition of ECharts-X can only be 'inside'
+                    position: 'inside',
+                    textStyle: {
+                        color: 'black'
+                    }
+                }
+            }
+        }
     },
 
     markLine: {

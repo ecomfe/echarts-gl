@@ -174,7 +174,7 @@ define(function (require) {
         // Implement onframe
         onframe: function (deltaTime) {
             var renderable = this._curveAnimatingPointsRenderable;
-            if (renderable.geometry.getVertexNumber() > 0) {
+            if (renderable && renderable.geometry.getVertexNumber() > 0) {
                 this._elapsedTime += deltaTime / 1000;
                 // 3 s
                 var t = this._elapsedTime / 3;
