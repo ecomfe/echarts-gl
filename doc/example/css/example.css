@@ -129,7 +129,8 @@ body {
 #editor .CodeMirror {
     height: 100%;
     font-size: 14px;
-    opacity: 0.9;
+    opacity: 0.85;
+    line-height: 22px;
 }
 
 #editor-toolbar {

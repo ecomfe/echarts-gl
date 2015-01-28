@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ECharts-X">
     <meta name="author" content="shenyi.914@gmail.com">
-    <title><-- ${title} --> Powered by ECharts-X</title>
+    <title>{{title}} Powered by ECharts-X</title>
 
     <link rel="shortcut icon" href="img/favicon.png">
 
@@ -39,7 +39,7 @@
         </div>
 
 <script type="text/x-javascript" id="code-source">
-<!-- ${code} -->
+{{code}}
 </script>
 
         <script src="lib/esl.js"></script>

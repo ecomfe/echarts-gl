@@ -452,6 +452,8 @@ define(function (require) {
                         self._imageCache.put(src, image);
                     }
                     image.src = src;
+                } else {
+                    texture.image = image;
                 }
             } else if (this._isValueImage(image)) {
                 texture.image = image;
