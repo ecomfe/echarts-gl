@@ -1,20 +1,26 @@
 /**
  * Texture Atlas for the sprites
  *
- * @module echarts-x/core/TextureAtlas
+ * @module echarts-x/surface/TextureAtlasSurface
  */
 
 define(function (require) {
 
     var Texture2D = require('qtek/Texture2D');
+    var ZRenderSurface = require('./ZRenderSurface');
     /**
      * constructor
-     * @alias module:echarts-x/core/TextureAtlas
+     * @alias module:echarts-x/surface/TextureAtlasSurface
      * @param {number} width
      * @param {number} height
      */
-    var TextureAtlas = function (width, height) {
+    var TextureAtlasSurface = function (zr, width, height) {
 
+        /**
+         * zrender instance in the Chart
+         * @type {zrender~ZRender}
+         */
+        this.zr = zr;
         /**
          * Current cursor x
          * @type {number}
@@ -55,20 +61,13 @@ define(function (require) {
          */
         this._coords = {};
 
-        this._canvas = document.createElement('canvas');
-        this._ctx = this._canvas.getContext('2d');
-
-        this._canvas.width = this._width;
-        this._canvas.height = this._height;
-
-        this._texture = new Texture2D({
-            anisotropic: 32,
-            image: this._canvas,
-            flipY: false
-        });
+        this._zrenderSurface = new ZRenderSurface(width, height);
+        this._zrenderSurface.onrefresh = function () {
+            zr.refreshNextFrame();
+        };
     };
 
-    TextureAtlas.prototype = {
+    TextureAtlasSurface.prototype = {
 
         /**
          * Clear the texture atlas
@@ -78,7 +77,7 @@ define(function (require) {
             this._y = 0;
             this._rowHeight = 0;
 
-            this._ctx.clearRect(0, 0, this._width, this._height);
+            this._zrenderSurface.clearElements();
             this._coords = {};
         },
 
@@ -97,7 +96,7 @@ define(function (require) {
         },
 
         getTexture: function () {
-            return this._texture;
+            return this._zrenderSurface.getTexture();
         },
 
         /**
@@ -106,44 +105,18 @@ define(function (require) {
          * @param  {number} height
          */
         resize: function (width, height) {
-            if (
-                width === this._width
-                && height === this._height
-            ) {
-                return;
-            }
-            this._width = width;
-            this._height = height;
-            this._canvas.width = width;
-            this._canvas.height = height;
-
-            this.clear();
+            this._zrenderSurface.resize(width, height);
         },
 
         /**
-         * Add image to atlas
-         * @param {string} id Image ID
-         * @param {HTMLImageElement|HTMLCanvasElement} image
-         * @param {number} [width]
-         * @param {number} [height]
+         * Add shape to atlas
+         * @param {zrender/shape/Base} shape
+         * @param {number} width
+         * @param {number} height
          * @return {Array}
          */
-        addImage: function (id, image, width, height) {
-            var imgWidth = image.width;
-            var imgHeight = image.height;
-            if (! imgWidth || ! imgHeight) {
-                // Image is not renderable
-                return null;
-            }
-            if (height == null) {
-                width = imgWidth;
-                if (width == null) {
-                    height = imgHeight;
-                } else {
-                    // Ratio scaling
-                    height = width / imgWidth * imgHeight;
-                }
-            }
+        addShape: function (shape, width, height) {
+            this._fitShape(shape, width, height);
 
             var x = this._x;
             var y = this._y;
@@ -165,15 +138,46 @@ define(function (require) {
 
             this._rowHeight = Math.max(this._rowHeight, height);
 
-            this._ctx.drawImage(image, x, y, width, height);
+            // Shift the shape
+            shape.position[0] += x;
+            shape.position[1] += y;
+            this._zrenderSurface.addElement(shape);
 
             var coords = [
                 [x / this._width, y / this._height],
                 [(x + width) / this._width, (y + height) / this._height]
             ];
-            this._coords[id] = coords;
+            this._coords[shape.id] = coords;
 
             return coords;
+        },
+
+        refresh: function () {
+            this._zrenderSurface.refresh();
+        },
+
+        /**
+         * Fit shape size by correct its position and scaling
+         * @param {zrender/shape/Base} shape
+         * @param {number} width
+         * @param {number} height
+         */
+        _fitShape: function (shape, width, height) {
+            var rect = shape.getRect(shape.style);
+            var lineWidth = shape.style.lineWidth || 0;
+            var shadowBlur = shape.style.shadowBlur || 0;
+            var margin = lineWidth + shadowBlur;
+            rect.x -= margin;
+            rect.y -= margin;
+            rect.width += margin * 2;
+            rect.height += margin * 2;
+            var scaleX = width / rect.width;
+            var scaleY = height / rect.height;
+            var x = rect.x;
+            var y = rect.y;
+            shape.position = [-rect.x * scaleX, -rect.y * scaleY];
+            shape.scale = [scaleX, scaleY];
+            shape.updateTransform();
         },
 
         /**
@@ -186,5 +190,5 @@ define(function (require) {
         }
     }
 
-    return TextureAtlas;
+    return TextureAtlasSurface;
 });

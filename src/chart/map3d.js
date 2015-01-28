@@ -79,11 +79,20 @@ define(function (require) {
         /**
          * Cached map data, key is map type
          * @type {Object}
+         * @private
          */
         this._mapDataMap = {};
 
         /**
+         * Name map
+         * @type {Object}
+         * @private
+         */
+        this._nameMap = {};
+
+        /**
          * @type {module:echarts-x/core/ZRenderSurface}
+         * @private
          */
         this._globeSurface = null;
 
@@ -105,8 +114,8 @@ define(function (require) {
         });
         this._albedoShader.enableTexture('diffuseMap');
         
-        this._albedoShaderWithPA = this._albedoShader.clone();
-        this._albedoShaderWithPA.define('fragment', 'PREMULTIPLIED_ALPHA')
+        this._albedoShaderPA = this._albedoShader.clone();
+        this._albedoShaderPA.define('fragment', 'PREMULTIPLIED_ALPHA')
 
         /**
          * @type {qtek.DynamicGeoemtry}
@@ -158,6 +167,7 @@ define(function (require) {
                 if (series[i].type === ecConfig.CHART_TYPE_MAP3D) {
                     series[i] = this.reformOption(series[i]);
                     var seriesName = series[i].name;
+                    var mapType = series[i].mapType;
                     this.selectedMap[seriesName] = legend
                         ? legend.isSelected(seriesName) : true;
 
@@ -169,6 +179,12 @@ define(function (require) {
                     if (series[i].textFixed) {
                         zrUtil.merge(
                             textFixedMap, series[i].textFixed, true
+                        );
+                    }
+                    if (series[i].nameMap) {
+                        this._nameMap[mapType] = this._nameMap[mapType] || {};
+                        zrUtil.merge(
+                            this._nameMap[mapType], series[i].nameMap, true
                         );
                     }
                 }
@@ -458,7 +474,7 @@ define(function (require) {
             // var name = surfaceLayerCfg.name || serie.name;
 
             surfaceMesh.material =  new Material({
-                shader: this._albedoShaderWithPA,
+                shader: this._albedoShaderPA,
                 transparent: true,
                 depthMask: false
             });
@@ -632,11 +648,14 @@ define(function (require) {
             var scaleX = this._baseTextureSize / 360;
             var scaleY = this._baseTextureSize / 180;
 
+            var mapType = this.deepQuery(seriesGroup, 'mapType');
+            var nameMap = this._nameMap[mapType] || {};
             // Draw map
             // TODO Special area
             for (var i = 0; i < mapData.features.length; i++) {
                 var feature = mapData.features[i];
                 var name = feature.properties.name;
+                name = nameMap[name] || name;
 
                 var dataItem = data[name];
                 var value;

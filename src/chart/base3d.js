@@ -8,6 +8,7 @@ define(function (require) {
 
     'use strict';
 
+    var ecConfig = require('echarts/config');
     var zrUtil = require('zrender/tool/util');
 
     var ComponentBase3D = require('../component/base3d');
@@ -94,7 +95,12 @@ define(function (require) {
             var serie = this.series[seriesIndex];
 
             if (serie.markPoint) {
-                zrUtil.merge(serie.markPoint, this.ecTheme.markPoint);
+                zrUtil.merge(
+                    zrUtil.merge(
+                        serie.markPoint, this.ecTheme.markPoint || {}
+                    ),
+                    ecConfig.markPoint
+                );
                 if (serie.markPoint.large) {
                     this._buildSingleTypeMarker(
                         'largeMarkPoint', seriesIndex, parentNode
@@ -106,13 +112,23 @@ define(function (require) {
                 }
             }
             if (serie.markLine) {
-                zrUtil.merge(serie.markLine, this.ecTheme.markLine);
+                zrUtil.merge(
+                    zrUtil.merge(
+                        serie.markLine, this.ecTheme.markLine || {}
+                    ),
+                    ecConfig.markLine
+                );
                 this._buildSingleTypeMarker(
                     'markLine', seriesIndex, parentNode
                 );
             }
             if (serie.markBar) {
-                zrUtil.merge(serie.markBar, this.ecTheme.markBar);
+                zrUtil.merge(
+                    zrUtil.merge(
+                        serie.markBar, this.ecTheme.markBar || {}
+                    ),
+                    ecConfig.markBar
+                );
                 this._buildSingleTypeMarker(
                     'markBar', seriesIndex, parentNode
                 );

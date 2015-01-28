@@ -16,7 +16,7 @@ define(function (require) {
     var Texture2D = require('qtek/Texture2D');
     var Texture = require('qtek/Texture');
 
-    var TextureAtlas = require('../../util/TextureAtlas');
+    var TextureAtlasSurface = require('../../surface/TextureAtlasSurface');
     var SpritesGeometry = require('../../util/geometry/Sprites');
     var spriteUtil = require('../../util/sprite');
 
@@ -38,9 +38,7 @@ define(function (require) {
         this._spritesRenderables = [];
         this._spritesShader = null;
 
-        this._textureAtlas = [];
-
-        this._spriteCanvas = null;
+        this._textureAtlasList = [];
 
         this._spriteSize = 128;
 
@@ -78,8 +76,10 @@ define(function (require) {
             );
             // According to the webglstats.com. MAX_TEXTURE_SIZE 2048 is supported by all devices
             atlasSize = Math.min(2048, atlasSize);
-            var textureAtlas = new TextureAtlas(atlasSize, atlasSize);
-            this._textureAtlas.push(textureAtlas);
+            var textureAtlas = new TextureAtlasSurface(
+                chart.zr, atlasSize, atlasSize
+            );
+            this._textureAtlasList.push(textureAtlas);
             var spriteRenderable = this._createSpritesRenderable(textureAtlas);
             for (var i = 0; i < dataList.length; i++) {
                 var dataItem = dataList[i];
@@ -139,22 +139,29 @@ define(function (require) {
                     );
                 }
 
-                this._spriteCanvas = spriteUtil.makeSpriteFromShape(
-                    this._spriteSize, shape, this._spriteCanvas
+                var coords = textureAtlas.addShape(
+                    shape, this._spriteSize, this._spriteSize
                 );
-                var coords = textureAtlas.addImage(shape.id, this._spriteCanvas);
                 // Texture Atlas is full
                 if (! coords) {
                     // Create an other one
-                    textureAtlas = new TextureAtlas(atlasSize, atlasSize);
-                    this._textureAtlas.push(textureAtlas);
+                    textureAtlas = new TextureAtlasSurface(
+                        chart.zr, atlasSize, atlasSize
+                    );
+                    this._textureAtlasList.push(textureAtlas);
                     spriteRenderable = this._createSpritesRenderable(textureAtlas);
-                    coords = textureAtlas.addImage(shape.id, this._spriteCanvas);
+                    coords = textureAtlas.addShape(
+                        shape, this._spriteSize, this._spriteSize
+                    );
                 }
 
                 chart.getMarkPointTransform(seriesIndex, dataItem, matrix);
 
                 spriteRenderable.geometry.addSprite(matrix, coords);
+            }
+
+            for (var i = 0; i < this._textureAtlasList.length; i++) {
+                this._textureAtlasList[i].refresh();
             }
         },
 
@@ -187,7 +194,7 @@ define(function (require) {
             var renderer = this.chart.baseLayer.renderer;
             renderer.disposeNode(this._sceneNode, true, true);
             this._spritesRenderables = [];
-            this._textureAtlas = [];
+            this._textureAtlasList = [];
         },
 
         getSceneNode: function () {

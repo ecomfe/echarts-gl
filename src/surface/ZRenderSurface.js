@@ -75,7 +75,9 @@ define(function (require) {
         },
 
         resize: function (width, height) {
-            if (this._width === width && this._height === height) {
+            if (
+                this._width === width && this._height === height
+            ) {
                 return;
             }
 
@@ -112,7 +114,7 @@ define(function (require) {
             for (var i = 0; i < list.length; i++) {
                 var shape = list[i];
                 if (!shape.invisible) {
-                    shape.brush(ctx, shape.isHighlight, this._refreshNextTick);
+                    shape.brush(ctx, shape.isHighlight, this.refreshNextTick);
                 }
             }
 
@@ -121,7 +123,7 @@ define(function (require) {
             this.onrefresh && this.onrefresh();
         },
 
-        _refreshNextTick: (function () {
+        refreshNextTick: (function () {
             var timeout;
             return function() {
                 var self = this;
@@ -130,7 +132,7 @@ define(function (require) {
                 }
                 timeout = setTimeout(function () {
                     self.refresh();
-                }, 20);
+                }, 16);
             }
         }),
 
