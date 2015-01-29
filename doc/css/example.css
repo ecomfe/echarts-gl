@@ -1,60 +1,7 @@
 html, body {
     height: 100%;
 
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-}
-
-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50px;
-
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
-    background-color: #3F4657;
-    margin-bottom: 0;
-    z-index: 100;
-}
-
-header h1 {
-    font-size: 18px;
-    color: #82BECD;
-    margin: 8px 0 0 30px;
-    padding-left: 50px;
-
-    background-image: url(../img/echarts-logo.png);
-    background-repeat: no-repeat;
-
-    line-height: 35px;
-    display: inline-block;
-}
-
-header .links {
-    float: right;
-    margin: 0px;
-}
-
-header .links li {
-    float: left;
-    list-style: none;
-}
-header .links li:hover {
-    border-bottom: 3px solid #82BECD;
-    margin-bottom: -3px;
-}
-
-header .links li a {
-    color: #82BECD;
-    text-decoration: none;
-
-    padding: 0px 10px;
-    height: 50px;
-    line-height: 50px;
-    display: inline-block;
-}
-header .links li a:hover {
-    text-decoration: none;
+    font-family: 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif;
 }
 
 button {

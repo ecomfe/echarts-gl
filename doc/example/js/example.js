@@ -1,10 +1,10 @@
 define(function (require) {
-    var CodeMirror = require('../lib/codemirror/codemirror');
+    var CodeMirror = require('lib/codemirror/codemirror');
     var ec = require('echarts');
     require('echarts-x');
     require('echarts/chart/map');
     require('echarts-x/chart/map3d');
-    require('../lib/codemirror/mode/javascript');
+    require('lib/codemirror/mode/javascript');
 
     var myChart = null;
     var currentRuningFunc = null;

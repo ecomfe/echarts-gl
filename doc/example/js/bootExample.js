@@ -12,7 +12,8 @@
     if (developMode) {
         require.config({
             paths: {
-                'text': './lib/text'
+                "lib": '../lib',
+                'text': '../lib/text'
             },
             packages: [
                 {
@@ -48,9 +49,10 @@
         script.onload = function () {
             require.config({
                 paths: {
-                    'echarts-x': './lib/echarts-x',
-                    'echarts': './lib/echarts',
-                    'text': './lib/text'
+                    "lib": '../lib',
+                    'echarts-x': '../lib/echarts-x',
+                    'echarts': '../lib/echarts',
+                    'text': '../lib/text'
                 }
             });
 

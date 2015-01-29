@@ -10,7 +10,7 @@
         "echarts": "2.1.10",
         "qtek": "0.1"
     },
-    "repository": "git://github.com/ecomfe/echarts",
+    "repository": "git://github.com/ecomfe/echarts-x",
     "main": "echarts-x",
     "homepage": "http://echarts.baidu.com"
 }
