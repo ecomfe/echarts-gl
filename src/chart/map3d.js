@@ -25,6 +25,7 @@ define(function (require) {
     var Shader = require('qtek/Shader');
     var Texture2D = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
+    var Matrix4 = require('qtek/math/Matrix4');
     var glenum = require('qtek/core/glenum');
 
     var ecConfig = require('../config');
@@ -977,46 +978,58 @@ define(function (require) {
         },
 
         // Overwrite getMarkPointTransform
-        getMarkPointTransform: function (seriesIdx, data, matrix) {
+        getMarkPointTransform: (function () {
             var xAxis = new Vector3();
             var yAxis = new Vector3();
             var zAxis = new Vector3();
             var position = new Vector3();
-            var series = this.series[seriesIdx];
-            var queryTarget = [data, series.markPoint];
-            var symbolSize = this.deepQuery(queryTarget, 'symbolSize');
-            var orientation = this.deepQuery(queryTarget, 'orientation');
+            return function (seriesIdx, data, matrix) {
+                var series = this.series[seriesIdx];
+                var queryTarget = [data, series.markPoint];
+                var symbolSize = this.deepQuery(queryTarget, 'symbolSize');
+                var orientation = this.deepQuery(queryTarget, 'orientation');
+                var orientationAngle = this.deepQuery(queryTarget, 'orientationAngle');
 
-            this.getMarkCoord(seriesIdx, data, position);
-            Vector3.normalize(zAxis, position);
-            Vector3.cross(xAxis, Vector3.UP, zAxis);
-            Vector3.normalize(xAxis, xAxis);
-            Vector3.cross(yAxis, zAxis, xAxis);
+                this.getMarkCoord(seriesIdx, data, position);
+                Vector3.normalize(zAxis, position);
+                Vector3.cross(xAxis, Vector3.UP, zAxis);
+                Vector3.normalize(xAxis, xAxis);
+                Vector3.cross(yAxis, zAxis, xAxis);
 
-            // Scaling
-            if (!isNaN(symbolSize)) {
-                symbolSize = [symbolSize, symbolSize];
-            }
-            if (orientation === 'tangent') {
-                var tmp = zAxis;
-                zAxis = yAxis;
-                yAxis = tmp;
-                Vector3.negate(zAxis, zAxis);
-                // Move along y axis half size
-                Vector3.scaleAndAdd(position, position, yAxis, symbolSize[1]);
-            }
-            Vector3.scale(xAxis, xAxis, symbolSize[0]);
-            Vector3.scale(yAxis, yAxis, symbolSize[1]);
+                // Scaling
+                if (!isNaN(symbolSize)) {
+                    symbolSize = [symbolSize, symbolSize];
+                }
+                if (orientation === 'tangent') {
+                    var tmp = zAxis;
+                    zAxis = yAxis;
+                    yAxis = tmp;
+                    Vector3.negate(zAxis, zAxis);
+                    // Move along y axis half size
+                    Vector3.scaleAndAdd(position, position, yAxis, symbolSize[1]);
+                }
 
-            matrix.x = xAxis;
-            matrix.y = yAxis;
-            matrix.z = zAxis;
-            // Set the position
-            var arr = matrix._array;
-            arr[12] = position.x;
-            arr[13] = position.y;
-            arr[14] = position.z;
-        },
+                matrix.x = xAxis;
+                matrix.y = yAxis;
+                matrix.z = zAxis;
+                Matrix4.rotateX(
+                    // Rotate up if value is positive
+                    matrix, matrix, -orientationAngle / 180 * Math.PI
+                );
+
+                Matrix4.scale(
+                    matrix, matrix, new Vector3(
+                        symbolSize[0], symbolSize[1], 1
+                    )
+                )
+
+                // Set the position
+                var arr = matrix._array;
+                arr[12] = position.x;
+                arr[13] = position.y;
+                arr[14] = position.z;
+            };
+        })(),
 
         // Overwrite getMarkBarPoints
         getMarkBarPoints: (function () {

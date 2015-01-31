@@ -15,21 +15,22 @@ define(function (require) {
         $('#editor textarea')[0],
         {
             lineNumbers: true,
-            mode: 'javascript'
+            mode: 'javascript',
+            tabSize: 4
         }
     );
     editor.setOption('theme', 'twilight');
 
     function runCode(code) {
-        currentRuningFunc = new Function('myChart', code);
-        currentRuningFunc(myChart);
-    };
+        currentRuningFunc = new Function('myChart', 'require', code);
+        currentRuningFunc(myChart, require);
+    }
 
     function update() {
         if (currentRuningFunc) {
-            currentRuningFunc(myChart);
+            currentRuningFunc(myChart, require);
         }
-    };
+    }
 
     function refresh() {
         if (myChart) {
@@ -37,7 +38,7 @@ define(function (require) {
         }
         myChart = ec.init(document.getElementById('viewport'));
         runCode(editor.doc.getValue());
-    };
+    }
 
     $('#open-editor').click(function () {
         $('#editor').show();
@@ -52,5 +53,7 @@ define(function (require) {
     $('#editor-refresh').click(refresh);
     $('#editor-update').click(update);
 
-    refresh();
+    setTimeout(function () {
+        refresh();
+    });
 });
