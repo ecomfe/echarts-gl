@@ -35,6 +35,15 @@ define(function (require) {
     var VectorFieldParticleSurface = require('../surface/VectorFieldParticleSurface');
 
     var LRU = require('qtek/core/LRU');
+
+
+    var formatGeoPoint = function (p) {
+        //调整俄罗斯东部到地图右侧与俄罗斯相连
+        return [
+            (p[0] < -168.5 && p[1] > 63.8) ? p[0] + 360 : p[0], 
+            p[1]
+        ];
+    };
     /**
      * @constructor
      * @extends module:echarts-x/chart/base3d
@@ -817,7 +826,7 @@ define(function (require) {
                         }
                     });
                     for (var i = 0; i < coordinates[k].length; i++) {
-                        var point = self._formatPoint(coordinates[k][i]);
+                        var point = formatGeoPoint(coordinates[k][i]);
                         // Format point
                         var x = (point[0] + 180) * scaleX;
                         var y = (90 - point[1]) * scaleY;
@@ -861,40 +870,29 @@ define(function (require) {
             return textPosition;
         },
 
-        _formatPoint: function (p) {
-            //调整俄罗斯东部到地图右侧与俄罗斯相连
-            return [
-                (p[0] < -168.5 && p[1] > 63.8) ? p[0] + 360 : p[0], 
-                p[1]
-            ];
-        },
-
         _initGlobeHandlers: function () {
             var globeMesh = this._globeNode.queryNode('earth');
-            ['CLICK', 'DBLCLICK', 'MOUSEOVER', 'MOUSEOUT', 'MOUSEMOVE',
-            'DRAGSTART', 'DRAGEND', 'DRAGENTER', 'DRAGOVER', 'DRAGLEAVE', 'DROP']
-            .forEach(function (eveName) {
+
+            var mouseEventHandler = function (e) {
+                var shape = this._globeSurface.hover(e);
+                if (shape) {
+                    // Trigger a global zr event to tooltip
+                    this.zr.handler.dispatch(e.type, {
+                        target: shape,
+                        event: e.event,
+                        type: e.type
+                    });
+                }
+            }
+
+            var eventList = ['CLICK', 'DBLCLICK', 'MOUSEOVER', 'MOUSEOUT', 'MOUSEMOVE',
+            'DRAGSTART', 'DRAGEND', 'DRAGENTER', 'DRAGOVER', 'DRAGLEAVE', 'DROP'];
+            
+            eventList.forEach(function (eveName) {
                 globeMesh.on(
-                    zrConfig.EVENT[eveName], this._mouseEventHandler, this
+                    zrConfig.EVENT[eveName], mouseEventHandler, this
                 );
             }, this);
-        },
-
-        /**
-         * Handle mousemove events like hover
-         * @param {Object} e
-         * @private
-         */
-        _mouseEventHandler: function (e) {
-            var shape = this._globeSurface.hover(e);
-            if (shape) {
-                // Trigger a global zr event to tooltip
-                this.zr.handler.dispatch(e.type, {
-                    target: shape,
-                    event: e.event,
-                    type: e.type
-                });
-            }
         },
 
         _eulerToSphere: function (x, y, z) {
@@ -962,7 +960,7 @@ define(function (require) {
             ], 'distance');
             coords[0] = geoCoord.x == null ? geoCoord[0] : geoCoord.x;
             coords[1] = geoCoord.y == null ? geoCoord[1] : geoCoord.y;
-            coords = this._formatPoint(coords);
+            coords = formatGeoPoint(coords);
 
             var lon = coords[0];
             var lat = coords[1];

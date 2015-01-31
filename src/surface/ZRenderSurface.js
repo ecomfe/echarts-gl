@@ -42,6 +42,8 @@ define(function (require) {
             anisotropic: 32,
             flipY: false
         });
+
+        this.refreshNextTick = this.refreshNextTick.bind(this);
     }
 
     ZRenderSurface.prototype = {
@@ -134,7 +136,7 @@ define(function (require) {
                     self.refresh();
                 }, 16);
             }
-        }),
+        })(),
 
         hover: function (e) {
             var list = this._storage.getShapeList();

@@ -21,6 +21,7 @@ define(function (require) {
     var spriteUtil = require('../../util/sprite');
 
     var IconShape = require('echarts/util/shape/Icon');
+    var ImageShape = require('zrender/shape/Image');
 
     var Matrix4 = require('qtek/math/Matrix4');
 
@@ -61,6 +62,7 @@ define(function (require) {
             var dataRange = component.dataRange;
             var markPoint = serie.markPoint;
             var zr = chart.zr;
+            var spriteSize = this._spriteSize;
 
             var dataList = markPoint.data;
             var serieColor;
@@ -110,20 +112,30 @@ define(function (require) {
                 var strokeColor = chart.deepQuery(queryTarget, 'itemStyle.normal.borderColor');
                 var lineWidth = chart.deepQuery(queryTarget, 'itemStyle.normal.borderWidth');
 
-                // Draw symbol shape
-                var shape = new IconShape({
-                    style: {
-                        x: 0,
-                        y: 0,
-                        width: this._spriteSize,
-                        height: this._spriteSize,
-                        iconType: symbol,
-                        color: color,
-                        brushType: 'both',
-                        strokeColor: strokeColor,
-                        lineWidth: lineWidth / symbolSize * this._spriteSize
-                    }
-                });
+                var shape;
+                if (symbol.match(/^image:\/\//)) {
+                    shape = new ImageShape({
+                        style: {
+                            image: symbol.replace(/^image:\/\//, '')
+                        }
+                    });
+                }
+                else {
+                    // Draw symbol shape
+                    shape = new IconShape({
+                        style: {
+                            iconType: symbol,
+                            color: color,
+                            brushType: 'both',
+                            strokeColor: strokeColor,
+                            lineWidth: lineWidth / symbolSize * spriteSize
+                        }
+                    });
+                }
+                var shapeStyle = shape.style;
+                shapeStyle.x = shapeStyle.y = 0;
+                shapeStyle.width = shapeStyle.height = spriteSize;
+
                 if (chart.deepQuery(
                     queryTarget, 'itemStyle.normal.label.show'
                 )) {
@@ -140,7 +152,7 @@ define(function (require) {
                 }
 
                 var coords = textureAtlas.addShape(
-                    shape, this._spriteSize, this._spriteSize
+                    shape, spriteSize, spriteSize
                 );
                 // Texture Atlas is full
                 if (! coords) {
@@ -151,7 +163,7 @@ define(function (require) {
                     this._textureAtlasList.push(textureAtlas);
                     spriteRenderable = this._createSpritesRenderable(textureAtlas);
                     coords = textureAtlas.addShape(
-                        shape, this._spriteSize, this._spriteSize
+                        shape, spriteSize, spriteSize
                     );
                 }
 
