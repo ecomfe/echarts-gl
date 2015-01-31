@@ -1,35 +1,44 @@
 {
-    "exampleCodeRoot": "example/code",
     "examples": [{
         "type": "map3d",
         "name": "map3d",
-        "title": "Basic Map3D",
-        "codeUrl": "map3d.js"
+        "title": "Basic Map3D"
     }, {
         "type": "map3d",
         "name": "map3d_jupiter",
-        "title": "Jupiter",
-        "codeUrl": "map3d_jupiter.js"
+        "title": "Jupiter"
     }, {
         "type": "map3d",
         "name": "map3d_population1",
-        "title": "Population",
-        "codeUrl": "map3d_population1.js"
+        "title": "World Population"
     }, {
         "type": "map3d",
         "name": "map3d_population2",
-        "title": "Population 2",
-        "codeUrl": "map3d_population2.js"
+        "title": "World Population 2"
     }, {
         "type": "map3d",
         "name": "map3d_population3",
-        "title": "Population 3",
-        "codeUrl": "map3d_population3.js"
+        "title": "World Population 3"
     }, {
         "type": "map3d",
         "name": "map3d_wind",
-        "title": "Wind",
-        "codeUrl": "map3d_wind.js"
+        "title": "Wind"
+    }, {
+        "type": "map3d",
+        "name": "map3d_flights",
+        "title": "World Flights"
+    }, {
+        "type": "map3d",
+        "name": "map3d_placemark",
+        "title": "Map3D Famous Place"
+    }, {
+        "type": "map3d",
+        "name": "map3d_mix",
+        "title": "Map3D Mix Map"
+    }, {
+        "type": "map3d",
+        "name": "map3d_mix2",
+        "title": "World GDP"
     }],
 
 

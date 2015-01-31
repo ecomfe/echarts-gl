@@ -12,9 +12,11 @@ myChart.setOption({
     series: [{
         type: 'map3d',
         mapType: 'world',
-        mapBackgroundColor: '',
-        mapBackgroundImage: 'asset/earth.jpg',
-        mapQuality: 'high',
+        baseLayer: {
+            backgroundColor: '',
+            backgroundImage: 'asset/earth.jpg',
+            quality: 'high',
+        },
 
         surfaceLayers: [{
             type: 'texture',

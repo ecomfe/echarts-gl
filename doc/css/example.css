@@ -44,14 +44,14 @@ body {
     top: 50px;
     left: 0;
     right: 0;
-}
-
-#viewport {
-    height: 100%;
 
     background: -webkit-linear-gradient(#22466F, #452525);
     background: -o-linear-gradient(#22466F, #452525);
     background: linear-gradient(#22466F, #452525);
+}
+
+#chart {
+    height: 100%;
 }
 
 #editor {
@@ -76,7 +76,7 @@ body {
 #editor .CodeMirror {
     height: 100%;
     font-size: 14px;
-    opacity: 0.85;
+    background-color: rgba(0, 0, 0, 0.5);
     line-height: 22px;
 }
 
@@ -84,6 +84,7 @@ body {
     position: absolute;
     right: 30px;
     bottom: 20px;
+    z-index: 100;
 }
 
 #editor-toolbar button {

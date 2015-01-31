@@ -8,8 +8,8 @@ var exampleTpl = fs.readFileSync('tpl/example.tpl', 'utf-8');
 var exampleTplRenderer = etpl.compile(exampleTpl);
 config.examples.forEach(function (exampleConf) {
     var code = fs.readFileSync(
-        (config.exampleCodeRoot || '') + '/' + exampleConf.codeUrl, 'utf-8'
-        );
+       'example/code/' + exampleConf.name + '.js', 'utf-8'
+    );
 
     var html = exampleTplRenderer({
         title: exampleConf.title

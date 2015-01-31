@@ -16,18 +16,19 @@ define({
             height: '100%'
         },
         
-        // Base map background color
-        mapBackgroundColor: 'black',
-        // Base map background image
-        mapBackgroundImage: '',
-
-        // Base map texture resolution
-        // 'low': 1024x1024
-        // 'medium': 2048x2048
-        // 'high': 4096x4096
-        // 
-        // Or directly give the size like 512
-        mapQuality: 'medium',
+        baseLayer: {
+            // Base map background color
+            backgroundColor: 'black',
+            // Base map background image
+            backgroundImage: '',
+            // Base map texture resolution
+            // 'low': 1024x1024
+            // 'medium': 2048x2048
+            // 'high': 4096x4096
+            // 
+            // Or directly give the size like 512
+            quality: 'medium',
+        },
 
         // {
         //     name: 'cloud',
@@ -105,6 +106,10 @@ define({
         // Marker orientation in 3D space. Only available when large is false.
         // Value can be 'normal', 'tangent', 'eye'.
         orientation: 'tangent',
+
+        // Angle to the default orientation
+        orientationAngle: 0,
+
         itemStyle: {
             normal: {
                 borderWidth: 1,

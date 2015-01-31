@@ -163,3 +163,10 @@ pip-log.txt
 .DS_Store
 
 node_modules
+
+# Assets files
+*.psd
+
+doc/static
+doc/example/data/raw
+ecx.todo

@@ -33,9 +33,12 @@ $.ajax({
             },
             series: [{
                 type: 'map3d',
-                mapBackgroundColor: '',
-                mapBackgroundImage: './asset/earth.jpg',
-                mapQuality: 'high',
+
+                baseLayer: {
+                    backgroundColor: '',
+                    backgroundImage: './asset/earth.jpg',
+                    quality: 'high'
+                },
 
                 itemStyle: {
                     normal: {

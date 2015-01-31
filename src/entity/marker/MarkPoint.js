@@ -42,7 +42,6 @@ define(function (require) {
         this._textureAtlasList = [];
 
         this._spriteSize = 128;
-
     }
 
     MarkPoint.prototype = {

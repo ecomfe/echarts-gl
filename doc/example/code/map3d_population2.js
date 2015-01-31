@@ -39,7 +39,11 @@ $.ajax({
                 name: 'World Population',
                 type: 'map3d',
                 mapType: 'world',
-                mapBackgroundColor: '#005f99',
+
+                baseLayer: {
+                    backgroundColor: '#005f99'
+                },
+
                 itemStyle: {
                     normal: {
                         borderColor: '#777'

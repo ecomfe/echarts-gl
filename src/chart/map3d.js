@@ -205,7 +205,7 @@ define(function (require) {
 
             for (var mapType in dataMap) {
                 var seriesGroup = seriesGroupByMapType[mapType];
-                var mapQuality = this.deepQuery(seriesGroup, 'mapQuality');
+                var mapQuality = this.deepQuery(seriesGroup, 'baseLayer.quality');
                 if (isNaN(mapQuality)) {
                     switch (mapQuality) {
                         case 'low':
@@ -348,8 +348,8 @@ define(function (require) {
             );
 
             // Update earth base texture background image and color
-            var bgColor = this.deepQuery(seriesGroup, 'mapBackgroundColor');
-            var bgImage = this.deepQuery(seriesGroup, 'mapBackgroundImage');
+            var bgColor = this.deepQuery(seriesGroup, 'baseLayer.backgroundColor');
+            var bgImage = this.deepQuery(seriesGroup, 'baseLayer.backgroundImage');
             globeSurface.backgroundColor = this._isValueNone(bgColor) ? '' : bgColor;
             if (! this._isValueNone(bgImage)) {
                 if (typeof(bgImage) == 'string') {

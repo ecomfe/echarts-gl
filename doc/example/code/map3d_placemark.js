@@ -15,8 +15,11 @@ myChart.setOption({
         name: 'placemarks',
         type: 'map3d',
         mapType: 'world',
-        mapBackgroundColor: '',
-        mapBackgroundImage: 'asset/earth.jpg',
+        baseLayer: {
+            backgroundColor: '',
+            backgroundImage: 'asset/earth.jpg',
+            quality: 'high'
+        },
         itemStyle: {
             normal: {
                 label: {
@@ -38,7 +41,7 @@ myChart.setOption({
             itemStyle: {
                 normal: {
                     label: {
-                        show: true,
+                        show: false,
                         formatter: '{b}',
                         textStyle: {
                             fontSize: 12,

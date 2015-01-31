@@ -44,11 +44,6 @@ option = {
 }
 ```
 
-<figure>
-<img width="100%" src="../../screenshot/map3d_population3.jpg" />
-<figcaption>Fig1. World Population</figcaption>
-</figure>
-
 ##Mark Bar Option
 
 ###barSize

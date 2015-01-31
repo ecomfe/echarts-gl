@@ -12,8 +12,10 @@ var option = {
         name: 'globe',
         type: 'map3d',
         // 底图配置
-        mapBackgroundColor: '',
-        mapBackgroundImage: 'asset/earth.jpg',
+        baseLayer: {
+            backgroundColor: '',
+            backgroundImage: 'asset/earth.jpg',
+        },
         // 表层（比如云层）配置
         surfaceLayers: [{
             type: 'texture',
@@ -38,39 +40,39 @@ var option = {
 }
 ```
 
-<figure>
-<img width="100%" src="../../screenshot/map3d.jpg" title="Simple Example"  />
-<figcaption>Fig1. Simple Example</figcaption>
-</figure>
-
 ##Series Option
 
 > 系列配置项, 通用部分详见 [ECharts](http://echarts.baidu.com/doc/doc.html#Series)
+
+###mapType
+
+###mapLocation
 
 ###autoRotate
 
 球体是否在打开的时候自动旋转
 
-###mapBackgroundColor
+###baseLayer
+####backgroundColor
 
 ```javascript
-mapBackgroundColor: 'black'
+backgroundColor: 'black'
 ```
 
 底图背景色
 
-###mapBackgroundImage
+####backgroundImage
 
 ```javascript
-mapBackgroundImage: 'none'
+backgroundImage: 'none'
 ```
 
 底图背景图片，覆盖在地图背景色上，可以是Image url，Image dom 或者 Canvas dom
 
-###mapQuality
+####quality
 
 ```javascript
-mapQuality: 'medium'
+quality: 'medium'
 ```
 
 底图贴图质量，即贴图的分辨率. 可选项：

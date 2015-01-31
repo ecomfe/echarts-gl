@@ -14,9 +14,10 @@ myChart.setOption({
     series: [{
         type: 'map3d',
         mapType: 'none',
-        mapBackgroundColor: '',
-        mapBackgroundImage: './asset/jupiter.jpg',
-        mapQuality: 'high',
+        baseLayer: {
+            backgroundColor: '',
+            backgroundImage: 'asset/jupiter.jpg'
+        },
 
         itemStyle: {
             normal: {
