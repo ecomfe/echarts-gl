@@ -16,7 +16,7 @@ define(function (require) {
         [-1, -1, 0], [1, -1, 0], [1, 1, 0], [-1, 1, 0]
     ];
 
-    squareTexcoords = [
+    var squareTexcoords = [
         [0, 0], [1, 0], [1, 1], [0, 1]
     ];
 

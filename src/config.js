@@ -7,6 +7,15 @@ define({
 
         // Base map configuration
         mapType: 'world',
+
+        // Globe location, same as ECharts map
+        mapLocation: {
+            x: 0,
+            y: 0,
+            width: '100%',
+            height: '100%'
+        },
+        
         // Base map background color
         mapBackgroundColor: 'black',
         // Base map background image

@@ -84,21 +84,21 @@ define(function (require) {
             var tmp2y = (y1 - y2) * 3.0 - y0 + y3;
             var tmp2z = (z1 - z2) * 3.0 - z0 + z3;
 
-            fx = x0;
-            fy = y0;
-            fz = z0;
+            var fx = x0;
+            var fy = y0;
+            var fz = z0;
 
-            dfx = (x1 - x0) * pre1 + tmp1x * pre2 + tmp2x * step3;
-            dfy = (y1 - y0) * pre1 + tmp1y * pre2 + tmp2y * step3;
-            dfz = (z1 - z0) * pre1 + tmp1z * pre2 + tmp2z * step3;
+            var dfx = (x1 - x0) * pre1 + tmp1x * pre2 + tmp2x * step3;
+            var dfy = (y1 - y0) * pre1 + tmp1y * pre2 + tmp2y * step3;
+            var dfz = (z1 - z0) * pre1 + tmp1z * pre2 + tmp2z * step3;
 
-            ddfx = tmp1x * pre4 + tmp2x * pre5;
-            ddfy = tmp1y * pre4 + tmp2y * pre5;
-            ddfz = tmp1z * pre4 + tmp2z * pre5;
+            var ddfx = tmp1x * pre4 + tmp2x * pre5;
+            var ddfy = tmp1y * pre4 + tmp2y * pre5;
+            var ddfz = tmp1z * pre4 + tmp2z * pre5;
 
-            dddfx = tmp2x * pre5;
-            dddfy = tmp2y * pre5;
-            dddfz = tmp2z * pre5;
+            var dddfx = tmp2x * pre5;
+            var dddfy = tmp2y * pre5;
+            var dddfz = tmp2z * pre5;
 
             var positionArr = this.attributes.position.value;
             var colorArr = this.attributes.color.value;
@@ -120,7 +120,7 @@ define(function (require) {
                 ddfx += dddfx; ddfy += dddfy; ddfz += dddfz;
                 t += step;
             }
-        },
+        }
 
         // http://antigrain.com/research/adaptive_bezier/#toc0002
         // addCubicCurve: function (p0, p1, p2, p3, color) {
