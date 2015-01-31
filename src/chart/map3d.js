@@ -209,14 +209,19 @@ define(function (require) {
                             this._baseTextureSize = 2048;
                             break;
                     }   
-                } else {
+                }
+                else {
                     this._baseTextureSize = mapQuality;
                 }
 
                 if (!this._globeNode) {
-                    this._createGlob(seriesGroupByMapType[mapType]);
+                    this._createGlob(seriesGroup);
+
+                    this._initGlobeHandlers();
                 }
                 this._updateGlobe(mapType, dataMap[mapType], seriesGroup);
+
+                this._setViewport(seriesGroup);
                 //TODO Only support one mapType here
                 break;
             }
@@ -228,6 +233,28 @@ define(function (require) {
             camera.lookAt(Vector3.ZERO);
 
             this.afterBuildMark();
+        },
+
+        _setViewport: function (seriesGroup) {
+            // Set viewport, aka globe location
+            var mapLocation = this.deepQuery(seriesGroup, 'mapLocation') || {};
+            var x = mapLocation.x;
+            var y = mapLocation.y;
+            var width = mapLocation.width;
+            var height = mapLocation.height;
+            var zrWidth = this.zr.getWidth();
+            var zrHeight = this.zr.getHeight();
+            x = this.parsePercent(x, zrWidth);
+            y = this.parsePercent(y, zrHeight);
+            width = this.parsePercent(width, zrWidth);
+            height = this.parsePercent(height, zrHeight);
+
+            x = isNaN(x) ? 0 : x;
+            y = isNaN(y) ? 0 : x;
+            width = isNaN(width) ? zrWidth : width;
+            height = isNaN(height) ? zrHeight : height;
+
+            this.baseLayer.setViewport(x, y, width, height);
         },
 
         /**
@@ -322,11 +349,13 @@ define(function (require) {
                         globeSurface.refresh();
                     }
                     img.src = bgImage;
-                } else {
+                }
+                else {
                     // mapBackgroundImage is a image|canvas object
                     globeSurface.backgroundImage = bgImage;
                 }
-            } else {
+            }
+            else {
                 globeSurface.backgroundImage = null;
             }
 
@@ -452,10 +481,12 @@ define(function (require) {
                         self._imageCache.put(src, image);
                     }
                     image.src = src;
-                } else {
+                }
+                else {
                     texture.image = image;
                 }
-            } else if (this._isValueImage(image)) {
+            }
+            else if (this._isValueImage(image)) {
                 texture.image = image;
             }
         },
@@ -494,11 +525,13 @@ define(function (require) {
                 if (! vfImage) {
                     return false;
                 }
-            } else if (this._isValueImage(data)) {
+            }
+            else if (this._isValueImage(data)) {
                 width = data.width;
                 height = data.height;
                 vfImage = data;
-            } else {
+            }
+            else {
                 // Invalid data
                 return false;
             }
@@ -510,7 +543,8 @@ define(function (require) {
             var textureSize = this.query(surfaceLayerCfg, 'size');
             if (typeof(textureSize) === 'number') {
                 textureSize = [textureSize, textureSize];
-            } else if (! textureSize) {
+            }
+            else if (! textureSize) {
                 // Default texture size
                 textureSize = [2048, 1024];
             }
@@ -614,8 +648,6 @@ define(function (require) {
 
             this._globeNode.add(globeMesh);
 
-            globeMesh.on('mousemove', this._mouseMoveHandler, this);
-
             var scene = this.baseLayer.scene;
             scene.add(this._globeNode);
 
@@ -671,7 +703,8 @@ define(function (require) {
                         queryTarget.push(this.series[sIdx]);
                     }
                     value = dataItem.value;
-                } else {
+                }
+                else {
                     dataItem = '-';
                     value = '-';
 
@@ -768,7 +801,8 @@ define(function (require) {
             function createGeometry(geometry, bundleShape) {
                 if (geometry.type == 'Polygon') {
                     createPolygon(geometry.coordinates, bundleShape);
-                } else if (geometry.type == 'MultiPolygon') {
+                }
+                else if (geometry.type == 'MultiPolygon') {
                     for (var i = 0; i < geometry.coordinates.length; i++) {
                         createPolygon(geometry.coordinates[i], bundleShape);
                     }
@@ -835,19 +869,30 @@ define(function (require) {
             ];
         },
 
+        _initGlobeHandlers: function () {
+            var globeMesh = this._globeNode.queryNode('earth');
+            ['CLICK', 'DBLCLICK', 'MOUSEOVER', 'MOUSEOUT', 'MOUSEMOVE',
+            'DRAGSTART', 'DRAGEND', 'DRAGENTER', 'DRAGOVER', 'DRAGLEAVE', 'DROP']
+            .forEach(function (eveName) {
+                globeMesh.on(
+                    zrConfig.EVENT[eveName], this._mouseEventHandler, this
+                );
+            }, this);
+        },
+
         /**
          * Handle mousemove events like hover
          * @param {Object} e
          * @private
          */
-        _mouseMoveHandler: function (e) {
+        _mouseEventHandler: function (e) {
             var shape = this._globeSurface.hover(e);
             if (shape) {
                 // Trigger a global zr event to tooltip
-                this.zr.handler.dispatch(zrConfig.EVENT.MOUSEMOVE, {
+                this.zr.handler.dispatch(e.type, {
                     target: shape,
                     event: e.event,
-                    type: zrConfig.EVENT.MOUSEMOVE
+                    type: e.type
                 });
             }
         },

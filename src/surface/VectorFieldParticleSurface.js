@@ -161,7 +161,7 @@ define(function (require) {
                 image: spriteUtil.makeSimpleSprite(128)
             }));
             particleMesh.material.set(
-                'sizeScaling', this.particleSizeScaling * this.renderer.devicePixelRatio
+                'sizeScaling', this.particleSizeScaling * this.renderer.getDevicePixelRatio()
             );
             particleMesh.material.set('color', this.particleColor);
 

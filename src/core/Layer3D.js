@@ -58,6 +58,17 @@ define(function (require) {
          */
         this.scene = new Scene();
 
+        /**
+         * Renderer viewport, represented with percent
+         * @type {Object}
+         */
+        this._viewport = {
+            x: 0,
+            y: 0,
+            width: 1,
+            height: 1
+        };
+
         this._initHandlers();
     }
 
@@ -85,9 +96,40 @@ define(function (require) {
      * @param  {number} height
      */
     Layer3D.prototype.resize = function (width, height) {
-        this.renderer.resize(width, height);
-        if (this.camera instanceof PerspectiveCamera) {
-            this.camera.aspect = width / height;
+        var renderer = this.renderer;
+        renderer.resize(width, height);
+        var viewport = this._viewport;
+        this.setViewport(
+            viewport.x * width, viewport.y * height,
+            viewport.width * width, viewport.height * height
+        );
+    };
+
+    /**
+     * Set layer renderer viewport
+     * @param {number} x Viewport left bottom x
+     * @param {number} y Viewport left bottom y
+     * @param {number} width Viewport height
+     * @param {number} height Viewport height
+     */
+    Layer3D.prototype.setViewport = function (x, y, width, height) {
+        var renderer = this.renderer;
+        var rendererWidth = renderer.getWidth();
+        var rendererHeight = renderer.getHeight();
+        // Set viewport
+        var viewport = this._viewport;
+        viewport.x = x / rendererWidth;
+        viewport.y = y / rendererHeight;
+        viewport.width = width / rendererWidth;
+        // Invert y, in WebGL [0, 0] is left bottom coorner
+        viewport.height = 1 - height / rendererHeight;
+
+        renderer.setViewport(x, y, width, height);
+
+        // Set camera aspect
+        var camera = this.camera;
+        if (camera instanceof PerspectiveCamera) {
+            camera.aspect = width / height;
         }
     };
 
