@@ -132,7 +132,7 @@ define(function (require) {
          */
         this._sphereGeometry = new SphereGeometry({
             widthSegments: 40,
-            heightSegments: 40,
+            heightSegments: 40
         });
 
         /**
@@ -783,7 +783,7 @@ define(function (require) {
                         x: 0,
                         y: 0,
                         brushType: 'fill',
-                        text: this.getLabelText(name, value, queryTarget, 'normal'),
+                        text: this._getMapLabelText(name, value, queryTarget, 'normal'),
                         textAlign: 'center',
                         color: this.deepQuery(
                             queryTarget, 'itemStyle.normal.label.textStyle.color'
@@ -924,7 +924,7 @@ define(function (require) {
          * @param  {string} status 'normal' | 'emphasis'
          * @return {string}
          */
-        getLabelText : function (name, value, queryTarget, status) {
+        _getMapLabelText : function (name, value, queryTarget, status) {
             var formatter = this.deepQuery(
                 queryTarget,
                 'itemStyle.' + status + '.label.formatter'

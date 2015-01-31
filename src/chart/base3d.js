@@ -15,15 +15,9 @@ define(function (require) {
 
     var colorUtil = require('../util/color');
 
-    var Mesh = require('qtek/Mesh');
-    var Material = require('qtek/Material');
-    var Shader = require('qtek/Shader');
     var LRUCache = require('qtek/core/LRU');
     var Vector3 = require('qtek/math/Vector3');
     var Matrix4 = require('qtek/math/Matrix4');
-
-    var vec3 = require('qtek/dep/glmatrix').vec3;
-    var vec4 = require('qtek/dep/glmatrix').vec4;
 
     var MarkerCtorMap = {
         markLine: require('../entity/marker/MarkLine'),
@@ -238,9 +232,9 @@ define(function (require) {
          * @param  {qtek.math.Vector3} point Output 3d vector
          */
         getMarkCoord: function (seriesIndex, data, point) {
-            out._array[0] = data.x;
-            out._array[1] = data.y;
-            out._array[2] = data.z;
+            point._array[0] = data.x;
+            point._array[1] = data.y;
+            point._array[2] = data.z;
         },
 
         /**
@@ -302,6 +296,66 @@ define(function (require) {
             }
         },
 
+        /**
+         * Get label text based with formatter
+         * Code from echarts
+         * @param {Object} serie
+         * @param {Object} data
+         * @param {string} name
+         * @param {string} status Can be 'normal' or 'emphasis'
+         */
+        getSerieLabelText: function (serie, data, name, status) {
+            var formatter = this.deepQuery(
+                [data, serie],
+                'itemStyle.' + status + '.label.formatter'
+            );
+            if (!formatter && status === 'emphasis') {
+                // emphasis时需要看看normal下是否有formatter
+                formatter = this.deepQuery(
+                    [data, serie],
+                    'itemStyle.normal.label.formatter'
+                );
+            }
+            
+            var value = this.getDataFromOption(data, '-');
+            
+            if (formatter) {
+                if (typeof formatter === 'function') {
+                    return formatter.call(
+                        this.myChart,
+                        {
+                            seriesName: serie.name,
+                            series: serie,
+                            name: name,
+                            value: value,
+                            data: data,
+                            status: status
+                        }
+                    );
+                }
+                else if (typeof formatter === 'string') {
+                    formatter = formatter.replace('{a}','{a0}')
+                                         .replace('{b}','{b0}')
+                                         .replace('{c}','{c0}')
+                                         .replace('{a0}', serie.name)
+                                         .replace('{b0}', name)
+                                         .replace('{c0}', this.numAddCommas(value));
+    
+                    return formatter;
+                }
+            }
+            else {
+                if (value instanceof Array) {
+                    return value[2] != null
+                           ? this.numAddCommas(value[2])
+                           : (value[0] + ' , ' + value[1]);
+                }
+                else {
+                    return this.numAddCommas(value);
+                }
+            }
+        },
+
         // Overwrite onlegendSelected
         onlegendSelected: function (param, status) {
             var legendSelected = param.selected;
@@ -320,7 +374,7 @@ define(function (require) {
 
             // Dispose all the markers
             for (var i = 0; i < this._markList.length; i++) {
-                this._disposeSingleMark(this._markList[i]);
+                this._disposeSingleSerieMark(this._markList[i]);
             }
         },
 

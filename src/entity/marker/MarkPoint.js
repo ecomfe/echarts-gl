@@ -139,7 +139,9 @@ define(function (require) {
                 if (chart.deepQuery(
                     queryTarget, 'itemStyle.normal.label.show'
                 )) {
-                    shape.style.text = value;
+                    shape.style.text = chart.getSerieLabelText(
+                        markPoint, dataItem, dataItem.name, 'normal'
+                    );
                     shape.style.textPosition = 'inside';
                     shape.style.textColor = chart.deepQuery(
                         queryTarget, 'itemStyle.normal.label.textStyle.color'
