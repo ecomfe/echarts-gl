@@ -3,18 +3,24 @@ var ecConfig = require('echarts/config');
 var mapParams = require('echarts/util/mapData/params').params;
 
 myChart.setOption({
-    title: {
-        text: 'World GDP',
-        x: 'center',
-        textStyle: {
-            color: 'white'
-        }
-    },
     series: [{
         name: 'Map 3D',
         type: 'map3d',
         mapType: 'world',
-        data: [{}]
+        baseLayer: {
+            backgroundColor: 'rgba(0, 0, 0, 0.3)'
+        },
+        itemStyle: {
+            normal: {
+                areaStyle: {
+                    color: '#396696' 
+                }
+            }
+        },
+        data: [{}],
+        mapLocation: {
+            width: '80%'
+        }
     }]
 });
 
@@ -22,23 +28,23 @@ $.ajax({
     url: 'data/gdp.json',
     success: function (data) {
 
-        $('#chart').css({
-            width: '50%'
-        });
-        myChart.resize();
+        if (! window.barChart) {
+            var $chart2 = $('<div></div>').css({
+                width: '50%',
+                position: 'absolute',
+                right: "0px",
+                top: '0px',
+                bottom: '0px',
+                opacity: 0.7
+            }).appendTo($('#main'));
 
-        var $chart2 = $('<div></div>').css({
-            width: '50%',
-            position: 'absolute',
-            right: "0px",
-            top: '0px',
-            bottom: '0px'
-        }).appendTo($('#main'));
-
-        var barChart = echarts.init($chart2[0]);
+            window.barChart = echarts.init($chart2[0]);
+        }
         barChart.setOption({
             title: {
-                text: 'GDP',
+                text: 'World GDP',
+                subtext: 'Data from Geohive',
+                sublink: 'http://www.geohive.com/charts/ec_gdp1.aspx',
                 x: 'center',
                 textStyle: {
                     color: 'white'
@@ -47,6 +53,9 @@ $.ajax({
             tooltip: {
                 trigger: 'axis'
             },
+            grid: {
+                borderWidth: 0
+            },
             xAxis: {
                 type: 'category',
                 data: data.years.map(function (year) { return year + '年'; }),
@@ -54,6 +63,12 @@ $.ajax({
                     textStyle: {
                         color: 'white'
                     }
+                },
+                splitArea: {
+                    show: false
+                },
+                splitLine: {
+                    show: false
                 }
             },
             yAxis: {
@@ -62,12 +77,24 @@ $.ajax({
                     textStyle: {
                         color: 'white'
                     }
-                }
+                },
+                splitArea: {
+                    show: false
+                },
+                splitLine: {
+                    show: false
+                },
+                position: 'right'
             },
             series: [{
                 name: 'gdp',
                 type: 'bar',
-                data: [1400532, 2898133, 11027922, 22000729, 32346738, 63508421, 70441599, 71918394]
+                data: [1400532, 2898133, 11027922, 22000729, 32346738, 63508421, 70441599, 71918394],
+                itemStyle: {
+                    normal: {
+                        color: '#396696'
+                    }
+                }
             }]
         });
 
@@ -78,9 +105,6 @@ $.ajax({
                 barChart.setOption({
                     title: {
                         text: currentName + ' GDP'
-                    },
-                    grid: {
-                        show: false
                     },
                     series: [{
                         name: 'gdp',

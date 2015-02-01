@@ -1,9 +1,39 @@
 var fs = require('fs');
 var etpl = require('etpl');
 var marked = require('marked');
+var _ = require('lodash');
 
 var config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
 
+// Example entry
+var exampleEntryTpl = fs.readFileSync('tpl/example_entry.tpl', 'utf-8');
+var exampleEntryTplRenderer = etpl.compile(exampleEntryTpl);
+
+var exampleAllTypesMap = _.groupBy(config.examples, function (exampleConf) {
+    return exampleConf.type;
+});
+var exampleAllTypes = [];
+for (var type in exampleAllTypesMap) {
+    exampleAllTypes.push({
+        type: type,
+        typeTitle: config.exampleTypes[type].title,
+        examples: exampleAllTypesMap[type].map(function (exampleConf) {
+            var name = exampleConf.name;
+            return {
+                name: name,
+                thumb: 'img/example/' + name + '.jpg',
+                title: exampleConf.title,
+                url: "example/" + name + '.html'
+            };
+        })
+    })
+}
+
+fs.writeFileSync('example.html', exampleEntryTplRenderer({
+    exampleAllTypes: exampleAllTypes
+}), 'utf-8');
+
+// Example files
 var exampleTpl = fs.readFileSync('tpl/example.tpl', 'utf-8');
 var exampleTplRenderer = etpl.compile(exampleTpl);
 config.examples.forEach(function (exampleConf) {

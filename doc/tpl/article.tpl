@@ -25,24 +25,68 @@
             </ul>
         </header>
         <div id="main">
-            <div id="nav">
-                <h5>Menu</h5>
-                <ul>
+            <nav id="nav" class="sidebar affix">
+                <ul class="top">
                 <!-- for: ${articleList} as ${item} -->
-                    <li class="article-title">
+                    <!-- if: ${item.title} === ${article.title} -->
+                    <li class="current">
+                    <!-- else -->
+                    <li>
+                    <!-- /if -->
                         <a href="${item.url}">${item.title}</a>
                     </li>
                 <!-- /for -->
                 </ul>
-            </div>
+            </nav>
             <article id="article">
                 <h1>${article.title}</h1>
                 {{articleHtml}}
             </article>
         </div>
 
-        <script src="../../lib/esl.js"></script>
+        <div style="clear:both;"></div>
+        <footer id="footer"></footer>
+
         <script src="../../lib/jquery.min.js"></script>
+        <script src="../../lib/affix.js"></script>
+
+        <script>
+            $('#nav').affix({
+                offset: {
+                    top: 60,
+                    bottom: 40
+                }
+            });
+
+            var $currentNav = $('#nav>ul>li.current');
+
+            var $currentNavSub = $('<ul></ul>').appendTo($currentNav);
+            $('#article h2, #article h3').each(function (idx, $el) {
+                var padding = 0;
+                switch ($el.tagName.toLowerCase()) {
+                    case 'h2':
+                        padding = 20;
+                        break;
+                    case 'h3':
+                        padding = 30;
+                        break;
+                    case 'h4':
+                        padding = 40;
+                        break;
+                    case 'h5':
+                        padding = 50;
+                        break;
+                }
+
+                $el = $($el);
+                var title = $el.html();
+                $el.prepend('<a name="' + title + '"></a>');
+                
+                $('<li><a href="#' + title + '">' + title + '</a></li>')
+                    .appendTo($currentNavSub)
+                    .find('a').css('padding-left', padding + 'px');
+            });
+        </script>
     </body>
 </head>
 </html>

@@ -26,53 +26,10 @@ body {
 }
 #main {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  width: 1280px;
+  width: 1200px;
   margin: 0 auto;
   margin-top: 70px;
   text-align: left;
-}
-#main a {
-  position: relative;
-  text-decoration: none;
-  color: #333;
-}
-#main a:before {
-  content: "";
-  border-bottom: 1px solid #890505;
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  width: 0px;
-  color: #333;
-  -webkit-transition: width 0.5s;
-  -moz-transition: width 0.5s;
-  -ms-transition: width 0.5s;
-  -o-transition: width 0.5s;
-  transition: width 0.5s;
-}
-#main a:hover::before {
-  width: 100%;
-}
-#nav {
-  position: absolute;
-  width: 300px;
-  top: 100px;
-}
-#nav ul {
-  margin: 0px;
-}
-#nav ul li {
-  list-style: none;
-  line-height: 30px;
-  font-size: 14px;
-}
-#nav ul > li > a {
-  font-size: 16px;
-}
-#nav h5 {
-  margin: 0px 0px 20px 30px;
-  color: #82BECD;
-  font-size: 18px;
 }
 #article {
   margin-left: 300px;
@@ -82,16 +39,23 @@ body {
 }
 #article h1 {
   color: #82BECD;
-  font-weight: normal;
+  font-weight: 200;
+  font-size: 28px;
 }
-#article h2,
+#article h2 {
+  margin-left: 40px 0px 0px 0px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #82becd;
+  color: #82becd;
+  font-weight: 200;
+  font-size: 22px;
+}
 #article h3,
 #article h4,
 #article h5 {
-  border-left: 3px solid #82BECD;
+  border-left: 2px solid #82becd;
   padding-left: 10px;
-  margin-left: 5px;
-  margin-top: 40px;
+  margin-left: 30px 0px 0px 5px;
   font-weight: normal;
 }
 #article a {
@@ -120,4 +84,17 @@ body {
 }
 #article figcaption {
   margin: 10px 0px;
+}
+#article p {
+  line-height: 20px;
+  line-height: 25px;
+  font-size: 15px;
+}
+#article p code {
+  padding: 2px 3px;
+  border: 1px solid #B0AEAE;
+  border-radius: 5px;
+  margin: 2px;
+  vertical-align: middle;
+  font-size: 15px;
 }

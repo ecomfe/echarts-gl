@@ -24,7 +24,7 @@ define(function (require) {
         markBar: require('../entity/marker/MarkBar'),
         markPoint: require('../entity/marker/MarkPoint'),
         largeMarkPoint: require('../entity/marker/LargeMarkPoint')
-    }
+    };
 
     /**
      * @constructor

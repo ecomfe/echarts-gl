@@ -13,7 +13,9 @@ $.ajax({
         }
         myChart.setOption({
             title: {
-                text: 'Wind',
+                text: 'Surface Wind Field Visualization',
+                subtext: 'Data from http://earth.nullschool.net',
+                sublink: 'http://earth.nullschool.net',
                 x: 'center',
                 textStyle: {
                     color: 'white'

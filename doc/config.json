@@ -1,4 +1,12 @@
 {
+    "exampleTypes": {
+        "map3d": {
+            "title": "Map 3D"
+        },
+        "map3d_mix": {
+            "title": "Map 3D Mix"
+        }
+    },
     "examples": [{
         "type": "map3d",
         "name": "map3d",
@@ -22,7 +30,7 @@
     }, {
         "type": "map3d",
         "name": "map3d_wind",
-        "title": "Wind"
+        "title": "Surface Wind Field Visualization"
     }, {
         "type": "map3d",
         "name": "map3d_flights",
@@ -30,13 +38,13 @@
     }, {
         "type": "map3d",
         "name": "map3d_placemark",
-        "title": "Map3D Famous Place"
+        "title": "The 25 Most Popular Tourist Attractions In The World"
     }, {
-        "type": "map3d",
+        "type": "map3d_mix",
         "name": "map3d_mix",
         "title": "Map3D Mix Map"
     }, {
-        "type": "map3d",
+        "type": "map3d_mix",
         "name": "map3d_mix2",
         "title": "World GDP"
     }],

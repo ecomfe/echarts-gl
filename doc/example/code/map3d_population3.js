@@ -16,7 +16,7 @@ $.ajax({
         myChart.setOption({
             title : {
                 text: 'Gridded Population of the World (2000)',
-                subtext: 'from Socioeconomic Data and Applications Center',
+                subtext: 'Data from Socioeconomic Data and Applications Center',
                 sublink : 'http://sedac.ciesin.columbia.edu/data/set/gpw-v3-population-density/data-download#close',
                 x:'center',
                 y:'top',

@@ -1,7 +1,8 @@
 myChart.setOption({
     title: {
         text: 'The 25 Most Popular Tourist Attractions In The World',
-        link: 'http://www.businessinsider.com/worlds-best-attractions-2013-6?op=1',
+        subtext: 'From businessinsider',
+        sublink: 'http://www.businessinsider.com/worlds-best-attractions-2013-6?op=1',
         x: 'center',
         y: 'top',
         textStyle: {

@@ -645,7 +645,7 @@ define(function (require) {
             this._globeNode = new Node({
                 name: 'globe'
             });
-            var globeMesh = new Mesh({
+            var earthMesh = new Mesh({
                 name: 'earth',
                 geometry: this._sphereGeometry,
                 material: new Material({
@@ -654,9 +654,9 @@ define(function (require) {
                 })
             });
             var radius = this._earthRadius;
-            globeMesh.scale.set(radius, radius, radius);
+            earthMesh.scale.set(radius, radius, radius);
 
-            this._globeNode.add(globeMesh);
+            this._globeNode.add(earthMesh);
 
             var scene = this.baseLayer.scene;
             scene.add(this._globeNode);
@@ -669,7 +669,7 @@ define(function (require) {
                 this._baseTextureSize, this._baseTextureSize
             );
             this._globeSurface = globeSurface;
-            globeMesh.material.set('diffuseMap', globeSurface.getTexture());
+            earthMesh.material.set('diffuseMap', globeSurface.getTexture());
 
             globeSurface.onrefresh = function () {
                 zr.refreshNextFrame();

@@ -1,3 +1,5 @@
+@import url(color.less);
+
 header {
     position: absolute;
     top: 0;
@@ -6,30 +8,42 @@ header {
     height: 50px;
 
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
-    background-color: #3F4657;
+    background-color: @dark-color;
     margin-bottom: 0;
     z-index: 100;
 
     h1 {
-        margin: 3px 0 0 30px;
+        margin: 5px 0 0 30px;
         a {
-            font-size: 18px;
-            color: #82BECD;
+            font-size: 22px;
+            color: @light-color;
             padding-left: 50px;
-
             background-image: url(../img/echarts-logo.png);
             background-repeat: no-repeat;
-
             line-height: 35px;
             display: inline-block;
             text-decoration: none;
+
+            text-shadow: rgb(57, 63, 78) 1px 1px,
+                rgb(57, 63, 78) 2px 2px,
+                rgb(57, 63, 78) 3px 3px,
+                rgb(57, 63, 78) 4px 4px,
+                rgb(57, 63, 78) 5px 5px,
+                rgb(57, 63, 78) 6px 6px,
+                rgb(57, 63, 79) 7px 7px,
+                rgb(58, 64, 80) 8px 8px,
+                rgb(59, 65, 81) 9px 9px,
+                rgb(59, 66, 82) 10px 10px,
+                rgb(60, 66, 83) 11px 11px,
+                rgb(61, 67, 84) 12px 12px,
+                rgb(61, 68, 85) 13px 13px,
         }
         display: inline-block;
     }
 
     .links {
         float: right;
-        margin: 0px;
+        margin: 0px 30px 0px 0px;
 
         li {
             float: left;
@@ -37,12 +51,12 @@ header {
 
             &:hover,
             &.active {
-                border-bottom: 3px solid #82BECD;
+                border-bottom: 3px solid @light-color;
                 margin-bottom: -3px;
             }
 
             a {
-                color: #82BECD;
+                color: @light-color;
                 text-decoration: none;
 
                 padding: 0px 10px;
@@ -56,4 +70,108 @@ header {
             }
         }
     }
+}
+
+nav.sidebar {
+    width: 300px;
+
+    ul.top {
+        margin: 0px 0px 0px 20px;
+
+        &>li>a {
+            font-size: 16px;
+        }
+    }
+
+    ul {
+        margin: 0px;
+        padding: 0px;
+
+        li {
+            list-style: none;
+            line-height: 20px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        
+        li a {
+            font-size: 14px;
+            padding-left: 10px;
+        }
+
+        li.current {
+            &>a {
+                margin-left: -2px;
+                border-left: 2px solid @dark-color;
+                color: @dark-color;
+            }
+        }
+
+        li:hover {
+            &>a {
+                border-left: 1px solid @dark-color;
+                margin-left: -1px;
+                color: @dark-color;
+            }
+            &.current>a {
+                border-left-width: 2px;
+                margin-left: -2px;
+            }
+        }
+    }
+
+    a {
+        position: relative;
+        text-decoration: none;
+        color: #333;
+    }
+
+    // h5 {
+    //     margin: 0px 0px 20px 30px;
+    //     color: @light-color;
+    //     font-size: 18px;
+    // }
+
+    // a {
+    //     position: relative;
+    //     text-decoration: none;
+    //     color: #333;
+
+    //     &:before {
+    //         content: "";
+    //         border-bottom: 1px solid @light-color;
+    //         position: absolute;
+    //         left: 0;
+    //         bottom: -1px;
+    //         width: 0px;
+    //         color: #333;
+    //         -webkit-transition: width 0.5s;
+    //            -moz-transition: width 0.5s;
+    //             -ms-transition: width 0.5s;
+    //              -o-transition: width 0.5s;
+    //                 transition: width 0.5s;
+    //     }
+    //     &:hover::before {
+    //         width: 100%;
+    //     }
+    // }
+}
+
+.affix {
+    position: fixed;
+    top: 40px;
+}
+
+.affix-top {
+    position: absolute;
+    top: 100px;
+}
+
+.affix-bottom {
+    position: absolute;
+    bottom: 200px;
+}
+
+#footer {
+    height: 150px;
 }

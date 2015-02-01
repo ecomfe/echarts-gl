@@ -1,6 +1,6 @@
 > map3d 类型提供了对全球数据的可视化，支持 ECharts 中 map 原有配置项的同时也加入了大量新的配置项。
 
-###Simple Example
+##Simple Example
 
 ```javascript
 var option = {
@@ -170,7 +170,7 @@ size: [2048, 1024]
 
 <figure>
 <a name="#fig-vector-field"></a>
-<img src="../../img/article/vector-field.png" />
+<img src="../../img/article/vector_field.png" />
 <figcaption>Fig2. Vector Field</figcaption>
 </figure>
 

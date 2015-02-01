@@ -72,7 +72,7 @@ define({
                 borderColor: 'black',
                 borderWidth: 1,
                 areaStyle: {
-                    color: '#17192e',
+                    color: '#396696',
                     opacity: 1
                 }
             },

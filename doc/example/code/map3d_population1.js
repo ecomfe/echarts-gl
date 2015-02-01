@@ -1,7 +1,7 @@
 myChart.setOption({
     title : {
         text: 'World Population (2010)',
-        subtext: 'from United Nations, Total population, both sexes combined, as of 1 July (thousands)',
+        subtext: 'Data from United Nations, Total population, both sexes combined, as of 1 July (thousands)',
         sublink : 'http://esa.un.org/wpp/Excel-Data/population.htm',
         x:'center',
         y:'top',
