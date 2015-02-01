@@ -1,0 +1,77 @@
+@import url(color.less);
+
+#header {
+    background-color: white;
+
+    h1 {
+        a {
+            color: @dark-color;
+            text-shadow: none;
+        }
+    }
+
+    .links li a {
+        color: @dark-color;
+    }
+}
+
+body {
+    margin: 0px;
+    padding-top: 50px;
+
+    text-align: center;
+}
+
+#main {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+#masthead {
+    background-color: @dark-color;
+    padding-bottom: 50px;
+
+    .thumb {
+        width: 200px;
+        margin: 50px 0px 20px 0px;
+    }
+
+    p.desc {
+        color: white;
+        font-size: 30px;
+        width: 700px;
+        margin: 0px auto 50px auto;
+
+        line-height: 50px;
+        font-weight: 200;
+    }
+
+    a.download {
+        font-size: 40px;
+        border: 1px solid white;
+        padding: 10px 20px;
+        border-radius: 10px;
+
+        background: none;
+        color: white;
+        font-weight: 200;
+        font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        cursor: pointer;
+
+        text-decoration: none;
+        display: inline-block;
+
+        -webkit-transition: all 0.2s linear;
+        -moz-transition: all 0.2s linear;
+        transition: all 0.2s linear;
+
+        &:hover {
+            color: @dark-color;
+            background: white;
+        }
+    }
+
+    .github-status {
+        height: 50px;
+        margin: 50px 0px;
+    }
+}

@@ -4,6 +4,7 @@ header {
   left: 0;
   right: 0;
   height: 50px;
+  text-align: left;
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
   background-color: #3f4657;
   margin-bottom: 0;
@@ -96,12 +97,27 @@ nav.sidebar a {
 }
 .affix-top {
   position: absolute;
-  top: 100px;
+  top: 80px;
 }
 .affix-bottom {
   position: absolute;
-  bottom: 200px;
 }
 #footer {
-  height: 150px;
+  height: 50px;
+  padding-top: 100px;
+  font-size: 14px;
+}
+#footer a {
+  text-decoration: none;
+  color: #1a4a7d;
+}
+#footer a:hover {
+  text-decoration: underline;
+}
+#footer .links {
+  margin: 20px 0px 30px 0px;
+}
+#footer .links li {
+  display: inline;
+  padding: 0px 3px;
 }

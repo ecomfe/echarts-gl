@@ -24,7 +24,7 @@
                 <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
             </ul>
         </header>
-        <div id="main">
+        <main id="main">
             <nav id="nav" class="sidebar affix">
                 <ul class="top">
                 <!-- for: ${articleList} as ${item} -->
@@ -42,10 +42,9 @@
                 <h1>${article.title}</h1>
                 {{articleHtml}}
             </article>
-        </div>
+        </main>
 
-        <div style="clear:both;"></div>
-        <footer id="footer"></footer>
+        <!-- import: footer -->
 
         <script src="../../lib/jquery.min.js"></script>
         <script src="../../lib/affix.js"></script>

@@ -1,5 +1,9 @@
 body {
   background-color: #eee;
+  text-align: center;
+}
+#nav.sidebar {
+  width: 200px;
 }
 #main {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -9,10 +13,10 @@ body {
   text-align: left;
 }
 #examples {
-  margin-left: 300px;
+  margin-left: 200px;
   background-color: white;
   padding: 10px 20px;
-  box-shadow: 0px 0px 10px #C7C7C7;
+  box-shadow: 0px 5px 12px rgba(0, 0, 0, 0.2);
 }
 #examples h1 {
   color: #82becd;
@@ -35,17 +39,17 @@ body {
 }
 #examples li {
   list-style: none;
-  width: 390px;
+  width: 440px;
   margin: 20px;
   float: left;
 }
 #examples li img {
-  width: 390px;
-  height: 195px;
+  width: 440px;
+  height: 220px;
   -webkit-transition: all 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms;
   -moz-transition: all 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms;
   transition: all 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms;
-  box-shadow: rgba(0, 0, 0, 0.4) 2px 2px 4px 0px;
+  box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 4px 0px;
 }
 #examples li img:hover {
   box-shadow: rgba(0, 0, 0, 0.4) 5px 15px 25px 0px;

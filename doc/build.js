@@ -5,6 +5,9 @@ var _ = require('lodash');
 
 var config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
 
+
+etpl.compile(fs.readFileSync('tpl/footer.tpl', 'utf-8'));
+
 // Example entry
 var exampleEntryTpl = fs.readFileSync('tpl/example_entry.tpl', 'utf-8');
 var exampleEntryTplRenderer = etpl.compile(exampleEntryTpl);
@@ -80,4 +83,4 @@ for (var name in config.languages) {
 
 // Index
 var tpl = fs.readFileSync('tpl/index.tpl', 'utf-8');
-fs.writeFileSync('index.html', tpl, 'utf-8');
+fs.writeFileSync('index.html', etpl.compile(tpl)(), 'utf-8');

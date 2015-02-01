@@ -3,6 +3,7 @@ define(function (require) {
     var ec = require('echarts');
     require('echarts-x');
     require('echarts/chart/map');
+    require('echarts/chart/bar');
     require('echarts-x/chart/map3d');
     require('lib/codemirror/mode/javascript');
 
@@ -36,7 +37,7 @@ define(function (require) {
         if (myChart) {
             myChart.dispose();
         }
-        myChart = ec.init(document.getElementById('viewport'));
+        myChart = ec.init(document.getElementById('chart'));
         runCode(editor.doc.getValue());
     }
 

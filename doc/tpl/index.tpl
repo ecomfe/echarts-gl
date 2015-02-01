@@ -24,7 +24,24 @@
                 <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
             </ul>
         </header>
-        <div id="main"></div>
+
+        <main id="main">
+            <div id="masthead">
+                <img class="thumb" src="img/logo.png" alt="">
+                <p class="desc">
+                    ECharts-X is an extension pack for ECharts providing globe visualization and 3d plots
+                </p>
+                <a class="download">DOWNLOAD</a>
+                
+                <div class="github-status">
+                    <iframe style="margin-left:40px;" src="https://ghbtns.com/github-btn.html?user=pissang&repo=echarts-x&type=star&count=true&size=large" frameborder="0" scrolling="0" width="150px" height="30px"></iframe>
+
+                    <iframe src="https://ghbtns.com/github-btn.html?user=pissang&repo=echarts-x&type=fork&count=true&size=large" frameborder="0" scrolling="0" width="150px" height="30px"></iframe>
+                </div>
+            </div>
+        </main>
+
+        <!-- import: footer -->
 
         <script src="lib/esl.js"></script>
         <script src="lib/jquery.min.js"></script>

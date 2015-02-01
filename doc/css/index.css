@@ -1,0 +1,58 @@
+#header {
+  background-color: white;
+}
+#header h1 a {
+  color: #3f4657;
+  text-shadow: none;
+}
+#header .links li a {
+  color: #3f4657;
+}
+body {
+  margin: 0px;
+  padding-top: 50px;
+  text-align: center;
+}
+#main {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+#masthead {
+  background-color: #3f4657;
+  padding-bottom: 50px;
+}
+#masthead .thumb {
+  width: 200px;
+  margin: 50px 0px 20px 0px;
+}
+#masthead p.desc {
+  color: white;
+  font-size: 30px;
+  width: 700px;
+  margin: 0px auto 50px auto;
+  line-height: 50px;
+  font-weight: 200;
+}
+#masthead a.download {
+  font-size: 40px;
+  border: 1px solid white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: none;
+  color: white;
+  font-weight: 200;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  -webkit-transition: all 0.2s linear;
+  -moz-transition: all 0.2s linear;
+  transition: all 0.2s linear;
+}
+#masthead a.download:hover {
+  color: #3f4657;
+  background: white;
+}
+#masthead .github-status {
+  height: 50px;
+  margin: 50px 0px;
+}

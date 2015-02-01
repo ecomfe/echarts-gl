@@ -35,7 +35,7 @@ body {
   margin-left: 300px;
   background-color: white;
   padding: 10px 20px;
-  box-shadow: 0px 0px 10px #C7C7C7;
+  box-shadow: 0px 5px 12px rgba(0, 0, 0, 0.2);
 }
 #article h1 {
   color: #82BECD;
