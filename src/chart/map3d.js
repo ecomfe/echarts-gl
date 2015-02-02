@@ -59,6 +59,11 @@ define(function (require) {
 
         ChartBase3D.call(this, ecTheme, messageCenter, zr, option, myChart);
 
+        // Browser not support WebGL
+        if (! this.baseLayer.renderer) {
+            return;
+        }
+
         /**
          * Radius of earth sphere mesh
          * @type {number}
@@ -1115,7 +1120,12 @@ define(function (require) {
         },
 
         // Overwrite refresh
-        refresh: function(newOption) {
+        refresh: function(newOption) {        
+            // Browser not support WebGL
+            if (! this.baseLayer.renderer) {
+                return;
+            }
+
             if (newOption) {
                 this.option = newOption;
                 this.series = newOption.series;

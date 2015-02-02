@@ -33,19 +33,28 @@ define(function (require) {
         this.id = id;
 
         /**
+         * @type {qtek.Renderer}
+         */
+        try {
+            this.renderer = new Renderer();
+            this.renderer.resize(painter.getWidth(), painter.getHeight());   
+        }
+        catch (e) {
+            this.renderer = null;
+            this.dom = document.createElement('div');
+            this.dom.style.cssText = 'position:absolute; left: 0; top: 0; right: 0; bottom: 0;';
+            this.dom.className = 'ecx-nowebgl'
+            this.dom.innerHTML = 'Sorry, your browser does support WebGL';
+
+            return;
+        }
+
+        /**
          * Canvas dom for webgl rendering
          * @type {HTMLCanvasElement}
          */
-        this.dom = document.createElement('canvas');
+        this.dom = this.renderer.canvas;
         this.dom.style.cssText = 'position:absolute; left: 0; top: 0';
-
-        /**
-         * @type {qtek.Renderer}
-         */
-        this.renderer = new Renderer({
-            canvas: this.dom
-        });
-        this.renderer.resize(painter.getWidth(), painter.getHeight());
 
         /**
          * @type {qtek.camera.Perspective}

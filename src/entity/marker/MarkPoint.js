@@ -53,6 +53,7 @@ define(function (require) {
             if (! serie.markPoint || ! serie.markPoint.data || serie.markPoint.data.length === 0) {
                 return;
             }
+
             this.seriesIndex = seriesIndex;
 
             var chart = this.chart;
@@ -206,6 +207,7 @@ define(function (require) {
         clear: function () {
             var renderer = this.chart.baseLayer.renderer;
             renderer.disposeNode(this._sceneNode, true, true);
+            this._sceneNode = new Node();
             this._spritesRenderables = [];
             this._textureAtlasList = [];
         },
