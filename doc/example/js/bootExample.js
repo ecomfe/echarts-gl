@@ -7,7 +7,7 @@
     $(window).resize(resize);
     resize();
 
-    var developMode = true;
+    var developMode = false;
 
     if (developMode) {
         require.config({
@@ -42,27 +42,44 @@
         boot();
     }
     else {
-        var script = document.createElement('script');
-        script.async = true;
-
-        script.src = 'lib/echarts-x/echarts-x.js';
-        script.onload = function () {
-            require.config({
-                paths: {
-                    "lib": '../lib',
-                    'echarts-x': '../lib/echarts-x',
-                    'echarts': '../lib/echarts',
-                    'text': '../lib/text'
-                }
+        $(document).ready(function () {
+            loadScript([
+                '../lib/echarts-x/echarts-x.js',
+                '../lib/echarts/echarts.js',
+                '../lib/echarts/chart/map.js'
+            ], function () {
+                require.config({
+                    paths: {
+                        "lib": '../lib',
+                        'echarts-x': '../lib/echarts-x',
+                        'echarts': '../lib/echarts',
+                        'text': '../lib/text'
+                    }
+                });
+                boot();
             });
-
-            boot();
-        }
-
-        (document.getElementsByTagName('head')[0] || document.body).appendChild(script);
+        });
     }
 
     function boot() {
         require(['js/example']);
+    }
+
+    function loadScript(urlList, onload) {
+        var count = urlList.length;;
+        for (var i = 0; i < urlList.length; i++) {
+            var script = document.createElement('script');
+            script.async = true;
+
+            script.src = urlList[i];
+            script.onload = function () {
+                count--;
+                if (count === 0) {
+                    onload && onload();
+                }
+            }
+
+            document.getElementsByTagName('head')[0].appendChild(script);
+        }
     }
 })()

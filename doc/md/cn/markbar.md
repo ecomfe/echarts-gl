@@ -59,7 +59,10 @@ distance: 1
 map3d 中 `distance` 表示标注离球体表面的距离。球体半径为 100。也可以细化到在 data 级别配置 `distance`。
 
 ###data
-data 配置详见 <a href="./Mark_Point">markPoint</a>。跟 markPoint 相比 markBar 的 data 可以使用 barHeight 配置柱形高度。如下：
+data 配置详见 <a href="./markpoint.html">markPoint</a>。跟 markPoint 相比 markBar 的 data 可以使用 barHeight 配置柱形高度。如下：
+
+###itemStyle
+markBar 的 itemStyle 只支持配置颜色 `color`
 
 ```javascript
 var data = [{

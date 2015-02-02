@@ -12,6 +12,13 @@ myChart.setOption({
     tooltip: {
         formatter: '{b}'
     },
+    legend: {
+        x: 'left',
+        data: ['placemarks'],
+        textStyle: {
+            color: 'white'
+        }
+    },
     series: [{
         name: 'placemarks',
         type: 'map3d',

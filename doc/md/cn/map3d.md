@@ -1,4 +1,4 @@
-> map3d 类型提供了对全球数据的可视化，支持 ECharts 中 map 原有配置项的同时也加入了大量新的配置项。
+> map3d 类型提供了对全球数据的可视化，支持 ECharts 中 map 原有配置项的同时也加入了大量新的配置项。如果你之前使用过 ECharts 的 map 组件的话对下面的示例肯定不会陌生。
 
 ##Simple Example
 
@@ -46,11 +46,28 @@ var option = {
 
 ###mapType
 
+```javascript
+mapType: 'world'
+```
+
+同 ECharts 中 map 的 mapType, 默认是 `world`。不建议使用其它类型。
+
 ###mapLocation
+
+```javascript
+mapLocation: {
+    x: 0,
+    y: 0,
+    width: '100%',
+    height: '100%'
+}
+```
+
+同 ECharts 中 map 的 mapLocation，指定地球在视图中的位置。可以是绝对的像素坐标，也可以表示相对的百分比。
 
 ###autoRotate
 
-球体是否在打开的时候自动旋转
+地球是否在打开的时候自动旋转
 
 ###baseLayer
 ####backgroundColor
@@ -173,5 +190,7 @@ size: [2048, 1024]
 <img src="../../img/article/vector_field.png" />
 <figcaption>Fig2. Vector Field</figcaption>
 </figure>
+
+具体的示例可以参见[风场的可视化示例](../../example/map3d_wind.html)
 
 ##Map 3D 中的分层

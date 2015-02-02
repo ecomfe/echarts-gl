@@ -92,7 +92,16 @@
                     setInterval(draw, 50);
                 }
                 bgImage.src = 'example/asset/background.jpg';
+
+                // Mouse move effect
+                $('#main').mousemove(function (e) {
+                    var deg = (e.clientX - $(window).width() / 2) / 80;
+                    $('#masthead').css('transform', 'rotateY(' + deg + 'deg)');
+                    $('#main').css('background-position', (-deg * 7 - 200) +  'px -100px');
+                });
             });
+
+            
         </script>
     </body>
 </head>

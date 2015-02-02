@@ -30,9 +30,9 @@
                 <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
             </ul>
         </header>
-        <div id="main">
+        <main id="main">
             <div id="chart"></div>
-        </div>
+        </main>
         <div id="editor">
             <textarea></textarea>
             <div id="editor-toolbar">

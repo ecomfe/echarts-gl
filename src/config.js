@@ -115,7 +115,7 @@ define({
                 borderWidth: 1,
                 borderColor: '#000',
                 label: {
-                    show: true,
+                    show: false,
                     // Text poisition of ECharts-X can only be 'inside'
                     position: 'inside',
                     textStyle: {

@@ -32,8 +32,6 @@ body {
 }
 
 #main {
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-
     width: 1200px;
     margin: 0 auto;
     margin-top: 70px;
@@ -63,13 +61,9 @@ body {
     h3, h4, h5 {
         border-left: 2px solid @light-color;
         padding-left: 10px;
-        margin-left: 30px 0px 0px 5px;
+        margin: 40px 0px 20px 0px;
 
         font-weight: normal;
-    }
-
-    a {
-        font-style: italic;
     }
 
     blockquote {
@@ -78,13 +72,21 @@ body {
         margin: 0px 10px;
     }
 
+    code {
+        font-family: 'Monaco', Arial;
+    }
+
     pre {
-        line-height: 20px;
         background-color: #F7F7F7;
         margin: 0px -21px;
         padding: 20px;
         box-sizing: border-box;
         border: 1px solid #D5D5D5;
+
+        code {
+            font-size: 14px;
+            line-height: 24px;
+        }
     }
 
     img {
@@ -108,13 +110,38 @@ body {
     }
 
     p code {
-        padding: 2px 3px;
-        border: 1px solid #B0AEAE;
-        border-radius: 5px;
-        margin: 2px;
+        border: 1px solid #EAEAEA;
+        margin: 0 2px;
+        padding: 0 5px;
+        border-radius: 3px;
         vertical-align: middle;
 
-        font-size: 15px;
+        font-size: 13px;
+        color: '#333'
+    }
+
+    a {
+        color: @light-color;
+        text-decoration: none;
+        position: relative;
+
+        &:before {
+            content: "";
+            border-bottom: 1px solid @light-color;
+            position: absolute;
+            left: 0;
+            bottom: -1px;
+            width: 0px;
+            color: #333;
+            -webkit-transition: width 0.5s;
+               -moz-transition: width 0.5s;
+                -ms-transition: width 0.5s;
+                 -o-transition: width 0.5s;
+                    transition: width 0.5s;
+        }
+        &:hover::before {
+            width: 100%;
+        }
     }
 }
 #article h1,

@@ -48,6 +48,9 @@
 
         <script src="../../lib/jquery.min.js"></script>
         <script src="../../lib/affix.js"></script>
+        <script src="../../lib/prettify/prettify.js"></script>
+
+        <link rel="stylesheet" href="../../lib/prettify/github.css">
 
         <script>
             $('#nav').affix({
@@ -56,6 +59,10 @@
                     bottom: 40
                 }
             });
+
+            $('pre').addClass('.prettyprint');
+
+            prettyPrint();
 
             var $currentNav = $('#nav>ul>li.current');
 

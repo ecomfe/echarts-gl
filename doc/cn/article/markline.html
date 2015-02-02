@@ -1,0 +1,175 @@
+<!Doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ECharts-X">
+    <meta name="author" content="shenyi.914@gmail.com">
+    <title>ECharts-X</title>
+
+    <link rel="shortcut icon" href="../../img/favicon.png">
+
+    <link rel="stylesheet" href="../../css/common.css">
+    <link rel="stylesheet" href="../../css/article.css">
+    <body>
+        <header id="header">
+            <h1><a href="../../index.html">ECharts-X</a></h1>
+            <ul class="links">
+                <li class="active">
+                    <a href="./getting_started.html" target="_blank">Documentation</a>
+                </li>
+                <li><a href="../../example.html" target="_blank">Examples</a></li>
+                <li><a href="https://github.com/pissang/echarts-x/" target="_blank">Github</a></li>
+                <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
+            </ul>
+        </header>
+        <main id="main">
+            <nav id="nav" class="sidebar affix">
+                <ul class="top">
+                
+                    
+                    <li>
+                    
+                        <a href="getting_started.html">Getting Started</a>
+                    </li>
+                
+                    
+                    <li>
+                    
+                        <a href="map3d.html">Map 3D</a>
+                    </li>
+                
+                    
+                    <li>
+                    
+                        <a href="markpoint.html">Mark Point</a>
+                    </li>
+                
+                    
+                    <li>
+                    
+                        <a href="markbar.html">Mark Bar</a>
+                    </li>
+                
+                    
+                    <li class="current">
+                    
+                        <a href="markline.html">Mark Line</a>
+                    </li>
+                
+                </ul>
+            </nav>
+            <article id="article">
+                <h1>Mark Line</h1>
+                <blockquote>
+<p>ECharts 提供了使用 WebGL 绘制的 markLine。并且在大部分配置项上兼容 <a href="http://echarts.baidu.com/doc/doc.html#SeriesMarkLine">ECharts</a>。</p>
+</blockquote>
+<h2 id="simple-example-from-north-to-south">Simple Example - From north to south</h2>
+<pre><code class="lang-javascript">var option = {
+    series: [{
+        markLine: [{
+            data: [{
+                geoCoord: [0, -89]
+            }, {
+                geoCoord: [0, 89]
+            }]
+        }]
+    }]
+};
+</code></pre>
+<p>或者你可以查看使用 markLine 可视化全球飞行路线的<a href="../../example/map3d_flights.html">示例</a></p>
+<h2 id="markline-option">MarkLine Option</h2>
+<h3 id="effect">effect</h3>
+<pre><code class="lang-javascript">effect: {
+    show: false,
+    scaleSize: 2
+}
+</code></pre>
+<p>markLine 动画效果配置</p>
+<h3 id="distance">distance</h3>
+<pre><code class="lang-javascript">distance: 1
+</code></pre>
+<p>map3d 中 <code>distance</code> 表示标注离球体表面的距离。球体半径为 100。也可以细化到在 data 级别配置 <code>distance</code>。</p>
+<h3 id="itemstyle">itemStyle</h3>
+<pre><code>itemStyle: {
+    normal: {
+        // 线的颜色默认是取 legend 的颜色
+        // color: null
+        // 线宽，这里线宽是屏幕的像素大小
+        width: 1
+        // 线的透明度
+        opacity: 0.2
+    }
+}
+</code></pre><p>ECharts-X 中 <code>markLine</code> 的 <code>itemStyle</code> 目前不支持 <code>emphasis</code> 的样式。</p>
+<h3 id="data">data</h3>
+
+            </article>
+        </main>
+
+        
+<div style="clear:both;"></div>
+<footer id="footer">
+    <p class="maintained">Maintained by <a href="http://echarts.baidu.com/doc/about.html" target="_blank">ECharts</a> team</p>
+    <ul class="links">
+        <li><a target="_blank" href="http://echarts.baidu.com">ECharts</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://tushuo.baidu.com/">Baidu 图说</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://efe.baidu.com/">Baidu EFE</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://weibo.com/echarts">Weibo</a></li>
+    </ul>
+</footer>
+
+        <script src="../../lib/jquery.min.js"></script>
+        <script src="../../lib/affix.js"></script>
+        <script src="../../lib/prettify/prettify.js"></script>
+
+        <link rel="stylesheet" href="../../lib/prettify/github.css">
+
+        <script>
+            $('#nav').affix({
+                offset: {
+                    top: 60,
+                    bottom: 40
+                }
+            });
+
+            $('pre').addClass('.prettyprint');
+
+            prettyPrint();
+
+            var $currentNav = $('#nav>ul>li.current');
+
+            var $currentNavSub = $('<ul></ul>').appendTo($currentNav);
+            $('#article h2, #article h3').each(function (idx, $el) {
+                var padding = 0;
+                switch ($el.tagName.toLowerCase()) {
+                    case 'h2':
+                        padding = 20;
+                        break;
+                    case 'h3':
+                        padding = 30;
+                        break;
+                    case 'h4':
+                        padding = 40;
+                        break;
+                    case 'h5':
+                        padding = 50;
+                        break;
+                }
+
+                $el = $($el);
+                var title = $el.html();
+                $el.prepend('<a name="' + title + '"></a>');
+                
+                $('<li><a href="#' + title + '">' + title + '</a></li>')
+                    .appendTo($currentNavSub)
+                    .find('a').css('padding-left', padding + 'px');
+            });
+        </script>
+    </body>
+</head>
+</html>

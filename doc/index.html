@@ -24,10 +24,98 @@
                 <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
             </ul>
         </header>
-        <div id="main"></div>
+
+        <main id="main">
+            <div id="masthead">
+                <img class="thumb" src="img/logo.png" alt="">
+                <p class="desc">
+                    Extension pack of ECharts providing globe visualization and 3d plots
+                </p>
+                <a class="download">DOWNLOAD</a>
+                
+                <div class="github-status">
+                    <iframe src="https://ghbtns.com/github-btn.html?user=pissang&repo=echarts-x&type=star&count=false&size=large" frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
+
+                    <iframe src="https://ghbtns.com/github-btn.html?user=pissang&repo=echarts-x&type=fork&count=false&size=large" frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
+                </div>
+            </div>
+        </main>
+
+        
+<div style="clear:both;"></div>
+<footer id="footer">
+    <p class="maintained">Maintained by <a href="http://echarts.baidu.com/doc/about.html" target="_blank">ECharts</a> team</p>
+    <ul class="links">
+        <li><a target="_blank" href="http://echarts.baidu.com">ECharts</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://tushuo.baidu.com/">Baidu 图说</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://efe.baidu.com/">Baidu EFE</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://weibo.com/echarts">Weibo</a></li>
+    </ul>
+</footer>
 
         <script src="lib/esl.js"></script>
         <script src="lib/jquery.min.js"></script>
+
+        <script>
+            $(window).load(function () {
+                var canvas = document.createElement('canvas');
+                if (!canvas.getContext) {
+                    return;
+                }
+                var $clipImage = $('#masthead .thumb');
+                canvas.width = $clipImage.width();
+                canvas.height = $clipImage.height();
+                canvas.className = 'thumb';
+
+                var ctx = canvas.getContext('2d');
+                if (ctx.globalCompositeOperation == null) {
+                    return;
+                }
+
+                var bgImage = new Image();
+
+                bgImage.onload = function () {
+                    var cx = bgImage.width / 2;
+                    var cy = bgImage.height / 2;
+                    var angle = 0;
+
+                    function draw() {
+                        angle += 0.002;
+                        cx = 400 * Math.cos(angle) + 500;
+                        cy = 200 * Math.sin(angle) + 250;
+
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.save();
+                        ctx.drawImage($clipImage[0], 0, 0, canvas.width, canvas.height);
+                        ctx.globalCompositeOperation = 'source-in';
+                        ctx.drawImage(bgImage, -cx, -cy);
+
+                        ctx.restore();
+                        ctx.save();
+                        ctx.globalAlpha = 0.6;
+                        ctx.drawImage($clipImage[0], 0, 0, canvas.width, canvas.height);
+                        ctx.restore();
+                    }
+                    draw();
+
+                    $clipImage.replaceWith(canvas);
+                    setInterval(draw, 50);
+                }
+                bgImage.src = 'example/asset/background.jpg';
+
+                // Mouse move effect
+                $('#main').mousemove(function (e) {
+                    var deg = (e.clientX - $(window).width() / 2) / 80;
+                    $('#masthead').css('transform', 'rotateY(' + deg + 'deg)');
+                    $('#main').css('background-position', (-deg * 7 - 200) +  'px -100px');
+                });
+            });
+
+            
+        </script>
     </body>
 </head>
 </html>

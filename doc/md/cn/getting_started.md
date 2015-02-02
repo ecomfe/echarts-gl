@@ -1,10 +1,10 @@
-ECharts-X 的定位是 ECharts 的扩展，因此在使用和配置项上跟 ECharts 上尽量保持一致，可以使用 ECharts 中的组件比如`legend`, `dataRange`。也可以和 ECharts 中的折柱饼图混搭。最后当然在引入 ECharts-X 前需要先引入 ECharts，如果之前没有使用过 ECharts，可以先去了解 ECharts 的[入门教程](http://echarts.baidu.com/doc/start.html)，或者看看 ECharts 的诸多[示例](http://echarts.baidu.com/doc/example.html)。
+ECharts-X 的定位是 ECharts 的扩展，因此在使用和配置项上跟 ECharts 上尽量保持一致，可以使用 ECharts 中的组件比如`legend`, `dataRange`。也可以和 ECharts 中的折柱饼图混搭。不过当然在引入 ECharts-X 前需要先引入 ECharts，如果之前没有使用过 ECharts，可以先去了解 ECharts 的[入门教程](http://echarts.baidu.com/doc/start.html)，或者看看 ECharts 的诸多[示例](http://echarts.baidu.com/doc/example.html)。
 
 ##获取 ECharts-X
 
 你可以从多种途径获取 ECharts-X，最简单的方式就是[点这下载]()。
 
-跟 ECharts 一样， ECharts-X 也托管在 [github](https://github.com/pissang/echarts-x) 上，你可以直接下载最新的 [release](https://github.com/pissang/echarts-x/releases) 版本。或者如果想要一直保持代码是最新的，你也可以直接从 clone 下来出整个代码仓库。
+跟 ECharts 一样， ECharts-X 也托管在 [GitHub](https://github.com/pissang/echarts-x) 上，你可以直接下载最新的 [Release](https://github.com/pissang/echarts-x/releases) 版本。或者如果想要一直保持代码是最新的，你也可以直接从 clone 下来出整个代码仓库。
 
 ##引入 ECharts-X
 
@@ -49,7 +49,7 @@ require.config({
     <!-- 必须要先引入 ECharts 主文件 -->
     <script src="dep/echarts/build/echarts.js"></script>
     <!-- 引入 ECharts-X 主文件 --> 
-    <script src="dep/echarts-x/build/echarts-x.js></script>
+    <script src="dep/echarts-x/build/echarts-x.js"></script>
     
     <script type="text/javascript">
         // 配置后续加载的各种 chart 配置 config

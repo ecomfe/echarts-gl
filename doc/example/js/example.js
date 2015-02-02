@@ -8,7 +8,6 @@ define(function (require) {
     require('lib/codemirror/mode/javascript');
 
     var myChart = null;
-    var currentRuningFunc = null;
 
     $('#editor textarea').val($('#code-source').text());
     // Init code mirror
@@ -23,14 +22,12 @@ define(function (require) {
     editor.setOption('theme', 'twilight');
 
     function runCode(code) {
-        currentRuningFunc = new Function('myChart', 'require', code);
-        currentRuningFunc(myChart, require);
+        var func = new Function('myChart', 'require', code);
+        func(myChart, require);
     }
 
     function update() {
-        if (currentRuningFunc) {
-            currentRuningFunc(myChart, require);
-        }
+        runCode(editor.doc.getValue());
     }
 
     function refresh() {

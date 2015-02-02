@@ -54,7 +54,10 @@ define(function (require) {
          * @type {HTMLCanvasElement}
          */
         this.dom = this.renderer.canvas;
-        this.dom.style.cssText = 'position:absolute; left: 0; top: 0';
+        var style = this.dom.style;
+        style.position = 'absolute';
+        style.left = '0';
+        style.top = '0';
 
         /**
          * @type {qtek.camera.Perspective}

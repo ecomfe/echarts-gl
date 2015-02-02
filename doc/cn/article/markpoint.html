@@ -1,0 +1,229 @@
+<!Doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ECharts-X">
+    <meta name="author" content="shenyi.914@gmail.com">
+    <title>ECharts-X</title>
+
+    <link rel="shortcut icon" href="../../img/favicon.png">
+
+    <link rel="stylesheet" href="../../css/common.css">
+    <link rel="stylesheet" href="../../css/article.css">
+    <body>
+        <header id="header">
+            <h1><a href="../../index.html">ECharts-X</a></h1>
+            <ul class="links">
+                <li class="active">
+                    <a href="./getting_started.html" target="_blank">Documentation</a>
+                </li>
+                <li><a href="../../example.html" target="_blank">Examples</a></li>
+                <li><a href="https://github.com/pissang/echarts-x/" target="_blank">Github</a></li>
+                <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
+            </ul>
+        </header>
+        <main id="main">
+            <nav id="nav" class="sidebar affix">
+                <ul class="top">
+                
+                    
+                    <li>
+                    
+                        <a href="getting_started.html">Getting Started</a>
+                    </li>
+                
+                    
+                    <li>
+                    
+                        <a href="map3d.html">Map 3D</a>
+                    </li>
+                
+                    
+                    <li class="current">
+                    
+                        <a href="markpoint.html">Mark Point</a>
+                    </li>
+                
+                    
+                    <li>
+                    
+                        <a href="markbar.html">Mark Bar</a>
+                    </li>
+                
+                    
+                    <li>
+                    
+                        <a href="markline.html">Mark Line</a>
+                    </li>
+                
+                </ul>
+            </nav>
+            <article id="article">
+                <h1>Mark Point</h1>
+                <blockquote>
+<p>ECharts-X 提供了使用 WebGL 绘制的 markPoint。并且在大部分配置项上兼容 <a href="http://echarts.baidu.com/doc/doc.html#SeriesMarkPoint">ECharts</a>。</p>
+</blockquote>
+<h2 id="example-world-population">Example - World Population</h2>
+<pre><code class="lang-javascript">var option = {
+    title : {
+        text: &#39;Gridded Population of the World (2000)&#39;,
+        x:&#39;center&#39;,
+        y:&#39;top&#39;,
+        textStyle: {
+            color: &#39;white&#39;
+        }
+    },
+    dataRange: {
+        min: 0,
+        max: max,
+        text:[&#39;High&#39;,&#39;Low&#39;],
+        realtime: false,
+        calculable : true,
+        color: [&#39;red&#39;,&#39;yellow&#39;,&#39;lightskyblue&#39;]
+    },
+    series: [{
+        name: &#39;World Population&#39;,
+        type: &#39;map3d&#39;,
+        mapType: &#39;world&#39;,
+        mapBackgroundColor: &#39;#005f99&#39;,
+        // 地图的样式配置
+        itemStyle: {
+            normal: {
+                borderColor: &#39;#777&#39;
+            }
+        },
+        markPoint: {
+            large: true,
+            // Markpoint 呼吸动画
+            effect: {
+                show: true,
+                shadowBlur: 0.4
+            },
+            // 异步获取的 Data
+            data: populationData
+        }
+    }, {
+        name: 
+    }]
+};
+</code></pre>
+<h2 id="markpoint-option">MarkPoint Option</h2>
+<h3 id="symbol">symbol</h3>
+<pre><code class="lang-javascript">symbol: &#39;pin&#39;
+</code></pre>
+<p>标注类型，同 ECharts，目前有 <code>circle</code>, <code>rectangle</code>, <code>triangle</code>, <code>diamond</code>, <code>emptyCircle</code>, <code>emptyRectangle</code>, <code>emptyTriangle</code>, <code>emptyDiamond</code> , <code>emptyCircle</code>, 只持使用 <code>image://url</code> 加载图片</p>
+<h3 id="symbolsize">symbolSize</h3>
+<pre><code class="lang-javascript">symbolSize: 4
+</code></pre>
+<p>标注大小，要注意的是 ECharts-X 中的普通标注（<code>large:false</code>） symbolSize 并不是像素的大小，而是3D空间中的相对大小。<code>large:true</code> 时 symbolSize 对应的仍然是像素大小，而且不受缩放影响。</p>
+<h3 id="large">large</h3>
+<pre><code class="lang-javascript">large: false
+</code></pre>
+<p>是否启用大规模标注模式</p>
+<h3 id="effect">effect</h3>
+<pre><code class="lang-javascript">effect: {
+    show: false,
+    shadowBlur: 0
+}
+</code></pre>
+<p>标注的呼吸动画特效，<code>large:true</code>时有效，目前只支持 <code>shadowBlur</code> 配置项。 </p>
+<h3 id="distance">distance</h3>
+<pre><code class="lang-javascript">distance: 1
+</code></pre>
+<p>map3d 中 <code>distance</code> 表示标注离球体表面的距离。球体半径为 100。也可以细化到在 data 级别配置 <code>distance</code>。</p>
+<h3 id="orientation">orientation</h3>
+<pre><code class="lang-javascript">orientation: ‘tangent’
+</code></pre>
+<p>标注在3D空间中的朝向，可以是标注所在表面(surface)的切线<code>tangent</code>或者法线<code>normal</code>。只有在<code>large:false</code>的时候有效</p>
+<h3 id="orientationangle">orientationAngle</h3>
+<pre><code class="lang-javascript">orientationAngle: 0
+</code></pre>
+<p>偏离原先朝向的角度。</p>
+<h3 id="itemstyle">itemStyle</h3>
+<pre><code>itemStyle: {
+    normal: {
+        borderWidth: 1,
+        borderColor: &#39;#000&#39;,
+        label: {
+            show: false,
+            position: &#39;inside&#39;,
+            textStyle: {
+                color: &#39;black&#39;
+            }
+        }
+    }
+}
+</code></pre><p>格式同 ECharts 中的 <a href="http://echarts.baidu.com/doc/doc.html#ItemStyle">itemStyle</a>，目前尚不支持 emphasis 样式的配置。</p>
+<h3 id="data">data</h3>
+<p>系列的标注数据, 详见<a href="http://echarts.baidu.com/doc/doc.html#SeriesMarkPoint">ECharts#SeriesMarkPoint</a>，注意 ECharts-X 中 3D 空间的标注坐标需要三个数值 x, y, z 指定。</p>
+
+            </article>
+        </main>
+
+        
+<div style="clear:both;"></div>
+<footer id="footer">
+    <p class="maintained">Maintained by <a href="http://echarts.baidu.com/doc/about.html" target="_blank">ECharts</a> team</p>
+    <ul class="links">
+        <li><a target="_blank" href="http://echarts.baidu.com">ECharts</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://tushuo.baidu.com/">Baidu 图说</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://efe.baidu.com/">Baidu EFE</a></li>
+        <li>·</li>
+        <li><a target="_blank" href="http://weibo.com/echarts">Weibo</a></li>
+    </ul>
+</footer>
+
+        <script src="../../lib/jquery.min.js"></script>
+        <script src="../../lib/affix.js"></script>
+        <script src="../../lib/prettify/prettify.js"></script>
+
+        <link rel="stylesheet" href="../../lib/prettify/github.css">
+
+        <script>
+            $('#nav').affix({
+                offset: {
+                    top: 60,
+                    bottom: 40
+                }
+            });
+
+            $('pre').addClass('.prettyprint');
+
+            prettyPrint();
+
+            var $currentNav = $('#nav>ul>li.current');
+
+            var $currentNavSub = $('<ul></ul>').appendTo($currentNav);
+            $('#article h2, #article h3').each(function (idx, $el) {
+                var padding = 0;
+                switch ($el.tagName.toLowerCase()) {
+                    case 'h2':
+                        padding = 20;
+                        break;
+                    case 'h3':
+                        padding = 30;
+                        break;
+                    case 'h4':
+                        padding = 40;
+                        break;
+                    case 'h5':
+                        padding = 50;
+                        break;
+                }
+
+                $el = $($el);
+                var title = $el.html();
+                $el.prepend('<a name="' + title + '"></a>');
+                
+                $('<li><a href="#' + title + '">' + title + '</a></li>')
+                    .appendTo($currentNavSub)
+                    .find('a').css('padding-left', padding + 'px');
+            });
+        </script>
+    </body>
+</head>
+</html>

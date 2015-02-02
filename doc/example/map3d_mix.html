@@ -1,0 +1,162 @@
+<!Doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ECharts-X">
+    <meta name="author" content="shenyi.914@gmail.com">
+    <title>Map3D Mix Map - Powered by ECharts-X</title>
+
+    <link rel="shortcut icon" href="img/favicon.png">
+
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/example.css">
+    <link rel="stylesheet" href="../css/codemirror.css">
+    <link rel="stylesheet" href="../css/monokai.css">
+    <link rel="stylesheet" href="../css/twilight.css">
+    <body>
+        <header id="header">
+            <h1><a href="../index.html">ECharts-X</a></h1>
+            <div id="toolbar">
+                <button id="open-editor">Code Editor</button>
+            </div>
+            <ul class="links">
+                <li>
+                    <a href="../cn/article/getting_started.html" target="_blank">Documentation</a>
+                </li>
+                <li><a href="../example.html" class="active" target="_blank">Examples</a></li>
+                <li><a href="https://github.com/pissang/echarts-x/" target="_blank">Github</a></li>
+                <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
+            </ul>
+        </header>
+        <main id="main">
+            <div id="chart"></div>
+        </main>
+        <div id="editor">
+            <textarea></textarea>
+            <div id="editor-toolbar">
+                <button id="editor-update">Update</button>
+                <button id="editor-refresh">Refresh All</button>
+                <button id="editor-close">Close</button>
+            </div>
+        </div>
+
+<script type="text/x-javascript" id="code-source">
+var ecConfig = require('echarts/config');
+var mapParams = require('echarts/util/mapData/params').params;
+
+mapParams.world.getGeoJson(function (data) {
+    data.features.forEach(function (feature) {
+        // Register regions
+        mapParams[feature.properties.name] = {
+            getGeoJson: function (callback) {
+                callback({
+                    type: 'FeatureCollection',
+                    features: [feature]
+                })
+            }
+        }
+    })
+});
+
+mapParams.usa = {
+    getGeoJson: function (callback) {
+        $.ajax({
+            url: 'data/usa_geo.json',
+            success: function (data) {
+                callback(data);
+            }
+        });
+    }
+}
+
+myChart.setOption({
+    title: {
+        text: 'Map3D Map Mixing',
+        x: 'center',
+        textStyle: {
+            color: 'white'
+        }
+    },
+    series: [{
+        name: 'Globe',
+        type: 'map3d',
+        mapType: 'world',
+        data: [{}],
+        mapLocation: {
+            x: 0,
+            y: 0,
+            width: '50%',
+            height: '100%'
+        }
+    }, {
+        name: 'Map',
+        type: 'map',
+        mapType: 'china',
+        data: [{}],
+        itemStyle:{
+            normal:{
+                borderColor:'rgba(100,149,237,1)',
+                borderWidth:1.5,
+                areaStyle:{
+                    color: '#1b1b1b'
+                }
+            }
+        },
+        mapLocation: {
+            x: '50%',
+            y: 0,
+            width: '50%',
+            height: '100%'
+        }
+    }]
+});
+
+myChart.on(ecConfig.EVENT.CLICK, function (param) {
+    var name = param.name;
+    if (name === 'China') {
+        myChart.setOption({
+            series: [{
+                name: 'Globe',
+                type: 'map3d'
+            }, {
+                name: 'Map',
+                type: 'map',
+                mapType: 'china'
+            }]
+        });
+    }
+    else if(name === 'United States of America') {
+        myChart.setOption({
+            series: [{
+                name: 'Globe',
+                type: 'map3d'
+            }, {
+                name: 'Map',
+                type: 'map',
+                mapType: 'usa'
+            }]
+        })
+    }
+    else {
+        myChart.setOption({
+            series: [{
+                name: 'Globe',
+                type: 'map3d'
+            }, {
+                name: 'Map',
+                type: 'map',
+                mapType: name
+            }]
+        })
+    }
+});
+</script>
+
+        <script src="../lib/esl.js"></script>
+        <script src="../lib/jquery.min.js"></script>
+        <script src="js/bootExample.js"></script>
+    </body>
+</head>
+</html>

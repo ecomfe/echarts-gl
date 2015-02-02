@@ -1,42 +1,67 @@
 @import url(color.less);
 
 #header {
-    background-color: white;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid #222;
+    position: fixed;
 
     h1 {
         a {
-            color: @dark-color;
+            color: rgba(255, 255, 255, 0.7);
             text-shadow: none;
         }
     }
 
-    .links li a {
-        color: @dark-color;
+    .links li {
+        &:hover {
+            border-bottom: 2px solid @dark-color;
+        }
+        a {
+            color: rgba(255, 255, 255, 0.7);
+        }
     }
 }
 
 body {
-    margin: 0px;
-    padding-top: 50px;
-
+    // padding-top: 50px;
     text-align: center;
+    background-color: black;
+}
+
+iframe {
+    background: none;
+    border: none;
 }
 
 #main {
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    background-image: url(../example/asset/background.jpg);
+    background-size: 120% auto;
+    background-position: -100px -100px;
+
+    transform-style: preserve-3d;
+    perspective: 400px;
+}
+
+#footer {
+    color: white;
+
+    a {
+        color: white;
+    }
 }
 
 #masthead {
-    background-color: @dark-color;
-    padding-bottom: 50px;
+    // background-color: @dark-color;
+    // background-color: black;
+    padding-bottom: 10px;
 
     .thumb {
-        width: 200px;
-        margin: 50px 0px 20px 0px;
+        width: 400px;
+        margin: 50px 0px 0px 0px;
     }
 
     p.desc {
-        color: white;
+        color: rgba(255, 255, 255, 0.7);
         font-size: 30px;
         width: 700px;
         margin: 0px auto 50px auto;
@@ -46,7 +71,7 @@ body {
     }
 
     a.download {
-        font-size: 40px;
+        font-size: 30px;
         border: 1px solid white;
         padding: 10px 20px;
         border-radius: 10px;
@@ -72,6 +97,10 @@ body {
 
     .github-status {
         height: 50px;
-        margin: 50px 0px;
+        margin: 50px 0px 30px 0px;
+
+        iframe {
+            margin: 0px 10px;
+        }
     }
 }

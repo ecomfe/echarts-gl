@@ -1,46 +1,9 @@
-var echarts = require('echarts');
 var ecConfig = require('echarts/config');
-var mapParams = require('echarts/util/mapData/params').params;
-
-myChart.setOption({
-    series: [{
-        name: 'Map 3D',
-        type: 'map3d',
-        mapType: 'world',
-        baseLayer: {
-            backgroundColor: 'rgba(0, 0, 0, 0.3)'
-        },
-        itemStyle: {
-            normal: {
-                areaStyle: {
-                    color: '#396696' 
-                }
-            }
-        },
-        data: [{}],
-        mapLocation: {
-            width: '80%'
-        }
-    }]
-});
 
 $.ajax({
     url: 'data/gdp.json',
     success: function (data) {
-
-        if (! window.barChart) {
-            var $chart2 = $('<div></div>').css({
-                width: '50%',
-                position: 'absolute',
-                right: "0px",
-                top: '0px',
-                bottom: '0px',
-                opacity: 0.7
-            }).appendTo($('#main'));
-
-            window.barChart = echarts.init($chart2[0]);
-        }
-        barChart.setOption({
+        myChart.setOption({
             title: {
                 text: 'World GDP',
                 subtext: 'Data from Geohive',
@@ -54,7 +17,8 @@ $.ajax({
                 trigger: 'axis'
             },
             grid: {
-                borderWidth: 0
+                borderWidth: 0,
+                x: '50%'
             },
             xAxis: {
                 type: 'category',
@@ -87,6 +51,24 @@ $.ajax({
                 position: 'right'
             },
             series: [{
+                name: 'Globe',
+                type: 'map3d',
+                mapType: 'world',
+                baseLayer: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.3)'
+                },
+                itemStyle: {
+                    normal: {
+                        areaStyle: {
+                            color: '#396696' 
+                        }
+                    }
+                },
+                data: [{}],
+                mapLocation: {
+                    width: '80%'
+                }
+            }, {
                 name: 'gdp',
                 type: 'bar',
                 data: [1400532, 2898133, 11027922, 22000729, 32346738, 63508421, 70441599, 71918394],
@@ -102,11 +84,14 @@ $.ajax({
         myChart.on(ecConfig.EVENT.CLICK, function (param) {
             if (data.data[param.name] && param.name !== currentName) {
                 currentName = param.name;
-                barChart.setOption({
+                myChart.setOption({
                     title: {
                         text: currentName + ' GDP'
                     },
                     series: [{
+                        name: 'Globe',
+                        type: 'map3d'
+                    }, {
                         name: 'gdp',
                         type: 'bar',
                         data: data.data[param.name]

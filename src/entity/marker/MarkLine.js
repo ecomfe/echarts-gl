@@ -5,7 +5,7 @@
  * @author Yi Shen(https://github.com/pissang)
  */
 define(function (require) {
-    
+
     var zrUtil = require('zrender/tool/util');
     var MarkBase = require('./Base');
     var Renderable = require('qtek/Renderable');
