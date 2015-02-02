@@ -28,7 +28,7 @@ myChart.setOption({
 
         baseLayer: {
             backgroundColor: '#d9dcf7'
-        }
+        },
 
         itemStyle: {
             normal: {
