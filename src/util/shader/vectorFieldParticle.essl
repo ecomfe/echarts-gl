@@ -17,8 +17,8 @@ void main()
     if (p.w > 0.0) {
         vec4 vTex = texture2D(velocityTexture, p.xy);
         vec2 v = vTex.xy;
-        p.z = length(v);
         v = (v - 0.5) * 2.0;
+        p.z = length(v);
         p.xy += v * deltaTime / 50.0 * speedScaling;
         // Make the particle surface seamless 
         p.xy = fract(p.xy);
@@ -43,13 +43,22 @@ uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 
 uniform float sizeScaling : 1.0;
 
+varying float alpha;
+
 void main()
 {
     vec4 p = texture2D(particleTexture, texcoord);
 
-    gl_Position = worldViewProjection * vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
+    if (p.w <= 0.0) {
+        gl_Position = vec4(100000.0, 100000.0, 100000.0, 1.0);
+    }
+    else {
+        gl_Position = worldViewProjection * vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
+    }
 
     gl_PointSize = sizeScaling * p.z;
+
+    alpha = p.z;
 }
 
 @end
@@ -59,9 +68,13 @@ void main()
 uniform sampler2D spriteTexture;
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
+varying float alpha;
+
 void main()
 {
     gl_FragColor = color * texture2D(spriteTexture, gl_PointCoord);
+    // FIXME Point should not be in the field zero
+    gl_FragColor.a *= alpha;
 }
 
 @end

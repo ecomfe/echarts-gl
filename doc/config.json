@@ -33,6 +33,10 @@
         "title": "Surface Wind Field Visualization"
     }, {
         "type": "map3d",
+        "name": "map3d_wave",
+        "title": "Surface Wave Field Visualization"
+    }, {
+        "type": "map3d",
         "name": "map3d_flights",
         "title": "World Flights"
     }, {

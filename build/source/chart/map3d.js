@@ -376,7 +376,7 @@ define('echarts-x/chart/map3d', [
             }
             vfParticleSurface.vectorFieldTexture = new Texture2D({
                 image: vfImage,
-                flipY: false
+                flipY: true
             });
             vfParticleSurface.surfaceTexture = new Texture2D({
                 width: textureSize[0],
@@ -3757,16 +3757,27 @@ define('echarts-x/chart/map3d', [
         'EXT_texture_filter_anisotropic',
         'WEBGL_draw_buffers'
     ];
+    var PARAMETER_NAMES = [
+        'MAX_TEXTURE_SIZE',
+        'MAX_CUBE_MAP_TEXTURE_SIZE'
+    ];
     var extensions = {};
+    var parameters = {};
     var glinfo = {
         initialize: function (_gl) {
-            if (extensions[_gl.__GLID__]) {
+            var glid = _gl.__GLID__;
+            if (extensions[glid]) {
                 return;
             }
-            extensions[_gl.__GLID__] = {};
+            extensions[glid] = {};
+            parameters[glid] = {};
             for (var i = 0; i < EXTENSION_LIST.length; i++) {
                 var extName = EXTENSION_LIST[i];
                 this._createExtension(_gl, extName);
+            }
+            for (var i = 0; i < PARAMETER_NAMES.length; i++) {
+                var name = PARAMETER_NAMES[i];
+                parameters[glid][name] = _gl.getParameter(_gl[name]);
             }
         },
         getExtension: function (_gl, name) {
@@ -3778,8 +3789,15 @@ define('echarts-x/chart/map3d', [
                 return extensions[glid][name];
             }
         },
+        getParameter: function (_gl, name) {
+            var glid = _gl.__GLID__;
+            if (parameters[glid]) {
+                return parameters[glid][name];
+            }
+        },
         dispose: function (_gl) {
             delete extensions[_gl.__GLID__];
+            delete parameters[_gl.__GLID__];
         },
         _createExtension: function (_gl, name) {
             var ext = _gl.getExtension(name);
@@ -6824,7 +6842,7 @@ define('echarts-x/chart/map3d', [
             this.resize(this.width, this.height);
             glinfo.initialize(this.gl);
         } catch (e) {
-            throw 'Error creating WebGL Context';
+            throw 'Error creating WebGL Context ' + e;
         }
     }, {
         resize: function (width, height) {

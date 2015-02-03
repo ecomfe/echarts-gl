@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ECharts-X">
     <meta name="author" content="shenyi.914@gmail.com">
-    <title>Surface Wind Field Visualization - Powered by ECharts-X</title>
+    <title>Surface Wave Field Visualization - Powered by ECharts-X</title>
 
     <link rel="shortcut icon" href="img/favicon.png">
 
@@ -44,7 +44,7 @@
 
 <script type="text/x-javascript" id="code-source">
 $.ajax({
-    url: './data/winds.json',
+    url: './data/wave.json',
     success: function (data) {
         var field = [];
         var p = 0;
@@ -58,7 +58,7 @@ $.ajax({
         }
         myChart.setOption({
             title: {
-                text: 'Surface Wind Field Visualization',
+                text: 'Surface Wave Field Visualization',
                 subtext: 'Data from http://earth.nullschool.net',
                 sublink: 'http://earth.nullschool.net',
                 x: 'center',
@@ -82,20 +82,16 @@ $.ajax({
                 type: 'map3d',
 
                 baseLayer: {
-                    backgroundColor: '',
-                    backgroundImage: './asset/earth.jpg',
+                    backgroundColor: '#136dae',
                     quality: 'high'
                 },
 
                 itemStyle: {
                     normal: {
-                        label: {
-                            show: true
-                        },
                         borderWidth: 1,
-                        borderColor: 'yellow',
+                        borderColor: '#d99524',
                         areaStyle: {
-                            color: 'rgba(0, 0, 0, 0)'
+                            color: '#d99524'
                         }
                     }
                 },
@@ -106,13 +102,13 @@ $.ajax({
 
                 surfaceLayers: [{
                     type: 'particle',
-                    distance: 3,
+                    distance: 0.5,
                     size: [4096, 2048],
                     particle: {
                         vectorField: field,
                         color: 'white',
-                        speedScaling: 1,
-                        sizeScaling: 1,
+                        speedScaling: 0.2,
+                        sizeScaling: 2,
                         number: 512 * 512,
                         motionBlurFactor: 0.97
                     }

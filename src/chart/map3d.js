@@ -583,7 +583,7 @@ define(function (require) {
             vfParticleSurface.vectorFieldTexture = new Texture2D({
                 image: vfImage,
                 // Vector data column ranges -90 to 90
-                flipY: false
+                flipY: true
             });
             vfParticleSurface.surfaceTexture = new Texture2D({
                 width: textureSize[0],
@@ -635,6 +635,7 @@ define(function (require) {
             ctx.putImageData(imageData, 0, 0);
 
             // document.body.appendChild(vfImage);
+            // vfImage.style.position = 'absolute';
             return vfImage;
         },
 
