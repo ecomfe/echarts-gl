@@ -52,7 +52,7 @@ $.ajax({
                 },
                 data: [{}]
             }, {
-                name: 'winds',
+                name: 'wave',
                 type: 'map3d',
 
                 surfaceLayers: [{
