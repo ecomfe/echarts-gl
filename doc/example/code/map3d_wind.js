@@ -4,11 +4,11 @@ $.ajax({
         var field = [];
         var p = 0;
         for (var j = 0; j < data.ny; j++) {
-            field[data.ny - j - 1] = [];
+            field[j] = [];
             for (var i = 0; i < data.nx; i++, p++) {
-                data.data[p][0] /= data.max;
-                data.data[p][1] /= data.max;
-                field[data.ny - j - 1][i] = data.data[p];
+                data.data[p][0] /= (data.max / 4);
+                data.data[p][1] /= (data.max / 4);
+                field[j][i] = data.data[p];
             }
         }
         myChart.setOption({
@@ -66,10 +66,10 @@ $.ajax({
                     particle: {
                         vectorField: field,
                         color: 'white',
-                        speedScaling: 1,
+                        speedScaling: 0.25,
                         sizeScaling: 1,
                         number: 512 * 512,
-                        motionBlurFactor: 0.97
+                        motionBlurFactor: 0.99
                     }
                 }]
             }]
