@@ -2,7 +2,7 @@ ECharts-X 的定位是 ECharts 的扩展，因此在使用和配置项上跟 ECh
 
 ##获取 ECharts-X
 
-你可以从多种途径获取 ECharts-X，最简单的方式就是[点这下载](https://echarts.baidu.com/x/build/echarts-x-0.1.0.zip)。
+你可以从多种途径获取 ECharts-X，最简单的方式就是[点这下载](http://echarts.baidu.com/x/build/echarts-x-0.1.0.zip)。
 
 跟 ECharts 一样， ECharts-X 也托管在 [GitHub](https://github.com/pissang/echarts-x) 上，你可以直接下载最新的 [Release](https://github.com/pissang/echarts-x/releases) 版本。或者如果想要一直保持代码是最新的，你也可以直接从 clone 下来出整个代码仓库。
 
