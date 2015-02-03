@@ -1,4 +1,4 @@
-> map3d 类型提供了对全球数据的可视化，支持 ECharts 中 map 原有配置项的同时也加入了大量新的配置项。如果你之前使用过 ECharts 的 map 组件的话对下面的示例肯定不会陌生。
+`map3d`类型提供了对全球数据的可视化，支持 ECharts 中`map`原有配置项的同时也加入了大量新的配置项。如果你之前使用过 ECharts 的`map`组件的话对下面的示例肯定不会陌生。
 
 ##Simple Example
 
@@ -42,7 +42,7 @@ var option = {
 
 ##Series Option
 
-> 系列配置项, 通用部分详见 [ECharts](http://echarts.baidu.com/doc/doc.html#Series)
+系列配置项, 通用部分详见 [ECharts](http://echarts.baidu.com/doc/doc.html#Series)
 
 ###mapType
 
@@ -156,13 +156,13 @@ size: [2048, 1024]
     <tr>
         <td>color</td>
         <td>String</td>
-        <td>'#fff'</td>
+        <td>`'#fff'`</td>
         <td>粒子颜色</td>
     </tr>
     <tr>
         <td>sizeScaling</td>
         <td>number</td>
-        <td>1</td>
+        <td>`1`</td>
         <td>默认粒子大小从 0 到 1（取决于速度的大小），sizeScaling 描述粒子的缩放系数，例如 sizeScaling 值为 7 的时候粒子的大小就是 0 到 7。</td>
     </tr>
     <tr>
@@ -174,13 +174,13 @@ size: [2048, 1024]
     <tr>
         <td>number</td>
         <td>number</td>
-        <td>65536</td>
-        <td>粒子数目，默认为 256 x 256 即 65536。</td>
+        <td>`65536`</td>
+        <td>粒子数目，默认为`256 x 256`即`65536`。</td>
     </tr>
     <tr>
         <td>motionBlurFactor</td>
         <td>number</td>
-        <td>0.99</td>
+        <td>`0.99`</td>
         <td>动态模糊系数，动态模糊效果会保存上一帧的图片乘上透明度系数即 motionBlurFactor 再与当前帧的图片混合。该系数越大则粒子运动的尾迹越长。</td>
     </tr>
 </table>
@@ -193,4 +193,4 @@ size: [2048, 1024]
 
 具体的示例可以参见[风场的可视化示例](../../example/map3d_wind.html)
 
-##Map 3D 中的分层
+<!-- ##Map 3D 中的分层 -->

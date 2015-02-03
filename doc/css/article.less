@@ -43,25 +43,28 @@ body {
     background-color: white;
     padding: 10px 20px;
     box-shadow: 0px 5px 12px rgba(0, 0, 0, 0.2);
+
+    color: #555;
     
     h1 {
-        color: #82BECD;
+        color: #28829D;
         font-weight: 200;
-        font-size: 28px;
+        font-size: 32px;
+        margin-bottom: 50px;
     }
     h2 {
-        margin-left: 40px 0px 0px 0px;
+        margin: 40px 0px 0px 0px;
         padding-bottom: 5px;
-        border-bottom: 1px solid @light-color;
-        color: @light-color;
+        border-bottom: 1px solid #ccc;
+        color: @article-header-color;
         font-weight: 200;
         font-size: 22px;
     }
 
     h3, h4, h5 {
-        border-left: 2px solid @light-color;
-        padding-left: 10px;
-        margin: 40px 0px 20px 0px;
+        // border-left: 2px solid @article-header-color;
+        padding-left: 0px;
+        margin: 30px 0px 20px 0px;
 
         font-weight: normal;
     }
@@ -109,7 +112,8 @@ body {
         font-size: 15px;
     }
 
-    p code {
+    p code,
+    table code {
         border: 1px solid #EAEAEA;
         margin: 0 2px;
         padding: 0 5px;
@@ -121,7 +125,7 @@ body {
     }
 
     a {
-        color: @light-color;
+        color: @article-link-color;
         text-decoration: none;
         position: relative;
 
