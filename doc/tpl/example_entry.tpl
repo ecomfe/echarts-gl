@@ -20,7 +20,7 @@
                     <a href="cn/article/getting_started.html" target="_blank">Documentation</a>
                 </li>
                 <li><a href="example.html" class="active" target="_blank">Examples</a></li>
-                <li><a href="https://github.com/pissang/echarts-x/" target="_blank">Github</a></li>
+                <li><a href="https://github.com/ecomfe/echarts-x/" target="_blank">Github</a></li>
                 <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
             </ul>
         </header>

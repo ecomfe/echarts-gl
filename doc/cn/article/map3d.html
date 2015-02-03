@@ -20,7 +20,7 @@
                     <a href="./getting_started.html" target="_blank">Documentation</a>
                 </li>
                 <li><a href="../../example.html" target="_blank">Examples</a></li>
-                <li><a href="https://github.com/pissang/echarts-x/" target="_blank">Github</a></li>
+                <li><a href="https://github.com/ecomfe/echarts-x/" target="_blank">Github</a></li>
                 <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
             </ul>
         </header>
@@ -105,7 +105,7 @@
 <h3 id="maptype">mapType</h3>
 <pre><code class="lang-javascript">mapType: &#39;world&#39;
 </code></pre>
-<p>同 ECharts 中 map 的 mapType, 默认是 <code>world</code>。不建议使用其它类型。</p>
+<p>同 ECharts 中 map 的 mapType, 默认是 <code>world</code>。支持但是不建议使用其它非世界地图的类型。</p>
 <h3 id="maplocation">mapLocation</h3>
 <pre><code class="lang-javascript">mapLocation: {
     x: 0,
@@ -116,8 +116,9 @@
 </code></pre>
 <p>同 ECharts 中 map 的 mapLocation，指定地球在视图中的位置。可以是绝对的像素坐标，也可以表示相对的百分比。</p>
 <h3 id="autorotate">autoRotate</h3>
-<p>地球是否在打开的时候自动旋转</p>
+<p>地球是否在打开的时候自动旋。</p>
 <h3 id="baselayer">baseLayer</h3>
+<p>底层基本地图的绘制配置。</p>
 <h4 id="backgroundcolor">backgroundColor</h4>
 <pre><code class="lang-javascript">backgroundColor: &#39;black&#39;
 </code></pre>
@@ -125,7 +126,7 @@
 <h4 id="backgroundimage">backgroundImage</h4>
 <pre><code class="lang-javascript">backgroundImage: &#39;none&#39;
 </code></pre>
-<p>底图背景图片，覆盖在地图背景色上，可以是Image url，Image dom 或者 Canvas dom</p>
+<p>底图背景图片，覆盖在地图背景色上，可以是Image url，Image dom 或者 Canvas dom。</p>
 <h4 id="quality">quality</h4>
 <pre><code class="lang-javascript">quality: &#39;medium&#39;
 </code></pre>
@@ -214,7 +215,7 @@
         
 <div style="clear:both;"></div>
 <footer id="footer">
-    <p class="maintained">Proudly presented by <a href="http://echarts.baidu.com/doc/about.html" target="_blank">ECharts</a> team</p>
+    <p class="maintained">Maintained by <a href="http://echarts.baidu.com/doc/about.html" target="_blank">ECharts</a> team</p>
     <ul class="links">
         <li><a target="_blank" href="http://echarts.baidu.com">ECharts</a></li>
         <li>·</li>

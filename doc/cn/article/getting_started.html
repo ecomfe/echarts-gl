@@ -20,7 +20,7 @@
                     <a href="./getting_started.html" target="_blank">Documentation</a>
                 </li>
                 <li><a href="../../example.html" target="_blank">Examples</a></li>
-                <li><a href="https://github.com/pissang/echarts-x/" target="_blank">Github</a></li>
+                <li><a href="https://github.com/ecomfe/echarts-x/" target="_blank">Github</a></li>
                 <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
             </ul>
         </header>
@@ -64,10 +64,10 @@
                 <h1>Getting Started</h1>
                 <p>ECharts-X 的定位是 ECharts 的扩展，因此在使用和配置项上跟 ECharts 上尽量保持一致，可以使用 ECharts 中的组件比如<code>legend</code>, <code>dataRange</code>。也可以和 ECharts 中的折柱饼图混搭。不过当然在引入 ECharts-X 前需要先引入 ECharts，如果之前没有使用过 ECharts，可以先去了解 ECharts 的<a href="http://echarts.baidu.com/doc/start.html">入门教程</a>，或者看看 ECharts 的诸多<a href="http://echarts.baidu.com/doc/example.html">示例</a>。</p>
 <h2 id="-echarts-x">获取 ECharts-X</h2>
-<p>你可以从多种途径获取 ECharts-X，最简单的方式就是<a href="http://echarts.baidu.com/x/build/echarts-x-0.1.0.zip">点这下载</a>。</p>
-<p>跟 ECharts 一样， ECharts-X 也托管在 <a href="https://github.com/pissang/echarts-x">GitHub</a> 上，你可以直接下载最新的 <a href="https://github.com/pissang/echarts-x/releases">Release</a> 版本。或者如果想要一直保持代码是最新的，你也可以直接从 clone 下来出整个代码仓库。</p>
+<p>你可以从多种途径获取 ECharts-X，最简单的方式就是<a href="http://echarts.baidu.com/x/build/echarts-x-0.1.0.zip">从官网下载</a>。</p>
+<p>同时 ECharts-X 也托管在 <a href="https://github.com/pissang/echarts-x">GitHub</a> 上，你可以直接下载最新的 <a href="https://github.com/pissang/echarts-x/releases">Release</a> 版本。或者如果想要一直保持代码是最新的，你也可以直接从 clone 下来出整个代码仓库。</p>
 <h2 id="-echarts-x">引入 ECharts-X</h2>
-<p>ECharts-X 也是使用 <a href="https://github.com/ecomfe/echarts-optimizer">echarts-optimizer</a> 构建，因此引入方式同 ECharts 相同。关于如何在项目中引入 ECharts 可以参见 <a href="http://echarts.baidu.com/doc/doc.html#引入ECharts">引入ECharts</a>。里面描述了三种不同的引入方式，ECharts-X 目前只支持模块化包引入和模块化单文件引入，标签单文件引入还不支持。</p>
+<p>ECharts-X 也是使用 <a href="https://github.com/ecomfe/echarts-optimizer">echarts-optimizer</a> 构建，因此引入方式同 ECharts 相同。关于如何在项目中引入 ECharts 可以参见 <a href="http://echarts.baidu.com/doc/doc.html#引入ECharts">引入ECharts</a>。里面描述了三种不同的引入方式，ECharts-X 目前只支持模块化包引入和模块化单文件引入。</p>
 <h3 id="-">模块化包引入</h3>
 <p>除了 <a href="https://github.com/ecomfe/echarts">ECharts</a> 和 <a href="https://github.com/ecomfe/zrender">ZRender</a>, ECharts-X 还依赖 WebGL 库 <a href="https://github.com/pissang/qtek">qtek</a>，同样的你可以下载最新的 release 版本，或者使用 git 工具 clone 整个 <a href="https://github.com/pissang/qtek">qtek</a>。</p>
 <p>把这三个依赖库加上 <a href="https://github.com/pissang/echarts-x">ECharts-X</a> 下载下来后，我们这里先假设你把这四个项目的目录放在一个目录 <code>project/dep</code> 下，而 <code>index.html</code> 放在 <code>project</code> 下，那么可以如下配置 <code>esl</code> 或者 <code>requirejs</code> 的 <code>packages</code>:</p>
@@ -157,7 +157,7 @@ chart.setOption({
     // 浏览器不支持 WebGL
 }
 </code></pre>
-<p>如果浏览器不支持 WebGL, <code>map3d</code>可以降级到使用 ECharts 的 <code>map</code>。</p>
+<p>另外如果浏览器不支持 WebGL, 建议可以将 <code>map3d</code>可以降级到使用 ECharts 的 <code>map</code>。</p>
 
             </article>
         </main>
@@ -165,7 +165,7 @@ chart.setOption({
         
 <div style="clear:both;"></div>
 <footer id="footer">
-    <p class="maintained">Proudly presented by <a href="http://echarts.baidu.com/doc/about.html" target="_blank">ECharts</a> team</p>
+    <p class="maintained">Maintained by <a href="http://echarts.baidu.com/doc/about.html" target="_blank">ECharts</a> team</p>
     <ul class="links">
         <li><a target="_blank" href="http://echarts.baidu.com">ECharts</a></li>
         <li>·</li>

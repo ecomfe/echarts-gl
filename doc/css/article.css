@@ -54,9 +54,14 @@ body {
 #article h3,
 #article h4,
 #article h5 {
-  padding-left: 0px;
+  border-left: 2px solid #222222;
+  padding-left: 10px;
   margin: 30px 0px 20px 0px;
   font-weight: normal;
+}
+#article h4,
+#article h5 {
+  border-left-width: 1px;
 }
 #article blockquote {
   border-left: 2px solid #e7e7e9;

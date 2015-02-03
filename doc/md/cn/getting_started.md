@@ -2,13 +2,13 @@ ECharts-X 的定位是 ECharts 的扩展，因此在使用和配置项上跟 ECh
 
 ##获取 ECharts-X
 
-你可以从多种途径获取 ECharts-X，最简单的方式就是[点这下载](http://echarts.baidu.com/x/build/echarts-x-0.1.0.zip)。
+你可以从多种途径获取 ECharts-X，最简单的方式就是[从官网下载](http://echarts.baidu.com/x/build/echarts-x-0.1.0.zip)。
 
-跟 ECharts 一样， ECharts-X 也托管在 [GitHub](https://github.com/pissang/echarts-x) 上，你可以直接下载最新的 [Release](https://github.com/pissang/echarts-x/releases) 版本。或者如果想要一直保持代码是最新的，你也可以直接从 clone 下来出整个代码仓库。
+同时 ECharts-X 也托管在 [GitHub](https://github.com/pissang/echarts-x) 上，你可以直接下载最新的 [Release](https://github.com/pissang/echarts-x/releases) 版本。或者如果想要一直保持代码是最新的，你也可以直接从 clone 下来出整个代码仓库。
 
 ##引入 ECharts-X
 
-ECharts-X 也是使用 [echarts-optimizer](https://github.com/ecomfe/echarts-optimizer) 构建，因此引入方式同 ECharts 相同。关于如何在项目中引入 ECharts 可以参见 [引入ECharts](http://echarts.baidu.com/doc/doc.html#引入ECharts)。里面描述了三种不同的引入方式，ECharts-X 目前只支持模块化包引入和模块化单文件引入，标签单文件引入还不支持。
+ECharts-X 也是使用 [echarts-optimizer](https://github.com/ecomfe/echarts-optimizer) 构建，因此引入方式同 ECharts 相同。关于如何在项目中引入 ECharts 可以参见 [引入ECharts](http://echarts.baidu.com/doc/doc.html#引入ECharts)。里面描述了三种不同的引入方式，ECharts-X 目前只支持模块化包引入和模块化单文件引入。
 
 ###模块化包引入
 除了 [ECharts](https://github.com/ecomfe/echarts) 和 [ZRender](https://github.com/ecomfe/zrender), ECharts-X 还依赖 WebGL 库 [qtek](https://github.com/pissang/qtek)，同样的你可以下载最新的 release 版本，或者使用 git 工具 clone 整个 [qtek](https://github.com/pissang/qtek)。
@@ -121,4 +121,4 @@ try {
 }
 ```
 
-如果浏览器不支持 WebGL, `map3d`可以降级到使用 ECharts 的 `map`。
+另外如果浏览器不支持 WebGL, 建议可以将 `map3d`可以降级到使用 ECharts 的 `map`。

@@ -20,7 +20,7 @@
                     <a href="cn/article/getting_started.html" target="_blank">Documentation</a>
                 </li>
                 <li><a href="example.html" target="_blank">Examples</a></li>
-                <li><a href="https://github.com/pissang/echarts-x/" target="_blank">Github</a></li>
+                <li><a href="https://github.com/ecomfe/echarts-x/" target="_blank">Github</a></li>
                 <li><a href="http://echarts.baidu.com/" target="_blank">ECharts</a></li>
             </ul>
         </header>
@@ -31,7 +31,7 @@
                 <p class="desc">
                     Extension pack of ECharts providing globe visualization and 3d plots
                 </p>
-                <a class="download" href="https://echarts.baidu.com/x/build/echarts-x-0.1.0.zip">DOWNLOAD</a>
+                <a class="download" href="http://echarts.baidu.com/x/build/echarts-x-0.1.0.zip">DOWNLOAD</a>
                 
                 <div class="github-status">
                     <iframe src="https://ghbtns.com/github-btn.html?user=pissang&repo=echarts-x&type=star&count=false&size=large" frameborder="0" scrolling="0" width="80px" height="30px"></iframe>

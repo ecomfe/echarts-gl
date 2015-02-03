@@ -1,7 +1,7 @@
 ECharts-X
 =======
 
-ECharts-X is an extension pack of [ECharts](http://echarts.baidu.com) providing globe visualization and 3D plots. Proudly presented by [ECharts](http://echarts.baidu.com/doc/about.html) team.
+ECharts-X is an extension pack of [ECharts](http://echarts.baidu.com) providing globe visualization and 3D plots. Maintained by [ECharts](http://echarts.baidu.com/doc/about.html) team.
 
 It is built on top of Canvas library [ZRender](https://github.com/ecomfe/zrender) and WebGL graphic library [QTEK](https://github.com/pissang/qtek)。
 

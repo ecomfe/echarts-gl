@@ -23,7 +23,7 @@ $.ajax({
             },
             legend: {
                 show: true,
-                data: ['winds'],
+                data: ['wave'],
                 x: 'left',
                 orient: 'vertical',
                 textStyle: {

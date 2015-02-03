@@ -1,4 +1,4 @@
-> ECharts-X 中的柱形标注 markBar 是从 markPoint 衍生出来，除了 markPoint 能够展示的颜色和大小维度，在三维空间中使用柱形扩展了高度维度来表示数据的大小。比如下面示例中通过柱形的高度表示同一份人口密度分布数据，跟使用 markPoint 仅通过颜色区分相比更加直观和清晰。
+ECharts-X 中的柱形标注 markBar 是从 markPoint 衍生出来，除了 markPoint 能够展示的颜色和大小维度，在三维空间中使用柱形扩展了高度维度来表示数据的大小。比如下面示例中通过柱形的高度表示同一份人口密度分布数据，跟使用 markPoint 仅通过颜色区分相比更加直观和清晰。
 
 ##Example - World Population
 ```javascript

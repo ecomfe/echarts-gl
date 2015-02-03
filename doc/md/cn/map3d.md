@@ -50,7 +50,7 @@ var option = {
 mapType: 'world'
 ```
 
-同 ECharts 中 map 的 mapType, 默认是 `world`。不建议使用其它类型。
+同 ECharts 中 map 的 mapType, 默认是 `world`。支持但是不建议使用其它非世界地图的类型。
 
 ###mapLocation
 
@@ -67,9 +67,11 @@ mapLocation: {
 
 ###autoRotate
 
-地球是否在打开的时候自动旋转
+地球是否在打开的时候自动旋。
 
 ###baseLayer
+底层基本地图的绘制配置。
+
 ####backgroundColor
 
 ```javascript
@@ -84,7 +86,7 @@ backgroundColor: 'black'
 backgroundImage: 'none'
 ```
 
-底图背景图片，覆盖在地图背景色上，可以是Image url，Image dom 或者 Canvas dom
+底图背景图片，覆盖在地图背景色上，可以是Image url，Image dom 或者 Canvas dom。
 
 ####quality
 
