@@ -34,9 +34,9 @@
                 <a class="download" href="http://echarts.baidu.com/x/build/echarts-x-0.1.0.zip">DOWNLOAD</a>
                 
                 <div class="github-status">
-                    <iframe src="https://ghbtns.com/github-btn.html?user=pissang&repo=echarts-x&type=star&count=false&size=large" frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
+                    <iframe src="https://ghbtns.com/github-btn.html?user=ecomfe&repo=echarts-x&type=star&count=false&size=large" frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
 
-                    <iframe src="https://ghbtns.com/github-btn.html?user=pissang&repo=echarts-x&type=fork&count=false&size=large" frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
+                    <iframe src="https://ghbtns.com/github-btn.html?user=ecomfe&repo=echarts-x&type=fork&count=false&size=large" frameborder="0" scrolling="0" width="80px" height="30px"></iframe>
                 </div>
             </div>
         </main>
