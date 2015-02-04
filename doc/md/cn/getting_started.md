@@ -13,7 +13,7 @@ ECharts-X 也是使用 [echarts-optimizer](https://github.com/ecomfe/echarts-opt
 ###模块化包引入
 除了 [ECharts](https://github.com/ecomfe/echarts) 和 [ZRender](https://github.com/ecomfe/zrender), ECharts-X 还依赖 WebGL 库 [qtek](https://github.com/pissang/qtek)，同样的你可以下载最新的 release 版本，或者使用 git 工具 clone 整个 [qtek](https://github.com/pissang/qtek)。
 
-把这三个依赖库加上 [ECharts-X](https://github.com/pissang/echarts-x) 下载下来后，我们这里先假设你把这四个项目的目录放在一个目录 `project/dep` 下，而 `index.html` 放在 `project` 下，那么可以如下配置 `esl` 或者 `requirejs` 的 `packages`:
+把这三个依赖库加上 [ECharts-X](https://github.com/pissang/echarts-x) 下载下来后，我们这里先假设你把这四个项目的目录放在一个目录 `project/dep` 下，而 `index.html` 放在 `project` 下，那么可以如下配置 ESL 或者 RequireJS 的 `packages`:
 
 ```javascript
 require.config({
@@ -76,7 +76,7 @@ require.config({
 </body>
 ```
 
-尽管跟 ECharts 相比看起来麻烦了很多，但是如果你了解 amd 规范的加载器，或者之前有用 ECharts 做过开发的话，相信你很快就能上手了。
+尽管跟 ECharts 相比看起来麻烦了很多，但是如果你了解 AMD 规范的加载器，或者之前有用 ECharts 做过开发的话，相信你很快就能上手了。
 
 
 ##A Simple Example
@@ -103,7 +103,7 @@ chart.setOption({
 
 ##判断浏览器是否支持 WebGL
 
-ECharts-X 需要浏览器支持 WebGL，目前流行的 PC 浏览器中支持 WebGL 的有 Chrome, Firefox, Safari, IE11。移动浏览器支持的较少，iOS 8中的 Safari 是支持的。
+ECharts-X 需要浏览器支持 WebGL，目前流行的 PC 浏览器中支持 WebGL 的有 Chrome, Firefox, Safari, IE11。移动浏览器支持的较少，iOS 8 中的 Safari 是支持的。
 
 默认 ECharts-X 在不支持 WebGL 的环境中会提示浏览器不支持WebGL，这个提示的样式可以通过 class `.ecx-nowebgl` 配置。
 

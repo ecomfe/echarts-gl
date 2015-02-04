@@ -70,7 +70,7 @@
 <p>ECharts-X 也是使用 <a href="https://github.com/ecomfe/echarts-optimizer">echarts-optimizer</a> 构建，因此引入方式同 ECharts 相同。关于如何在项目中引入 ECharts 可以参见 <a href="http://echarts.baidu.com/doc/doc.html#引入ECharts">引入ECharts</a>。里面描述了三种不同的引入方式，ECharts-X 目前只支持模块化包引入和模块化单文件引入。</p>
 <h3 id="-">模块化包引入</h3>
 <p>除了 <a href="https://github.com/ecomfe/echarts">ECharts</a> 和 <a href="https://github.com/ecomfe/zrender">ZRender</a>, ECharts-X 还依赖 WebGL 库 <a href="https://github.com/pissang/qtek">qtek</a>，同样的你可以下载最新的 release 版本，或者使用 git 工具 clone 整个 <a href="https://github.com/pissang/qtek">qtek</a>。</p>
-<p>把这三个依赖库加上 <a href="https://github.com/pissang/echarts-x">ECharts-X</a> 下载下来后，我们这里先假设你把这四个项目的目录放在一个目录 <code>project/dep</code> 下，而 <code>index.html</code> 放在 <code>project</code> 下，那么可以如下配置 <code>esl</code> 或者 <code>requirejs</code> 的 <code>packages</code>:</p>
+<p>把这三个依赖库加上 <a href="https://github.com/pissang/echarts-x">ECharts-X</a> 下载下来后，我们这里先假设你把这四个项目的目录放在一个目录 <code>project/dep</code> 下，而 <code>index.html</code> 放在 <code>project</code> 下，那么可以如下配置 ESL 或者 RequireJS 的 <code>packages</code>:</p>
 <pre><code class="lang-javascript">require.config({
     packages: [{
         name: &#39;echarts&#39;,
@@ -126,7 +126,7 @@
     &lt;/script&gt;
 &lt;/body&gt;
 </code></pre>
-<p>尽管跟 ECharts 相比看起来麻烦了很多，但是如果你了解 amd 规范的加载器，或者之前有用 ECharts 做过开发的话，相信你很快就能上手了。</p>
+<p>尽管跟 ECharts 相比看起来麻烦了很多，但是如果你了解 AMD 规范的加载器，或者之前有用 ECharts 做过开发的话，相信你很快就能上手了。</p>
 <h2 id="a-simple-example">A Simple Example</h2>
 <p>引入 ECharts 后就可以写一个简单的例子了。文章开头提过 ECharts-X 的使用方式跟 ECharts 是一样的，这里不再赘述，如下代码就可以画出一个简单的地球啦。</p>
 <pre><code class="lang-javascript">var chart = echarts.init(document.getElementById(&#39;main&#39;));
@@ -144,7 +144,7 @@ chart.setOption({
 </code></pre>
 <p>更多的示例可以访问<a href="../../example.html">示例代码</a></p>
 <h2 id="-webgl">判断浏览器是否支持 WebGL</h2>
-<p>ECharts-X 需要浏览器支持 WebGL，目前流行的 PC 浏览器中支持 WebGL 的有 Chrome, Firefox, Safari, IE11。移动浏览器支持的较少，iOS 8中的 Safari 是支持的。</p>
+<p>ECharts-X 需要浏览器支持 WebGL，目前流行的 PC 浏览器中支持 WebGL 的有 Chrome, Firefox, Safari, IE11。移动浏览器支持的较少，iOS 8 中的 Safari 是支持的。</p>
 <p>默认 ECharts-X 在不支持 WebGL 的环境中会提示浏览器不支持WebGL，这个提示的样式可以通过 class <code>.ecx-nowebgl</code> 配置。</p>
 <p>但是如果在引入 ECharts-X 前就要判断浏览器是否支持 WebGL, 可以使用下面的脚本：</p>
 <pre><code class="lang-javascript">try {
@@ -176,6 +176,13 @@ chart.setOption({
         <li><a target="_blank" href="http://weibo.com/echarts">Weibo</a></li>
     </ul>
 </footer>
+
+<script>
+if (document.location.href.indexOf('local') == -1) {
+    var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3Fb78830c9a5dad062d08b90b2bc0cf5da' type='text/javascript'%3E%3C/script%3E"));   
+}
+</script>
 
         <script src="../../lib/jquery.min.js"></script>
         <script src="../../lib/affix.js"></script>
