@@ -138,7 +138,9 @@ size: [2048, 1024]
 
 ####particle
 
-仅在`type:'particle'` 时有效，particle 的配置项如下
+仅在`type:'particle'` 时有效，需要浏览器支持浮点纹理扩展，除了移动端因为硬件的限制，目前绝大部分的PC浏览器都是支持的。
+
+particle 的配置项如下
 
 <table>
     <tr>

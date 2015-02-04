@@ -1,26 +1,35 @@
 @import url(color.less);
 
-table {
-    width: 100%;
-    border-bottom: 1px solid @lines;
-    margin-bottom: 10px;
-
-    tr {
-        th, td {
-            padding: 8px;
-            line-height: 20px;
-            text-align: left;
-            vertical-align: top;
-            border-top: 1px solid @lines;
-            border-left: 1px solid @lines;
-            border-color: @lines !important;
-
-            &:last-child {
-                border-right: 1px solid @lines;
-            }
-        }
-    }
+article table {
+  display: block;
+  width: 100%;
+  overflow: auto;
+  word-break: normal;
+  word-break: keep-all;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
+
+article table th {
+  font-weight: bold;
+}
+
+article table th,
+article table td {
+  padding: 6px 13px;
+  border: 1px solid #ddd;
+}
+
+article table tr {
+  background-color: #fff;
+  border-top: 1px solid #ccc;
+  margin: 0px;
+}
+
+article table tr:nth-child(2n) {
+  background-color: #f8f8f8;
+}
+
 
 body {
     text-align: center;

@@ -52,3 +52,5 @@ ECharts-X 中 `markLine` 的 `itemStyle` 目前不支持 `emphasis` 的样式。
 
 
 ###data
+
+同 ECharts 中 markLine 的数据格式。

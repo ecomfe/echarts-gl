@@ -1,21 +1,27 @@
-table {
+article table {
+  display: block;
   width: 100%;
-  border-bottom: 1px solid #e7e7e9;
-  margin-bottom: 10px;
+  overflow: auto;
+  word-break: normal;
+  word-break: keep-all;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
-table tr th,
-table tr td {
-  padding: 8px;
-  line-height: 20px;
-  text-align: left;
-  vertical-align: top;
-  border-top: 1px solid #e7e7e9;
-  border-left: 1px solid #e7e7e9;
-  border-color: #e7e7e9 !important;
+article table th {
+  font-weight: bold;
 }
-table tr th:last-child,
-table tr td:last-child {
-  border-right: 1px solid #e7e7e9;
+article table th,
+article table td {
+  padding: 6px 13px;
+  border: 1px solid #ddd;
+}
+article table tr {
+  background-color: #fff;
+  border-top: 1px solid #ccc;
+  margin: 0px;
+}
+article table tr:nth-child(2n) {
+  background-color: #f8f8f8;
 }
 body {
   text-align: center;
