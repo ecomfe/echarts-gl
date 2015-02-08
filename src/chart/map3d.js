@@ -391,8 +391,6 @@ define(function (require) {
                     self._mapDataMap[mapType] = mapData;
                     self._updateMapPolygonShapes(data, mapData, seriesGroup);
                     globeSurface.refresh();
-
-                    self._focusOnShape(globeSurface.getShapeByName('China'));
                 });
             }
             else {
@@ -1011,10 +1009,27 @@ define(function (require) {
             var rotation = new Quaternion().setAxes(
                 normal.negate(), bitangent, tangent
             ).invert();
+            var self = this;
 
             this._orbitControl.rotateTo({
                 rotation: rotation,
-                easing: 'CubicOut'
+                easing: 'CubicOut',
+            }).done(function () {
+                var layer3d = self.baseLayer;
+                var camera = layer3d.camera;
+                var width = Math.max(lt.dist(rt), lb.dist(rb));
+                var height = Math.max(lt.dist(lb), rt.dist(rb));
+
+                var rad = camera.fov * PI / 360;
+                var tanRad = Math.tan(rad);
+                var z = Math.max(
+                    width / 2 / tanRad / camera.aspect,
+                    height / 2 / tanRad 
+                );
+                self._orbitControl.zoomTo({
+                    zoom: (camera.position.z - z) / r,
+                    easing: 'CubicOut'
+                });
             });
         },
 

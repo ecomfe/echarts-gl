@@ -146,6 +146,22 @@ define(function (require) {
     };
 
     /**
+     * Get viewport width in pixel
+     * @return {number}
+     */
+    Layer3D.prototype.getViewportWidth = function () {
+        return this._viewport.width * this.renderer.getWidth();
+    };
+
+    /**
+     * Get viewport height in pixel
+     * @return {number}
+     */
+    Layer3D.prototype.getViewportHeight = function () {
+        return this._viewport.height * this.renderer.getHeight();
+    };
+
+    /**
      * Refresh the layer, will be invoked by zrender
      */
     Layer3D.prototype.refresh = function () {

@@ -167,14 +167,36 @@ define(function (require) {
                     self._rotateX = euler.x;
                     self._rotateY = euler.y;
                 })
-                .start(opts.easing);
+                .start(opts.easing || 'Linear');
         },
 
         /**
          * Zoom to animation
+         * @param {Object} opts
+         * @param {number} opts.zoom
+         * @param {number} [opts.time=1000]
+         * @param {number} [opts.easing='Linear']
          */
-        zoomTo: function () {
+        zoomTo: function (opts) {
+            var zr = this.zr;
+            var zoom = opts.zoom;
+            var self = this;
 
+            zoom = Math.max(Math.min(this.maxZoom, zoom), this.minZoom);
+            this._animating = true;
+            return zr.animation.animate(this)
+                .when(opts.time || 1000, {
+                    _zoom: zoom
+                })
+                .during(function () {
+                    var zoom = self._zoom;
+                    self.target.scale.set(zoom, zoom, zoom);
+                    zr.refreshNextFrame();
+                })
+                .done(function () {
+                    self._animating = false;
+                })
+                .start(opts.easing || 'Linear');
         },
 
         /**
