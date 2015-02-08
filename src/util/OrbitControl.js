@@ -11,6 +11,8 @@ define(function (require) {
 
     var zrConfig = require('zrender/config');
     var Vector2 = require('qtek/math/Vector2');
+    var Vector3 = require('qtek/math/Vector3');
+    var Quaternion = require('qtek/math/Quaternion');
 
     var EVENT = zrConfig.EVENT;
 
@@ -69,6 +71,8 @@ define(function (require) {
         this._rotateVelocity = new Vector2();
 
         this._zoomSpeed = 0;
+
+        this._animating = false;
     };
 
     OrbitControl.prototype = {
@@ -80,6 +84,7 @@ define(function (require) {
          * Mouse event binding
          */
         init: function () {
+            this._animating = false;
             this.layer.bind(EVENT.MOUSEDOWN, this._mouseDownHandler, this);
             this.layer.bind(EVENT.MOUSEWHEEL, this._mouseWheelHandler, this);
         },
@@ -96,10 +101,91 @@ define(function (require) {
         },
 
         /**
+         * Rotation to animation, Params can be target quaternion or x, y, z axis
+         * @example
+         *     control.rotateTo({
+         *         x: transform.x,
+         *         y: transform.y,
+         *         z: transform.z,
+         *         time: 1000
+         *     });
+         *     control.rotateTo({
+         *         rotation: quat,
+         *         time: 1000,
+         *         easing: 'CubicOut'
+         *     })
+         *     .done(function() {
+         *         xxx
+         *     });
+         * @param {Object} opts
+         * @param {qtek.math.Quaternion} [opts.rotation]
+         * @param {qtek.math.Vector3} [opts.x]
+         * @param {qtek.math.Vector3} [opts.y]
+         * @param {qtek.math.Vector3} [opts.z]
+         * @param {number} [opts.time=1000]
+         * @param {number} [opts.easing='Linear']
+         */
+        rotateTo: function (opts) {
+            var toQuat;
+            var self = this;
+            if (! opts.rotation) {
+                toQuat = new Quaternion();
+                var view = new Vector3();
+                Vector3.negate(view, opts.z);
+                toQuat.setAxes(view, opts.x, opts.y);
+            }
+            else {
+                toQuat = opts.rotation;
+            }
+
+            var zr = this.zr;
+            var obj = {
+                p: 0
+            };
+
+            var target = this.target;
+            var fromQuat = target.rotation.clone();
+            this._animating = true;
+            return zr.animation.animate(obj)
+                .when(opts.time || 1000, {
+                    p: 1
+                })
+                .during(function () {
+                    Quaternion.slerp(
+                        target.rotation, fromQuat, toQuat, obj.p
+                    );
+                    zr.refreshNextFrame();
+                })
+                .done(function () {
+                    self._animating = false;
+                    var euler = new Vector3();
+                    // Z Rotate at last so it can be zero
+                    euler.eulerFromQuaternion(
+                        target.rotation.normalize(), 'ZXY'
+                    );
+
+                    self._rotateX = euler.x;
+                    self._rotateY = euler.y;
+                })
+                .start(opts.easing);
+        },
+
+        /**
+         * Zoom to animation
+         */
+        zoomTo: function () {
+
+        },
+
+        /**
          * Call update each frame
          * @param  {number} deltaTime Frame time
          */
         update: function (deltaTime) {
+            if (this._animating) {
+                return;
+            }
+
             this._rotateY = (this._rotateVelocity.y + this._rotateY) % (Math.PI * 2);
             this._rotateX = (this._rotateVelocity.x + this._rotateX) % (Math.PI * 2);
 
@@ -137,6 +223,9 @@ define(function (require) {
         },
 
         _mouseDownHandler: function (e) {
+            if (this._animating) {
+                return;
+            }
             this.layer.bind(EVENT.MOUSEMOVE, this._mouseMoveHandler, this);
             this.layer.bind(EVENT.MOUSEUP, this._mouseUpHandler, this);
 
@@ -152,6 +241,9 @@ define(function (require) {
         },
 
         _mouseMoveHandler: function (e) {
+            if (this._animating) {
+                return;
+            }
             e = e.event;
 
             this._rotateVelocity.y = (e.pageX - this._mouseX) / 500;
@@ -162,6 +254,9 @@ define(function (require) {
         },
 
         _mouseWheelHandler: function (e) {
+            if (this._animating) {
+                return;
+            }
             e = e.event;
             var delta = e.wheelDelta // Webkit
                         || -e.detail; // Firefox

@@ -26,7 +26,7 @@ define(function (require) {
     var Texture2D = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
     var Matrix4 = require('qtek/math/Matrix4');
-    var glenum = require('qtek/core/glenum');
+    var Quaternion = require('qtek/math/Quaternion');
 
     var ecConfig = require('../config');
     var ChartBase3D = require('./base3d');
@@ -37,7 +37,6 @@ define(function (require) {
 
     var LRU = require('qtek/core/LRU');
 
-
     var formatGeoPoint = function (p) {
         //调整俄罗斯东部到地图右侧与俄罗斯相连
         return [
@@ -45,6 +44,11 @@ define(function (require) {
             p[1]
         ];
     };
+
+    var PI = Math.PI;
+    var PI2 = PI * 2;
+    var sin = Math.sin;
+    var cos = Math.cos;
     /**
      * @constructor
      * @extends module:echarts-x/chart/base3d
@@ -387,12 +391,15 @@ define(function (require) {
                     self._mapDataMap[mapType] = mapData;
                     self._updateMapPolygonShapes(data, mapData, seriesGroup);
                     globeSurface.refresh();
+
+                    self._focusOnShape(globeSurface.getShapeByName('China'));
                 });
             }
             else {
                 globeSurface.refresh();
             }
 
+            // Build surface layers
             if (this._surfaceLayerRoot) {
                 this.baseLayer.renderer.disposeNode(
                     this._surfaceLayerRoot, false, true
@@ -408,6 +415,7 @@ define(function (require) {
             }
             this._vfParticleSurfaceList = [];
 
+            // Build markers
             seriesGroup.forEach(function (serie) {
                 var sIdx = this.series.indexOf(serie);
                 this.buildMark(sIdx, this._globeNode);
@@ -779,8 +787,8 @@ define(function (require) {
                 // Create label text shape
                 var cp = this._getTextPosition(shape);
                 // Scale text by the latitude, text of high latitude will be pinched
-                var lat = (0.5 - cp[1] / this._baseTextureSize) * Math.PI;
-                var textScaleX = 1 / Math.cos(lat);
+                var lat = (0.5 - cp[1] / this._baseTextureSize) * PI;
+                var textScaleX = 1 / cos(lat);
                 var baseScale = this._baseTextureSize / 2048;
                 var textShape = new TextShape({
                     zlevel: 1,
@@ -906,11 +914,11 @@ define(function (require) {
             var theta = Math.asin(y);
             var phi = Math.atan2(z, -x);
             if (phi < 0) {
-                phi = Math.PI * 2  + phi;
+                phi = PI2  + phi;
             }
 
-            var log = theta * 180 / Math.PI + 90;
-            var lat = phi * 180 / Math.PI;
+            var log = theta * 180 / PI + 90;
+            var lat = phi * 180 / PI;
         },
 
         _isValueNone: function (value) {
@@ -957,6 +965,59 @@ define(function (require) {
             }
         },
 
+        /**
+         * Zoom and rotate to focus on the shape
+         */
+        _focusOnShape: function (shape) {
+            if (!shape) {
+                return;
+            }
+
+            var surface = this._globeSurface;
+            var w = surface.getWidth();
+            var h = surface.getHeight();
+            var r = this._earthRadius;
+
+            function convertCoord(x, y) {
+                x /= w;
+                y /= h;
+
+                var r0 = r * sin(y * PI);
+                return new Vector3(
+                    -r0 * cos(x * PI2),
+                    r * cos(y * PI),
+                    r0 * sin(x * PI2)
+                );
+            }
+
+            var rect = shape.getRect(shape.style);
+            var x = rect.x, y = rect.y;
+            var width = rect.width, height = rect.height;
+            var lt = convertCoord(x, y);
+            var rt = convertCoord(x + width, y);
+            var lb = convertCoord(x, y + height);
+            var rb = convertCoord(x + width, y + height);
+
+            // Z
+            var normal = new Vector3()
+                .add(lt).add(rt).add(lb).add(rb).normalize();
+            // Y
+            var tangent = new Vector3();
+            // X
+            var bitangent = new Vector3();
+            bitangent.cross(Vector3.UP, normal).normalize();
+            tangent.cross(normal, bitangent).normalize();
+
+            var rotation = new Quaternion().setAxes(
+                normal.negate(), bitangent, tangent
+            ).invert();
+
+            this._orbitControl.rotateTo({
+                rotation: rotation,
+                easing: 'CubicOut'
+            });
+        },
+
         // Overwrite getMarkCoord
         getMarkCoord: function (seriesIdx, data, point) {
             var geoCoord = data.geoCoord || geoCoordMap[data.name];
@@ -972,15 +1033,15 @@ define(function (require) {
             var lon = coords[0];
             var lat = coords[1];
 
-            lon = Math.PI * lon / 180;
-            lat = Math.PI * lat / 180;
+            lon = PI * lon / 180;
+            lat = PI * lat / 180;
 
             var r = this._earthRadius + distance;
-            var r0 = Math.cos(lat) * r;
-            point._array[1] = Math.sin(lat) * r;
+            var r0 = cos(lat) * r;
+            point._array[1] = sin(lat) * r;
             // TODO
-            point._array[0] = -r0 * Math.cos(lon + Math.PI);
-            point._array[2] = r0 * Math.sin(lon + Math.PI);
+            point._array[0] = -r0 * cos(lon + PI);
+            point._array[2] = r0 * sin(lon + PI);
         },
 
         // Overwrite getMarkPointTransform
@@ -1020,7 +1081,7 @@ define(function (require) {
                 matrix.z = zAxis;
                 Matrix4.rotateX(
                     // Rotate up if value is positive
-                    matrix, matrix, -orientationAngle / 180 * Math.PI
+                    matrix, matrix, -orientationAngle / 180 * PI
                 );
 
                 Matrix4.scale(

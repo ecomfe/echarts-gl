@@ -41,6 +41,14 @@ define(function (require) {
     // Extend echarts config
     zrUtil.merge(ecConfig, ecxConfig, true);
 
+    // Some basic dependencies
+    require('qtek/Node');
+    require('qtek/Mesh');
+    require('qtek/Material');
+    require('qtek/Shader');
+    require('qtek/Texture2D');
+    require('qtek/core/glenum');
+
     // Import basic shaders
     var Shader = require('qtek/Shader');
     Shader['import'](require('text!./util/shader/albedo.essl'));

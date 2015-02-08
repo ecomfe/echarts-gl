@@ -88,6 +88,8 @@ backgroundImage: 'none'
 
 底图背景图片，覆盖在地图背景色上，可以是Image url，Image dom 或者 Canvas dom。
 
+**注意**：WebGL 是不允许图片跨域加载的，所以如果是跨域的图片可能会报`tainted canvases may not be loaded`的错误。
+
 ####quality
 
 ```javascript
