@@ -117,7 +117,9 @@ void main()
     #ifdef AMBIENT_LIGHT_NUMBER
         for(int i = 0; i < AMBIENT_LIGHT_NUMBER; i++)
         {
-            diffuseColor += ambientLightColor[i];
+            // Multiply a dot factor to make sure the bump detail can be seen 
+            // in the dark side
+            diffuseColor += ambientLightColor[i] * dot(v_Normal, N);
         }
     #endif
     #ifdef DIRECTIONAL_LIGHT_NUMBER

@@ -87,6 +87,8 @@ define(function (require) {
             this._animating = false;
             this.layer.bind(EVENT.MOUSEDOWN, this._mouseDownHandler, this);
             this.layer.bind(EVENT.MOUSEWHEEL, this._mouseWheelHandler, this);
+
+            this._decomposeRotation();
         },
 
         /**
@@ -158,14 +160,6 @@ define(function (require) {
                 })
                 .done(function () {
                     self._animating = false;
-                    var euler = new Vector3();
-                    // Z Rotate at last so it can be zero
-                    euler.eulerFromQuaternion(
-                        target.rotation.normalize(), 'ZXY'
-                    );
-
-                    self._rotateX = euler.x;
-                    self._rotateY = euler.y;
                 })
                 .start(opts.easing || 'Linear');
         },
@@ -195,6 +189,7 @@ define(function (require) {
                 })
                 .done(function () {
                     self._animating = false;
+                    self._decomposeRotation();
                 })
                 .start(opts.easing || 'Linear');
         },
@@ -242,6 +237,17 @@ define(function (require) {
             if (Math.abs(this._zoomSpeed) < 1e-3) {
                 this._zoomSpeed = 0;
             }
+        },
+
+        _decomposeRotation: function () {
+            var euler = new Vector3();
+            // Z Rotate at last so it can be zero
+            euler.eulerFromQuaternion(
+                this.target.rotation.normalize(), 'ZXY'
+            );
+
+            this._rotateX = euler.x;
+            this._rotateY = euler.y;
         },
 
         _mouseDownHandler: function (e) {

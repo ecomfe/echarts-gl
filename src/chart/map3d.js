@@ -131,6 +131,16 @@ define(function (require) {
          * @type {qtek.Shader}
          * @private
          */
+        this._lambertShader = new Shader({
+            vertex: Shader.source('ecx.lambert.vertex'),
+            fragment: Shader.source('ecx.lambert.fragment')
+        });
+        this._lambertShader.enableTexture('diffuseMap');
+
+        /**
+         * @type {qtek.Shader}
+         * @private
+         */
         this._albedoShader = new Shader({
             vertex: Shader.source('ecx.albedo.vertex'),
             fragment: Shader.source('ecx.albedo.fragment')
@@ -143,16 +153,6 @@ define(function (require) {
          */
         this._albedoShaderPA = this._albedoShader.clone();
         this._albedoShaderPA.define('fragment', 'PREMULTIPLIED_ALPHA');
-
-        /**
-         * @type {qtek.Shader}
-         * @private
-         */
-        this._lambertShader = new Shader({
-            vertex: Shader.source('ecx.lambert.vertex'),
-            fragment: Shader.source('ecx.lambert.fragment')
-        });
-        this._lambertShader.enableTexture('diffuseMap');
 
         /**
          * @type {qtek.DynamicGeoemtry}
@@ -374,6 +374,10 @@ define(function (require) {
             this._globeNode = new Node({
                 name: 'globe'
             });
+
+            // Put the longitude 0 in the center of view
+            this._globeNode.rotation.rotateY(-Math.PI / 2);
+
             var earthMesh = new Mesh({
                 name: 'earth',
                 geometry: this._sphereGeometry,
@@ -505,7 +509,6 @@ define(function (require) {
             var globeNode = this._globeNode;
             var earthMesh = globeNode.queryNode('earth');
             var earthMaterial = earthMesh.material;
-            // earthMaterial.transparent = false;
 
             var deepQuery = this.deepQuery;
 
@@ -527,11 +530,9 @@ define(function (require) {
                 ambientLight.intensity = deepQuery(seriesGroup, 'light.ambientIntensity');
                 // Put sun in the right position
                 var time = deepQuery(seriesGroup, 'baseLayer.time') || new Date().toUTCString();
-                // var sunPos = sunCalc.getPosition(Date.parse(time), 0, 0);
 
-                // sunLight.position.y = 200;
-                // sunLight.position.x = 200;
-                // sunLight.lookAt(Vector3.ZERO);
+                this._getSunPosition(time, sunLight.position);
+                sunLight.lookAt(Vector3.ZERO);
 
                 var heightImage = deepQuery(seriesGroup, 'baseLayer.heightImage');
                 if (! this._isValueNone(heightImage)) {
@@ -564,6 +565,15 @@ define(function (require) {
             else if (! enableLight && earthMaterial.shader !== this._albedoShader) {
                 earthMaterial.attachShader(this._albedoShader, true);
             }
+        },
+
+        _getSunPosition: function (time, out) {
+            // FIXME Don't know if it is right T^T
+            var coords = sunCalc.getCoords(Date.parse(time));
+            var r0 = Math.cos(coords.dec);
+            out.y = Math.sin(coords.dec);
+            out.z = r0 * Math.sin(coords.ra + Math.PI);
+            out.x = -r0 * Math.cos(coords.ra + Math.PI);
         },
 
         /**

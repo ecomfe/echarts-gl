@@ -23,7 +23,8 @@ myChart.setOption({
         light: {
             enable: true,
             // Use the system time
-            time: ''
+            time: '',
+            sunIntensity: 1.2
         },
 
         itemStyle: {
