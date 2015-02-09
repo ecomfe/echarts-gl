@@ -28,6 +28,21 @@ define({
             // 
             // Or directly give the size like 512
             quality: 'medium',
+
+            // Image providing elevation infomation
+            // Used for light shading
+            // Available only when light.enable: true
+            heightImage: ''
+        },
+
+        light: {
+            // If enable light in lambert shading
+            // Default is false and only has albedo color
+            enable: false,
+            sunIntensity: 0.9,
+            ambientIntensity: 0.1,
+            // UTC Time, default it will use system time
+            time: ''
         },
 
         // {

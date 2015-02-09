@@ -38,7 +38,17 @@ $.ajax({
 
                 baseLayer: {
                     backgroundColor: '#136dae',
-                    quality: 'high'
+                    quality: 'high',
+
+                    heightImage: 'asset/elev_bump.jpg'
+                },
+
+                light: {
+                    enable: true,
+                    // Use the system time
+                    time: '',
+                    sunIntensity: 0.4,
+                    ambientIntensity: 0.6
                 },
 
                 itemStyle: {

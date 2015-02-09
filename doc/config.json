@@ -44,6 +44,10 @@
         "name": "map3d_placemark",
         "title": "The 25 Most Popular Tourist Attractions In The World"
     }, {
+        "type": "map3d",
+        "name": "map3d_sun",
+        "title": "Earth with sun light example"
+    }, {
         "type": "map3d_mix",
         "name": "map3d_mix",
         "title": "Map3D Mix Map"

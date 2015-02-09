@@ -27,13 +27,17 @@ define(function (require) {
     var Vector3 = require('qtek/math/Vector3');
     var Matrix4 = require('qtek/math/Matrix4');
     var Quaternion = require('qtek/math/Quaternion');
+    var DirectionalLight = require('qtek/light/Directional');
+    var AmbientLight = require('qtek/light/Ambient');
 
     var ecConfig = require('../config');
     var ChartBase3D = require('./base3d');
     var OrbitControl = require('../util/OrbitControl');
-
+ 
     var ZRenderSurface = require('../surface/ZRenderSurface');
     var VectorFieldParticleSurface = require('../surface/VectorFieldParticleSurface');
+
+    var sunCalc = require('../util/sunCalc');
 
     var LRU = require('qtek/core/LRU');
 
@@ -132,9 +136,23 @@ define(function (require) {
             fragment: Shader.source('ecx.albedo.fragment')
         });
         this._albedoShader.enableTexture('diffuseMap');
-        
+            
+        /**
+         * @type {qtek.Shader}
+         * @private
+         */
         this._albedoShaderPA = this._albedoShader.clone();
-        this._albedoShaderPA.define('fragment', 'PREMULTIPLIED_ALPHA')
+        this._albedoShaderPA.define('fragment', 'PREMULTIPLIED_ALPHA');
+
+        /**
+         * @type {qtek.Shader}
+         * @private
+         */
+        this._lambertShader = new Shader({
+            vertex: Shader.source('ecx.lambert.vertex'),
+            fragment: Shader.source('ecx.lambert.fragment')
+        });
+        this._lambertShader.enableTexture('diffuseMap');
 
         /**
          * @type {qtek.DynamicGeoemtry}
@@ -149,7 +167,7 @@ define(function (require) {
          * @type {qtek.core.LRU}
          * @private
          */
-        this._imageCache = new LRU(5);
+        this._imageCache = new LRU(6);
 
         /**
          * List of all vector field particle surfaces
@@ -254,8 +272,11 @@ define(function (require) {
             this.afterBuildMark();
         },
 
+        /**
+         * Set viewport of map3d layer
+         * @param {Array.<Object>} seriesGroup
+         */
         _setViewport: function (seriesGroup) {
-            // Set viewport, aka globe location
             var mapLocation = this.deepQuery(seriesGroup, 'mapLocation') || {};
             var x = mapLocation.x;
             var y = mapLocation.y;
@@ -342,6 +363,49 @@ define(function (require) {
         },
 
         /**
+         * Create globe mesh, and surface canvas, mouse control instance.
+         * Stuff only need to create once and used each refresh.
+         * @param  {Array.<Object>} seriesGroup
+         * @private
+         */
+        _createGlob: function (seriesGroup) {
+            var zr = this.zr;
+            var self = this;
+            this._globeNode = new Node({
+                name: 'globe'
+            });
+            var earthMesh = new Mesh({
+                name: 'earth',
+                geometry: this._sphereGeometry,
+                material: new Material({
+                    shader: this._albedoShader,
+                    transparent: true
+                })
+            });
+            var radius = this._earthRadius;
+            earthMesh.scale.set(radius, radius, radius);
+
+            this._globeNode.add(earthMesh);
+
+            var scene = this.baseLayer.scene;
+            scene.add(this._globeNode);
+
+            this._orbitControl = new OrbitControl(this._globeNode, this.zr, this.baseLayer);
+            this._orbitControl.init();
+            this._orbitControl.autoRotate = this.deepQuery(seriesGroup, 'autoRotate');
+
+            var globeSurface = new ZRenderSurface(
+                this._baseTextureSize, this._baseTextureSize
+            );
+            this._globeSurface = globeSurface;
+            earthMesh.material.set('diffuseMap', globeSurface.getTexture());
+
+            globeSurface.onrefresh = function () {
+                zr.refreshNextFrame();
+            };
+        },
+
+        /**
          * Build globe in each refresh operation.
          * Draw base map from geoJSON data. Build markers.
          * @param  {string} mapType
@@ -350,24 +414,35 @@ define(function (require) {
          */
         _updateGlobe: function (mapType, data, seriesGroup) {
             var globeSurface = this._globeSurface;
+            var globeNode = this._globeNode;
             var self = this;
+            var deepQuery = this.deepQuery;
 
             globeSurface.resize(
                 this._baseTextureSize, this._baseTextureSize
             );
+            // Light configuration
+            this._updateLightShading(seriesGroup);
 
             // Update earth base texture background image and color
-            var bgColor = this.deepQuery(seriesGroup, 'baseLayer.backgroundColor');
-            var bgImage = this.deepQuery(seriesGroup, 'baseLayer.backgroundImage');
+            var bgColor = deepQuery(seriesGroup, 'baseLayer.backgroundColor');
+            var bgImage = deepQuery(seriesGroup, 'baseLayer.backgroundImage');
             globeSurface.backgroundColor = this._isValueNone(bgColor) ? '' : bgColor;
             if (! this._isValueNone(bgImage)) {
                 if (typeof(bgImage) == 'string') {
-                    var img = new Image();
-                    img.onload = function () {
-                        globeSurface.backgroundImage = img;
-                        globeSurface.refresh();
+                    var img = this._imageCache.get(bgImage);
+                    if (! img) {
+                        var img = new Image();
+                        img.onload = function () {
+                            globeSurface.backgroundImage = img;
+                            globeSurface.refresh();
+                            self._imageCache.put(bgImage, img);
+                        }
+                        img.src = bgImage;
                     }
-                    img.src = bgImage;
+                    else {
+                        globeSurface.backgroundImage = img;
+                    }
                 }
                 else {
                     // mapBackgroundImage is a image|canvas object
@@ -406,7 +481,7 @@ define(function (require) {
             this._surfaceLayerRoot = new Node({
                 name: 'surfaceLayers'
             });
-            this._globeNode.add(this._surfaceLayerRoot);
+            globeNode.add(this._surfaceLayerRoot);
 
             for (var i = 0; i < this._vfParticleSurfaceList.length; i++) {
                 this._vfParticleSurfaceList[i].dispose();
@@ -416,9 +491,79 @@ define(function (require) {
             // Build markers
             seriesGroup.forEach(function (serie) {
                 var sIdx = this.series.indexOf(serie);
-                this.buildMark(sIdx, this._globeNode);
+                this.buildMark(sIdx, globeNode);
                 this._createSurfaceLayers(sIdx);
             }, this);
+        },
+
+        /**
+         * Update sun light position and shading config
+         * @param  {Array.<Object>} seriesGroup
+         */
+        _updateLightShading: function (seriesGroup) {
+            var self = this;
+            var globeNode = this._globeNode;
+            var earthMesh = globeNode.queryNode('earth');
+            var earthMaterial = earthMesh.material;
+            // earthMaterial.transparent = false;
+
+            var deepQuery = this.deepQuery;
+
+            var enableLight = deepQuery(seriesGroup, 'light.enable');
+            if (enableLight) {
+                var lambertShader = this._lambertShader;
+                if (earthMaterial.shader !== lambertShader) {
+                    earthMaterial.attachShader(lambertShader, true);
+                }
+                var sunLight = globeNode.queryNode('sun');
+                var ambientLight = globeNode.queryNode('ambient');
+                if (! sunLight) {
+                    sunLight = new DirectionalLight({ name: 'sun' });
+                    globeNode.add(sunLight);
+                    ambientLight = new AmbientLight({ name: 'ambient' });
+                    globeNode.add(ambientLight);
+                }
+                sunLight.intensity = deepQuery(seriesGroup, 'light.sunIntensity');
+                ambientLight.intensity = deepQuery(seriesGroup, 'light.ambientIntensity');
+                // Put sun in the right position
+                var time = deepQuery(seriesGroup, 'baseLayer.time') || new Date().toUTCString();
+                // var sunPos = sunCalc.getPosition(Date.parse(time), 0, 0);
+
+                // sunLight.position.y = 200;
+                // sunLight.position.x = 200;
+                // sunLight.lookAt(Vector3.ZERO);
+
+                var heightImage = deepQuery(seriesGroup, 'baseLayer.heightImage');
+                if (! this._isValueNone(heightImage)) {
+                    var bumpTexture = earthMaterial.get('bumpMap');
+                    if (! bumpTexture) {
+                        bumpTexture = new Texture2D({ anisotropic: 32, flipY: false });
+                    }
+                    if (typeof (heightImage) === 'string') {
+                        var src = heightImage;
+                        heightImage = this._imageCache.get(src);
+                        if (! heightImage) {
+                            bumpTexture.load(src).success(function () {
+                                // FIXME Config changed and refreshed before bum map loaded
+                                lambertShader.enableTexture('bumpMap');
+                                earthMaterial.set('bumpMap', bumpTexture);
+                                self._imageCache.put(src, bumpTexture.image);
+                                self.zr.refreshNextFrame();
+                            });
+                        }
+                        else {
+                            bumpTexture.image = heightImage;
+                        }
+                        bumpTexture.dirty();
+                    }
+                }
+                else {
+                    lambertShader.disableTexture('bumpMap');
+                }
+            }
+            else if (! enableLight && earthMaterial.shader !== this._albedoShader) {
+                earthMaterial.attachShader(this._albedoShader, true);
+            }
         },
 
         /**
@@ -493,15 +638,11 @@ define(function (require) {
             if (typeof(image) === 'string') {
                 var src = image;
                 image = this._imageCache.get(src);
-                if (!image) {
-                    image = new Image();
-                    image.onload = function () {
-                        texture.image = image;
-                        texture.dirty();
+                if (! image) {
+                    texture.load(src).success(function () {
                         self.zr.refreshNextFrame();
-                        self._imageCache.put(src, image);
-                    }
-                    image.src = src;
+                        self._imageCache.put(src, texture.image);
+                    });
                 }
                 else {
                     texture.image = image;
@@ -643,49 +784,6 @@ define(function (require) {
             // document.body.appendChild(vfImage);
             // vfImage.style.position = 'absolute';
             return vfImage;
-        },
-
-        /**
-         * Create globe mesh, and surface canvas, mouse control instance.
-         * Stuff only need to create once and used each refresh.
-         * @param  {Array.<Object>} seriesGroup
-         * @private
-         */
-        _createGlob: function (seriesGroup) {
-            var zr = this.zr;
-            var self = this;
-            this._globeNode = new Node({
-                name: 'globe'
-            });
-            var earthMesh = new Mesh({
-                name: 'earth',
-                geometry: this._sphereGeometry,
-                material: new Material({
-                    shader: this._albedoShader,
-                    transparent: true
-                })
-            });
-            var radius = this._earthRadius;
-            earthMesh.scale.set(radius, radius, radius);
-
-            this._globeNode.add(earthMesh);
-
-            var scene = this.baseLayer.scene;
-            scene.add(this._globeNode);
-
-            this._orbitControl = new OrbitControl(this._globeNode, this.zr, this.baseLayer);
-            this._orbitControl.init();
-            this._orbitControl.autoRotate = this.deepQuery(seriesGroup, 'autoRotate');
-
-            var globeSurface = new ZRenderSurface(
-                this._baseTextureSize, this._baseTextureSize
-            );
-            this._globeSurface = globeSurface;
-            earthMesh.material.set('diffuseMap', globeSurface.getTexture());
-
-            globeSurface.onrefresh = function () {
-                zr.refreshNextFrame();
-            };
         },
 
         /**

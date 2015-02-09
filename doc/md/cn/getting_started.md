@@ -29,7 +29,7 @@ require.config({
         name: 'qtek',
         location: 'dep/qtek/src',
         // 这里需要是 qtek.amd, 如果是 qtek 会
-        // 引入所有 qtek 的模块，回导致项目体积过大
+        // 引入所有 qtek 的模块，会导致项目体积过大
         main: 'qtek.amd'
     }, {
         name: 'echarts-x',

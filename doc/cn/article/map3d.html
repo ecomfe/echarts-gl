@@ -127,6 +127,7 @@
 <pre><code class="lang-javascript">backgroundImage: &#39;none&#39;
 </code></pre>
 <p>底图背景图片，覆盖在地图背景色上，可以是Image url，Image dom 或者 Canvas dom。</p>
+<p><strong>注意</strong>：WebGL 是不允许图片跨域加载的，所以如果是跨域的图片可能会报<code>tainted canvases may not be loaded</code>的错误。</p>
 <h4 id="quality">quality</h4>
 <pre><code class="lang-javascript">quality: &#39;medium&#39;
 </code></pre>
