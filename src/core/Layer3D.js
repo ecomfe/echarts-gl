@@ -36,7 +36,9 @@ define(function (require) {
          * @type {qtek.Renderer}
          */
         try {
-            this.renderer = new Renderer();
+            this.renderer = new Renderer({
+                // clear: 0
+            });
             this.renderer.resize(painter.getWidth(), painter.getHeight());   
         }
         catch (e) {
@@ -162,10 +164,47 @@ define(function (require) {
     };
 
     /**
+     * Clear color and depth
+     * @return {[type]} [description]
+     */
+    Layer3D.prototype.clear = function () {
+        var gl = this.renderer.gl;
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+    };
+
+    /**
+     * Clear depth
+     */
+    Layer3D.prototype.clearDepth = function () {
+        var gl = this.renderer.gl;
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+    };
+
+    /**
+     * Clear color
+     */
+    Layer3D.prototype.clearColor = function () {
+        var gl = this.renderer.gl;
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+    };
+
+    /**
      * Refresh the layer, will be invoked by zrender
      */
     Layer3D.prototype.refresh = function () {
+        this.clear();
         this.renderer.render(this.scene, this.camera);
+    };
+
+    /**
+     * Render the give scene with layer renderer and camera
+     * Without clear the buffer
+     * @return {qtek.Scene}
+     */
+    Layer3D.prototype.renderScene = function (scene) {
+        this.renderer.render(scene, this.camera);
     };
 
     /**
