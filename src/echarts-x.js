@@ -33,6 +33,30 @@
  */
 
 define(function (require) {
+    
+    var ecx = {
+        version: '0.1.0',
+        dependencies: {
+            echarts: '2.2.0',
+            zrender: '2.0.7'
+        }
+    };
+
+    // Version checking
+    var deps = ecx.dependencies;
+    function versionTooOldMsg(name) {
+        throw new Error(
+            name + ' version is too old, needs ' + deps[name] + ' or higher'
+        );
+    }
+    function checkVersion(mod, name) {
+        if ((mod.version.replace('.', '') - 0) < (deps[name].replace('.', '') - 0)) {
+            versionTooOldMsg(name);
+        }
+    }
+    checkVersion(require('echarts'), 'echarts');
+    checkVersion(require('zrender'), 'zrender');
+
 
     var ecConfig = require('echarts/config');
     var ecxConfig = require('./config');
@@ -57,4 +81,6 @@ define(function (require) {
     Shader['import'](require('text!./util/shader/vectorFieldParticle.essl'));
     Shader['import'](require('text!./util/shader/lambert.essl'));
     Shader['import'](require('text!./util/shader/motionBlur.essl'));
+
+    return ecx;
 });
