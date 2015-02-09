@@ -26,6 +26,7 @@ void main()
     }
     else {
         p = texture2D(spawnTexture, fract(v_Texcoord + elapsedTime / 10.0));
+        p.z = 0.0;
     }
     gl_FragColor = p;
 }
@@ -43,8 +44,6 @@ uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 
 uniform float sizeScaling : 1.0;
 
-varying float alpha;
-
 void main()
 {
     vec4 p = texture2D(particleTexture, texcoord);
@@ -57,8 +56,6 @@ void main()
     }
 
     gl_PointSize = sizeScaling * p.z;
-
-    alpha = p.z;
 }
 
 @end
@@ -68,13 +65,9 @@ void main()
 uniform sampler2D spriteTexture;
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
-varying float alpha;
-
 void main()
 {
     gl_FragColor = color * texture2D(spriteTexture, gl_PointCoord);
-    // FIXME Point should not be in the field zero
-    gl_FragColor.a *= alpha;
 }
 
 @end

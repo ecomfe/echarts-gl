@@ -51,8 +51,8 @@ $.ajax({
         for (var j = 0; j < data.ny; j++) {
             field[j] = [];
             for (var i = 0; i < data.nx; i++, p++) {
-                data.data[p][0] /= (data.max / 4);
-                data.data[p][1] /= (data.max / 4);
+                data.data[p][0] /= data.max;
+                data.data[p][1] /= data.max;
                 field[j][i] = data.data[p];
             }
         }
@@ -111,7 +111,7 @@ $.ajax({
                     particle: {
                         vectorField: field,
                         color: 'white',
-                        speedScaling: 0.25,
+                        speedScaling: 1,
                         sizeScaling: 1,
                         number: 512 * 512,
                         motionBlurFactor: 0.99
