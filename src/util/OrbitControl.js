@@ -60,6 +60,11 @@ define(function (require) {
          */
         this.maxZoom = 1.5;
 
+        /**
+         * Start auto rotating after still for the given time
+         */
+        this.autoRotateAfterStill = 0;
+
         this._zoom = 1;
 
         this._rotateY = 0;
@@ -73,6 +78,8 @@ define(function (require) {
         this._zoomSpeed = 0;
 
         this._animating = false;
+
+        this._stillTimeout = 0;
     };
 
     OrbitControl.prototype = {
@@ -239,6 +246,18 @@ define(function (require) {
             }
         },
 
+        _startCountingStill: function () {
+            clearTimeout(this._stillTimeout);
+
+            var time = this.autoRotateAfterStill;
+            var self = this;
+            if (!isNaN(time) && time > 0) {
+                setTimeout(function () {
+                    self.autoRotate = true;
+                }, time * 1000);   
+            }
+        },
+
         _decomposeRotation: function () {
             var euler = new Vector3();
             // Z Rotate at last so it can be zero
@@ -266,6 +285,7 @@ define(function (require) {
             if (this.autoRotate) {
                 this.autoRotate = false;
             }
+            this._startCountingStill();
         },
 
         _mouseMoveHandler: function (e) {
@@ -290,6 +310,11 @@ define(function (require) {
                         || -e.detail; // Firefox
 
             this._zoomSpeed = delta > 0 ? 0.05 : -0.05;
+
+            if (this.autoRotate) {
+                this.autoRotate = false;
+            }
+            this._startCountingStill();
         },
 
         _mouseUpHandler: function () {

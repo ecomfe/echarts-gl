@@ -5,6 +5,10 @@ define({
     map3d: {
         zlevel: -1,
 
+        hoverable: true,
+
+        clickable: true,
+
         // Base map configuration
         mapType: 'world',
 
@@ -100,7 +104,12 @@ define({
             }
         },
 
-        autoRotate: true
+        // If rotate on on init
+        autoRotate: true,
+
+        // Start rotating after still for a given time
+        // default is 5 seconds
+        autoRotateAfterStill: 5
     },
 
     markBar: {

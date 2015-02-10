@@ -254,7 +254,7 @@ define(function (require) {
                 if (!this._globeNode) {
                     this._createGlob(seriesGroup);
 
-                    this._initGlobeHandlers();
+                    this._initGlobeHandlers(seriesGroup);
                 }
                 this._updateGlobe(mapType, dataMap[mapType], seriesGroup);
 
@@ -498,6 +498,9 @@ define(function (require) {
                 this.buildMark(sIdx, globeNode);
                 this._createSurfaceLayers(sIdx);
             }, this);
+
+            // Oribit control configuration
+            this._orbitControl.autoRotateAfterStill = this.deepQuery(seriesGroup, 'autoRotateAfterStill');
         },
 
         /**
@@ -568,12 +571,12 @@ define(function (require) {
         },
 
         _getSunPosition: function (time, out) {
-            // FIXME Don't know if it is right T^T
-            var coords = sunCalc.getCoords(Date.parse(time));
-            var r0 = Math.cos(coords.dec);
-            out.y = Math.sin(coords.dec);
-            out.z = r0 * Math.sin(coords.ra + Math.PI);
-            out.x = -r0 * Math.cos(coords.ra + Math.PI);
+            // http://en.wikipedia.org/wiki/Azimuth
+            var pos = sunCalc.getPosition(Date.parse(time), 0, 0);
+            var r0 = Math.cos(pos.altitude);
+            out.y = r0 * Math.cos(pos.azimuth);
+            out.x = Math.sin(pos.altitude);
+            out.z = r0 * Math.sin(pos.azimuth);
         },
 
         /**
@@ -994,10 +997,25 @@ define(function (require) {
             return textPosition;
         },
 
-        _initGlobeHandlers: function () {
+        _initGlobeHandlers: function (seriesGroup) {
             var globeMesh = this._globeNode.queryNode('earth');
 
             var mouseEventHandler = function (e) {
+                // FIXME
+                if (
+                    e.type === zrConfig.EVENT.CLICK || e.type === zrConfig.EVENT.DBLCLICK
+                ) {
+                    if (! this.deepQuery(seriesGroup, 'clickable')) {
+                        return;
+                    }
+                }
+                // Hover Events
+                else {
+                    if (! this.deepQuery(seriesGroup, 'hoverable')) {
+                        return;
+                    }
+                }
+
                 var shape = this._globeSurface.hover(e);
                 if (shape) {
                     // Trigger a global zr event to tooltip
