@@ -177,6 +177,12 @@ define(function (require) {
          */
         this._vfParticleSurfaceList = [];
 
+        /**
+         * Skydome mesh
+         * @type {qtek.Mesh}
+         */
+        this._skydome = null;
+
         this.refresh(option);
     }
 
@@ -428,6 +434,9 @@ define(function (require) {
             // Light configuration
             this._updateLightShading(seriesGroup);
 
+            // Skydome background configuration
+            this._updateBackground(seriesGroup);
+
             // Update earth base texture background image and color
             var bgColor = deepQuery(seriesGroup, 'baseLayer.backgroundColor');
             var bgImage = deepQuery(seriesGroup, 'baseLayer.backgroundImage');
@@ -504,6 +513,56 @@ define(function (require) {
         },
 
         /**
+         * @param  {Array.<Object>} seriesGroup
+         */
+        _updateBackground: function (seriesGroup) {
+            var background = this.deepQuery(seriesGroup, 'background');
+            var self = this;
+
+            if (! this._isValueNone(background)) {
+                if (! this._skydome) {
+                    this._skydome = new Mesh({
+                        material: new Material({
+                            shader: this._albedoShader
+                        }),
+                        geometry: this._sphereGeometry,
+                        frontFace: Mesh.CW
+                    });
+                    this._skydome.scale.set(1000, 1000, 1000);
+                }
+                var skydome = this._skydome;
+                skydome.visible = true;
+
+                var texture = skydome.material.get('diffuseMap');
+                if (! texture) {
+                    texture = new Texture2D({ flipY: false });
+                    skydome.material.set('diffuseMap', texture);
+                }
+                if (typeof(background) === 'string') {
+                    var img = this._imageCache.get(background);
+                    if (!img) {
+                        texture.load(background).success(function () {
+                            self._imageCache.put(background, img);
+                            self.zr.refreshNextFrame();
+                        });
+                    }
+                    else {
+                        texture.image = img;
+                    }
+                }
+                else if (this._isValueImage(background)) {
+                    texture.image = background;
+                }
+                texture.dirty();
+
+                this.baseLayer.scene.add(skydome);
+            }
+            else if (this._skydome) {
+                this._skydome.visible = false;
+            }
+        },
+
+        /**
          * Update sun light position and shading config
          * @param  {Array.<Object>} seriesGroup
          */
@@ -558,8 +617,11 @@ define(function (require) {
                         else {
                             bumpTexture.image = heightImage;
                         }
-                        bumpTexture.dirty();
                     }
+                    else if (this._isValueImage(heightImage)) {
+                        bumpTexture.image = heightImage;
+                    }
+                    bumpTexture.dirty();
                 }
                 else {
                     lambertShader.disableTexture('bumpMap');
@@ -1315,6 +1377,10 @@ define(function (require) {
 
         // Overwrite onframe
         onframe: function (deltaTime) {
+            if (! this._globeNode) {
+                return;
+            }
+
             ChartBase3D.prototype.onframe.call(this, deltaTime);
 
             this._orbitControl.update(deltaTime);
@@ -1322,6 +1388,11 @@ define(function (require) {
             for (var i = 0; i < this._vfParticleSurfaceList.length; i++) {
                 this._vfParticleSurfaceList[i].update(Math.min(deltaTime / 1000, 0.5));
                 this.zr.refreshNextFrame();
+            }
+
+            // Background
+            if (this._skydome) {
+                this._skydome.rotation.copy(this._globeNode.rotation);
             }
         },
 
@@ -1359,7 +1430,6 @@ define(function (require) {
             }
 
             this._globeNode = null;
-            this._orbitControl = null;
 
             this._disposed = true;
 

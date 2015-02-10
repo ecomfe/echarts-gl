@@ -3,6 +3,11 @@ define({
     CHART_TYPE_MAP3D: 'map3d',
 
     map3d: {
+
+        // Background image
+        // Used as an environment texture
+        background: '',
+
         zlevel: -1,
 
         hoverable: true,
@@ -108,8 +113,8 @@ define({
         autoRotate: true,
 
         // Start rotating after still for a given time
-        // default is 5 seconds
-        autoRotateAfterStill: 5
+        // default is 3 seconds
+        autoRotateAfterStill: 3
     },
 
     markBar: {
