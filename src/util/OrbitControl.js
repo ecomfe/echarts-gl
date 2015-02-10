@@ -252,9 +252,9 @@ define(function (require) {
             var time = this.autoRotateAfterStill;
             var self = this;
             if (!isNaN(time) && time > 0) {
-                setTimeout(function () {
+                this._stillTimeout = setTimeout(function () {
                     self.autoRotate = true;
-                }, time * 1000);   
+                }, time * 1000);
             }
         },
 

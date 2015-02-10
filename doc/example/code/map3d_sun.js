@@ -15,7 +15,7 @@ myChart.setOption({
         baseLayer: {
             backgroundColor: '',
             backgroundImage: 'asset/earth.jpg',
-            quality: 'high',
+            quality: 'medium',
 
             heightImage: 'asset/elev_bump.jpg'
         },
@@ -23,8 +23,8 @@ myChart.setOption({
         light: {
             enable: true,
             // Use the system time
-            time: '',
-            sunIntensity: 1.2
+            // time: '2013-08-07 18:09:09',
+            sunIntensity: 1.5
         },
 
         itemStyle: {

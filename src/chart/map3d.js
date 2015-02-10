@@ -591,7 +591,7 @@ define(function (require) {
                 sunLight.intensity = deepQuery(seriesGroup, 'light.sunIntensity');
                 ambientLight.intensity = deepQuery(seriesGroup, 'light.ambientIntensity');
                 // Put sun in the right position
-                var time = deepQuery(seriesGroup, 'light.time') || new Date().toDateString();
+                var time = deepQuery(seriesGroup, 'light.time') || new Date();
 
                 this._getSunPosition(new Date(time).toUTCString(), sunLight.position);
                 sunLight.lookAt(Vector3.ZERO);
@@ -636,7 +636,8 @@ define(function (require) {
             // http://en.wikipedia.org/wiki/Azimuth
             var pos = sunCalc.getPosition(Date.parse(time), 0, 0);
             var r0 = Math.cos(pos.altitude);
-            out.y = r0 * Math.cos(pos.azimuth);
+            // FIXME How to calculate the y ?
+            out.y = -r0 * Math.cos(pos.azimuth);
             out.x = Math.sin(pos.altitude);
             out.z = r0 * Math.sin(pos.azimuth);
         },
