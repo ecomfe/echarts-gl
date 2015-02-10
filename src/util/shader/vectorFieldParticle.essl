@@ -38,7 +38,6 @@ void main()
 
 attribute vec2 texcoord : TEXCOORD_0;
 
-uniform float radius: 100;
 uniform sampler2D particleTexture;
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 
@@ -48,11 +47,11 @@ void main()
 {
     vec4 p = texture2D(particleTexture, texcoord);
 
-    if (p.w <= 0.0) {
-        gl_Position = vec4(100000.0, 100000.0, 100000.0, 1.0);
+    if (p.w > 0.0) {
+        gl_Position = worldViewProjection * vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
     }
     else {
-        gl_Position = worldViewProjection * vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
+        gl_Position = vec4(100000.0, 100000.0, 100000.0, 1.0);
     }
 
     gl_PointSize = sizeScaling * p.z;

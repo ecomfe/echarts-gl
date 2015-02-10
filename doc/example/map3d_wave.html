@@ -83,7 +83,6 @@ $.ajax({
 
                 baseLayer: {
                     backgroundColor: '#136dae',
-                    quality: 'high',
 
                     heightImage: 'asset/elev_bump.jpg'
                 },
@@ -118,9 +117,9 @@ $.ajax({
                         vectorField: field,
                         color: 'white',
                         speedScaling: 0.2,
-                        sizeScaling: 2,
+                        sizeScaling: 0.5,
                         number: 512 * 512,
-                        motionBlurFactor: 0.97
+                        motionBlurFactor: 0.99
                     }
                 }]
             }]

@@ -38,8 +38,7 @@ $.ajax({
 
                 baseLayer: {
                     backgroundColor: '',
-                    backgroundImage: './asset/earth.jpg',
-                    quality: 'high'
+                    backgroundImage: './asset/earth.jpg'
                 },
 
                 itemStyle: {

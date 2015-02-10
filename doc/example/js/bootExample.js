@@ -7,7 +7,7 @@
     $(window).resize(resize);
     resize();
 
-    var developMode = false;
+    var developMode = true;
 
     if (developMode) {
         require.config({

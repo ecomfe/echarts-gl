@@ -529,9 +529,9 @@ define(function (require) {
                 sunLight.intensity = deepQuery(seriesGroup, 'light.sunIntensity');
                 ambientLight.intensity = deepQuery(seriesGroup, 'light.ambientIntensity');
                 // Put sun in the right position
-                var time = deepQuery(seriesGroup, 'baseLayer.time') || new Date().toUTCString();
+                var time = deepQuery(seriesGroup, 'light.time') || new Date().toDateString();
 
-                this._getSunPosition(time, sunLight.position);
+                this._getSunPosition(new Date(time).toUTCString(), sunLight.position);
                 sunLight.lookAt(Vector3.ZERO);
 
                 var heightImage = deepQuery(seriesGroup, 'baseLayer.heightImage');
@@ -726,6 +726,9 @@ define(function (require) {
             if (particleSpeedScaling == null) {
                 particleSpeedScaling = 1;
             }
+            // Scale particle size by texture width
+            particleSizeScaling *= textureSize[0] / 1024;
+
             var particleColor = this.query(surfaceLayerCfg, 'particle.color') || 'white';
             var particleNumber = this.query(surfaceLayerCfg, 'particle.number');
             if (particleNumber == null) {

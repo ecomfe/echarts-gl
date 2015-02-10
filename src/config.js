@@ -41,7 +41,7 @@ define({
             enable: false,
             sunIntensity: 1,
             ambientIntensity: 0.1,
-            // UTC Time, default it will use system time
+            // Time, default it will use system time
             time: ''
         },
 
