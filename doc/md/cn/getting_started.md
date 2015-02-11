@@ -66,7 +66,7 @@ require.config({
             'echarts-x',
             // ECharts-X 中 map3d 的地图绘制基于 ECharts 中的 map。
             'echarts/chart/map',
-            'echarts/chart/map3d'
+            'echarts-x/chart/map3d'
         ], function (ec) {
             // 跟 ECharts 一样的方式初始化
             var myChart = ec.init(document.getElementById('main'));
