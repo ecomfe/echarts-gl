@@ -31,7 +31,7 @@ myChart.setOption({
         itemStyle: {
             normal: {
                 label: {
-                    show: true
+                    show: false
                 },
                 borderWidth: 1,
                 borderColor: 'yellow',
@@ -49,8 +49,9 @@ myChart.setOption({
             itemStyle: {
                 normal: {
                     label: {
-                        show: false,
+                        show: true,
                         formatter: '{b}',
+                        // position: 'right',
                         textStyle: {
                             fontSize: 12,
                             color: 'white'

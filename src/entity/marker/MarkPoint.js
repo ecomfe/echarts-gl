@@ -136,19 +136,22 @@ define(function (require) {
                 shapeStyle.x = shapeStyle.y = 0;
                 shapeStyle.width = shapeStyle.height = spriteSize;
 
+                var labelQueryPrefix = 'itemStyle.normal.label';
                 if (chart.deepQuery(
-                    queryTarget, 'itemStyle.normal.label.show'
+                    queryTarget, labelQueryPrefix + '.show'
                 )) {
-                    shape.style.text = chart.getSerieLabelText(
+                    shapeStyle.text = chart.getSerieLabelText(
                         markPoint, dataItem, dataItem.name, 'normal'
                     );
-                    shape.style.textPosition = 'inside';
-                    shape.style.textColor = chart.deepQuery(
-                        queryTarget, 'itemStyle.normal.label.textStyle.color'
+                    shapeStyle.textPosition = chart.deepQuery(
+                        queryTarget, labelQueryPrefix + '.position'
                     );
-                    shape.style.textFont = chart.getFont(
+                    shapeStyle.textColor = chart.deepQuery(
+                        queryTarget, labelQueryPrefix + '.textStyle.color'
+                    );
+                    shapeStyle.textFont = chart.getFont(
                         chart.deepQuery(
-                            queryTarget, 'itemStyle.normal.label.textStyle'
+                            queryTarget, labelQueryPrefix + '.textStyle'
                         )
                     );
                 }
@@ -156,7 +159,7 @@ define(function (require) {
                 var coords = textureAtlas.addShape(
                     shape, spriteSize, spriteSize
                 );
-                // Texture Atlas is full
+                // Texture atlas is full
                 if (! coords) {
                     // Create an other one
                     textureAtlas = new TextureAtlasSurface(

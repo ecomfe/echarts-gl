@@ -8,6 +8,7 @@ define(function (require) {
 
     var Texture2D = require('qtek/Texture2D');
     var ZRenderSurface = require('./ZRenderSurface');
+    var area = require('zrender/tool/area');
     /**
      * constructor
      * @alias module:echarts-x/surface/TextureAtlasSurface
@@ -118,6 +119,14 @@ define(function (require) {
         addShape: function (shape, width, height) {
             this._fitShape(shape, width, height);
 
+            var aspect = shape.scale[1] / shape.scale[0];
+
+            // Adjust aspect ratio to make the text more clearly
+            // FIXME If height > width
+            width *= aspect;
+            shape.position[0] *= aspect;
+            shape.scale[0] = shape.scale[1];
+
             var x = this._x;
             var y = this._y;
 
@@ -159,20 +168,71 @@ define(function (require) {
         /**
          * Fit shape size by correct its position and scaling
          * @param {zrender/shape/Base} shape
-         * @param {number} width
-         * @param {number} height
+         * @param {number} spriteWidth
+         * @param {number} spriteHeight
          */
-        _fitShape: function (shape, width, height) {
-            var rect = shape.getRect(shape.style);
-            var lineWidth = shape.style.lineWidth || 0;
-            var shadowBlur = shape.style.shadowBlur || 0;
+        _fitShape: function (shape, spriteWidth, spriteHeight) {
+            var shapeStyle = shape.style;
+            var rect = shape.getRect(shapeStyle);
+            var lineWidth = shapeStyle.lineWidth || 0;
+            var shadowBlur = shapeStyle.shadowBlur || 0;
             var margin = lineWidth + shadowBlur;
+            var textWidth = 0, textHeight = 0;
+            if (shapeStyle.text) {
+                textHeight = area.getTextHeight('国', shapeStyle.textFont);
+                textWidth = area.getTextWidth(shapeStyle.text, shapeStyle.textFont);
+            }
+
             rect.x -= margin;
             rect.y -= margin;
             rect.width += margin * 2;
             rect.height += margin * 2;
-            var scaleX = width / rect.width;
-            var scaleY = height / rect.height;
+
+            if (shapeStyle.text) {
+                var width = rect.width;
+                var height = rect.height;
+                // 文本与图形间空白间隙
+                // ZRender 里是写死的，这里也写死了
+                var dd = 10;
+
+                // FIXME textAlign and textBaseline
+                switch (shapeStyle.textPosition) {
+                    case 'inside':
+                        width = Math.max(textWidth, width);
+                        height = Math.max(textHeight, height);
+                        rect.x -= (width - rect.width) / 2;
+                        rect.y -= (height - rect.height) / 2;
+                        break;
+                    case 'top':
+                        width = Math.max(textWidth, width);
+                        height += textHeight + dd;
+                        rect.x -= (width - rect.width) / 2;
+                        rect.y -= textHeight + dd;
+                        break;
+                    case 'bottom':
+                        width = Math.max(textWidth, width);
+                        height += textHeight + dd;
+                        rect.x -= (width - rect.width) / 2;
+                        break;
+                    case 'left':
+                        width += textWidth + dd;
+                        height = Math.max(textHeight, height);
+                        rect.x -= textWidth + dd;
+                        rect.y -= (height - rect.height) / 2;
+                        break;
+                    case 'right':
+                        width += textWidth + dd;
+                        height = Math.max(textHeight, height);
+                        rect.y -= (height - rect.height) / 2;
+                        break;
+                }
+
+                rect.width = width;
+                rect.height = height;
+            }
+
+            var scaleX = spriteWidth / rect.width;
+            var scaleY = spriteHeight / rect.height;
             var x = rect.x;
             var y = rect.y;
             shape.position = [-rect.x * scaleX, -rect.y * scaleY];

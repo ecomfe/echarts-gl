@@ -11,10 +11,16 @@ define(function (require) {
     var Vector3 = require('qtek/math/Vector3');
     var vec3 = require('qtek/dep/glmatrix').vec3;
     var vec2 = require('qtek/dep/glmatrix').vec2;
+    var fromValues = vec3.fromValues;
 
-    var squarePositions = [
-        [-1, -1, 0], [1, -1, 0], [1, 1, 0], [-1, 1, 0]
-    ];
+    function getSquarePositions(w, h) {
+        return [
+            fromValues(-w, -h, 0), 
+            fromValues(w, -h, 0), 
+            fromValues(w, h, 0),
+            fromValues(-w, h, 0)
+        ];
+    }
 
     var squareTexcoords = [
         [0, 0], [1, 0], [1, 1], [0, 1]
@@ -47,8 +53,14 @@ define(function (require) {
                 this.faces.push(face);
             }
 
+            // Scale width to avoid stretch artifacts
+            // FIXME If height > width
+            var scaling = (coords[1][0] - coords[0][0]) / (coords[1][1] - coords[0][1]);
+
+            var squarePositions = getSquarePositions(scaling, 1);
+
             for (var i = 0; i < squarePositions.length; i++) {
-                var pos = vec3.clone(squarePositions[i]);
+                var pos = squarePositions[i];
                 vec3.transformMat4(pos, pos, matrix._array);
                 this.attributes.position.value.push(pos);
             }
