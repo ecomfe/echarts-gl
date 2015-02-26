@@ -15,6 +15,7 @@ define(function (require) {
 
     var Eventful = require('zrender/mixin/Eventful');
     var zrUtil = require('zrender/tool/util');
+    var eventTool = require('zrender/tool/event');
 
     /**
      * @constructor
@@ -217,7 +218,7 @@ define(function (require) {
     // Event handlers
     Layer3D.prototype.onmousedown = function (e) {
         e = e.event;
-        var obj = this.pickObject(e.offsetX, e.offsetY);
+        var obj = this.pickObject(eventTool.getX(e), eventTool.getY(e));
         if (obj) {
             this._dispatchEvent('mousedown', e, obj);
         }
@@ -225,7 +226,7 @@ define(function (require) {
 
     Layer3D.prototype.onmousemove = function (e) {
         e = e.event;
-        var obj = this.pickObject(e.offsetX, e.offsetY);
+        var obj = this.pickObject(eventTool.getX(e), eventTool.getY(e));
         if (obj) {
             this._dispatchEvent('mousemove', e, obj);
         }
@@ -233,7 +234,7 @@ define(function (require) {
 
     Layer3D.prototype.onmouseup = function (e) {
         e = e.event;
-        var obj = this.pickObject(e.offsetX, e.offsetY);
+        var obj = this.pickObject(eventTool.getX(e), eventTool.getY(e));
         if (obj) {
             this._dispatchEvent('mouseup', e, obj);
         }
@@ -241,7 +242,7 @@ define(function (require) {
 
     Layer3D.prototype.onclick = function (e) {
         e = e.event;
-        var obj = this.pickObject(e.offsetX, e.offsetY);
+        var obj = this.pickObject(eventTool.getX(e), eventTool.getY(e));
         if (obj) {
             this._dispatchEvent('click', e, obj);
         }

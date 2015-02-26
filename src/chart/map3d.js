@@ -17,6 +17,7 @@ define(function (require) {
     var PolygonShape = require('zrender/shape/Polygon');
     var ShapeBundle = require('zrender/shape/ShapeBundle');
     var TextShape = require('zrender/shape/Text');
+    var eventTool = require('zrender/tool/event');
 
     var Node = require('qtek/Node');
     var Mesh = require('qtek/Mesh');
@@ -25,10 +26,12 @@ define(function (require) {
     var Shader = require('qtek/Shader');
     var Texture2D = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
+    var Vector2 = require('qtek/math/Vector2');
     var Matrix4 = require('qtek/math/Matrix4');
     var Quaternion = require('qtek/math/Quaternion');
     var DirectionalLight = require('qtek/light/Directional');
     var AmbientLight = require('qtek/light/Ambient');
+    var Ray = require('qtek/math/Ray');
 
     var ecConfig = require('../config');
     var ChartBase3D = require('./base3d');
@@ -159,8 +162,17 @@ define(function (require) {
          * @private
          */
         this._sphereGeometry = new SphereGeometry({
-            widthSegments: 40,
-            heightSegments: 40
+            widthSegments: 60,
+            heightSegments: 60
+        });
+
+        /**
+         * @type {qtek.DynamicGeoemtry}
+         * @private
+         */
+        this._sphereGeometryLowRes = new SphereGeometry({
+            widthSegments: 30,
+            heightSegments: 30
         });
 
         /**
@@ -259,9 +271,9 @@ define(function (require) {
 
                 if (!this._globeNode) {
                     this._createGlob(seriesGroup);
-
-                    this._initGlobeHandlers(seriesGroup);
                 }
+                this._initGlobeHandlers(seriesGroup);
+
                 this._updateGlobe(mapType, dataMap[mapType], seriesGroup);
 
                 this._setViewport(seriesGroup);
@@ -390,7 +402,8 @@ define(function (require) {
                 material: new Material({
                     shader: this._albedoShader,
                     transparent: true
-                })
+                }),
+                ignorePicking: true
             });
             var radius = this._earthRadius;
             earthMesh.scale.set(radius, radius, radius);
@@ -525,7 +538,7 @@ define(function (require) {
                         material: new Material({
                             shader: this._albedoShader
                         }),
-                        geometry: this._sphereGeometry,
+                        geometry: this._sphereGeometryLowRes,
                         frontFace: Mesh.CW
                     });
                     this._skydome.scale.set(1000, 1000, 1000);
@@ -653,7 +666,7 @@ define(function (require) {
                 var surfaceLayer = serie.surfaceLayers[i];
                 var surfaceMesh = new Mesh({
                     name: 'surfaceLayer' + i,
-                    geometry: this._sphereGeometry,
+                    geometry: this._sphereGeometryLowRes,
                     ignorePicking: true
                 });
                 var distance = surfaceLayer.distance;
@@ -1061,54 +1074,87 @@ define(function (require) {
         },
 
         _initGlobeHandlers: function (seriesGroup) {
-            var globeMesh = this._globeNode.queryNode('earth');
+            var earthMesh = this._globeNode.queryNode('earth');
+
+            var ray = new Ray();
+            var ndc = new Vector2();
+            var worldInverse = new Matrix4();
+            var intersectPoint = new Vector3();
+
+            var baseLayer = this.baseLayer;
+
+            var clickable = this.deepQuery(seriesGroup, 'clickable');
+            var hoverable = this.deepQuery(seriesGroup, 'hoverable');
 
             var mouseEventHandler = function (e) {
                 // FIXME
                 if (
                     e.type === zrConfig.EVENT.CLICK || e.type === zrConfig.EVENT.DBLCLICK
                 ) {
-                    if (! this.deepQuery(seriesGroup, 'clickable')) {
+                    if (! clickable) {
                         return;
                     }
                 }
                 // Hover Events
                 else {
-                    if (! this.deepQuery(seriesGroup, 'hoverable')) {
+                    if (! hoverable) {
                         return;
                     }
                 }
 
-                var shape = this._globeSurface.hover(e);
-                if (shape) {
-                    // Trigger a global zr event to tooltip
-                    this.zr.handler.dispatch(e.type, {
-                        target: shape,
-                        event: e.event,
-                        type: e.type
-                    });
+                baseLayer.renderer.screenToNdc(
+                    eventTool.getX(e.event), eventTool.getY(e.event), ndc
+                );
+
+                baseLayer.camera.castRay(ndc, ray);
+
+                Matrix4.invert(worldInverse, earthMesh.worldTransform);
+
+                ray.applyTransform(worldInverse);
+
+                var res = ray.intersectSphere(Vector3.ZERO, 1, intersectPoint);
+
+                if (res) {
+                    var geo = this._eulerToGeographic(res.x, res.y, res.z);
+                    var x = (geo[0] + 180) / 360 * this._globeSurface.getWidth();
+                    var y = (90 - geo[1]) / 180 * this._globeSurface.getHeight();
+
+                    var shape = this._globeSurface.hover(x, y);
+                    if (shape) {
+                        // Trigger a global zr event to tooltip
+                        this.zr.handler.dispatch(e.type, {
+                            target: shape,
+                            event: e.event,
+                            type: e.type
+                        });
+                    }
                 }
             }
 
             var eventList = ['CLICK', 'DBLCLICK', 'MOUSEOVER', 'MOUSEOUT', 'MOUSEMOVE',
             'DRAGSTART', 'DRAGEND', 'DRAGENTER', 'DRAGOVER', 'DRAGLEAVE', 'DROP'];
-            
+
             eventList.forEach(function (eveName) {
-                globeMesh.on(
-                    zrConfig.EVENT[eveName], mouseEventHandler, this
-                );
+                if (baseLayer.__globeMouseEventHandler) {
+                    baseLayer.off(zrConfig.EVENT[eveName], baseLayer.__globeMouseEventHandler);
+                }
+                baseLayer.bind(zrConfig.EVENT[eveName], mouseEventHandler, this);
             }, this);
+
+            baseLayer.__globeMouseEventHandler = mouseEventHandler;
         },
 
-        _eulerToSphere: function (x, y, z) {
+        _eulerToGeographic: function (x, y, z) {
             var theta = Math.asin(y);
             var phi = Math.atan2(z, -x);
             if (phi < 0) {
                 phi = PI2  + phi;
             }
 
-            var log = theta * 180 / PI + 90;
-            var lat = phi * 180 / PI;
+            var lat = theta * 180 / PI;
+            var lon = phi * 180 / PI - 180;
+
+            return [lon, lat];
         },
 
         _isValueNone: function (value) {

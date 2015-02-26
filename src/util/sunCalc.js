@@ -85,11 +85,6 @@ define(function (require) {
         };
     };
 
-    SunCalc.getCoords = function (date) {
-        var d = toDays(date);
-        return sunCoords(d);
-    };
-
     return SunCalc;
 
 }());

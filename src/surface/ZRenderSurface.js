@@ -172,11 +172,20 @@ define(function (require) {
 
         /**
          * If hover on a shape. And highlight it.
+         * Parameter can be an event object given by RayPicking, or a simple x, y coord
          * @param {Object} Event object. delivered in Layer3D
          */
-        hover: function (e) {
+        hover: function (x, y) {
             var list = this._storage.getShapeList();
-            var shape = this.pick(e.target, e.face, e.point, list);
+            var shape;
+
+            if (typeof (x) == 'number') {
+                shape = this.pickByCoord(x, y);
+            }
+            else {
+                var e = x;
+                shape = this.pick(e.target, e.face, e.point, list);
+            }
 
             var needsRefresh = false;
             for (var i = 0; i < list.length; i++) {
@@ -195,7 +204,7 @@ define(function (require) {
             }
 
             if (needsRefresh) {
-                this.refresh();
+                this.refreshNextTick();
             }
 
             return shape;
@@ -265,15 +274,19 @@ define(function (require) {
                 var x = uv.x * this._width;
                 var y = uv.y * this._height;
 
-                var list = list || this._storage.getShapeList();
-                for (var i = list.length - 1; i >= 0; i--) {
-                    var shape = list[i];
-                    if (!shape.isSilent() && shape.isCover(x, y)) {
-                        return shape;
-                    }
+                return this.pickByCoord(x, y, list);
+            }
+        })(),
+
+        pickByCoord: function (x, y, list) {
+            var list = list || this._storage.getShapeList();
+            for (var i = list.length - 1; i >= 0; i--) {
+                var shape = list[i];
+                if (!shape.isSilent() && shape.isCover(x, y)) {
+                    return shape;
                 }
             }
-        })()
+        }
     };
 
     return ZRenderSurface;
