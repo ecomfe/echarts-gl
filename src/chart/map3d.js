@@ -32,6 +32,7 @@ define(function (require) {
     var DirectionalLight = require('qtek/light/Directional');
     var AmbientLight = require('qtek/light/Ambient');
     var Ray = require('qtek/math/Ray');
+    var RayPicking = require('qtek/picking/RayPicking');
 
     var ecConfig = require('../config');
     var ChartBase3D = require('./base3d');
@@ -402,9 +403,10 @@ define(function (require) {
                 material: new Material({
                     shader: this._albedoShader,
                     transparent: true
-                }),
-                ignorePicking: true
+                })
             });
+            this._sphereGeometry.pickByRay = this._getSphereRayPickingHooker(earthMesh);
+
             var radius = this._earthRadius;
             earthMesh.scale.set(radius, radius, radius);
 
@@ -883,7 +885,7 @@ define(function (require) {
          * and drawed on the canvas(which is attached on the sphere surface).
          * @param  {Array.<Object>} data
          * @param  {Object} mapData map geoJSON data
-         * @param  {Array.} seriesGroup
+         * @param  {Array.<Object>} seriesGroup
          */
         _updateMapPolygonShapes: function (data, mapData, seriesGroup) {
             this._globeSurface.clearElements();
@@ -1073,15 +1075,26 @@ define(function (require) {
             return textPosition;
         },
 
+        _getSphereRayPickingHooker: function (sphereMesh) {
+
+            return function (ray) {
+                var r = sphereMesh.geometry.radius;
+                var point = ray.intersectSphere(Vector3.ZERO, r);
+                if (point) {
+                    var pointWorld = new Vector3();
+                    Vector3.transformMat4(pointWorld, point, sphereMesh.worldTransform);
+                    var dist = Vector3.distance(ray.origin, point);
+                    return new RayPicking.Intersection(point, pointWorld, sphereMesh, null, dist);
+                }
+            }
+        },
+
+        /**-
+         * @param  {Array.<Object>} seriesGroup
+         * @private
+         */
         _initGlobeHandlers: function (seriesGroup) {
             var earthMesh = this._globeNode.queryNode('earth');
-
-            var ray = new Ray();
-            var ndc = new Vector2();
-            var worldInverse = new Matrix4();
-            var intersectPoint = new Vector3();
-
-            var baseLayer = this.baseLayer;
 
             var clickable = this.deepQuery(seriesGroup, 'clickable');
             var hoverable = this.deepQuery(seriesGroup, 'hoverable');
@@ -1102,32 +1115,19 @@ define(function (require) {
                     }
                 }
 
-                baseLayer.renderer.screenToNdc(
-                    eventTool.getX(e.event), eventTool.getY(e.event), ndc
-                );
+                var point = e.point;
+                var geo = this._eulerToGeographic(point.x, point.y, point.z);
+                var x = (geo[0] + 180) / 360 * this._globeSurface.getWidth();
+                var y = (90 - geo[1]) / 180 * this._globeSurface.getHeight();
 
-                baseLayer.camera.castRay(ndc, ray);
-
-                Matrix4.invert(worldInverse, earthMesh.worldTransform);
-
-                ray.applyTransform(worldInverse);
-
-                var res = ray.intersectSphere(Vector3.ZERO, 1, intersectPoint);
-
-                if (res) {
-                    var geo = this._eulerToGeographic(res.x, res.y, res.z);
-                    var x = (geo[0] + 180) / 360 * this._globeSurface.getWidth();
-                    var y = (90 - geo[1]) / 180 * this._globeSurface.getHeight();
-
-                    var shape = this._globeSurface.hover(x, y);
-                    if (shape) {
-                        // Trigger a global zr event to tooltip
-                        this.zr.handler.dispatch(e.type, {
-                            target: shape,
-                            event: e.event,
-                            type: e.type
-                        });
-                    }
+                var shape = this._globeSurface.hover(x, y);
+                if (shape) {
+                    // Trigger a global zr event to tooltip
+                    this.zr.handler.dispatch(e.type, {
+                        target: shape,
+                        event: e.event,
+                        type: e.type
+                    });
                 }
             }
 
@@ -1135,13 +1135,9 @@ define(function (require) {
             'DRAGSTART', 'DRAGEND', 'DRAGENTER', 'DRAGOVER', 'DRAGLEAVE', 'DROP'];
 
             eventList.forEach(function (eveName) {
-                if (baseLayer.__globeMouseEventHandler) {
-                    baseLayer.off(zrConfig.EVENT[eveName], baseLayer.__globeMouseEventHandler);
-                }
-                baseLayer.bind(zrConfig.EVENT[eveName], mouseEventHandler, this);
+                earthMesh.off(zrConfig.EVENT[eveName]);
+                earthMesh.on(zrConfig.EVENT[eveName], mouseEventHandler, this);
             }, this);
-
-            baseLayer.__globeMouseEventHandler = mouseEventHandler;
         },
 
         _eulerToGeographic: function (x, y, z) {
