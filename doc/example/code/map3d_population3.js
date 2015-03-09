@@ -53,8 +53,7 @@ $.ajax({
                 markBar: {
                     barSize: 0.6,
                     data: data
-                },
-                autoRotate: true,
+                }
             }]
         });
     }

@@ -75,8 +75,7 @@ $.ajax({
                     large: true,
                     symbolSize: 3,
                     data: airports
-                },
-                autoRotate: true,
+                }
             }]
         };
 

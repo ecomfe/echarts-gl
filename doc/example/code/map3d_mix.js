@@ -44,6 +44,9 @@ myChart.setOption({
             y: 0,
             width: '50%',
             height: '100%'
+        },
+        roam: {
+            autoRotate: false
         }
     }, {
         name: 'Map',

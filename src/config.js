@@ -24,7 +24,7 @@ define({
             width: '100%',
             height: '100%'
         },
-        
+
         baseLayer: {
             // Base map background color
             backgroundColor: 'black',
@@ -109,12 +109,30 @@ define({
             }
         },
 
-        // If rotate on on init
-        autoRotate: true,
+        // Roam configuration
+        roam: {
+            // If rotate on on init
+            autoRotate: true,
 
-        // Start rotating after still for a given time
-        // default is 3 seconds
-        autoRotateAfterStill: 3
+            // Start rotating after still for a given time
+            // default is 3 seconds
+            autoRotateAfterStill: 3,
+
+            // Rotate globe to have camera focused on a given area, e.g. 'China'
+            rotateTo: '',
+
+            // Default zoom ratio
+            // Only available when focus is empty
+            zoom: 1,
+
+            // Min zoom ratio
+            minZoom: 0.5,
+            // Max zoom ratio
+            maxZoom: 1.5,
+
+            // Preserve previous rotate, zoom, pan value when setOption
+            preserve: true
+        }
     },
 
     markBar: {

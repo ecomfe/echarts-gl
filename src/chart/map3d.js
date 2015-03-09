@@ -417,6 +417,7 @@ define(function (require) {
             scene.add(this._globeNode);
 
             this._orbitControl = new OrbitControl(this._globeNode, this.zr, this.baseLayer);
+            this._orbitControl.__firstInit = true;
             this._orbitControl.init();
 
             var globeSurface = new ZRenderSurface(
@@ -438,9 +439,35 @@ define(function (require) {
          * @param  {Array.<Object>} seriesGroup seriesGroup created in _groupSeriesByMapType
          */
         _updateGlobe: function (mapType, data, seriesGroup) {
-            var globeSurface = this._globeSurface;
-            var globeNode = this._globeNode;
+
             var self = this;
+            var orbitControl = this._orbitControl;
+            var globeSurface = this._globeSurface;
+
+            function focusOrZoomOnLoad() {
+                if (! self.deepQuery(seriesGroup, 'roam.preserve') || orbitControl.__firstInit) {
+                    var rotateTo = self.deepQuery(seriesGroup, 'roam.rotateTo');
+                    if (! self._isValueNone(rotateTo)) {
+                        var shape = globeSurface.getShapeByName(rotateTo);
+                        if (shape) {
+                            self._rotateToShape(shape);
+                        }
+                    }
+                    else {
+                        var zoom = self.deepQuery(seriesGroup, 'roam.zoom');
+                        if (zoom !== orbitControl.getZoom()) {
+                            orbitControl.zoomTo({
+                                zoom: zoom,
+                                easing: 'CubicOut'
+                            });
+                        }
+                    }
+                }
+
+                orbitControl.__firstInit = false;
+            }
+
+            var globeNode = this._globeNode;
             var deepQuery = this.deepQuery;
 
             globeSurface.resize(
@@ -484,6 +511,7 @@ define(function (require) {
             if (this._mapDataMap[mapType]) {
                 this._updateMapPolygonShapes(data, this._mapDataMap[mapType], seriesGroup);
                 globeSurface.refresh();
+                focusOrZoomOnLoad();
             }
             else if (mapParams[mapType].getGeoJson) {
                 // Load geo json and draw the map on the base texture
@@ -494,6 +522,7 @@ define(function (require) {
                     self._mapDataMap[mapType] = mapData;
                     self._updateMapPolygonShapes(data, mapData, seriesGroup);
                     globeSurface.refresh();
+                    focusOrZoomOnLoad();
                 });
             }
             else {
@@ -524,8 +553,9 @@ define(function (require) {
             }, this);
 
             // Oribit control configuration
-            this._orbitControl.autoRotate = this.deepQuery(seriesGroup, 'autoRotate');
-            this._orbitControl.autoRotateAfterStill = this.deepQuery(seriesGroup, 'autoRotateAfterStill');
+            ['autoRotate', 'autoRotateAfterStill', 'maxZoom', 'minZoom'].forEach(function (propName) {
+                orbitControl[propName] = this.deepQuery(seriesGroup, 'roam.' + propName);
+            }, this);
         },
 
         /**
@@ -1201,7 +1231,7 @@ define(function (require) {
         /**
          * Zoom and rotate to focus on the shape
          */
-        _focusOnShape: function (shape) {
+        _rotateToShape: function (shape) {
             if (!shape) {
                 return;
             }
@@ -1249,23 +1279,24 @@ define(function (require) {
             this._orbitControl.rotateTo({
                 rotation: rotation,
                 easing: 'CubicOut',
-            }).done(function () {
-                var layer3d = self.baseLayer;
-                var camera = layer3d.camera;
-                var width = Math.max(lt.dist(rt), lb.dist(rb));
-                var height = Math.max(lt.dist(lb), rt.dist(rb));
-
-                var rad = camera.fov * PI / 360;
-                var tanRad = Math.tan(rad);
-                var z = Math.max(
-                    width / 2 / tanRad / camera.aspect,
-                    height / 2 / tanRad 
-                );
-                self._orbitControl.zoomTo({
-                    zoom: (camera.position.z - z) / r,
-                    easing: 'CubicOut'
-                });
             });
+            // .done(function () {
+            //     var layer3d = self.baseLayer;
+            //     var camera = layer3d.camera;
+            //     var width = Math.max(lt.dist(rt), lb.dist(rb));
+            //     var height = Math.max(lt.dist(lb), rt.dist(rb));
+
+            //     var rad = camera.fov * PI / 360;
+            //     var tanRad = Math.tan(rad);
+            //     var z = Math.max(
+            //         width / 2 / tanRad / camera.aspect,
+            //         height / 2 / tanRad 
+            //     );
+            //     self._orbitControl.zoomTo({
+            //         zoom: (camera.position.z - z) / r,
+            //         easing: 'CubicOut'
+            //     });
+            // });
         },
 
         // Overwrite getMarkCoord

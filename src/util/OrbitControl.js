@@ -123,6 +123,19 @@ define(function (require) {
         },
 
         /**
+         * Get zoom ratio
+         * @return {number}
+         */
+        getZoom: function () {
+            return this._zoom
+        },
+
+        setZoom: function (zoom) {
+            this._zoom = zoom;
+            this.zr.refreshNextFrame();
+        },
+
+        /**
          * Rotation to animation, Params can be target quaternion or x, y, z axis
          * @example
          *     control.rotateTo({
@@ -180,6 +193,7 @@ define(function (require) {
                 })
                 .done(function () {
                     self._animating = false;
+                    self._decomposeRotation();
                 })
                 .start(opts.easing || 'Linear');
         },
