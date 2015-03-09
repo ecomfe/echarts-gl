@@ -273,6 +273,7 @@ define(function (require) {
                 if (!this._globeNode) {
                     this._createGlob(seriesGroup);
                 }
+
                 this._initGlobeHandlers(seriesGroup);
 
                 this._updateGlobe(mapType, dataMap[mapType], seriesGroup);
@@ -417,7 +418,6 @@ define(function (require) {
 
             this._orbitControl = new OrbitControl(this._globeNode, this.zr, this.baseLayer);
             this._orbitControl.init();
-            this._orbitControl.autoRotate = this.deepQuery(seriesGroup, 'autoRotate');
 
             var globeSurface = new ZRenderSurface(
                 this._baseTextureSize, this._baseTextureSize
@@ -524,6 +524,7 @@ define(function (require) {
             }, this);
 
             // Oribit control configuration
+            this._orbitControl.autoRotate = this.deepQuery(seriesGroup, 'autoRotate');
             this._orbitControl.autoRotateAfterStill = this.deepQuery(seriesGroup, 'autoRotateAfterStill');
         },
 

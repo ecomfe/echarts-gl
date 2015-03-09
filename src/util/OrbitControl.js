@@ -44,7 +44,16 @@ define(function (require) {
          * @type {boolean}
          * @default false
          */
-        this.autoRotate = false;
+        var autoRotate = false;
+        Object.defineProperty(this, 'autoRotate', {
+            get: function (val) {
+                return autoRotate;
+            },
+            set: function (val) {
+                autoRotate = val;
+                this._rotating = autoRotate;
+            }
+        })
 
         /**
          * Minimum zoom rate
@@ -64,6 +73,8 @@ define(function (require) {
          * Start auto rotating after still for the given time
          */
         this.autoRotateAfterStill = 0;
+
+        this._rotating = false;
 
         this._zoom = 1;
 
@@ -94,6 +105,8 @@ define(function (require) {
             this._animating = false;
             this.layer.bind(EVENT.MOUSEDOWN, this._mouseDownHandler, this);
             this.layer.bind(EVENT.MOUSEWHEEL, this._mouseWheelHandler, this);
+
+            this._rotating = this.autoRotate;
 
             this._decomposeRotation();
         },
@@ -226,7 +239,7 @@ define(function (require) {
             var zoom = this._zoom;
             this.target.scale.set(zoom, zoom, zoom);
 
-            if (this.autoRotate) {
+            if (this._rotating) {
                 this._rotateY -= deltaTime * 1e-4;
                 this.zr.refreshNextFrame();
             } else if (this._rotateVelocity.len() > 0 || this._zoomSpeed !== 0) {
@@ -253,7 +266,7 @@ define(function (require) {
             var self = this;
             if (!isNaN(time) && time > 0) {
                 this._stillTimeout = setTimeout(function () {
-                    self.autoRotate = true;
+                    self._rotating = true;
                 }, time * 1000);
             }
         },
@@ -282,10 +295,11 @@ define(function (require) {
             this._mouseX = e.pageX;
             this._mouseY = e.pageY;
 
+            this._rotating = false;
+
             if (this.autoRotate) {
-                this.autoRotate = false;
+                this._startCountingStill();
             }
-            this._startCountingStill();
         },
 
         _mouseMoveHandler: function (e) {
@@ -311,10 +325,11 @@ define(function (require) {
 
             this._zoomSpeed = delta > 0 ? 0.05 : -0.05;
 
+            this._rotating = false;
+
             if (this.autoRotate) {
-                this.autoRotate = false;
+                this._startCountingStill();
             }
-            this._startCountingStill();
         },
 
         _mouseUpHandler: function () {
