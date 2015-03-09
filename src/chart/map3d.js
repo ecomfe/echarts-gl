@@ -1076,14 +1076,15 @@ define(function (require) {
         },
 
         _getSphereRayPickingHooker: function (sphereMesh) {
-
+            var originWorld = new Vector3();
             return function (ray) {
                 var r = sphereMesh.geometry.radius;
                 var point = ray.intersectSphere(Vector3.ZERO, r);
                 if (point) {
                     var pointWorld = new Vector3();
                     Vector3.transformMat4(pointWorld, point, sphereMesh.worldTransform);
-                    var dist = Vector3.distance(ray.origin, point);
+                    Vector3.transformMat4(originWorld, ray.origin, sphereMesh.worldTransform);
+                    var dist = Vector3.distance(originWorld, point);
                     return new RayPicking.Intersection(point, pointWorld, sphereMesh, null, dist);
                 }
             }
@@ -1131,8 +1132,7 @@ define(function (require) {
                 }
             }
 
-            var eventList = ['CLICK', 'DBLCLICK', 'MOUSEOVER', 'MOUSEOUT', 'MOUSEMOVE',
-            'DRAGSTART', 'DRAGEND', 'DRAGENTER', 'DRAGOVER', 'DRAGLEAVE', 'DROP'];
+            var eventList = ['CLICK', 'DBLCLICK', 'MOUSEOVER', 'MOUSEOUT', 'MOUSEMOVE'];
 
             eventList.forEach(function (eveName) {
                 earthMesh.off(zrConfig.EVENT[eveName]);

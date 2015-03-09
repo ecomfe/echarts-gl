@@ -1,6 +1,6 @@
 /**
- * Texture Atlas for the sprites
- *
+ * Texture Atlas for the sprites.
+ * It uses ZRenderSurface for shape management and rendering
  * @module echarts-x/surface/TextureAtlasSurface
  */
 
@@ -122,8 +122,8 @@ define(function (require) {
             var aspect = shape.scale[1] / shape.scale[0];
 
             // Adjust aspect ratio to make the text more clearly
-            // FIXME If height > width
-            width *= aspect;
+            // FIXME If height > width, width is useless ?
+            width = height * aspect;
             shape.position[0] *= aspect;
             shape.scale[0] = shape.scale[1];
 
@@ -163,6 +163,10 @@ define(function (require) {
 
         refresh: function () {
             this._zrenderSurface.refresh();
+        },
+
+        refreshNextTick: function () {
+            this._zrenderSurface.refreshNextTick();
         },
 
         /**
@@ -238,6 +242,14 @@ define(function (require) {
             shape.position = [-rect.x * scaleX, -rect.y * scaleY];
             shape.scale = [scaleX, scaleY];
             shape.updateTransform();
+        },
+
+        /**
+         * @param {Object|number} x Event object delivered from Layer3D or x coord
+         * @param {number} [y] y
+         */
+        hover: function (x, y) {
+            return this._zrenderSurface.hover(x, y);
         },
 
         /**

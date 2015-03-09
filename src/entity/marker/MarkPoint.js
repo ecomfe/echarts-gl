@@ -23,7 +23,12 @@ define(function (require) {
     var IconShape = require('echarts/util/shape/Icon');
     var ImageShape = require('zrender/shape/Image');
 
+    var ecData = require('echarts/util/ecData');
+
     var Matrix4 = require('qtek/math/Matrix4');
+    var zrConfig = require('zrender/config');
+
+    var eventList = ['CLICK', 'DBLCLICK', 'MOUSEOVER', 'MOUSEOUT', 'MOUSEMOVE'];
 
     /**
      * @constructor
@@ -136,6 +141,11 @@ define(function (require) {
                 shapeStyle.x = shapeStyle.y = 0;
                 shapeStyle.width = shapeStyle.height = spriteSize;
 
+                ecData.pack(
+                    shape, serie, seriesIndex,
+                    dataItem, i, dataItem.name, value
+                )
+
                 var labelQueryPrefix = 'itemStyle.normal.label';
                 if (chart.deepQuery(
                     queryTarget, labelQueryPrefix + '.show'
@@ -198,9 +208,15 @@ define(function (require) {
                 }),
                 culling: false,
                 geometry: new SpritesGeometry(),
-                ignorePicking: true
+
+                textureAtlas: textureAtlas
             });
             renderable.material.set('diffuseMap', textureAtlas.getTexture());
+
+            eventList.forEach(function (eveName) {
+                renderable.on(zrConfig.EVENT[eveName], this._mouseEventHandler, this);
+            }, this);
+
             this._spritesRenderables.push(renderable);
 
             this._sceneNode.add(renderable);
@@ -217,6 +233,35 @@ define(function (require) {
 
         getSceneNode: function () {
             return this._sceneNode;
+        },
+
+        _mouseEventHandler: function (e) {
+            var chart = this.chart;
+            var zr = chart.zr;
+
+            var renderable = e.target;
+            var textureAtlas = renderable.textureAtlas;
+
+            var shape = textureAtlas.hover(e);
+            if (shape) {
+                if (e.type === zrConfig.EVENT.CLICK || e.type === zrConfig.EVENT.DBLCLICK) {
+                    if (! shape.clickable) {
+                        return;
+                    }
+                }
+                else {
+                    if (! shape.hoverable) {
+                        return;
+                    }
+                }
+
+                // Trigger a global zr event to tooltip
+                zr.handler.dispatch(e.type, {
+                    target: shape,
+                    event: e.event,
+                    type: e.type
+                });
+            }
         }
     };
 

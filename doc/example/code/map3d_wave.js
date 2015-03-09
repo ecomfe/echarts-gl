@@ -66,7 +66,7 @@ $.ajax({
 
                 surfaceLayers: [{
                     type: 'particle',
-                    distance: 0.5,
+                    distance: 0.8,
                     size: [4096, 2048],
                     particle: {
                         vectorField: field,
