@@ -46,7 +46,8 @@ myChart.setOption({
             height: '100%'
         },
         roam: {
-            autoRotate: false
+            autoRotate: false,
+            focus: 'China'
         }
     }, {
         name: 'Map',

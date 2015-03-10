@@ -74,9 +74,13 @@ define(function (require) {
          */
         this.autoRotateAfterStill = 0;
 
-        this._rotating = false;
+        /**
+         * Pan or rotate
+         * @type {String}
+         */
+        this.mode = 'rotate';
 
-        this._zoom = 1;
+        this._rotating = false;
 
         this._rotateY = 0;
         this._rotateX = 0;
@@ -85,6 +89,12 @@ define(function (require) {
         this._mouseY = 0;
 
         this._rotateVelocity = new Vector2();
+
+        this._panVelocity = new Vector2();
+
+        this._cameraStartPos = new Vector3();
+
+        this._zoom = 1;
 
         this._zoomSpeed = 0;
 
@@ -108,6 +118,8 @@ define(function (require) {
 
             this._rotating = this.autoRotate;
 
+            Vector3.copy(this._cameraStartPos, this.layer.camera.position);
+
             this._decomposeRotation();
         },
 
@@ -130,6 +142,10 @@ define(function (require) {
             return this._zoom
         },
 
+        /**
+         * Set zoom ratio
+         * @param {number} zoom
+         */
         setZoom: function (zoom) {
             this._zoom = zoom;
             this.zr.refreshNextFrame();
@@ -217,13 +233,40 @@ define(function (require) {
                     _zoom: zoom
                 })
                 .during(function () {
-                    var zoom = self._zoom;
-                    self.target.scale.set(zoom, zoom, zoom);
+                    self._setZoom(this._zoom);
                     zr.refreshNextFrame();
                 })
                 .done(function () {
                     self._animating = false;
-                    self._decomposeRotation();
+                })
+                .start(opts.easing || 'Linear');
+        },
+
+        /**
+         * Move to animation
+         * @param {Object} opts
+         * @param {qtek.math.Vector3} opts.position
+         * @param {number} [opts.time=1000]
+         * @param {number} [opts.easing='Linear']
+         */
+        moveTo: function (opts) {
+            var zr = this.zr;
+            var position = opts.position;
+            var self = this;
+
+            this._animating = true;
+
+            return zr.animation.animate(this.target.position)
+                .when(opts.time || 1000, {
+                    x: position.x,
+                    y: position.y,
+                    z: position.z
+                })
+                .during(function () {
+                    zr.refreshNextFrame();
+                })
+                .done(function () {
+                    self._animating = false;
                 })
                 .start(opts.easing || 'Linear');
         },
@@ -237,39 +280,83 @@ define(function (require) {
                 return;
             }
 
-            this._rotateY = (this._rotateVelocity.y + this._rotateY) % (Math.PI * 2);
-            this._rotateX = (this._rotateVelocity.x + this._rotateX) % (Math.PI * 2);
+            if (this.mode === 'rotate') {
+                this._updateRotate(deltaTime);
+            }
+            else if (this.mode === 'pan') {
+                this._updatePan(deltaTime);
+            }
+
+            this._updateZoom(deltaTime);
+        },
+
+        _updateRotate: function (deltaTime) {
+
+            var velocity = this._rotateVelocity;
+            this._rotateY = (velocity.y + this._rotateY) % (Math.PI * 2);
+            this._rotateX = (velocity.x + this._rotateX) % (Math.PI * 2);
 
             this._rotateX = Math.max(Math.min(this._rotateX, Math.PI / 2), -Math.PI / 2);
-
-            this._zoom += this._zoomSpeed;
-            this._zoom = Math.max(Math.min(this._zoom, this.maxZoom), this.minZoom);
 
             this.target.rotation
                 .identity()
                 .rotateX(this._rotateX)
                 .rotateY(this._rotateY);
 
-            var zoom = this._zoom;
-            this.target.scale.set(zoom, zoom, zoom);
+            // Rotate speed damping
+            this._vectorDamping(velocity, 0.8);
 
             if (this._rotating) {
                 this._rotateY -= deltaTime * 1e-4;
                 this.zr.refreshNextFrame();
-            } else if (this._rotateVelocity.len() > 0 || this._zoomSpeed !== 0) {
+            }
+            else if (velocity.len() > 0) {
                 this.zr.refreshNextFrame();
             }
-            // Rotate speed damping
-            var speed = this._rotateVelocity.len();
-            speed = speed * 0.8;
-            if (speed < 1e-4) {
-                speed = 0;
-            }
-            this._rotateVelocity.normalize().scale(speed);
+        },
+
+        _updateZoom: function (deltaTime) {
+
+            this._setZoom(this._zoom + this._zoomSpeed);
+
             // Zoom speed damping
             this._zoomSpeed *= 0.8;
-            if (Math.abs(this._zoomSpeed) < 1e-3) {
-                this._zoomSpeed = 0;
+            if (Math.abs(this._zoomSpeed) > 1e-3) {
+                this.zr.refreshNextFrame();
+            }
+        },
+
+        _setZoom: function (zoom) {
+            this._zoom = Math.max(Math.min(zoom, this.maxZoom), this.minZoom);
+            var zoom = this._zoom;
+
+            var camera = this.layer.camera;
+            var z = camera.worldTransform.z.normalize();
+
+            // FIXME Assume origin is ZERO
+            var len = this._cameraStartPos.len() * zoom;
+            camera.position.normalize().scale(len);
+
+        },
+
+        _updatePan: function (deltaTime) {
+            var velocity = this._panVelocity;
+            var target = this.target;
+            var yAxis = target.worldTransform.y;
+            var xAxis = target.worldTransform.x;
+
+            // FIXME Assume origin is ZERO
+            var len = this.layer.camera.position.len();
+            // PENDING
+            target.position
+                .scaleAndAdd(xAxis, velocity.x * len / 400)
+                .scaleAndAdd(yAxis, velocity.y * len / 400)
+
+            // Pan damping
+            this._vectorDamping(velocity, 0.8);
+
+            if (velocity.len() > 0) {
+                this.zr.refreshNextFrame();
             }
         },
 
@@ -283,6 +370,15 @@ define(function (require) {
                     self._rotating = true;
                 }, time * 1000);
             }
+        },
+
+        _vectorDamping: function (v, damping) {
+            var speed = v.len();
+            speed = speed * damping;
+            if (speed < 1e-4) {
+                speed = 0;
+            }
+            v.normalize().scale(speed);
         },
 
         _decomposeRotation: function () {
@@ -304,16 +400,20 @@ define(function (require) {
             this.layer.bind(EVENT.MOUSEUP, this._mouseUpHandler, this);
 
             e = e.event;
-            // Reset rotate velocity
-            this._rotateVelocity.set(0, 0);
+
+            if (this.mode === 'rotate') {
+                // Reset rotate velocity
+                this._rotateVelocity.set(0, 0);
+
+                this._rotating = false;
+
+                if (this.autoRotate) {
+                    this._startCountingStill();
+                }
+            }
+
             this._mouseX = e.pageX;
             this._mouseY = e.pageY;
-
-            this._rotating = false;
-
-            if (this.autoRotate) {
-                this._startCountingStill();
-            }
         },
 
         _mouseMoveHandler: function (e) {
@@ -322,8 +422,14 @@ define(function (require) {
             }
             e = e.event;
 
-            this._rotateVelocity.y = (e.pageX - this._mouseX) / 500;
-            this._rotateVelocity.x = (e.pageY - this._mouseY) / 500;
+            if (this.mode === 'rotate') {
+                this._rotateVelocity.y = (e.pageX - this._mouseX) / 500;
+                this._rotateVelocity.x = (e.pageY - this._mouseY) / 500;   
+            }
+            else if (this.mode === 'pan') {
+                this._panVelocity.x = e.pageX - this._mouseX;
+                this._panVelocity.y = -e.pageY + this._mouseY;
+            }
 
             this._mouseX = e.pageX;
             this._mouseY = e.pageY;
@@ -341,7 +447,7 @@ define(function (require) {
 
             this._rotating = false;
 
-            if (this.autoRotate) {
+            if (this.autoRotate && this.mode === 'rotate') {
                 this._startCountingStill();
             }
         },

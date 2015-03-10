@@ -10,12 +10,15 @@ define({
 
         zlevel: -1,
 
+        // Base map configuration
+        mapType: 'world',
+
+        // If change from a globe to a flat map
+        flat: false,
+
         hoverable: true,
 
         clickable: true,
-
-        // Base map configuration
-        mapType: 'world',
 
         // Globe location, same as ECharts map
         mapLocation: {
@@ -118,8 +121,8 @@ define({
             // default is 3 seconds
             autoRotateAfterStill: 3,
 
-            // Rotate globe to have camera focused on a given area, e.g. 'China'
-            rotateTo: '',
+            // Rotate globe or pan flat map to have camera focused on a given area, e.g. 'China'
+            focus: '',
 
             // Default zoom ratio
             // Only available when focus is empty

@@ -22,12 +22,14 @@ define(function (require) {
     var Node = require('qtek/Node');
     var Mesh = require('qtek/Mesh');
     var SphereGeometry = require('qtek/geometry/Sphere');
+    var PlaneGeometry = require('qtek/geometry/Plane');
     var Material = require('qtek/Material');
     var Shader = require('qtek/Shader');
     var Texture2D = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
     var Vector2 = require('qtek/math/Vector2');
     var Matrix4 = require('qtek/math/Matrix4');
+    var Plane = require('qtek/math/Plane');
     var Quaternion = require('qtek/math/Quaternion');
     var DirectionalLight = require('qtek/light/Directional');
     var AmbientLight = require('qtek/light/Ambient');
@@ -91,17 +93,11 @@ define(function (require) {
         this._baseTextureSize = 2048;
 
         /**
-         * Root scene node of globe. Children contains earth mesh, markers mesh etc.
+         * Root scene node of map3d. Children contains earth mesh, markers mesh etc.
          * @type {qtek.Node}
          * @private
          */
-        this._globeNode = null;
-
-        /**
-         * @type {module:echarts-x/util/OrbitControl}
-         * @private
-         */
-        this._orbitControl = null;
+        this._mapRootNode = null;
 
         /**
          * Cached map data, key is map type
@@ -135,11 +131,11 @@ define(function (require) {
          * @type {qtek.Shader}
          * @private
          */
-        this._lambertShader = new Shader({
+        this._lambertDiffShader = new Shader({
             vertex: Shader.source('ecx.lambert.vertex'),
             fragment: Shader.source('ecx.lambert.fragment')
         });
-        this._lambertShader.enableTexture('diffuseMap');
+        this._lambertDiffShader.enableTexture('diffuseMap');
 
         /**
          * @type {qtek.Shader}
@@ -159,7 +155,7 @@ define(function (require) {
         this._albedoShaderPA.define('fragment', 'PREMULTIPLIED_ALPHA');
 
         /**
-         * @type {qtek.DynamicGeoemtry}
+         * @type {qtek.geometry.Sphere}
          * @private
          */
         this._sphereGeometry = new SphereGeometry({
@@ -168,13 +164,18 @@ define(function (require) {
         });
 
         /**
-         * @type {qtek.DynamicGeoemtry}
+         * @type {qtek.geometry.Sphere}
          * @private
          */
         this._sphereGeometryLowRes = new SphereGeometry({
             widthSegments: 30,
             heightSegments: 30
         });
+
+        /**
+         * @type {qtek.geometry.Plane}
+         */
+        this._planeGeometry = new PlaneGeometry();
 
         /**
          * @type {qtek.core.LRU}
@@ -270,24 +271,25 @@ define(function (require) {
                     this._baseTextureSize = mapQuality;
                 }
 
-                if (!this._globeNode) {
-                    this._createGlob(seriesGroup);
+                var isFlatMap = this.deepQuery(seriesGroup, 'flat');
+                var mapRootNode = this._mapRootNode;
+                if (! mapRootNode || mapRootNode.__isFlatMap !== isFlatMap) {
+                    if (mapRootNode) {
+                        mapRootNode.__control && mapRootNode.__control.dispose();
+                        this.baseLayer.renderer.disposeNode(mapRootNode, true, true);
+                    }
+
+                    this._createMapRootNode(seriesGroup);
                 }
 
-                this._initGlobeHandlers(seriesGroup);
+                this._initMapHandlers(seriesGroup);
 
-                this._updateGlobe(mapType, dataMap[mapType], seriesGroup);
+                this._updateMap3D(mapType, dataMap[mapType], seriesGroup);
 
                 this._setViewport(seriesGroup);
                 //TODO Only support one mapType here
                 break;
             }
-
-            var camera = this.baseLayer.camera;
-            camera.position.y = 0;
-            camera.position.z = this._earthRadius * 2.5;
-
-            camera.lookAt(Vector3.ZERO);
 
             this.afterBuildMark();
         },
@@ -388,45 +390,71 @@ define(function (require) {
          * @param  {Array.<Object>} seriesGroup
          * @private
          */
-        _createGlob: function (seriesGroup) {
+        _createMapRootNode: function (seriesGroup) {
             var zr = this.zr;
             var self = this;
-            this._globeNode = new Node({
+            var isFlatMap = this.deepQuery(seriesGroup, 'flat');
+            var camera = this.baseLayer.camera;
+
+            this._mapRootNode = new Node({
                 name: 'globe'
             });
+            var mapRootNode = this._mapRootNode;
+            mapRootNode.__isFlatMap = isFlatMap;
 
             // Put the longitude 0 in the center of view
-            this._globeNode.rotation.rotateY(-Math.PI / 2);
+            if (! isFlatMap) {
+                mapRootNode.rotation.rotateY(-Math.PI / 2);
+            }
+            else {
+                // 45 degree angle view
+                mapRootNode.rotation.rotateX(-Math.PI / 5);
+            }
 
             var earthMesh = new Mesh({
                 name: 'earth',
-                geometry: this._sphereGeometry,
+                geometry: isFlatMap ? this._planeGeometry : this._sphereGeometry,
                 material: new Material({
                     shader: this._albedoShader,
                     transparent: true
                 })
             });
-            this._sphereGeometry.pickByRay = this._getSphereRayPickingHooker(earthMesh);
+            
+            earthMesh.geometry.pickByRay = isFlatMap ? this._getPlaneRayPickingHooker(earthMesh)
+                    : this._getSphereRayPickingHooker(earthMesh);
 
             var radius = this._earthRadius;
-            earthMesh.scale.set(radius, radius, radius);
 
-            this._globeNode.add(earthMesh);
+            if (isFlatMap) {
+                earthMesh.scale.set(radius * Math.PI, radius * Math.PI / 2, 1);
+            }
+            else {
+                earthMesh.scale.set(radius, radius, radius);
+            }
+            camera.position.z = radius * (isFlatMap ? 1 : 2.5);
+            camera.position.y = 0;
+            camera.lookAt(Vector3.ZERO);
+
+            mapRootNode.add(earthMesh);
 
             var scene = this.baseLayer.scene;
-            scene.add(this._globeNode);
+            scene.add(mapRootNode);
 
-            this._orbitControl = new OrbitControl(this._globeNode, this.zr, this.baseLayer);
-            this._orbitControl.__firstInit = true;
-            this._orbitControl.init();
+            var control = new OrbitControl(mapRootNode, this.zr, this.baseLayer);
+            control.__firstInit = true;
+            control.mode = isFlatMap ? 'pan' : 'rotate';
+            control.init();
 
-            var globeSurface = new ZRenderSurface(
+            mapRootNode.__control = control;
+
+            this._globeSurface = this._globeSurface || new ZRenderSurface(
                 this._baseTextureSize, this._baseTextureSize
             );
-            this._globeSurface = globeSurface;
-            earthMesh.material.set('diffuseMap', globeSurface.getTexture());
+            var texture = this._globeSurface.getTexture();
+            earthMesh.material.set('diffuseMap', texture);
+            texture.flipY = isFlatMap;
 
-            globeSurface.onrefresh = function () {
+            this._globeSurface.onrefresh = function () {
                 zr.refreshNextFrame();
             };
         },
@@ -438,25 +466,26 @@ define(function (require) {
          * @param  {Array.<Object>} data Data preprocessed in _mergeSeriesData
          * @param  {Array.<Object>} seriesGroup seriesGroup created in _groupSeriesByMapType
          */
-        _updateGlobe: function (mapType, data, seriesGroup) {
+        _updateMap3D: function (mapType, data, seriesGroup) {
 
             var self = this;
-            var orbitControl = this._orbitControl;
+            var mapRootNode = this._mapRootNode;
+            var mouseControl = mapRootNode.__control;
             var globeSurface = this._globeSurface;
 
             function focusOrZoomOnLoad() {
-                if (! self.deepQuery(seriesGroup, 'roam.preserve') || orbitControl.__firstInit) {
-                    var rotateTo = self.deepQuery(seriesGroup, 'roam.rotateTo');
-                    if (! self._isValueNone(rotateTo)) {
-                        var shape = globeSurface.getShapeByName(rotateTo);
+                if (! self.deepQuery(seriesGroup, 'roam.preserve') || mouseControl.__firstInit) {
+                    var focus = self.deepQuery(seriesGroup, 'roam.focus');
+                    if (! self._isValueNone(focus)) {
+                        var shape = globeSurface.getShapeByName(focus);
                         if (shape) {
-                            self._rotateToShape(shape);
+                            self._focusOnShape(shape);
                         }
                     }
                     else {
                         var zoom = self.deepQuery(seriesGroup, 'roam.zoom');
-                        if (zoom !== orbitControl.getZoom()) {
-                            orbitControl.zoomTo({
+                        if (zoom !== mouseControl.getZoom()) {
+                            mouseControl.zoomTo({
                                 zoom: zoom,
                                 easing: 'CubicOut'
                             });
@@ -464,10 +493,9 @@ define(function (require) {
                     }
                 }
 
-                orbitControl.__firstInit = false;
+                mouseControl.__firstInit = false;
             }
 
-            var globeNode = this._globeNode;
             var deepQuery = this.deepQuery;
 
             globeSurface.resize(
@@ -538,7 +566,7 @@ define(function (require) {
             this._surfaceLayerRoot = new Node({
                 name: 'surfaceLayers'
             });
-            globeNode.add(this._surfaceLayerRoot);
+            mapRootNode.add(this._surfaceLayerRoot);
 
             for (var i = 0; i < this._vfParticleSurfaceList.length; i++) {
                 this._vfParticleSurfaceList[i].dispose();
@@ -548,13 +576,13 @@ define(function (require) {
             // Build markers
             seriesGroup.forEach(function (serie) {
                 var sIdx = this.series.indexOf(serie);
-                this.buildMark(sIdx, globeNode);
+                this.buildMark(sIdx, mapRootNode);
                 this._createSurfaceLayers(sIdx);
             }, this);
 
             // Oribit control configuration
             ['autoRotate', 'autoRotateAfterStill', 'maxZoom', 'minZoom'].forEach(function (propName) {
-                orbitControl[propName] = this.deepQuery(seriesGroup, 'roam.' + propName);
+                mouseControl[propName] = this.deepQuery(seriesGroup, 'roam.' + propName);
             }, this);
         },
 
@@ -614,25 +642,26 @@ define(function (require) {
          */
         _updateLightShading: function (seriesGroup) {
             var self = this;
-            var globeNode = this._globeNode;
-            var earthMesh = globeNode.queryNode('earth');
+            var mapRootNode = this._mapRootNode;
+            var earthMesh = mapRootNode.queryNode('earth');
             var earthMaterial = earthMesh.material;
+            var isFlatMap = mapRootNode.__isFlatMap;
 
             var deepQuery = this.deepQuery;
 
             var enableLight = deepQuery(seriesGroup, 'light.enable');
             if (enableLight) {
-                var lambertShader = this._lambertShader;
-                if (earthMaterial.shader !== lambertShader) {
-                    earthMaterial.attachShader(lambertShader, true);
+                var lambertDiffShader = this._lambertDiffShader;
+                if (earthMaterial.shader !== lambertDiffShader) {
+                    earthMaterial.attachShader(lambertDiffShader, true);
                 }
-                var sunLight = globeNode.queryNode('sun');
-                var ambientLight = globeNode.queryNode('ambient');
+                var sunLight = mapRootNode.queryNode('sun');
+                var ambientLight = mapRootNode.queryNode('ambient');
                 if (! sunLight) {
                     sunLight = new DirectionalLight({ name: 'sun' });
-                    globeNode.add(sunLight);
+                    mapRootNode.add(sunLight);
                     ambientLight = new AmbientLight({ name: 'ambient' });
-                    globeNode.add(ambientLight);
+                    mapRootNode.add(ambientLight);
                 }
                 sunLight.intensity = deepQuery(seriesGroup, 'light.sunIntensity');
                 ambientLight.intensity = deepQuery(seriesGroup, 'light.ambientIntensity');
@@ -646,7 +675,7 @@ define(function (require) {
                 if (! this._isValueNone(heightImage)) {
                     var bumpTexture = earthMaterial.get('bumpMap');
                     if (! bumpTexture) {
-                        bumpTexture = new Texture2D({ anisotropic: 32, flipY: false });
+                        bumpTexture = new Texture2D({ anisotropic: 32, flipY: isFlatMap });
                     }
                     if (typeof (heightImage) === 'string') {
                         var src = heightImage;
@@ -654,7 +683,7 @@ define(function (require) {
                         if (! heightImage) {
                             bumpTexture.load(src).success(function () {
                                 // FIXME Config changed and refreshed before bum map loaded
-                                lambertShader.enableTexture('bumpMap');
+                                lambertDiffShader.enableTexture('bumpMap');
                                 earthMaterial.set('bumpMap', bumpTexture);
                                 self._imageCache.put(src, bumpTexture.image);
                                 self.zr.refreshNextFrame();
@@ -670,7 +699,7 @@ define(function (require) {
                     bumpTexture.dirty();
                 }
                 else {
-                    lambertShader.disableTexture('bumpMap');
+                    lambertDiffShader.disableTexture('bumpMap');
                 }
             }
             else if (! enableLight && earthMaterial.shader !== this._albedoShader) {
@@ -695,11 +724,13 @@ define(function (require) {
          */
         _createSurfaceLayers: function (seriesIdx) {
             var serie = this.series[seriesIdx];
+            var isFlatMap = this._mapRootNode.__isFlatMap;
+
             for (var i = 0; i < serie.surfaceLayers.length; i++) {
                 var surfaceLayer = serie.surfaceLayers[i];
                 var surfaceMesh = new Mesh({
                     name: 'surfaceLayer' + i,
-                    geometry: this._sphereGeometryLowRes,
+                    geometry: isFlatMap ? this._planeGeometry : this._sphereGeometryLowRes,
                     ignorePicking: true
                 });
                 var distance = surfaceLayer.distance;
@@ -707,8 +738,16 @@ define(function (require) {
                 if (distance == null) {
                     distance = i + 1;
                 }
-                var r = this._earthRadius + distance;
-                surfaceMesh.scale.set(r, r, r);
+
+                if (isFlatMap) {
+                    surfaceMesh.position.z = distance;
+                    surfaceMesh.scale.copy(this._mapRootNode.queryNode('earth').scale);
+                }
+                else {
+                    var r = this._earthRadius + distance;
+                    surfaceMesh.scale.set(r, r, r);   
+                }
+
                 switch (surfaceLayer.type) {
                     case 'particle':
                         this._createParticleSurfaceLayer(
@@ -855,7 +894,7 @@ define(function (require) {
             vfParticleSurface.vectorFieldTexture = new Texture2D({
                 image: vfImage,
                 // Vector data column ranges -90 to 90
-                flipY: true
+                flipY: ! this._mapRootNode.__isFlatMap,
             });
             vfParticleSurface.surfaceTexture = new Texture2D({
                 width: textureSize[0],
@@ -1121,15 +1160,34 @@ define(function (require) {
             }
         },
 
+        _getPlaneRayPickingHooker: function (planeMesh) {
+            var originWorld = new Vector3();
+            var plane = new Plane();
+            plane.normal.set(0, 0, 1);
+
+            return function (ray) {
+                var point = ray.intersectPlane(plane);
+                if (point.x >= -1 && point.x <= 1 && point.y >= -1 && point.y <= 1) {
+                    var pointWorld = new Vector3();
+                    Vector3.transformMat4(pointWorld, point, planeMesh.worldTransform);
+                    Vector3.transformMat4(originWorld, ray.origin, planeMesh.worldTransform);
+                    var dist = Vector3.distance(originWorld, point);
+                    return new RayPicking.Intersection(point, pointWorld, planeMesh, null, dist);
+                }
+            }
+        },
+
         /**-
          * @param  {Array.<Object>} seriesGroup
          * @private
          */
-        _initGlobeHandlers: function (seriesGroup) {
-            var earthMesh = this._globeNode.queryNode('earth');
+        _initMapHandlers: function (seriesGroup) {
+            var earthMesh = this._mapRootNode.queryNode('earth');
 
             var clickable = this.deepQuery(seriesGroup, 'clickable');
             var hoverable = this.deepQuery(seriesGroup, 'hoverable');
+
+            var isFlatMap = this._mapRootNode.__isFlatMap;
 
             var mouseEventHandler = function (e) {
                 // FIXME
@@ -1148,9 +1206,19 @@ define(function (require) {
                 }
 
                 var point = e.point;
-                var geo = this._eulerToGeographic(point.x, point.y, point.z);
-                var x = (geo[0] + 180) / 360 * this._globeSurface.getWidth();
-                var y = (90 - geo[1]) / 180 * this._globeSurface.getHeight();
+
+                var x, y;
+                var width = this._globeSurface.getWidth();
+                var height = this._globeSurface.getWidth();
+                if (isFlatMap) {
+                    x = (point.x + 1) * width / 2;
+                    y = (1 - point.y) * height / 2;
+                }
+                else {
+                    var geo = this._eulerToGeographic(point.x, point.y, point.z);
+                    x = (geo[0] + 180) / 360 * width;
+                    y = (90 - geo[1]) / 180 * height;
+                }
 
                 var shape = this._globeSurface.hover(x, y);
                 if (shape) {
@@ -1231,11 +1299,13 @@ define(function (require) {
         /**
          * Zoom and rotate to focus on the shape
          */
-        _rotateToShape: function (shape) {
+        _focusOnShape: function (shape) {
             if (!shape) {
                 return;
             }
 
+            var mapRootNode = this._mapRootNode;
+            var isFlatMap = mapRootNode.__isFlatMap;
             var surface = this._globeSurface;
             var w = surface.getWidth();
             var h = surface.getHeight();
@@ -1245,12 +1315,21 @@ define(function (require) {
                 x /= w;
                 y /= h;
 
-                var r0 = r * sin(y * PI);
-                return new Vector3(
-                    -r0 * cos(x * PI2),
-                    r * cos(y * PI),
-                    r0 * sin(x * PI2)
-                );
+                if (isFlatMap) {
+                    var r0 = r * sin(y * PI);
+                    return new Vector3(
+                        -r0 * cos(x * PI2),
+                        r * cos(y * PI),
+                        r0 * sin(x * PI2)
+                    );
+                }
+                else {
+                    return new Vector3(
+                        r * Math.PI * 2 * (x - 0.5),
+                        0,
+                        r * Math.PI * (0.5 - y)
+                    )
+                }
             }
 
             var rect = shape.getRect(shape.style);
@@ -1261,46 +1340,41 @@ define(function (require) {
             var lb = convertCoord(x, y + height);
             var rb = convertCoord(x + width, y + height);
 
-            // Z
-            var normal = new Vector3()
-                .add(lt).add(rt).add(lb).add(rb).normalize();
-            // Y
-            var tangent = new Vector3();
-            // X
-            var bitangent = new Vector3();
-            bitangent.cross(Vector3.UP, normal).normalize();
-            tangent.cross(normal, bitangent).normalize();
+            if (isFlatMap) {
+                var center = new Vector3()
+                    add(lt).add(rt).add(lb).add(rb).scale(0.25);
 
-            var rotation = new Quaternion().setAxes(
-                normal.negate(), bitangent, tangent
-            ).invert();
-            var self = this;
+                this._mapRootNode.__control.moveTo({
+                    position: center.negate(),
+                    easing: 'CubicOut'
+                });
+            }
+            else {
+                // Z
+                var normal = new Vector3()
+                    .add(lt).add(rt).add(lb).add(rb).normalize();
+                // Y
+                var tangent = new Vector3();
+                // X
+                var bitangent = new Vector3();
+                bitangent.cross(Vector3.UP, normal).normalize();
+                tangent.cross(normal, bitangent).normalize();
 
-            this._orbitControl.rotateTo({
-                rotation: rotation,
-                easing: 'CubicOut',
-            });
-            // .done(function () {
-            //     var layer3d = self.baseLayer;
-            //     var camera = layer3d.camera;
-            //     var width = Math.max(lt.dist(rt), lb.dist(rb));
-            //     var height = Math.max(lt.dist(lb), rt.dist(rb));
+                var rotation = new Quaternion().setAxes(
+                    normal.negate(), bitangent, tangent
+                ).invert();
+                var self = this;
 
-            //     var rad = camera.fov * PI / 360;
-            //     var tanRad = Math.tan(rad);
-            //     var z = Math.max(
-            //         width / 2 / tanRad / camera.aspect,
-            //         height / 2 / tanRad 
-            //     );
-            //     self._orbitControl.zoomTo({
-            //         zoom: (camera.position.z - z) / r,
-            //         easing: 'CubicOut'
-            //     });
-            // });
+                this._mapRootNode.__control.rotateTo({
+                    rotation: rotation,
+                    easing: 'CubicOut',
+                });
+            }
         },
 
         // Overwrite getMarkCoord
         getMarkCoord: function (seriesIdx, data, point) {
+            var isFlatMap = this._mapRootNode.__isFlatMap;
             var geoCoord = data.geoCoord || geoCoordMap[data.name];
             var coords = [];
             var serie = this.series[seriesIdx];
@@ -1314,15 +1388,23 @@ define(function (require) {
             var lon = coords[0];
             var lat = coords[1];
 
-            lon = PI * lon / 180;
-            lat = PI * lat / 180;
+            var r = this._earthRadius;
+            if (isFlatMap) {
+                point._array[0] = lon / 180 * r * Math.PI;
+                point._array[1] = lat / 180 * r * Math.PI;
+                point._array[2] = distance;
+            }
+            else {
+                lon = PI * lon / 180;
+                lat = PI * lat / 180;
 
-            var r = this._earthRadius + distance;
-            var r0 = cos(lat) * r;
-            point._array[1] = sin(lat) * r;
-            // TODO
-            point._array[0] = -r0 * cos(lon + PI);
-            point._array[2] = r0 * sin(lon + PI);
+                r = r + distance;
+                var r0 = cos(lat) * r;
+                point._array[1] = sin(lat) * r;
+                // TODO
+                point._array[0] = -r0 * cos(lon + PI);
+                point._array[2] = r0 * sin(lon + PI);
+            }
         },
 
         // Overwrite getMarkPointTransform
@@ -1332,6 +1414,7 @@ define(function (require) {
             var zAxis = new Vector3();
             var position = new Vector3();
             return function (seriesIdx, data, matrix) {
+                var isFlatMap = this._mapRootNode.__isFlatMap;
                 var series = this.series[seriesIdx];
                 var queryTarget = [data, series.markPoint];
                 var symbolSize = this.deepQuery(queryTarget, 'symbolSize');
@@ -1339,10 +1422,18 @@ define(function (require) {
                 var orientationAngle = this.deepQuery(queryTarget, 'orientationAngle');
 
                 this.getMarkCoord(seriesIdx, data, position);
-                Vector3.normalize(zAxis, position);
-                Vector3.cross(xAxis, Vector3.UP, zAxis);
-                Vector3.normalize(xAxis, xAxis);
-                Vector3.cross(yAxis, zAxis, xAxis);
+
+                if (isFlatMap) {
+                    Vector3.set(zAxis, 0, 0, 1);
+                    Vector3.set(yAxis, 0, 1, 0);
+                    Vector3.set(xAxis, 1, 0, 0);
+                }
+                else {
+                    Vector3.normalize(zAxis, position);
+                    Vector3.cross(xAxis, Vector3.UP, zAxis);
+                    Vector3.normalize(xAxis, xAxis);
+                    Vector3.cross(yAxis, zAxis, xAxis);
+                }
 
                 // Scaling
                 if (!isNaN(symbolSize)) {
@@ -1383,13 +1474,19 @@ define(function (require) {
         getMarkBarPoints: (function () {
             var normal = new Vector3();
             return function (seriesIdx, data, start, end) {
+                var isFlatMap = this._mapRootNode.__isFlatMap;
                 var barHeight = data.barHeight != null ? data.barHeight : 1;
                 if (typeof(barHeight) == 'function') {
                     barHeight = barHeight(data);
                 }
                 this.getMarkCoord(seriesIdx, data, start);
-                Vector3.copy(normal, start);
-                Vector3.normalize(normal, normal);
+                if (isFlatMap) {
+                    Vector3.set(normal, 0, 0, 1);
+                }
+                else {
+                    Vector3.copy(normal, start);
+                    Vector3.normalize(normal, normal);   
+                }
                 Vector3.scaleAndAdd(end, start, normal, barHeight);
             };
         })(),
@@ -1401,6 +1498,7 @@ define(function (require) {
             var bitangent = new Vector3();
             var halfVector = new Vector3();
             return function (seriesIdx, data, p0, p1, p2, p3) {
+                var isFlatMap = this._mapRootNode.__isFlatMap;
                 var isCurve = !!p2;
                 if (!isCurve) { // Mark line is not a curve
                     p3 = p1;
@@ -1412,53 +1510,69 @@ define(function (require) {
                 var cross = Vector3.cross;
                 var sub = Vector3.sub;
                 var add = Vector3.add;
+                var scaleAndAdd = Vector3.scaleAndAdd;
+
                 if (isCurve) {
-                    // Get p1
-                    normalize(normal, p0);
-                    // TODO p0-p3 is parallel with normal
-                    sub(tangent, p3, p0);
-                    normalize(tangent, tangent);
-                    cross(bitangent, tangent, normal);
-                    normalize(bitangent, bitangent);
-                    cross(tangent, normal, bitangent);
-                    // p1 is half vector of p0 and tangent on p0
-                    add(p1, normal, tangent);
-                    normalize(p1, p1);
 
-                    // Get p2
-                    normalize(normal, p3);
-                    sub(tangent, p0, p3);
-                    normalize(tangent, tangent);
-                    cross(bitangent, tangent, normal);
-                    normalize(bitangent, bitangent);
-                    cross(tangent, normal, bitangent);
-                    // p2 is half vector of p3 and tangent on p3
-                    add(p2, normal, tangent);
-                    normalize(p2, p2);
+                    if (isFlatMap) {
+                        var len = Vector3.dist(p0, p3);
 
-                    // Project distance of p0 on haflVector
-                    add(halfVector, p0, p3);
-                    normalize(halfVector, halfVector);
-                    var projDist = Vector3.dot(p0, halfVector);
-                    // Angle of halfVector and p1
-                    var cosTheta = Vector3.dot(halfVector, p1);
-                    var len = (this._earthRadius - projDist) / cosTheta * 2;
+                        add(p1, p0, p3);
+                        Vector3.scale(p1, p1, 0.5);
 
-                    Vector3.scaleAndAdd(p1, p0, p1, len);
-                    Vector3.scaleAndAdd(p2, p3, p2, len);
+                        Vector3.set(normal, 0, 0, 1);
+                        scaleAndAdd(p1, p1, normal, Math.min(len * 0.1, 10));
+
+                        Vector3.copy(p2, p1);
+                    }
+                    else {
+                        // Get p1
+                        normalize(normal, p0);
+                        // TODO p0-p3 is parallel with normal
+                        sub(tangent, p3, p0);
+                        normalize(tangent, tangent);
+                        cross(bitangent, tangent, normal);
+                        normalize(bitangent, bitangent);
+                        cross(tangent, normal, bitangent);
+                        // p1 is half vector of p0 and tangent on p0
+                        add(p1, normal, tangent);
+                        normalize(p1, p1);
+
+                        // Get p2
+                        normalize(normal, p3);
+                        sub(tangent, p0, p3);
+                        normalize(tangent, tangent);
+                        cross(bitangent, tangent, normal);
+                        normalize(bitangent, bitangent);
+                        cross(tangent, normal, bitangent);
+                        // p2 is half vector of p3 and tangent on p3
+                        add(p2, normal, tangent);
+                        normalize(p2, p2);
+
+                        // Project distance of p0 on halfVector
+                        add(halfVector, p0, p3);
+                        normalize(halfVector, halfVector);
+                        var projDist = Vector3.dot(p0, halfVector);
+                        // Angle of halfVector and p1
+                        var cosTheta = Vector3.dot(halfVector, p1);
+                        var len = (this._earthRadius - projDist) / cosTheta * 2;
+
+                        scaleAndAdd(p1, p0, p1, len);
+                        scaleAndAdd(p2, p3, p2, len);
+                    }
                 }
             }
         })(),
 
         // Overwrite onframe
         onframe: function (deltaTime) {
-            if (! this._globeNode) {
+            if (! this._mapRootNode) {
                 return;
             }
 
             ChartBase3D.prototype.onframe.call(this, deltaTime);
 
-            this._orbitControl.update(deltaTime);
+            this._mapRootNode.__control.update(deltaTime);
 
             for (var i = 0; i < this._vfParticleSurfaceList.length; i++) {
                 this._vfParticleSurfaceList[i].update(Math.min(deltaTime / 1000, 0.5));
@@ -1467,7 +1581,7 @@ define(function (require) {
 
             // Background
             if (this._skydome) {
-                this._skydome.rotation.copy(this._globeNode.rotation);
+                this._skydome.rotation.copy(this._mapRootNode.rotation);
             }
         },
 
@@ -1500,11 +1614,11 @@ define(function (require) {
             ChartBase3D.prototype.dispose.call(this);
 
             this.baseLayer.dispose();
-            if (this._orbitControl) {
-                this._orbitControl.dispose();
+            if (this._mapRootNode.__control) {
+                this._mapRootNode.__control.dispose();
             }
 
-            this._globeNode = null;
+            this._mapRootNode = null;
 
             this._disposed = true;
 

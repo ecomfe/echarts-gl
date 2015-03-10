@@ -1,6 +1,7 @@
 @export ecx.albedo.vertex
 
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
+uniform vec2 uvRepeat: [1, 1];
 
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 position: POSITION;
@@ -15,7 +16,7 @@ varying vec2 v_Texcoord;
 void main()
 {
     gl_Position = worldViewProjection * vec4(position, 1.0);
-    v_Texcoord = texcoord;
+    v_Texcoord = texcoord * uvRepeat;
 
     #ifdef VERTEX_COLOR
     v_Color = a_Color;
