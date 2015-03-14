@@ -658,8 +658,16 @@ define(function (require) {
                 if (earthMaterial.shader !== lambertDiffShader) {
                     earthMaterial.attachShader(lambertDiffShader, true);
                 }
+                if (isFlatMap) {
+                    lambertDiffShader.define('fragment', 'FLAT');
+                }
+                else {
+                    lambertDiffShader.unDefine('fragment', 'FLAT');   
+                }
+
                 var sunLight = mapRootNode.queryNode('sun');
                 var ambientLight = mapRootNode.queryNode('ambient');
+
                 if (! sunLight) {
                     sunLight = new DirectionalLight({ name: 'sun' });
                     mapRootNode.add(sunLight);
