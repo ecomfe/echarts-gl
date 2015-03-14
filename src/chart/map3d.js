@@ -277,6 +277,9 @@ define(function (require) {
                     if (mapRootNode) {
                         mapRootNode.__control && mapRootNode.__control.dispose();
                         this.baseLayer.renderer.disposeNode(mapRootNode, true, true);
+                        // All shaders and textures have been dispose 
+                        // So the cached markers is useless and must be disposed
+                        this.disposeMark();
                     }
 
                     this._createMapRootNode(seriesGroup);

@@ -20,10 +20,10 @@ define(function (require) {
     var Matrix4 = require('qtek/math/Matrix4');
 
     var MarkerCtorMap = {
-        markLine: require('../entity/marker/MarkLine'),
-        markBar: require('../entity/marker/MarkBar'),
-        markPoint: require('../entity/marker/MarkPoint'),
-        largeMarkPoint: require('../entity/marker/LargeMarkPoint')
+        line: require('../entity/marker/MarkLine'),
+        bar: require('../entity/marker/MarkBar'),
+        point: require('../entity/marker/MarkPoint'),
+        largePoint: require('../entity/marker/LargeMarkPoint')
     };
 
     /**
@@ -42,19 +42,12 @@ define(function (require) {
         ComponentBase3D.call(this, ecTheme, messageCenter, zr, option, myChart);
 
         // Markers
-        this._markLineList = [];
-        this._markLineCount = 0;
-
-        this._markPointList = [];
-        this._markPointCount = 0;
-
-        this._markBarList = [];
-        this._markBarCount = 0;
-
-        this._largeMarkPointList = [];
-        this._largeMarkPointCount = 0;
-
-        this._markList = [];
+        this._markers = {
+            line: { list: [], count: 0 },
+            point: { list: [], count: 0 },
+            bar: { list: [], count: 0 },
+            largePoint: { list: [], count: 0 }
+        };
     };
 
     Base3D.prototype = {
@@ -68,15 +61,14 @@ define(function (require) {
          * Instances which is no longer used will be disposed in the afterBuildMark method
          */
         beforeBuildMark: function () {
-            for (var i = 0; i < this._markList.length; i++) {
-                this._markList[i].clear();
-            }
-            this._markList.length = 0;
 
-            this._markBarCount = 0;
-            this._markPointCount = 0;
-            this._markLineCount = 0;
-            this._largeMarkPointCount = 0;
+            for (var markerType in this._markers) {
+                var marker = this._markers[markerType];
+                for (var i = 0; i < marker.list.length; i++) {
+                    marker.list[i].clear();
+                }
+                marker.count = 0;
+            }
         },
 
         /**
@@ -97,11 +89,11 @@ define(function (require) {
                 );
                 if (serie.markPoint.large) {
                     this._buildSingleTypeMarker(
-                        'largeMarkPoint', seriesIndex, parentNode
+                        'largePoint', seriesIndex, parentNode
                     );
                 } else {
                     this._buildSingleTypeMarker(
-                        'markPoint', seriesIndex, parentNode
+                        'point', seriesIndex, parentNode
                     );
                 }
             }
@@ -113,7 +105,7 @@ define(function (require) {
                     ecConfig.markLine
                 );
                 this._buildSingleTypeMarker(
-                    'markLine', seriesIndex, parentNode
+                    'line', seriesIndex, parentNode
                 );
             }
             if (serie.markBar) {
@@ -124,7 +116,7 @@ define(function (require) {
                     ecConfig.markBar
                 );
                 this._buildSingleTypeMarker(
-                    'markBar', seriesIndex, parentNode
+                    'bar', seriesIndex, parentNode
                 );
             }
         },
@@ -134,22 +126,13 @@ define(function (require) {
          */
         afterBuildMark: function () {
             // TODO Memory leak test
-            for (var i = this._markPointCount; i < this._markPointList.length; i++) {
-                this._disposeSingleSerieMark(this._markPointList[i]);
+            for (var markerType in this._markers) {
+                var marker = this._markers[markerType];
+                for (var i = marker.count; i < marker.list.length; i++) {
+                    this._disposeSingleSerieMark(marker.list[i]);
+                }
+                marker.list.length = marker.count;
             }
-            this._markPointList.length = this._markPointCount;
-            for (var i = this._largeMarkPointCount; i < this._largeMarkPointList.length; i++) {
-                this._disposeSingleSerieMark(this._largeMarkPointList[i]);
-            }
-            this._largeMarkPointList.length = this._largeMarkPointCount;
-            for (var i = this._markLineCount; i < this._markLineList.length; i++) {
-                this._disposeSingleSerieMark(this._markLineList[i]);
-            }
-            this._markLineList.length = this._markLineCount;
-            for (var i = this._markBarCount; i < this._markBarList.length; i++) {
-                this._disposeSingleSerieMark(this._markBarList[i]);
-            }
-            this._markBarList.length = this._markBarCount;
         },
 
         /**
@@ -173,8 +156,9 @@ define(function (require) {
          */
         _buildSingleTypeMarker: function (markerType, seriesIndex, parentNode) {
             var serie = this.series[seriesIndex];
-            var list = this['_' + markerType + 'List'];
-            var count = this['_' + markerType + 'Count'];
+            var markerObj = this._markers[markerType];
+            var list = markerObj.list;
+            var count = markerObj.count;
             var MarkerCtor = MarkerCtorMap[markerType];
             if (! list || ! MarkerCtor) {
                 // Invalid marker type
@@ -191,9 +175,7 @@ define(function (require) {
                 parentNode.add(sceneNode);
             }
 
-            this['_' + markerType + 'Count']++;
-
-            this._markList.push(marker);
+            markerObj.count++;
         },
 
         /**
@@ -368,20 +350,30 @@ define(function (require) {
             return;
         },
 
+        disposeMark: function () {
+            // Dispose all the markers
+            for (var markerType in this._markers) {
+                var marker = this._markers[markerType];
+                for (var i = 0; i < marker.list.length; i++) {
+                    this._disposeSingleSerieMark(marker.list[i]);
+                }
+                marker.list.length = marker.count = 0;
+            }
+        },
+
         // Overwrite dispose
         dispose: function () {
             ComponentBase3D.prototype.dispose.call(this);
-
-            // Dispose all the markers
-            for (var i = 0; i < this._markList.length; i++) {
-                this._disposeSingleSerieMark(this._markList[i]);
-            }
+            this.disposeMark();
         },
 
         // Overwrite onframe
         onframe: function (deltaTime) {
-            for (var i = 0; i < this._markList.length; i++) {
-                this._markList[i].onframe(deltaTime);
+            for (var markerType in this._markers) {
+                var marker = this._markers[markerType];
+                for (var i = 0; i < marker.count; i++) {
+                    marker.list[i].onframe(deltaTime);
+                }
             }
         }
     }
