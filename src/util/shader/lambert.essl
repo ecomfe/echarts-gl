@@ -113,7 +113,7 @@ void main()
     float ambientFactor = 1.0;
 #ifdef FLAT
     // Map plane normal and position to sphere coordinates
-    float theta = v_Texcoord.y * PI;
+    float theta = (1.0 - v_Texcoord.y) * PI;
     float phi = v_Texcoord.x * PI * 2.0;
     float r0 = sin(theta);
     N = vec3(-cos(phi) * r0, cos(theta), sin(phi) * r0);
