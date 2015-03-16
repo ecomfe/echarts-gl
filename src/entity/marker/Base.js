@@ -45,7 +45,7 @@ define(function (require) {
      */
     MarkerBase.prototype.dispose = function () {
         var renderer = this.chart.baseLayer.renderer;
-        renderer.dispose(this.getSceneNode(), true, true);
+        renderer.disposeNode(this.getSceneNode(), true, true);
     }
 
     return MarkerBase;

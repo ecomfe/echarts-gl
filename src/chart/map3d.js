@@ -277,7 +277,7 @@ define(function (require) {
                 break;
             }
             if (! mapDataLoading) {
-                afterMapDataLoad();
+                setTimeout(afterMapDataLoad);
             }
 
             function afterMapDataLoad() {
