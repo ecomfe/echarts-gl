@@ -47,7 +47,8 @@ myChart.setOption({
         },
         roam: {
             autoRotate: false,
-            focus: 'China'
+            focus: 'China',
+            preserve: false
         }
     }, {
         name: 'Map',
@@ -78,7 +79,10 @@ myChart.on(ecConfig.EVENT.CLICK, function (param) {
         myChart.setOption({
             series: [{
                 name: 'Globe',
-                type: 'map3d'
+                type: 'map3d',
+                roam: {
+                    focus: name
+                }
             }, {
                 name: 'Map',
                 type: 'map',
@@ -90,7 +94,10 @@ myChart.on(ecConfig.EVENT.CLICK, function (param) {
         myChart.setOption({
             series: [{
                 name: 'Globe',
-                type: 'map3d'
+                type: 'map3d',
+                roam: {
+                    focus: name
+                }
             }, {
                 name: 'Map',
                 type: 'map',
@@ -102,7 +109,10 @@ myChart.on(ecConfig.EVENT.CLICK, function (param) {
         myChart.setOption({
             series: [{
                 name: 'Globe',
-                type: 'map3d'
+                type: 'map3d',
+                roam: {
+                    focus: name
+                }
             }, {
                 name: 'Map',
                 type: 'map',

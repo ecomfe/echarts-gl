@@ -50,6 +50,9 @@ $.ajax({
 
                 flat: true,
 
+                hoverable: false,
+                clickable: false,
+
                 baseLayer: {
                     backgroundColor: 'rgba(0, 0, 0, 0)'
                 },
@@ -64,7 +67,7 @@ $.ajax({
                 },
 
                 roam: {
-                    minZoom: 5.0,
+                    minZoom: 4.0,
                     zoom: 5.0,
                     maxZoom: 10.0
                 },
@@ -89,7 +92,7 @@ $.ajax({
                         show : false
                     },
                     data : mpData[1],
-                    distance: 1
+                    distance: 1.2
                 }
             }, {
                 name : '强',
@@ -102,7 +105,7 @@ $.ajax({
                         show : false
                     },
                     data : mpData[2],
-                    distance: 1
+                    distance: 1.4
                 }
             }]
         });

@@ -101,6 +101,8 @@ define(function (require) {
         this._animating = false;
 
         this._stillTimeout = 0;
+
+        this._animators = [];
     };
 
     OrbitControl.prototype = {
@@ -132,6 +134,8 @@ define(function (require) {
             this.layer.unbind(EVENT.MOUSEMOVE, this._mouseMoveHandler);
             this.layer.unbind(EVENT.MOUSEUP, this._mouseUpHandler);
             this.layer.unbind(EVENT.MOUSEWHEEL, this._mouseWheelHandler);
+
+            this.stopAllAnimation();
         },
 
         /**
@@ -197,21 +201,23 @@ define(function (require) {
             var target = this.target;
             var fromQuat = target.rotation.clone();
             this._animating = true;
-            return zr.animation.animate(obj)
-                .when(opts.time || 1000, {
-                    p: 1
-                })
-                .during(function () {
-                    Quaternion.slerp(
-                        target.rotation, fromQuat, toQuat, obj.p
-                    );
-                    zr.refreshNextFrame();
-                })
-                .done(function () {
-                    self._animating = false;
-                    self._decomposeRotation();
-                })
-                .start(opts.easing || 'Linear');
+            return this._addAnimator(
+                zr.animation.animate(obj)
+                    .when(opts.time || 1000, {
+                        p: 1
+                    })
+                    .during(function () {
+                        Quaternion.slerp(
+                            target.rotation, fromQuat, toQuat, obj.p
+                        );
+                        zr.refreshNextFrame();
+                    })
+                    .done(function () {
+                        self._animating = false;
+                        self._decomposeRotation();
+                    })
+                    .start(opts.easing || 'Linear')
+            );
         },
 
         /**
@@ -228,18 +234,30 @@ define(function (require) {
 
             zoom = Math.max(Math.min(this.maxZoom, zoom), this.minZoom);
             this._animating = true;
-            return zr.animation.animate(this)
-                .when(opts.time || 1000, {
-                    _zoom: zoom
-                })
-                .during(function () {
-                    self._setZoom(self._zoom);
-                    zr.refreshNextFrame();
-                })
-                .done(function () {
-                    self._animating = false;
-                })
-                .start(opts.easing || 'Linear');
+            return this._addAnimator(
+                zr.animation.animate(this)
+                    .when(opts.time || 1000, {
+                        _zoom: zoom
+                    })
+                    .during(function () {
+                        self._setZoom(self._zoom);
+                        zr.refreshNextFrame();
+                    })
+                    .done(function () {
+                        self._animating = false;
+                    })
+                    .start(opts.easing || 'Linear')
+            );
+        },
+
+        /**
+         * Stop all animation
+         */
+        stopAllAnimation: function () {
+            for (var i = 0; i < this._animators.length; i++) {
+                this._animators[i].stop();
+            }
+            this._animators.length = 0;
         },
 
         /**
@@ -256,19 +274,21 @@ define(function (require) {
 
             this._animating = true;
 
-            return zr.animation.animate(this.target.position)
-                .when(opts.time || 1000, {
-                    x: position.x,
-                    y: position.y,
-                    z: position.z
-                })
-                .during(function () {
-                    zr.refreshNextFrame();
-                })
-                .done(function () {
-                    self._animating = false;
-                })
-                .start(opts.easing || 'Linear');
+            return this._addAnimator(
+                zr.animation.animate(this.target.position)
+                    .when(opts.time || 1000, {
+                        x: position.x,
+                        y: position.y,
+                        z: position.z
+                    })
+                    .during(function () {
+                        zr.refreshNextFrame();
+                    })
+                    .done(function () {
+                        self._animating = false;
+                    })
+                    .start(opts.easing || 'Linear')
+            );
         },
 
         /**
@@ -454,6 +474,18 @@ define(function (require) {
         _mouseUpHandler: function () {
             this.layer.unbind(EVENT.MOUSEMOVE, this._mouseMoveHandler, this);
             this.layer.unbind(EVENT.MOUSEUP, this._mouseUpHandler, this);
+        },
+
+        _addAnimator: function (animator) {
+            var animators = this._animators;
+            animators.push(animator);
+            animator.done(function () {
+                var idx = animators.indexOf(animator);
+                if (idx >= 0) {
+                    animators.splice(idx, 1);
+                }
+            });
+            return animator;
         }
     };
 

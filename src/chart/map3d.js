@@ -487,7 +487,6 @@ define(function (require) {
 
             var control = new OrbitControl(mapRootNode, this.zr, this.baseLayer);
             control.__firstInit = true;
-            control.setZoom(10.0);
             control.mode = isFlatMap ? 'pan' : 'rotate';
             control.init();
 
@@ -513,15 +512,20 @@ define(function (require) {
                 mouseControl[propName] = this.deepQuery(seriesGroup, 'roam.' + propName);
             }, this);
 
+            mouseControl.stopAllAnimation();
+
             if (! this.deepQuery(seriesGroup, 'roam.preserve') || mouseControl.__firstInit) {
                 var focus = this.deepQuery(seriesGroup, 'roam.focus');
                 if (! this._isValueNone(focus)) {
-                    var shape = globeSurface.getShapeByName(focus);
+                    var shape = this._globeSurface.getShapeByName(focus);
                     if (shape) {
                         this._focusOnShape(shape);
                     }
                 }
                 else {
+                    if (mouseControl.__firstInit) {
+                        mouseControl.setZoom(10.0);
+                    }
                     var zoom = this.deepQuery(seriesGroup, 'roam.zoom');
                     if (zoom !== mouseControl.getZoom()) {
                         mouseControl.zoomTo({
@@ -1375,7 +1379,7 @@ define(function (require) {
                 x /= w;
                 y /= h;
 
-                if (isFlatMap) {
+                if (! isFlatMap) {
                     var r0 = r * sin(y * PI);
                     return new Vector3(
                         -r0 * cos(x * PI2),
