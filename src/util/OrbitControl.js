@@ -233,7 +233,7 @@ define(function (require) {
                     _zoom: zoom
                 })
                 .during(function () {
-                    self._setZoom(this._zoom);
+                    self._setZoom(self._zoom);
                     zr.refreshNextFrame();
                 })
                 .done(function () {
@@ -336,7 +336,6 @@ define(function (require) {
             // FIXME Assume origin is ZERO
             var len = this._cameraStartPos.len() * zoom;
             camera.position.normalize().scale(len);
-
         },
 
         _updatePan: function (deltaTime) {
@@ -443,7 +442,7 @@ define(function (require) {
             var delta = e.wheelDelta // Webkit
                         || -e.detail; // Firefox
 
-            this._zoomSpeed = delta > 0 ? 0.05 : -0.05;
+            this._zoomSpeed = delta > 0 ? this._zoom / 20 : -this._zoom / 20;
 
             this._rotating = false;
 

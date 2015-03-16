@@ -48,6 +48,10 @@
         "name": "map3d_sun",
         "title": "Earth with sun light example"
     }, {
+        "type": "map3d",
+        "name": "map3d_weibo",
+        "title": "Weibo checkin visualization"
+    }, {
         "type": "map3d_mix",
         "name": "map3d_mix",
         "title": "Map3D Mix Map"

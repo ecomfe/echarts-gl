@@ -13,6 +13,7 @@ define(function (require) {
     var mapParams = require('echarts/util/mapData/params').params;
     var geoCoordMap = require('echarts/util/mapData/geoCoord');
     var textFixedMap = require('echarts/util/mapData/textFixed');
+    var normalProj = require('echarts/util/projection/normal');
 
     var PolygonShape = require('zrender/shape/Polygon');
     var ShapeBundle = require('zrender/shape/ShapeBundle');
@@ -50,8 +51,8 @@ define(function (require) {
     var formatGeoPoint = function (p) {
         //调整俄罗斯东部到地图右侧与俄罗斯相连
         return [
-            (p[0] < -168.5 && p[1] > 63.8) ? p[0] + 360 : p[0], 
-            p[1]
+            ((p[0] < -168.5 && p[1] > 63.8) ? p[0] + 360 : p[0]) + 168.5, 
+            90 - p[1]
         ];
     };
 
@@ -216,6 +217,7 @@ define(function (require) {
         _init: function () {
             var legend = this.component.legend;
             var series = this.series;
+            var self = this;
             this.selectedMap = {};
 
             this.beforeBuildMark();
@@ -250,51 +252,91 @@ define(function (require) {
             var seriesGroupByMapType = this._groupSeriesByMapType(series);
             var dataMap = this._mergeSeriesData(series);
 
-            for (var mapType in dataMap) {
-                var seriesGroup = seriesGroupByMapType[mapType];
-                var mapQuality = this.deepQuery(seriesGroup, 'baseLayer.quality');
-                if (isNaN(mapQuality)) {
-                    switch (mapQuality) {
-                        case 'low':
-                            this._baseTextureSize = 1024;
-                            break;
-                        case 'high':
-                            this._baseTextureSize = 4096;
-                            break;
-                        case 'medium':
-                        default:
-                            this._baseTextureSize = 2048;
-                            break;
-                    }   
-                }
-                else {
-                    this._baseTextureSize = mapQuality;
-                }
+            var mapDataLoading = 0;
+            function loadMapData(mapType) {
+                // Load geo json and draw the map on the base texture
+                mapParams[mapType].getGeoJson(function (mapData) {
+                    mapData.mapType = mapType;
+                    self._mapDataMap[mapType] = mapData;
 
-                var isFlatMap = this.deepQuery(seriesGroup, 'flat');
-                var mapRootNode = this._mapRootNode;
-                if (! mapRootNode || mapRootNode.__isFlatMap !== isFlatMap) {
-                    if (mapRootNode) {
-                        mapRootNode.__control && mapRootNode.__control.dispose();
-                        this.baseLayer.renderer.disposeNode(mapRootNode, true, true);
-                        // All shaders and textures have been dispose 
-                        // So the cached markers is useless and must be disposed
-                        this.disposeMark();
+                    mapDataLoading--;
+                    if (! mapDataLoading) {
+                        afterMapDataLoad();
                     }
-
-                    this._createMapRootNode(seriesGroup);
+                });
+            }
+            for (var mapType in dataMap) {
+                if (this._mapDataMap[mapType]) {
+                    continue;
                 }
-
-                this._initMapHandlers(seriesGroup);
-
-                this._updateMap3D(mapType, dataMap[mapType], seriesGroup);
-
-                this._setViewport(seriesGroup);
-                //TODO Only support one mapType here
+                else if (mapParams[mapType].getGeoJson) {
+                    mapDataLoading++;
+                    loadMapData(mapType);
+                }
+                // TODO Only support one mapType here
                 break;
             }
+            if (! mapDataLoading) {
+                afterMapDataLoad();
+            }
 
-            this.afterBuildMark();
+            function afterMapDataLoad() {
+                if (self._disposed) {
+                    return;
+                }
+
+                for (var mapType in dataMap) {
+                    var seriesGroup = seriesGroupByMapType[mapType];
+                    self._initMap3D(mapType, seriesGroup, dataMap[mapType]);
+                    //TODO Only support one mapType here
+                    break;
+                }
+
+                self.afterBuildMark();
+            }
+        },
+
+        _initMap3D: function (mapType, seriesGroup, seriesData) {
+            var mapQuality = this.deepQuery(seriesGroup, 'baseLayer.quality');
+            if (isNaN(mapQuality)) {
+                switch (mapQuality) {
+                    case 'low':
+                        this._baseTextureSize = 1024;
+                        break;
+                    case 'high':
+                        this._baseTextureSize = 4096;
+                        break;
+                    case 'medium':
+                    default:
+                        this._baseTextureSize = 2048;
+                        break;
+                }   
+            }
+            else {
+                this._baseTextureSize = mapQuality;
+            }
+
+            var isFlatMap = this.deepQuery(seriesGroup, 'flat');
+            var mapRootNode = this._mapRootNode;
+            if (! mapRootNode || mapRootNode.__isFlatMap !== isFlatMap) {
+                if (mapRootNode) {
+                    mapRootNode.__control && mapRootNode.__control.dispose();
+                    this.baseLayer.renderer.disposeNode(mapRootNode, true, true);
+                    // All shaders and textures have been dispose 
+                    // So the cached markers is useless and must be disposed
+                    this.disposeMark();
+                }
+
+                this._createMapRootNode(seriesGroup);
+            }
+
+            this._initMapHandlers(seriesGroup);
+
+            this._updateMapLayers(mapType, seriesData, seriesGroup);
+
+            this._setViewport(seriesGroup);
+
+            this._updateOrbitControl(seriesGroup);
         },
 
         /**
@@ -411,7 +453,7 @@ define(function (require) {
             }
             else {
                 // 45 degree angle view
-                mapRootNode.rotation.rotateX(-Math.PI / 5);
+                mapRootNode.rotation.rotateX(-Math.PI / 4);
             }
 
             var earthMesh = new Mesh({
@@ -445,6 +487,7 @@ define(function (require) {
 
             var control = new OrbitControl(mapRootNode, this.zr, this.baseLayer);
             control.__firstInit = true;
+            control.setZoom(10.0);
             control.mode = isFlatMap ? 'pan' : 'rotate';
             control.init();
 
@@ -462,6 +505,36 @@ define(function (require) {
             };
         },
 
+        _updateOrbitControl: function (seriesGroup) {
+            var mouseControl = this._mapRootNode.__control;
+
+            // Oribit control configuration
+            ['autoRotate', 'autoRotateAfterStill', 'maxZoom', 'minZoom'].forEach(function (propName) {
+                mouseControl[propName] = this.deepQuery(seriesGroup, 'roam.' + propName);
+            }, this);
+
+            if (! this.deepQuery(seriesGroup, 'roam.preserve') || mouseControl.__firstInit) {
+                var focus = this.deepQuery(seriesGroup, 'roam.focus');
+                if (! this._isValueNone(focus)) {
+                    var shape = globeSurface.getShapeByName(focus);
+                    if (shape) {
+                        this._focusOnShape(shape);
+                    }
+                }
+                else {
+                    var zoom = this.deepQuery(seriesGroup, 'roam.zoom');
+                    if (zoom !== mouseControl.getZoom()) {
+                        mouseControl.zoomTo({
+                            zoom: zoom,
+                            easing: 'CubicOut'
+                        });
+                    }
+                }
+            }
+
+            mouseControl.__firstInit = false;
+        },
+
         /**
          * Build globe in each refresh operation.
          * Draw base map from geoJSON data. Build markers.
@@ -469,35 +542,12 @@ define(function (require) {
          * @param  {Array.<Object>} data Data preprocessed in _mergeSeriesData
          * @param  {Array.<Object>} seriesGroup seriesGroup created in _groupSeriesByMapType
          */
-        _updateMap3D: function (mapType, data, seriesGroup) {
+        _updateMapLayers: function (mapType, data, seriesGroup) {
 
             var self = this;
             var mapRootNode = this._mapRootNode;
             var mouseControl = mapRootNode.__control;
             var globeSurface = this._globeSurface;
-
-            function focusOrZoomOnLoad() {
-                if (! self.deepQuery(seriesGroup, 'roam.preserve') || mouseControl.__firstInit) {
-                    var focus = self.deepQuery(seriesGroup, 'roam.focus');
-                    if (! self._isValueNone(focus)) {
-                        var shape = globeSurface.getShapeByName(focus);
-                        if (shape) {
-                            self._focusOnShape(shape);
-                        }
-                    }
-                    else {
-                        var zoom = self.deepQuery(seriesGroup, 'roam.zoom');
-                        if (zoom !== mouseControl.getZoom()) {
-                            mouseControl.zoomTo({
-                                zoom: zoom,
-                                easing: 'CubicOut'
-                            });
-                        }
-                    }
-                }
-
-                mouseControl.__firstInit = false;
-            }
 
             var deepQuery = this.deepQuery;
 
@@ -508,7 +558,7 @@ define(function (require) {
             this._updateLightShading(seriesGroup);
 
             // Skydome background configuration
-            this._updateBackground(seriesGroup);
+            this._updateSkydome(seriesGroup);
 
             // Update earth base texture background image and color
             var bgColor = deepQuery(seriesGroup, 'baseLayer.backgroundColor');
@@ -541,24 +591,8 @@ define(function (require) {
 
             if (this._mapDataMap[mapType]) {
                 this._updateMapPolygonShapes(data, this._mapDataMap[mapType], seriesGroup);
-                globeSurface.refresh();
-                focusOrZoomOnLoad();
             }
-            else if (mapParams[mapType].getGeoJson) {
-                // Load geo json and draw the map on the base texture
-                mapParams[mapType].getGeoJson(function (mapData) {
-                    if (self._disposed) {
-                        return;
-                    }
-                    self._mapDataMap[mapType] = mapData;
-                    self._updateMapPolygonShapes(data, mapData, seriesGroup);
-                    globeSurface.refresh();
-                    focusOrZoomOnLoad();
-                });
-            }
-            else {
-                globeSurface.refresh();
-            }
+            globeSurface.refresh();
 
             // Build surface layers
             if (this._surfaceLayerRoot) {
@@ -582,17 +616,12 @@ define(function (require) {
                 this.buildMark(sIdx, mapRootNode);
                 this._createSurfaceLayers(sIdx);
             }, this);
-
-            // Oribit control configuration
-            ['autoRotate', 'autoRotateAfterStill', 'maxZoom', 'minZoom'].forEach(function (propName) {
-                mouseControl[propName] = this.deepQuery(seriesGroup, 'roam.' + propName);
-            }, this);
         },
 
         /**
          * @param  {Array.<Object>} seriesGroup
          */
-        _updateBackground: function (seriesGroup) {
+        _updateSkydome: function (seriesGroup) {
             var background = this.deepQuery(seriesGroup, 'background');
             var self = this;
 
@@ -969,16 +998,17 @@ define(function (require) {
          * @param  {Array.<Object>} seriesGroup
          */
         _updateMapPolygonShapes: function (data, mapData, seriesGroup) {
+
             this._globeSurface.clearElements();
 
             var self = this;
             var dataRange = this.component.dataRange;
 
-            var scaleX = this._baseTextureSize / 360;
-            var scaleY = this._baseTextureSize / 180;
+            var bbox = this._getMapBBox(mapData);
 
             var mapType = this.deepQuery(seriesGroup, 'mapType');
             var nameMap = this._nameMap[mapType] || {};
+
             // Draw map
             // TODO Special area
             for (var i = 0; i < mapData.features.length; i++) {
@@ -1112,15 +1142,34 @@ define(function (require) {
                         }
                     });
                     for (var i = 0; i < coordinates[k].length; i++) {
-                        var point = formatGeoPoint(coordinates[k][i]);
-                        // Format point
-                        var x = (point[0] + 180) * scaleX;
-                        var y = (90 - point[1]) * scaleY;
-                        polygon.style.pointList.push([x, y]);
+                        var coords = self._normalizeGeoCoord(coordinates[k][i], bbox);
+                        coords[0] *= self._baseTextureSize;
+                        coords[1] *= self._baseTextureSize;
+                        polygon.style.pointList.push(coords);
                     }
                     bundleShape.style.shapeList.push(polygon);
                 }
             }
+        },
+
+        /**
+         * Normalize geo coord to [0, 1]
+         * @param  {Array.<number>} coords
+         * @param  {Object} bbox   {left, top, width, height}
+         * @private
+         */
+        _normalizeGeoCoord: function (coords, bbox) {
+            coords = formatGeoPoint(coords);
+            coords[0] = (coords[0] - bbox.left) / bbox.width;
+            coords[1] = (coords[1] - bbox.top) / bbox.height;
+
+            return coords;
+        },
+
+        _getMapBBox: function (mapData) {
+            return (this._mapRootNode.__isFlatMap && ! mapData.mapType.match('world'))
+                ? (mapData.bbox || normalProj.getBbox(mapData))
+                : { top: 0, left: -180 + 168.5, width: 360, height: 180};
         },
 
         /**
@@ -1394,18 +1443,20 @@ define(function (require) {
             ], 'distance');
             coords[0] = geoCoord.x == null ? geoCoord[0] : geoCoord.x;
             coords[1] = geoCoord.y == null ? geoCoord[1] : geoCoord.y;
-            coords = formatGeoPoint(coords);
-
-            var lon = coords[0];
-            var lat = coords[1];
 
             var r = this._earthRadius;
             if (isFlatMap) {
-                point._array[0] = lon / 180 * r * Math.PI;
-                point._array[1] = lat / 180 * r * Math.PI;
+                var bbox = this._getMapBBox(this._mapDataMap[serie.mapType]);
+                coords = this._normalizeGeoCoord(coords, bbox);
+
+                point._array[0] = (coords[0] - 0.5) * 2 * r * Math.PI;
+                point._array[1] = (0.5 - coords[1]) * r * Math.PI;
                 point._array[2] = distance;
             }
             else {
+                var lon = coords[0];
+                var lat = coords[1];
+
                 lon = PI * lon / 180;
                 lat = PI * lat / 180;
 
