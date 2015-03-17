@@ -27,6 +27,11 @@ define(function (require) {
          * @type {qtek.Renderable}
          */
         this._markBarRenderable = null;
+
+        this._albedoShader = new Shader({
+            vertex: Shader.source('ecx.albedo.vertex'),
+            fragment: Shader.source('ecx.albedo.fragment')  
+        });
     };
 
     MarkBar.prototype = {
@@ -35,10 +40,7 @@ define(function (require) {
 
         _createMarkBarRenderable: function () {
             var material = new Material({
-                shader: new Shader({
-                    vertex: Shader.source('ecx.albedo.vertex'),
-                    fragment: Shader.source('ecx.albedo.fragment')
-                })
+                shader: this._albedoShader
             });
             material.shader.define('both', 'VERTEX_COLOR');
             this._markBarRenderable = new Renderable({

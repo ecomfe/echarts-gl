@@ -195,8 +195,24 @@ define(function (require) {
         /**
          * Skydome mesh
          * @type {qtek.Mesh}
+         * @private
          */
         this._skydome = null;
+
+        /**
+         * @private
+         */
+        this._selectedShapeMap = {};
+        /**
+         * @private
+         */
+        this._selectedShapeList = [];
+
+        /**
+         * @type {boolean}
+         * @private
+         */
+        this._selectedMode = false;
 
         this.refresh(option);
     }
@@ -315,6 +331,10 @@ define(function (require) {
             else {
                 this._baseTextureSize = mapQuality;
             }
+
+            this._selectedShapeMap = {};
+            this._selectedShapeList = [];
+            this._selectedMode = this.deepQuery(seriesGroup, 'selectedMode');
 
             var isFlatMap = this.deepQuery(seriesGroup, 'flat');
             var mapRootNode = this._mapRootNode;
@@ -1067,6 +1087,11 @@ define(function (require) {
                         opacity: this.deepQuery(queryTarget, 'itemStyle.emphasis.opacity') 
                     }
                 });
+
+                if (dataItem.selected) {
+                    this._selectShape(shape);
+                }
+
                 ecData.pack(
                     shape,
                     {
@@ -1170,10 +1195,59 @@ define(function (require) {
             return coords;
         },
 
+        /**
+         * Get map bounding box, if mapType has keyword 'world'
+         * it will return bbox {0, 0, 360, 180}
+         * @param  {Object} mapData
+         * @return {Object} {top, left, width, height}
+         */
         _getMapBBox: function (mapData) {
             return (this._mapRootNode.__isFlatMap && ! mapData.mapType.match('world'))
                 ? (mapData.bbox || normalProj.getBbox(mapData))
                 : { top: 0, left: -180 + 168.5, width: 360, height: 180};
+        },
+
+        _selectShape: function (shape) {
+            if (shape.__selected) {
+                return;
+            }
+
+            this._selectedShapeMap[shape.name] = shape;
+            this._selectedShapeList.push(shape);
+
+            if (this._selectedMode === 'single') {
+                if (this._selectedShapeList.length > 1) {
+                    var previousShape = this._selectedShapeList.shift();
+                    this._unselectShape(previousShape);   
+                }
+            }
+
+            shape.__selected = true;
+
+            shape._style = shape.style;
+
+            shape.style = shape.highlightStyle;
+            shape.style.shapeList = shape._style.shapeList;
+            shape.style.brushType = shape._style.brushType;
+
+            shape.modSelf();
+        },
+
+        _unselectShape: function (shape) {
+            if (!shape.__selected) {
+                return;
+            }
+            delete this._selectedShapeMap[shape.name];
+            var idx = this._selectedShapeList.indexOf(shape);
+            if (idx >= 0) {
+                this._selectedShapeList.splice(idx, 1);
+            }
+
+            shape.__selected = false;
+
+            shape.style = shape._style;
+
+            shape.modSelf();
         },
 
         /**
@@ -1286,6 +1360,25 @@ define(function (require) {
 
                 var shape = this._globeSurface.hover(x, y);
                 if (shape) {
+                    if (e.type === zrConfig.EVENT.CLICK && this._selectedMode) {
+                        shape.__selected ? this._unselectShape(shape)
+                            : this._selectShape(shape);
+
+                        var selected = {};
+                        for (var name in this._selectedShapeMap) {
+                            selected[name] = true;
+                        }
+                        this.messageCenter.dispatch(
+                            ecConfig.EVENT.MAP3D_SELECTED,
+                            e.event,
+                            {
+                                selected : selected,
+                                target : shape.name
+                            },
+                            this.myChart
+                        );
+                    }
+
                     // Trigger a global zr event to tooltip
                     this.zr.handler.dispatch(e.type, {
                         target: shape,

@@ -24,7 +24,7 @@ mapParams.usa = {
             }
         });
     }
-}
+};
 
 myChart.setOption({
     title: {
@@ -38,7 +38,10 @@ myChart.setOption({
         name: 'Globe',
         type: 'map3d',
         mapType: 'world',
-        data: [{}],
+        data: [{
+            name: 'China',
+            selected: true
+        }],
         mapLocation: {
             x: 0,
             y: 0,
@@ -75,14 +78,20 @@ myChart.setOption({
 
 myChart.on(ecConfig.EVENT.CLICK, function (param) {
     var name = param.name;
+    var dataOpt = [{
+        name: name,
+        selected: true
+    }];
+    var roamOpt = {
+        focus: name
+    }
     if (name === 'China') {
         myChart.setOption({
             series: [{
                 name: 'Globe',
                 type: 'map3d',
-                roam: {
-                    focus: name
-                }
+                data: dataOpt,
+                roam: roamOpt
             }, {
                 name: 'Map',
                 type: 'map',
@@ -95,9 +104,8 @@ myChart.on(ecConfig.EVENT.CLICK, function (param) {
             series: [{
                 name: 'Globe',
                 type: 'map3d',
-                roam: {
-                    focus: name
-                }
+                data: dataOpt,
+                roam: roamOpt
             }, {
                 name: 'Map',
                 type: 'map',
@@ -110,9 +118,8 @@ myChart.on(ecConfig.EVENT.CLICK, function (param) {
             series: [{
                 name: 'Globe',
                 type: 'map3d',
-                roam: {
-                    focus: name
-                }
+                data: dataOpt,
+                roam: roamOpt
             }, {
                 name: 'Map',
                 type: 'map',

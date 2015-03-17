@@ -20,6 +20,10 @@ define({
 
         clickable: true,
 
+        // Map area selected mode, 'single' or 'multiple'
+        // Default is disabled
+        selectedMode: false,
+
         // Globe location, same as ECharts map
         mapLocation: {
             x: 0,
@@ -186,5 +190,9 @@ define({
                 }
             }
         }
+    },
+
+    EVENT: {
+        MAP3D_SELECTED: 'map3dSelected'
     }
 });
