@@ -258,6 +258,7 @@ define(function (require) {
                 this._animators[i].stop();
             }
             this._animators.length = 0;
+            this._animating = false;
         },
 
         /**
