@@ -50,6 +50,8 @@ $.ajax({
 
                 flat: true,
 
+                flatAngle: 10,
+
                 hoverable: false,
                 clickable: false,
 

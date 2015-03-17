@@ -350,6 +350,20 @@ define(function (require) {
                 this._createMapRootNode(seriesGroup);
             }
 
+            if (isFlatMap) {
+                // Rotate plane
+                var radian = this.deepQuery(seriesGroup, 'flatAngle') * Math.PI / 180;
+                radian = Math.max(Math.min(Math.PI / 2, radian), 0);
+                this._mapRootNode.rotation.identity().rotateX(-radian);
+
+                // Adjust the aspect of plane
+                var bbox = this._getMapBBox(this._mapDataMap[mapType]);
+                var aspect = bbox.height / bbox.width;
+
+                var earthMesh = this._mapRootNode.queryNode('earth');
+                earthMesh.scale.y = earthMesh.scale.x * aspect;
+            }
+
             this._initMapHandlers(seriesGroup);
 
             this._updateMapLayers(mapType, seriesData, seriesGroup);
@@ -470,10 +484,6 @@ define(function (require) {
             // Put the longitude 0 in the center of view
             if (! isFlatMap) {
                 mapRootNode.rotation.rotateY(-Math.PI / 2);
-            }
-            else {
-                // 45 degree angle view
-                mapRootNode.rotation.rotateX(-Math.PI / 4);
             }
 
             var earthMesh = new Mesh({
@@ -1531,7 +1541,9 @@ define(function (require) {
 
         // Overwrite getMarkCoord
         getMarkCoord: function (seriesIdx, data, point) {
-            var isFlatMap = this._mapRootNode.__isFlatMap;
+            var mapRootNode = this._mapRootNode;
+            var earthMesh = mapRootNode.queryNode('earth');
+            var isFlatMap = mapRootNode.__isFlatMap;
             var geoCoord = data.geoCoord || geoCoordMap[data.name];
             var coords = [];
             var serie = this.series[seriesIdx];
@@ -1546,8 +1558,8 @@ define(function (require) {
                 var bbox = this._getMapBBox(this._mapDataMap[serie.mapType]);
                 coords = this._normalizeGeoCoord(coords, bbox);
 
-                point._array[0] = (coords[0] - 0.5) * 2 * r * Math.PI;
-                point._array[1] = (0.5 - coords[1]) * r * Math.PI;
+                point._array[0] = (coords[0] - 0.5) * earthMesh.scale.x * 2;
+                point._array[1] = (0.5 - coords[1]) * earthMesh.scale.y * 2;
                 point._array[2] = distance;
             }
             else {

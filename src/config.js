@@ -16,6 +16,10 @@ define({
         // If change from a globe to a flat map
         flat: false,
 
+        // Angle of plane when when flat is true.
+        // Values ranges from 0 to 90.
+        flatAngle: 30,
+
         hoverable: true,
 
         clickable: true,
