@@ -269,6 +269,7 @@ define(function (require) {
             var dataMap = this._mergeSeriesData(series);
 
             var mapDataLoading = 0;
+            var noAsyncData = true;
             function loadMapData(mapType) {
                 // Load geo json and draw the map on the base texture
                 mapParams[mapType].getGeoJson(function (mapData) {
@@ -282,18 +283,17 @@ define(function (require) {
                 });
             }
             for (var mapType in dataMap) {
-                if (this._mapDataMap[mapType]) {
-                    continue;
-                }
-                else if (mapParams[mapType].getGeoJson) {
+                if (! this._mapDataMap[mapType]
+                    && mapParams[mapType].getGeoJson) {
                     mapDataLoading++;
+                    noAsyncData = false;
                     loadMapData(mapType);
                 }
                 // TODO Only support one mapType here
                 break;
             }
-            if (! mapDataLoading) {
-                setTimeout(afterMapDataLoad);
+            if (noAsyncData) {
+                afterMapDataLoad();
             }
 
             function afterMapDataLoad() {
