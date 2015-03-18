@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ECharts-X">
     <meta name="author" content="shenyi.914@gmail.com">
-    <title>Earth with sun light example - Powered by ECharts-X</title>
+    <title>Earth with sun light and universe - Powered by ECharts-X</title>
 
     <link rel="shortcut icon" href="img/favicon.png">
 
@@ -46,6 +46,8 @@
 myChart.setOption({
     title: {
         text: 'Earth with sun light example',
+        subtext: 'Environment texture from Natural Earth III',
+        sublink: 'http://www.shadedrelief.com/natural3/pages/textures.html',
         x: 'center',
         textStyle: {
             color: 'white'
@@ -57,6 +59,11 @@ myChart.setOption({
     series: [{
         type: 'map3d',
         mapType: 'world',
+
+        background: 'asset/starfield.jpg',
+        // Have a try to change an environment
+        // background: 'asset/background.jpg',
+
         baseLayer: {
             backgroundColor: '',
             backgroundImage: 'asset/earth.jpg',
@@ -66,10 +73,10 @@ myChart.setOption({
         },
 
         light: {
-            enable: true,
+            show: true,
             // Use the system time
             // time: '2013-08-07 18:09:09',
-            sunIntensity: 1.5
+            sunIntensity: 1
         },
 
         itemStyle: {

@@ -150,7 +150,7 @@ if (document.location.href.indexOf('local') == -1) {
             var $currentNav = $('#nav>ul>li.current');
 
             var $currentNavSub = $('<ul></ul>').appendTo($currentNav);
-            $('#article h2, #article h3').each(function (idx, $el) {
+            $('#article h2, #article h3, #article h4').each(function (idx, $el) {
                 var padding = 0;
                 switch ($el.tagName.toLowerCase()) {
                     case 'h2':

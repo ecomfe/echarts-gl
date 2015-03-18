@@ -62,7 +62,7 @@
             </nav>
             <article id="article">
                 <h1>Map 3D</h1>
-                <p><code>map3d</code>类型提供了对全球数据的可视化，支持 ECharts 中<code>map</code>原有配置项的同时也加入了大量新的配置项。如果你之前使用过 ECharts 的<code>map</code>组件的话对下面的示例肯定不会陌生。</p>
+                <p><code>map3d</code>类型提供了3D地图的可视化，支持 ECharts 中<code>map</code>原有配置项的同时也加入了大量新的配置项。如果你之前使用过 ECharts 的<code>map</code>组件的话对下面的示例肯定不会陌生。</p>
 <h2 id="simple-example">Simple Example</h2>
 <pre><code class="lang-javascript">var option = {
     title: {
@@ -115,8 +115,27 @@
 }
 </code></pre>
 <p>同 ECharts 中 map 的 mapLocation，指定地球在视图中的位置。可以是绝对的像素坐标，也可以表示相对的百分比。</p>
-<h3 id="autorotate">autoRotate</h3>
-<p>地球是否在打开的时候自动旋。</p>
+<h3 id="background">background</h3>
+<p>环境贴图，图片需要是一张全景图。示例 <a href="../../example/map3d_sun.html" target="_blank">map3d_sun</a>中就使用了下图作为星空背景。</p>
+<p><img src="../../example/asset/starfield.jpg" width="700px" alt=""></p>
+<h3 id="flat">flat</h3>
+<pre><code class="lang-javascript">flat: false
+</code></pre>
+<p>是否使用平面地图。</p>
+<h3 id="flatangle">flatAngle</h3>
+<pre><code class="lang-javascript">flatAngle: 30
+</code></pre>
+<p>当开启平面地图模式的时候，该选项可以用来配置地图平面与屏幕平面的夹角。</p>
+<h3 id="hoverable">hoverable</h3>
+<pre><code class="lang-javascript">hoverable: false
+</code></pre>
+<h3 id="clickable">clickable</h3>
+<pre><code class="lang-javascript">clickable: false
+</code></pre>
+<h3 id="selectedmode">selectedMode</h3>
+<pre><code class="lang-javascript">selectedMode: false
+</code></pre>
+<p>区域选择模式，可以是多选<code>&#39;mutiple&#39;</code>，单选<code>&#39;single&#39;</code>，默认关闭</p>
 <h3 id="baselayer">baseLayer</h3>
 <p>底层基本地图的绘制配置。</p>
 <h4 id="backgroundcolor">backgroundColor</h4>
@@ -127,7 +146,7 @@
 <pre><code class="lang-javascript">backgroundImage: &#39;none&#39;
 </code></pre>
 <p>底图背景图片，覆盖在地图背景色上，可以是Image url，Image dom 或者 Canvas dom。</p>
-<p><strong>注意</strong>：WebGL 是不允许图片跨域加载的，所以如果是跨域的图片可能会报<code>tainted canvases may not be loaded</code>的错误。</p>
+<p><strong>注意</strong>：WebGL 是不允许图片跨域加载的，所以如果是跨域的图片可能会报 <code>tainted canvases may not be loaded</code> 的错误。</p>
 <h4 id="quality">quality</h4>
 <pre><code class="lang-javascript">quality: &#39;medium&#39;
 </code></pre>
@@ -136,6 +155,26 @@
 <p><code>&#39;medium&#39;</code>(2048 x 2048)</p>
 <p><code>&#39;low&#39;</code>(1024 x 1024)</p>
 <p>也可以直接配置数值分辨率比如<code>512</code>。</p>
+<h4 id="heightimage">heightImage</h4>
+<p>地表高度图，在启用光照后用来表现地表高度不同所产生的阴影。下面两张图分别是美国区域使用和未使用高度图。</p>
+<p><img src="../../img/article/heightmap_enable.png" alt="" />
+<img src="../../img/article/heightmap_disable.png" alt="" /></p>
+<h3 id="light">light</h3>
+<p>光照配置</p>
+<h4 id="show">show</h4>
+<pre><code class="lang-javascript">show: false
+</code></pre>
+<p>是否展现光照。</p>
+<h4 id="time">time</h4>
+<p>设置时间，用来计算日照的位置和角度。默认使用系统时间。</p>
+<h4 id="sunintensity">sunIntensity</h4>
+<pre><code class="lang-javascript">sunIntensity: 1
+</code></pre>
+<p>日照强度, ECharts-X 使用 <a href="http://en.wikipedia.org/wiki/Lambertian_reflectance" target="_blank">lambert shading </a>表现日照产生的明暗面。</p>
+<h4 id="ambientintensity">ambientIntensity</h4>
+<pre><code class="lang-javascript">ambientIntensity: 0.1
+</code></pre>
+<p>环境光照强度，有时候为了更清楚的展现地球暗面的信息，需要把这个值调高。</p>
 <h3 id="surfacelayers">surfaceLayers</h3>
 <p>除了基于 ECharts map 的底层基本地图，map3d 可以分层绘制其它数据，比如风场的可视化。对于每一层有如下配置项:</p>
 <h4 id="name">name</h4>
@@ -209,6 +248,36 @@
 </figure>
 
 <p>具体的示例可以参见<a href="../../example/map3d_wind.html">风场的可视化示例</a></p>
+<h3 id="roam">roam</h3>
+<p>鼠标漫游配置</p>
+<h4 id="autorotate">autoRotate</h4>
+<pre><code class="lang-javascript">autoRotate: true
+</code></pre>
+<p>地球是否开启自动旋转，<code>flat: false</code>时有效。默认开启。</p>
+<h4 id="autorotateafterstill">autoRotateAfterStill</h4>
+<pre><code class="lang-javascript">autoRotate: 3
+</code></pre>
+<p>在鼠标未操作地球一段时间后会开启自动旋转，<code>autoRotate: true</code>时有效。默认为<code>3s</code>。</p>
+<h4 id="focus">focus</h4>
+<p>初始化镜头聚焦的区域名称，比如需要停留到中国上空时，可以配置为 <code>focus: &#39;China&#39;</code>。</p>
+<h4 id="zoom">zoom</h4>
+<pre><code class="lang-javascript">zoom: 1
+</code></pre>
+<p>初始化的缩放大小。</p>
+<h4 id="minzoom">minZoom</h4>
+<pre><code class="lang-javascript">minZoom: 0.5
+</code></pre>
+<p>最小缩放值</p>
+<h4 id="maxzoom">maxZoom</h4>
+<pre><code class="lang-javascript">maxZoom: 1.5
+</code></pre>
+<p>最大缩放值</p>
+<h4 id="preserve">preserve</h4>
+<pre><code class="lang-javascript">preserve: true
+</code></pre>
+<p>是否在每次 setOption 后保留之前的鼠标操作状态。</p>
+<h2 id="-">事件</h2>
+<h3 id="map3d_selected">MAP3D_SELECTED</h3>
 <!-- ##Map 3D 中的分层 -->
 
             </article>
@@ -257,7 +326,7 @@ if (document.location.href.indexOf('local') == -1) {
             var $currentNav = $('#nav>ul>li.current');
 
             var $currentNavSub = $('<ul></ul>').appendTo($currentNav);
-            $('#article h2, #article h3').each(function (idx, $el) {
+            $('#article h2, #article h3, #article h4').each(function (idx, $el) {
                 var padding = 0;
                 switch ($el.tagName.toLowerCase()) {
                     case 'h2':

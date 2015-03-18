@@ -715,7 +715,7 @@ define(function (require) {
 
             var deepQuery = this.deepQuery;
 
-            var enableLight = deepQuery(seriesGroup, 'light.enable');
+            var enableLight = deepQuery(seriesGroup, 'light.show');
             if (enableLight) {
                 var lambertDiffShader = this._lambertDiffShader;
                 if (earthMaterial.shader !== lambertDiffShader) {

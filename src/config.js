@@ -58,7 +58,7 @@ define({
         light: {
             // If enable light in lambert shading
             // Default is false and only has albedo color
-            enable: false,
+            show: false,
             sunIntensity: 1,
             ambientIntensity: 0.1,
             // Time, default it will use system time

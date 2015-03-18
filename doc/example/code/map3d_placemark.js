@@ -53,7 +53,7 @@ myChart.setOption({
                         formatter: '{b}',
                         // position: 'right',
                         textStyle: {
-                            fontSize: 12,
+                            fontSize: 24,
                             color: 'white'
                         }
                     }

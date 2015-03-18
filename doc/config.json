@@ -17,6 +17,10 @@
         "title": "Jupiter"
     }, {
         "type": "map3d",
+        "name": "map3d_sun",
+        "title": "Earth with sun light and universe"
+    }, {
+        "type": "map3d",
         "name": "map3d_population1",
         "title": "World Population"
     }, {
@@ -43,10 +47,6 @@
         "type": "map3d",
         "name": "map3d_placemark",
         "title": "The 25 Most Popular Tourist Attractions In The World"
-    }, {
-        "type": "map3d",
-        "name": "map3d_sun",
-        "title": "Earth with sun light example"
     }, {
         "type": "map3d",
         "name": "map3d_weibo",

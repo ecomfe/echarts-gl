@@ -35,10 +35,10 @@
 define(function (require) {
     
     var ecx = {
-        version: '0.1.0',
+        version: '0.2.0',
         dependencies: {
-            echarts: '2.2.0',
-            zrender: '2.0.7'
+            echarts: '2.2.1',
+            zrender: '2.0.8'
         }
     };
 
@@ -56,7 +56,6 @@ define(function (require) {
     }
     checkVersion(require('echarts'), 'echarts');
     checkVersion(require('zrender'), 'zrender');
-
 
     var ecConfig = require('echarts/config');
     var ecxConfig = require('./config');

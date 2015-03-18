@@ -1,6 +1,8 @@
 myChart.setOption({
     title: {
         text: 'Earth with sun light example',
+        subtext: 'Environment texture from Natural Earth III',
+        sublink: 'http://www.shadedrelief.com/natural3/pages/textures.html',
         x: 'center',
         textStyle: {
             color: 'white'
@@ -12,6 +14,11 @@ myChart.setOption({
     series: [{
         type: 'map3d',
         mapType: 'world',
+
+        background: 'asset/starfield.jpg',
+        // Have a try to change an environment
+        // background: 'asset/background.jpg',
+
         baseLayer: {
             backgroundColor: '',
             backgroundImage: 'asset/earth.jpg',
@@ -21,10 +28,10 @@ myChart.setOption({
         },
 
         light: {
-            enable: true,
+            show: true,
             // Use the system time
             // time: '2013-08-07 18:09:09',
-            sunIntensity: 1.5
+            sunIntensity: 1
         },
 
         itemStyle: {

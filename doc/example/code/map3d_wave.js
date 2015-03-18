@@ -1,3 +1,4 @@
+
 $.ajax({
     url: './data/wave.json',
     success: function (data) {
@@ -42,12 +43,14 @@ $.ajax({
                     heightImage: 'asset/elev_bump.jpg'
                 },
 
+                flat: true,
+
                 light: {
-                    enable: true,
+                    show: true,
                     // Use the system time
                     time: '',
-                    sunIntensity: 0.6,
-                    ambientIntensity: 0.7
+                    sunIntensity: 0.8,
+                    ambientIntensity: 0.2
                 },
 
                 itemStyle: {
@@ -59,7 +62,12 @@ $.ajax({
                         }
                     }
                 },
-                data: [{}]
+                data: [{}],
+
+                roam: {
+                    zoom: 2,
+                    maxZoom: 4
+                }
             }, {
                 name: 'wave',
                 type: 'map3d',
@@ -72,7 +80,7 @@ $.ajax({
                         vectorField: field,
                         color: 'white',
                         speedScaling: 0.2,
-                        sizeScaling: 0.5,
+                        sizeScaling: 0.3,
                         number: 512 * 512,
                         motionBlurFactor: 0.99
                     }
