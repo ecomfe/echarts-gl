@@ -53,7 +53,7 @@ define(function (require) {
                 autoRotate = val;
                 this._rotating = autoRotate;
             }
-        })
+        });
 
         /**
          * Minimum zoom rate
@@ -143,7 +143,7 @@ define(function (require) {
          * @return {number}
          */
         getZoom: function () {
-            return this._zoom
+            return this._zoom;
         },
 
         /**
@@ -352,7 +352,6 @@ define(function (require) {
             var zoom = this._zoom;
 
             var camera = this.layer.camera;
-            var z = camera.worldTransform.z.normalize();
 
             // FIXME Assume origin is ZERO
             var len = this._cameraStartPos.len() * zoom;
@@ -370,7 +369,7 @@ define(function (require) {
             // PENDING
             target.position
                 .scaleAndAdd(xAxis, velocity.x * len / 400)
-                .scaleAndAdd(yAxis, velocity.y * len / 400)
+                .scaleAndAdd(yAxis, velocity.y * len / 400);
 
             // Pan damping
             this._vectorDamping(velocity, 0.8);

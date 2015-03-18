@@ -38,7 +38,8 @@ define(function (require) {
         version: '0.2.0',
         dependencies: {
             echarts: '2.2.1',
-            zrender: '2.0.8'
+            zrender: '2.0.8',
+            qtek: '0.2.1'
         }
     };
 
@@ -53,9 +54,11 @@ define(function (require) {
         if ((mod.version.replace('.', '') - 0) < (deps[name].replace('.', '') - 0)) {
             versionTooOldMsg(name);
         }
+        console.log('Loaded ' + name + ', version ' + mod.version);
     }
-    checkVersion(require('echarts'), 'echarts');
     checkVersion(require('zrender'), 'zrender');
+    checkVersion(require('qtek'), 'qtek');
+    checkVersion(require('echarts'), 'echarts');
 
     var ecConfig = require('echarts/config');
     var ecxConfig = require('./config');

@@ -28,8 +28,6 @@ define(function (require) {
             rect.height += margin * 2;
             var scaleX = size / rect.width;
             var scaleY = size / rect.height;
-            var x = rect.x;
-            var y = rect.y;
             shape.position = [-rect.x * scaleX, -rect.y * scaleY];
             shape.scale = [scaleX, scaleY];
             shape.updateTransform();

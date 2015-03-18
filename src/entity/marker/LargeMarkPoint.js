@@ -153,7 +153,7 @@ define(function (require) {
             var markPoint = serie.markPoint;
             var zr = chart.zr;
 
-            var symbol = chart.query(markPoint, 'symbol')
+            var symbol = chart.query(markPoint, 'symbol');
             var showMarkPointEffect = chart.query(markPoint, 'effect.show');
             // Shadow blur scale from 0 - 1
             var shadowBlur = chart.query(markPoint, 'effect.shadowBlur') || 0;
@@ -191,7 +191,7 @@ define(function (require) {
                 serieColor = legend.getColor(serie.name);
             }
             serieColor = chart.query(markPoint, 'itemStyle.normal.color') || serieColor;
-            var serieDefaultColor = chart.zr.getColor(seriesIndex);
+            var serieDefaultColor = zr.getColor(seriesIndex);
 
             var globalSize = chart.query(markPoint, 'symbolSize') || 2;
 

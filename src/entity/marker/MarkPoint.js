@@ -13,12 +13,10 @@ define(function (require) {
     var Material = require('qtek/Material');
     var Shader = require('qtek/Shader');
     var Node = require('qtek/Node');
-    var Texture2D = require('qtek/Texture2D');
     var Texture = require('qtek/Texture');
 
     var TextureAtlasSurface = require('../../surface/TextureAtlasSurface');
     var SpritesGeometry = require('../../util/geometry/Sprites');
-    var spriteUtil = require('../../util/sprite');
 
     var IconShape = require('echarts/util/shape/Icon');
     var ImageShape = require('zrender/shape/Image');
@@ -47,7 +45,7 @@ define(function (require) {
         this._textureAtlasList = [];
 
         this._spriteSize = 128;
-    }
+    };
 
     MarkPoint.prototype = {
 
@@ -75,7 +73,7 @@ define(function (require) {
                 serieColor = legend.getColor(serie.name);
             }
             serieColor = chart.query(serie.markBar, 'itemStyle.normal.color') || serieColor;
-            var serieDefaultColor = chart.zr.getColor(seriesIndex);
+            var serieDefaultColor = zr.getColor(seriesIndex);
 
             var matrix = new Matrix4();
             var atlasSize = Texture.prototype.nextHighestPowerOfTwo(
@@ -144,7 +142,7 @@ define(function (require) {
                 ecData.pack(
                     shape, serie, seriesIndex,
                     dataItem, i, dataItem.name, value
-                )
+                );
 
                 var labelQueryPrefix = 'itemStyle.normal.label';
                 if (chart.deepQuery(

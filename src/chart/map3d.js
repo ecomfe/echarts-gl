@@ -18,7 +18,6 @@ define(function (require) {
     var PolygonShape = require('zrender/shape/Polygon');
     var ShapeBundle = require('zrender/shape/ShapeBundle');
     var TextShape = require('zrender/shape/Text');
-    var eventTool = require('zrender/tool/event');
 
     var Node = require('qtek/Node');
     var Mesh = require('qtek/Mesh');
@@ -28,13 +27,11 @@ define(function (require) {
     var Shader = require('qtek/Shader');
     var Texture2D = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
-    var Vector2 = require('qtek/math/Vector2');
     var Matrix4 = require('qtek/math/Matrix4');
     var Plane = require('qtek/math/Plane');
     var Quaternion = require('qtek/math/Quaternion');
     var DirectionalLight = require('qtek/light/Directional');
     var AmbientLight = require('qtek/light/Ambient');
-    var Ray = require('qtek/math/Ray');
     var RayPicking = require('qtek/picking/RayPicking');
 
     var ecConfig = require('../config');
@@ -471,7 +468,6 @@ define(function (require) {
          */
         _createMapRootNode: function (seriesGroup) {
             var zr = this.zr;
-            var self = this;
             var isFlatMap = this.deepQuery(seriesGroup, 'flat');
             var camera = this.baseLayer.camera;
 
@@ -580,7 +576,6 @@ define(function (require) {
 
             var self = this;
             var mapRootNode = this._mapRootNode;
-            var mouseControl = mapRootNode.__control;
             var globeSurface = this._globeSurface;
 
             var deepQuery = this.deepQuery;
@@ -857,7 +852,6 @@ define(function (require) {
                 depthMask: false
             });
 
-            var serie = this.series[seriesIdx];
             var image = surfaceLayerCfg.image;
 
             var canvas = document.createElement('canvas');
@@ -898,8 +892,6 @@ define(function (require) {
         _createParticleSurfaceLayer: function (
             seriesIdx, surfaceLayerCfg, surfaceMesh
         ) {
-            var self = this;
-            var serie = this.series[seriesIdx];
             var data = this.query(surfaceLayerCfg, 'particle.vectorField');
             // var name = surfaceLayerCfg.name || serie.name;
 
@@ -1545,7 +1537,6 @@ define(function (require) {
                 var rotation = new Quaternion().setAxes(
                     normal.negate(), bitangent, tangent
                 ).invert();
-                var self = this;
 
                 this._mapRootNode.__control.rotateTo({
                     rotation: rotation,
@@ -1646,7 +1637,7 @@ define(function (require) {
                     matrix, matrix, new Vector3(
                         symbolSize[0], symbolSize[1], 1
                     )
-                )
+                );
 
                 // Set the position
                 var arr = matrix._array;
@@ -1747,7 +1738,7 @@ define(function (require) {
                         scaleAndAdd(p2, p3, p2, len);
                     }
                 }
-            }
+            };
         })(),
 
         // Overwrite onframe
@@ -1812,7 +1803,7 @@ define(function (require) {
                 this._vfParticleSurfaceList[i].dispose();
             }
         }
-    }
+    };
 
     zrUtil.inherits(Map3D, ChartBase3D);
 

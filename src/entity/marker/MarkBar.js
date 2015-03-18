@@ -76,7 +76,6 @@ define(function (require) {
 
             var start = new Vector3();
             var end = new Vector3();
-            var normal = new Vector3();
 
             var globalBarSize = serie.markBar.barSize;
             for (var i = 0; i < dataList.length; i++) {
@@ -109,10 +108,10 @@ define(function (require) {
                 }
 
                 chart.getMarkBarPoints(seriesIndex, dataItem, start, end);
-                this._markBarRenderable.geometry.addBar(start, end, barSize, colorArr);
+                geometry.addBar(start, end, barSize, colorArr);
             }
 
-            this._markBarRenderable.geometry.dirty();
+            geometry.dirty();
         },
 
         // Implement getSceneNode

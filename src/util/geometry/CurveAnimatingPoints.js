@@ -29,7 +29,7 @@ define(function (require) {
                 color: new Attribute('color', 'float', 4, 'COLOR', true)
             },
             mainAttribute: 'p0'
-        }
+        };
     },
     /** @lends module:echarts-x/util/geometry/CurveAnimatingPoints.prototype */
     {

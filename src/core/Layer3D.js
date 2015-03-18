@@ -10,7 +10,6 @@ define(function (require) {
     var Renderer = require('qtek/Renderer');
     var Scene = require('qtek/Scene');
     var PerspectiveCamera = require('qtek/camera/Perspective');
-    var OrthoCamera = require('qtek/camera/Orthographic');
     var RayPicking = require('qtek/picking/RayPicking');
 
     var Eventful = require('zrender/mixin/Eventful');
@@ -46,7 +45,7 @@ define(function (require) {
             this.renderer = null;
             this.dom = document.createElement('div');
             this.dom.style.cssText = 'position:absolute; left: 0; top: 0; right: 0; bottom: 0;';
-            this.dom.className = 'ecx-nowebgl'
+            this.dom.className = 'ecx-nowebgl';
             this.dom.innerHTML = 'Sorry, your browser does support WebGL';
 
             return;
@@ -85,7 +84,7 @@ define(function (require) {
         };
 
         this._initHandlers();
-    }
+    };
 
     /**
      * Register event handling functions

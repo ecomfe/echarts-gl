@@ -22,7 +22,7 @@ define(function (require) {
                 size: new Geometry.Attribute('size', 'float', 1, '', true),
                 color: new Geometry.Attribute('color', 'float', 4, 'COLOR', true)
             }
-        }
+        };
     },
     /** @lends module:echarts-x/util/geometry/Points.prototype */
     {

@@ -6,7 +6,6 @@
 
 define(function (require) {
 
-    var Texture2D = require('qtek/Texture2D');
     var ZRenderSurface = require('./ZRenderSurface');
     var area = require('zrender/tool/area');
     /**
@@ -237,8 +236,6 @@ define(function (require) {
 
             var scaleX = spriteWidth / rect.width;
             var scaleY = spriteHeight / rect.height;
-            var x = rect.x;
-            var y = rect.y;
             shape.position = [-rect.x * scaleX, -rect.y * scaleY];
             shape.scale = [scaleX, scaleY];
             shape.updateTransform();
@@ -260,7 +257,7 @@ define(function (require) {
         getImageCoords: function (id) {
             return this._coords[id];
         }
-    }
+    };
 
     return TextureAtlasSurface;
 });

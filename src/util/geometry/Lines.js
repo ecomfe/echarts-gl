@@ -8,7 +8,6 @@ define(function (require) {
     
     var DynamicGeometry = require('qtek/DynamicGeometry');
     var Geometry = require('qtek/Geometry');
-    var Vector3 = require('qtek/math/Vector3');
     var vec3 = require('qtek/dep/glmatrix').vec3;
 
     // var CURVE_RECURSION_LIMIT = 8;
@@ -180,7 +179,7 @@ define(function (require) {
         //         );
         //     }
         // }
-    })
+    });
 
     return LinesGeometry;
 });

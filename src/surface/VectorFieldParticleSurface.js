@@ -127,7 +127,7 @@ define(function (require) {
                 wrapS: glenum.REPEAT,
                 wrapT: glenum.REPEAT,
                 useMipmap: false
-            }
+            };
             this._spawnTexture = new Texture2D(parameters);
             this._spawnTexture.pixels = spawnTextureData;
 
@@ -213,7 +213,7 @@ define(function (require) {
             this._swapTexture();
 
             if (this.surfaceMesh) {
-                this.surfaceMesh.material.set('diffuseMap', this.surfaceTexture)
+                this.surfaceMesh.material.set('diffuseMap', this.surfaceTexture);
             }
 
             this._elapsedTime += deltaTime;
@@ -242,7 +242,7 @@ define(function (require) {
 
             renderer.disposeScene(this._scene);
         }
-    }
+    };
 
     return VectorFieldParticleSurface;
 });

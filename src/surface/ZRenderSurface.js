@@ -44,7 +44,7 @@ define(function (require) {
         });
 
         this.refreshNextTick = this.refreshNextTick.bind(this);
-    }
+    };
 
     ZRenderSurface.prototype = {
 
@@ -167,7 +167,7 @@ define(function (require) {
                 timeout = setTimeout(function () {
                     self.refresh();
                 }, 16);
-            }
+            };
         })(),
 
         /**
@@ -276,7 +276,7 @@ define(function (require) {
                 var y = uv.y * this._height;
 
                 return this.pickByCoord(x, y, list);
-            }
+            };
         })(),
 
         pickByCoord: function (x, y, list) {

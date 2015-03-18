@@ -14,7 +14,6 @@ define(function (require) {
     var Node = require('qtek/Node');
     var LinesGeometry = require('../../util/geometry/Lines');
     var CurveAnimatingPointsGeometry = require('../../util/geometry/CurveAnimatingPoints');
-    var Texture2D = require('qtek/Texture2D');
     var Vector3 = require('qtek/math/Vector3');
 
     /**
@@ -125,7 +124,7 @@ define(function (require) {
                 serieColor = legend.getColor(serie.name);
             }
             serieColor = chart.query(markLine, 'itemStyle.normal.color');
-            var serieDefaultColor = chart.zr.getColor(seriesIndex);
+            var serieDefaultColor = zr.getColor(seriesIndex);
 
             var dataList = markLine.data;
 

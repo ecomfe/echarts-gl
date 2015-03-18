@@ -7,8 +7,6 @@
 define(function (require) {
 
     var DynamicGeometry = require('qtek/DynamicGeometry');
-    var Matrix4 = require('qtek/math/Matrix4');
-    var Vector3 = require('qtek/math/Vector3');
     var vec3 = require('qtek/dep/glmatrix').vec3;
     var vec2 = require('qtek/dep/glmatrix').vec2;
     var fromValues = vec3.fromValues;
@@ -21,10 +19,6 @@ define(function (require) {
             fromValues(-w, h, 0)
         ];
     }
-
-    var squareTexcoords = [
-        [0, 0], [1, 0], [1, 1], [0, 1]
-    ];
 
     var squareFaces = [
         [0, 1, 2], [0, 2, 3]

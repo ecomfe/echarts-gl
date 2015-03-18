@@ -8,8 +8,6 @@
 define(function (require) {
 
     var DynamicGeometry = require('qtek/DynamicGeometry');
-    var Geometry = require('qtek/Geometry');
-    var CubeGeometry = require('qtek/geometry/Cube');
     var Matrix4 = require('qtek/math/Matrix4');
     var Vector3 = require('qtek/math/Vector3');
 
@@ -42,7 +40,7 @@ define(function (require) {
         return {
             _barMat: new Matrix4(),
             _barScaleVec: new Vector3()
-        }
+        };
     },
     /** @lends module:echarts-x/util/geometry/Bars.prototype */
     {
@@ -63,7 +61,6 @@ define(function (require) {
          * @param {Array.<number>} color
          */
         addBar: function (start, end, size, color) {
-            var cubeGeo = this._cubeGeometry;
             var barMat = this._barMat;
             var scaleVec = this._barScaleVec;
             var height = Vector3.dist(start, end);

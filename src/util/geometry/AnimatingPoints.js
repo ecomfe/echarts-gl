@@ -21,9 +21,9 @@ define(function (require) {
                 position: new Geometry.Attribute('position', 'float', 3, 'POSITION', true),
                 size: new Geometry.Attribute('size', 'float', 1, '', true),
                 delay: new Geometry.Attribute('delay', 'float', 1, '',true),
-                color: new Geometry.Attribute('color', 'float', 4, 'COLOR', true),
+                color: new Geometry.Attribute('color', 'float', 4, 'COLOR', true)
             }
-        }
+        };
     },
     /** @lends module:echarts-x/util/geometry/AnimatingPoints.prototype */
     {
@@ -44,7 +44,8 @@ define(function (require) {
          * @param {qtek.math.Vector3} position Point position
          * @param {Array.<number>} color Point color
          * @param {number} size Point size
-         * @param {number} delayTime Each point has a different animation delay time to produce a random animation effect
+         * @param {number} delayTime Each point has a different animation
+         *  delay time to produce a random animation effect
          */
         addPoint: function (position, color, size, delayTime) {
             var attributes = this.attributes;
