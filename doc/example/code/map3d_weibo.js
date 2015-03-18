@@ -61,6 +61,13 @@ $.ajax({
 
                 itemStyle: {
                     normal: {
+                        label: {
+                            show: true,
+                            textStyle: {
+                                color: 'white',
+                                fontSize: 16
+                            }
+                        },
                         borderColor: '#777',
                         areaStyle: {
                             color: "#000011"

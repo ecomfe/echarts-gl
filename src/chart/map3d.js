@@ -1040,6 +1040,8 @@ define(function (require) {
 
             var bbox = this._getMapBBox(mapData);
 
+            var isFlatMap = this._mapRootNode.__isFlatMap;
+
             var mapType = this.deepQuery(seriesGroup, 'mapType');
             var nameMap = this._nameMap[mapType] || {};
 
@@ -1125,15 +1127,19 @@ define(function (require) {
                 this._globeSurface.addElement(shape);
 
                 // Create label text shape
-                var cp = this._getTextPosition(shape);
+                var cp = this._getTextPosition(shape, bbox);
                 // Scale text by the latitude, text of high latitude will be pinched
-                var lat = (0.5 - cp[1] / this._baseTextureSize) * PI;
-                var textScaleX = 1 / cos(lat);
-                var baseScale = this._baseTextureSize / 2048;
+                var textScaleX = 1;
+                if (! isFlatMap) {
+                    var lat = (0.5 - cp[1] / this._baseTextureSize) * PI;
+                    var textScaleX = 0.5 / cos(lat);   
+                }
+                var baseScale = this._baseTextureSize / 2048 
+                    * Math.sqrt(Math.min(360 / bbox.width, 180 / bbox.height));
                 var textShape = new TextShape({
                     zlevel: 1,
                     position: cp,
-                    scale: [0.5 * textScaleX * baseScale, baseScale],
+                    scale: [textScaleX * baseScale, baseScale],
                     style: {
                         x: 0,
                         y: 0,
@@ -1262,26 +1268,25 @@ define(function (require) {
 
         /**
          * Get label position of each polygon.
-         * @param  {module:zrender/shape/Polygon} polygonShape
+         * @param {module:zrender/shape/Polygon} polygonShape
+         * @param {Object} bbox
          * @return {Array.<number>}
          * @private
          */
-        _getTextPosition: function (polygonShape) {
+        _getTextPosition: function (polygonShape, bbox) {
             var textPosition;
             var name = polygonShape.name;
             var textFixed = textFixedMap[name] || [0, 0];
             var size = this._baseTextureSize;
             if (geoCoordMap[name]) {
-                textPosition = [
-                    (geoCoordMap[name][0] + 180)  / 360 * size,
-                    (90 - geoCoordMap[name][1]) / 180 * size
-                ];
+                textPosition = this._normalizeGeoCoord(geoCoordMap[name], bbox);
+                textPosition[0] *= size;
+                textPosition[1] *= size;
             }
             else if (polygonShape.cp) {
-                textPosition = [
-                    (polygonShape.cp[0] + textFixed[0] + 180) / 360 * size,
-                    (90 - (polygonShape.cp[1] + textFixed[1])) / 180 * size
-                ];
+                textPosition = this._normalizeGeoCoord(polygonShape.cp, bbox);
+                textPosition[0] *= size;
+                textPosition[1] *= size;
             }
             else {
                 var bbox = polygonShape.getRect(polygonShape.style);

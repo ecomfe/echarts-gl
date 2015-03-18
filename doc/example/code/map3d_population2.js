@@ -43,6 +43,8 @@ $.ajax({
                 baseLayer: {
                     backgroundColor: '#005f99'
                 },
+                
+                hoverable: false,
 
                 itemStyle: {
                     normal: {

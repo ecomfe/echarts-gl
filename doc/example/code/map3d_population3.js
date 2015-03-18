@@ -42,6 +42,7 @@ $.ajax({
                     backgroundColor: 'rgba(0, 150, 200, 0.5)'
                 },
                 data: [{}],
+                hoverable: false,
                 itemStyle: {
                     normal: {
                         areaStyle: {
