@@ -37,6 +37,8 @@ void main()
 
 #define PI 3.14159265358979
 
+#extension GL_OES_standard_derivatives : enable
+
 varying vec2 v_Texcoord;
 
 varying vec3 v_Normal;
@@ -87,8 +89,6 @@ uniform float alpha : 1.0;
 #ifdef DIRECTIONAL_LIGHT_NUMBER
 @import buildin.header.directional_light
 #endif
-
-#extension GL_OES_standard_derivatives : enable
 
 void main()
 {
