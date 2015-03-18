@@ -137,13 +137,13 @@ quality: 'medium'
 也可以直接配置数值分辨率比如`512`。
 
 ####heightImage
-地表高度图，在启用光照后用来表现地表高度不同所产生的阴影。下面两张图分别是美国区域使用和未使用高度图。
+地表高度图，在启用光照后用来表现地表高度不同所产生的阴影。下面两张图分别是美国区域使用和未使用高度图的效果。
 
 <img src="../../img/article/heightmap_enable.png" alt="" />
 <img src="../../img/article/heightmap_disable.png" alt="" />
 
 ###light
-光照配置
+光照配置，见示例 <a href="../../example/map3d_sun.html" target="_blank">map3d_sun</a>
 
 ####show
 ```javascript

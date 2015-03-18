@@ -1,4 +1,6 @@
 
+myChart.showLoading();
+
 $.ajax({
     url: './data/wave.json',
     success: function (data) {
@@ -87,5 +89,9 @@ $.ajax({
                 }]
             }]
         });
+
+
+        myChart.hideLoading();
+
     }
 });

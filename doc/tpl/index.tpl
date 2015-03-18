@@ -31,7 +31,7 @@
                 <p class="desc">
                     Extension pack of ECharts providing globe visualization and 3d plots
                 </p>
-                <a class="download" href="http://echarts.baidu.com/x/build/echarts-x-0.1.0.zip">DOWNLOAD</a>
+                <a class="download" href="http://echarts.baidu.com/x/build/echarts-x-0.2.0.zip">DOWNLOAD v0.2</a>
                 
                 <div class="github-status">
                     <iframe src="https://ghbtns.com/github-btn.html?user=ecomfe&repo=echarts-x&type=star&count=false&size=large" frameborder="0" scrolling="0" width="80px" height="30px"></iframe>

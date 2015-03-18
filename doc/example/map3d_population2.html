@@ -43,6 +43,9 @@
         </div>
 
 <script type="text/x-javascript" id="code-source">
+
+myChart.showLoading();
+
 $.ajax({
     url: './data/population.json',
     success: function (data) {
@@ -109,6 +112,9 @@ $.ajax({
                 }
             }]
         });
+
+        myChart.hideLoading();
+
     }
 });
 </script>

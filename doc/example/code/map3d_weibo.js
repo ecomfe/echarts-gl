@@ -1,3 +1,6 @@
+
+myChart.showLoading();
+
 $.ajax({
     url: './data/weibo.json',
     success: function (data) {
@@ -118,5 +121,8 @@ $.ajax({
                 }
             }]
         });
+        
+        myChart.hideLoading();
+
     }
 });

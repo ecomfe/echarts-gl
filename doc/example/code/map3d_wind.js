@@ -1,3 +1,6 @@
+
+myChart.showLoading();
+
 $.ajax({
     url: './data/winds.json',
     success: function (data) {
@@ -73,5 +76,8 @@ $.ajax({
                 }]
             }]
         });
+
+        myChart.hideLoading();
+
     }
 });

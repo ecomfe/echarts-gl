@@ -1,3 +1,6 @@
+
+myChart.showLoading();
+
 $.ajax({
     url: './data/flights.json',
     success: function (data) {
@@ -113,5 +116,7 @@ $.ajax({
         });
 
         myChart.setOption(opts);
+
+        myChart.hideLoading();
     }
 });

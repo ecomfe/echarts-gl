@@ -1,3 +1,6 @@
+
+myChart.showLoading();
+
 $.ajax({
     url: './data/population.json',
     success: function (data) {
@@ -57,5 +60,8 @@ $.ajax({
                 }
             }]
         });
+
+        myChart.hideLoading();
+
     }
 });

@@ -43,6 +43,9 @@
         </div>
 
 <script type="text/x-javascript" id="code-source">
+
+myChart.showLoading();
+
 $.ajax({
     url: './data/winds.json',
     success: function (data) {
@@ -118,6 +121,9 @@ $.ajax({
                 }]
             }]
         });
+
+        myChart.hideLoading();
+
     }
 });
 </script>
