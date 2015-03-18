@@ -51,6 +51,10 @@ define(function (require) {
     $('#editor-refresh').click(refresh);
     $('#editor-update').click(update);
 
+    $(window).resize(function () {
+        myChart.resize();
+    });
+
     setTimeout(function () {
         refresh();
     });
