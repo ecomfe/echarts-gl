@@ -322,7 +322,7 @@ define(function (require) {
                     case 'high':
                         this._baseTextureSize = 4096;
                         break;
-                    case 'medium':
+                    // case 'medium':
                     default:
                         this._baseTextureSize = 2048;
                         break;
@@ -607,7 +607,7 @@ define(function (require) {
                             globeSurface.backgroundImage = img;
                             globeSurface.refresh();
                             self._imageCache.put(bgImage, img);
-                        }
+                        };
                         img.src = bgImage;
                     }
                     else {
@@ -828,7 +828,7 @@ define(function (require) {
                             seriesIdx, surfaceLayer, surfaceMesh
                         );
                         break;
-                    case "texture":
+                    // case 'texture':
                     default:
                         this._createTextureSurfaceLayer(
                             seriesIdx, surfaceLayer, surfaceMesh
@@ -959,7 +959,7 @@ define(function (require) {
             if (particleNumber == null) {
                 // Default 256 x 256
                 particleNumber = 256 * 256;
-            };
+            }
             var motionBlurFactor = this.query(surfaceLayerCfg, 'particle.motionBlurFactor');
             if (motionBlurFactor == null) {
                 motionBlurFactor = 0.99;
@@ -968,7 +968,7 @@ define(function (require) {
             vfParticleSurface.vectorFieldTexture = new Texture2D({
                 image: vfImage,
                 // Vector data column ranges -90 to 90
-                flipY: ! this._mapRootNode.__isFlatMap,
+                flipY: ! this._mapRootNode.__isFlatMap
             });
             vfParticleSurface.surfaceTexture = new Texture2D({
                 width: textureSize[0],
@@ -1113,7 +1113,7 @@ define(function (require) {
                     0,
                     dataItem, 0,
                     name
-                )
+                );
 
                 if (feature.type == 'Feature') {
                     createGeometry(feature.geometry, shape);
@@ -1310,7 +1310,7 @@ define(function (require) {
                     var dist = Vector3.distance(originWorld, point);
                     return new RayPicking.Intersection(point, pointWorld, sphereMesh, null, dist);
                 }
-            }
+            };
         },
 
         _getPlaneRayPickingHooker: function (planeMesh) {
@@ -1327,7 +1327,7 @@ define(function (require) {
                     var dist = Vector3.distance(originWorld, point);
                     return new RayPicking.Intersection(point, pointWorld, planeMesh, null, dist);
                 }
-            }
+            };
         },
 
         /**-
@@ -1401,7 +1401,7 @@ define(function (require) {
                         type: e.type
                     });
                 }
-            }
+            };
 
             var eventList = ['CLICK', 'DBLCLICK', 'MOUSEOVER', 'MOUSEOUT', 'MOUSEMOVE'];
 
@@ -1477,6 +1477,7 @@ define(function (require) {
             }
 
             var mapRootNode = this._mapRootNode;
+            var earthMesh = mapRootNode.queryNode('earth');
             var isFlatMap = mapRootNode.__isFlatMap;
             var surface = this._globeSurface;
             var w = surface.getWidth();
@@ -1497,10 +1498,10 @@ define(function (require) {
                 }
                 else {
                     return new Vector3(
-                        r * Math.PI * 2 * (x - 0.5),
-                        0,
-                        r * Math.PI * (0.5 - y)
-                    )
+                        earthMesh.scale.x * 2.0 * (x - 0.5),
+                        earthMesh.scale.y * 2.0 * (0.5 - y),
+                        0
+                    );
                 }
             }
 
@@ -1514,10 +1515,19 @@ define(function (require) {
 
             if (isFlatMap) {
                 var center = new Vector3()
-                    add(lt).add(rt).add(lb).add(rb).scale(0.25);
+                    .add(lt).add(rt).add(lb).add(rb).scale(0.25);
+
+                var yAxis = mapRootNode.worldTransform.y;
+                var xAxis = mapRootNode.worldTransform.x;
+
+                var x = center.x;
+                var y = center.y;
+
+                center.set(0, 0, 0).scaleAndAdd(yAxis, -y)
+                    .scaleAndAdd(xAxis, -x);
 
                 this._mapRootNode.__control.moveTo({
-                    position: center.negate(),
+                    position: center,
                     easing: 'CubicOut'
                 });
             }
@@ -1539,7 +1549,7 @@ define(function (require) {
 
                 this._mapRootNode.__control.rotateTo({
                     rotation: rotation,
-                    easing: 'CubicOut',
+                    easing: 'CubicOut'
                 });
             }
         },

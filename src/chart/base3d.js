@@ -48,7 +48,7 @@ define(function (require) {
             bar: { list: [], count: 0 },
             largePoint: { list: [], count: 0 }
         };
-    };
+    }
 
     Base3D.prototype = {
 
@@ -376,7 +376,7 @@ define(function (require) {
                 }
             }
         }
-    }
+    };
 
     zrUtil.inherits(Base3D, ComponentBase3D);
 
