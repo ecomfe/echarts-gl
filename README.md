@@ -10,3 +10,5 @@ It is built on top of Canvas library [ZRender](https://github.com/ecomfe/zrender
 ### [Documentation](http://echarts.baidu.com/x/doc/cn/article/getting_started.html)
 
 ### [Examples](http://echarts.baidu.com/x/doc/example.html)
+
+### [Changelog](https://github.com/ecomfe/echarts-x/wiki/Changelog)
