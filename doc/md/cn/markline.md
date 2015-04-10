@@ -5,11 +5,11 @@ ECharts 提供了使用 WebGL 绘制的 markLine。并且在大部分配置项�
 var option = {
     series: [{
         markLine: [{
-            data: [{
+            data: [[{
                 geoCoord: [0, -89]
             }, {
                 geoCoord: [0, 89]
-            }]
+            }]]
         }]
     }]
 };

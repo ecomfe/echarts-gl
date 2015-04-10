@@ -64,8 +64,8 @@ define(function (require) {
             var x2 = p2[0], y2 = p2[1], z2 = p2[2];
             var x3 = p3[0], y3 = p3[1], z3 = p3[2];
 
-            var len = (vec3.dist(p0, p1) + vec3.len(p2, p1) + vec3.len(p3, p2));
-            var step = 1 / (len + 1) * 15;
+            var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
+            var step = 1 / (len + 1) * 5;
 
             var step2 = step * step;
             var step3 = step2 * step;
@@ -102,17 +102,17 @@ define(function (require) {
             var positionArr = this.attributes.position.value;
             var colorArr = this.attributes.color.value;
             var offset = positionArr.length;
-            var len = 0;
+            var size = 0;
             var t = 0;
             while (t < 1 + step) {
-                if (len > 1) {
-                    positionArr.push(positionArr[offset + len - 1]);
-                    colorArr.push(colorArr[offset + len - 1]);
-                    len++;
+                if (size > 1) {
+                    positionArr.push(positionArr[offset + size - 1]);
+                    colorArr.push(colorArr[offset + size - 1]);
+                    size++;
                 }
                 positionArr.push(vec3.fromValues(fx, fy, fz));
                 colorArr.push(color);
-                len++;
+                size++;
 
                 fx += dfx; fy += dfy; fz += dfz;
                 dfx += ddfx; dfy += ddfy; dfz += ddfz;

@@ -41,7 +41,7 @@ require.config({
 
 ###模块化单文件引入(推荐)
 
-打包好后的单文件在 `build` 目录下
+假设打包好后的单文件在 `build` 目录下
 
 ```javascript
 <body>
