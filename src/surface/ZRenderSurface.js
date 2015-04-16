@@ -253,12 +253,12 @@ define(function (require) {
                 var dot = Vector3.dot;
                 var cross = Vector3.cross;
 
-                position.get(triangle[0], p0);
-                position.get(triangle[1], p1);
-                position.get(triangle[2], p2);
-                texcoord.get(triangle[0], uv0);
-                texcoord.get(triangle[1], uv1);
-                texcoord.get(triangle[2], uv2);
+                position.get(triangle[0], p0._array);
+                position.get(triangle[1], p1._array);
+                position.get(triangle[2], p2._array);
+                texcoord.get(triangle[0], uv0._array);
+                texcoord.get(triangle[1], uv1._array);
+                texcoord.get(triangle[2], uv2._array);
 
                 cross(vCross, p1, p2);
                 var det = dot(p0, vCross);
