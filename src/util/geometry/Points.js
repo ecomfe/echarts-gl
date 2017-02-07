@@ -6,16 +6,16 @@
  */
 
 define(function (require) {
-    
-    var DynamicGeometry = require('qtek/DynamicGeometry');
+
+    var StaticGeometry = require('qtek/StaticGeometry');
     var Geometry = require('qtek/Geometry');
 
     /**
      * @constructor
-     * @alias module:echarts-x/util/geometry/Points
-     * @extends qtek.DynamicGeometry
+     * @alias module:echarts-gl/util/geometry/Points
+     * @extends qtek.StaticGeometry
      */
-    var PointsGeometry = DynamicGeometry.derive(function () {
+    var PointsGeometry = StaticGeometry.extend(function () {
         return {
             attributes: {
                 position: new Geometry.Attribute('position', 'float', 3, 'POSITION', true),
