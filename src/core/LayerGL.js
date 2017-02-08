@@ -48,7 +48,8 @@ var LayerGL = function (id, zr) {
      */
     try {
         this.renderer = new Renderer({
-            clear: 0
+            clear: 0,
+            devicePixelRatio: zr.painter.dpr
         });
         this.renderer.resize(zr.painter.getWidth(), zr.painter.getHeight());
     }

@@ -130,32 +130,20 @@ EChartsGL.prototype.update = function (ecModel, api) {
     });
 
     ecModel.eachSeries(function (seriesModel) {
-        var view = api.getViewOfSeriesModel(seriesModel);
-        var groupGL = view.groupGL;
+        var chartView = api.getViewOfSeriesModel(seriesModel);
+        var groupGL = chartView.groupGL;
         var coordSys = seriesModel.coordinateSystem;
         if (groupGL) {
-            var viewGL;
-            if (coordSys) {
-                if (!coordSys.viewGL) {
-                    console.error('Can\'t find viewGL in coordinateSystem of series ' + seriesModel.id);
-                    return;
-                }
-                viewGL = coordSys.viewGL;
+            if ((coordSys && !coordSys.viewGL) && !chartView.viewGL) {
+                console.error('Can\'t find viewGL of series ' + chartView.id);
+                return;
             }
-            else {
-                if (!seriesModel.viewGL) {
-                    console.error('Can\'t find viewGL of series ' + seriesModel.id);
-                    return;
-                }
-                viewGL = coordSys.viewGL;
-            }
-
-            var viewGL = coordSys.viewGL;
+            var viewGL = (coordSys && coordSys.viewGL) || chartView.viewGL;
             // TODO Check zlevel not same with component of coordinate system ?
             var layerGL = getLayerGL(seriesModel);
             layerGL.addView(viewGL);
 
-            wrapDispose(view, layerGL);
+            wrapDispose(chartView, layerGL);
         }
     });
 };

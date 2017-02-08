@@ -1,6 +1,13 @@
 var PROD = process.argv.indexOf('-p') >= 0;
+var webpack = require('webpack');
 
 module.exports = {
+    plugins: [
+        new webpack.DefinePlugin({
+            'typeof __DEV__': JSON.stringify('boolean'),
+            __DEV__: PROD ? false : true
+        })
+    ],
     entry: {
         'echarts-gl': __dirname + '/index.js'
     },
