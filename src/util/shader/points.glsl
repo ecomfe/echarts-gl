@@ -5,7 +5,7 @@ uniform float elapsedTime : 0;
 
 attribute vec3 position : POSITION;
 #ifdef VERTEX_COLOR
-attribute vec4 color : COLOR;
+attribute vec4 a_Color : COLOR;
 varying vec4 v_Color;
 #endif
 attribute float size;
@@ -25,7 +25,7 @@ void main()
 #endif
 
 #ifdef VERTEX_COLOR
-    v_Color = color;
+    v_Color = a_Color;
 #endif
 }
 

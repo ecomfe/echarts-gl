@@ -60,6 +60,9 @@ module.exports = echarts.extendChartView({
     },
 
     render: function (seriesModel, ecModel, api) {
+        this.groupGL.add(this._barMesh);
+        this.groupGL.add(this._barMeshTransparent);
+
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys.type === 'globe') {
             coordSys.viewGL.add(this.groupGL);
@@ -91,33 +94,31 @@ module.exports = echarts.extendChartView({
         this._barMesh.geometry.resetOffset();
         this._barMeshTransparent.geometry.resetOffset();
 
-        var prevColor;
-        var prevOpacity;
-        var colorArr;
         var opacityAccessPath = ['itemStyle', 'normal', 'opacity'];
         var transparentBarCount = 0;
         var opaqueBarCount = 0;
-        var defaultColorArr = [0, 0, 0, 1];
+
+        var colorArr = [];
+        var vertexColors = new Float32Array(data.count() * 4);
+        var colorOffset = 0;
         // Seperate opaque and transparent bars.
         data.each(function (idx) {
             var itemModel = data.getItemModel(idx);
             var color = data.getItemVisual(idx, 'color');
 
-            var opacity = data.getItemVisual('opacity');
+            var opacity = data.getItemVisual(idx, 'opacity');
             if (opacity == null) {
                 opacity = itemModel.get(opacityAccessPath);
             }
             if (opacity == null) {
                 opacity = 1;
             }
-            if (color !== prevColor || opacity !== prevOpacity) {
-                colorArr = echarts.color.parse(color);
-                colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
-                colorArr[3] *= opacity;
-                prevColor = color;
-                prevOpacity = opacity;
-            }
-            data.setItemVisual(idx, 'vertexColor', colorArr || defaultColorArr);
+
+            echarts.color.parse(color, colorArr);
+            vertexColors[colorOffset++] = colorArr[0] / 255;
+            vertexColors[colorOffset++] = colorArr[1] / 255;
+            vertexColors[colorOffset++] = colorArr[2] / 255;
+            vertexColors[colorOffset++] = colorArr[3] * opacity;
 
             if (colorArr[3] < 0.99) {
                 if (colorArr[3] > 0) {
@@ -141,7 +142,11 @@ module.exports = echarts.extendChartView({
             var end = layout[1];
             var orient = graphicGL.Vector3.UP._array;
 
-            var colorArr = data.getItemVisual(idx, 'vertexColor');
+            var idx4 = idx * 4;
+            colorArr[0] = vertexColors[idx4++];
+            colorArr[1] = vertexColors[idx4++];
+            colorArr[2] = vertexColors[idx4++];
+            colorArr[3] = vertexColors[idx4++];
             if (colorArr[3] < 0.99) {
                 if (colorArr[3] > 0) {
                     self._barMeshTransparent.geometry.addBar(start, end, orient, barSize, colorArr);

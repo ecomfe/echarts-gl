@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>scatterGL - echarts-gl</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/china.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+            $.getJSON('data/masterPainterColorChoice.json', function (json) {
+
+                var data = json[0].x.map(function (x, idx) {
+                    return [+x, +json[0].y[idx]];
+                });
+
+                chart.setOption({
+                    backgroundColor: '#fff',
+                    title: {
+                        text: 'Master Painter Color Choices Throughout History',
+                        subtext: 'Data From Plot.ly',
+                        x: 'right'
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    xAxis: {
+                        type: 'value',
+                        splitLine: {
+                            show: false
+                        },
+                        scale: true,
+                        splitNumber: 5,
+                        axisLabel: {
+                            formatter: function (val) {
+                                return val + 's';
+                            }
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 0,
+                        max: 360,
+                        splitNumber: 6,
+                        name: 'Hue',
+                        splitLine: {
+                            show: false
+                        }
+                    },
+                    series: [{
+                        type: 'scatterGL',
+                        symbolSize: function (val, param) {
+                            return json[0].marker.size[param.dataIndex] / json[0].marker.sizeref;
+                        },
+                        itemStyle: {
+                            normal: {
+                                opacity: 0.5,
+                                color: function (param) {
+                                    return json[0].marker.color[param.dataIndex];
+                                }
+                            }
+                        },
+                        data: data
+                    }]
+                });
+            });
+        </script>
+    </body>
+</html>

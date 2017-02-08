@@ -45,21 +45,126 @@ echarts.extendChartView({
     },
 
     render: function (seriesModel, ecModel, api) {
+        this.groupGL.add(this._pointsMesh);
+
         this._updateCamera(api.getWidth(), api.getHeight());
 
         var data = seriesModel.getData();
         var geometry = this._pointsMesh.geometry;
 
+        var hasItemColor = false;
+        var hasItemOpacity = false;
+        for (var i = 0; i < data.count(); i++) {
+            if (!hasItemColor && data.getItemVisual(i, 'color', true) != null) {
+                hasItemColor = true;
+            }
+            if (!hasItemColor && data.getItemVisual(i, 'opacity', true) != null) {
+                hasItemOpacity = true;
+            }
+        }
+        var vertexColor = hasItemColor || hasItemOpacity;
+        this._pointsMesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
+
+
+        var symbolInfo = this._getSymbolInfo(data);
+        var dpr = api.getZr().painter.dpr;
+        // TODO arc is not so accurate in chrome, scale it a bit ?.
+        symbolInfo.maxSize *= dpr;
+        var symbolSize = [];
+        if (symbolInfo.aspect > 1) {
+            symbolSize[0] = symbolInfo.maxSize;
+            symbolSize[1] = symbolInfo.maxSize / symbolInfo.aspect;
+        }
+        else {
+            symbolSize[1] = symbolInfo.maxSize;
+            symbolSize[0] = symbolInfo.maxSize * symbolInfo.aspect;
+        }
+
+        // TODO image symbol
+        // TODO, shadowOffsetX, shadowOffsetY may not work well.
+        var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
+        var margin = spriteUtil.getMarginByStyle(itemStyle);
+        if (hasItemColor) {
+            itemStyle.fill = '#ffffff';
+            if (margin.right || margin.left || margin.bottom || margin.top) {
+                if (__DEV__) {
+                    console.error('shadowColor, borderColor will be ignored if data has different colors');
+                }
+                ['stroke', 'shadowColor'].forEach(function (key) {
+                    itemStyle[key] = '#ffffff';
+                });
+            }
+        }
+        spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, itemStyle, this._symbolTexture.image);
+        document.body.appendChild(this._symbolTexture.image);
+
+        var diffX = (margin.right - margin.left) / 2;
+        var diffY = (margin.bottom - margin.top) / 2;
+        var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
+
+        var points = data.getLayout('points');
         var attributes = geometry.attributes;
         attributes.position.init(data.count());
-        // attributes.color.init(data.count());
         attributes.size.init(data.count());
+        if (vertexColor) {
+            attributes.color.init(data.count());
+        }
+        var positionArr = attributes.position.value;
+        var colorArr = attributes.color.value;
 
+        var rgbaArr = [];
+        for (var i = 0; i < data.count(); i++) {
+            var i4 = i * 4;
+            var i3 = i * 3;
+            var i2 = i * 2;
+            positionArr[i3] = points[i2] + diffX;
+            positionArr[i3 + 1] = points[i2 + 1] + diffY;
+            positionArr[i3 + 2] = -10;
+
+            if (vertexColor) {
+                if (!hasItemColor && hasItemOpacity) {
+                    colorArr[i4++] = colorArr[i4++] = colorArr[i4++] = 1;
+                    colorArr[i4] = data.getItemVisual(i, 'opacity');
+                }
+                else {
+                    var color = data.getItemVisual(i, 'color');
+                    var opacity = data.getItemVisual(i, 'opacity');
+                    echarts.color.parse(color, rgbaArr);
+                    rgbaArr[0] /= 255; rgbaArr[1] /= 255; rgbaArr[2] /= 255;
+                    rgbaArr[3] *= opacity;
+                    attributes.color.set(i, rgbaArr);
+                }
+            }
+
+            var symbolSize = data.getItemVisual(i, 'symbolSize');
+
+            attributes.size.value[i] = ((symbolSize instanceof Array
+                ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize) + diffSize) * dpr;
+        }
+
+        geometry.dirty();
+    },
+
+    updateLayout: function (seriesModel, ecModel, api) {
+        var data = seriesModel.getData();
+        var positionArr = this._pointsMesh.geometry.attributes.position.value;
+        var points = data.getLayout('points');
+        for (var i = 0; i < points.length / 2; i++) {
+            var i3 = i * 3;
+            var i2 = i * 2;
+            positionArr[i3] = points[i2];
+            positionArr[i3 + 1] = points[i2 + 1];
+        }
+        this._pointsMesh.geometry.dirty();
+    },
+
+    _getSymbolInfo: function (data) {
         var symbolAspect = 1;
         var differentSymbolAspect = false;
         var symbolType = data.getItemVisual(0, 'symbol') || 'circle';
         var differentSymbolType = false;
         var maxSymbolSize = 0;
+
         data.each(function (idx) {
             var symbolSize = data.getItemVisual(idx, 'symbolSize');
             var currentSymbolType = data.getItemVisual(idx, 'symbol');
@@ -83,64 +188,21 @@ echarts.extendChartView({
             symbolType = currentSymbolType;
             symbolAspect = currentSymbolAspect;
         });
+
         if (__DEV__) {
             if (differentSymbolAspect) {
-                console.warn('Different symbol width / height ratio will be ignored.');
+                console.error('Different symbol width / height ratio will be ignored.');
             }
             if (differentSymbolType) {
-                console.warn('Different symbol type will be ignored.');
+                console.error('Different symbol type will be ignored.');
             }
         }
 
-        var dpr = api.getZr().painter.dpr;
-        maxSymbolSize *= dpr;
-        var symbolSize = [];
-        if (symbolAspect > 1) {
-            symbolSize[0] = maxSymbolSize;
-            symbolSize[1] = maxSymbolSize / symbolAspect;
-        }
-        else {
-            symbolSize[1] = maxSymbolSize;
-            symbolSize[0] = maxSymbolSize * symbolAspect;
-        }
-
-        // TODO, Not support different style(color, opacity) of data.
-        // TODO, shadowOffsetX, shadowOffsetY may not work well.
-        var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
-        var sprite = spriteUtil.createSymbolSprite(symbolType, symbolSize, itemStyle, this._symbolTexture.image);
-        var margin = sprite.margin;
-        var diffX = (margin.right - margin.left) / 2;
-        var diffY = (margin.bottom - margin.top) / 2;
-        var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
-
-        var points = data.getLayout('points');
-        for (var i = 0; i < points.length / 2; i++) {
-            var i3 = i * 3;
-            var i2 = i * 2;
-            attributes.position.value[i3] = points[i2] + diffX;
-            attributes.position.value[i3 + 1] = points[i2 + 1] + diffY;
-            attributes.position.value[i3 + 2] = -10;
-
-            var symbolSize = data.getItemVisual(i, 'symbolSize');
-
-            attributes.size.value[i] = ((symbolSize instanceof Array
-                ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize) + diffSize) * dpr;
-        }
-
-        geometry.dirty();
-    },
-
-    updateLayout: function (seriesModel, ecModel, api) {
-        var data = seriesModel.getData();
-        var positionArr = this._pointsMesh.geometry.attributes.position.value;
-        var points = data.getLayout('points');
-        for (var i = 0; i < points.length / 2; i++) {
-            var i3 = i * 3;
-            var i2 = i * 2;
-            positionArr[i3] = points[i2];
-            positionArr[i3 + 1] = points[i2 + 1];
-        }
-        this._pointsMesh.geometry.dirty();
+        return {
+            maxSize: maxSymbolSize,
+            type: symbolType,
+            aspect: symbolAspect
+        };
     },
 
     _updateCamera: function (width, height) {

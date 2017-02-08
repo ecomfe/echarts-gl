@@ -59,7 +59,6 @@ var spriteUtil = {
         }
 
         var rect = path.getBoundingRect();
-        // Some builtin shape like circle may have offset
         path.position[0] -= rect.x;
         path.position[1] -= rect.y;
 

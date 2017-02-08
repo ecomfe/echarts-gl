@@ -25,11 +25,12 @@ module.exports = echarts.extendChartView({
             }),
             ignorePicking: true
         });
-
-        this.groupGL.add(this._linesMesh);
     },
 
     render: function (seriesModel, ecModel, api) {
+
+        this.groupGL.add(this._linesMesh);
+
         var coordSys = seriesModel.coordinateSystem;
         var data = seriesModel.getData();
 
@@ -63,28 +64,21 @@ module.exports = echarts.extendChartView({
         geometry.setVertexCount(nVertex);
         geometry.resetOffset();
 
-        var prevColor;
-        var prevOpacity;
-        var colorArr;
-        var defaultColorArr = [0, 0, 0, 1];
+        var colorArr = [];
         var opacityAccessPath = ['lineStyle', 'normal', 'opacity'];
         data.each(function (idx) {
             var itemModel = data.getItemModel(idx);
             var pts = data.getItemLayout(idx);
             var color = data.getItemVisual(idx, 'color');
-            var opacity = data.getItemVisual('opacity');
+            var opacity = data.getItemVisual(idx, 'opacity');
             if (opacity == null) {
                 opacity = itemModel.get(opacityAccessPath);
             }
-            if (color !== prevColor || opacity !== prevOpacity) {
-                colorArr = echarts.color.parse(color);
-                colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
-                colorArr[3] *= opacity;
-                prevColor = color;
-                prevOpacity = opacity;
-            }
+            colorArr = echarts.color.parse(color, colorArr);
+            colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
+            colorArr[3] *= opacity;
 
-            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr || defaultColorArr);
+            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr);
         });
 
         geometry.dirty();

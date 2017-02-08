@@ -14458,6 +14458,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        createAttribute: function (name, type, size, semantic) {
 	            var attrib = new DynamicAttribute(name, type, size, semantic);
+	            if (this.attributes[name]) {
+	                this.removeAttribute(name);
+	            }
 	            this.attributes[name] = attrib;
 	            this._attributeList.push(name);
 	            return attrib;
@@ -15658,7 +15661,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @constructor qtek.StaticGeometry
 	     * @extends qtek.Geometry
 	     */
-	    var StaticGeometry = Geometry.extend(function() {
+	    var StaticGeometry = Geometry.extend(function () {
 	        return /** @lends qtek.StaticGeometry# */ {
 	            attributes: {
 	                 position: new StaticAttribute('position', 'float', 3, 'POSITION'),
@@ -15692,7 +15695,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    /** @lends qtek.StaticGeometry.prototype */
 	    {
-	        updateBoundingBox: function() {
+	        updateBoundingBox: function () {
 	            var bbox = this.boundingBox;
 	            if (!bbox) {
 	                bbox = this.boundingBox = new BoundingBox();
@@ -15722,7 +15725,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 
-	        dirty: function() {
+	        dirty: function () {
 	            this._cache.dirtyAll();
 	            this._enabledAttributes = null;
 	        },
@@ -15747,7 +15750,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            faces[idx * 3 + 2] = arr[2];
 	        },
 
-	        isUseFace: function() {
+	        isUseFace: function () {
 	            return this.useFace && (this.faces != null);
 	        },
 
@@ -15774,14 +15777,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.faces = value;
 	        },
 
-	        createAttribute: function(name, type, size, semantic) {
+	        createAttribute: function (name, type, size, semantic) {
 	            var attrib = new StaticAttribute(name, type, size, semantic);
+	            if (this.attributes[name]) {
+	                this.removeAttribute(name);
+	            }
 	            this.attributes[name] = attrib;
 	            this._attributeList.push(name);
 	            return attrib;
 	        },
 
-	        removeAttribute: function(name) {
+	        removeAttribute: function (name) {
 	            var attributeList = this._attributeList;
 	            var idx = attributeList.indexOf(name);
 	            if (idx >= 0) {
@@ -15797,7 +15803,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	         * Attribute which has the same vertex number with position is treated as a enabled attribute
 	         * @return {string[]}
 	         */
-	        getEnabledAttributes: function() {
+	        getEnabledAttributes: function () {
 	            var enabledAttributes = this._enabledAttributes;
 	            var attributeList = this._attributeList;
 	            // Cache
@@ -15823,7 +15829,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return result;
 	        },
 
-	        getBufferChunks: function(_gl) {
+	        getBufferChunks: function (_gl) {
 	            var cache = this._cache;
 	            cache.use(_gl.__GLID__);
 	            if (cache.isDirty()) {
@@ -15833,7 +15839,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return cache.get('chunks');
 	        },
 
-	        _updateBuffer: function(_gl) {
+	        _updateBuffer: function (_gl) {
 	            var chunks = this._cache.get('chunks');
 	            var firstUpdate = false;
 	            if (!chunks) {
@@ -15906,7 +15912,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 
-	        generateVertexNormals: function() {
+	        generateVertexNormals: function () {
 	            var faces = this.faces;
 	            var attributes = this.attributes;
 	            var positions = attributes.position.value;
@@ -15960,7 +15966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.dirty();
 	        },
 
-	        generateFaceNormals: function() {
+	        generateFaceNormals: function () {
 	            if (!this.isUniqueVertex()) {
 	                this.generateUniqueVertex();
 	            }
@@ -16005,7 +16011,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.dirty();
 	        },
 
-	        generateTangents: function() {
+	        generateTangents: function () {
 	            var nVertex = this.vertexCount;
 	            var attributes = this.attributes;
 	            if (!attributes.tangent.value) {
@@ -16099,7 +16105,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.dirty();
 	        },
 
-	        isUniqueVertex: function() {
+	        isUniqueVertex: function () {
 	            if (this.isUseFace()) {
 	                return this.vertexCount === this.faces.length;
 	            } else {
@@ -16107,7 +16113,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 
-	        generateUniqueVertex: function() {
+	        generateUniqueVertex: function () {
 	            var vertexUseCount = [];
 
 	            for (var i = 0, len = this.vertexCount; i < len; i++) {
@@ -16159,7 +16165,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.dirty();
 	        },
 
-	        generateBarycentric: function() {
+	        generateBarycentric: function () {
 
 	            if (!this.isUniqueVertex()) {
 	                this.generateUniqueVertex();
@@ -16182,7 +16188,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.dirty();
 	        },
 
-	        convertToDynamic: function(geometry) {
+	        convertToDynamic: function (geometry) {
 	            for (var i = 0; i < this.faces.length; i+=3) {
 	                geometry.faces.push(this.face.subarray(i, i + 3));
 	            }
@@ -16220,7 +16226,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return geometry;
 	        },
 
-	        applyTransform: function(matrix) {
+	        applyTransform: function (matrix) {
 
 	            var attributes = this.attributes;
 	            var positions = attributes.position.value;
@@ -16248,7 +16254,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 
-	        dispose: function(_gl) {
+	        dispose: function (_gl) {
 
 	            var cache = this._cache;
 
@@ -18508,7 +18514,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * Simple double linked list. Compared with array, it has O(1) remove operation.
 	     * @constructor
 	     */
-	    var LinkedList = function() {
+	    var LinkedList = function () {
 
 	        /**
 	         * @type {module:zrender/core/LRU~Entry}
@@ -18529,7 +18535,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param  {} val
 	     * @return {module:zrender/core/LRU~Entry}
 	     */
-	    linkedListProto.insert = function(val) {
+	    linkedListProto.insert = function (val) {
 	        var entry = new Entry(val);
 	        this.insertEntry(entry);
 	        return entry;
@@ -18539,13 +18545,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * Insert an entry at the tail
 	     * @param  {module:zrender/core/LRU~Entry} entry
 	     */
-	    linkedListProto.insertEntry = function(entry) {
+	    linkedListProto.insertEntry = function (entry) {
 	        if (!this.head) {
 	            this.head = this.tail = entry;
 	        }
 	        else {
 	            this.tail.next = entry;
 	            entry.prev = this.tail;
+	            entry.next = null;
 	            this.tail = entry;
 	        }
 	        this._len++;
@@ -18555,7 +18562,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * Remove entry.
 	     * @param  {module:zrender/core/LRU~Entry} entry
 	     */
-	    linkedListProto.remove = function(entry) {
+	    linkedListProto.remove = function (entry) {
 	        var prev = entry.prev;
 	        var next = entry.next;
 	        if (prev) {
@@ -18579,7 +18586,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /**
 	     * @return {number}
 	     */
-	    linkedListProto.len = function() {
+	    linkedListProto.len = function () {
 	        return this._len;
 	    };
 
@@ -18587,7 +18594,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @constructor
 	     * @param {} val
 	     */
-	    var Entry = function(val) {
+	    var Entry = function (val) {
 	        /**
 	         * @type {}
 	         */
@@ -18609,13 +18616,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @constructor
 	     * @alias module:zrender/core/LRU
 	     */
-	    var LRU = function(maxSize) {
+	    var LRU = function (maxSize) {
 
 	        this._list = new LinkedList();
 
 	        this._map = {};
 
 	        this._maxSize = maxSize || 10;
+
+	        this._lastRemovedEntry = null;
 	    };
 
 	    var LRUProto = LRU.prototype;
@@ -18623,30 +18632,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /**
 	     * @param  {string} key
 	     * @param  {} value
+	     * @return {} Removed value
 	     */
-	    LRUProto.put = function(key, value) {
+	    LRUProto.put = function (key, value) {
 	        var list = this._list;
 	        var map = this._map;
+	        var removed = null;
 	        if (map[key] == null) {
 	            var len = list.len();
+	            // Reuse last removed entry
+	            var entry = this._lastRemovedEntry;
+
 	            if (len >= this._maxSize && len > 0) {
 	                // Remove the least recently used
 	                var leastUsedEntry = list.head;
 	                list.remove(leastUsedEntry);
 	                delete map[leastUsedEntry.key];
+
+	                removed = leastUsedEntry.value;
+	                this._lastRemovedEntry = leastUsedEntry;
 	            }
 
-	            var entry = list.insert(value);
+	            if (entry) {
+	                entry.value = value;
+	            }
+	            else {
+	                entry = new Entry(value);
+	            }
 	            entry.key = key;
+	            list.insertEntry(entry);
 	            map[key] = entry;
 	        }
+
+	        return removed;
 	    };
 
 	    /**
 	     * @param  {string} key
 	     * @return {}
 	     */
-	    LRUProto.get = function(key) {
+	    LRUProto.get = function (key) {
 	        var entry = this._map[key];
 	        var list = this._list;
 	        if (entry != null) {
@@ -18663,7 +18688,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /**
 	     * Clear the cache
 	     */
-	    LRUProto.clear = function() {
+	    LRUProto.clear = function () {
 	        this._list.clear();
 	        this._map = {};
 	    };
@@ -19865,12 +19890,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 50 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * @module zrender/tool/color
 	 */
 
+
+	    var LRU = __webpack_require__(45);
 
 	    var kCSSColorTable = {
 	        'transparent': [0,0,0,0], 'aliceblue': [240,248,255,1],
@@ -20001,15 +20028,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return a + (b - a) * p;
 	    }
 
+	    function setRgba(out, r, g, b, a) {
+	        out[0] = r; out[1] = g; out[2] = b; out[3] = a;
+	        return out;
+	    }
+	    function copyRgba(out, a) {
+	        out[0] = a[0]; out[1] = a[1]; out[2] = a[2]; out[3] = a[3];
+	        return out;
+	    }
+	    var colorCache = new LRU(20);
+	    var lastRemovedArr = null;
+	    function putToCache(colorStr, rgbaArr) {
+	        // Reuse removed array
+	        if (lastRemovedArr) {
+	            copyRgba(lastRemovedArr, rgbaArr);
+	        }
+	        lastRemovedArr = colorCache.put(colorStr, lastRemovedArr || (rgbaArr.slice()));
+	    }
 	    /**
 	     * @param {string} colorStr
+	     * @param {Array.<number>} out
 	     * @return {Array.<number>}
 	     * @memberOf module:zrender/util/color
 	     */
-	    function parse(colorStr) {
+	    function parse(colorStr, rgbaArr) {
 	        if (!colorStr) {
 	            return;
 	        }
+	        rgbaArr = rgbaArr || [];
+
+	        var cached = colorCache.get(colorStr);
+	        if (cached) {
+	            return copyRgba(rgbaArr, cached);
+	        }
+
 	        // colorStr may be not string
 	        colorStr = colorStr + '';
 	        // Remove all whitespace, not compliant, but should just be more accepting.
@@ -20017,7 +20069,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        // Color keywords (and transparent) lookup.
 	        if (str in kCSSColorTable) {
-	            return kCSSColorTable[str].slice();  // dup.
+	            copyRgba(rgbaArr, kCSSColorTable[str]);
+	            putToCache(colorStr, rgbaArr);
+	            return rgbaArr;
 	        }
 
 	        // #abc and #abc123 syntax.
@@ -20025,26 +20079,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (str.length === 4) {
 	                var iv = parseInt(str.substr(1), 16);  // TODO(deanm): Stricter parsing.
 	                if (!(iv >= 0 && iv <= 0xfff)) {
+	                    setRgba(rgbaArr, 0, 0, 0, 1);
 	                    return;  // Covers NaN.
 	                }
-	                return [
+	                setRgba(rgbaArr,
 	                    ((iv & 0xf00) >> 4) | ((iv & 0xf00) >> 8),
 	                    (iv & 0xf0) | ((iv & 0xf0) >> 4),
 	                    (iv & 0xf) | ((iv & 0xf) << 4),
 	                    1
-	                ];
+	                );
+	                putToCache(colorStr, rgbaArr);
+	                return rgbaArr;
 	            }
 	            else if (str.length === 7) {
 	                var iv = parseInt(str.substr(1), 16);  // TODO(deanm): Stricter parsing.
 	                if (!(iv >= 0 && iv <= 0xffffff)) {
+	                    setRgba(rgbaArr, 0, 0, 0, 1);
 	                    return;  // Covers NaN.
 	                }
-	                return [
+	                setRgba(rgbaArr,
 	                    (iv & 0xff0000) >> 16,
 	                    (iv & 0xff00) >> 8,
 	                    iv & 0xff,
 	                    1
-	                ];
+	                );
+	                putToCache(colorStr, rgbaArr);
+	                return rgbaArr;
 	            }
 
 	            return;
@@ -20057,44 +20117,56 @@ return /******/ (function(modules) { // webpackBootstrap
 	            switch (fname) {
 	                case 'rgba':
 	                    if (params.length !== 4) {
+	                        setRgba(rgbaArr, 0, 0, 0, 1);
 	                        return;
 	                    }
 	                    alpha = parseCssFloat(params.pop()); // jshint ignore:line
 	                // Fall through.
 	                case 'rgb':
 	                    if (params.length !== 3) {
+	                        setRgba(rgbaArr, 0, 0, 0, 1);
 	                        return;
 	                    }
-	                    return [
+	                    setRgba(rgbaArr,
 	                        parseCssInt(params[0]),
 	                        parseCssInt(params[1]),
 	                        parseCssInt(params[2]),
 	                        alpha
-	                    ];
+	                    );
+	                    putToCache(colorStr, rgbaArr);
+	                    return rgbaArr;
 	                case 'hsla':
 	                    if (params.length !== 4) {
+	                        setRgba(rgbaArr, 0, 0, 0, 1);
 	                        return;
 	                    }
 	                    params[3] = parseCssFloat(params[3]);
-	                    return hsla2rgba(params);
+	                    hsla2rgba(params, rgbaArr);
+	                    putToCache(colorStr, rgbaArr);
+	                    return rgbaArr;
 	                case 'hsl':
 	                    if (params.length !== 3) {
+	                        setRgba(rgbaArr, 0, 0, 0, 1);
 	                        return;
 	                    }
-	                    return hsla2rgba(params);
+	                    hsla2rgba(params, rgbaArr);
+	                    putToCache(colorStr, rgbaArr);
+	                    return rgbaArr;
 	                default:
 	                    return;
 	            }
 	        }
 
+	        setRgba(rgbaArr, 0, 0, 0, 1);
 	        return;
 	    }
 
 	    /**
 	     * @param {Array.<number>} hsla
+	     * @param {Array.<number>} rgba
 	     * @return {Array.<number>} rgba
 	     */
-	    function hsla2rgba(hsla) {
+	    function hsla2rgba(hsla, rgba) {
 	        var h = (((parseFloat(hsla[0]) % 360) + 360) % 360) / 360;  // 0 .. 1
 	        // NOTE(deanm): According to the CSS spec s/l should only be
 	        // percentages, but we don't bother and let float or percentage.
@@ -20103,11 +20175,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var m2 = l <= 0.5 ? l * (s + 1) : l + s - l * s;
 	        var m1 = l * 2 - m2;
 
-	        var rgba = [
+	        rgba = rgba || [];
+	        setRgba(rgba,
 	            clampCssByte(cssHueToRgb(m1, m2, h + 1 / 3) * 255),
 	            clampCssByte(cssHueToRgb(m1, m2, h) * 255),
-	            clampCssByte(cssHueToRgb(m1, m2, h - 1 / 3) * 255)
-	        ];
+	            clampCssByte(cssHueToRgb(m1, m2, h - 1 / 3) * 255),
+	            1
+	        );
 
 	        if (hsla.length === 4) {
 	            rgba[3] = hsla[3];
@@ -26217,6 +26291,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 
 	    render: function (seriesModel, ecModel, api) {
+	        this.groupGL.add(this._barMesh);
+	        this.groupGL.add(this._barMeshTransparent);
+
 	        var coordSys = seriesModel.coordinateSystem;
 	        if (coordSys.type === 'globe') {
 	            coordSys.viewGL.add(this.groupGL);
@@ -26248,33 +26325,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._barMesh.geometry.resetOffset();
 	        this._barMeshTransparent.geometry.resetOffset();
 
-	        var prevColor;
-	        var prevOpacity;
-	        var colorArr;
 	        var opacityAccessPath = ['itemStyle', 'normal', 'opacity'];
 	        var transparentBarCount = 0;
 	        var opaqueBarCount = 0;
-	        var defaultColorArr = [0, 0, 0, 1];
+
+	        var colorArr = [];
+	        var vertexColors = new Float32Array(data.count() * 4);
+	        var colorOffset = 0;
 	        // Seperate opaque and transparent bars.
 	        data.each(function (idx) {
 	            var itemModel = data.getItemModel(idx);
 	            var color = data.getItemVisual(idx, 'color');
 
-	            var opacity = data.getItemVisual('opacity');
+	            var opacity = data.getItemVisual(idx, 'opacity');
 	            if (opacity == null) {
 	                opacity = itemModel.get(opacityAccessPath);
 	            }
 	            if (opacity == null) {
 	                opacity = 1;
 	            }
-	            if (color !== prevColor || opacity !== prevOpacity) {
-	                colorArr = echarts.color.parse(color);
-	                colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
-	                colorArr[3] *= opacity;
-	                prevColor = color;
-	                prevOpacity = opacity;
-	            }
-	            data.setItemVisual(idx, 'vertexColor', colorArr || defaultColorArr);
+
+	            echarts.color.parse(color, colorArr);
+	            vertexColors[colorOffset++] = colorArr[0] / 255;
+	            vertexColors[colorOffset++] = colorArr[1] / 255;
+	            vertexColors[colorOffset++] = colorArr[2] / 255;
+	            vertexColors[colorOffset++] = colorArr[3] * opacity;
 
 	            if (colorArr[3] < 0.99) {
 	                if (colorArr[3] > 0) {
@@ -26298,7 +26373,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var end = layout[1];
 	            var orient = graphicGL.Vector3.UP._array;
 
-	            var colorArr = data.getItemVisual(idx, 'vertexColor');
+	            var idx4 = idx * 4;
+	            colorArr[0] = vertexColors[idx4++];
+	            colorArr[1] = vertexColors[idx4++];
+	            colorArr[2] = vertexColors[idx4++];
+	            colorArr[3] = vertexColors[idx4++];
 	            if (colorArr[3] < 0.99) {
 	                if (colorArr[3] > 0) {
 	                    self._barMeshTransparent.geometry.addBar(start, end, orient, barSize, colorArr);
@@ -26687,11 +26766,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }),
 	            ignorePicking: true
 	        });
-
-	        this.groupGL.add(this._linesMesh);
 	    },
 
 	    render: function (seriesModel, ecModel, api) {
+
+	        this.groupGL.add(this._linesMesh);
+
 	        var coordSys = seriesModel.coordinateSystem;
 	        var data = seriesModel.getData();
 
@@ -26725,28 +26805,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        geometry.setVertexCount(nVertex);
 	        geometry.resetOffset();
 
-	        var prevColor;
-	        var prevOpacity;
-	        var colorArr;
-	        var defaultColorArr = [0, 0, 0, 1];
+	        var colorArr = [];
 	        var opacityAccessPath = ['lineStyle', 'normal', 'opacity'];
 	        data.each(function (idx) {
 	            var itemModel = data.getItemModel(idx);
 	            var pts = data.getItemLayout(idx);
 	            var color = data.getItemVisual(idx, 'color');
-	            var opacity = data.getItemVisual('opacity');
+	            var opacity = data.getItemVisual(idx, 'opacity');
 	            if (opacity == null) {
 	                opacity = itemModel.get(opacityAccessPath);
 	            }
-	            if (color !== prevColor || opacity !== prevOpacity) {
-	                colorArr = echarts.color.parse(color);
-	                colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
-	                colorArr[3] *= opacity;
-	                prevColor = color;
-	                prevOpacity = opacity;
-	            }
+	            colorArr = echarts.color.parse(color, colorArr);
+	            colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
+	            colorArr[3] *= opacity;
 
-	            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr || defaultColorArr);
+	            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr);
 	        });
 
 	        geometry.dirty();
@@ -26983,6 +27056,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    __webpack_require__(98), 'scatterGL', 'circle', null
 	));
 
+	echarts.registerVisual(function (ecModel, api) {
+	    ecModel.eachSeriesByType('scatterGL', function (seriesModel) {
+	        var data = seriesModel.getData();
+	        var opacityAccessPath = 'itemStyle.normal.opacity'.split('.');
+	        var opacity = seriesModel.get(opacityAccessPath);
+
+	        data.setVisual('opacity', opacity == null ? 1 : opacity);
+
+	        if (data.hasItemOption) {
+	            data.each(function (idx) {
+	                var itemModel = data.getItemModel(idx);
+	                var opacity = itemModel.get(opacityAccessPath);
+	                if (opacity != null) {
+	                    data.setItemVisual(idx, opacity);
+	                }
+	            });
+	        }
+	    });
+	});
+
 	echarts.registerLayout(function (ecModel, api) {
 	    ecModel.eachSeriesByType('scatterGL', function (seriesModel) {
 	        var data = seriesModel.getData();
@@ -27110,21 +27203,126 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 
 	    render: function (seriesModel, ecModel, api) {
+	        this.groupGL.add(this._pointsMesh);
+
 	        this._updateCamera(api.getWidth(), api.getHeight());
 
 	        var data = seriesModel.getData();
 	        var geometry = this._pointsMesh.geometry;
 
+	        var hasItemColor = false;
+	        var hasItemOpacity = false;
+	        for (var i = 0; i < data.count(); i++) {
+	            if (!hasItemColor && data.getItemVisual(i, 'color', true) != null) {
+	                hasItemColor = true;
+	            }
+	            if (!hasItemColor && data.getItemVisual(i, 'opacity', true) != null) {
+	                hasItemOpacity = true;
+	            }
+	        }
+	        var vertexColor = hasItemColor || hasItemOpacity;
+	        this._pointsMesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
+
+
+	        var symbolInfo = this._getSymbolInfo(data);
+	        var dpr = api.getZr().painter.dpr;
+	        // TODO arc is not so accurate in chrome, scale it a bit.
+	        symbolInfo.maxSize *= dpr;
+	        var symbolSize = [];
+	        if (symbolInfo.aspect > 1) {
+	            symbolSize[0] = symbolInfo.maxSize;
+	            symbolSize[1] = symbolInfo.maxSize / symbolInfo.aspect;
+	        }
+	        else {
+	            symbolSize[1] = symbolInfo.maxSize;
+	            symbolSize[0] = symbolInfo.maxSize * symbolInfo.aspect;
+	        }
+
+	        // TODO image symbol
+	        // TODO, shadowOffsetX, shadowOffsetY may not work well.
+	        var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
+	        var margin = spriteUtil.getMarginByStyle(itemStyle);
+	        if (hasItemColor) {
+	            itemStyle.fill = '#ffffff';
+	            if (margin.right || margin.left || margin.bottom || margin.top) {
+	                if (true) {
+	                    console.error('shadowColor, borderColor will be ignored if data has different colors');
+	                }
+	                ['stroke', 'shadowColor'].forEach(function (key) {
+	                    itemStyle[key] = '#ffffff';
+	                });
+	            }
+	        }
+	        spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, itemStyle, this._symbolTexture.image);
+	        document.body.appendChild(this._symbolTexture.image);
+
+	        var diffX = (margin.right - margin.left) / 2;
+	        var diffY = (margin.bottom - margin.top) / 2;
+	        var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
+
+	        var points = data.getLayout('points');
 	        var attributes = geometry.attributes;
 	        attributes.position.init(data.count());
-	        // attributes.color.init(data.count());
 	        attributes.size.init(data.count());
+	        if (vertexColor) {
+	            attributes.color.init(data.count());
+	        }
+	        var positionArr = attributes.position.value;
+	        var colorArr = attributes.color.value;
 
+	        var rgbaArr = [];
+	        for (var i = 0; i < data.count(); i++) {
+	            var i4 = i * 4;
+	            var i3 = i * 3;
+	            var i2 = i * 2;
+	            positionArr[i3] = points[i2] + diffX;
+	            positionArr[i3 + 1] = points[i2 + 1] + diffY;
+	            positionArr[i3 + 2] = -10;
+
+	            if (vertexColor) {
+	                if (!hasItemColor && hasItemOpacity) {
+	                    colorArr[i4++] = colorArr[i4++] = colorArr[i4++] = 1;
+	                    colorArr[i4] = data.getItemVisual(i, 'opacity');
+	                }
+	                else {
+	                    var color = data.getItemVisual(i, 'color');
+	                    var opacity = data.getItemVisual(i, 'opacity');
+	                    echarts.color.parse(color, rgbaArr);
+	                    rgbaArr[0] /= 255; rgbaArr[1] /= 255; rgbaArr[2] /= 255;
+	                    rgbaArr[3] *= opacity;
+	                    attributes.color.set(i, rgbaArr);
+	                }
+	            }
+
+	            var symbolSize = data.getItemVisual(i, 'symbolSize');
+
+	            attributes.size.value[i] = ((symbolSize instanceof Array
+	                ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize) + diffSize) * dpr;
+	        }
+
+	        geometry.dirty();
+	    },
+
+	    updateLayout: function (seriesModel, ecModel, api) {
+	        var data = seriesModel.getData();
+	        var positionArr = this._pointsMesh.geometry.attributes.position.value;
+	        var points = data.getLayout('points');
+	        for (var i = 0; i < points.length / 2; i++) {
+	            var i3 = i * 3;
+	            var i2 = i * 2;
+	            positionArr[i3] = points[i2];
+	            positionArr[i3 + 1] = points[i2 + 1];
+	        }
+	        this._pointsMesh.geometry.dirty();
+	    },
+
+	    _getSymbolInfo: function (data) {
 	        var symbolAspect = 1;
 	        var differentSymbolAspect = false;
 	        var symbolType = data.getItemVisual(0, 'symbol') || 'circle';
 	        var differentSymbolType = false;
 	        var maxSymbolSize = 0;
+
 	        data.each(function (idx) {
 	            var symbolSize = data.getItemVisual(idx, 'symbolSize');
 	            var currentSymbolType = data.getItemVisual(idx, 'symbol');
@@ -27148,64 +27346,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	            symbolType = currentSymbolType;
 	            symbolAspect = currentSymbolAspect;
 	        });
+
 	        if (true) {
 	            if (differentSymbolAspect) {
-	                console.warn('Different symbol width / height ratio will be ignored.');
+	                console.error('Different symbol width / height ratio will be ignored.');
 	            }
 	            if (differentSymbolType) {
-	                console.warn('Different symbol type will be ignored.');
+	                console.error('Different symbol type will be ignored.');
 	            }
 	        }
 
-	        var dpr = api.getZr().painter.dpr;
-	        maxSymbolSize *= dpr;
-	        var symbolSize = [];
-	        if (symbolAspect > 1) {
-	            symbolSize[0] = maxSymbolSize;
-	            symbolSize[1] = maxSymbolSize / symbolAspect;
-	        }
-	        else {
-	            symbolSize[1] = maxSymbolSize;
-	            symbolSize[0] = maxSymbolSize * symbolAspect;
-	        }
-
-	        // TODO, Not support different style(color, opacity) of data.
-	        // TODO, shadowOffsetX, shadowOffsetY may not work well.
-	        var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
-	        var sprite = spriteUtil.createSymbolSprite(symbolType, symbolSize, itemStyle, this._symbolTexture.image);
-	        var margin = sprite.margin;
-	        var diffX = (margin.right - margin.left) / 2;
-	        var diffY = (margin.bottom - margin.top) / 2;
-	        var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
-
-	        var points = data.getLayout('points');
-	        for (var i = 0; i < points.length / 2; i++) {
-	            var i3 = i * 3;
-	            var i2 = i * 2;
-	            attributes.position.value[i3] = points[i2] + diffX;
-	            attributes.position.value[i3 + 1] = points[i2 + 1] + diffY;
-	            attributes.position.value[i3 + 2] = -10;
-
-	            var symbolSize = data.getItemVisual(i, 'symbolSize');
-
-	            attributes.size.value[i] = ((symbolSize instanceof Array
-	                ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize) + diffSize) * dpr;
-	        }
-
-	        geometry.dirty();
-	    },
-
-	    updateLayout: function (seriesModel, ecModel, api) {
-	        var data = seriesModel.getData();
-	        var positionArr = this._pointsMesh.geometry.attributes.position.value;
-	        var points = data.getLayout('points');
-	        for (var i = 0; i < points.length / 2; i++) {
-	            var i3 = i * 3;
-	            var i2 = i * 2;
-	            positionArr[i3] = points[i2];
-	            positionArr[i3 + 1] = points[i2 + 1];
-	        }
-	        this._pointsMesh.geometry.dirty();
+	        return {
+	            maxSize: maxSymbolSize,
+	            type: symbolType,
+	            aspect: symbolAspect
+	        };
 	    },
 
 	    _updateCamera: function (width, height) {
@@ -27292,7 +27447,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        var rect = path.getBoundingRect();
-	        // Some builtin shape like circle may have offset
 	        path.position[0] -= rect.x;
 	        path.position[1] -= rect.y;
 
@@ -27332,7 +27486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 97 */
 /***/ function(module, exports) {
 
-	module.exports = "@export ecgl.points.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n#ifdef VERTEX_COLOR\nattribute vec4 color : COLOR;\nvarying vec4 v_Color;\n#endif\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = color;\n#endif\n}\n\n@end\n\n@export ecgl.points.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = color;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end"
+	module.exports = "@export ecgl.points.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.points.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = color;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end"
 
 /***/ },
 /* 98 */
