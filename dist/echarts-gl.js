@@ -60,10 +60,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(36);
 
 	__webpack_require__(81);
-	__webpack_require__(86);
 	__webpack_require__(87);
+	__webpack_require__(88);
 
-	__webpack_require__(93);
+	__webpack_require__(94);
 
 /***/ },
 /* 1 */
@@ -17786,6 +17786,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	graphicGL.isImage = isValueImage;
 
+	graphicGL.additiveBlend = function (gl) {
+	    gl.blendEquation(gl.FUNC_ADD);
+	    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+	};
+
 	module.exports = graphicGL;
 
 /***/ },
@@ -25869,14 +25874,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	// Proxies
-	ViewGL.prototype.add = function (node3d) {
-	    this.scene.add(node3d);
+	ViewGL.prototype.add = function (node3D) {
+	    this.scene.add(node3D);
 	};
-	ViewGL.prototype.remove = function (node3d) {
-	    this.scene.remove(node3d);
+	ViewGL.prototype.remove = function (node3D) {
+	    this.scene.remove(node3D);
 	};
-	ViewGL.prototype.removeAll = function (node3d) {
-	    this.scene.removeAll(node3d);
+	ViewGL.prototype.removeAll = function (node3D) {
+	    this.scene.removeAll(node3D);
 	};
 
 
@@ -26168,9 +26173,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	__webpack_require__(85);
 
-	echarts.registerProcessor(function (ecModel, api) {
+	echarts.registerVisual(echarts.util.curry(
+	    __webpack_require__(86), 'bar3D'
+	));
 
-	    ecModel.eachSeriesByType('bar3d', function (seriesModel) {
+
+	echarts.registerProcessor(function (ecModel, api) {
+	    ecModel.eachSeriesByType('bar3D', function (seriesModel) {
 	        var data = seriesModel.getData();
 	        data.filterSelf(function (idx) {
 	            return data.hasValue(idx);
@@ -26186,9 +26195,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = echarts.extendSeriesModel({
 
-	    type: 'series.bar3d',
+	    type: 'series.bar3D',
 
-	    dependencies: ['globe3d'],
+	    dependencies: ['globe'],
 
 	    getInitialData: function (option, ecModel) {
 	        var data = new echarts.List(['x', 'y', 'z'], this);
@@ -26247,7 +26256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = echarts.extendChartView({
 
-	    type: 'bar3d',
+	    type: 'bar3D',
 
 	    init: function (ecModel, api) {
 
@@ -26325,7 +26334,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._barMesh.geometry.resetOffset();
 	        this._barMeshTransparent.geometry.resetOffset();
 
-	        var opacityAccessPath = ['itemStyle', 'normal', 'opacity'];
 	        var transparentBarCount = 0;
 	        var opaqueBarCount = 0;
 
@@ -26334,13 +26342,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var colorOffset = 0;
 	        // Seperate opaque and transparent bars.
 	        data.each(function (idx) {
-	            var itemModel = data.getItemModel(idx);
 	            var color = data.getItemVisual(idx, 'color');
 
 	            var opacity = data.getItemVisual(idx, 'opacity');
-	            if (opacity == null) {
-	                opacity = itemModel.get(opacityAccessPath);
-	            }
 	            if (opacity == null) {
 	                opacity = 1;
 	            }
@@ -26625,7 +26629,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	}
 	echarts.registerLayout(function (ecModel, api) {
-	    ecModel.eachSeriesByType('bar3d', function (seriesModel) {
+	    ecModel.eachSeriesByType('bar3D', function (seriesModel) {
 	        var coordSys = seriesModel.coordinateSystem;
 	        if (coordSys.type === 'globe') {
 	            globeLayout(seriesModel, coordSys);
@@ -26637,19 +26641,52 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 86 */
 /***/ function(module, exports) {
 
-	
+	module.exports = function (seriesType, ecModel, api) {
+	    ecModel.eachSeriesByType(seriesType, function (seriesModel) {
+	        var data = seriesModel.getData();
+	        var opacityAccessPath = seriesModel.visualColorAccessPath.split('.');
+	        opacityAccessPath[opacityAccessPath.length - 1] ='opacity';
+
+	        var opacity = seriesModel.get(opacityAccessPath);
+
+	        data.setVisual('opacity', opacity == null ? 1 : opacity);
+
+	        if (data.hasItemOption) {
+	            data.each(function (idx) {
+	                var itemModel = data.getItemModel(idx);
+	                var opacity = itemModel.get(opacityAccessPath);
+	                if (opacity != null) {
+	                    data.setItemVisual(idx, opacity);
+	                }
+	            });
+	        }
+	    });
+	};
 
 /***/ },
 /* 87 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	__webpack_require__(88);
-
-	__webpack_require__(89);
-	__webpack_require__(92);
+	
 
 /***/ },
 /* 88 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	__webpack_require__(89);
+
+	__webpack_require__(90);
+	__webpack_require__(93);
+
+	echarts.registerVisual(echarts.util.curry(
+	    __webpack_require__(86), 'lines3D'
+	));
+
+
+/***/ },
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -26727,7 +26764,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	echarts.registerLayout(function (ecModel, api) {
-	    ecModel.eachSeriesByType('lines3d', function (seriesModel) {
+	    ecModel.eachSeriesByType('lines3D', function (seriesModel) {
 	        var coordSys = seriesModel.coordinateSystem;
 	        if (coordSys.type === 'globe') {
 	            layoutGlobe(seriesModel, coordSys);
@@ -26736,22 +26773,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 89 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 	var graphicGL = __webpack_require__(39);
-	var LinesGeometry = __webpack_require__(90);
+	var LinesGeometry = __webpack_require__(91);
 
-	graphicGL.Shader.import(__webpack_require__(91));
+	graphicGL.Shader.import(__webpack_require__(92));
 
 	module.exports = echarts.extendChartView({
 
-	    type: 'lines3d',
+	    type: 'lines3D',
 
 	    init: function (ecModel, api) {
 	        this.groupGL = new graphicGL.Node();
 
+	        // TODO Windows chrome not support lineWidth > 1
 	        this._linesMesh = new graphicGL.Mesh({
 	            material: new graphicGL.Material({
 	                shader: new graphicGL.Shader({
@@ -26785,10 +26823,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        this._linesMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
-	            ? function (gl) {
-	                gl.blendEquation( gl.FUNC_ADD );
-	                gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
-	            } : null;
+	            ? graphicGL.additiveBlend : null;
 	    },
 
 	    _generateBezierCurvesOnGlobe: function (seriesModel) {
@@ -26806,15 +26841,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        geometry.resetOffset();
 
 	        var colorArr = [];
-	        var opacityAccessPath = ['lineStyle', 'normal', 'opacity'];
 	        data.each(function (idx) {
-	            var itemModel = data.getItemModel(idx);
 	            var pts = data.getItemLayout(idx);
 	            var color = data.getItemVisual(idx, 'color');
 	            var opacity = data.getItemVisual(idx, 'opacity');
 	            if (opacity == null) {
-	                opacity = itemModel.get(opacityAccessPath);
+	                opacity = 1;
 	            }
+
 	            colorArr = echarts.color.parse(color, colorArr);
 	            colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
 	            colorArr[3] *= opacity;
@@ -26835,12 +26869,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 90 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Geometry collecting straight line, cubic curve data
-	 * @module echarts-gl/chart/lines3d/LinesGeometry
+	 * @module echarts-gl/chart/lines3D/LinesGeometry
 	 * @author Yi Shen(http://github.com/pissang)
 	 */
 
@@ -26852,7 +26886,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	/**
 	 * @constructor
-	 * @alias module:echarts-gl/chart/lines3d/LinesGeometry
+	 * @alias module:echarts-gl/chart/lines3D/LinesGeometry
 	 * @extends qtek.StaticGeometry
 	 */
 
@@ -26867,7 +26901,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	},
-	/** @lends module: echarts-gl/chart/lines3d/LinesGeometry.prototype */
+	/** @lends module: echarts-gl/chart/lines3D/LinesGeometry.prototype */
 	{
 
 	    /**
@@ -26895,6 +26929,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param {Array.<number>} p1
 	     * @param {Array.<number>} p2
 	     * @param {Array.<number>} p3
+	     * @return number
 	     */
 	    getCubicCurveVertexCount: function (p0, p1, p2, p3) {
 	        var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
@@ -26982,20 +27017,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LinesGeometry;
 
 /***/ },
-/* 91 */
+/* 92 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.lines.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha) * v_Color;\n}\n@end"
 
 /***/ },
-/* 92 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
 	echarts.extendSeriesModel({
 
-	    type: 'series.lines3d',
+	    type: 'series.lines3D',
 
 	    dependencies: ['globe'],
 
@@ -27031,6 +27066,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        polyline: false,
 
+	        effect: {
+	            show: false,
+	            period: 4
+	        },
+
 	        // Support source-over, lighter
 	        blendMode: 'source-over',
 
@@ -27044,37 +27084,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 93 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(94);
 	__webpack_require__(95);
+	__webpack_require__(96);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(98), 'scatterGL', 'circle', null
+	    __webpack_require__(99), 'scatterGL', 'circle', null
 	));
 
-	echarts.registerVisual(function (ecModel, api) {
-	    ecModel.eachSeriesByType('scatterGL', function (seriesModel) {
-	        var data = seriesModel.getData();
-	        var opacityAccessPath = 'itemStyle.normal.opacity'.split('.');
-	        var opacity = seriesModel.get(opacityAccessPath);
-
-	        data.setVisual('opacity', opacity == null ? 1 : opacity);
-
-	        if (data.hasItemOption) {
-	            data.each(function (idx) {
-	                var itemModel = data.getItemModel(idx);
-	                var opacity = itemModel.get(opacityAccessPath);
-	                if (opacity != null) {
-	                    data.setItemVisual(idx, opacity);
-	                }
-	            });
-	        }
-	    });
-	});
+	echarts.registerVisual(echarts.util.curry(
+	    __webpack_require__(86), 'scatterGL'
+	));
 
 	echarts.registerLayout(function (ecModel, api) {
 	    ecModel.eachSeriesByType('scatterGL', function (seriesModel) {
@@ -27109,7 +27133,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -27142,6 +27166,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        symbolSize: 10,          // 图形大小，半宽（半径）参数，当图形为方向或菱形则总宽度为symbolSize * 2
 	        // symbolRotate: null,  // 图形旋转控制
 
+	        // Support source-over, lighter
+	        blendMode: 'source-over',
+
 	        itemStyle: {
 	            normal: {
 	                opacity: 0.8
@@ -27153,15 +27180,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 95 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 	var graphicGL = __webpack_require__(39);
 	var viewGL = __webpack_require__(77);
-	var spriteUtil = __webpack_require__(96);
+	var spriteUtil = __webpack_require__(97);
 
-	graphicGL.Shader.import(__webpack_require__(97));
+	graphicGL.Shader.import(__webpack_require__(98));
 
 	echarts.extendChartView({
 
@@ -27223,10 +27250,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var vertexColor = hasItemColor || hasItemOpacity;
 	        this._pointsMesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
 
+	        this._pointsMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
+	            ? graphicGL.additiveBlend : null;
 
 	        var symbolInfo = this._getSymbolInfo(data);
 	        var dpr = api.getZr().painter.dpr;
-	        // TODO arc is not so accurate in chrome, scale it a bit.
+	        // TODO arc is not so accurate in chrome, scale it a bit ?.
 	        symbolInfo.maxSize *= dpr;
 	        var symbolSize = [];
 	        if (symbolInfo.aspect > 1) {
@@ -27246,7 +27275,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            itemStyle.fill = '#ffffff';
 	            if (margin.right || margin.left || margin.bottom || margin.top) {
 	                if (true) {
-	                    console.error('shadowColor, borderColor will be ignored if data has different colors');
+	                    console.warn('shadowColor, borderColor will be ignored if data has different colors');
 	                }
 	                ['stroke', 'shadowColor'].forEach(function (key) {
 	                    itemStyle[key] = '#ffffff';
@@ -27349,10 +27378,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        if (true) {
 	            if (differentSymbolAspect) {
-	                console.error('Different symbol width / height ratio will be ignored.');
+	                console.warn('Different symbol width / height ratio will be ignored.');
 	            }
 	            if (differentSymbolType) {
-	                console.error('Different symbol type will be ignored.');
+	                console.warn('Different symbol type will be ignored.');
 	            }
 	        }
 
@@ -27383,7 +27412,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 96 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -27483,13 +27512,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = spriteUtil;
 
 /***/ },
-/* 97 */
+/* 98 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.points.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.points.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = color;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end"
 
 /***/ },
-/* 98 */
+/* 99 */
 /***/ function(module, exports) {
 
 	

@@ -72,14 +72,14 @@ ViewGL.prototype.containPoint = function (x, y) {
 };
 
 // Proxies
-ViewGL.prototype.add = function (node3d) {
-    this.scene.add(node3d);
+ViewGL.prototype.add = function (node3D) {
+    this.scene.add(node3D);
 };
-ViewGL.prototype.remove = function (node3d) {
-    this.scene.remove(node3d);
+ViewGL.prototype.remove = function (node3D) {
+    this.scene.remove(node3D);
 };
-ViewGL.prototype.removeAll = function (node3d) {
-    this.scene.removeAll(node3d);
+ViewGL.prototype.removeAll = function (node3D) {
+    this.scene.removeAll(node3D);
 };
 
 

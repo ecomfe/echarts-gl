@@ -10,10 +10,11 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/theme/dark.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
-            var chart = echarts.init(document.getElementById('main'));
+            var chart = echarts.init(document.getElementById('main'), 'dark');
 
             $.getJSON('data/flights.json', function (data) {
                 // Airport: [name, city, country, longitude, latitude]
@@ -42,13 +43,14 @@
                         return null;
                     }
                     return {
-                        type: 'lines3d',
+                        type: 'lines3D',
+                        name: airlineName,
                         lineStyle: {
                             normal: {
                                 opacity: 0.4
                             }
                         },
-                        blendMode: 'lighter',
+                        // blendMode: 'lighter',
                         data: routes.map(function (item) {
                             return [airports[item[1]].coord, airports[item[2]].coord];
                         })
@@ -58,14 +60,20 @@
                 });
 
                 chart.setOption({
+                    backgroundColor: '',
+                    legend: {
+                        left: 'left',
+                        data: Object.keys(routesGroupByAirline),
+                        orient: 'vertical'
+                    },
                     globe: {
-                        baseTexture: 'asset/world.topo.bathy.200401.jpg',
+                        baseTexture: 'asset/earth.jpg',
                         heightTexture: 'asset/elev_bump_4k.jpg',
 
                         shading: 'lambert',
 
                         light: {
-                            ambientIntensity: 0.1
+                            ambientIntensity: 0.4
                         }
                     },
                     series: series

@@ -216,4 +216,9 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
  */
 graphicGL.isImage = isValueImage;
 
+graphicGL.additiveBlend = function (gl) {
+    gl.blendEquation(gl.FUNC_ADD);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+};
+
 module.exports = graphicGL;

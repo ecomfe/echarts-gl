@@ -2,7 +2,7 @@ var echarts = require('echarts/lib/echarts');
 
 echarts.extendSeriesModel({
 
-    type: 'series.lines3d',
+    type: 'series.lines3D',
 
     dependencies: ['globe'],
 
@@ -37,6 +37,11 @@ echarts.extendSeriesModel({
         zlevel: 10,
 
         polyline: false,
+
+        effect: {
+            show: false,
+            period: 4
+        },
 
         // Support source-over, lighter
         blendMode: 'source-over',

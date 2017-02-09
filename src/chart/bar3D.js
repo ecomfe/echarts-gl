@@ -1,12 +1,15 @@
 var echarts = require('echarts/lib/echarts');
 
-require('./bar3d/Bar3dSeries');
-require('./bar3d/Bar3dView');
+require('./bar3D/bar3DLayout');
 
-require('./bar3d/bar3dLayout');
+require('./bar3D/bar3DView');
+require('./bar3D/bar3DSeries');
+
+echarts.registerVisual(echarts.util.curry(
+    require('./common/opacityVisual'), 'bar3D'
+));
 
 echarts.registerProcessor(function (ecModel, api) {
-
     ecModel.eachSeriesByType('bar3d', function (seriesModel) {
         var data = seriesModel.getData();
         data.filterSelf(function (idx) {
@@ -14,3 +17,4 @@ echarts.registerProcessor(function (ecModel, api) {
         });
     });
 });
+

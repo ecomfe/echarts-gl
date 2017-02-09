@@ -1,6 +1,6 @@
 /**
  * Geometry collecting straight line, cubic curve data
- * @module echarts-gl/chart/lines3d/LinesGeometry
+ * @module echarts-gl/chart/lines3D/LinesGeometry
  * @author Yi Shen(http://github.com/pissang)
  */
 
@@ -12,7 +12,7 @@ var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
 /**
  * @constructor
- * @alias module:echarts-gl/chart/lines3d/LinesGeometry
+ * @alias module:echarts-gl/chart/lines3D/LinesGeometry
  * @extends qtek.StaticGeometry
  */
 
@@ -27,7 +27,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         }
     };
 },
-/** @lends module: echarts-gl/chart/lines3d/LinesGeometry.prototype */
+/** @lends module: echarts-gl/chart/lines3D/LinesGeometry.prototype */
 {
 
     /**
@@ -55,6 +55,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @param {Array.<number>} p1
      * @param {Array.<number>} p2
      * @param {Array.<number>} p3
+     * @return number
      */
     getCubicCurveVertexCount: function (p0, p1, p2, p3) {
         var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);

@@ -1,6 +1,6 @@
-var Geo3D = require('./geo3d/Geo3d');
+var Geo3D = require('./geo3D/Geo3D');
 
-var geo3dCreator = {
+var geo3DCreator = {
 
     dimensions: Geo3D.prototype.dimensions,
 
@@ -9,4 +9,4 @@ var geo3dCreator = {
     }
 };
 
-module.exports = geo3dCreator;
+module.exports = geo3DCreator;

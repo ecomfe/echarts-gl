@@ -1,31 +1,15 @@
 var echarts = require('echarts/lib/echarts');
 
-require('./scattergl/ScatterGLSeries');
-require('./scattergl/ScatterGLView');
+require('./scatterGL/ScatterGLSeries');
+require('./scatterGL/ScatterGLView');
 
 echarts.registerVisual(echarts.util.curry(
     require('echarts/lib/visual/symbol'), 'scatterGL', 'circle', null
 ));
 
-echarts.registerVisual(function (ecModel, api) {
-    ecModel.eachSeriesByType('scatterGL', function (seriesModel) {
-        var data = seriesModel.getData();
-        var opacityAccessPath = 'itemStyle.normal.opacity'.split('.');
-        var opacity = seriesModel.get(opacityAccessPath);
-
-        data.setVisual('opacity', opacity == null ? 1 : opacity);
-
-        if (data.hasItemOption) {
-            data.each(function (idx) {
-                var itemModel = data.getItemModel(idx);
-                var opacity = itemModel.get(opacityAccessPath);
-                if (opacity != null) {
-                    data.setItemVisual(idx, opacity);
-                }
-            });
-        }
-    });
-});
+echarts.registerVisual(echarts.util.curry(
+    require('./common/opacityVisual'), 'scatterGL'
+));
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('scatterGL', function (seriesModel) {

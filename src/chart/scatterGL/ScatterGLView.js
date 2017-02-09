@@ -65,6 +65,8 @@ echarts.extendChartView({
         var vertexColor = hasItemColor || hasItemOpacity;
         this._pointsMesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
 
+        this._pointsMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
+            ? graphicGL.additiveBlend : null;
 
         var symbolInfo = this._getSymbolInfo(data);
         var dpr = api.getZr().painter.dpr;
@@ -88,7 +90,7 @@ echarts.extendChartView({
             itemStyle.fill = '#ffffff';
             if (margin.right || margin.left || margin.bottom || margin.top) {
                 if (__DEV__) {
-                    console.error('shadowColor, borderColor will be ignored if data has different colors');
+                    console.warn('shadowColor, borderColor will be ignored if data has different colors');
                 }
                 ['stroke', 'shadowColor'].forEach(function (key) {
                     itemStyle[key] = '#ffffff';
@@ -191,10 +193,10 @@ echarts.extendChartView({
 
         if (__DEV__) {
             if (differentSymbolAspect) {
-                console.error('Different symbol width / height ratio will be ignored.');
+                console.warn('Different symbol width / height ratio will be ignored.');
             }
             if (differentSymbolType) {
-                console.error('Different symbol type will be ignored.');
+                console.warn('Different symbol type will be ignored.');
             }
         }
 

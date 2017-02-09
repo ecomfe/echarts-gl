@@ -1,12 +1,12 @@
 var echarts = require('echarts/lib/echarts');
 
-function Geo3d() {
+function Geo3D() {
     this._rect = new echarts.graphic.BoundingRect();
 }
 
-Geo3d.prototype = {
+Geo3D.prototype = {
 
-    constructor: Geo3d,
+    constructor: Geo3D,
 
     setBoundingRect: function (x, y, width, height) {
         var rect = this._rect;
@@ -28,4 +28,4 @@ Geo3d.prototype = {
     }
 };
 
-module.exports = Geo3d;
+module.exports = Geo3D;

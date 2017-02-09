@@ -2,9 +2,9 @@ var echarts = require('echarts/lib/echarts');
 
 module.exports = echarts.extendSeriesModel({
 
-    type: 'series.bar3d',
+    type: 'series.bar3D',
 
-    dependencies: ['globe3d'],
+    dependencies: ['globe'],
 
     getInitialData: function (option, ecModel) {
         var data = new echarts.List(['x', 'y', 'z'], this);

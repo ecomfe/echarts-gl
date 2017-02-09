@@ -6,11 +6,12 @@ graphicGL.Shader.import(require('text!./shader/lines.glsl'));
 
 module.exports = echarts.extendChartView({
 
-    type: 'lines3d',
+    type: 'lines3D',
 
     init: function (ecModel, api) {
         this.groupGL = new graphicGL.Node();
 
+        // TODO Windows chrome not support lineWidth > 1
         this._linesMesh = new graphicGL.Mesh({
             material: new graphicGL.Material({
                 shader: new graphicGL.Shader({
@@ -44,10 +45,7 @@ module.exports = echarts.extendChartView({
         }
 
         this._linesMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
-            ? function (gl) {
-                gl.blendEquation( gl.FUNC_ADD );
-                gl.blendFunc( gl.SRC_ALPHA, gl.ONE );
-            } : null;
+            ? graphicGL.additiveBlend : null;
     },
 
     _generateBezierCurvesOnGlobe: function (seriesModel) {
@@ -65,15 +63,14 @@ module.exports = echarts.extendChartView({
         geometry.resetOffset();
 
         var colorArr = [];
-        var opacityAccessPath = ['lineStyle', 'normal', 'opacity'];
         data.each(function (idx) {
-            var itemModel = data.getItemModel(idx);
             var pts = data.getItemLayout(idx);
             var color = data.getItemVisual(idx, 'color');
             var opacity = data.getItemVisual(idx, 'opacity');
             if (opacity == null) {
-                opacity = itemModel.get(opacityAccessPath);
+                opacity = 1;
             }
+
             colorArr = echarts.color.parse(color, colorArr);
             colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
             colorArr[3] *= opacity;

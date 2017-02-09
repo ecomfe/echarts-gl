@@ -16,7 +16,7 @@ function getShader(shading) {
 
 module.exports = echarts.extendChartView({
 
-    type: 'bar3d',
+    type: 'bar3D',
 
     init: function (ecModel, api) {
 
@@ -94,7 +94,6 @@ module.exports = echarts.extendChartView({
         this._barMesh.geometry.resetOffset();
         this._barMeshTransparent.geometry.resetOffset();
 
-        var opacityAccessPath = ['itemStyle', 'normal', 'opacity'];
         var transparentBarCount = 0;
         var opaqueBarCount = 0;
 
@@ -103,13 +102,9 @@ module.exports = echarts.extendChartView({
         var colorOffset = 0;
         // Seperate opaque and transparent bars.
         data.each(function (idx) {
-            var itemModel = data.getItemModel(idx);
             var color = data.getItemVisual(idx, 'color');
 
             var opacity = data.getItemVisual(idx, 'opacity');
-            if (opacity == null) {
-                opacity = itemModel.get(opacityAccessPath);
-            }
             if (opacity == null) {
                 opacity = 1;
             }

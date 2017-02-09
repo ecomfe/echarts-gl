@@ -13,7 +13,7 @@ function globeLayout(seriesModel, coordSys) {
     });
 }
 echarts.registerLayout(function (ecModel, api) {
-    ecModel.eachSeriesByType('bar3d', function (seriesModel) {
+    ecModel.eachSeriesByType('bar3D', function (seriesModel) {
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys.type === 'globe') {
             globeLayout(seriesModel, coordSys);

@@ -73,7 +73,7 @@ function layoutGlobe(seriesModel, coordSys) {
 }
 
 echarts.registerLayout(function (ecModel, api) {
-    ecModel.eachSeriesByType('lines3d', function (seriesModel) {
+    ecModel.eachSeriesByType('lines3D', function (seriesModel) {
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys.type === 'globe') {
             layoutGlobe(seriesModel, coordSys);
