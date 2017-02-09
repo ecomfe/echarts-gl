@@ -1,5 +1,5 @@
 #################
-## Eclipse 
+## Eclipse
 #################
 
 *.pydevproject
@@ -169,4 +169,4 @@ node_modules
 
 doc/static
 doc/example/data/raw
-ecx.todo
+todo

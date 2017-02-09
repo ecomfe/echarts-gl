@@ -16,7 +16,7 @@
 
 var Renderer = require('qtek/lib/Renderer');
 var RayPicking = require('qtek/lib/picking/RayPicking');
-
+var Texture = require('qtek/lib/Texture2D');
 
 // PENDING
 var Eventful = require('zrender/lib/mixin/Eventful');
@@ -200,15 +200,96 @@ LayerGL.prototype.refresh = function () {
         this.renderer.render(viewGL.scene, viewGL.camera);
     }
     this.renderer.restoreViewport();
+
+    // Auto dispose unused resources on GPU, like program(shader), texture, geometry(buffers)
+    this._trackAndClean();
 };
 
-/**
- * Render the give scene with layer renderer and camera
- * Without clear the buffer
- * @return {qtek.Scene}
- */
-LayerGL.prototype.renderScene = function (scene) {
-    this.renderer.render(scene, this.camera);
+
+function getId(resource) {
+    return resource.__GUID__;
+}
+// configs for Auto GC for GPU resources
+var MAX_SHADER_COUNT = 40;
+var MAX_GEOMETRY_COUNT = 50;
+var MAX_TEXTURE_COUNT = 30;
+
+function checkAndDispose(gl, resourceMap, maxCount) {
+    var count = 0;
+    // FIXME not allocate array.
+    var unused = [];
+    for (var id in resourceMap) {
+        if (!resourceMap[id].count) {
+            unused.push(resourceMap[id].target);
+        }
+        else {
+            count++;
+        }
+    }
+    for (var i = 0; i < Math.min(count - maxCount, unused.length); i++) {
+        unused[i].dispose(gl);
+    }
+}
+
+function addToMap(map, target) {
+    var id = getId(target);
+    map[id] = map[id] || {
+        count: 0, target: target
+    };
+    map[id].count++;
+}
+LayerGL.prototype._trackAndClean = function () {
+    var shadersMap = this._shadersMap = this._shadersMap || {};
+    var texturesMap = this._texturesMap = this._texturesMap || {};
+    var geometriesMap = this._geometriesMap = this._geometriesMap || {};
+
+    for (var id in shadersMap) {
+        shadersMap[id].count = 0;
+    }
+    for (var id in texturesMap) {
+        texturesMap[id].count = 0;
+    }
+    for (var id in geometriesMap) {
+        geometriesMap[id].count = 0;
+    }
+
+    function trackQueue(queue) {
+        for (var i = 0; i < queue.length; i++) {
+            var renderable = queue[i];
+            var geometry = renderable.geometry;
+            var material = renderable.material;
+            var shader = material.shader;
+            addToMap(geometriesMap, geometry);
+            addToMap(shadersMap, shader);
+
+            for (var name in material.uniforms) {
+                var val = material.uniforms[name].value;
+                if (val instanceof Texture) {
+                    addToMap(texturesMap, val);
+                }
+                else if (val instanceof Array) {
+                    for (var i = 0; i < val.length; i++) {
+                        if (val[i] instanceof Texture) {
+                            addToMap(texturesMap, val[i]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (var i = 0; i < this.views.length; i++) {
+        var viewGL = this.views[i];
+        var scene = viewGL.scene;
+
+        trackQueue(scene.opaqueQueue);
+        trackQueue(scene.transparentQueue);
+    }
+    // Dispose those unsed resources
+    var gl = this.renderer.gl;
+
+    checkAndDispose(gl, shadersMap, MAX_SHADER_COUNT);
+    checkAndDispose(gl, texturesMap, MAX_TEXTURE_COUNT);
+    checkAndDispose(gl, geometriesMap, MAX_GEOMETRY_COUNT);
 };
 
 /**
