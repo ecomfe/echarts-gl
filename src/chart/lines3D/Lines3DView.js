@@ -1,6 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var LinesGeometry = require('./LinesGeometry');
+var CurveAnimatingPointsMesh = require('./CurveAnimatingPointsMesh');
 
 graphicGL.Shader.import(require('text!./shader/lines.glsl'));
 
@@ -26,6 +27,8 @@ module.exports = echarts.extendChartView({
             }),
             ignorePicking: true
         });
+
+        this._curveAnimatingPointsMesh = new CurveAnimatingPointsMesh();
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -42,6 +45,32 @@ module.exports = echarts.extendChartView({
             if (data.getLayout('lineType') === 'cubicBezier') {
                 this._generateBezierCurvesOnGlobe(seriesModel);
             }
+        }
+
+        var curveAnimatingPointsMesh = this._curveAnimatingPointsMesh;
+        curveAnimatingPointsMesh.stopAnimation();
+
+        if (seriesModel.get('effect.show')) {
+            this.groupGL.add(curveAnimatingPointsMesh);
+
+            curveAnimatingPointsMesh.setScale(coordSys.radius);
+            curveAnimatingPointsMesh.setData(data, api);
+
+            var period = seriesModel.get('effect.period') * 1000;
+            var delay = curveAnimatingPointsMesh.__percent ? -(period * curveAnimatingPointsMesh.__percent) : 0;
+            curveAnimatingPointsMesh.__percent = 0;
+            curveAnimatingPointsMesh.animate('', { loop: true })
+                .when(period, {
+                    __percent: 1
+                })
+                .delay(delay)
+                .during(function () {
+                    curveAnimatingPointsMesh.setAnimationPercent(curveAnimatingPointsMesh.__percent);
+                })
+                .start();
+        }
+        else {
+            this.groupGL.remove(curveAnimatingPointsMesh);
         }
 
         this._linesMesh.material.blend = seriesModel.get('blendMode') === 'lighter'

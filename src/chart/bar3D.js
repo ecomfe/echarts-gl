@@ -2,8 +2,8 @@ var echarts = require('echarts/lib/echarts');
 
 require('./bar3D/bar3DLayout');
 
-require('./bar3D/bar3DView');
-require('./bar3D/bar3DSeries');
+require('./bar3D/Bar3DView');
+require('./bar3D/Bar3DSeries');
 
 echarts.registerVisual(echarts.util.curry(
     require('./common/opacityVisual'), 'bar3D'
@@ -17,4 +17,3 @@ echarts.registerProcessor(function (ecModel, api) {
         });
     });
 });
-

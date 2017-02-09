@@ -33,6 +33,9 @@ var animatableMixin = {
         else {
             target = el;
         }
+        if (target == null) {
+            throw new Error('Target ' + path + ' not exists');
+        }
 
         var animators = this._animators;
 
@@ -53,6 +56,8 @@ var animatableMixin = {
         if (this.__zr) {
             this.__zr.animation.addAnimator(animator);
         }
+
+        return animator;
     },
 
     stopAnimation: function (forwardToLast) {
@@ -83,6 +88,6 @@ var animatableMixin = {
             }
         }
     }
-}
+};
 
 module.exports = animatableMixin;

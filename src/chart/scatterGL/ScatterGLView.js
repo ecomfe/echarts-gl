@@ -69,7 +69,7 @@ echarts.extendChartView({
             ? graphicGL.additiveBlend : null;
 
         var symbolInfo = this._getSymbolInfo(data);
-        var dpr = api.getZr().painter.dpr;
+        var dpr = api.getDevicePixelRatio();
         // TODO arc is not so accurate in chrome, scale it a bit ?.
         symbolInfo.maxSize *= dpr;
         var symbolSize = [];

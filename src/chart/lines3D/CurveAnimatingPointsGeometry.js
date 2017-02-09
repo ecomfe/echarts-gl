@@ -27,7 +27,7 @@ var CurveAnimatingPointsGeometry = StaticGeometry.derive(function () {
         },
         mainAttribute: 'p0',
 
-        segmentScale: 1,
+        scale: 1,
 
         _offset: 0
     };
@@ -58,7 +58,7 @@ var CurveAnimatingPointsGeometry = StaticGeometry.derive(function () {
     getPointVertexCount: function (p0, p1, p2, p3) {
         var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
         // TODO Consider time
-        var count = Math.max(Math.min(Math.round((len + 1)) / 100, 15), 5);
+        var count = Math.max(Math.min(Math.round((len + 1) / this.scale * 40), 15), 3);
         return count;
     },
     /**
@@ -67,9 +67,10 @@ var CurveAnimatingPointsGeometry = StaticGeometry.derive(function () {
      * @param {Array.<number>} p1
      * @param {Array.<number>} p2
      * @param {Array.<number>} p3
+     * @param {number} size
      * @param {Array.<number>} color
      */
-    addPoint: function (p0, p1, p2, p3, color) {
+    addPoint: function (p0, p1, p2, p3, size, color) {
         var attributes = this.attributes;
         var offset = Math.random();
         var count = this.getPointVertexCount(p0, p1, p2, p3);
@@ -79,7 +80,7 @@ var CurveAnimatingPointsGeometry = StaticGeometry.derive(function () {
             attributes.p2.set(this._offset, p2);
             attributes.p3.set(this._offset, p3);
             attributes.offset.set(this._offset, offset);
-            attributes.size.set(this._offset, i / count);
+            attributes.size.set(this._offset, size * i / count);
             attributes.color.set(this._offset++, color);
             // PENDING
             offset += 0.004;

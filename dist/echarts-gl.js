@@ -60,10 +60,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(36);
 
 	__webpack_require__(81);
-	__webpack_require__(87);
-	__webpack_require__(88);
+	__webpack_require__(84);
+	__webpack_require__(85);
 
-	__webpack_require__(94);
+	__webpack_require__(95);
 
 /***/ },
 /* 1 */
@@ -18740,6 +18740,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        else {
 	            target = el;
 	        }
+	        if (target == null) {
+	            throw new Error('Target ' + path + ' not exists');
+	        }
 
 	        var animators = this._animators;
 
@@ -18760,6 +18763,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (this.__zr) {
 	            this.__zr.animation.addAnimator(animator);
 	        }
+
+	        return animator;
 	    },
 
 	    stopAnimation: function (forwardToLast) {
@@ -18790,7 +18795,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    }
-	}
+	};
 
 	module.exports = animatableMixin;
 
@@ -26169,17 +26174,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	var echarts = __webpack_require__(2);
 
 	__webpack_require__(82);
-	__webpack_require__(83);
 
-	__webpack_require__(85);
+	__webpack_require__(100);
+	__webpack_require__(102);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(86), 'bar3D'
+	    __webpack_require__(83), 'bar3D'
 	));
 
-
 	echarts.registerProcessor(function (ecModel, api) {
-	    ecModel.eachSeriesByType('bar3D', function (seriesModel) {
+	    ecModel.eachSeriesByType('bar3d', function (seriesModel) {
 	        var data = seriesModel.getData();
 	        data.filterSelf(function (idx) {
 	            return data.hasValue(idx);
@@ -26193,16 +26197,765 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var echarts = __webpack_require__(2);
 
-	module.exports = echarts.extendSeriesModel({
+	function globeLayout(seriesModel, coordSys) {
+	    var data = seriesModel.getData();
+	    var extent = data.getDataExtent('z', true);
+	    var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
+	    var isZeroExtent = Math.abs(extent[1] - extent[0]) < 1e-10;
+	    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
+	        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, extent, heightExtent);
+	        var start = coordSys.dataToPoint([lng, lat, 0]);
+	        var end = coordSys.dataToPoint([lng, lat, height]);
+	        data.setItemLayout(idx, [start, end]);
+	    });
+	}
+	echarts.registerLayout(function (ecModel, api) {
+	    ecModel.eachSeriesByType('bar3D', function (seriesModel) {
+	        var coordSys = seriesModel.coordinateSystem;
+	        if (coordSys.type === 'globe') {
+	            globeLayout(seriesModel, coordSys);
+	        }
+	    });
+	});
 
-	    type: 'series.bar3D',
+/***/ },
+/* 83 */
+/***/ function(module, exports) {
+
+	module.exports = function (seriesType, ecModel, api) {
+	    ecModel.eachSeriesByType(seriesType, function (seriesModel) {
+	        var data = seriesModel.getData();
+	        var opacityAccessPath = seriesModel.visualColorAccessPath.split('.');
+	        opacityAccessPath[opacityAccessPath.length - 1] ='opacity';
+
+	        var opacity = seriesModel.get(opacityAccessPath);
+
+	        data.setVisual('opacity', opacity == null ? 1 : opacity);
+
+	        if (data.hasItemOption) {
+	            data.each(function (idx) {
+	                var itemModel = data.getItemModel(idx);
+	                var opacity = itemModel.get(opacityAccessPath);
+	                if (opacity != null) {
+	                    data.setItemVisual(idx, opacity);
+	                }
+	            });
+	        }
+	    });
+	};
+
+/***/ },
+/* 84 */
+/***/ function(module, exports) {
+
+	
+
+/***/ },
+/* 85 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	__webpack_require__(86);
+
+	__webpack_require__(87);
+	__webpack_require__(94);
+
+	echarts.registerVisual(echarts.util.curry(
+	    __webpack_require__(83), 'lines3D'
+	));
+
+
+/***/ },
+/* 86 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+	var glmatrix = __webpack_require__(15);
+	var vec3 = glmatrix.vec3;
+
+	function layoutGlobe(seriesModel, coordSys) {
+	    var data = seriesModel.getData();
+	    var isPolyline = seriesModel.get('polyline');
+
+	    var normal = vec3.create();
+	    var tangent = vec3.create();
+	    var bitangent = vec3.create();
+	    var halfVector = vec3.create();
+
+	    data.setLayout('lineType', isPolyline ? 'polyline' : 'cubicBezier');
+
+	    data.each(function (idx) {
+	        var itemModel = data.getItemModel(idx);
+	        var coords = (itemModel.option instanceof Array) ?
+	            itemModel.option : itemModel.getShallow('coords', true);
+
+	        if (!(coords instanceof Array && coords.length > 0 && coords[0] instanceof Array)) {
+	            throw new Error('Invalid coords ' + JSON.stringify(coords) + '. Lines must have 2d coords array in data item.');
+	        }
+
+	        var pts = [];
+	        if (isPolyline) {
+
+	        }
+	        else {
+	            var p0 = pts[0] = vec3.create();
+	            var p1 = pts[1] = vec3.create();
+	            var p2 = pts[2] = vec3.create();
+	            var p3 = pts[3] = vec3.create();
+	            coordSys.dataToPoint(coords[0], p0);
+	            coordSys.dataToPoint(coords[1], p3);
+	            // Get p1
+	            vec3.normalize(normal, p0);
+	            // TODO p0-p3 is parallel with normal
+	            vec3.sub(tangent, p3, p0);
+	            vec3.normalize(tangent, tangent);
+	            vec3.cross(bitangent, tangent, normal);
+	            vec3.normalize(bitangent, bitangent);
+	            vec3.cross(tangent, normal, bitangent);
+	            // p1 is half vector of p0 and tangent on p0
+	            vec3.add(p1, normal, tangent);
+	            vec3.normalize(p1, p1);
+
+	            // Get p2
+	            vec3.normalize(normal, p3);
+	            vec3.sub(tangent, p0, p3);
+	            vec3.normalize(tangent, tangent);
+	            vec3.cross(bitangent, tangent, normal);
+	            vec3.normalize(bitangent, bitangent);
+	            vec3.cross(tangent, normal, bitangent);
+	            // p2 is half vector of p3 and tangent on p3
+	            vec3.add(p2, normal, tangent);
+	            vec3.normalize(p2, p2);
+
+	            // Project distance of p0 on halfVector
+	            vec3.add(halfVector, p0, p3);
+	            vec3.normalize(halfVector, halfVector);
+	            var projDist = vec3.dot(p0, halfVector);
+	            // Angle of halfVector and p1
+	            var cosTheta = vec3.dot(halfVector, p1);
+	            var len = (coordSys.radius - projDist) / cosTheta * 2;
+
+	            vec3.scaleAndAdd(p1, p0, p1, len);
+	            vec3.scaleAndAdd(p2, p3, p2, len);
+	        }
+
+	        data.setItemLayout(idx, pts);
+	    });
+	}
+
+	echarts.registerLayout(function (ecModel, api) {
+	    ecModel.eachSeriesByType('lines3D', function (seriesModel) {
+	        var coordSys = seriesModel.coordinateSystem;
+	        if (coordSys.type === 'globe') {
+	            layoutGlobe(seriesModel, coordSys);
+	        }
+	    });
+	});
+
+/***/ },
+/* 87 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+	var graphicGL = __webpack_require__(39);
+	var LinesGeometry = __webpack_require__(88);
+	var CurveAnimatingPointsMesh = __webpack_require__(89);
+
+	graphicGL.Shader.import(__webpack_require__(93));
+
+	module.exports = echarts.extendChartView({
+
+	    type: 'lines3D',
+
+	    init: function (ecModel, api) {
+	        this.groupGL = new graphicGL.Node();
+
+	        // TODO Windows chrome not support lineWidth > 1
+	        this._linesMesh = new graphicGL.Mesh({
+	            material: new graphicGL.Material({
+	                shader: new graphicGL.Shader({
+	                    vertex: graphicGL.Shader.source('ecgl.lines.vertex'),
+	                    fragment: graphicGL.Shader.source('ecgl.lines.fragment')
+	                }),
+	                transparent: true
+	            }),
+	            mode: graphicGL.Mesh.LINES,
+	            geometry: new LinesGeometry({
+	                dynamic: true
+	            }),
+	            ignorePicking: true
+	        });
+
+	        this._curveAnimatingPointsMesh = new CurveAnimatingPointsMesh();
+	    },
+
+	    render: function (seriesModel, ecModel, api) {
+
+	        this.groupGL.add(this._linesMesh);
+
+	        var coordSys = seriesModel.coordinateSystem;
+	        var data = seriesModel.getData();
+
+	        if (coordSys.type === 'globe') {
+	            var viewGL = coordSys.viewGL;
+	            viewGL.add(this.groupGL);
+
+	            if (data.getLayout('lineType') === 'cubicBezier') {
+	                this._generateBezierCurvesOnGlobe(seriesModel);
+	            }
+	        }
+
+	        var curveAnimatingPointsMesh = this._curveAnimatingPointsMesh;
+	        curveAnimatingPointsMesh.stopAnimation();
+
+	        if (seriesModel.get('effect.show')) {
+	            this.groupGL.add(curveAnimatingPointsMesh);
+
+	            curveAnimatingPointsMesh.setScale(coordSys.radius);
+	            curveAnimatingPointsMesh.setData(data, api);
+
+	            var period = seriesModel.get('effect.period') * 1000;
+	            var delay = curveAnimatingPointsMesh.__percent ? -(period * curveAnimatingPointsMesh.__percent) : 0;
+	            curveAnimatingPointsMesh.__percent = 0;
+	            curveAnimatingPointsMesh.animate('', { loop: true })
+	                .when(period, {
+	                    __percent: 1
+	                })
+	                .delay(delay)
+	                .during(function () {
+	                    curveAnimatingPointsMesh.setAnimationPercent(curveAnimatingPointsMesh.__percent);
+	                })
+	                .start();
+	        }
+	        else {
+	            this.groupGL.remove(curveAnimatingPointsMesh);
+	        }
+
+	        this._linesMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
+	            ? graphicGL.additiveBlend : null;
+	    },
+
+	    _generateBezierCurvesOnGlobe: function (seriesModel) {
+	        var data = seriesModel.getData();
+	        var coordSys = seriesModel.coordinateSystem;
+	        var geometry = this._linesMesh.geometry;
+	        geometry.segmentScale = coordSys.radius / 20;
+
+	        var nVertex = 0;
+	        data.each(function (idx) {
+	            var pts = data.getItemLayout(idx);
+	            nVertex += geometry.getCubicCurveVertexCount(pts[0], pts[1], pts[2], pts[3]);
+	        });
+	        geometry.setVertexCount(nVertex);
+	        geometry.resetOffset();
+
+	        var colorArr = [];
+	        data.each(function (idx) {
+	            var pts = data.getItemLayout(idx);
+	            var color = data.getItemVisual(idx, 'color');
+	            var opacity = data.getItemVisual(idx, 'opacity');
+	            if (opacity == null) {
+	                opacity = 1;
+	            }
+
+	            colorArr = echarts.color.parse(color, colorArr);
+	            colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
+	            colorArr[3] *= opacity;
+
+	            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr);
+	        });
+
+	        geometry.dirty();
+	    },
+
+	    remove: function () {
+	        this.groupGL.removeAll();
+	    },
+
+	    dispose: function () {
+	        this.groupGL.removeAll();
+	    }
+	});
+
+/***/ },
+/* 88 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Geometry collecting straight line, cubic curve data
+	 * @module echarts-gl/chart/lines3D/LinesGeometry
+	 * @author Yi Shen(http://github.com/pissang)
+	 */
+
+	var StaticGeometry = __webpack_require__(32);
+	var vec3 = __webpack_require__(15).vec3;
+
+	// var CURVE_RECURSION_LIMIT = 8;
+	// var CURVE_COLLINEAR_EPSILON = 40;
+
+	/**
+	 * @constructor
+	 * @alias module:echarts-gl/chart/lines3D/LinesGeometry
+	 * @extends qtek.StaticGeometry
+	 */
+
+	var LinesGeometry = StaticGeometry.extend(function () {
+	    return {
+
+	        segmentScale: 1,
+
+	        attributes: {
+	            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
+	            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+	        }
+	    };
+	},
+	/** @lends module: echarts-gl/chart/lines3D/LinesGeometry.prototype */
+	{
+
+	    /**
+	     * Reset offset
+	     */
+	    resetOffset: function () {
+	        this._offset = 0;
+	    },
+
+	    /**
+	     * @param {number} nVertex
+	     */
+	    setVertexCount: function (nVertex) {
+	        if (this.vertexCount !== nVertex) {
+	            this.attributes.position.init(nVertex);
+	            this.attributes.color.init(nVertex);
+
+	            this._offset = 0;
+	        }
+	    },
+
+	    /**
+	     * Get vertex count of cubic curve
+	     * @param {Array.<number>} p0
+	     * @param {Array.<number>} p1
+	     * @param {Array.<number>} p2
+	     * @param {Array.<number>} p3
+	     * @return number
+	     */
+	    getCubicCurveVertexCount: function (p0, p1, p2, p3) {
+	        var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
+	        var step = 1 / (len + 1) * this.segmentScale;
+	        return Math.ceil(1 / step) * 2 + 1;
+	    },
+	    /**
+	     * Add a cubic curve
+	     * @param {Array.<number>} p0
+	     * @param {Array.<number>} p1
+	     * @param {Array.<number>} p2
+	     * @param {Array.<number>} p3
+	     * @param {Array.<number>} color
+	     */
+	    addCubicCurve: function (p0, p1, p2, p3, color) {
+	        // incremental interpolation
+	        // http://antigrain.com/research/bezier_interpolation/index.html#PAGE_BEZIER_INTERPOLATION
+	        var x0 = p0[0], y0 = p0[1], z0 = p0[2];
+	        var x1 = p1[0], y1 = p1[1], z1 = p1[2];
+	        var x2 = p2[0], y2 = p2[1], z2 = p2[2];
+	        var x3 = p3[0], y3 = p3[1], z3 = p3[2];
+
+	        var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
+	        var step = 1 / (len + 1) * this.segmentScale;
+
+	        var step2 = step * step;
+	        var step3 = step2 * step;
+
+	        var pre1 = 3.0 * step;
+	        var pre2 = 3.0 * step2;
+	        var pre4 = 6.0 * step2;
+	        var pre5 = 6.0 * step3;
+
+	        var tmp1x = x0 - x1 * 2.0 + x2;
+	        var tmp1y = y0 - y1 * 2.0 + y2;
+	        var tmp1z = z0 - z1 * 2.0 + z2;
+
+	        var tmp2x = (x1 - x2) * 3.0 - x0 + x3;
+	        var tmp2y = (y1 - y2) * 3.0 - y0 + y3;
+	        var tmp2z = (z1 - z2) * 3.0 - z0 + z3;
+
+	        var fx = x0;
+	        var fy = y0;
+	        var fz = z0;
+
+	        var dfx = (x1 - x0) * pre1 + tmp1x * pre2 + tmp2x * step3;
+	        var dfy = (y1 - y0) * pre1 + tmp1y * pre2 + tmp2y * step3;
+	        var dfz = (z1 - z0) * pre1 + tmp1z * pre2 + tmp2z * step3;
+
+	        var ddfx = tmp1x * pre4 + tmp2x * pre5;
+	        var ddfy = tmp1y * pre4 + tmp2y * pre5;
+	        var ddfz = tmp1z * pre4 + tmp2z * pre5;
+
+	        var dddfx = tmp2x * pre5;
+	        var dddfy = tmp2y * pre5;
+	        var dddfz = tmp2z * pre5;
+
+	        var positionAttr = this.attributes.position;
+	        var colorAttr = this.attributes.color;
+	        var firstSeg = true;
+	        var t = 0;
+	        var posTmp = [];
+	        while (t < 1 + step) {
+	            if (!firstSeg) {
+	                positionAttr.copy(this._offset, this._offset - 1);
+	                colorAttr.copy(this._offset, this._offset - 1);
+	                this._offset ++;
+	            }
+
+	            firstSeg = false;
+
+	            colorAttr.set(this._offset, color);
+	            posTmp[0] = fx; posTmp[1] = fy; posTmp[2] = fz;
+	            positionAttr.set(this._offset, posTmp);
+	            this._offset++;
+
+	            fx += dfx; fy += dfy; fz += dfz;
+	            dfx += ddfx; dfy += ddfy; dfz += ddfz;
+	            ddfx += dddfx; ddfy += dddfy; ddfz += dddfz;
+	            t += step;
+	        }
+	    }
+	});
+
+	module.exports = LinesGeometry;
+
+/***/ },
+/* 89 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+	var graphicGL = __webpack_require__(39);
+	var spriteUtil = __webpack_require__(90);
+
+	var CurveAnimatingPointsGeometry = __webpack_require__(91);
+
+	graphicGL.Shader.import(__webpack_require__(92));
+
+	module.exports = graphicGL.Mesh.extend(function () {
+
+	    var material = new graphicGL.Material({
+	        shader: new graphicGL.Shader({
+	            vertex: graphicGL.Shader.source('ecgl.curveAnimatingPoints.vertex'),
+	            fragment: graphicGL.Shader.source('ecgl.curveAnimatingPoints.fragment')
+	        }),
+	        transparent: true,
+	        depthMask: false
+	    });
+	    material.shader.enableTexture('sprite');
+	    var texture = new graphicGL.Texture2D({
+	        image: document.createElement('canvas')
+	    });
+	    material.set('sprite', texture);
+
+	    return {
+	        geometry: new CurveAnimatingPointsGeometry({
+	            dynamic: true
+	        }),
+	        material: material,
+
+	        mode: graphicGL.Mesh.POINTS,
+
+	        _spriteTexture: texture
+	    };
+	}, {
+
+	    setData: function (data, api) {
+	        var seriesModel = data.hostModel;
+	        var geometry = this.geometry;
+
+	        var effectModel = seriesModel.getModel('effect');
+	        var symbolType = effectModel.get('symbol');
+	        var size = effectModel.get('symbolSize') * api.getDevicePixelRatio();
+
+	        spriteUtil.createSymbolSprite(symbolType, size, {
+	            fill: '#fff'
+	        }, this._spriteTexture.image);
+	        this._spriteTexture.dirty();
+
+	        geometry.reset();
+
+	        var vertexCount = 0;
+	        data.each(function (idx) {
+	            var pts = data.getItemLayout(idx);
+	            vertexCount += geometry.getPointVertexCount(pts[0], pts[1], pts[2], pts[3]);
+	        });
+	        geometry.setVertexCount(vertexCount);
+
+	        var colorArr = [];
+	        data.each(function (idx) {
+	            var pts = data.getItemLayout(idx);
+	            var opacity = data.getItemVisual(idx, 'opacity');
+	            var color = data.getItemVisual(idx, 'color');
+
+	            if (opacity == null) {
+	                opacity = 1;
+	            }
+	            colorArr = echarts.color.parse(color, colorArr);
+	            colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
+	            colorArr[3] *= opacity;
+
+	            geometry.addPoint(pts[0], pts[1], pts[2], pts[3], size, colorArr);
+	        });
+
+	        geometry.dirty();
+	    },
+
+	    setScale: function (scale) {
+	        this.geometry.scale = scale;
+	    },
+
+	    setAnimationPercent: function (percent) {
+	        this.material.set('percent', percent);
+	    }
+	});
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	function makeSprite(size, canvas, draw) {
+	    // http://simonsarris.com/blog/346-how-you-clear-your-canvas-matters
+	    // http://jsperf.com/canvasclear
+	    // Set width and height is fast
+	    // And use the exist canvas if possible
+	    // http://jsperf.com/create-canvas-vs-set-width-height/2
+	    var canvas = canvas || document.createElement('canvas');
+	    canvas.width = size;
+	    canvas.height = size;
+	    var ctx = canvas.getContext('2d');
+
+	    draw && draw(ctx);
+
+	    return canvas;
+	}
+
+	var spriteUtil = {
+
+	    getMarginByStyle: function (style) {
+	        var lineWidth = 0;
+	        if (style.stroke && style.stroke !== 'none') {
+	            lineWidth = style.lineWidth == null ? 1 : style.lineWidth;
+	        }
+	        var shadowBlurSize = style.shadowBlur || 0;
+	        var shadowOffsetX = style.shadowOffsetX || 0;
+	        var shadowOffsetY = style.shadowOffsetY || 0;
+
+	        var margin = {};
+	        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize);
+	        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize);
+	        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize);
+	        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize);
+
+	        return margin;
+	    },
+	    /**
+	     * @param {string} symbol
+	     * @param {number | Array.<number>} symbolSize
+	     */
+	    createSymbolSprite: function (symbol, symbolSize, style, canvas) {
+	        if (!echarts.util.isArray(symbolSize)) {
+	            symbolSize = [symbolSize, symbolSize];
+	        }
+	        var margin = spriteUtil.getMarginByStyle(style);
+	        var width = symbolSize[0] + margin.left + margin.right;
+	        var height = symbolSize[1] + margin.top + margin.bottom;
+	        var path = echarts.helper.createSymbol(symbol, 0, 0, symbolSize[0], symbolSize[1]);
+
+	        var size = Math.max(width, height);
+
+	        path.position = [margin.left, margin.top];
+	        if (width > height) {
+	            path.position[1] += (size - height) / 2;
+	        }
+	        else {
+	            path.position[0] += (size - width) / 2;
+	        }
+
+	        var rect = path.getBoundingRect();
+	        path.position[0] -= rect.x;
+	        path.position[1] -= rect.y;
+
+	        path.setStyle(style);
+	        path.update();
+
+	        return {
+	            image: makeSprite(size, canvas, function (ctx) {
+	                path.brush(ctx);
+	            }),
+	            margin: margin
+	        };
+	    },
+
+	    createSimpleSprite: function (size, canvas) {
+	        return makeSprite(size, canvas, function (ctx) {
+	            var halfSize = size / 2;
+	            ctx.beginPath();
+	            ctx.arc(halfSize, halfSize, 60, 0, Math.PI * 2, false) ;
+	            ctx.closePath();
+
+	            var gradient = ctx.createRadialGradient(
+	                halfSize, halfSize, 0, halfSize, halfSize, halfSize
+	            );
+	            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+	            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+	            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+	            ctx.fillStyle = gradient;
+	            ctx.fill();
+	        });
+	    }
+	};
+
+	module.exports = spriteUtil;
+
+/***/ },
+/* 91 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Geometry colleting cloud points data
+	 * Points will move on a cubic curve path
+	 *
+	 * @module echarts-gl/chart/lines3D/CurveAnimatingPointsGeometry
+	 * @author Yi Shen(http://github.com/pissang)
+	 */
+
+	var StaticGeometry = __webpack_require__(32);
+	var vec3 = __webpack_require__(15).vec3;
+
+	/**
+	 * @constructor
+	 * @alias module:echarts-gl/chart/lines3D/CurveAnimatingPointsGeometry
+	 * @extends qtek.StaticGeometry
+	 */
+	var CurveAnimatingPointsGeometry = StaticGeometry.derive(function () {
+	    return {
+	        attributes: {
+	            p0: new StaticGeometry.Attribute('p0', 'float', 3, ''),
+	            p1: new StaticGeometry.Attribute('p1', 'float', 3, ''),
+	            p2: new StaticGeometry.Attribute('p2', 'float', 3, ''),
+	            p3: new StaticGeometry.Attribute('p3', 'float', 3, ''),
+	            offset: new StaticGeometry.Attribute('offset', 'float', 1, ''),
+	            size: new StaticGeometry.Attribute('size', 'float', 1, ''),
+	            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+	        },
+	        mainAttribute: 'p0',
+
+	        scale: 1,
+
+	        _offset: 0
+	    };
+	},
+	/** @lends module:echarts-gl/chart/lines3D/CurveAnimatingPointsGeometry.prototype */
+	{
+
+	    reset: function () {
+	        this._offset = 0;
+	    },
+
+	    setVertexCount: function (vertexCount) {
+	        if (this.vertexCount !== vertexCount) {
+	            for (var name in this.attributes) {
+	                this.attributes[name].init(vertexCount);
+	            }
+	        }
+	    },
+
+	    /**
+	     * Get vertex count of cubic curve
+	     * @param {Array.<number>} p0
+	     * @param {Array.<number>} p1
+	     * @param {Array.<number>} p2
+	     * @param {Array.<number>} p3
+	     * @return number
+	     */
+	    getPointVertexCount: function (p0, p1, p2, p3) {
+	        var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
+	        // TODO Consider time
+	        var count = Math.max(Math.min(Math.round((len + 1) / this.scale * 40), 15), 3);
+	        return count;
+	    },
+	    /**
+	     * Add a point
+	     * @param {Array.<number>} p0
+	     * @param {Array.<number>} p1
+	     * @param {Array.<number>} p2
+	     * @param {Array.<number>} p3
+	     * @param {number} size
+	     * @param {Array.<number>} color
+	     */
+	    addPoint: function (p0, p1, p2, p3, size, color) {
+	        var attributes = this.attributes;
+	        var offset = Math.random();
+	        var count = this.getPointVertexCount(p0, p1, p2, p3);
+	        for (var i = 0; i < count; i++) {
+	            attributes.p0.set(this._offset, p0);
+	            attributes.p1.set(this._offset, p1);
+	            attributes.p2.set(this._offset, p2);
+	            attributes.p3.set(this._offset, p3);
+	            attributes.offset.set(this._offset, offset);
+	            attributes.size.set(this._offset, size * i / count);
+	            attributes.color.set(this._offset++, color);
+	            // PENDING
+	            offset += 0.004;
+	        }
+	    }
+	});
+
+	module.exports = CurveAnimatingPointsGeometry;
+
+/***/ },
+/* 92 */
+/***/ function(module, exports) {
+
+	module.exports = "@export ecgl.curveAnimatingPoints.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float percent : 0.0;\n\nattribute vec3 p0;\nattribute vec3 p1;\nattribute vec3 p2;\nattribute vec3 p3;\nattribute vec4 color : COLOR;\n\nattribute float offset;\nattribute float size;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    float t = mod(offset + percent, 1.0);\n    float onet = 1.0 - t;\n    vec3 position = onet * onet * (onet * p0 + 3.0 * t * p1)\n        + t * t * (t * p3 + 3.0 * onet * p2);\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    gl_PointSize = size;\n\n    v_Color = color;\n}\n\n@end\n\n@export ecgl.curveAnimatingPoints.fragment\n\nvarying vec4 v_Color;\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = v_Color;\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n}\n@end"
+
+/***/ },
+/* 93 */
+/***/ function(module, exports) {
+
+	module.exports = "@export ecgl.lines.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha) * v_Color;\n}\n@end"
+
+/***/ },
+/* 94 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	echarts.extendSeriesModel({
+
+	    type: 'series.lines3D',
 
 	    dependencies: ['globe'],
 
+	    visualColorAccessPath: 'lineStyle.normal.color',
+
 	    getInitialData: function (option, ecModel) {
-	        var data = new echarts.List(['x', 'y', 'z'], this);
-	        data.initData(option.data);
-	        return data;
+	        var lineData = new echarts.List(['value'], this);
+	        lineData.hasItemOption = false;
+	        lineData.initData(option.data, [], function (dataItem, dimName, dataIndex, dimIndex) {
+	            // dataItem is simply coords
+	            if (dataItem instanceof Array) {
+	                return NaN;
+	            }
+	            else {
+	                lineData.hasItemOption = true;
+	                var value = dataItem.value;
+	                if (value != null) {
+	                    return value instanceof Array ? value[dimIndex] : value;
+	                }
+	            }
+	        });
+
+	        return lineData;
 	    },
 
 	    defaultOption: {
@@ -26213,34 +26966,417 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        zlevel: 10,
 
-	        // Bar width and depth
-	        barSize: [1, 1],
+	        polyline: false,
 
-	        // Shading of globe
-	        // 'color', 'lambert'
-	        // TODO, 'realastic', 'toon'
-	        shading: 'color',
+	        effect: {
+	            symbol: 'circle',
+	            show: false,
+	            period: 4,
+	            symbolSize: 4
+	        },
 
-	        // If coordinateSystem is globe, value will be mapped
-	        // from minHeight to maxHeight
-	        minHeight: 0,
-	        maxHeight: 100,
+	        // Support source-over, lighter
+	        blendMode: 'source-over',
 
-	        itemStyle: {
+	        lineStyle: {
 	            normal: {
-	                opacity: 1
+	                // color
+	                // opacity
 	            }
 	        }
 	    }
 	});
 
 /***/ },
-/* 83 */
+/* 95 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	__webpack_require__(96);
+	__webpack_require__(97);
+
+	echarts.registerVisual(echarts.util.curry(
+	    __webpack_require__(99), 'scatterGL', 'circle', null
+	));
+
+	echarts.registerVisual(echarts.util.curry(
+	    __webpack_require__(83), 'scatterGL'
+	));
+
+	echarts.registerLayout(function (ecModel, api) {
+	    ecModel.eachSeriesByType('scatterGL', function (seriesModel) {
+	        var data = seriesModel.getData();
+	        var coordSys = seriesModel.coordinateSystem;
+
+	        if (coordSys) {
+	            var dims = coordSys.dimensions;
+	            var points = new Float32Array(data.count() * 2);
+	            if (dims.length === 1) {
+	                data.each(dims[0], function (x, idx) {
+	                    var pt = coordSys.dataToPoint(x);
+	                    points[idx * 2] = pt[0];
+	                    points[idx * 2 + 1] = pt[1];
+	                });
+	            }
+	            else if (dims.length === 2) {
+	                var item = [];
+	                data.each(dims, function (x, y, idx) {
+	                    item[0] = x;
+	                    item[1] = y;
+
+	                    var pt = coordSys.dataToPoint(item);
+	                    points[idx * 2] = pt[0];
+	                    points[idx * 2 + 1] = pt[1];
+	                });
+	            }
+
+	            data.setLayout('points', points);
+	        }
+	    });
+	});
+
+/***/ },
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	echarts.extendSeriesModel({
+
+	    type: 'series.scatterGL',
+
+	    dependencies: ['grid', 'polar', 'geo', 'singleAxis'],
+
+	    getInitialData: function () {
+	        return echarts.helper.createList(this);
+	    },
+
+	    defaultOption: {
+	        coordinateSystem: 'cartesian2d',
+	        zlevel: 10,
+
+	        // Cartesian coordinate system
+	        // xAxisIndex: 0,
+	        // yAxisIndex: 0,
+
+	        // Polar coordinate system
+	        // polarIndex: 0,
+
+	        // Geo coordinate system
+	        // geoIndex: 0,
+
+	        symbol: 'circle',
+	        symbolSize: 10,          // 图形大小，半宽（半径）参数，当图形为方向或菱形则总宽度为symbolSize * 2
+	        // symbolRotate: null,  // 图形旋转控制
+
+	        // Support source-over, lighter
+	        blendMode: 'source-over',
+
+	        itemStyle: {
+	            normal: {
+	                opacity: 0.8
+	                // color: 各异
+	            }
+	        }
+
+	    }
+	});
+
+/***/ },
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 	var graphicGL = __webpack_require__(39);
-	var BarsGeometry = __webpack_require__(84);
+	var viewGL = __webpack_require__(77);
+	var spriteUtil = __webpack_require__(90);
+
+	graphicGL.Shader.import(__webpack_require__(98));
+
+	echarts.extendChartView({
+
+	    type: 'scatterGL',
+
+	    init: function (ecModel, api) {
+
+	        this.groupGL = new graphicGL.Node();
+	        this.viewGL = new viewGL('orthographic');
+
+	        this.viewGL.add(this.groupGL);
+
+	        var mesh = new graphicGL.Mesh({
+	            material: new graphicGL.Material({
+	                shader: new graphicGL.Shader({
+	                    vertex: graphicGL.Shader.source('ecgl.points.vertex'),
+	                    fragment: graphicGL.Shader.source('ecgl.points.fragment')
+	                }),
+	                transparent: true,
+	                depthMask: false
+	            }),
+	            geometry: new graphicGL.Geometry({
+	                dynamic: true
+	            }),
+	            mode: graphicGL.Mesh.POINTS
+	        });
+	        mesh.geometry.createAttribute('color', 'float', 4, 'COLOR');
+	        mesh.geometry.createAttribute('size', 'float', 1);
+	        mesh.material.shader.enableTexture('sprite');
+
+	        this.groupGL.add(mesh);
+
+	        this._pointsMesh = mesh;
+
+	        this._symbolTexture = new graphicGL.Texture2D({
+	            image: document.createElement('canvas')
+	        });
+	        mesh.material.set('sprite', this._symbolTexture);
+	    },
+
+	    render: function (seriesModel, ecModel, api) {
+	        this.groupGL.add(this._pointsMesh);
+
+	        this._updateCamera(api.getWidth(), api.getHeight());
+
+	        var data = seriesModel.getData();
+	        var geometry = this._pointsMesh.geometry;
+
+	        var hasItemColor = false;
+	        var hasItemOpacity = false;
+	        for (var i = 0; i < data.count(); i++) {
+	            if (!hasItemColor && data.getItemVisual(i, 'color', true) != null) {
+	                hasItemColor = true;
+	            }
+	            if (!hasItemColor && data.getItemVisual(i, 'opacity', true) != null) {
+	                hasItemOpacity = true;
+	            }
+	        }
+	        var vertexColor = hasItemColor || hasItemOpacity;
+	        this._pointsMesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
+
+	        this._pointsMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
+	            ? graphicGL.additiveBlend : null;
+
+	        var symbolInfo = this._getSymbolInfo(data);
+	        var dpr = api.getDevicePixelRatio();
+	        // TODO arc is not so accurate in chrome, scale it a bit ?.
+	        symbolInfo.maxSize *= dpr;
+	        var symbolSize = [];
+	        if (symbolInfo.aspect > 1) {
+	            symbolSize[0] = symbolInfo.maxSize;
+	            symbolSize[1] = symbolInfo.maxSize / symbolInfo.aspect;
+	        }
+	        else {
+	            symbolSize[1] = symbolInfo.maxSize;
+	            symbolSize[0] = symbolInfo.maxSize * symbolInfo.aspect;
+	        }
+
+	        // TODO image symbol
+	        // TODO, shadowOffsetX, shadowOffsetY may not work well.
+	        var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
+	        var margin = spriteUtil.getMarginByStyle(itemStyle);
+	        if (hasItemColor) {
+	            itemStyle.fill = '#ffffff';
+	            if (margin.right || margin.left || margin.bottom || margin.top) {
+	                if (true) {
+	                    console.warn('shadowColor, borderColor will be ignored if data has different colors');
+	                }
+	                ['stroke', 'shadowColor'].forEach(function (key) {
+	                    itemStyle[key] = '#ffffff';
+	                });
+	            }
+	        }
+	        spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, itemStyle, this._symbolTexture.image);
+	        document.body.appendChild(this._symbolTexture.image);
+
+	        var diffX = (margin.right - margin.left) / 2;
+	        var diffY = (margin.bottom - margin.top) / 2;
+	        var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
+
+	        var points = data.getLayout('points');
+	        var attributes = geometry.attributes;
+	        attributes.position.init(data.count());
+	        attributes.size.init(data.count());
+	        if (vertexColor) {
+	            attributes.color.init(data.count());
+	        }
+	        var positionArr = attributes.position.value;
+	        var colorArr = attributes.color.value;
+
+	        var rgbaArr = [];
+	        for (var i = 0; i < data.count(); i++) {
+	            var i4 = i * 4;
+	            var i3 = i * 3;
+	            var i2 = i * 2;
+	            positionArr[i3] = points[i2] + diffX;
+	            positionArr[i3 + 1] = points[i2 + 1] + diffY;
+	            positionArr[i3 + 2] = -10;
+
+	            if (vertexColor) {
+	                if (!hasItemColor && hasItemOpacity) {
+	                    colorArr[i4++] = colorArr[i4++] = colorArr[i4++] = 1;
+	                    colorArr[i4] = data.getItemVisual(i, 'opacity');
+	                }
+	                else {
+	                    var color = data.getItemVisual(i, 'color');
+	                    var opacity = data.getItemVisual(i, 'opacity');
+	                    echarts.color.parse(color, rgbaArr);
+	                    rgbaArr[0] /= 255; rgbaArr[1] /= 255; rgbaArr[2] /= 255;
+	                    rgbaArr[3] *= opacity;
+	                    attributes.color.set(i, rgbaArr);
+	                }
+	            }
+
+	            var symbolSize = data.getItemVisual(i, 'symbolSize');
+
+	            attributes.size.value[i] = ((symbolSize instanceof Array
+	                ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize) + diffSize) * dpr;
+	        }
+
+	        geometry.dirty();
+	    },
+
+	    updateLayout: function (seriesModel, ecModel, api) {
+	        var data = seriesModel.getData();
+	        var positionArr = this._pointsMesh.geometry.attributes.position.value;
+	        var points = data.getLayout('points');
+	        for (var i = 0; i < points.length / 2; i++) {
+	            var i3 = i * 3;
+	            var i2 = i * 2;
+	            positionArr[i3] = points[i2];
+	            positionArr[i3 + 1] = points[i2 + 1];
+	        }
+	        this._pointsMesh.geometry.dirty();
+	    },
+
+	    _getSymbolInfo: function (data) {
+	        var symbolAspect = 1;
+	        var differentSymbolAspect = false;
+	        var symbolType = data.getItemVisual(0, 'symbol') || 'circle';
+	        var differentSymbolType = false;
+	        var maxSymbolSize = 0;
+
+	        data.each(function (idx) {
+	            var symbolSize = data.getItemVisual(idx, 'symbolSize');
+	            var currentSymbolType = data.getItemVisual(idx, 'symbol');
+	            var currentSymbolAspect;
+	            if (!(symbolSize instanceof Array)) {
+	                currentSymbolAspect = 1;
+	                maxSymbolSize = Math.max(symbolSize, maxSymbolSize);
+	            }
+	            else {
+	                currentSymbolAspect = symbolSize[0] / symbolSize[1];
+	                maxSymbolSize = Math.max(Math.max(symbolSize[0], symbolSize[1]), maxSymbolSize);
+	            }
+	            if (true) {
+	                if (Math.abs(currentSymbolAspect - symbolAspect) > 0.05) {
+	                    differentSymbolAspect = true;
+	                }
+	                if (currentSymbolType !== symbolType) {
+	                    differentSymbolType = true;
+	                }
+	            }
+	            symbolType = currentSymbolType;
+	            symbolAspect = currentSymbolAspect;
+	        });
+
+	        if (true) {
+	            if (differentSymbolAspect) {
+	                console.warn('Different symbol width / height ratio will be ignored.');
+	            }
+	            if (differentSymbolType) {
+	                console.warn('Different symbol type will be ignored.');
+	            }
+	        }
+
+	        return {
+	            maxSize: maxSymbolSize,
+	            type: symbolType,
+	            aspect: symbolAspect
+	        };
+	    },
+
+	    _updateCamera: function (width, height) {
+	        this.viewGL.setViewport(0, 0, width, height);
+	        var camera = this.viewGL.camera;
+	        camera.left = camera.top = 0;
+	        camera.bottom = height;
+	        camera.right = width;
+	        camera.near = 0;
+	        camera.far = 100;
+	    },
+
+	    dispose: function () {
+	        this.groupGL.removeAll();
+	    },
+
+	    remove: function () {
+	        this.groupGL.removeAll();
+	    }
+	});
+
+/***/ },
+/* 98 */
+/***/ function(module, exports) {
+
+	module.exports = "@export ecgl.points.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.points.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = color;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end"
+
+/***/ },
+/* 99 */
+/***/ function(module, exports) {
+
+	
+
+	    module.exports = function (seriesType, defaultSymbolType, legendSymbol, ecModel, api) {
+
+	        // Encoding visual for all series include which is filtered for legend drawing
+	        ecModel.eachRawSeriesByType(seriesType, function (seriesModel) {
+	            var data = seriesModel.getData();
+
+	            var symbolType = seriesModel.get('symbol') || defaultSymbolType;
+	            var symbolSize = seriesModel.get('symbolSize');
+
+	            data.setVisual({
+	                legendSymbol: legendSymbol || symbolType,
+	                symbol: symbolType,
+	                symbolSize: symbolSize
+	            });
+
+	            // Only visible series has each data be visual encoded
+	            if (!ecModel.isSeriesFiltered(seriesModel)) {
+	                if (typeof symbolSize === 'function') {
+	                    data.each(function (idx) {
+	                        var rawValue = seriesModel.getRawValue(idx);
+	                        // FIXME
+	                        var params = seriesModel.getDataParams(idx);
+	                        data.setItemVisual(idx, 'symbolSize', symbolSize(rawValue, params));
+	                    });
+	                }
+	                data.each(function (idx) {
+	                    var itemModel = data.getItemModel(idx);
+	                    var itemSymbolType = itemModel.getShallow('symbol', true);
+	                    var itemSymbolSize = itemModel.getShallow('symbolSize', true);
+	                    // If has item symbol
+	                    if (itemSymbolType != null) {
+	                        data.setItemVisual(idx, 'symbol', itemSymbolType);
+	                    }
+	                    if (itemSymbolSize != null) {
+	                        // PENDING Transform symbolSize ?
+	                        data.setItemVisual(idx, 'symbolSize', itemSymbolSize);
+	                    }
+	                });
+	            }
+	        });
+	    };
+
+
+/***/ },
+/* 100 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+	var graphicGL = __webpack_require__(39);
+	var BarsGeometry = __webpack_require__(101);
 
 	graphicGL.Shader.import(__webpack_require__(66));
 	graphicGL.Shader.import(__webpack_require__(67));
@@ -26406,7 +27542,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 84 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -26611,449 +27747,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = BarsGeometry;
 
 /***/ },
-/* 85 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	function globeLayout(seriesModel, coordSys) {
-	    var data = seriesModel.getData();
-	    var extent = data.getDataExtent('z', true);
-	    var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
-	    var isZeroExtent = Math.abs(extent[1] - extent[0]) < 1e-10;
-	    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
-	        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, extent, heightExtent);
-	        var start = coordSys.dataToPoint([lng, lat, 0]);
-	        var end = coordSys.dataToPoint([lng, lat, height]);
-	        data.setItemLayout(idx, [start, end]);
-	    });
-	}
-	echarts.registerLayout(function (ecModel, api) {
-	    ecModel.eachSeriesByType('bar3D', function (seriesModel) {
-	        var coordSys = seriesModel.coordinateSystem;
-	        if (coordSys.type === 'globe') {
-	            globeLayout(seriesModel, coordSys);
-	        }
-	    });
-	});
+	module.exports = echarts.extendSeriesModel({
 
-/***/ },
-/* 86 */
-/***/ function(module, exports) {
-
-	module.exports = function (seriesType, ecModel, api) {
-	    ecModel.eachSeriesByType(seriesType, function (seriesModel) {
-	        var data = seriesModel.getData();
-	        var opacityAccessPath = seriesModel.visualColorAccessPath.split('.');
-	        opacityAccessPath[opacityAccessPath.length - 1] ='opacity';
-
-	        var opacity = seriesModel.get(opacityAccessPath);
-
-	        data.setVisual('opacity', opacity == null ? 1 : opacity);
-
-	        if (data.hasItemOption) {
-	            data.each(function (idx) {
-	                var itemModel = data.getItemModel(idx);
-	                var opacity = itemModel.get(opacityAccessPath);
-	                if (opacity != null) {
-	                    data.setItemVisual(idx, opacity);
-	                }
-	            });
-	        }
-	    });
-	};
-
-/***/ },
-/* 87 */
-/***/ function(module, exports) {
-
-	
-
-/***/ },
-/* 88 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-
-	__webpack_require__(89);
-
-	__webpack_require__(90);
-	__webpack_require__(93);
-
-	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(86), 'lines3D'
-	));
-
-
-/***/ },
-/* 89 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-	var glmatrix = __webpack_require__(15);
-	var vec3 = glmatrix.vec3;
-
-	function layoutGlobe(seriesModel, coordSys) {
-	    var data = seriesModel.getData();
-	    var isPolyline = seriesModel.get('polyline');
-
-	    var normal = vec3.create();
-	    var tangent = vec3.create();
-	    var bitangent = vec3.create();
-	    var halfVector = vec3.create();
-
-	    data.setLayout('lineType', isPolyline ? 'polyline' : 'cubicBezier');
-
-	    data.each(function (idx) {
-	        var itemModel = data.getItemModel(idx);
-	        var coords = (itemModel.option instanceof Array) ?
-	            itemModel.option : itemModel.getShallow('coords', true);
-
-	        if (!(coords instanceof Array && coords.length > 0 && coords[0] instanceof Array)) {
-	            throw new Error('Invalid coords ' + JSON.stringify(coords) + '. Lines must have 2d coords array in data item.');
-	        }
-
-	        var pts = [];
-	        if (isPolyline) {
-
-	        }
-	        else {
-	            var p0 = pts[0] = vec3.create();
-	            var p1 = pts[1] = vec3.create();
-	            var p2 = pts[2] = vec3.create();
-	            var p3 = pts[3] = vec3.create();
-	            coordSys.dataToPoint(coords[0], p0);
-	            coordSys.dataToPoint(coords[1], p3);
-	            // Get p1
-	            vec3.normalize(normal, p0);
-	            // TODO p0-p3 is parallel with normal
-	            vec3.sub(tangent, p3, p0);
-	            vec3.normalize(tangent, tangent);
-	            vec3.cross(bitangent, tangent, normal);
-	            vec3.normalize(bitangent, bitangent);
-	            vec3.cross(tangent, normal, bitangent);
-	            // p1 is half vector of p0 and tangent on p0
-	            vec3.add(p1, normal, tangent);
-	            vec3.normalize(p1, p1);
-
-	            // Get p2
-	            vec3.normalize(normal, p3);
-	            vec3.sub(tangent, p0, p3);
-	            vec3.normalize(tangent, tangent);
-	            vec3.cross(bitangent, tangent, normal);
-	            vec3.normalize(bitangent, bitangent);
-	            vec3.cross(tangent, normal, bitangent);
-	            // p2 is half vector of p3 and tangent on p3
-	            vec3.add(p2, normal, tangent);
-	            vec3.normalize(p2, p2);
-
-	            // Project distance of p0 on halfVector
-	            vec3.add(halfVector, p0, p3);
-	            vec3.normalize(halfVector, halfVector);
-	            var projDist = vec3.dot(p0, halfVector);
-	            // Angle of halfVector and p1
-	            var cosTheta = vec3.dot(halfVector, p1);
-	            var len = (coordSys.radius - projDist) / cosTheta * 2;
-
-	            vec3.scaleAndAdd(p1, p0, p1, len);
-	            vec3.scaleAndAdd(p2, p3, p2, len);
-	        }
-
-	        data.setItemLayout(idx, pts);
-	    });
-	}
-
-	echarts.registerLayout(function (ecModel, api) {
-	    ecModel.eachSeriesByType('lines3D', function (seriesModel) {
-	        var coordSys = seriesModel.coordinateSystem;
-	        if (coordSys.type === 'globe') {
-	            layoutGlobe(seriesModel, coordSys);
-	        }
-	    });
-	});
-
-/***/ },
-/* 90 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(39);
-	var LinesGeometry = __webpack_require__(91);
-
-	graphicGL.Shader.import(__webpack_require__(92));
-
-	module.exports = echarts.extendChartView({
-
-	    type: 'lines3D',
-
-	    init: function (ecModel, api) {
-	        this.groupGL = new graphicGL.Node();
-
-	        // TODO Windows chrome not support lineWidth > 1
-	        this._linesMesh = new graphicGL.Mesh({
-	            material: new graphicGL.Material({
-	                shader: new graphicGL.Shader({
-	                    vertex: graphicGL.Shader.source('ecgl.lines.vertex'),
-	                    fragment: graphicGL.Shader.source('ecgl.lines.fragment')
-	                }),
-	                transparent: true
-	            }),
-	            mode: graphicGL.Mesh.LINES,
-	            geometry: new LinesGeometry({
-	                dynamic: true
-	            }),
-	            ignorePicking: true
-	        });
-	    },
-
-	    render: function (seriesModel, ecModel, api) {
-
-	        this.groupGL.add(this._linesMesh);
-
-	        var coordSys = seriesModel.coordinateSystem;
-	        var data = seriesModel.getData();
-
-	        if (coordSys.type === 'globe') {
-	            var viewGL = coordSys.viewGL;
-	            viewGL.add(this.groupGL);
-
-	            if (data.getLayout('lineType') === 'cubicBezier') {
-	                this._generateBezierCurvesOnGlobe(seriesModel);
-	            }
-	        }
-
-	        this._linesMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
-	            ? graphicGL.additiveBlend : null;
-	    },
-
-	    _generateBezierCurvesOnGlobe: function (seriesModel) {
-	        var data = seriesModel.getData();
-	        var coordSys = seriesModel.coordinateSystem;
-	        var geometry = this._linesMesh.geometry;
-	        geometry.segmentScale = coordSys.radius / 20;
-
-	        var nVertex = 0;
-	        data.each(function (idx) {
-	            var pts = data.getItemLayout(idx);
-	            nVertex += geometry.getCubicCurveVertexCount(pts[0], pts[1], pts[2], pts[3]);
-	        });
-	        geometry.setVertexCount(nVertex);
-	        geometry.resetOffset();
-
-	        var colorArr = [];
-	        data.each(function (idx) {
-	            var pts = data.getItemLayout(idx);
-	            var color = data.getItemVisual(idx, 'color');
-	            var opacity = data.getItemVisual(idx, 'opacity');
-	            if (opacity == null) {
-	                opacity = 1;
-	            }
-
-	            colorArr = echarts.color.parse(color, colorArr);
-	            colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
-	            colorArr[3] *= opacity;
-
-	            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr);
-	        });
-
-	        geometry.dirty();
-	    },
-
-	    remove: function () {
-	        this.groupGL.removeAll();
-	    },
-
-	    dispose: function () {
-	        this.groupGL.removeAll();
-	    }
-	});
-
-/***/ },
-/* 91 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Geometry collecting straight line, cubic curve data
-	 * @module echarts-gl/chart/lines3D/LinesGeometry
-	 * @author Yi Shen(http://github.com/pissang)
-	 */
-
-	var StaticGeometry = __webpack_require__(32);
-	var vec3 = __webpack_require__(15).vec3;
-
-	// var CURVE_RECURSION_LIMIT = 8;
-	// var CURVE_COLLINEAR_EPSILON = 40;
-
-	/**
-	 * @constructor
-	 * @alias module:echarts-gl/chart/lines3D/LinesGeometry
-	 * @extends qtek.StaticGeometry
-	 */
-
-	var LinesGeometry = StaticGeometry.extend(function () {
-	    return {
-
-	        segmentScale: 1,
-
-	        attributes: {
-	            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
-	            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
-	        }
-	    };
-	},
-	/** @lends module: echarts-gl/chart/lines3D/LinesGeometry.prototype */
-	{
-
-	    /**
-	     * Reset offset
-	     */
-	    resetOffset: function () {
-	        this._offset = 0;
-	    },
-
-	    /**
-	     * @param {number} nVertex
-	     */
-	    setVertexCount: function (nVertex) {
-	        if (this.vertexCount !== nVertex) {
-	            this.attributes.position.init(nVertex);
-	            this.attributes.color.init(nVertex);
-
-	            this._offset = 0;
-	        }
-	    },
-
-	    /**
-	     * Get vertex count of cubic curve
-	     * @param {Array.<number>} p0
-	     * @param {Array.<number>} p1
-	     * @param {Array.<number>} p2
-	     * @param {Array.<number>} p3
-	     * @return number
-	     */
-	    getCubicCurveVertexCount: function (p0, p1, p2, p3) {
-	        var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
-	        var step = 1 / (len + 1) * this.segmentScale;
-	        return Math.ceil(1 / step) * 2 + 1;
-	    },
-	    /**
-	     * Add a cubic curve
-	     * @param {Array.<number>} p0
-	     * @param {Array.<number>} p1
-	     * @param {Array.<number>} p2
-	     * @param {Array.<number>} p3
-	     * @param {Array.<number>} color
-	     */
-	    addCubicCurve: function (p0, p1, p2, p3, color) {
-	        // incremental interpolation
-	        // http://antigrain.com/research/bezier_interpolation/index.html#PAGE_BEZIER_INTERPOLATION
-	        var x0 = p0[0], y0 = p0[1], z0 = p0[2];
-	        var x1 = p1[0], y1 = p1[1], z1 = p1[2];
-	        var x2 = p2[0], y2 = p2[1], z2 = p2[2];
-	        var x3 = p3[0], y3 = p3[1], z3 = p3[2];
-
-	        var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
-	        var step = 1 / (len + 1) * this.segmentScale;
-
-	        var step2 = step * step;
-	        var step3 = step2 * step;
-
-	        var pre1 = 3.0 * step;
-	        var pre2 = 3.0 * step2;
-	        var pre4 = 6.0 * step2;
-	        var pre5 = 6.0 * step3;
-
-	        var tmp1x = x0 - x1 * 2.0 + x2;
-	        var tmp1y = y0 - y1 * 2.0 + y2;
-	        var tmp1z = z0 - z1 * 2.0 + z2;
-
-	        var tmp2x = (x1 - x2) * 3.0 - x0 + x3;
-	        var tmp2y = (y1 - y2) * 3.0 - y0 + y3;
-	        var tmp2z = (z1 - z2) * 3.0 - z0 + z3;
-
-	        var fx = x0;
-	        var fy = y0;
-	        var fz = z0;
-
-	        var dfx = (x1 - x0) * pre1 + tmp1x * pre2 + tmp2x * step3;
-	        var dfy = (y1 - y0) * pre1 + tmp1y * pre2 + tmp2y * step3;
-	        var dfz = (z1 - z0) * pre1 + tmp1z * pre2 + tmp2z * step3;
-
-	        var ddfx = tmp1x * pre4 + tmp2x * pre5;
-	        var ddfy = tmp1y * pre4 + tmp2y * pre5;
-	        var ddfz = tmp1z * pre4 + tmp2z * pre5;
-
-	        var dddfx = tmp2x * pre5;
-	        var dddfy = tmp2y * pre5;
-	        var dddfz = tmp2z * pre5;
-
-	        var positionAttr = this.attributes.position;
-	        var colorAttr = this.attributes.color;
-	        var firstSeg = true;
-	        var t = 0;
-	        var posTmp = [];
-	        while (t < 1 + step) {
-	            if (!firstSeg) {
-	                positionAttr.copy(this._offset, this._offset - 1);
-	                colorAttr.copy(this._offset, this._offset - 1);
-	                this._offset ++;
-	            }
-
-	            firstSeg = false;
-
-	            colorAttr.set(this._offset, color);
-	            posTmp[0] = fx; posTmp[1] = fy; posTmp[2] = fz;
-	            positionAttr.set(this._offset, posTmp);
-	            this._offset++;
-
-	            fx += dfx; fy += dfy; fz += dfz;
-	            dfx += ddfx; dfy += ddfy; dfz += ddfz;
-	            ddfx += dddfx; ddfy += dddfy; ddfz += dddfz;
-	            t += step;
-	        }
-	    }
-	});
-
-	module.exports = LinesGeometry;
-
-/***/ },
-/* 92 */
-/***/ function(module, exports) {
-
-	module.exports = "@export ecgl.lines.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha) * v_Color;\n}\n@end"
-
-/***/ },
-/* 93 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-
-	echarts.extendSeriesModel({
-
-	    type: 'series.lines3D',
+	    type: 'series.bar3D',
 
 	    dependencies: ['globe'],
 
-	    visualColorAccessPath: 'lineStyle.normal.color',
-
 	    getInitialData: function (option, ecModel) {
-	        var lineData = new echarts.List(['value'], this);
-	        lineData.hasItemOption = false;
-	        lineData.initData(option.data, [], function (dataItem, dimName, dataIndex, dimIndex) {
-	            // dataItem is simply coords
-	            if (dataItem instanceof Array) {
-	                return NaN;
-	            }
-	            else {
-	                lineData.hasItemOption = true;
-	                var value = dataItem.value;
-	                if (value != null) {
-	                    return value instanceof Array ? value[dimIndex] : value;
-	                }
-	            }
-	        });
-
-	        return lineData;
+	        var data = new echarts.List(['x', 'y', 'z'], this);
+	        data.initData(option.data);
+	        return data;
 	    },
 
 	    defaultOption: {
@@ -27064,507 +27772,26 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        zlevel: 10,
 
-	        polyline: false,
+	        // Bar width and depth
+	        barSize: [1, 1],
 
-	        effect: {
-	            show: false,
-	            period: 4
-	        },
+	        // Shading of globe
+	        // 'color', 'lambert'
+	        // TODO, 'realastic', 'toon'
+	        shading: 'color',
 
-	        // Support source-over, lighter
-	        blendMode: 'source-over',
-
-	        lineStyle: {
-	            normal: {
-	                // color
-	                // opacity
-	            }
-	        }
-	    }
-	});
-
-/***/ },
-/* 94 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-
-	__webpack_require__(95);
-	__webpack_require__(96);
-
-	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(99), 'scatterGL', 'circle', null
-	));
-
-	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(86), 'scatterGL'
-	));
-
-	echarts.registerLayout(function (ecModel, api) {
-	    ecModel.eachSeriesByType('scatterGL', function (seriesModel) {
-	        var data = seriesModel.getData();
-	        var coordSys = seriesModel.coordinateSystem;
-
-	        if (coordSys) {
-	            var dims = coordSys.dimensions;
-	            var points = new Float32Array(data.count() * 2);
-	            if (dims.length === 1) {
-	                data.each(dims[0], function (x, idx) {
-	                    var pt = coordSys.dataToPoint(x);
-	                    points[idx * 2] = pt[0];
-	                    points[idx * 2 + 1] = pt[1];
-	                });
-	            }
-	            else if (dims.length === 2) {
-	                var item = [];
-	                data.each(dims, function (x, y, idx) {
-	                    item[0] = x;
-	                    item[1] = y;
-
-	                    var pt = coordSys.dataToPoint(item);
-	                    points[idx * 2] = pt[0];
-	                    points[idx * 2 + 1] = pt[1];
-	                });
-	            }
-
-	            data.setLayout('points', points);
-	        }
-	    });
-	});
-
-/***/ },
-/* 95 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-
-	echarts.extendSeriesModel({
-
-	    type: 'series.scatterGL',
-
-	    dependencies: ['grid', 'polar', 'geo', 'singleAxis'],
-
-	    getInitialData: function () {
-	        return echarts.helper.createList(this);
-	    },
-
-	    defaultOption: {
-	        coordinateSystem: 'cartesian2d',
-	        zlevel: 10,
-
-	        // Cartesian coordinate system
-	        // xAxisIndex: 0,
-	        // yAxisIndex: 0,
-
-	        // Polar coordinate system
-	        // polarIndex: 0,
-
-	        // Geo coordinate system
-	        // geoIndex: 0,
-
-	        symbol: 'circle',
-	        symbolSize: 10,          // 图形大小，半宽（半径）参数，当图形为方向或菱形则总宽度为symbolSize * 2
-	        // symbolRotate: null,  // 图形旋转控制
-
-	        // Support source-over, lighter
-	        blendMode: 'source-over',
+	        // If coordinateSystem is globe, value will be mapped
+	        // from minHeight to maxHeight
+	        minHeight: 0,
+	        maxHeight: 100,
 
 	        itemStyle: {
 	            normal: {
-	                opacity: 0.8
-	                // color: 各异
+	                opacity: 1
 	            }
 	        }
-
 	    }
 	});
-
-/***/ },
-/* 96 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(39);
-	var viewGL = __webpack_require__(77);
-	var spriteUtil = __webpack_require__(97);
-
-	graphicGL.Shader.import(__webpack_require__(98));
-
-	echarts.extendChartView({
-
-	    type: 'scatterGL',
-
-	    init: function (ecModel, api) {
-
-	        this.groupGL = new graphicGL.Node();
-	        this.viewGL = new viewGL('orthographic');
-
-	        this.viewGL.add(this.groupGL);
-
-	        var mesh = new graphicGL.Mesh({
-	            material: new graphicGL.Material({
-	                shader: new graphicGL.Shader({
-	                    vertex: graphicGL.Shader.source('ecgl.points.vertex'),
-	                    fragment: graphicGL.Shader.source('ecgl.points.fragment')
-	                }),
-	                transparent: true,
-	                depthMask: false
-	            }),
-	            geometry: new graphicGL.Geometry({
-	                dynamic: true
-	            }),
-	            mode: graphicGL.Mesh.POINTS
-	        });
-	        mesh.geometry.createAttribute('color', 'float', 4, 'COLOR');
-	        mesh.geometry.createAttribute('size', 'float', 1);
-	        mesh.material.shader.enableTexture('sprite');
-
-	        this.groupGL.add(mesh);
-
-	        this._pointsMesh = mesh;
-
-	        this._symbolTexture = new graphicGL.Texture2D({
-	            image: document.createElement('canvas')
-	        });
-	        mesh.material.set('sprite', this._symbolTexture);
-	    },
-
-	    render: function (seriesModel, ecModel, api) {
-	        this.groupGL.add(this._pointsMesh);
-
-	        this._updateCamera(api.getWidth(), api.getHeight());
-
-	        var data = seriesModel.getData();
-	        var geometry = this._pointsMesh.geometry;
-
-	        var hasItemColor = false;
-	        var hasItemOpacity = false;
-	        for (var i = 0; i < data.count(); i++) {
-	            if (!hasItemColor && data.getItemVisual(i, 'color', true) != null) {
-	                hasItemColor = true;
-	            }
-	            if (!hasItemColor && data.getItemVisual(i, 'opacity', true) != null) {
-	                hasItemOpacity = true;
-	            }
-	        }
-	        var vertexColor = hasItemColor || hasItemOpacity;
-	        this._pointsMesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
-
-	        this._pointsMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
-	            ? graphicGL.additiveBlend : null;
-
-	        var symbolInfo = this._getSymbolInfo(data);
-	        var dpr = api.getZr().painter.dpr;
-	        // TODO arc is not so accurate in chrome, scale it a bit ?.
-	        symbolInfo.maxSize *= dpr;
-	        var symbolSize = [];
-	        if (symbolInfo.aspect > 1) {
-	            symbolSize[0] = symbolInfo.maxSize;
-	            symbolSize[1] = symbolInfo.maxSize / symbolInfo.aspect;
-	        }
-	        else {
-	            symbolSize[1] = symbolInfo.maxSize;
-	            symbolSize[0] = symbolInfo.maxSize * symbolInfo.aspect;
-	        }
-
-	        // TODO image symbol
-	        // TODO, shadowOffsetX, shadowOffsetY may not work well.
-	        var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
-	        var margin = spriteUtil.getMarginByStyle(itemStyle);
-	        if (hasItemColor) {
-	            itemStyle.fill = '#ffffff';
-	            if (margin.right || margin.left || margin.bottom || margin.top) {
-	                if (true) {
-	                    console.warn('shadowColor, borderColor will be ignored if data has different colors');
-	                }
-	                ['stroke', 'shadowColor'].forEach(function (key) {
-	                    itemStyle[key] = '#ffffff';
-	                });
-	            }
-	        }
-	        spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, itemStyle, this._symbolTexture.image);
-	        document.body.appendChild(this._symbolTexture.image);
-
-	        var diffX = (margin.right - margin.left) / 2;
-	        var diffY = (margin.bottom - margin.top) / 2;
-	        var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
-
-	        var points = data.getLayout('points');
-	        var attributes = geometry.attributes;
-	        attributes.position.init(data.count());
-	        attributes.size.init(data.count());
-	        if (vertexColor) {
-	            attributes.color.init(data.count());
-	        }
-	        var positionArr = attributes.position.value;
-	        var colorArr = attributes.color.value;
-
-	        var rgbaArr = [];
-	        for (var i = 0; i < data.count(); i++) {
-	            var i4 = i * 4;
-	            var i3 = i * 3;
-	            var i2 = i * 2;
-	            positionArr[i3] = points[i2] + diffX;
-	            positionArr[i3 + 1] = points[i2 + 1] + diffY;
-	            positionArr[i3 + 2] = -10;
-
-	            if (vertexColor) {
-	                if (!hasItemColor && hasItemOpacity) {
-	                    colorArr[i4++] = colorArr[i4++] = colorArr[i4++] = 1;
-	                    colorArr[i4] = data.getItemVisual(i, 'opacity');
-	                }
-	                else {
-	                    var color = data.getItemVisual(i, 'color');
-	                    var opacity = data.getItemVisual(i, 'opacity');
-	                    echarts.color.parse(color, rgbaArr);
-	                    rgbaArr[0] /= 255; rgbaArr[1] /= 255; rgbaArr[2] /= 255;
-	                    rgbaArr[3] *= opacity;
-	                    attributes.color.set(i, rgbaArr);
-	                }
-	            }
-
-	            var symbolSize = data.getItemVisual(i, 'symbolSize');
-
-	            attributes.size.value[i] = ((symbolSize instanceof Array
-	                ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize) + diffSize) * dpr;
-	        }
-
-	        geometry.dirty();
-	    },
-
-	    updateLayout: function (seriesModel, ecModel, api) {
-	        var data = seriesModel.getData();
-	        var positionArr = this._pointsMesh.geometry.attributes.position.value;
-	        var points = data.getLayout('points');
-	        for (var i = 0; i < points.length / 2; i++) {
-	            var i3 = i * 3;
-	            var i2 = i * 2;
-	            positionArr[i3] = points[i2];
-	            positionArr[i3 + 1] = points[i2 + 1];
-	        }
-	        this._pointsMesh.geometry.dirty();
-	    },
-
-	    _getSymbolInfo: function (data) {
-	        var symbolAspect = 1;
-	        var differentSymbolAspect = false;
-	        var symbolType = data.getItemVisual(0, 'symbol') || 'circle';
-	        var differentSymbolType = false;
-	        var maxSymbolSize = 0;
-
-	        data.each(function (idx) {
-	            var symbolSize = data.getItemVisual(idx, 'symbolSize');
-	            var currentSymbolType = data.getItemVisual(idx, 'symbol');
-	            var currentSymbolAspect;
-	            if (!(symbolSize instanceof Array)) {
-	                currentSymbolAspect = 1;
-	                maxSymbolSize = Math.max(symbolSize, maxSymbolSize);
-	            }
-	            else {
-	                currentSymbolAspect = symbolSize[0] / symbolSize[1];
-	                maxSymbolSize = Math.max(Math.max(symbolSize[0], symbolSize[1]), maxSymbolSize);
-	            }
-	            if (true) {
-	                if (Math.abs(currentSymbolAspect - symbolAspect) > 0.05) {
-	                    differentSymbolAspect = true;
-	                }
-	                if (currentSymbolType !== symbolType) {
-	                    differentSymbolType = true;
-	                }
-	            }
-	            symbolType = currentSymbolType;
-	            symbolAspect = currentSymbolAspect;
-	        });
-
-	        if (true) {
-	            if (differentSymbolAspect) {
-	                console.warn('Different symbol width / height ratio will be ignored.');
-	            }
-	            if (differentSymbolType) {
-	                console.warn('Different symbol type will be ignored.');
-	            }
-	        }
-
-	        return {
-	            maxSize: maxSymbolSize,
-	            type: symbolType,
-	            aspect: symbolAspect
-	        };
-	    },
-
-	    _updateCamera: function (width, height) {
-	        this.viewGL.setViewport(0, 0, width, height);
-	        var camera = this.viewGL.camera;
-	        camera.left = camera.top = 0;
-	        camera.bottom = height;
-	        camera.right = width;
-	        camera.near = 0;
-	        camera.far = 100;
-	    },
-
-	    dispose: function () {
-	        this.groupGL.removeAll();
-	    },
-
-	    remove: function () {
-	        this.groupGL.removeAll();
-	    }
-	});
-
-/***/ },
-/* 97 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-
-	function makeSprite(size, canvas, draw) {
-	    // http://simonsarris.com/blog/346-how-you-clear-your-canvas-matters
-	    // http://jsperf.com/canvasclear
-	    // Set width and height is fast
-	    // And use the exist canvas if possible
-	    // http://jsperf.com/create-canvas-vs-set-width-height/2
-	    var canvas = canvas || document.createElement('canvas');
-	    canvas.width = size;
-	    canvas.height = size;
-	    var ctx = canvas.getContext('2d');
-
-	    draw && draw(ctx);
-
-	    return canvas;
-	}
-
-	var spriteUtil = {
-
-	    getMarginByStyle: function (style) {
-	        var lineWidth = 0;
-	        if (style.stroke && style.stroke !== 'none') {
-	            lineWidth = style.lineWidth == null ? 1 : style.lineWidth;
-	        }
-	        var shadowBlurSize = style.shadowBlur || 0;
-	        var shadowOffsetX = style.shadowOffsetX || 0;
-	        var shadowOffsetY = style.shadowOffsetY || 0;
-
-	        var margin = {};
-	        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize);
-	        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize);
-	        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize);
-	        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize);
-
-	        return margin;
-	    },
-	    /**
-	     * @param {string} symbol
-	     * @param {number | Array.<number>} symbolSize
-	     */
-	    createSymbolSprite: function (symbol, symbolSize, style, canvas) {
-	        if (!echarts.util.isArray(symbolSize)) {
-	            symbolSize = [symbolSize, symbolSize];
-	        }
-	        var margin = spriteUtil.getMarginByStyle(style);
-	        var width = symbolSize[0] + margin.left + margin.right;
-	        var height = symbolSize[1] + margin.top + margin.bottom;
-	        var path = echarts.helper.createSymbol(symbol, 0, 0, symbolSize[0], symbolSize[1]);
-
-	        var size = Math.max(width, height);
-
-	        path.position = [margin.left, margin.top];
-	        if (width > height) {
-	            path.position[1] += (size - height) / 2;
-	        }
-	        else {
-	            path.position[0] += (size - width) / 2;
-	        }
-
-	        var rect = path.getBoundingRect();
-	        path.position[0] -= rect.x;
-	        path.position[1] -= rect.y;
-
-	        path.setStyle(style);
-	        path.update();
-
-	        return {
-	            image: makeSprite(size, canvas, function (ctx) {
-	                path.brush(ctx);
-	            }),
-	            margin: margin
-	        };
-	    },
-
-	    createSimpleSprite: function (size, canvas) {
-	        return makeSprite(size, canvas, function (ctx) {
-	            var halfSize = size / 2;
-	            ctx.beginPath();
-	            ctx.arc(halfSize, halfSize, 60, 0, Math.PI * 2, false) ;
-	            ctx.closePath();
-
-	            var gradient = ctx.createRadialGradient(
-	                halfSize, halfSize, 0, halfSize, halfSize, halfSize
-	            );
-	            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-	            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
-	            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-	            ctx.fillStyle = gradient;
-	            ctx.fill();
-	        });
-	    }
-	};
-
-	module.exports = spriteUtil;
-
-/***/ },
-/* 98 */
-/***/ function(module, exports) {
-
-	module.exports = "@export ecgl.points.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.points.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = color;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end"
-
-/***/ },
-/* 99 */
-/***/ function(module, exports) {
-
-	
-
-	    module.exports = function (seriesType, defaultSymbolType, legendSymbol, ecModel, api) {
-
-	        // Encoding visual for all series include which is filtered for legend drawing
-	        ecModel.eachRawSeriesByType(seriesType, function (seriesModel) {
-	            var data = seriesModel.getData();
-
-	            var symbolType = seriesModel.get('symbol') || defaultSymbolType;
-	            var symbolSize = seriesModel.get('symbolSize');
-
-	            data.setVisual({
-	                legendSymbol: legendSymbol || symbolType,
-	                symbol: symbolType,
-	                symbolSize: symbolSize
-	            });
-
-	            // Only visible series has each data be visual encoded
-	            if (!ecModel.isSeriesFiltered(seriesModel)) {
-	                if (typeof symbolSize === 'function') {
-	                    data.each(function (idx) {
-	                        var rawValue = seriesModel.getRawValue(idx);
-	                        // FIXME
-	                        var params = seriesModel.getDataParams(idx);
-	                        data.setItemVisual(idx, 'symbolSize', symbolSize(rawValue, params));
-	                    });
-	                }
-	                data.each(function (idx) {
-	                    var itemModel = data.getItemModel(idx);
-	                    var itemSymbolType = itemModel.getShallow('symbol', true);
-	                    var itemSymbolSize = itemModel.getShallow('symbolSize', true);
-	                    // If has item symbol
-	                    if (itemSymbolType != null) {
-	                        data.setItemVisual(idx, 'symbol', itemSymbolType);
-	                    }
-	                    if (itemSymbolSize != null) {
-	                        // PENDING Transform symbolSize ?
-	                        data.setItemVisual(idx, 'symbolSize', itemSymbolSize);
-	                    }
-	                });
-	            }
-	        });
-	    };
-
 
 /***/ }
 /******/ ])

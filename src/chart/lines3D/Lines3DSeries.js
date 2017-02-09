@@ -39,8 +39,10 @@ echarts.extendSeriesModel({
         polyline: false,
 
         effect: {
+            symbol: 'circle',
             show: false,
-            period: 4
+            period: 4,
+            symbolSize: 4
         },
 
         // Support source-over, lighter
