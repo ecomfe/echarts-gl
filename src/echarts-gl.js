@@ -76,6 +76,21 @@ EChartsGL.prototype.update = function (ecModel, api) {
         var layerGL = layers[zlevel];
         if (!layerGL) {
             layerGL = layers[zlevel] = new LayerGL('gl-' + zlevel, zr);
+
+            if (zr.painter.isSingleCanvas()) {
+                layerGL.virtual = true;
+                // If container is canvas, use image to represent LayerGL
+                // FIXME Performance
+                var img = new echarts.graphic.Image({
+                    z: 1e4,
+                    style: {
+                        image: layerGL.renderer.canvas
+                    }
+                });
+
+                zr.add(img);
+            }
+
             zr.painter.insertLayer(zlevel, layerGL);
         }
 

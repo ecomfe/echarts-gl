@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>globe - echarts-gl</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <style>
+            #viewport {
+                position: absolute;
+            }
+        </style>
+        <div id="main">
+            <canvas id="viewport"></canvas>
+        </div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('viewport'), null, {
+                width: document.getElementById('main').offsetWidth,
+                height: document.getElementById('main').offsetHeight
+            });
+
+            // http://visibleearth.nasa.gov/view_cat.php?categoryID=1484
+            chart.setOption({
+                globe: {
+                    baseTexture: 'asset/world.topo.bathy.200401.jpg',
+                    heightTexture: 'asset/elev_bump_4k.jpg',
+
+                    displacementScale: 0.1,
+
+                    shading: 'lambert',
+
+                    light: {
+                        ambientIntensity: 0.1,
+                        sunIntensity: 2
+                    }
+                },
+                series: []
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>
