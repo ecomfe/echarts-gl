@@ -1,5 +1,9 @@
 var echarts = require('echarts/lib/echarts');
 
+
+function defaultId(option, idx) {
+    option.id = option.id || option.name || (idx + '');
+}
 var GlobeModel = echarts.extendComponentModel({
 
     type: 'globe',
@@ -12,13 +16,9 @@ var GlobeModel = echarts.extendComponentModel({
         GlobeModel.superApply(this, 'init', arguments);
 
         echarts.util.each(this.option.layers, function (layerOption, idx) {
-            echarts.util.layer.merge(layerOption, this.defaultLayerOption);
-            this._defaultId(layerOption);
+            echarts.util.merge(layerOption, this.defaultLayerOption);
+            defaultId(layerOption);
         }, this);
-    },
-
-    _defaultId: function (option, idx) {
-        option.id = option.id || option.name || (idx + '');
     },
 
     mergeOption: function (option) {
@@ -29,6 +29,7 @@ var GlobeModel = echarts.extendComponentModel({
 
         function createLayerMap(layers) {
             return echarts.util.reduce(layers, function (obj, layerOption, idx) {
+                defaultId(layerOption, idx);
                 obj[layerOption.id] = layerOption;
                 return obj;
             }, {});
@@ -37,18 +38,22 @@ var GlobeModel = echarts.extendComponentModel({
             var newLayerMap = createLayerMap(option.layers);
             var oldLayerMap = createLayerMap(oldLayers);
             for (var id in newLayerMap) {
-                this._defaultId(newLayerMap[id], echarts.util.indexOf(option.layers, newLayerMap[id]));
                 if (oldLayerMap[id]) {
-                    echarts.util.merge(newLayerMap[id]);
+                    echarts.util.merge(oldLayerMap[id], newLayerMap[id], true);
                 }
                 else {
-                    oldLayers.push(option.layers);
+                    oldLayers.push(option.layers[id]);
                 }
             }
             // Copy back
             this.option.layers = oldLayers;
         }
         // else overwrite
+
+        // Set default
+        echarts.util.each(this.option.layers, function (layerOption) {
+            echarts.util.merge(layerOption, this.defaultLayerOption);
+        }, this);
     },
 
     defaultLayerOption: {
@@ -128,13 +133,14 @@ var GlobeModel = echarts.extendComponentModel({
         // {
         //     show: true,
         //     name: 'cloud',
-        //     type: 'overlay'
+        //     type: 'overlay',
+        //     shading: 'lambert',
         //     distance: 10,
         //     texture: ''
         // }
         // {
         //     type: 'blend',
-        //     blendTo: 'emission'
+        //     blendTo: 'albedo'
         //     blendType: 'source-over'
         // }
 

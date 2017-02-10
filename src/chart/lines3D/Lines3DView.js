@@ -15,10 +15,7 @@ module.exports = echarts.extendChartView({
         // TODO Windows chrome not support lineWidth > 1
         this._linesMesh = new graphicGL.Mesh({
             material: new graphicGL.Material({
-                shader: new graphicGL.Shader({
-                    vertex: graphicGL.Shader.source('ecgl.lines.vertex'),
-                    fragment: graphicGL.Shader.source('ecgl.lines.fragment')
-                }),
+                shader: graphicGL.createShader('ecgl.lines'),
                 transparent: true
             }),
             mode: graphicGL.Mesh.LINES,

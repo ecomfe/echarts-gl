@@ -18,10 +18,7 @@ echarts.extendChartView({
 
         var mesh = new graphicGL.Mesh({
             material: new graphicGL.Material({
-                shader: new graphicGL.Shader({
-                    vertex: graphicGL.Shader.source('ecgl.points.vertex'),
-                    fragment: graphicGL.Shader.source('ecgl.points.fragment')
-                }),
+                shader: graphicGL.createShader('ecgl.points'),
                 transparent: true,
                 depthMask: false
             }),

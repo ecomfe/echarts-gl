@@ -7,6 +7,7 @@ var StaticGeometry = require('qtek/lib/StaticGeometry');
 var echarts = require('echarts/lib/echarts');
 var Scene = require('qtek/lib/Scene');
 var LRUCache = require('zrender/lib/core/LRU');
+var textureUtil = require('qtek/lib/util/texture');
 
 var animatableMixin = require('./animatableMixin');
 echarts.util.extend(Node3D.prototype, animatableMixin);
@@ -68,15 +69,14 @@ Mesh.prototype.setTextureImage = function (textureName, imgValue, api, textureOp
 
     var zr = api.getZr();
 
+    // disableTexture first
+    material.shader.disableTexture(textureName);
     if (!isValueNone(imgValue)) {
         graphicGL.loadTexture(imgValue, api, textureOpts, function (texture) {
             material.shader.enableTexture(textureName);
             material.set(textureName, texture);
             zr && zr.refresh();
         });
-    }
-    else {
-        material.shader.disableTexture(textureName);
     }
 
     return material.get(textureName);
@@ -89,6 +89,21 @@ graphicGL.Node = Node3D;
 graphicGL.Mesh = Mesh;
 
 graphicGL.Shader = Shader;
+
+graphicGL.createShader = function (prefix) {
+    var vertexShaderStr = Shader.source(prefix + '.vertex');
+    var fragmentShaderStr = Shader.source(prefix + '.fragment');
+    if (!vertexShaderStr) {
+        console.error('Vertex shader of \'%s\' not exits', prefix);
+    }
+    if (!fragmentShaderStr) {
+        console.error('Fragment shader of \'%s\' not exits', prefix);
+    }
+    return new Shader({
+        vertex: vertexShaderStr,
+        fragment: fragmentShaderStr
+    });
+};
 
 graphicGL.Material = Material;
 
@@ -208,6 +223,11 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
         return textureObj.texture;
     }
 };
+
+/**
+ * Create a blank texture for placeholder
+ */
+graphicGL.createBlankTexture = textureUtil.createBlank;
 
 /**
  * If value is image

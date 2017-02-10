@@ -97,21 +97,6 @@ EChartsGL.prototype.update = function (ecModel, api) {
         return layerGL;
     }
 
-    function wrapDispose(view, layerGL) {
-        // Wrap dispose, PENDING
-        var oldDispose = view.__oldDispose || view.dispose;
-        view.__oldDispose = oldDispose;
-        view.dispose = function () {
-            if (view.viewGL) {
-                layerGL.renderer.disposeScene(view.viewGL.scene);
-            }
-            else {
-                layerGL.renderer.disposeNode(view.groupGL);
-            }
-            oldDispose.apply(this, arguments);
-        };
-    }
-
     ecModel.eachComponent(function (componentType, componentModel) {
         if (componentType !== 'series') {
             var view = api.getViewOfComponentModel(componentModel);
@@ -138,8 +123,6 @@ EChartsGL.prototype.update = function (ecModel, api) {
                 var layerGL = getLayerGL(componentModel);
 
                 layerGL.addView(viewGL);
-
-                wrapDispose(view, layerGL);
             }
         }
     });
@@ -157,8 +140,6 @@ EChartsGL.prototype.update = function (ecModel, api) {
             // TODO Check zlevel not same with component of coordinate system ?
             var layerGL = getLayerGL(seriesModel);
             layerGL.addView(viewGL);
-
-            wrapDispose(chartView, layerGL);
         }
     });
 };

@@ -1,5 +1,3 @@
-var echarts = require('echarts/lib/echarts');
-var Matrix4 = require('qtek/lib/math/Matrix4');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 var vec3 = glmatrix.vec3;
 

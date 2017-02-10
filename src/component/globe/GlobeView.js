@@ -5,16 +5,6 @@ var OrbitControl = require('../../util/OrbitControl');
 
 var sunCalc = require('../../util/sunCalc');
 
-function createBlankCanvas() {
-    var canvas = document.createElement('canvas');
-    var ctx = canvas.getContext('2d');
-    canvas.width = canvas.height = 1;
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, 1, 1);
-
-    return ctx;
-}
-
 
 graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
 graphicGL.Shader.import(require('text!../../util/shader/lambert.glsl'));
@@ -28,17 +18,11 @@ module.exports = echarts.extendComponentView({
     init: function (ecModel, api) {
         this.groupGL = new graphicGL.Node();
 
-        this._blankTexture = new graphicGL.Texture2D({
-            image: createBlankCanvas()
-        });
         /**
          * @type {qtek.Shader}
          * @private
          */
-        var lambertShader = new graphicGL.Shader({
-            vertex: graphicGL.Shader.source('ecgl.lambert.vertex'),
-            fragment: graphicGL.Shader.source('ecgl.lambert.fragment')
-        });
+        var lambertShader = graphicGL.createShader('ecgl.lambert');
         this._lambertMaterial = new graphicGL.Material({
             shader: lambertShader
         });
@@ -47,10 +31,7 @@ module.exports = echarts.extendComponentView({
          * @type {qtek.Shader}
          * @private
          */
-        var albedoShader = new graphicGL.Shader({
-            vertex: graphicGL.Shader.source('ecgl.albedo.vertex'),
-            fragment: graphicGL.Shader.source('ecgl.albedo.fragment')
-        });
+        var albedoShader = graphicGL.createShader('ecgl.albedo');
         this._albedoMaterial = new graphicGL.Material({
             shader: albedoShader
         });
@@ -63,6 +44,10 @@ module.exports = echarts.extendComponentView({
             widthSegments: 200,
             heightSegments: 100,
             dynamic: true
+        });
+        this._overlayGeometry = new graphicGL.SphereGeometry({
+            widthSegments: 80,
+            heightSegments: 40
         });
 
         /**
@@ -96,6 +81,8 @@ module.exports = echarts.extendComponentView({
         });
 
         this._control.init();
+
+        this._layerMeshes = {};
     },
 
     render: function (globeModel, ecModel, api) {
@@ -137,6 +124,72 @@ module.exports = echarts.extendComponentView({
 
         this._displaceVertices(globeModel, api);
 
+        this._updateViewControl(globeModel, api);
+
+        this._updateLayers(globeModel, api);
+    },
+
+    _updateLayers: function (globeModel, api) {
+        var coordSys = globeModel.coordinateSystem;
+        var layers = globeModel.get('layers');
+        echarts.util.each(layers, function (layerOption) {
+            var layerModel = new echarts.Model(layerOption);
+
+            var layerType = layerModel.get('type');
+            if (layerType === 'blend') {
+
+            }
+            else { // Default use overlay
+                var id = layerModel.get('id');
+                var overlayMesh = this._layerMeshes[id];
+                if (!overlayMesh) {
+                    overlayMesh = this._layerMeshes[id] = new graphicGL.Mesh({
+                        geometry: this._overlayGeometry
+                    });
+                }
+                var shading = layerModel.get('shading');
+                if (shading === 'lambert') {
+                    overlayMesh.material = overlayMesh.__lambertMaterial || new graphicGL.Material({
+                        shader: graphicGL.createShader('ecgl.lambert'),
+                        transparent: true,
+                        depthMask: false
+                    });
+                    overlayMesh.__lambertMaterial = overlayMesh.material;
+                }
+                else { // color
+                    overlayMesh.material = overlayMesh.__albedoMaterial || new graphicGL.Material({
+                        shader: graphicGL.createShader('ecgl.albedo'),
+                        transparent: true,
+                        depthMask: false
+                    });
+                    overlayMesh.__albedoMaterial = overlayMesh.material;
+                }
+                // overlay should be transparet if texture is not loaded yet.
+                overlayMesh.material.shader.enableTexture('diffuseMap');
+
+                var distance = layerModel.get('distance');
+                var radius = coordSys.radius + (distance == null ? coordSys.radius / 100 : distance);
+                overlayMesh.scale.set(radius, radius, radius);
+
+                // FIXME Exists blink.
+                var blankTexture = this._blankTexture || (this._blankTexture = graphicGL.createBlankTexture('rgba(255, 255, 255, 0)'));
+                overlayMesh.material.set('diffuseMap', blankTexture);
+
+                graphicGL.loadTexture(layerModel.get('texture'), api, {
+                    flipY: false,
+                    anisotropic: 8
+                }, function (texture) {
+                    overlayMesh.material.set('diffuseMap', texture);
+                    api.getZr().refresh();
+                });
+
+                layerModel.get('show') ? this.groupGL.add(overlayMesh) : this.groupGL.remove(overlayMesh);
+            }
+        }, this);
+    },
+
+    _updateViewControl: function (globeModel, api) {
+        var coordSys = globeModel.coordinateSystem;
         // Update camera
         var viewControlModel = globeModel.getModel('viewControl');
 
@@ -281,7 +334,8 @@ module.exports = echarts.extendComponentView({
 
     },
 
-    dispose: function () {
+    dispose: function (ecModel, api) {
         this.groupGL.removeAll();
+        this._control.dispose();
     }
 });

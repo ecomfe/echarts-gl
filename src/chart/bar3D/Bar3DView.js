@@ -6,10 +6,7 @@ graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
 graphicGL.Shader.import(require('text!../../util/shader/lambert.glsl'));
 
 function getShader(shading) {
-    var shader = new graphicGL.Shader({
-        vertex: graphicGL.Shader.source('ecgl.' + shading + '.vertex'),
-        fragment: graphicGL.Shader.source('ecgl.' + shading + '.fragment')
-    });
+    var shader = graphicGL.createShader('ecgl.' + shading);
     shader.define('both', 'VERTEX_COLOR');
     return shader;
 }
