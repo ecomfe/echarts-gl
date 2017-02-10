@@ -8,6 +8,7 @@ var echarts = require('echarts/lib/echarts');
 var Scene = require('qtek/lib/Scene');
 var LRUCache = require('zrender/lib/core/LRU');
 var textureUtil = require('qtek/lib/util/texture');
+var EChartsSurface = require('./EChartsSurface');
 
 var animatableMixin = require('./animatableMixin');
 echarts.util.extend(Node3D.prototype, animatableMixin);
@@ -21,6 +22,11 @@ function isValueImage(value) {
         || value instanceof HTMLImageElement
         || value instanceof Image;
 }
+
+function isECharts(value) {
+    return value.getZr && value.setOption;
+}
+
 // Overwrite addToScene and removeFromScene
 var oldAddToScene = Scene.prototype.addToScene;
 var oldRemoveFromScene = Scene.prototype.removeFromScene;
@@ -68,11 +74,15 @@ Mesh.prototype.setTextureImage = function (textureName, imgValue, api, textureOp
     }
 
     var zr = api.getZr();
+    var mesh = this;
 
     // disableTexture first
     material.shader.disableTexture(textureName);
     if (!isValueNone(imgValue)) {
         graphicGL.loadTexture(imgValue, api, textureOpts, function (texture) {
+            if (texture.surface) {
+                texture.surface.attachToMesh(mesh);
+            }
             material.shader.enableTexture(textureName);
             material.set(textureName, texture);
             zr && zr.refresh();
@@ -164,7 +174,33 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
 
     var textureCache = api.__textureCache = api.__textureCache || new LRUCache(20);
 
-    if (isValueImage(imgValue)) {
+    if (isECharts(imgValue)) {
+        var id = imgValue.__textureid__;
+        var textureObj = textureCache.get(prefix + id);
+        if (!textureObj) {
+            var surface = new EChartsSurface(imgValue);
+            // FIXME, won't update
+            surface.textureupdated = function () {
+                api.getZr().refresh();
+            };
+            textureObj = {
+                texture: surface.getTexture()
+            };
+            for (var i = 0; i < keys.length; i++) {
+                textureObj.texture[keys[i]] = textureOpts[keys[i]];
+            }
+            id = imgValue.__textureid__ || '__ecgl_ec__' + textureObj.texture.__GUID__;
+            imgValue.__textureid__ = id;
+            textureCache.put(prefix + id, textureObj);
+            // TODO Next tick?
+            cb && cb(textureObj.texture);
+        }
+        else {
+            textureObj.texture.surface.setECharts(imgValue);
+        }
+        return textureObj.texture;
+    }
+    else if (isValueImage(imgValue)) {
         var id = imgValue.__textureid__;
         var textureObj = textureCache.get(prefix + id);
         if (!textureObj) {
@@ -178,7 +214,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
             }
             id = imgValue.__textureid__ || '__ecgl_image__' + textureObj.texture.__GUID__;
             imgValue.__textureid__ = id;
-            textureObj.put(prefix + id, textureObj);
+            textureCache.put(prefix + id, textureObj);
             // TODO Next tick?
             cb && cb(textureObj.texture);
         }
