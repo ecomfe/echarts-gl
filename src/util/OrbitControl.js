@@ -246,6 +246,21 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
+        if (this._rotating) {
+            this._rotateY -= deltaTime * 1e-4;
+            this._needsUpdate = true;
+        }
+        else if (this._rotateVelocity.len() > 0) {
+            this._needsUpdate = true;
+        }
+        if (Math.abs(this._zoomSpeed) > 1e-3) {
+            this._needsUpdate = true;
+        }
+
+        if (!this._needsUpdate) {
+            return;
+        }
+
         this._camera.rotation.identity();
         this._camera.update();
 
@@ -258,14 +273,13 @@ var OrbitControl = Base.extend(function () {
             this._updatePan(deltaTime);
         }
 
-        if (this._needsUpdate) {
-            this.zr.refresh();
-            this.trigger('update');
-            this._needsUpdate = false;
-        }
+        this.zr.refresh();
+        this.trigger('update');
+        this._needsUpdate = false;
     },
 
     _updateRotate: function (deltaTime) {
+
 
         var velocity = this._rotateVelocity;
         this._rotateY = (velocity.y + this._rotateY) % (Math.PI * 2);
@@ -281,13 +295,6 @@ var OrbitControl = Base.extend(function () {
         // Rotate speed damping
         this._vectorDamping(velocity, 0.8);
 
-        if (this._rotating) {
-            this._rotateY -= deltaTime * 1e-4;
-            this._needsUpdate = true;
-        }
-        else if (velocity.len() > 0) {
-            this._needsUpdate = true;
-        }
     },
 
     _updateDistance: function (deltaTime) {
@@ -296,9 +303,6 @@ var OrbitControl = Base.extend(function () {
 
         // Zoom speed damping
         this._zoomSpeed *= 0.8;
-        if (Math.abs(this._zoomSpeed) > 1e-3) {
-            this._needsUpdate = true;
-        }
     },
 
     _setDistance: function (distance) {

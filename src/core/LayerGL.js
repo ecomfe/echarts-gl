@@ -346,7 +346,7 @@ LayerGL.prototype.pickObject = function (x, y) {
     }
     output.sort(function (a, b) {
         return a.distance - b.distance;
-    })
+    });
     return output[0];
 };
 

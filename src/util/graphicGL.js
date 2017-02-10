@@ -179,7 +179,6 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
         var textureObj = textureCache.get(prefix + id);
         if (!textureObj) {
             var surface = new EChartsSurface(imgValue);
-            // FIXME, won't update
             surface.textureupdated = function () {
                 api.getZr().refresh();
             };
