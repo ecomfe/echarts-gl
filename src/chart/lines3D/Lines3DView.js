@@ -73,7 +73,9 @@ module.exports = echarts.extendChartView({
             this.groupGL.remove(curveAnimatingPointsMesh);
         }
 
-        this._linesMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
+
+        this._linesMesh.material.blend = this._curveAnimatingPointsMesh.material.blend
+            = seriesModel.get('blendMode') === 'lighter'
             ? graphicGL.additiveBlend : null;
     },
 

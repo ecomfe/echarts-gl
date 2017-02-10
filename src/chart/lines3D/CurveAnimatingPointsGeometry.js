@@ -58,7 +58,7 @@ var CurveAnimatingPointsGeometry = StaticGeometry.derive(function () {
     getPointVertexCount: function (p0, p1, p2, p3) {
         var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
         // TODO Consider time
-        var count = Math.max(Math.min(Math.round((len + 1) / this.scale * 40), 15), 3);
+        var count = Math.max(Math.min(Math.round((len + 1) / this.scale * 40), 15), 5);
         return count;
     },
     /**

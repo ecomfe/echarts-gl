@@ -210,9 +210,10 @@ function getId(resource) {
     return resource.__GUID__;
 }
 // configs for Auto GC for GPU resources
-var MAX_SHADER_COUNT = 40;
-var MAX_GEOMETRY_COUNT = 50;
-var MAX_TEXTURE_COUNT = 30;
+// PENDING
+var MAX_SHADER_COUNT = 60;
+var MAX_GEOMETRY_COUNT = 20;
+var MAX_TEXTURE_COUNT = 20;
 
 function checkAndDispose(gl, resourceMap, maxCount) {
     var count = 0;
