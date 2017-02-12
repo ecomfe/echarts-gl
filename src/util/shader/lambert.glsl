@@ -44,9 +44,9 @@ void main()
 
 @export ecgl.lambert.fragment
 
+#define LAYER_DIFFUSEMAP_COUNT 0
+#define LAYER_EMISSIVEMAP_COUNT 0
 #define PI 3.14159265358979
-
-#extension GL_OES_standard_derivatives : enable
 
 varying vec2 v_Texcoord;
 
@@ -55,6 +55,14 @@ varying vec3 v_WorldPosition;
 
 #ifdef DIFFUSEMAP_ENABLED
 uniform sampler2D diffuseMap;
+#endif
+
+#if (LAYER_DIFFUSEMAP_COUNT > 0)
+uniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];
+#endif
+
+#if (LAYER_EMISSIVEMAP_COUNT > 0)
+uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
 #endif
 
 #ifdef BUMPMAP_ENABLED
@@ -111,10 +119,20 @@ void main()
     gl_FragColor *= v_Color;
 #endif
 
+    vec4 albedoTexel = vec4(1.0);
 #ifdef DIFFUSEMAP_ENABLED
-    vec4 tex = texture2D(diffuseMap, v_Texcoord);
-    gl_FragColor *= tex;
+    albedoTexel = texture2D(diffuseMap, v_Texcoord);
 #endif
+
+#if (LAYER_DIFFUSEMAP_COUNT > 0)
+    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{
+        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);
+        // source-over blend
+        albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);
+        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;
+    }}
+#endif
+    gl_FragColor *= albedoTexel;
 
     vec3 N = v_Normal;
     vec3 P = v_WorldPosition;
@@ -160,6 +178,14 @@ vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
 #endif
 
     gl_FragColor.rgb *= diffuseColor;
+
+#if (LAYER_EMISSIVEMAP_COUNT > 0)
+    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
+        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);
+        gl_FragColor.rgb += texel2.rgb;
+    }}
+#endif
+
 }
 
 @end

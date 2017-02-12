@@ -132,12 +132,30 @@ module.exports = echarts.extendComponentView({
     _updateLayers: function (globeModel, api) {
         var coordSys = globeModel.coordinateSystem;
         var layers = globeModel.get('layers');
+
+        var lastDistance = coordSys.radius;
+        var layerDiffuseTextures = [];
+        var layerEmissiveTextures = [];
         echarts.util.each(layers, function (layerOption) {
             var layerModel = new echarts.Model(layerOption);
-
             var layerType = layerModel.get('type');
-            if (layerType === 'blend') {
 
+            var texture = graphicGL.loadTexture(layerModel.get('texture'), api, {
+                flipY: false,
+                anisotropic: 8
+            });
+            if (texture.surface) {
+                texture.surface.attachToMesh(this._earthMesh);
+            }
+
+            if (layerType === 'blend') {
+                var blendTo = layerModel.get('blendTo');
+                if (blendTo === 'emission') {
+                    layerEmissiveTextures.push(texture);
+                }
+                else { // Default is albedo
+                    layerDiffuseTextures.push(texture);
+                }
             }
             else { // Default use overlay
                 var id = layerModel.get('id');
@@ -168,8 +186,11 @@ module.exports = echarts.extendComponentView({
                 overlayMesh.material.shader.enableTexture('diffuseMap');
 
                 var distance = layerModel.get('distance');
-                var radius = coordSys.radius + (distance == null ? coordSys.radius / 100 : distance);
+                // Based on distance of last layer
+                var radius = lastDistance + (distance == null ? coordSys.radius / 100 : distance);
                 overlayMesh.scale.set(radius, radius, radius);
+
+                lastDistance = radius;
 
                 // FIXME Exists blink.
                 var blankTexture = this._blankTexture || (this._blankTexture = graphicGL.createBlankTexture('rgba(255, 255, 255, 0)'));
@@ -179,6 +200,9 @@ module.exports = echarts.extendComponentView({
                     flipY: false,
                     anisotropic: 8
                 }, function (texture) {
+                    if (texture.surface) {
+                        texture.surface.attachToMesh(overlayMesh);
+                    }
                     overlayMesh.material.set('diffuseMap', texture);
                     api.getZr().refresh();
                 });
@@ -186,6 +210,13 @@ module.exports = echarts.extendComponentView({
                 layerModel.get('show') ? this.groupGL.add(overlayMesh) : this.groupGL.remove(overlayMesh);
             }
         }, this);
+
+        var earthMaterial = this._earthMesh.material;
+        earthMaterial.shader.define('fragment', 'LAYER_DIFFUSEMAP_COUNT', layerDiffuseTextures.length);
+        earthMaterial.shader.define('fragment', 'LAYER_EMISSIVEMAP_COUNT', layerEmissiveTextures.length);
+
+        earthMaterial.set('layerDiffuseMap', layerDiffuseTextures);
+        earthMaterial.set('layerEmissiveMap', layerEmissiveTextures);
     },
 
     _updateViewControl: function (globeModel, api) {

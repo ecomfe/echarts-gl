@@ -56,14 +56,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	__webpack_require__(1);
 
-	__webpack_require__(35);
-	__webpack_require__(36);
+	__webpack_require__(37);
+	__webpack_require__(38);
 
-	__webpack_require__(81);
-	__webpack_require__(84);
-	__webpack_require__(85);
+	__webpack_require__(90);
+	__webpack_require__(96);
+	__webpack_require__(97);
 
-	__webpack_require__(95);
+	__webpack_require__(107);
 
 /***/ },
 /* 1 */
@@ -147,25 +147,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var layerGL = layers[zlevel];
 	        if (!layerGL) {
 	            layerGL = layers[zlevel] = new LayerGL('gl-' + zlevel, zr);
+
+	            if (zr.painter.isSingleCanvas()) {
+	                layerGL.virtual = true;
+	                // If container is canvas, use image to represent LayerGL
+	                // FIXME Performance
+	                var img = new echarts.graphic.Image({
+	                    z: 1e4,
+	                    style: {
+	                        image: layerGL.renderer.canvas
+	                    }
+	                });
+
+	                zr.add(img);
+	            }
+
 	            zr.painter.insertLayer(zlevel, layerGL);
 	        }
 
 	        return layerGL;
-	    }
-
-	    function wrapDispose(view, layerGL) {
-	        // Wrap dispose, PENDING
-	        var oldDispose = view.__oldDispose || view.dispose;
-	        view.__oldDispose = oldDispose;
-	        view.dispose = function () {
-	            if (view.viewGL) {
-	                layerGL.renderer.disposeScene(view.viewGL.scene);
-	            }
-	            else {
-	                layerGL.renderer.disposeNode(view.groupGL);
-	            }
-	            oldDispose.apply(this, arguments);
-	        };
 	    }
 
 	    ecModel.eachComponent(function (componentType, componentModel) {
@@ -194,8 +194,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var layerGL = getLayerGL(componentModel);
 
 	                layerGL.addView(viewGL);
-
-	                wrapDispose(view, layerGL);
 	            }
 	        }
 	    });
@@ -213,8 +211,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // TODO Check zlevel not same with component of coordinate system ?
 	            var layerGL = getLayerGL(seriesModel);
 	            layerGL.addView(viewGL);
-
-	            wrapDispose(chartView, layerGL);
 	        }
 	    });
 	};
@@ -268,11 +264,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Renderer = __webpack_require__(5);
 	var RayPicking = __webpack_require__(25);
-
+	var Texture = __webpack_require__(33);
 
 	// PENDING
-	var Eventful = __webpack_require__(33);
-	var zrUtil = __webpack_require__(34);
+	var Eventful = __webpack_require__(35);
+	var zrUtil = __webpack_require__(36);
 
 	/**
 	 * @constructor
@@ -452,15 +448,97 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.renderer.render(viewGL.scene, viewGL.camera);
 	    }
 	    this.renderer.restoreViewport();
+
+	    // Auto dispose unused resources on GPU, like program(shader), texture, geometry(buffers)
+	    this._trackAndClean();
 	};
 
-	/**
-	 * Render the give scene with layer renderer and camera
-	 * Without clear the buffer
-	 * @return {qtek.Scene}
-	 */
-	LayerGL.prototype.renderScene = function (scene) {
-	    this.renderer.render(scene, this.camera);
+
+	function getId(resource) {
+	    return resource.__GUID__;
+	}
+	// configs for Auto GC for GPU resources
+	// PENDING
+	var MAX_SHADER_COUNT = 60;
+	var MAX_GEOMETRY_COUNT = 20;
+	var MAX_TEXTURE_COUNT = 20;
+
+	function checkAndDispose(gl, resourceMap, maxCount) {
+	    var count = 0;
+	    // FIXME not allocate array.
+	    var unused = [];
+	    for (var id in resourceMap) {
+	        if (!resourceMap[id].count) {
+	            unused.push(resourceMap[id].target);
+	        }
+	        else {
+	            count++;
+	        }
+	    }
+	    for (var i = 0; i < Math.min(count - maxCount, unused.length); i++) {
+	        unused[i].dispose(gl);
+	    }
+	}
+
+	function addToMap(map, target) {
+	    var id = getId(target);
+	    map[id] = map[id] || {
+	        count: 0, target: target
+	    };
+	    map[id].count++;
+	}
+	LayerGL.prototype._trackAndClean = function () {
+	    var shadersMap = this._shadersMap = this._shadersMap || {};
+	    var texturesMap = this._texturesMap = this._texturesMap || {};
+	    var geometriesMap = this._geometriesMap = this._geometriesMap || {};
+
+	    for (var id in shadersMap) {
+	        shadersMap[id].count = 0;
+	    }
+	    for (var id in texturesMap) {
+	        texturesMap[id].count = 0;
+	    }
+	    for (var id in geometriesMap) {
+	        geometriesMap[id].count = 0;
+	    }
+
+	    function trackQueue(queue) {
+	        for (var i = 0; i < queue.length; i++) {
+	            var renderable = queue[i];
+	            var geometry = renderable.geometry;
+	            var material = renderable.material;
+	            var shader = material.shader;
+	            addToMap(geometriesMap, geometry);
+	            addToMap(shadersMap, shader);
+
+	            for (var name in material.uniforms) {
+	                var val = material.uniforms[name].value;
+	                if (val instanceof Texture) {
+	                    addToMap(texturesMap, val);
+	                }
+	                else if (val instanceof Array) {
+	                    for (var i = 0; i < val.length; i++) {
+	                        if (val[i] instanceof Texture) {
+	                            addToMap(texturesMap, val[i]);
+	                        }
+	                    }
+	                }
+	            }
+	        }
+	    }
+	    for (var i = 0; i < this.views.length; i++) {
+	        var viewGL = this.views[i];
+	        var scene = viewGL.scene;
+
+	        trackQueue(scene.opaqueQueue);
+	        trackQueue(scene.transparentQueue);
+	    }
+	    // Dispose those unsed resources
+	    var gl = this.renderer.gl;
+
+	    checkAndDispose(gl, shadersMap, MAX_SHADER_COUNT);
+	    checkAndDispose(gl, texturesMap, MAX_TEXTURE_COUNT);
+	    checkAndDispose(gl, geometriesMap, MAX_GEOMETRY_COUNT);
 	};
 
 	/**
@@ -516,7 +594,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    output.sort(function (a, b) {
 	        return a.distance - b.distance;
-	    })
+	    });
 	    return output[0];
 	};
 
@@ -16310,6 +16388,228 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 33 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	    var Texture = __webpack_require__(21);
+	    var glinfo = __webpack_require__(10);
+	    var glenum = __webpack_require__(11);
+	    var mathUtil = __webpack_require__(34);
+	    var isPowerOfTwo = mathUtil.isPowerOfTwo;
+
+	    /**
+	     * @constructor qtek.Texture2D
+	     * @extends qtek.Texture
+	     *
+	     * @example
+	     *     ...
+	     *     var mat = new qtek.Material({
+	     *         shader: qtek.shader.library.get('qtek.phong', 'diffuseMap')
+	     *     });
+	     *     var diffuseMap = new qtek.Texture2D();
+	     *     diffuseMap.load('assets/textures/diffuse.jpg');
+	     *     mat.set('diffuseMap', diffuseMap);
+	     *     ...
+	     *     diffuseMap.success(function() {
+	     *         // Wait for the diffuse texture loaded
+	     *         animation.on('frame', function(frameTime) {
+	     *             renderer.render(scene, camera);
+	     *         });
+	     *     });
+	     */
+	    var Texture2D = Texture.extend(function() {
+	        return /** @lends qtek.Texture2D# */ {
+	            /**
+	             * @type {HTMLImageElement|HTMLCanvasElemnet}
+	             */
+	            image: null,
+	            /**
+	             * @type {Uint8Array|Float32Array}
+	             */
+	            pixels: null,
+	            /**
+	             * @type {Array.<Object>}
+	             * @example
+	             *     [{
+	             *         image: mipmap0,
+	             *         pixels: null
+	             *     }, {
+	             *         image: mipmap1,
+	             *         pixels: null
+	             *     }, ....]
+	             */
+	            mipmaps: []
+	        };
+	    }, {
+	        update: function(_gl) {
+
+	            _gl.bindTexture(_gl.TEXTURE_2D, this._cache.get('webgl_texture'));
+
+	            this.beforeUpdate( _gl);
+
+	            var glFormat = this.format;
+	            var glType = this.type;
+
+	            _gl.texParameteri(_gl.TEXTURE_2D, _gl.TEXTURE_WRAP_S, this.wrapS);
+	            _gl.texParameteri(_gl.TEXTURE_2D, _gl.TEXTURE_WRAP_T, this.wrapT);
+
+	            _gl.texParameteri(_gl.TEXTURE_2D, _gl.TEXTURE_MAG_FILTER, this.magFilter);
+	            _gl.texParameteri(_gl.TEXTURE_2D, _gl.TEXTURE_MIN_FILTER, this.minFilter);
+
+	            var anisotropicExt = glinfo.getExtension(_gl, 'EXT_texture_filter_anisotropic');
+	            if (anisotropicExt && this.anisotropic > 1) {
+	                _gl.texParameterf(_gl.TEXTURE_2D, anisotropicExt.TEXTURE_MAX_ANISOTROPY_EXT, this.anisotropic);
+	            }
+
+	            // Fallback to float type if browser don't have half float extension
+	            if (glType === 36193) {
+	                var halfFloatExt = glinfo.getExtension(_gl, 'OES_texture_half_float');
+	                if (!halfFloatExt) {
+	                    glType = glenum.FLOAT;
+	                }
+	            }
+
+	            if (this.mipmaps.length) {
+	                var width = this.width;
+	                var height = this.height;
+	                for (var i = 0; i < this.mipmaps.length; i++) {
+	                    var mipmap = this.mipmaps[i];
+	                    this._updateTextureData(_gl, mipmap, i, width, height, glFormat, glType);
+	                    width /= 2;
+	                    height /= 2;
+	                }
+	            }
+	            else {
+	                this._updateTextureData(_gl, this, 0, this.width, this.height, glFormat, glType);
+
+	                if (this.useMipmap && !this.NPOT) {
+	                    _gl.generateMipmap(_gl.TEXTURE_2D);
+	                }
+	            }
+
+	            _gl.bindTexture(_gl.TEXTURE_2D, null);
+	        },
+
+	        _updateTextureData: function (_gl, data, level, width, height, glFormat, glType) {
+	            if (data.image) {
+	                _gl.texImage2D(_gl.TEXTURE_2D, level, glFormat, glFormat, glType, data.image);
+	            }
+	            else {
+	                // Can be used as a blank texture when writing render to texture(RTT)
+	                if (
+	                    glFormat <= Texture.COMPRESSED_RGBA_S3TC_DXT5_EXT
+	                    && glFormat >= Texture.COMPRESSED_RGB_S3TC_DXT1_EXT
+	                ) {
+	                    _gl.compressedTexImage2D(_gl.TEXTURE_2D, level, glFormat, width, height, 0, data.pixels);
+	                }
+	                else {
+	                    // Is a render target if pixels is null
+	                    _gl.texImage2D(_gl.TEXTURE_2D, level, glFormat, width, height, 0, glFormat, glType, data.pixels);
+	                }
+	            }
+	        },
+
+	        /**
+	         * @param  {WebGLRenderingContext} _gl
+	         * @memberOf qtek.Texture2D.prototype
+	         */
+	        generateMipmap: function(_gl) {
+	            if (this.useMipmap && !this.NPOT) {
+	                _gl.bindTexture(_gl.TEXTURE_2D, this._cache.get('webgl_texture'));
+	                _gl.generateMipmap(_gl.TEXTURE_2D);
+	            }
+	        },
+
+	        isPowerOfTwo: function() {
+	            var width;
+	            var height;
+	            if (this.image) {
+	                width = this.image.width;
+	                height = this.image.height;
+	            }
+	            else {
+	                width = this.width;
+	                height = this.height;
+	            }
+	            return isPowerOfTwo(width) && isPowerOfTwo(height);
+	        },
+
+	        isRenderable: function() {
+	            if (this.image) {
+	                return this.image.nodeName === 'CANVAS'
+	                    || this.image.nodeName === 'VIDEO'
+	                    || this.image.complete;
+	            }
+	            else {
+	                return !!(this.width && this.height);
+	            }
+	        },
+
+	        bind: function(_gl) {
+	            _gl.bindTexture(_gl.TEXTURE_2D, this.getWebGLTexture(_gl));
+	        },
+
+	        unbind: function(_gl) {
+	            _gl.bindTexture(_gl.TEXTURE_2D, null);
+	        },
+
+	        load: function (src) {
+	            var image = new Image();
+	            var self = this;
+	            image.onload = function() {
+	                self.dirty();
+	                self.trigger('success', self);
+	                image.onload = null;
+	            };
+	            image.onerror = function() {
+	                self.trigger('error', self);
+	                image.onerror = null;
+	            };
+
+	            image.src = src;
+	            this.image = image;
+
+	            return this;
+	        }
+	    });
+
+	    module.exports = Texture2D;
+
+
+/***/ },
+/* 34 */
+/***/ function(module, exports) {
+
+	
+
+	    var mathUtil = {};
+
+	    mathUtil.isPowerOfTwo = function (value) {
+	        return (value & (value - 1)) === 0;
+	    };
+
+	    mathUtil.nextPowerOfTwo = function (value) {
+	        value --;
+	        value |= value >> 1;
+	        value |= value >> 2;
+	        value |= value >> 4;
+	        value |= value >> 8;
+	        value |= value >> 16;
+	        value ++;
+
+	        return value;
+	    };
+
+	    mathUtil.nearestPowerOfTwo = function (value) {
+	        return Math.pow( 2, Math.round( Math.log( value ) / Math.LN2 ) );
+	    };
+
+	    module.exports = mathUtil;
+
+
+/***/ },
+/* 35 */
 /***/ function(module, exports) {
 
 	/**
@@ -16617,7 +16917,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 34 */
+/* 36 */
 /***/ function(module, exports) {
 
 	/**
@@ -16692,7 +16992,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        else if (TYPED_ARRAY[typeStr]) {
 	            result = source.constructor.from(source);
 	        }
-	        else if (!BUILTIN_OBJECT[typeStr] && !isDom(source)) {
+	        else if (!BUILTIN_OBJECT[typeStr] && !isPrimitive(source) && !isDom(source)) {
 	            result = {};
 	            for (var key in source) {
 	                if (source.hasOwnProperty(key)) {
@@ -16730,6 +17030,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    && !isDom(targetProp)
 	                    && !isBuiltInObject(sourceProp)
 	                    && !isBuiltInObject(targetProp)
+	                    && !isPrimitive(sourceProp)
+	                    && !isPrimitive(targetProp)
 	                ) {
 	                    // 如果需要递归覆盖，就递归调用merge
 	                    merge(targetProp, sourceProp, overwrite);
@@ -17115,6 +17417,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 
+	    var primitiveKey = '__ec_primitive__';
+	    /**
+	     * Set an object as primitive to be ignored traversing children in clone or merge
+	     */
+	    function setAsPrimitive(obj) {
+	        obj[primitiveKey] = true;
+	    }
+
+	    function isPrimitive(obj) {
+	        return obj[primitiveKey];
+	    }
+
 	    var util = {
 	        inherits: inherits,
 	        mixin: mixin,
@@ -17144,6 +17458,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        eqNaN: eqNaN,
 	        retrieve: retrieve,
 	        assert: assert,
+	        setAsPrimitive: setAsPrimitive,
 	        noop: function () {}
 	    };
 	    module.exports = util;
@@ -17151,22 +17466,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 35 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
 
 /***/ },
-/* 36 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(37);
-	__webpack_require__(38);
+	__webpack_require__(39);
+	__webpack_require__(40);
 
-	__webpack_require__(68);
+	__webpack_require__(79);
 
 	echarts.registerAction({
 	    type: 'globeUpdateCamera',
@@ -17181,12 +17496,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 37 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	module.exports = echarts.extendComponentModel({
+
+	function defaultId(option, idx) {
+	    option.id = option.id || option.name || (idx + '');
+	}
+	var GlobeModel = echarts.extendComponentModel({
 
 	    type: 'globe',
 
@@ -17194,11 +17513,60 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    coordinateSystem: null,
 
+	    init: function () {
+	        GlobeModel.superApply(this, 'init', arguments);
+
+	        echarts.util.each(this.option.layers, function (layerOption, idx) {
+	            echarts.util.merge(layerOption, this.defaultLayerOption);
+	            defaultId(layerOption);
+	        }, this);
+	    },
+
+	    mergeOption: function (option) {
+	        // TODO test
+	        var oldLayers = this.option.layers;
+	        this.option.layers = null;
+	        GlobeModel.superApply(this, 'mergeOption', arguments);
+
+	        function createLayerMap(layers) {
+	            return echarts.util.reduce(layers, function (obj, layerOption, idx) {
+	                defaultId(layerOption, idx);
+	                obj[layerOption.id] = layerOption;
+	                return obj;
+	            }, {});
+	        }
+	        if (oldLayers && oldLayers.length) {
+	            var newLayerMap = createLayerMap(option.layers);
+	            var oldLayerMap = createLayerMap(oldLayers);
+	            for (var id in newLayerMap) {
+	                if (oldLayerMap[id]) {
+	                    echarts.util.merge(oldLayerMap[id], newLayerMap[id], true);
+	                }
+	                else {
+	                    oldLayers.push(option.layers[id]);
+	                }
+	            }
+	            // Copy back
+	            this.option.layers = oldLayers;
+	        }
+	        // else overwrite
+
+	        // Set default
+	        echarts.util.each(this.option.layers, function (layerOption) {
+	            echarts.util.merge(layerOption, this.defaultLayerOption);
+	        }, this);
+	    },
+
+	    defaultLayerOption: {
+	        show: true,
+	        type: 'overlay'
+	    },
+
 	    defaultOption: {
 
-	        zlevel: 10,
-
 	        show: true,
+
+	        zlevel: 10,
 
 	        flat: false,
 
@@ -17263,6 +17631,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            quaternion: null
 	        },
 
+	        // {
+	        //     show: true,
+	        //     name: 'cloud',
+	        //     type: 'overlay',
+	        //     shading: 'lambert',
+	        //     distance: 10,
+	        //     texture: ''
+	        // }
+	        // {
+	        //     type: 'blend',
+	        //     blendTo: 'albedo'
+	        //     blendType: 'source-over'
+	        // }
+
 	        layers: []
 	    },
 
@@ -17272,30 +17654,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	});
 
+	module.exports = GlobeModel;
+
 /***/ },
-/* 38 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	var graphicGL = __webpack_require__(39);
-	var OrbitControl = __webpack_require__(64);
+	var graphicGL = __webpack_require__(41);
+	var OrbitControl = __webpack_require__(75);
 
-	var sunCalc = __webpack_require__(65);
-
-	function createBlankCanvas() {
-	    var canvas = document.createElement('canvas');
-	    var ctx = canvas.getContext('2d');
-	    canvas.width = canvas.height = 1;
-	    ctx.fillStyle = '#fff';
-	    ctx.fillRect(0, 0, 1, 1);
-
-	    return ctx;
-	}
+	var sunCalc = __webpack_require__(76);
 
 
-	graphicGL.Shader.import(__webpack_require__(66));
-	graphicGL.Shader.import(__webpack_require__(67));
+	graphicGL.Shader.import(__webpack_require__(77));
+	graphicGL.Shader.import(__webpack_require__(78));
 
 	module.exports = echarts.extendComponentView({
 
@@ -17306,17 +17680,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    init: function (ecModel, api) {
 	        this.groupGL = new graphicGL.Node();
 
-	        this._blankTexture = new graphicGL.Texture2D({
-	            image: createBlankCanvas()
-	        });
 	        /**
 	         * @type {qtek.Shader}
 	         * @private
 	         */
-	        var lambertShader = new graphicGL.Shader({
-	            vertex: graphicGL.Shader.source('ecgl.lambert.vertex'),
-	            fragment: graphicGL.Shader.source('ecgl.lambert.fragment')
-	        });
+	        var lambertShader = graphicGL.createShader('ecgl.lambert');
 	        this._lambertMaterial = new graphicGL.Material({
 	            shader: lambertShader
 	        });
@@ -17325,10 +17693,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	         * @type {qtek.Shader}
 	         * @private
 	         */
-	        var albedoShader = new graphicGL.Shader({
-	            vertex: graphicGL.Shader.source('ecgl.albedo.vertex'),
-	            fragment: graphicGL.Shader.source('ecgl.albedo.fragment')
-	        });
+	        var albedoShader = graphicGL.createShader('ecgl.albedo');
 	        this._albedoMaterial = new graphicGL.Material({
 	            shader: albedoShader
 	        });
@@ -17341,6 +17706,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            widthSegments: 200,
 	            heightSegments: 100,
 	            dynamic: true
+	        });
+	        this._overlayGeometry = new graphicGL.SphereGeometry({
+	            widthSegments: 80,
+	            heightSegments: 40
 	        });
 
 	        /**
@@ -17374,6 +17743,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 
 	        this._control.init();
+
+	        this._layerMeshes = {};
 	    },
 
 	    render: function (globeModel, ecModel, api) {
@@ -17415,6 +17786,103 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        this._displaceVertices(globeModel, api);
 
+	        this._updateViewControl(globeModel, api);
+
+	        this._updateLayers(globeModel, api);
+	    },
+
+	    _updateLayers: function (globeModel, api) {
+	        var coordSys = globeModel.coordinateSystem;
+	        var layers = globeModel.get('layers');
+
+	        var lastDistance = coordSys.radius;
+	        var layerDiffuseTextures = [];
+	        var layerEmissiveTextures = [];
+	        echarts.util.each(layers, function (layerOption) {
+	            var layerModel = new echarts.Model(layerOption);
+	            var layerType = layerModel.get('type');
+
+	            var texture = graphicGL.loadTexture(layerModel.get('texture'), api, {
+	                flipY: false,
+	                anisotropic: 8
+	            });
+	            if (texture.surface) {
+	                texture.surface.attachToMesh(this._earthMesh);
+	            }
+
+	            if (layerType === 'blend') {
+	                var blendTo = layerModel.get('blendTo');
+	                if (blendTo === 'emission') {
+	                    layerEmissiveTextures.push(texture);
+	                }
+	                else { // Default is albedo
+	                    layerDiffuseTextures.push(texture);
+	                }
+	            }
+	            else { // Default use overlay
+	                var id = layerModel.get('id');
+	                var overlayMesh = this._layerMeshes[id];
+	                if (!overlayMesh) {
+	                    overlayMesh = this._layerMeshes[id] = new graphicGL.Mesh({
+	                        geometry: this._overlayGeometry
+	                    });
+	                }
+	                var shading = layerModel.get('shading');
+	                if (shading === 'lambert') {
+	                    overlayMesh.material = overlayMesh.__lambertMaterial || new graphicGL.Material({
+	                        shader: graphicGL.createShader('ecgl.lambert'),
+	                        transparent: true,
+	                        depthMask: false
+	                    });
+	                    overlayMesh.__lambertMaterial = overlayMesh.material;
+	                }
+	                else { // color
+	                    overlayMesh.material = overlayMesh.__albedoMaterial || new graphicGL.Material({
+	                        shader: graphicGL.createShader('ecgl.albedo'),
+	                        transparent: true,
+	                        depthMask: false
+	                    });
+	                    overlayMesh.__albedoMaterial = overlayMesh.material;
+	                }
+	                // overlay should be transparet if texture is not loaded yet.
+	                overlayMesh.material.shader.enableTexture('diffuseMap');
+
+	                var distance = layerModel.get('distance');
+	                // Based on distance of last layer
+	                var radius = lastDistance + (distance == null ? coordSys.radius / 100 : distance);
+	                overlayMesh.scale.set(radius, radius, radius);
+
+	                lastDistance = radius;
+
+	                // FIXME Exists blink.
+	                var blankTexture = this._blankTexture || (this._blankTexture = graphicGL.createBlankTexture('rgba(255, 255, 255, 0)'));
+	                overlayMesh.material.set('diffuseMap', blankTexture);
+
+	                graphicGL.loadTexture(layerModel.get('texture'), api, {
+	                    flipY: false,
+	                    anisotropic: 8
+	                }, function (texture) {
+	                    if (texture.surface) {
+	                        texture.surface.attachToMesh(overlayMesh);
+	                    }
+	                    overlayMesh.material.set('diffuseMap', texture);
+	                    api.getZr().refresh();
+	                });
+
+	                layerModel.get('show') ? this.groupGL.add(overlayMesh) : this.groupGL.remove(overlayMesh);
+	            }
+	        }, this);
+
+	        var earthMaterial = this._earthMesh.material;
+	        earthMaterial.shader.define('fragment', 'LAYER_DIFFUSEMAP_COUNT', layerDiffuseTextures.length);
+	        earthMaterial.shader.define('fragment', 'LAYER_EMISSIVEMAP_COUNT', layerEmissiveTextures.length);
+
+	        earthMaterial.set('layerDiffuseMap', layerDiffuseTextures);
+	        earthMaterial.set('layerEmissiveMap', layerEmissiveTextures);
+	    },
+
+	    _updateViewControl: function (globeModel, api) {
+	        var coordSys = globeModel.coordinateSystem;
 	        // Update camera
 	        var viewControlModel = globeModel.getModel('viewControl');
 
@@ -17559,17 +18027,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    },
 
-	    dispose: function () {
+	    dispose: function (ecModel, api) {
 	        this.groupGL.removeAll();
+	        this._control.dispose();
 	    }
 	});
 
 /***/ },
-/* 39 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Mesh = __webpack_require__(40);
-	var Texture2D = __webpack_require__(41);
+	var Mesh = __webpack_require__(42);
+	var Texture2D = __webpack_require__(33);
 	var Shader = __webpack_require__(18);
 	var Material = __webpack_require__(20);
 	var Node3D = __webpack_require__(28);
@@ -17577,8 +18046,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var echarts = __webpack_require__(2);
 	var Scene = __webpack_require__(43);
 	var LRUCache = __webpack_require__(45);
+	var textureUtil = __webpack_require__(46);
+	var EChartsSurface = __webpack_require__(59);
 
-	var animatableMixin = __webpack_require__(46);
+	var animatableMixin = __webpack_require__(60);
 	echarts.util.extend(Node3D.prototype, animatableMixin);
 
 	function isValueNone(value) {
@@ -17590,6 +18061,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        || value instanceof HTMLImageElement
 	        || value instanceof Image;
 	}
+
+	function isECharts(value) {
+	    return value.getZr && value.setOption;
+	}
+
 	// Overwrite addToScene and removeFromScene
 	var oldAddToScene = Scene.prototype.addToScene;
 	var oldRemoveFromScene = Scene.prototype.removeFromScene;
@@ -17637,16 +18113,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    var zr = api.getZr();
+	    var mesh = this;
 
+	    // disableTexture first
+	    material.shader.disableTexture(textureName);
 	    if (!isValueNone(imgValue)) {
 	        graphicGL.loadTexture(imgValue, api, textureOpts, function (texture) {
+	            if (texture.surface) {
+	                texture.surface.attachToMesh(mesh);
+	            }
 	            material.shader.enableTexture(textureName);
 	            material.set(textureName, texture);
 	            zr && zr.refresh();
 	        });
-	    }
-	    else {
-	        material.shader.disableTexture(textureName);
 	    }
 
 	    return material.get(textureName);
@@ -17660,6 +18139,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	graphicGL.Shader = Shader;
 
+	graphicGL.createShader = function (prefix) {
+	    var vertexShaderStr = Shader.source(prefix + '.vertex');
+	    var fragmentShaderStr = Shader.source(prefix + '.fragment');
+	    if (!vertexShaderStr) {
+	        console.error('Vertex shader of \'%s\' not exits', prefix);
+	    }
+	    if (!fragmentShaderStr) {
+	        console.error('Fragment shader of \'%s\' not exits', prefix);
+	    }
+	    return new Shader({
+	        vertex: vertexShaderStr,
+	        fragment: fragmentShaderStr
+	    });
+	};
+
 	graphicGL.Material = Material;
 
 	graphicGL.Texture2D = Texture2D;
@@ -17667,37 +18161,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Geometries
 	graphicGL.Geometry = StaticGeometry;
 
-	graphicGL.SphereGeometry = __webpack_require__(51);
+	graphicGL.SphereGeometry = __webpack_require__(56);
 
-	graphicGL.PlaneGeometry = __webpack_require__(52);
+	graphicGL.PlaneGeometry = __webpack_require__(65);
 
-	graphicGL.CubeGeometry = __webpack_require__(53);
+	graphicGL.CubeGeometry = __webpack_require__(66);
 
 	// Lights
-	graphicGL.AmbientLight = __webpack_require__(54);
-	graphicGL.DirectionalLight = __webpack_require__(55);
-	graphicGL.PointLight = __webpack_require__(56);
-	graphicGL.SpotLight = __webpack_require__(57);
+	graphicGL.AmbientLight = __webpack_require__(67);
+	graphicGL.DirectionalLight = __webpack_require__(68);
+	graphicGL.PointLight = __webpack_require__(69);
+	graphicGL.SpotLight = __webpack_require__(70);
 
 	// Math
 	graphicGL.Vector2 = __webpack_require__(22);
 	graphicGL.Vector3 = __webpack_require__(14);
-	graphicGL.Vector4 = __webpack_require__(58);
+	graphicGL.Vector4 = __webpack_require__(71);
 
 	graphicGL.Quaternion = __webpack_require__(29);
 
-	graphicGL.Matrix2 = __webpack_require__(59);
-	graphicGL.Matrix2d = __webpack_require__(60);
-	graphicGL.Matrix3 = __webpack_require__(61);
+	graphicGL.Matrix2 = __webpack_require__(72);
+	graphicGL.Matrix2d = __webpack_require__(73);
+	graphicGL.Matrix3 = __webpack_require__(74);
 	graphicGL.Matrix4 = __webpack_require__(16);
 
-	graphicGL.Plane = __webpack_require__(62);
+	graphicGL.Plane = __webpack_require__(53);
 	graphicGL.Ray = __webpack_require__(26);
 	graphicGL.BoundingBox = __webpack_require__(13);
-	graphicGL.Frustum = __webpack_require__(63);
+	graphicGL.Frustum = __webpack_require__(52);
 
 	// Texture utilities
 
+	var blankImage = textureUtil.createBlank('rgba(255,255,255,0)');
 	/**
 	 * @param {string|HTMLImageElement|HTMLCanvasElement} imgValue
 	 * @param {module:echarts/ExtensionAPI} api
@@ -17719,7 +18214,32 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var textureCache = api.__textureCache = api.__textureCache || new LRUCache(20);
 
-	    if (isValueImage(imgValue)) {
+	    if (isECharts(imgValue)) {
+	        var id = imgValue.__textureid__;
+	        var textureObj = textureCache.get(prefix + id);
+	        if (!textureObj) {
+	            var surface = new EChartsSurface(imgValue);
+	            surface.textureupdated = function () {
+	                api.getZr().refresh();
+	            };
+	            textureObj = {
+	                texture: surface.getTexture()
+	            };
+	            for (var i = 0; i < keys.length; i++) {
+	                textureObj.texture[keys[i]] = textureOpts[keys[i]];
+	            }
+	            id = imgValue.__textureid__ || '__ecgl_ec__' + textureObj.texture.__GUID__;
+	            imgValue.__textureid__ = id;
+	            textureCache.put(prefix + id, textureObj);
+	            // TODO Next tick?
+	            cb && cb(textureObj.texture);
+	        }
+	        else {
+	            textureObj.texture.surface.setECharts(imgValue);
+	        }
+	        return textureObj.texture;
+	    }
+	    else if (isValueImage(imgValue)) {
 	        var id = imgValue.__textureid__;
 	        var textureObj = textureCache.get(prefix + id);
 	        if (!textureObj) {
@@ -17733,7 +18253,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            id = imgValue.__textureid__ || '__ecgl_image__' + textureObj.texture.__GUID__;
 	            imgValue.__textureid__ = id;
-	            textureObj.put(prefix + id, textureObj);
+	            textureCache.put(prefix + id, textureObj);
 	            // TODO Next tick?
 	            cb && cb(textureObj.texture);
 	        }
@@ -17780,6 +18300,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	/**
+	 * Create a blank texture for placeholder
+	 */
+	graphicGL.createBlankTexture = textureUtil.createBlank;
+
+	/**
 	 * If value is image
 	 * @param {*}
 	 * @return {boolean}
@@ -17794,7 +18319,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = graphicGL;
 
 /***/ },
-/* 40 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -17854,228 +18379,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Mesh.CCW = glenum.CCW;
 
 	    module.exports = Mesh;
-
-
-/***/ },
-/* 41 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-
-	    var Texture = __webpack_require__(21);
-	    var glinfo = __webpack_require__(10);
-	    var glenum = __webpack_require__(11);
-	    var mathUtil = __webpack_require__(42);
-	    var isPowerOfTwo = mathUtil.isPowerOfTwo;
-
-	    /**
-	     * @constructor qtek.Texture2D
-	     * @extends qtek.Texture
-	     *
-	     * @example
-	     *     ...
-	     *     var mat = new qtek.Material({
-	     *         shader: qtek.shader.library.get('qtek.phong', 'diffuseMap')
-	     *     });
-	     *     var diffuseMap = new qtek.Texture2D();
-	     *     diffuseMap.load('assets/textures/diffuse.jpg');
-	     *     mat.set('diffuseMap', diffuseMap);
-	     *     ...
-	     *     diffuseMap.success(function() {
-	     *         // Wait for the diffuse texture loaded
-	     *         animation.on('frame', function(frameTime) {
-	     *             renderer.render(scene, camera);
-	     *         });
-	     *     });
-	     */
-	    var Texture2D = Texture.extend(function() {
-	        return /** @lends qtek.Texture2D# */ {
-	            /**
-	             * @type {HTMLImageElement|HTMLCanvasElemnet}
-	             */
-	            image: null,
-	            /**
-	             * @type {Uint8Array|Float32Array}
-	             */
-	            pixels: null,
-	            /**
-	             * @type {Array.<Object>}
-	             * @example
-	             *     [{
-	             *         image: mipmap0,
-	             *         pixels: null
-	             *     }, {
-	             *         image: mipmap1,
-	             *         pixels: null
-	             *     }, ....]
-	             */
-	            mipmaps: []
-	        };
-	    }, {
-	        update: function(_gl) {
-
-	            _gl.bindTexture(_gl.TEXTURE_2D, this._cache.get('webgl_texture'));
-
-	            this.beforeUpdate( _gl);
-
-	            var glFormat = this.format;
-	            var glType = this.type;
-
-	            _gl.texParameteri(_gl.TEXTURE_2D, _gl.TEXTURE_WRAP_S, this.wrapS);
-	            _gl.texParameteri(_gl.TEXTURE_2D, _gl.TEXTURE_WRAP_T, this.wrapT);
-
-	            _gl.texParameteri(_gl.TEXTURE_2D, _gl.TEXTURE_MAG_FILTER, this.magFilter);
-	            _gl.texParameteri(_gl.TEXTURE_2D, _gl.TEXTURE_MIN_FILTER, this.minFilter);
-
-	            var anisotropicExt = glinfo.getExtension(_gl, 'EXT_texture_filter_anisotropic');
-	            if (anisotropicExt && this.anisotropic > 1) {
-	                _gl.texParameterf(_gl.TEXTURE_2D, anisotropicExt.TEXTURE_MAX_ANISOTROPY_EXT, this.anisotropic);
-	            }
-
-	            // Fallback to float type if browser don't have half float extension
-	            if (glType === 36193) {
-	                var halfFloatExt = glinfo.getExtension(_gl, 'OES_texture_half_float');
-	                if (!halfFloatExt) {
-	                    glType = glenum.FLOAT;
-	                }
-	            }
-
-	            if (this.mipmaps.length) {
-	                var width = this.width;
-	                var height = this.height;
-	                for (var i = 0; i < this.mipmaps.length; i++) {
-	                    var mipmap = this.mipmaps[i];
-	                    this._updateTextureData(_gl, mipmap, i, width, height, glFormat, glType);
-	                    width /= 2;
-	                    height /= 2;
-	                }
-	            }
-	            else {
-	                this._updateTextureData(_gl, this, 0, this.width, this.height, glFormat, glType);
-
-	                if (this.useMipmap && !this.NPOT) {
-	                    _gl.generateMipmap(_gl.TEXTURE_2D);
-	                }
-	            }
-
-	            _gl.bindTexture(_gl.TEXTURE_2D, null);
-	        },
-
-	        _updateTextureData: function (_gl, data, level, width, height, glFormat, glType) {
-	            if (data.image) {
-	                _gl.texImage2D(_gl.TEXTURE_2D, level, glFormat, glFormat, glType, data.image);
-	            }
-	            else {
-	                // Can be used as a blank texture when writing render to texture(RTT)
-	                if (
-	                    glFormat <= Texture.COMPRESSED_RGBA_S3TC_DXT5_EXT
-	                    && glFormat >= Texture.COMPRESSED_RGB_S3TC_DXT1_EXT
-	                ) {
-	                    _gl.compressedTexImage2D(_gl.TEXTURE_2D, level, glFormat, width, height, 0, data.pixels);
-	                }
-	                else {
-	                    // Is a render target if pixels is null
-	                    _gl.texImage2D(_gl.TEXTURE_2D, level, glFormat, width, height, 0, glFormat, glType, data.pixels);
-	                }
-	            }
-	        },
-
-	        /**
-	         * @param  {WebGLRenderingContext} _gl
-	         * @memberOf qtek.Texture2D.prototype
-	         */
-	        generateMipmap: function(_gl) {
-	            if (this.useMipmap && !this.NPOT) {
-	                _gl.bindTexture(_gl.TEXTURE_2D, this._cache.get('webgl_texture'));
-	                _gl.generateMipmap(_gl.TEXTURE_2D);
-	            }
-	        },
-
-	        isPowerOfTwo: function() {
-	            var width;
-	            var height;
-	            if (this.image) {
-	                width = this.image.width;
-	                height = this.image.height;
-	            }
-	            else {
-	                width = this.width;
-	                height = this.height;
-	            }
-	            return isPowerOfTwo(width) && isPowerOfTwo(height);
-	        },
-
-	        isRenderable: function() {
-	            if (this.image) {
-	                return this.image.nodeName === 'CANVAS'
-	                    || this.image.nodeName === 'VIDEO'
-	                    || this.image.complete;
-	            }
-	            else {
-	                return !!(this.width && this.height);
-	            }
-	        },
-
-	        bind: function(_gl) {
-	            _gl.bindTexture(_gl.TEXTURE_2D, this.getWebGLTexture(_gl));
-	        },
-
-	        unbind: function(_gl) {
-	            _gl.bindTexture(_gl.TEXTURE_2D, null);
-	        },
-
-	        load: function (src) {
-	            var image = new Image();
-	            var self = this;
-	            image.onload = function() {
-	                self.dirty();
-	                self.trigger('success', self);
-	                image.onload = null;
-	            };
-	            image.onerror = function() {
-	                self.trigger('error', self);
-	                image.onerror = null;
-	            };
-
-	            image.src = src;
-	            this.image = image;
-
-	            return this;
-	        }
-	    });
-
-	    module.exports = Texture2D;
-
-
-/***/ },
-/* 42 */
-/***/ function(module, exports) {
-
-	
-
-	    var mathUtil = {};
-
-	    mathUtil.isPowerOfTwo = function (value) {
-	        return (value & (value - 1)) === 0;
-	    };
-
-	    mathUtil.nextPowerOfTwo = function (value) {
-	        value --;
-	        value |= value >> 1;
-	        value |= value >> 2;
-	        value |= value >> 4;
-	        value |= value >> 8;
-	        value |= value >> 16;
-	        value ++;
-
-	        return value;
-	    };
-
-	    mathUtil.nearestPowerOfTwo = function (value) {
-	        return Math.pow( 2, Math.round( Math.log( value ) / Math.LN2 ) );
-	    };
-
-	    module.exports = mathUtil;
 
 
 /***/ },
@@ -18705,7 +19008,2415 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Animator = __webpack_require__(47);
+	'use strict';
+
+
+	    var Texture2D = __webpack_require__(33);
+	    var TextureCube = __webpack_require__(47);
+	    var request = __webpack_require__(48);
+	    var EnvironmentMapPass = __webpack_require__(49);
+	    var Skydome = __webpack_require__(55);
+	    var Scene = __webpack_require__(43);
+
+	    var dds = __webpack_require__(57);
+	    var hdr = __webpack_require__(58);
+
+	    /**
+	     * @namespace qtek.util.texture
+	     */
+	    var textureUtil = {
+	        /**
+	         * @param  {string|object} path
+	         * @param  {object} [option]
+	         * @param  {Function} [onsuccess]
+	         * @param  {Function} [onerror]
+	         * @return {qtek.Texture}
+	         *
+	         * @memberOf qtek.util.texture
+	         */
+	        loadTexture: function (path, option, onsuccess, onerror) {
+	            var texture;
+	            if (typeof(option) === 'function') {
+	                onsuccess = option;
+	                onerror = onsuccess;
+	                option = {};
+	            }
+	            else {
+	                option = option || {};
+	            }
+	            if (typeof(path) === 'string') {
+	                if (path.match(/.hdr$/)) {
+	                    texture = new Texture2D({
+	                        width: 0,
+	                        height: 0
+	                    });
+	                    textureUtil._fetchTexture(
+	                        path,
+	                        function (data) {
+	                            hdr.parseRGBE(data, texture, option.exposure);
+	                            texture.dirty();
+	                            onsuccess && onsuccess(texture);
+	                        },
+	                        onerror
+	                    );
+	                    return texture;
+	                }
+	                else if (path.match(/.dds$/)) {
+	                    texture = new Texture2D({
+	                        width: 0,
+	                        height: 0
+	                    });
+	                    textureUtil._fetchTexture(
+	                        path,
+	                        function (data) {
+	                            dds.parse(data, texture);
+	                            texture.dirty();
+	                            onsuccess && onsuccess(texture);
+	                        },
+	                        onerror
+	                    );
+	                }
+	                else {
+	                    texture = new Texture2D();
+	                    texture.load(path);
+	                    texture.success(onsuccess);
+	                    texture.error(onerror);
+	                }
+	            }
+	            else if (typeof(path) == 'object' && typeof(path.px) !== 'undefined') {
+	                var texture = new TextureCube();
+	                texture.load(path);
+	                texture.success(onsuccess);
+	                texture.error(onerror);
+	            }
+	            return texture;
+	        },
+
+	        /**
+	         * Load a panorama texture and render it to a cube map
+	         * @param  {qtek.Renderer} renderer
+	         * @param  {string} path
+	         * @param  {qtek.TextureCube} cubeMap
+	         * @param  {object} [option]
+	         * @param  {boolean} [option.encodeRGBM]
+	         * @param  {number} [option.exposure]
+	         * @param  {Function} [onsuccess]
+	         * @param  {Function} [onerror]
+	         *
+	         * @memberOf qtek.util.texture
+	         */
+	        loadPanorama: function (renderer, path, cubeMap, option, onsuccess, onerror) {
+	            var self = this;
+
+	            if (typeof(option) === 'function') {
+	                onsuccess = option;
+	                onerror = onsuccess;
+	                option = {};
+	            }
+	            else {
+	                option = option || {};
+	            }
+
+	            textureUtil.loadTexture(path, option, function (texture) {
+	                // PENDING
+	                texture.flipY = option.flipY || false;
+	                self.panoramaToCubeMap(renderer, texture, cubeMap, option);
+	                texture.dispose(renderer.gl);
+	                onsuccess && onsuccess(cubeMap);
+	            }, onerror);
+	        },
+
+	        /**
+	         * Render a panorama texture to a cube map
+	         * @param  {qtek.Renderer} renderer
+	         * @param  {qtek.Texture2D} panoramaMap
+	         * @param  {qtek.TextureCube} cubeMap
+	         * @param  {Object} option
+	         * @param  {boolean} [option.encodeRGBM]
+	         *
+	         * @memberOf qtek.util.texture
+	         */
+	        panoramaToCubeMap: function (renderer, panoramaMap, cubeMap, option) {
+	            var environmentMapPass = new EnvironmentMapPass();
+	            var skydome = new Skydome({
+	                scene: new Scene()
+	            });
+	            skydome.material.set('diffuseMap', panoramaMap);
+
+	            option = option || {};
+	            if (option.encodeRGBM) {
+	                skydome.material.shader.define('fragment', 'RGBM_ENCODE');
+	            }
+
+	            environmentMapPass.texture = cubeMap;
+	            environmentMapPass.render(renderer, skydome.scene);
+	            environmentMapPass.texture = null;
+	            environmentMapPass.dispose(renderer);
+	            return cubeMap;
+	        },
+
+	        _fetchTexture: function (path, onsuccess, onerror) {
+	            request.get({
+	                url: path,
+	                responseType: 'arraybuffer',
+	                onload: onsuccess,
+	                onerror: onerror
+	            });
+	        },
+
+	        /**
+	         * Create a chessboard texture
+	         * @param  {number} [size]
+	         * @param  {number} [unitSize]
+	         * @param  {string} [color1]
+	         * @param  {string} [color2]
+	         * @return {qtek.Texture2D}
+	         *
+	         * @memberOf qtek.util.texture
+	         */
+	        createChessboard: function (size, unitSize, color1, color2) {
+	            size = size || 512;
+	            unitSize = unitSize || 64;
+	            color1 = color1 || 'black';
+	            color2 = color2 || 'white';
+
+	            var repeat = Math.ceil(size / unitSize);
+
+	            var canvas = document.createElement('canvas');
+	            canvas.width = size;
+	            canvas.height = size;
+	            var ctx = canvas.getContext('2d');
+	            ctx.fillStyle = color2;
+	            ctx.fillRect(0, 0, size, size);
+
+	            ctx.fillStyle = color1;
+	            for (var i = 0; i < repeat; i++) {
+	                for (var j = 0; j < repeat; j++) {
+	                    var isFill = j % 2 ? (i % 2) : (i % 2 - 1);
+	                    if (isFill) {
+	                        ctx.fillRect(i * unitSize, j * unitSize, unitSize, unitSize);
+	                    }
+	                }
+	            }
+
+	            var texture = new Texture2D({
+	                image: canvas,
+	                anisotropic: 8
+	            });
+
+	            return texture;
+	        },
+
+	        /**
+	         * Create a blank pure color 1x1 texture
+	         * @param  {string} color
+	         * @return {qtek.Texture2D}
+	         *
+	         * @memberOf qtek.util.texture
+	         */
+	        createBlank: function (color) {
+	            var canvas = document.createElement('canvas');
+	            canvas.width = 10;
+	            canvas.height = 10;
+	            var ctx = canvas.getContext('2d');
+	            ctx.fillStyle = color;
+	            ctx.fillRect(0, 0, 10, 10);
+
+	            var texture = new Texture2D({
+	                image: canvas
+	            });
+
+	            return texture;
+	        }
+	    };
+
+	    module.exports = textureUtil;
+
+
+/***/ },
+/* 47 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	    var Texture = __webpack_require__(21);
+	    var glinfo = __webpack_require__(10);
+	    var glenum = __webpack_require__(11);
+	    var util = __webpack_require__(9);
+	    var mathUtil = __webpack_require__(34);
+	    var isPowerOfTwo = mathUtil.isPowerOfTwo;
+
+	    var targetList = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
+
+	    /**
+	     * @constructor qtek.TextureCube
+	     * @extends qtek.Texture
+	     *
+	     * @example
+	     *     ...
+	     *     var mat = new qtek.Material({
+	     *         shader: qtek.shader.library.get('qtek.phong', 'environmentMap')
+	     *     });
+	     *     var envMap = new qtek.TextureCube();
+	     *     envMap.load({
+	     *         'px': 'assets/textures/sky/px.jpg',
+	     *         'nx': 'assets/textures/sky/nx.jpg'
+	     *         'py': 'assets/textures/sky/py.jpg'
+	     *         'ny': 'assets/textures/sky/ny.jpg'
+	     *         'pz': 'assets/textures/sky/pz.jpg'
+	     *         'nz': 'assets/textures/sky/nz.jpg'
+	     *     });
+	     *     mat.set('environmentMap', envMap);
+	     *     ...
+	     *     envMap.success(function() {
+	     *         // Wait for the sky texture loaded
+	     *         animation.on('frame', function(frameTime) {
+	     *             renderer.render(scene, camera);
+	     *         });
+	     *     });
+	     */
+	    var TextureCube = Texture.extend(function() {
+	        return /** @lends qtek.TextureCube# */{
+	            /**
+	             * @type {Object}
+	             * @property {HTMLImageElement|HTMLCanvasElemnet} px
+	             * @property {HTMLImageElement|HTMLCanvasElemnet} nx
+	             * @property {HTMLImageElement|HTMLCanvasElemnet} py
+	             * @property {HTMLImageElement|HTMLCanvasElemnet} ny
+	             * @property {HTMLImageElement|HTMLCanvasElemnet} pz
+	             * @property {HTMLImageElement|HTMLCanvasElemnet} nz
+	             */
+	            image: {
+	                px: null,
+	                nx: null,
+	                py: null,
+	                ny: null,
+	                pz: null,
+	                nz: null
+	            },
+	            /**
+	             * @type {Object}
+	             * @property {Uint8Array} px
+	             * @property {Uint8Array} nx
+	             * @property {Uint8Array} py
+	             * @property {Uint8Array} ny
+	             * @property {Uint8Array} pz
+	             * @property {Uint8Array} nz
+	             */
+	            pixels: {
+	                px: null,
+	                nx: null,
+	                py: null,
+	                ny: null,
+	                pz: null,
+	                nz: null
+	            },
+
+	            /**
+	             * @type {Array.<Object>}
+	             */
+	            mipmaps: []
+	       };
+	    }, {
+	        update: function(_gl) {
+
+	            _gl.bindTexture(_gl.TEXTURE_CUBE_MAP, this._cache.get('webgl_texture'));
+
+	            this.beforeUpdate(_gl);
+
+	            var glFormat = this.format;
+	            var glType = this.type;
+
+	            _gl.texParameteri(_gl.TEXTURE_CUBE_MAP, _gl.TEXTURE_WRAP_S, this.wrapS);
+	            _gl.texParameteri(_gl.TEXTURE_CUBE_MAP, _gl.TEXTURE_WRAP_T, this.wrapT);
+
+	            _gl.texParameteri(_gl.TEXTURE_CUBE_MAP, _gl.TEXTURE_MAG_FILTER, this.magFilter);
+	            _gl.texParameteri(_gl.TEXTURE_CUBE_MAP, _gl.TEXTURE_MIN_FILTER, this.minFilter);
+
+	            var anisotropicExt = glinfo.getExtension(_gl, 'EXT_texture_filter_anisotropic');
+	            if (anisotropicExt && this.anisotropic > 1) {
+	                _gl.texParameterf(_gl.TEXTURE_CUBE_MAP, anisotropicExt.TEXTURE_MAX_ANISOTROPY_EXT, this.anisotropic);
+	            }
+
+	            // Fallback to float type if browser don't have half float extension
+	            if (glType === 36193) {
+	                var halfFloatExt = glinfo.getExtension(_gl, 'OES_texture_half_float');
+	                if (!halfFloatExt) {
+	                    glType = glenum.FLOAT;
+	                }
+	            }
+
+	            if (this.mipmaps.length) {
+	                var width = this.width;
+	                var height = this.height;
+	                for (var i = 0; i < this.mipmaps.length; i++) {
+	                    var mipmap = this.mipmaps[i];
+	                    this._updateTextureData(_gl, mipmap, i, width, height, glFormat, glType);
+	                    width /= 2;
+	                    height /= 2;
+	                }
+	            }
+	            else {
+	                this._updateTextureData(_gl, this, 0, this.width, this.height, glFormat, glType);
+
+	                if (!this.NPOT && this.useMipmap) {
+	                    _gl.generateMipmap(_gl.TEXTURE_CUBE_MAP);
+	                }
+	            }
+
+	            _gl.bindTexture(_gl.TEXTURE_CUBE_MAP, null);
+	        },
+
+	        _updateTextureData: function (_gl, data, level, width, height, glFormat, glType) {
+	            for (var i = 0; i < 6; i++) {
+	                var target = targetList[i];
+	                var img = data.image && data.image[target];
+	                if (img) {
+	                    _gl.texImage2D(_gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, level, glFormat, glFormat, glType, img);
+	                }
+	                else {
+	                    _gl.texImage2D(_gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, level, glFormat, width, height, 0, glFormat, glType, data.pixels && data.pixels[target]);
+	                }
+	            }
+	        },
+
+	        /**
+	         * @param  {WebGLRenderingContext} _gl
+	         * @memberOf qtek.TextureCube.prototype
+	         */
+	        generateMipmap: function(_gl) {
+	            if (this.useMipmap && !this.NPOT) {
+	                _gl.bindTexture(_gl.TEXTURE_CUBE_MAP, this._cache.get('webgl_texture'));
+	                _gl.generateMipmap(_gl.TEXTURE_CUBE_MAP);
+	            }
+	        },
+
+	        bind: function(_gl) {
+
+	            _gl.bindTexture(_gl.TEXTURE_CUBE_MAP, this.getWebGLTexture(_gl));
+	        },
+
+	        unbind: function(_gl) {
+	            _gl.bindTexture(_gl.TEXTURE_CUBE_MAP, null);
+	        },
+
+	        // Overwrite the isPowerOfTwo method
+	        isPowerOfTwo: function() {
+	            if (this.image.px) {
+	                return isPowerOfTwo(this.image.px.width)
+	                    && isPowerOfTwo(this.image.px.height);
+	            }
+	            else {
+	                return isPowerOfTwo(this.width)
+	                    && isPowerOfTwo(this.height);
+	            }
+	        },
+
+	        isRenderable: function() {
+	            if (this.image.px) {
+	                return isImageRenderable(this.image.px)
+	                    && isImageRenderable(this.image.nx)
+	                    && isImageRenderable(this.image.py)
+	                    && isImageRenderable(this.image.ny)
+	                    && isImageRenderable(this.image.pz)
+	                    && isImageRenderable(this.image.nz);
+	            }
+	            else {
+	                return !!(this.width && this.height);
+	            }
+	        },
+
+	        load: function(imageList) {
+	            var loading = 0;
+	            var self = this;
+	            util.each(imageList, function(src, target){
+	                var image = new Image();
+	                image.onload = function() {
+	                    loading --;
+	                    if (loading === 0){
+	                        self.dirty();
+	                        self.trigger('success', self);
+	                    }
+	                    image.onload = null;
+	                };
+	                image.onerror = function() {
+	                    loading --;
+	                    image.onerror = null;
+	                };
+
+	                loading++;
+	                image.src = src;
+	                self.image[target] = image;
+	            });
+
+	            return this;
+	        }
+	    });
+
+	    function isImageRenderable(image) {
+	        return image.nodeName === 'CANVAS' ||
+	                image.nodeName === 'VIDEO' ||
+	                image.complete;
+	    }
+
+	    module.exports = TextureCube;
+
+
+/***/ },
+/* 48 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+
+	    function get(options) {
+
+	        var xhr = new XMLHttpRequest();
+
+	        xhr.open('get', options.url);
+	        // With response type set browser can get and put binary data
+	        // https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/Sending_and_Receiving_Binary_Data
+	        // Default is text, and it can be set
+	        // arraybuffer, blob, document, json, text
+	        xhr.responseType = options.responseType || 'text';
+
+	        if (options.onprogress) {
+	            //https://developer.mozilla.org/en-US/docs/DOM/XMLHttpRequest/Using_XMLHttpRequest
+	            xhr.onprogress = function(e) {
+	                if (e.lengthComputable) {
+	                    var percent = e.loaded / e.total;
+	                    options.onprogress(percent, e.loaded, e.total);
+	                } else {
+	                    options.onprogress(null);
+	                }
+	            };
+	        }
+	        xhr.onload = function(e) {
+	            options.onload && options.onload(xhr.response);
+	        };
+	        if (options.onerror) {
+	            xhr.onerror = options.onerror;
+	        }
+	        xhr.send(null);
+	    }
+
+	    module.exports = {
+	        get : get
+	    };
+
+
+/***/ },
+/* 49 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	    var Base = __webpack_require__(6);
+	    var Vector3 = __webpack_require__(14);
+	    var PerspectiveCamera = __webpack_require__(50);
+	    var FrameBuffer = __webpack_require__(54);
+
+	    var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
+
+	    /**
+	     * Pass rendering scene to a environment cube map
+	     *
+	     * @constructor qtek.prePass.EnvironmentMap
+	     * @extends qtek.core.Base
+	     * @example
+	     *     // Example of car reflection
+	     *     var envMap = new qtek.TextureCube({
+	     *         width: 256,
+	     *         height: 256
+	     *     });
+	     *     var envPass = new qtek.prePass.EnvironmentMap({
+	     *         position: car.position,
+	     *         texture: envMap
+	     *     });
+	     *     var carBody = car.getChildByName('body');
+	     *     carBody.material.shader.enableTexture('environmentMap');
+	     *     carBody.material.set('environmentMap', envMap);
+	     *     ...
+	     *     animation.on('frame', function(frameTime) {
+	     *         envPass.render(renderer, scene);
+	     *         renderer.render(scene, camera);
+	     *     });
+	     */
+	    var EnvironmentMapPass = Base.extend(function() {
+	        var ret = {
+	            /**
+	             * Camera position
+	             * @type {qtek.math.Vector3}
+	             * @memberOf qtek.prePass.EnvironmentMap#
+	             */
+	            position: new Vector3(),
+	            /**
+	             * Camera far plane
+	             * @type {number}
+	             * @memberOf qtek.prePass.EnvironmentMap#
+	             */
+	            far: 1000,
+	            /**
+	             * Camera near plane
+	             * @type {number}
+	             * @memberOf qtek.prePass.EnvironmentMap#
+	             */
+	            near: 0.1,
+	            /**
+	             * Environment cube map
+	             * @type {qtek.TextureCube}
+	             * @memberOf qtek.prePass.EnvironmentMap#
+	             */
+	            texture: null,
+
+	            /**
+	             * Used if you wan't have shadow in environment map
+	             * @type {qtek.prePass.ShadowMap}
+	             */
+	            shadowMapPass: null,
+	        };
+	        var cameras = ret._cameras = {
+	            px: new PerspectiveCamera({ fov: 90 }),
+	            nx: new PerspectiveCamera({ fov: 90 }),
+	            py: new PerspectiveCamera({ fov: 90 }),
+	            ny: new PerspectiveCamera({ fov: 90 }),
+	            pz: new PerspectiveCamera({ fov: 90 }),
+	            nz: new PerspectiveCamera({ fov: 90 })
+	        };
+	        cameras.px.lookAt(Vector3.POSITIVE_X, Vector3.NEGATIVE_Y);
+	        cameras.nx.lookAt(Vector3.NEGATIVE_X, Vector3.NEGATIVE_Y);
+	        cameras.py.lookAt(Vector3.POSITIVE_Y, Vector3.POSITIVE_Z);
+	        cameras.ny.lookAt(Vector3.NEGATIVE_Y, Vector3.NEGATIVE_Z);
+	        cameras.pz.lookAt(Vector3.POSITIVE_Z, Vector3.NEGATIVE_Y);
+	        cameras.nz.lookAt(Vector3.NEGATIVE_Z, Vector3.NEGATIVE_Y);
+
+	        // FIXME In windows, use one framebuffer only renders one side of cubemap
+	        ret._frameBuffer = new FrameBuffer()
+
+	        return ret;
+	    }, {
+	        /**
+	         * @param  {string} target
+	         * @return  {qtek.Camera}
+	         */
+	        getCamera: function (target) {
+	            return this._cameras[target];
+	        },
+	        /**
+	         * @param  {qtek.Renderer} renderer
+	         * @param  {qtek.Scene} scene
+	         * @param  {boolean} [notUpdateScene=false]
+	         */
+	        render: function(renderer, scene, notUpdateScene) {
+	            var _gl = renderer.gl;
+	            if (!notUpdateScene) {
+	                scene.update();
+	            }
+	            // Tweak fov
+	            // http://the-witness.net/news/2012/02/seamless-cube-map-filtering/
+	            var n = this.texture.width;
+	            var fov = 2 * Math.atan(n / (n - 0.5)) / Math.PI * 180;
+
+	            for (var i = 0; i < 6; i++) {
+	                var target = targets[i];
+	                var camera = this._cameras[target];
+	                Vector3.copy(camera.position, this.position);
+
+	                camera.far = this.far;
+	                camera.near = this.near;
+	                camera.fov = fov;
+
+	                if (this.shadowMapPass) {
+	                    camera.update();
+
+	                    // update boundingBoxLastFrame
+	                    var bbox = scene.getBoundingBox(function (el) {
+	                        return !el.invisible;
+	                    });
+	                    bbox.applyTransform(camera.viewMatrix);
+	                    scene.viewBoundingBoxLastFrame.copy(bbox);
+
+	                    this.shadowMapPass.render(renderer, scene, camera, true);
+	                }
+	                this._frameBuffer.attach(
+	                    this.texture, _gl.COLOR_ATTACHMENT0,
+	                    _gl.TEXTURE_CUBE_MAP_POSITIVE_X + i
+	                );
+	                this._frameBuffer.bind(renderer);
+	                renderer.render(scene, camera, true);
+	                this._frameBuffer.unbind(renderer);
+	            }
+	        },
+	        /**
+	         * @param  {qtek.Renderer} renderer
+	         */
+	        dispose: function(gl) {
+	            this._frameBuffer.dispose(gl);
+	        }
+	    });
+
+	    module.exports = EnvironmentMapPass;
+
+
+/***/ },
+/* 50 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+
+	    var Camera = __webpack_require__(51);
+
+	    /**
+	     * @constructor qtek.camera.Perspective
+	     * @extends qtek.Camera
+	     */
+	    var Perspective = Camera.extend(
+	    /** @lends qtek.camera.Perspective# */
+	    {
+	        /**
+	         * Vertical field of view in radians
+	         * @type {number}
+	         */
+	        fov: 50,
+	        /**
+	         * Aspect ratio, typically viewport width / height
+	         * @type {number}
+	         */
+	        aspect: 1,
+	        /**
+	         * Near bound of the frustum
+	         * @type {number}
+	         */
+	        near: 0.1,
+	        /**
+	         * Far bound of the frustum
+	         * @type {number}
+	         */
+	        far: 2000
+	    },
+	    /** @lends qtek.camera.Perspective.prototype */
+	    {
+
+	        updateProjectionMatrix: function() {
+	            var rad = this.fov / 180 * Math.PI;
+	            this.projectionMatrix.perspective(rad, this.aspect, this.near, this.far);
+	        },
+	        decomposeProjectionMatrix: function () {
+	            var m = this.projectionMatrix._array;
+	            var rad = Math.atan(1 / m[5]) * 2;
+	            this.fov = rad / Math.PI * 180;
+	            this.aspect = m[5] / m[0];
+	            this.near = m[14] / (m[10] - 1);
+	            this.far = m[14] / (m[10] + 1);
+	        },
+	        /**
+	         * @return {qtek.camera.Perspective}
+	         */
+	        clone: function() {
+	            var camera = Camera.prototype.clone.call(this);
+	            camera.fov = this.fov;
+	            camera.aspect = this.aspect;
+	            camera.near = this.near;
+	            camera.far = this.far;
+
+	            return camera;
+	        }
+	    });
+
+	    module.exports = Perspective;
+
+
+/***/ },
+/* 51 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+
+	    var Node = __webpack_require__(28);
+	    var Matrix4 = __webpack_require__(16);
+	    var Frustum = __webpack_require__(52);
+	    var Ray = __webpack_require__(26);
+
+	    var glMatrix = __webpack_require__(15);
+	    var vec3 = glMatrix.vec3;
+	    var vec4 = glMatrix.vec4;
+
+	    /**
+	     * @constructor qtek.Camera
+	     * @extends qtek.Node
+	     */
+	    var Camera = Node.extend(function () {
+	        return /** @lends qtek.Camera# */ {
+	            /**
+	             * Camera projection matrix
+	             * @type {qtek.math.Matrix4}
+	             */
+	            projectionMatrix: new Matrix4(),
+
+	            /**
+	             * Inverse of camera projection matrix
+	             * @type {qtek.math.Matrix4}
+	             */
+	            invProjectionMatrix: new Matrix4(),
+
+	            /**
+	             * View matrix, equal to inverse of camera's world matrix
+	             * @type {qtek.math.Matrix4}
+	             */
+	            viewMatrix: new Matrix4(),
+
+	            /**
+	             * Camera frustum in view space
+	             * @type {qtek.math.Frustum}
+	             */
+	            frustum: new Frustum()
+	        };
+	    }, function () {
+	        this.update(true);
+	    },
+	    /** @lends qtek.Camera.prototype */
+	    {
+
+	        update: function (force) {
+	            Node.prototype.update.call(this, force);
+	            Matrix4.invert(this.viewMatrix, this.worldTransform);
+
+	            this.updateProjectionMatrix();
+	            Matrix4.invert(this.invProjectionMatrix, this.projectionMatrix);
+
+	            this.frustum.setFromProjection(this.projectionMatrix);
+	        },
+
+	        /**
+	         * Set camera view matrix
+	         */
+	        setViewMatrix: function (viewMatrix) {
+	            Matrix4.invert(this.worldTransform, viewMatrix);
+	            this.decomposeWorldTransform();
+	        },
+
+	        /**
+	         * Decompose camera projection matrix
+	         */
+	        decomposeProjectionMatrix: function () {},
+
+	        /**
+	         * Set camera projection matrix
+	         */
+	        setProjectionMatrix: function (projectionMatrix) {
+	            Matrix4.copy(this.projectionMatrix, projectionMatrix);
+	            Matrix4.invert(this.invProjectionMatrix, projectionMatrix);
+	            this.decomposeProjectionMatrix();
+	        },
+	        /**
+	         * Update projection matrix, called after update
+	         */
+	        updateProjectionMatrix: function () {},
+
+	        /**
+	         * Cast a picking ray from camera near plane to far plane
+	         * @method
+	         * @param {qtek.math.Vector2} ndc
+	         * @param {qtek.math.Ray} [out]
+	         * @return {qtek.math.Ray}
+	         */
+	        castRay: (function () {
+	            var v4 = vec4.create();
+	            return function (ndc, out) {
+	                var ray = out !== undefined ? out : new Ray();
+	                var x = ndc._array[0];
+	                var y = ndc._array[1];
+	                vec4.set(v4, x, y, -1, 1);
+	                vec4.transformMat4(v4, v4, this.invProjectionMatrix._array);
+	                vec4.transformMat4(v4, v4, this.worldTransform._array);
+	                vec3.scale(ray.origin._array, v4, 1 / v4[3]);
+
+	                vec4.set(v4, x, y, 1, 1);
+	                vec4.transformMat4(v4, v4, this.invProjectionMatrix._array);
+	                vec4.transformMat4(v4, v4, this.worldTransform._array);
+	                vec3.scale(v4, v4, 1 / v4[3]);
+	                vec3.sub(ray.direction._array, v4, ray.origin._array);
+
+	                vec3.normalize(ray.direction._array, ray.direction._array);
+	                ray.direction._dirty = true;
+	                ray.origin._dirty = true;
+
+	                return ray;
+	            };
+	        })()
+
+	        /**
+	         * @method
+	         * @name clone
+	         * @return {qtek.Camera}
+	         * @memberOf qtek.Camera.prototype
+	         */
+	    });
+
+	    module.exports = Camera;
+
+
+/***/ },
+/* 52 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+
+	    var Vector3 = __webpack_require__(14);
+	    var BoundingBox = __webpack_require__(13);
+	    var Plane = __webpack_require__(53);
+
+	    var glMatrix = __webpack_require__(15);
+	    var vec3 = glMatrix.vec3;
+
+	    var vec3Set = vec3.set;
+	    var vec3Copy = vec3.copy;
+	    var vec3TranformMat4 = vec3.transformMat4;
+	    var mathMin = Math.min;
+	    var mathMax = Math.max;
+	    /**
+	     * @constructor
+	     * @alias qtek.math.Frustum
+	     */
+	    var Frustum = function() {
+
+	        /**
+	         * Eight planes to enclose the frustum
+	         * @type {qtek.math.Plane[]}
+	         */
+	        this.planes = [];
+
+	        for (var i = 0; i < 6; i++) {
+	            this.planes.push(new Plane());
+	        }
+
+	        /**
+	         * Bounding box of frustum
+	         * @type {qtek.math.BoundingBox}
+	         */
+	        this.boundingBox = new BoundingBox();
+
+	        /**
+	         * Eight vertices of frustum
+	         * @type {Float32Array[]}
+	         */
+	        this.vertices = [];
+	        for (var i = 0; i < 8; i++) {
+	            this.vertices[i] = vec3.fromValues(0, 0, 0);
+	        }
+	    };
+
+	    Frustum.prototype = {
+
+	        // http://web.archive.org/web/20120531231005/http://crazyjoke.free.fr/doc/3D/plane%20extraction.pdf
+	        /**
+	         * Set frustum from a projection matrix
+	         * @param {qtek.math.Matrix4} projectionMatrix
+	         */
+	        setFromProjection: function(projectionMatrix) {
+
+	            var planes = this.planes;
+	            var m = projectionMatrix._array;
+	            var m0 = m[0], m1 = m[1], m2 = m[2], m3 = m[3];
+	            var m4 = m[4], m5 = m[5], m6 = m[6], m7 = m[7];
+	            var m8 = m[8], m9 = m[9], m10 = m[10], m11 = m[11];
+	            var m12 = m[12], m13 = m[13], m14 = m[14], m15 = m[15];
+
+	            // Update planes
+	            vec3Set(planes[0].normal._array, m3 - m0, m7 - m4, m11 - m8);
+	            planes[0].distance = -(m15 - m12);
+	            planes[0].normalize();
+
+	            vec3Set(planes[1].normal._array, m3 + m0, m7 + m4, m11 + m8);
+	            planes[1].distance = -(m15 + m12);
+	            planes[1].normalize();
+
+	            vec3Set(planes[2].normal._array, m3 + m1, m7 + m5, m11 + m9);
+	            planes[2].distance = -(m15 + m13);
+	            planes[2].normalize();
+
+	            vec3Set(planes[3].normal._array, m3 - m1, m7 - m5, m11 - m9);
+	            planes[3].distance = -(m15 - m13);
+	            planes[3].normalize();
+
+	            vec3Set(planes[4].normal._array, m3 - m2, m7 - m6, m11 - m10);
+	            planes[4].distance = -(m15 - m14);
+	            planes[4].normalize();
+
+	            vec3Set(planes[5].normal._array, m3 + m2, m7 + m6, m11 + m10);
+	            planes[5].distance = -(m15 + m14);
+	            planes[5].normalize();
+
+	            // Perspective projection
+	            var boundingBox = this.boundingBox;
+	            if (m15 === 0)  {
+	                var aspect = m5 / m0;
+	                var zNear = -m14 / (m10 - 1);
+	                var zFar = -m14 / (m10 + 1);
+	                var farY = -zFar / m5;
+	                var nearY = -zNear / m5;
+	                // Update bounding box
+	                boundingBox.min.set(-farY * aspect, -farY, zFar);
+	                boundingBox.max.set(farY * aspect, farY, zNear);
+	                // update vertices
+	                var vertices = this.vertices;
+	                //--- min z
+	                // min x
+	                vec3Set(vertices[0], -farY * aspect, -farY, zFar);
+	                vec3Set(vertices[1], -farY * aspect, farY, zFar);
+	                // max x
+	                vec3Set(vertices[2], farY * aspect, -farY, zFar);
+	                vec3Set(vertices[3], farY * aspect, farY, zFar);
+	                //-- max z
+	                vec3Set(vertices[4], -nearY * aspect, -nearY, zNear);
+	                vec3Set(vertices[5], -nearY * aspect, nearY, zNear);
+	                vec3Set(vertices[6], nearY * aspect, -nearY, zNear);
+	                vec3Set(vertices[7], nearY * aspect, nearY, zNear);
+	            }
+	            else { // Orthographic projection
+	                var left = (-1 - m12) / m0;
+	                var right = (1 - m12) / m0;
+	                var top = (1 - m13) / m5;
+	                var bottom = (-1 - m13) / m5;
+	                var near = (-1 - m14) / m10;
+	                var far = (1 - m14) / m10;
+
+	                boundingBox.min.set(left, bottom, far);
+	                boundingBox.max.set(right, top, near);
+
+	                var min = boundingBox.min._array;
+	                var max = boundingBox.max._array;
+	                var vertices = this.vertices;
+	                //--- min z
+	                // min x
+	                vec3Set(vertices[0], min[0], min[1], min[2]);
+	                vec3Set(vertices[1], min[0], max[1], min[2]);
+	                // max x
+	                vec3Set(vertices[2], max[0], min[1], min[2]);
+	                vec3Set(vertices[3], max[0], max[1], min[2]);
+	                //-- max z
+	                vec3Set(vertices[4], min[0], min[1], max[2]);
+	                vec3Set(vertices[5], min[0], max[1], max[2]);
+	                vec3Set(vertices[6], max[0], min[1], max[2]);
+	                vec3Set(vertices[7], max[0], max[1], max[2]);
+	            }
+	        },
+
+	        /**
+	         * Apply a affine transform matrix and set to the given bounding box
+	         * @method
+	         * @param {qtek.math.BoundingBox}
+	         * @param {qtek.math.Matrix4}
+	         * @return {qtek.math.BoundingBox}
+	         */
+	        getTransformedBoundingBox: (function() {
+
+	            var tmpVec3 = vec3.create();
+
+	            return function(bbox, matrix) {
+	                var vertices = this.vertices;
+
+	                var m4 = matrix._array;
+	                var min = bbox.min;
+	                var max = bbox.max;
+	                var minArr = min._array;
+	                var maxArr = max._array;
+	                var v = vertices[0];
+	                vec3TranformMat4(tmpVec3, v, m4);
+	                vec3Copy(minArr, tmpVec3);
+	                vec3Copy(maxArr, tmpVec3);
+
+	                for (var i = 1; i < 8; i++) {
+	                    v = vertices[i];
+	                    vec3TranformMat4(tmpVec3, v, m4);
+
+	                    minArr[0] = mathMin(tmpVec3[0], minArr[0]);
+	                    minArr[1] = mathMin(tmpVec3[1], minArr[1]);
+	                    minArr[2] = mathMin(tmpVec3[2], minArr[2]);
+
+	                    maxArr[0] = mathMax(tmpVec3[0], maxArr[0]);
+	                    maxArr[1] = mathMax(tmpVec3[1], maxArr[1]);
+	                    maxArr[2] = mathMax(tmpVec3[2], maxArr[2]);
+	                }
+
+	                min._dirty = true;
+	                max._dirty = true;
+
+	                return bbox;
+	            };
+	        }) ()
+	    };
+	    module.exports = Frustum;
+
+
+/***/ },
+/* 53 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+
+	    var Vector3 = __webpack_require__(14);
+	    var glMatrix = __webpack_require__(15);
+	    var vec3 = glMatrix.vec3;
+	    var mat4 = glMatrix.mat4;
+	    var vec4 = glMatrix.vec4;
+
+	    /**
+	     * @constructor
+	     * @alias qtek.math.Plane
+	     * @param {qtek.math.Vector3} [normal]
+	     * @param {number} [distance]
+	     */
+	    var Plane = function(normal, distance) {
+	        /**
+	         * Normal of the plane
+	         * @type {qtek.math.Vector3}
+	         */
+	        this.normal = normal || new Vector3(0, 1, 0);
+
+	        /**
+	         * Constant of the plane equation, used as distance to the origin
+	         * @type {number}
+	         */
+	        this.distance = distance || 0;
+	    };
+
+	    Plane.prototype = {
+
+	        constructor: Plane,
+
+	        /**
+	         * Distance from given point to plane
+	         * @param  {qtek.math.Vector3} point
+	         * @return {number}
+	         */
+	        distanceToPoint: function(point) {
+	            return vec3.dot(point._array, this.normal._array) - this.distance;
+	        },
+
+	        /**
+	         * Calculate the projection on the plane of point
+	         * @param  {qtek.math.Vector3} point
+	         * @param  {qtek.math.Vector3} out
+	         * @return {qtek.math.Vector3}
+	         */
+	        projectPoint: function(point, out) {
+	            if (!out) {
+	                out = new Vector3();
+	            }
+	            var d = this.distanceToPoint(point);
+	            vec3.scaleAndAdd(out._array, point._array, this.normal._array, -d);
+	            out._dirty = true;
+	            return out;
+	        },
+
+	        /**
+	         * Normalize the plane's normal and calculate distance
+	         */
+	        normalize: function() {
+	            var invLen = 1 / vec3.len(this.normal._array);
+	            vec3.scale(this.normal._array, invLen);
+	            this.distance *= invLen;
+	        },
+
+	        /**
+	         * If the plane intersect a frustum
+	         * @param  {qtek.math.Frustum} Frustum
+	         * @return {boolean}
+	         */
+	        intersectFrustum: function(frustum) {
+	            // Check if all coords of frustum is on plane all under plane
+	            var coords = frustum.vertices;
+	            var normal = this.normal._array;
+	            var onPlane = vec3.dot(coords[0]._array, normal) > this.distance;
+	            for (var i = 1; i < 8; i++) {
+	                if ((vec3.dot(coords[i]._array, normal) > this.distance) != onPlane) {
+	                    return true;
+	                } 
+	            }
+	        },
+
+	        /**
+	         * Calculate the intersection point between plane and a given line
+	         * @method
+	         * @param {qtek.math.Vector3} start start point of line
+	         * @param {qtek.math.Vector3} end end point of line
+	         * @param {qtek.math.Vector3} [out]
+	         * @return {qtek.math.Vector3}
+	         */
+	        intersectLine: (function() {
+	            var rd = vec3.create();
+	            return function(start, end, out) {
+	                var d0 = this.distanceToPoint(start);
+	                var d1 = this.distanceToPoint(end);
+	                if ((d0 > 0 && d1 > 0) || (d0 < 0 && d1 < 0)) {
+	                    return null;
+	                }
+	                // Ray intersection
+	                var pn = this.normal._array;
+	                var d = this.distance;
+	                var ro = start._array;
+	                // direction
+	                vec3.sub(rd, end._array, start._array);
+	                vec3.normalize(rd, rd);
+
+	                var divider = vec3.dot(pn, rd);
+	                // ray is parallel to the plane
+	                if (divider === 0) {
+	                    return null;
+	                }
+	                if (!out) {
+	                    out = new Vector3();
+	                }
+	                var t = (vec3.dot(pn, ro) - d) / divider;
+	                vec3.scaleAndAdd(out._array, ro, rd, -t);
+	                out._dirty = true;
+	                return out;
+	            };
+	        })(),
+
+	        /**
+	         * Apply an affine transform matrix to plane
+	         * @method
+	         * @return {qtek.math.Matrix4}
+	         */
+	        applyTransform: (function() {
+	            var inverseTranspose = mat4.create();
+	            var normalv4 = vec4.create();
+	            var pointv4 = vec4.create();
+	            pointv4[3] = 1;
+	            return function(m4) {
+	                m4 = m4._array;
+	                // Transform point on plane
+	                vec3.scale(pointv4, this.normal._array, this.distance);
+	                vec4.transformMat4(pointv4, pointv4, m4);
+	                this.distance = vec3.dot(pointv4, this.normal._array);
+	                // Transform plane normal
+	                mat4.invert(inverseTranspose, m4);
+	                mat4.transpose(inverseTranspose, inverseTranspose);
+	                normalv4[3] = 0;
+	                vec3.copy(normalv4, this.normal._array);
+	                vec4.transformMat4(normalv4, normalv4, inverseTranspose);
+	                vec3.copy(this.normal._array, normalv4);
+	            };
+	        })(),
+
+	        /**
+	         * Copy from another plane
+	         * @param  {qtek.math.Vector3} plane
+	         */
+	        copy: function(plane) {
+	            vec3.copy(this.normal._array, plane.normal._array);
+	            this.normal._dirty = true;
+	            this.distance = plane.distance;
+	        },
+
+	        /**
+	         * Clone a new plane
+	         * @return {qtek.math.Plane}
+	         */
+	        clone: function() {
+	            var plane = new Plane();
+	            plane.copy(this);
+	            return plane;
+	        }
+	    };
+
+	    module.exports = Plane;
+
+
+/***/ },
+/* 54 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+
+	    var Base = __webpack_require__(6);
+	    var Texture = __webpack_require__(21);
+	    var TextureCube = __webpack_require__(47);
+	    var glinfo = __webpack_require__(10);
+	    var glenum = __webpack_require__(11);
+	    var Cache = __webpack_require__(19);
+
+	    var KEY_FRAMEBUFFER = 'framebuffer';
+	    var KEY_RENDERBUFFER = 'renderbuffer';
+	    var KEY_RENDERBUFFER_WIDTH = KEY_RENDERBUFFER + '_width';
+	    var KEY_RENDERBUFFER_HEIGHT = KEY_RENDERBUFFER + '_height';
+	    var KEY_RENDERBUFFER_ATTACHED = KEY_RENDERBUFFER + '_attached';
+	    var KEY_DEPTHTEXTURE_ATTACHED = 'depthtexture_attached';
+
+	    var GL_FRAMEBUFFER = glenum.FRAMEBUFFER;
+	    var GL_RENDERBUFFER = glenum.RENDERBUFFER;
+	    var GL_DEPTH_ATTACHMENT = glenum.DEPTH_ATTACHMENT;
+	    var GL_COLOR_ATTACHMENT0 = glenum.COLOR_ATTACHMENT0;
+	    /**
+	     * @constructor qtek.FrameBuffer
+	     * @extends qtek.core.Base
+	     */
+	    var FrameBuffer = Base.extend(
+	    /** @lends qtek.FrameBuffer# */
+	    {
+	        /**
+	         * If use depth buffer
+	         * @type {boolean}
+	         */
+	        depthBuffer: true,
+
+	        /**
+	         * @type {Object}
+	         */
+	        viewport: null,
+
+	        _width: 0,
+	        _height: 0,
+
+	        _textures: null,
+
+	        _boundRenderer: null,
+	    }, function () {
+	        // Use cache
+	        this._cache = new Cache();
+
+	        this._textures = {};
+	    },
+
+	    /**@lends qtek.FrameBuffer.prototype. */
+	    {
+	        /**
+	         * Get attached texture width
+	         * {number}
+	         */
+	        // FIXME Can't use before #bind
+	        getTextureWidth: function () {
+	            return this._width;
+	        },
+
+	        /**
+	         * Get attached texture height
+	         * {number}
+	         */
+	        getTextureHeight: function () {
+	            return this._height;
+	        },
+
+	        /**
+	         * Bind the framebuffer to given renderer before rendering
+	         * @param  {qtek.Renderer} renderer
+	         */
+	        bind: function (renderer) {
+
+	            if (renderer.__currentFrameBuffer) {
+	                // Already bound
+	                if (renderer.__currentFrameBuffer === this) {
+	                    return;
+	                }
+
+	                console.warn('Renderer already bound with another framebuffer. Unbind it first');
+	            }
+	            renderer.__currentFrameBuffer = this;
+
+	            var _gl = renderer.gl;
+
+	            _gl.bindFramebuffer(GL_FRAMEBUFFER, this._getFrameBufferGL(_gl));
+	            this._boundRenderer = renderer;
+	            var cache = this._cache;
+
+	            cache.put('viewport', renderer.viewport);
+
+	            var hasTextureAttached = false;
+	            var width;
+	            var height;
+	            for (var attachment in this._textures) {
+	                hasTextureAttached = true;
+	                var obj = this._textures[attachment];
+	                if (obj) {
+	                    // TODO Do width, height checking, make sure size are same
+	                    width = obj.texture.width;
+	                    height = obj.texture.height;
+	                    // Attach textures
+	                    this._doAttach(_gl, obj.texture, attachment, obj.target);
+	                }
+	            }
+
+	            this._width = width;
+	            this._height = height;
+
+	            if (!hasTextureAttached && this.depthBuffer) {
+	                console.error('Must attach texture before bind, or renderbuffer may have incorrect width and height.')
+	            }
+
+	            if (this.viewport) {
+	                renderer.setViewport(this.viewport);
+	            }
+	            else {
+	                renderer.setViewport(0, 0, width, height, 1);
+	            }
+
+	            var attachedTextures = cache.get('attached_textures');
+	            if (attachedTextures) {
+	                for (var attachment in attachedTextures) {
+	                    if (!this._textures[attachment]) {
+	                        var target = attachedTextures[attachment];
+	                        this._doDetach(_gl, attachment, target);
+	                    }
+	                }
+	            }
+	            if (!cache.get(KEY_DEPTHTEXTURE_ATTACHED) && this.depthBuffer) {
+	                // Create a new render buffer
+	                if (cache.miss(KEY_RENDERBUFFER)) {
+	                    cache.put(KEY_RENDERBUFFER, _gl.createRenderbuffer());
+	                }
+	                var renderbuffer = cache.get(KEY_RENDERBUFFER);
+
+	                if (width !== cache.get(KEY_RENDERBUFFER_WIDTH)
+	                     || height !== cache.get(KEY_RENDERBUFFER_HEIGHT)) {
+	                    _gl.bindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+	                    _gl.renderbufferStorage(GL_RENDERBUFFER, _gl.DEPTH_COMPONENT16, width, height);
+	                    cache.put(KEY_RENDERBUFFER_WIDTH, width);
+	                    cache.put(KEY_RENDERBUFFER_HEIGHT, height);
+	                    _gl.bindRenderbuffer(GL_RENDERBUFFER, null);
+	                }
+	                if (!cache.get(KEY_RENDERBUFFER_ATTACHED)) {
+	                    _gl.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+	                    cache.put(KEY_RENDERBUFFER_ATTACHED, true);
+	                }
+	            }
+	        },
+
+	        /**
+	         * Unbind the frame buffer after rendering
+	         * @param  {qtek.Renderer} renderer
+	         */
+	        unbind: function (renderer) {
+	            // Remove status record on renderer
+	            renderer.__currentFrameBuffer = null;
+
+	            var _gl = renderer.gl;
+
+	            _gl.bindFramebuffer(GL_FRAMEBUFFER, null);
+	            this._boundRenderer = null;
+
+	            this._cache.use(_gl.__GLID__);
+	            var viewport = this._cache.get('viewport');
+	            // Reset viewport;
+	            if (viewport) {
+	                renderer.setViewport(viewport);
+	            }
+
+	            this.updateMipmap(_gl);
+	        },
+
+	        // Because the data of texture is changed over time,
+	        // Here update the mipmaps of texture each time after rendered;
+	        updateMipmap: function (_gl) {
+	            for (var attachment in this._textures) {
+	                var obj = this._textures[attachment];
+	                if (obj) {
+	                    var texture = obj.texture;
+	                    // FIXME some texture format can't generate mipmap
+	                    if (!texture.NPOT && texture.useMipmap
+	                        && texture.minFilter === Texture.LINEAR_MIPMAP_LINEAR) {
+	                        var target = texture instanceof TextureCube ? glenum.TEXTURE_CUBE_MAP : glenum.TEXTURE_2D;
+	                        _gl.bindTexture(target, texture.getWebGLTexture(_gl));
+	                        _gl.generateMipmap(target);
+	                        _gl.bindTexture(target, null);
+	                    }
+	                }
+	            }
+	        },
+
+	        /**
+	         * 0x8CD5, 36053, FRAMEBUFFER_COMPLETE
+	         * 0x8CD6, 36054, FRAMEBUFFER_INCOMPLETE_ATTACHMENT
+	         * 0x8CD7, 36055, FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT
+	         * 0x8CD9, 36057, FRAMEBUFFER_INCOMPLETE_DIMENSIONS
+	         * 0x8CDD, 36061, FRAMEBUFFER_UNSUPPORTED
+	         */
+	        checkStatus: function (_gl) {
+	            return _gl.checkFramebufferStatus(GL_FRAMEBUFFER);
+	        },
+
+	        _getFrameBufferGL: function (_gl) {
+	            var cache = this._cache;
+	            cache.use(_gl.__GLID__);
+
+	            if (cache.miss(KEY_FRAMEBUFFER)) {
+	                cache.put(KEY_FRAMEBUFFER, _gl.createFramebuffer());
+	            }
+
+	            return cache.get(KEY_FRAMEBUFFER);
+	        },
+
+	        /**
+	         * Attach a texture(RTT) to the framebuffer
+	         * @param  {qtek.Texture} texture
+	         * @param  {number} [attachment=gl.COLOR_ATTACHMENT0]
+	         * @param  {number} [target=gl.TEXTURE_2D]
+	         */
+	        attach: function (texture, attachment, target) {
+
+	            if (!texture.width) {
+	                throw new Error('The texture attached to color buffer is not a valid.');
+	            }
+	            // TODO width and height check
+
+	            // If the depth_texture extension is enabled, developers
+	            // Can attach a depth texture to the depth buffer
+	            // http://blog.tojicode.com/2012/07/using-webgldepthtexture.html
+	            attachment = attachment || GL_COLOR_ATTACHMENT0;
+	            target = target || glenum.TEXTURE_2D;
+
+	            var boundRenderer = this._boundRenderer;
+	            var _gl = boundRenderer && boundRenderer.gl;
+	            var attachedTextures;
+
+	            if (_gl) {
+	                var cache = this._cache;
+	                cache.use(_gl.__GLID__);
+	                attachedTextures = cache.get('attached_textures');
+	            }
+
+	            // Check if texture attached
+	            var previous = this._textures[attachment];
+	            if (previous && previous.target === target
+	                && previous.texture === texture
+	                && (attachedTextures && attachedTextures[attachment] != null)
+	            ) {
+	                return;
+	            }
+
+	            var canAttach = true;
+	            if (_gl) {
+	                canAttach = this._doAttach(_gl, texture, attachment, target);
+	                // Set viewport again incase attached to different size textures.
+	                if (!this.viewport) {
+	                    boundRenderer.setViewport(0, 0, texture.width, texture.height, 1);
+	                }
+	            }
+
+	            if (canAttach) {
+	                this._textures[attachment] = this._textures[attachment] || {};
+	                this._textures[attachment].texture = texture;
+	                this._textures[attachment].target = target;
+	            }
+	        },
+
+	        _doAttach: function (_gl, texture, attachment, target) {
+
+	            // Make sure texture is always updated
+	            // Because texture width or height may be changed and in this we can't be notified
+	            // FIXME awkward;
+	            var webglTexture = texture.getWebGLTexture(_gl);
+	            // Assume cache has been used.
+	            var attachedTextures = this._cache.get('attached_textures');
+	            if (attachedTextures && attachedTextures[attachment]) {
+	                var obj = attachedTextures[attachment];
+	                // Check if texture and target not changed
+	                if (obj.texture === texture && obj.target === target) {
+	                    return;
+	                }
+	            }
+	            attachment = +attachment;
+
+	            var canAttach = true;
+	            if (attachment === GL_DEPTH_ATTACHMENT || attachment === glenum.DEPTH_STENCIL_ATTACHMENT) {
+	                var extension = glinfo.getExtension(_gl, 'WEBGL_depth_texture');
+
+	                if (!extension) {
+	                    console.error('Depth texture is not supported by the browser');
+	                    canAttach = false;
+	                }
+	                if (texture.format !== glenum.DEPTH_COMPONENT
+	                    && texture.format !== glenum.DEPTH_STENCIL
+	                ) {
+	                    console.error('The texture attached to depth buffer is not a valid.');
+	                    canAttach = false;
+	                }
+
+	                // Dispose render buffer created previous
+	                if (canAttach) {
+	                    var renderbuffer = this._cache.get(KEY_RENDERBUFFER);
+	                    if (renderbuffer) {
+	                        _gl.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, null);
+	                        _gl.deleteRenderbuffer(renderbuffer);
+	                        this._cache.put(KEY_RENDERBUFFER, false);
+	                    }
+
+	                    this._cache.put(KEY_RENDERBUFFER_ATTACHED, false);
+	                    this._cache.put(KEY_DEPTHTEXTURE_ATTACHED, true);
+	                }
+	            }
+
+	            // Mipmap level can only be 0
+	            _gl.framebufferTexture2D(GL_FRAMEBUFFER, attachment, target, webglTexture, 0);
+
+	            if (!attachedTextures) {
+	                attachedTextures = {};
+	                this._cache.put('attached_textures', attachedTextures);
+	            }
+	            attachedTextures[attachment] = attachedTextures[attachment] || {};
+	            attachedTextures[attachment].texture = texture;
+	            attachedTextures[attachment].target = target;
+
+	            return canAttach;
+	        },
+
+	        _doDetach: function (_gl, attachment, target) {
+	            // Detach a texture from framebuffer
+	            // https://github.com/KhronosGroup/WebGL/blob/master/conformance-suites/1.0.0/conformance/framebuffer-test.html#L145
+	            _gl.framebufferTexture2D(GL_FRAMEBUFFER, attachment, target, null, 0);
+
+	            // Assume cache has been used.
+	            var attachedTextures = this._cache.get('attached_textures');
+	            if (attachedTextures && attachedTextures[attachment]) {
+	                attachedTextures[attachment] = null;
+	            }
+
+	            if (attachment === GL_DEPTH_ATTACHMENT || attachment === glenum.DEPTH_STENCIL_ATTACHMENT) {
+	                this._cache.put(KEY_DEPTHTEXTURE_ATTACHED, false);
+	            }
+	        },
+
+	        /**
+	         * Detach a texture
+	         * @param  {number} [attachment=gl.COLOR_ATTACHMENT0]
+	         * @param  {number} [target=gl.TEXTURE_2D]
+	         */
+	        detach: function (attachment, target) {
+	            // TODO depth extension check ?
+	            this._textures[attachment] = null;
+	            if (this._boundRenderer) {
+	                var gl = this._boundRenderer.gl;
+	                var cache = this._cache;
+	                cache.use(gl.__GLID__);
+	                this._doDetach(gl, attachment, target);
+	            }
+	        },
+	        /**
+	         * Dispose
+	         * @param  {WebGLRenderingContext} _gl
+	         */
+	        dispose: function (_gl) {
+
+	            var cache = this._cache;
+
+	            cache.use(_gl.__GLID__);
+
+	            var renderBuffer = cache.get(KEY_RENDERBUFFER);
+	            if (renderBuffer) {
+	                _gl.deleteRenderbuffer(renderBuffer);
+	            }
+	            var frameBuffer = cache.get(KEY_FRAMEBUFFER);
+	            if (frameBuffer) {
+	                _gl.deleteFramebuffer(frameBuffer);
+	            }
+	            cache.deleteContext(_gl.__GLID__);
+
+	            // Clear cache for reusing
+	            this._textures = {};
+
+	        }
+	    });
+
+	    FrameBuffer.DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT;
+	    FrameBuffer.COLOR_ATTACHMENT0 = GL_COLOR_ATTACHMENT0;
+	    FrameBuffer.STENCIL_ATTACHMENT = glenum.STENCIL_ATTACHMENT;
+	    FrameBuffer.DEPTH_STENCIL_ATTACHMENT = glenum.DEPTH_STENCIL_ATTACHMENT;
+
+	    module.exports = FrameBuffer;
+
+
+/***/ },
+/* 55 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	    var Mesh = __webpack_require__(42);
+	    var SphereGeometry = __webpack_require__(56);
+	    var Shader = __webpack_require__(18);
+	    var Material = __webpack_require__(20);
+
+	    var skydomeShader;
+
+	    /**
+	     * @constructor qtek.plugin.Skydome
+	     *
+	     * @example
+	     *     var skyTex = new qtek.Texture2D();
+	     *     skyTex.load('assets/textures/sky.jpg');
+	     *     var skydome = new qtek.plugin.Skydome({
+	     *         scene: scene
+	     *     });
+	     *     skydome.material.set('diffuseMap', skyTex);
+	     */
+	    var Skydome = Mesh.extend(function () {
+
+	        if (!skydomeShader) {
+	            skydomeShader = new Shader({
+	                vertex: Shader.source('qtek.basic.vertex'),
+	                fragment: Shader.source('qtek.basic.fragment')
+	            });
+	            skydomeShader.enableTexture('diffuseMap');
+	        }
+
+	        var material = new Material({
+	            shader: skydomeShader,
+	            depthMask: false
+	        });
+
+	        return {
+	            /**
+	             * @type {qtek.Scene}
+	             * @memberOf qtek.plugin.Skydome#
+	             */
+	            scene: null,
+
+	            geometry: new SphereGeometry({
+	                widthSegments: 30,
+	                heightSegments: 30,
+	                // thetaLength: Math.PI / 2
+	            }),
+
+	            material: material,
+
+	            environmentMap: null,
+
+	            culling: false
+	        };
+	    }, function () {
+	        var scene = this.scene;
+	        if (scene) {
+	            this.attachScene(scene);
+	        }
+
+	        if (this.environmentMap) {
+	            this.setEnvironmentMap(this.environmentMap);
+	        }
+	    }, {
+	        /**
+	         * Attach the skybox to the scene
+	         * @param  {qtek.Scene} scene
+	         * @memberOf qtek.plugin.Skydome.prototype
+	         */
+	        attachScene: function (scene) {
+	            if (this.scene) {
+	                this.detachScene();
+	            }
+	            this.scene = scene;
+	            scene.on('beforerender', this._beforeRenderScene, this);
+	        },
+	        /**
+	         * Detach from scene
+	         * @memberOf qtek.plugin.Skydome.prototype
+	         */
+	        detachScene: function () {
+	            if (this.scene) {
+	                this.scene.off('beforerender', this._beforeRenderScene, this);
+	            }
+	            this.scene = null;
+	        },
+
+	        _beforeRenderScene: function (renderer, scene, camera) {
+	            this.position.copy(camera.getWorldPosition());
+	            this.update();
+	            renderer.renderQueue([this], camera);
+	        },
+
+	        setEnvironmentMap: function (envMap) {
+	            this.material.set('diffuseMap', envMap);
+	        },
+
+	        dispose: function (gl) {
+	            this.detachScene();
+	            this.geometry.dispose(gl);
+	            this.material.dispose(gl);
+	        }
+	    });
+
+	    module.exports = Skydome;
+
+
+/***/ },
+/* 56 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+
+	    var StaticGeometry = __webpack_require__(32);
+	    var glMatrix = __webpack_require__(15);
+	    var vec3 = glMatrix.vec3;
+	    var vec2 = glMatrix.vec2;
+	    var BoundingBox = __webpack_require__(13);
+
+	    /**
+	     * @constructor qtek.geometry.Sphere
+	     * @extends qtek.StaticGeometry
+	     * @param {Object} [opt]
+	     * @param {number} [widthSegments]
+	     * @param {number} [heightSegments]
+	     * @param {number} [phiStart]
+	     * @param {number} [phiLength]
+	     * @param {number} [thetaStart]
+	     * @param {number} [thetaLength]
+	     * @param {number} [radius]
+	     */
+	    var Sphere = StaticGeometry.extend(
+	    /** @lends qtek.geometry.Sphere# */
+	    {
+	        /**
+	         * @type {number}
+	         */
+	        widthSegments: 20,
+	        /**
+	         * @type {number}
+	         */
+	        heightSegments: 20,
+
+	        /**
+	         * @type {number}
+	         */
+	        phiStart: 0,
+	        /**
+	         * @type {number}
+	         */
+	        phiLength: Math.PI * 2,
+
+	        /**
+	         * @type {number}
+	         */
+	        thetaStart: 0,
+	        /**
+	         * @type {number}
+	         */
+	        thetaLength: Math.PI,
+
+	        /**
+	         * @type {number}
+	         */
+	        radius: 1
+
+	    }, function() {
+	        this.build();
+	    },
+	    /** @lends qtek.geometry.Sphere.prototype */
+	    {
+	        /**
+	         * Build sphere geometry
+	         */
+	        build: function() {
+	            var positions = [];
+	            var texcoords = [];
+	            var normals = [];
+	            var faces = [];
+
+	            var x, y, z,
+	                u, v,
+	                i, j;
+	            var normal;
+
+	            var heightSegments = this.heightSegments;
+	            var widthSegments = this.widthSegments;
+	            var radius = this.radius;
+	            var phiStart = this.phiStart;
+	            var phiLength = this.phiLength;
+	            var thetaStart = this.thetaStart;
+	            var thetaLength = this.thetaLength;
+	            var radius = this.radius;
+
+	            for (j = 0; j <= heightSegments; j ++) {
+	                for (i = 0; i <= widthSegments; i ++) {
+	                    u = i / widthSegments;
+	                    v = j / heightSegments;
+
+	                    // X axis is inverted so texture can be mapped from left to right
+	                    x = -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
+	                    y = radius * Math.cos(thetaStart + v * thetaLength);
+	                    z = radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
+
+	                    positions.push(vec3.fromValues(x, y, z));
+	                    texcoords.push(vec2.fromValues(u, v));
+
+	                    normal = vec3.fromValues(x, y, z);
+	                    vec3.normalize(normal, normal);
+	                    normals.push(normal);
+	                }
+	            }
+
+	            var i1, i2, i3, i4;
+
+	            var len = widthSegments + 1;
+
+	            for (j = 0; j < heightSegments; j ++) {
+	                for (i = 0; i < widthSegments; i ++) {
+	                    i2 = j * len + i;
+	                    i1 = (j * len + i + 1);
+	                    i4 = (j + 1) * len + i + 1;
+	                    i3 = (j + 1) * len + i;
+
+	                    faces.push(vec3.fromValues(i1, i2, i4));
+	                    faces.push(vec3.fromValues(i2, i3, i4));
+	                }
+	            }
+
+	            var attributes = this.attributes;
+
+	            attributes.position.fromArray(positions);
+	            attributes.texcoord0.fromArray(texcoords);
+	            attributes.normal.fromArray(normals);
+
+	            this.initFaceFromArray(faces);
+
+
+	            this.boundingBox = new BoundingBox();
+	            this.boundingBox.max.set(radius, radius, radius);
+	            this.boundingBox.min.set(-radius, -radius, -radius);
+	        }
+	    });
+
+	    module.exports = Sphere;
+
+
+/***/ },
+/* 57 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+
+	    var Texture = __webpack_require__(21);
+	    var Texture2D = __webpack_require__(33);
+	    var TextureCube = __webpack_require__(47);
+
+	    // http://msdn.microsoft.com/en-us/library/windows/desktop/bb943991(v=vs.85).aspx
+	    // https://github.com/toji/webgl-texture-utils/blob/master/texture-util/dds.js
+	    var DDS_MAGIC = 0x20534444;
+
+	    var DDSD_CAPS = 0x1;
+	    var DDSD_HEIGHT = 0x2;
+	    var DDSD_WIDTH = 0x4;
+	    var DDSD_PITCH = 0x8;
+	    var DDSD_PIXELFORMAT = 0x1000;
+	    var DDSD_MIPMAPCOUNT = 0x20000;
+	    var DDSD_LINEARSIZE = 0x80000;
+	    var DDSD_DEPTH = 0x800000;
+
+	    var DDSCAPS_COMPLEX = 0x8;
+	    var DDSCAPS_MIPMAP = 0x400000;
+	    var DDSCAPS_TEXTURE = 0x1000;
+
+	    var DDSCAPS2_CUBEMAP = 0x200;
+	    var DDSCAPS2_CUBEMAP_POSITIVEX = 0x400;
+	    var DDSCAPS2_CUBEMAP_NEGATIVEX = 0x800;
+	    var DDSCAPS2_CUBEMAP_POSITIVEY = 0x1000;
+	    var DDSCAPS2_CUBEMAP_NEGATIVEY = 0x2000;
+	    var DDSCAPS2_CUBEMAP_POSITIVEZ = 0x4000;
+	    var DDSCAPS2_CUBEMAP_NEGATIVEZ = 0x8000;
+	    var DDSCAPS2_VOLUME = 0x200000;
+
+	    var DDPF_ALPHAPIXELS = 0x1;
+	    var DDPF_ALPHA = 0x2;
+	    var DDPF_FOURCC = 0x4;
+	    var DDPF_RGB = 0x40;
+	    var DDPF_YUV = 0x200;
+	    var DDPF_LUMINANCE = 0x20000;
+
+	    function fourCCToInt32(value) {
+	        return value.charCodeAt(0) +
+	            (value.charCodeAt(1) << 8) +
+	            (value.charCodeAt(2) << 16) +
+	            (value.charCodeAt(3) << 24);
+	    }
+
+	    function int32ToFourCC(value) {
+	        return String.fromCharCode(
+	            value & 0xff,
+	            (value >> 8) & 0xff,
+	            (value >> 16) & 0xff,
+	            (value >> 24) & 0xff
+	        );
+	    }
+
+	    var headerLengthInt = 31; // The header length in 32 bit ints
+
+	    var FOURCC_DXT1 = fourCCToInt32('DXT1');
+	    var FOURCC_DXT3 = fourCCToInt32('DXT3');
+	    var FOURCC_DXT5 = fourCCToInt32('DXT5');
+	     // Offsets into the header array
+	    var off_magic = 0;
+
+	    var off_size = 1;
+	    var off_flags = 2;
+	    var off_height = 3;
+	    var off_width = 4;
+
+	    var off_mipmapCount = 7;
+
+	    var off_pfFlags = 20;
+	    var off_pfFourCC = 21;
+
+	    var off_caps = 27;
+	    var off_caps2 = 28;
+	    var off_caps3 = 29;
+	    var off_caps4 = 30;
+
+	    var ret = {
+	        parse: function(arrayBuffer, out) {
+	            var header = new Int32Array(arrayBuffer, 0, headerLengthInt);
+	            if (header[off_magic] !== DDS_MAGIC) {
+	                return null;
+	            }
+	            if (!header(off_pfFlags) & DDPF_FOURCC) {
+	                return null;
+	            }
+
+	            var fourCC = header(off_pfFourCC);
+	            var width = header[off_width];
+	            var height = header[off_height];
+	            var isCubeMap = header[off_caps2] & DDSCAPS2_CUBEMAP;
+	            var hasMipmap = header[off_flags] & DDSD_MIPMAPCOUNT;
+	            var blockBytes, internalFormat;
+	            switch(fourCC) {
+	                case FOURCC_DXT1:
+	                    blockBytes = 8;
+	                    internalFormat = Texture.COMPRESSED_RGB_S3TC_DXT1_EXT;
+	                    break;
+	                case FOURCC_DXT3:
+	                    blockBytes = 16;
+	                    internalFormat = Texture.COMPRESSED_RGBA_S3TC_DXT3_EXT;
+	                    break;
+	                case FOURCC_DXT5:
+	                    blockBytes = 16;
+	                    internalFormat = Texture.COMPRESSED_RGBA_S3TC_DXT5_EXT;
+	                    break;
+	                default:
+	                    return null;
+	            }
+	            var dataOffset = header[off_size] + 4;
+	            // TODO: Suppose all face are existed
+	            var faceNumber = isCubeMap ? 6 : 1;
+	            var mipmapCount = 1;
+	            if (hasMipmap) {
+	                mipmapCount = Math.max(1, header[off_mipmapCount]);
+	            }
+
+	            var textures = [];
+	            for (var f = 0; f < faceNumber; f++) {
+	                var _width = width;
+	                var _height = height;
+	                textures[f] = new Texture2D({
+	                    width : _width,
+	                    height : _height,
+	                    format : internalFormat
+	                });
+	                var mipmaps = [];
+	                for (var i = 0; i < mipmapCount; i++) {
+	                    var dataLength = Math.max(4, _width) / 4 * Math.max(4, _height) / 4 * blockBytes;
+	                    var byteArray = new Uint8Array(arrayBuffer, dataOffset, dataLength);
+
+	                    dataOffset += dataLength;
+	                    _width *= 0.5;
+	                    _height *= 0.5;
+	                    mipmaps[i] = byteArray;
+	                }
+	                textures[f].pixels = mipmaps[0];
+	                if (hasMipmap) {
+	                    textures[f].mipmaps = mipmaps;
+	                }
+	            }
+	            // TODO
+	            // return isCubeMap ? textures : textures[0];
+	            if (out) {
+	                out.width = textures[0].width;
+	                out.height = textures[0].height;
+	                out.format = textures[0].format;
+	                out.pixels = textures[0].pixels;
+	                out.mipmaps = textures[0].mipmaps;
+	            }
+	            else {
+	                return textures[0];
+	            }
+	        }
+	    };
+
+	    module.exports = ret;
+
+
+/***/ },
+/* 58 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+
+	    var Texture = __webpack_require__(21);
+	    var Texture2D = __webpack_require__(33);
+	    var toChar = String.fromCharCode;
+
+	    var MINELEN = 8;
+	    var MAXELEN = 0x7fff;
+	    function rgbe2float(rgbe, buffer, offset, exposure) {
+	        if (rgbe[3] > 0) {
+	            var f = Math.pow(2.0, rgbe[3] - 128 - 8 + exposure);
+	            buffer[offset + 0] = rgbe[0] * f;
+	            buffer[offset + 1] = rgbe[1] * f;
+	            buffer[offset + 2] = rgbe[2] * f;
+	        }
+	        else {
+	            buffer[offset + 0] = 0;
+	            buffer[offset + 1] = 0;
+	            buffer[offset + 2] = 0;
+	        }
+	        buffer[offset + 3] = 1.0;
+	        return buffer;
+	    }
+
+	    function uint82string(array, offset, size) {
+	        var str = '';
+	        for (var i = offset; i < size; i++) {
+	            str += toChar(array[i]);
+	        }
+	        return str;
+	    }
+
+	    function copyrgbe(s, t) {
+	        t[0] = s[0];
+	        t[1] = s[1];
+	        t[2] = s[2];
+	        t[3] = s[3];
+	    }
+
+	    // TODO : check
+	    function oldReadColors(scan, buffer, offset, xmax) {
+	        var rshift = 0, x = 0, len = xmax;
+	        while (len > 0) {
+	            scan[x][0] = buffer[offset++];
+	            scan[x][1] = buffer[offset++];
+	            scan[x][2] = buffer[offset++];
+	            scan[x][3] = buffer[offset++];
+	            if (scan[x][0] === 1 && scan[x][1] === 1 && scan[x][2] === 1) {
+	                // exp is count of repeated pixels
+	                for (var i = (scan[x][3] << rshift) >>> 0; i > 0; i--) {
+	                    copyrgbe(scan[x-1], scan[x]);
+	                    x++;
+	                    len--;
+	                }
+	                rshift += 8;
+	            } else {
+	                x++;
+	                len--;
+	                rshift = 0;
+	            }
+	        }
+	        return offset;
+	    }
+
+	    function readColors(scan, buffer, offset, xmax) {
+	        if ((xmax < MINELEN) | (xmax > MAXELEN)) {
+	            return oldReadColors(scan, buffer, offset, xmax);
+	        }
+	        var i = buffer[offset++];
+	        if (i != 2) {
+	            return oldReadColors(scan, buffer, offset - 1, xmax);
+	        }
+	        scan[0][1] = buffer[offset++];
+	        scan[0][2] = buffer[offset++];
+
+	        i = buffer[offset++];
+	        if ((((scan[0][2] << 8) >>> 0) | i) >>> 0 !== xmax) {
+	            return null;
+	        }
+	        for (var i = 0; i < 4; i++) {
+	            for (var x = 0; x < xmax;) {
+	                var code = buffer[offset++];
+	                if (code > 128) {
+	                    code = (code & 127) >>> 0;
+	                    var val = buffer[offset++];
+	                    while (code--) {
+	                        scan[x++][i] = val;
+	                    }
+	                } else {
+	                    while (code--) {
+	                        scan[x++][i] = buffer[offset++];
+	                    }
+	                }
+	            }
+	        }
+	        return offset;
+	    }
+
+
+	    var ret = {
+	        // http://www.graphics.cornell.edu/~bjw/rgbe.html
+	        // Blender source
+	        // http://radsite.lbl.gov/radiance/refer/Notes/picture_format.html
+	        parseRGBE: function(arrayBuffer, texture, exposure) {
+	            if (exposure == null) {
+	                exposure = 0;
+	            }
+	            var data = new Uint8Array(arrayBuffer);
+	            var size = data.length;
+	            if (uint82string(data, 0, 2) !== '#?') {
+	                return;
+	            }
+	            // find empty line, next line is resolution info
+	            for (var i = 2; i < size; i++) {
+	                if (toChar(data[i]) === '\n' && toChar(data[i+1]) === '\n') {
+	                    break;
+	                }
+	            }
+	            if (i >= size) { // not found
+	                return;
+	            }
+	            // find resolution info line
+	            i += 2;
+	            var str = '';
+	            for (; i < size; i++) {
+	                var _char = toChar(data[i]);
+	                if (_char === '\n') {
+	                    break;
+	                }
+	                str += _char;
+	            }
+	            // -Y M +X N
+	            var tmp = str.split(' ');
+	            var height = parseInt(tmp[1]);
+	            var width = parseInt(tmp[3]);
+	            if (!width || !height) {
+	                return;
+	            }
+
+	            // read and decode actual data
+	            var offset = i+1;
+	            var scanline = [];
+	            // memzero
+	            for (var x = 0; x < width; x++) {
+	                scanline[x] = [];
+	                for (var j = 0; j < 4; j++) {
+	                    scanline[x][j] = 0;
+	                }
+	            }
+	            var pixels = new Float32Array(width * height * 4);
+	            var offset2 = 0;
+	            for (var y = 0; y < height; y++) {
+	                var offset = readColors(scanline, data, offset, width);
+	                if (!offset) {
+	                    return null;
+	                }
+	                for (var x = 0; x < width; x++) {
+	                    rgbe2float(scanline[x], pixels, offset2, exposure);
+	                    offset2 += 4;
+	                }
+	            }
+
+	            if (!texture) {
+	                texture = new Texture2D();
+	            }
+	            texture.width = width;
+	            texture.height = height;
+	            texture.pixels = pixels;
+	            texture.type = Texture.FLOAT;
+	            return texture;
+	        },
+
+	        parseRGBEFromPNG: function(png) {
+
+	        }
+	    };
+
+	    module.exports = ret;
+
+
+/***/ },
+/* 59 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Surface texture in the 3D scene.
+	 * Provide management and rendering of zrender shapes and groups
+	 *
+	 * @module echarts-gl/util/EChartsSurface
+	 * @author Yi Shen(http://github.com/pissang)
+	 */
+
+	var Texture2D = __webpack_require__(33);
+	var Vector3 = __webpack_require__(14);
+	var Vector2 = __webpack_require__(22);
+
+	var events = ['mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout', 'click', 'dblclick', 'contextmenu'];
+
+	function makeHandlerName(eventName) {
+	    return '_on' + eventName;
+	}
+	/**
+	 * @constructor
+	 * @alias echarts-gl/util/EChartsSurface
+	 * @param {module:echarts~ECharts} chart
+	 */
+	var EChartsSurface = function (chart) {
+	    var self = this;
+	    this._texture = new Texture2D({
+	        anisotropic: 32,
+	        flipY: false,
+
+	        surface: this,
+
+	        dispose: function (gl) {
+	            self.dispose();
+	            Texture2D.prototype.dispose.call(this, gl);
+	        }
+	    });
+
+	    events.forEach(function (eventName) {
+	        this[makeHandlerName(eventName)] = function (eveObj) {
+	            this._meshes.forEach(function (mesh) {
+	                this.dispatchEvent(eventName, mesh, eveObj.face, eveObj.point);
+	            }, this);
+	        };
+	    }, this);
+
+	    this._meshes = [];
+
+	    if (chart) {
+	        this.setECharts(chart);
+	    }
+
+	    // Texture updated callback;
+	    this.textureupdated = null;
+	};
+
+	EChartsSurface.prototype = {
+
+	    constructor: EChartsSurface,
+
+	    getTexture: function () {
+	        return this._texture;
+	    },
+
+	    setECharts: function (chart) {
+	        this._chart = chart;
+
+	        var canvas = chart.getDom();
+	        if (!(canvas instanceof HTMLCanvasElement)) {
+	            console.error('ECharts must init on canvas if it is used as texture.');
+	            // Use an empty canvas
+	            canvas = document.createElement('canvas');
+	        }
+	        else {
+	            var self = this;
+	            // Wrap refreshImmediately
+	            var zr = chart.getZr();
+	            var oldRefreshImmediately = zr.__oldRefreshImmediately || zr.refreshImmediately;
+	            zr.refreshImmediately = function () {
+	                oldRefreshImmediately.call(this);
+	                self._texture.dirty();
+
+	                self.textureupdated && self.textureupdated();
+	            };
+	            zr.__oldRefreshImmediately = oldRefreshImmediately;
+	        }
+
+	        this._texture.image = canvas;
+	        this._texture.dirty();
+	        this.textureupdated && this.textureupdated();
+	    },
+
+	    /**
+	     * @method
+	     * @param {qtek.Mesh} attachedMesh
+	     * @param {Array.<number>} triangle Triangle indices
+	     * @param {qtek.math.Vector3} point
+	     */
+	    dispatchEvent: (function () {
+
+	        var p0 = new Vector3();
+	        var p1 = new Vector3();
+	        var p2 = new Vector3();
+	        var uv0 = new Vector2();
+	        var uv1 = new Vector2();
+	        var uv2 = new Vector2();
+	        var uv = new Vector2();
+
+	        var vCross = new Vector3();
+
+	        return function (eventName, attachedMesh, triangle, point) {
+	            var geo = attachedMesh.geometry;
+	            var position = geo.attributes.position;
+	            var texcoord = geo.attributes.texcoord0;
+	            var dot = Vector3.dot;
+	            var cross = Vector3.cross;
+
+	            position.get(triangle[0], p0._array);
+	            position.get(triangle[1], p1._array);
+	            position.get(triangle[2], p2._array);
+	            texcoord.get(triangle[0], uv0._array);
+	            texcoord.get(triangle[1], uv1._array);
+	            texcoord.get(triangle[2], uv2._array);
+
+	            cross(vCross, p1, p2);
+	            var det = dot(p0, vCross);
+	            var t = dot(point, vCross) / det;
+	            cross(vCross, p2, p0);
+	            var u = dot(point, vCross) / det;
+	            cross(vCross, p0, p1);
+	            var v = dot(point, vCross) / det;
+
+	            Vector2.scale(uv, uv0, t);
+	            Vector2.scaleAndAdd(uv, uv, uv1, u);
+	            Vector2.scaleAndAdd(uv, uv, uv2, v);
+
+	            var x = uv.x * this._chart.getWidth();
+	            var y = uv.y * this._chart.getHeight();
+	            this._chart.getZr().handler.dispatch(eventName, {
+	                zrX: x,
+	                zrY: y
+	            });
+	        };
+	    })(),
+
+	    attachToMesh: function (mesh) {
+	        if (this._meshes.indexOf(mesh) >= 0) {
+	            return;
+	        }
+
+	        events.forEach(function (eventName) {
+	            mesh.on(eventName, this[makeHandlerName(eventName)], this);
+	        }, this);
+
+	        this._meshes.push(mesh);
+	    },
+
+	    detachFromMesh: function (mesh) {
+	        var idx = this._meshes.indexOf(mesh);
+	        if (idx >= 0) {
+	            this._meshes.splice(idx, 1);
+	        }
+
+	        events.forEach(function (eventName) {
+	            mesh.off(eventName, this[makeHandlerName(eventName)]);
+	        }, this);
+	    },
+
+	    dispose: function () {
+	        this._meshes.forEach(function (mesh) {
+	            this.detachFromMesh(mesh);
+	        }, this);
+	    }
+	};
+
+	module.exports = EChartsSurface;
+
+/***/ },
+/* 60 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Animator = __webpack_require__(61);
 
 	var animatableMixin = {
 
@@ -18800,7 +21511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = animatableMixin;
 
 /***/ },
-/* 47 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -18808,9 +21519,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var Clip = __webpack_require__(48);
-	    var color = __webpack_require__(50);
-	    var util = __webpack_require__(34);
+	    var Clip = __webpack_require__(62);
+	    var color = __webpack_require__(64);
+	    var util = __webpack_require__(36);
 	    var isArrayLike = util.isArrayLike;
 
 	    var arraySlice = Array.prototype.slice;
@@ -19436,7 +22147,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 48 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -19455,7 +22166,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var easingFuncs = __webpack_require__(49);
+	    var easingFuncs = __webpack_require__(63);
 
 	    function Clip(options) {
 
@@ -19548,7 +22259,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 49 */
+/* 63 */
 /***/ function(module, exports) {
 
 	/**
@@ -19899,7 +22610,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 50 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -20431,148 +23142,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 51 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-
-	    var StaticGeometry = __webpack_require__(32);
-	    var glMatrix = __webpack_require__(15);
-	    var vec3 = glMatrix.vec3;
-	    var vec2 = glMatrix.vec2;
-	    var BoundingBox = __webpack_require__(13);
-
-	    /**
-	     * @constructor qtek.geometry.Sphere
-	     * @extends qtek.StaticGeometry
-	     * @param {Object} [opt]
-	     * @param {number} [widthSegments]
-	     * @param {number} [heightSegments]
-	     * @param {number} [phiStart]
-	     * @param {number} [phiLength]
-	     * @param {number} [thetaStart]
-	     * @param {number} [thetaLength]
-	     * @param {number} [radius]
-	     */
-	    var Sphere = StaticGeometry.extend(
-	    /** @lends qtek.geometry.Sphere# */
-	    {
-	        /**
-	         * @type {number}
-	         */
-	        widthSegments: 20,
-	        /**
-	         * @type {number}
-	         */
-	        heightSegments: 20,
-
-	        /**
-	         * @type {number}
-	         */
-	        phiStart: 0,
-	        /**
-	         * @type {number}
-	         */
-	        phiLength: Math.PI * 2,
-
-	        /**
-	         * @type {number}
-	         */
-	        thetaStart: 0,
-	        /**
-	         * @type {number}
-	         */
-	        thetaLength: Math.PI,
-
-	        /**
-	         * @type {number}
-	         */
-	        radius: 1
-
-	    }, function() {
-	        this.build();
-	    },
-	    /** @lends qtek.geometry.Sphere.prototype */
-	    {
-	        /**
-	         * Build sphere geometry
-	         */
-	        build: function() {
-	            var positions = [];
-	            var texcoords = [];
-	            var normals = [];
-	            var faces = [];
-
-	            var x, y, z,
-	                u, v,
-	                i, j;
-	            var normal;
-
-	            var heightSegments = this.heightSegments;
-	            var widthSegments = this.widthSegments;
-	            var radius = this.radius;
-	            var phiStart = this.phiStart;
-	            var phiLength = this.phiLength;
-	            var thetaStart = this.thetaStart;
-	            var thetaLength = this.thetaLength;
-	            var radius = this.radius;
-
-	            for (j = 0; j <= heightSegments; j ++) {
-	                for (i = 0; i <= widthSegments; i ++) {
-	                    u = i / widthSegments;
-	                    v = j / heightSegments;
-
-	                    // X axis is inverted so texture can be mapped from left to right
-	                    x = -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
-	                    y = radius * Math.cos(thetaStart + v * thetaLength);
-	                    z = radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
-
-	                    positions.push(vec3.fromValues(x, y, z));
-	                    texcoords.push(vec2.fromValues(u, v));
-
-	                    normal = vec3.fromValues(x, y, z);
-	                    vec3.normalize(normal, normal);
-	                    normals.push(normal);
-	                }
-	            }
-
-	            var i1, i2, i3, i4;
-
-	            var len = widthSegments + 1;
-
-	            for (j = 0; j < heightSegments; j ++) {
-	                for (i = 0; i < widthSegments; i ++) {
-	                    i2 = j * len + i;
-	                    i1 = (j * len + i + 1);
-	                    i4 = (j + 1) * len + i + 1;
-	                    i3 = (j + 1) * len + i;
-
-	                    faces.push(vec3.fromValues(i1, i2, i4));
-	                    faces.push(vec3.fromValues(i2, i3, i4));
-	                }
-	            }
-
-	            var attributes = this.attributes;
-
-	            attributes.position.fromArray(positions);
-	            attributes.texcoord0.fromArray(texcoords);
-	            attributes.normal.fromArray(normals);
-
-	            this.initFaceFromArray(faces);
-
-
-	            this.boundingBox = new BoundingBox();
-	            this.boundingBox.max.set(radius, radius, radius);
-	            this.boundingBox.min.set(-radius, -radius, -radius);
-	        }
-	    });
-
-	    module.exports = Sphere;
-
-
-/***/ },
-/* 52 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20652,14 +23222,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 53 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var StaticGeometry = __webpack_require__(32);
-	    var Plane = __webpack_require__(52);
+	    var Plane = __webpack_require__(65);
 	    var Matrix4 = __webpack_require__(16);
 	    var Vector3 = __webpack_require__(14);
 	    var BoundingBox = __webpack_require__(13);
@@ -20797,7 +23367,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 54 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20839,7 +23409,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 55 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20922,7 +23492,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 56 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20987,7 +23557,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 57 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -21099,7 +23669,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 58 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -21826,7 +24396,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 59 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22121,7 +24691,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 60 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22398,7 +24968,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22802,378 +25372,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-
-	    var Vector3 = __webpack_require__(14);
-	    var glMatrix = __webpack_require__(15);
-	    var vec3 = glMatrix.vec3;
-	    var mat4 = glMatrix.mat4;
-	    var vec4 = glMatrix.vec4;
-
-	    /**
-	     * @constructor
-	     * @alias qtek.math.Plane
-	     * @param {qtek.math.Vector3} [normal]
-	     * @param {number} [distance]
-	     */
-	    var Plane = function(normal, distance) {
-	        /**
-	         * Normal of the plane
-	         * @type {qtek.math.Vector3}
-	         */
-	        this.normal = normal || new Vector3(0, 1, 0);
-
-	        /**
-	         * Constant of the plane equation, used as distance to the origin
-	         * @type {number}
-	         */
-	        this.distance = distance || 0;
-	    };
-
-	    Plane.prototype = {
-
-	        constructor: Plane,
-
-	        /**
-	         * Distance from given point to plane
-	         * @param  {qtek.math.Vector3} point
-	         * @return {number}
-	         */
-	        distanceToPoint: function(point) {
-	            return vec3.dot(point._array, this.normal._array) - this.distance;
-	        },
-
-	        /**
-	         * Calculate the projection on the plane of point
-	         * @param  {qtek.math.Vector3} point
-	         * @param  {qtek.math.Vector3} out
-	         * @return {qtek.math.Vector3}
-	         */
-	        projectPoint: function(point, out) {
-	            if (!out) {
-	                out = new Vector3();
-	            }
-	            var d = this.distanceToPoint(point);
-	            vec3.scaleAndAdd(out._array, point._array, this.normal._array, -d);
-	            out._dirty = true;
-	            return out;
-	        },
-
-	        /**
-	         * Normalize the plane's normal and calculate distance
-	         */
-	        normalize: function() {
-	            var invLen = 1 / vec3.len(this.normal._array);
-	            vec3.scale(this.normal._array, invLen);
-	            this.distance *= invLen;
-	        },
-
-	        /**
-	         * If the plane intersect a frustum
-	         * @param  {qtek.math.Frustum} Frustum
-	         * @return {boolean}
-	         */
-	        intersectFrustum: function(frustum) {
-	            // Check if all coords of frustum is on plane all under plane
-	            var coords = frustum.vertices;
-	            var normal = this.normal._array;
-	            var onPlane = vec3.dot(coords[0]._array, normal) > this.distance;
-	            for (var i = 1; i < 8; i++) {
-	                if ((vec3.dot(coords[i]._array, normal) > this.distance) != onPlane) {
-	                    return true;
-	                } 
-	            }
-	        },
-
-	        /**
-	         * Calculate the intersection point between plane and a given line
-	         * @method
-	         * @param {qtek.math.Vector3} start start point of line
-	         * @param {qtek.math.Vector3} end end point of line
-	         * @param {qtek.math.Vector3} [out]
-	         * @return {qtek.math.Vector3}
-	         */
-	        intersectLine: (function() {
-	            var rd = vec3.create();
-	            return function(start, end, out) {
-	                var d0 = this.distanceToPoint(start);
-	                var d1 = this.distanceToPoint(end);
-	                if ((d0 > 0 && d1 > 0) || (d0 < 0 && d1 < 0)) {
-	                    return null;
-	                }
-	                // Ray intersection
-	                var pn = this.normal._array;
-	                var d = this.distance;
-	                var ro = start._array;
-	                // direction
-	                vec3.sub(rd, end._array, start._array);
-	                vec3.normalize(rd, rd);
-
-	                var divider = vec3.dot(pn, rd);
-	                // ray is parallel to the plane
-	                if (divider === 0) {
-	                    return null;
-	                }
-	                if (!out) {
-	                    out = new Vector3();
-	                }
-	                var t = (vec3.dot(pn, ro) - d) / divider;
-	                vec3.scaleAndAdd(out._array, ro, rd, -t);
-	                out._dirty = true;
-	                return out;
-	            };
-	        })(),
-
-	        /**
-	         * Apply an affine transform matrix to plane
-	         * @method
-	         * @return {qtek.math.Matrix4}
-	         */
-	        applyTransform: (function() {
-	            var inverseTranspose = mat4.create();
-	            var normalv4 = vec4.create();
-	            var pointv4 = vec4.create();
-	            pointv4[3] = 1;
-	            return function(m4) {
-	                m4 = m4._array;
-	                // Transform point on plane
-	                vec3.scale(pointv4, this.normal._array, this.distance);
-	                vec4.transformMat4(pointv4, pointv4, m4);
-	                this.distance = vec3.dot(pointv4, this.normal._array);
-	                // Transform plane normal
-	                mat4.invert(inverseTranspose, m4);
-	                mat4.transpose(inverseTranspose, inverseTranspose);
-	                normalv4[3] = 0;
-	                vec3.copy(normalv4, this.normal._array);
-	                vec4.transformMat4(normalv4, normalv4, inverseTranspose);
-	                vec3.copy(this.normal._array, normalv4);
-	            };
-	        })(),
-
-	        /**
-	         * Copy from another plane
-	         * @param  {qtek.math.Vector3} plane
-	         */
-	        copy: function(plane) {
-	            vec3.copy(this.normal._array, plane.normal._array);
-	            this.normal._dirty = true;
-	            this.distance = plane.distance;
-	        },
-
-	        /**
-	         * Clone a new plane
-	         * @return {qtek.math.Plane}
-	         */
-	        clone: function() {
-	            var plane = new Plane();
-	            plane.copy(this);
-	            return plane;
-	        }
-	    };
-
-	    module.exports = Plane;
-
-
-/***/ },
-/* 63 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-
-	    var Vector3 = __webpack_require__(14);
-	    var BoundingBox = __webpack_require__(13);
-	    var Plane = __webpack_require__(62);
-
-	    var glMatrix = __webpack_require__(15);
-	    var vec3 = glMatrix.vec3;
-
-	    var vec3Set = vec3.set;
-	    var vec3Copy = vec3.copy;
-	    var vec3TranformMat4 = vec3.transformMat4;
-	    var mathMin = Math.min;
-	    var mathMax = Math.max;
-	    /**
-	     * @constructor
-	     * @alias qtek.math.Frustum
-	     */
-	    var Frustum = function() {
-
-	        /**
-	         * Eight planes to enclose the frustum
-	         * @type {qtek.math.Plane[]}
-	         */
-	        this.planes = [];
-
-	        for (var i = 0; i < 6; i++) {
-	            this.planes.push(new Plane());
-	        }
-
-	        /**
-	         * Bounding box of frustum
-	         * @type {qtek.math.BoundingBox}
-	         */
-	        this.boundingBox = new BoundingBox();
-
-	        /**
-	         * Eight vertices of frustum
-	         * @type {Float32Array[]}
-	         */
-	        this.vertices = [];
-	        for (var i = 0; i < 8; i++) {
-	            this.vertices[i] = vec3.fromValues(0, 0, 0);
-	        }
-	    };
-
-	    Frustum.prototype = {
-
-	        // http://web.archive.org/web/20120531231005/http://crazyjoke.free.fr/doc/3D/plane%20extraction.pdf
-	        /**
-	         * Set frustum from a projection matrix
-	         * @param {qtek.math.Matrix4} projectionMatrix
-	         */
-	        setFromProjection: function(projectionMatrix) {
-
-	            var planes = this.planes;
-	            var m = projectionMatrix._array;
-	            var m0 = m[0], m1 = m[1], m2 = m[2], m3 = m[3];
-	            var m4 = m[4], m5 = m[5], m6 = m[6], m7 = m[7];
-	            var m8 = m[8], m9 = m[9], m10 = m[10], m11 = m[11];
-	            var m12 = m[12], m13 = m[13], m14 = m[14], m15 = m[15];
-
-	            // Update planes
-	            vec3Set(planes[0].normal._array, m3 - m0, m7 - m4, m11 - m8);
-	            planes[0].distance = -(m15 - m12);
-	            planes[0].normalize();
-
-	            vec3Set(planes[1].normal._array, m3 + m0, m7 + m4, m11 + m8);
-	            planes[1].distance = -(m15 + m12);
-	            planes[1].normalize();
-
-	            vec3Set(planes[2].normal._array, m3 + m1, m7 + m5, m11 + m9);
-	            planes[2].distance = -(m15 + m13);
-	            planes[2].normalize();
-
-	            vec3Set(planes[3].normal._array, m3 - m1, m7 - m5, m11 - m9);
-	            planes[3].distance = -(m15 - m13);
-	            planes[3].normalize();
-
-	            vec3Set(planes[4].normal._array, m3 - m2, m7 - m6, m11 - m10);
-	            planes[4].distance = -(m15 - m14);
-	            planes[4].normalize();
-
-	            vec3Set(planes[5].normal._array, m3 + m2, m7 + m6, m11 + m10);
-	            planes[5].distance = -(m15 + m14);
-	            planes[5].normalize();
-
-	            // Perspective projection
-	            var boundingBox = this.boundingBox;
-	            if (m15 === 0)  {
-	                var aspect = m5 / m0;
-	                var zNear = -m14 / (m10 - 1);
-	                var zFar = -m14 / (m10 + 1);
-	                var farY = -zFar / m5;
-	                var nearY = -zNear / m5;
-	                // Update bounding box
-	                boundingBox.min.set(-farY * aspect, -farY, zFar);
-	                boundingBox.max.set(farY * aspect, farY, zNear);
-	                // update vertices
-	                var vertices = this.vertices;
-	                //--- min z
-	                // min x
-	                vec3Set(vertices[0], -farY * aspect, -farY, zFar);
-	                vec3Set(vertices[1], -farY * aspect, farY, zFar);
-	                // max x
-	                vec3Set(vertices[2], farY * aspect, -farY, zFar);
-	                vec3Set(vertices[3], farY * aspect, farY, zFar);
-	                //-- max z
-	                vec3Set(vertices[4], -nearY * aspect, -nearY, zNear);
-	                vec3Set(vertices[5], -nearY * aspect, nearY, zNear);
-	                vec3Set(vertices[6], nearY * aspect, -nearY, zNear);
-	                vec3Set(vertices[7], nearY * aspect, nearY, zNear);
-	            }
-	            else { // Orthographic projection
-	                var left = (-1 - m12) / m0;
-	                var right = (1 - m12) / m0;
-	                var top = (1 - m13) / m5;
-	                var bottom = (-1 - m13) / m5;
-	                var near = (-1 - m14) / m10;
-	                var far = (1 - m14) / m10;
-
-	                boundingBox.min.set(left, bottom, far);
-	                boundingBox.max.set(right, top, near);
-
-	                var min = boundingBox.min._array;
-	                var max = boundingBox.max._array;
-	                var vertices = this.vertices;
-	                //--- min z
-	                // min x
-	                vec3Set(vertices[0], min[0], min[1], min[2]);
-	                vec3Set(vertices[1], min[0], max[1], min[2]);
-	                // max x
-	                vec3Set(vertices[2], max[0], min[1], min[2]);
-	                vec3Set(vertices[3], max[0], max[1], min[2]);
-	                //-- max z
-	                vec3Set(vertices[4], min[0], min[1], max[2]);
-	                vec3Set(vertices[5], min[0], max[1], max[2]);
-	                vec3Set(vertices[6], max[0], min[1], max[2]);
-	                vec3Set(vertices[7], max[0], max[1], max[2]);
-	            }
-	        },
-
-	        /**
-	         * Apply a affine transform matrix and set to the given bounding box
-	         * @method
-	         * @param {qtek.math.BoundingBox}
-	         * @param {qtek.math.Matrix4}
-	         * @return {qtek.math.BoundingBox}
-	         */
-	        getTransformedBoundingBox: (function() {
-
-	            var tmpVec3 = vec3.create();
-
-	            return function(bbox, matrix) {
-	                var vertices = this.vertices;
-
-	                var m4 = matrix._array;
-	                var min = bbox.min;
-	                var max = bbox.max;
-	                var minArr = min._array;
-	                var maxArr = max._array;
-	                var v = vertices[0];
-	                vec3TranformMat4(tmpVec3, v, m4);
-	                vec3Copy(minArr, tmpVec3);
-	                vec3Copy(maxArr, tmpVec3);
-
-	                for (var i = 1; i < 8; i++) {
-	                    v = vertices[i];
-	                    vec3TranformMat4(tmpVec3, v, m4);
-
-	                    minArr[0] = mathMin(tmpVec3[0], minArr[0]);
-	                    minArr[1] = mathMin(tmpVec3[1], minArr[1]);
-	                    minArr[2] = mathMin(tmpVec3[2], minArr[2]);
-
-	                    maxArr[0] = mathMax(tmpVec3[0], maxArr[0]);
-	                    maxArr[1] = mathMax(tmpVec3[1], maxArr[1]);
-	                    maxArr[2] = mathMax(tmpVec3[2], maxArr[2]);
-	                }
-
-	                min._dirty = true;
-	                max._dirty = true;
-
-	                return bbox;
-	            };
-	        }) ()
-	    };
-	    module.exports = Frustum;
-
-
-/***/ },
-/* 64 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -23424,6 +25623,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return;
 	        }
 
+	        if (this._rotating) {
+	            this._rotateY -= deltaTime * 1e-4;
+	            this._needsUpdate = true;
+	        }
+	        else if (this._rotateVelocity.len() > 0) {
+	            this._needsUpdate = true;
+	        }
+	        if (Math.abs(this._zoomSpeed) > 1e-3) {
+	            this._needsUpdate = true;
+	        }
+
+	        if (!this._needsUpdate) {
+	            return;
+	        }
+
 	        this._camera.rotation.identity();
 	        this._camera.update();
 
@@ -23436,14 +25650,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._updatePan(deltaTime);
 	        }
 
-	        if (this._needsUpdate) {
-	            this.zr.refresh();
-	            this.trigger('update');
-	            this._needsUpdate = false;
-	        }
+	        this.zr.refresh();
+	        this.trigger('update');
+	        this._needsUpdate = false;
 	    },
 
 	    _updateRotate: function (deltaTime) {
+
 
 	        var velocity = this._rotateVelocity;
 	        this._rotateY = (velocity.y + this._rotateY) % (Math.PI * 2);
@@ -23459,13 +25672,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // Rotate speed damping
 	        this._vectorDamping(velocity, 0.8);
 
-	        if (this._rotating) {
-	            this._rotateY -= deltaTime * 1e-4;
-	            this._needsUpdate = true;
-	        }
-	        else if (velocity.len() > 0) {
-	            this._needsUpdate = true;
-	        }
 	    },
 
 	    _updateDistance: function (deltaTime) {
@@ -23474,9 +25680,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        // Zoom speed damping
 	        this._zoomSpeed *= 0.8;
-	        if (Math.abs(this._zoomSpeed) > 1e-3) {
-	            this._needsUpdate = true;
-	        }
 	    },
 
 	    _setDistance: function (distance) {
@@ -23659,7 +25862,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = OrbitControl;
 
 /***/ },
-/* 65 */
+/* 76 */
 /***/ function(module, exports) {
 
 	/*
@@ -23749,25 +25952,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = SunCalc;
 
 /***/ },
-/* 66 */
+/* 77 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.albedo.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec2 uvRepeat: [1, 1];\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position: POSITION;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Texcoord = texcoord * uvRepeat;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.albedo.fragment\n\nuniform sampler2D diffuseMap;\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n#ifdef DIFFUSEMAP_ENABLED\n    vec4 tex = texture2D(diffuseMap, v_Texcoord);\n    gl_FragColor *= tex;\n#endif\n}\n@end"
 
 /***/ },
-/* 67 */
+/* 78 */
 /***/ function(module, exports) {
 
-	module.exports = "/**\n * http://en.wikipedia.org/wiki/Lambertian_reflectance\n */\n\n@export ecgl.lambert.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define PI 3.14159265358979\n\n#extension GL_OES_standard_derivatives : enable\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n// Derivative maps - bump mapping unparametrized surfaces by Morten Mikkelsen\n//  http://mmikkelsen3d.blogspot.sk/2011/07/derivative-maps.html\n\n// Evaluate the derivative of the height w.r.t. screen-space using forward differencing (listing 2)\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n#ifdef DIFFUSEMAP_ENABLED\n    vec4 tex = texture2D(diffuseMap, v_Texcoord);\n    gl_FragColor *= tex;\n#endif\n\n    vec3 N = v_Normal;\n    vec3 P = v_WorldPosition;\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n    #ifdef FLAT\n        ambientFactor = dot(P, N);\n    #else\n        ambientFactor = dot(v_Normal, N);\n    #endif\n#endif\n\nvec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n        // Multiply a dot factor to make sure the bump detail can be seen\n        // in the dark side\n        diffuseColor += ambientLightColor[i] * ambientFactor;\n    }\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float ndl = dot(N, normalize(lightDirection));\n\n        float shadowContrib = 1.0;\n        #if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n            if(shadowEnabled)\n            {\n                shadowContrib = shadowContribs[i];\n            }\n        #endif\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0) * shadowContrib;\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n}\n\n@end"
+	module.exports = "/**\n * http://en.wikipedia.org/wiki/Lambertian_reflectance\n */\n\n@export ecgl.lambert.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n// Derivative maps - bump mapping unparametrized surfaces by Morten Mikkelsen\n//  http://mmikkelsen3d.blogspot.sk/2011/07/derivative-maps.html\n\n// Evaluate the derivative of the height w.r.t. screen-space using forward differencing (listing 2)\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        // source-over blend\n        albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n    vec3 N = v_Normal;\n    vec3 P = v_WorldPosition;\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n    #ifdef FLAT\n        ambientFactor = dot(P, N);\n    #else\n        ambientFactor = dot(v_Normal, N);\n    #endif\n#endif\n\nvec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n        // Multiply a dot factor to make sure the bump detail can be seen\n        // in the dark side\n        diffuseColor += ambientLightColor[i] * ambientFactor;\n    }\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float ndl = dot(N, normalize(lightDirection));\n\n        float shadowContrib = 1.0;\n        #if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n            if(shadowEnabled)\n            {\n                shadowContrib = shadowContribs[i];\n            }\n        #endif\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0) * shadowContrib;\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);\n        gl_FragColor.rgb += texel2.rgb;\n    }}\n#endif\n\n}\n\n@end"
 
 /***/ },
-/* 68 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Globe = __webpack_require__(69);
+	var Globe = __webpack_require__(80);
 	var echarts = __webpack_require__(2);
-	var layoutUtil = __webpack_require__(70);
-	var ViewGL = __webpack_require__(77);
+	var layoutUtil = __webpack_require__(81);
+	var ViewGL = __webpack_require__(88);
 
 	function resizeGlobe(globeModel, api) {
 	    // Use left/top/width/height
@@ -23827,11 +26030,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = globeCreator;
 
 /***/ },
-/* 69 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var echarts = __webpack_require__(2);
-	var Matrix4 = __webpack_require__(16);
 	var glmatrix = __webpack_require__(15);
 	var vec3 = glmatrix.vec3;
 
@@ -23901,17 +26102,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Globe;
 
 /***/ },
-/* 70 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	// Layout helpers for each component positioning
 
 
-	    var zrUtil = __webpack_require__(34);
-	    var BoundingRect = __webpack_require__(71);
-	    var numberUtil = __webpack_require__(74);
-	    var formatUtil = __webpack_require__(75);
+	    var zrUtil = __webpack_require__(36);
+	    var BoundingRect = __webpack_require__(82);
+	    var numberUtil = __webpack_require__(85);
+	    var formatUtil = __webpack_require__(86);
 	    var parsePercent = numberUtil.parsePercent;
 	    var each = zrUtil.each;
 
@@ -24355,7 +26556,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 71 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -24364,8 +26565,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var vec2 = __webpack_require__(72);
-	    var matrix = __webpack_require__(73);
+	    var vec2 = __webpack_require__(83);
+	    var matrix = __webpack_require__(84);
 
 	    var v2ApplyTransform = vec2.applyTransform;
 	    var mathMin = Math.min;
@@ -24559,7 +26760,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 72 */
+/* 83 */
 /***/ function(module, exports) {
 
 	
@@ -24845,7 +27046,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 73 */
+/* 84 */
 /***/ function(module, exports) {
 
 	
@@ -25009,7 +27210,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 74 */
+/* 85 */
 /***/ function(module, exports) {
 
 	/**
@@ -25342,14 +27543,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	    var zrUtil = __webpack_require__(34);
-	    var numberUtil = __webpack_require__(74);
-	    var textContain = __webpack_require__(76);
+	    var zrUtil = __webpack_require__(36);
+	    var numberUtil = __webpack_require__(85);
+	    var textContain = __webpack_require__(87);
 
 	    var formatUtil = {};
 	    /**
@@ -25521,7 +27722,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 76 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -25530,8 +27731,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var textWidthCacheCounter = 0;
 	    var TEXT_CACHE_MAX = 5000;
 
-	    var util = __webpack_require__(34);
-	    var BoundingRect = __webpack_require__(71);
+	    var util = __webpack_require__(36);
+	    var BoundingRect = __webpack_require__(82);
 	    var retrieve = util.retrieve;
 
 	    function getTextWidth(text, textFont) {
@@ -25802,7 +28003,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 77 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -25811,8 +28012,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	var Scene = __webpack_require__(43);
-	var PerspectiveCamera = __webpack_require__(78);
-	var OrthographicCamera = __webpack_require__(80);
+	var PerspectiveCamera = __webpack_require__(50);
+	var OrthographicCamera = __webpack_require__(89);
 
 
 	/**
@@ -25893,213 +28094,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ViewGL;
 
 /***/ },
-/* 78 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Camera = __webpack_require__(79);
-
-	    /**
-	     * @constructor qtek.camera.Perspective
-	     * @extends qtek.Camera
-	     */
-	    var Perspective = Camera.extend(
-	    /** @lends qtek.camera.Perspective# */
-	    {
-	        /**
-	         * Vertical field of view in radians
-	         * @type {number}
-	         */
-	        fov: 50,
-	        /**
-	         * Aspect ratio, typically viewport width / height
-	         * @type {number}
-	         */
-	        aspect: 1,
-	        /**
-	         * Near bound of the frustum
-	         * @type {number}
-	         */
-	        near: 0.1,
-	        /**
-	         * Far bound of the frustum
-	         * @type {number}
-	         */
-	        far: 2000
-	    },
-	    /** @lends qtek.camera.Perspective.prototype */
-	    {
-
-	        updateProjectionMatrix: function() {
-	            var rad = this.fov / 180 * Math.PI;
-	            this.projectionMatrix.perspective(rad, this.aspect, this.near, this.far);
-	        },
-	        decomposeProjectionMatrix: function () {
-	            var m = this.projectionMatrix._array;
-	            var rad = Math.atan(1 / m[5]) * 2;
-	            this.fov = rad / Math.PI * 180;
-	            this.aspect = m[5] / m[0];
-	            this.near = m[14] / (m[10] - 1);
-	            this.far = m[14] / (m[10] + 1);
-	        },
-	        /**
-	         * @return {qtek.camera.Perspective}
-	         */
-	        clone: function() {
-	            var camera = Camera.prototype.clone.call(this);
-	            camera.fov = this.fov;
-	            camera.aspect = this.aspect;
-	            camera.near = this.near;
-	            camera.far = this.far;
-
-	            return camera;
-	        }
-	    });
-
-	    module.exports = Perspective;
-
-
-/***/ },
-/* 79 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-
-	    var Node = __webpack_require__(28);
-	    var Matrix4 = __webpack_require__(16);
-	    var Frustum = __webpack_require__(63);
-	    var Ray = __webpack_require__(26);
-
-	    var glMatrix = __webpack_require__(15);
-	    var vec3 = glMatrix.vec3;
-	    var vec4 = glMatrix.vec4;
-
-	    /**
-	     * @constructor qtek.Camera
-	     * @extends qtek.Node
-	     */
-	    var Camera = Node.extend(function () {
-	        return /** @lends qtek.Camera# */ {
-	            /**
-	             * Camera projection matrix
-	             * @type {qtek.math.Matrix4}
-	             */
-	            projectionMatrix: new Matrix4(),
-
-	            /**
-	             * Inverse of camera projection matrix
-	             * @type {qtek.math.Matrix4}
-	             */
-	            invProjectionMatrix: new Matrix4(),
-
-	            /**
-	             * View matrix, equal to inverse of camera's world matrix
-	             * @type {qtek.math.Matrix4}
-	             */
-	            viewMatrix: new Matrix4(),
-
-	            /**
-	             * Camera frustum in view space
-	             * @type {qtek.math.Frustum}
-	             */
-	            frustum: new Frustum()
-	        };
-	    }, function () {
-	        this.update(true);
-	    },
-	    /** @lends qtek.Camera.prototype */
-	    {
-
-	        update: function (force) {
-	            Node.prototype.update.call(this, force);
-	            Matrix4.invert(this.viewMatrix, this.worldTransform);
-
-	            this.updateProjectionMatrix();
-	            Matrix4.invert(this.invProjectionMatrix, this.projectionMatrix);
-
-	            this.frustum.setFromProjection(this.projectionMatrix);
-	        },
-
-	        /**
-	         * Set camera view matrix
-	         */
-	        setViewMatrix: function (viewMatrix) {
-	            Matrix4.invert(this.worldTransform, viewMatrix);
-	            this.decomposeWorldTransform();
-	        },
-
-	        /**
-	         * Decompose camera projection matrix
-	         */
-	        decomposeProjectionMatrix: function () {},
-
-	        /**
-	         * Set camera projection matrix
-	         */
-	        setProjectionMatrix: function (projectionMatrix) {
-	            Matrix4.copy(this.projectionMatrix, projectionMatrix);
-	            Matrix4.invert(this.invProjectionMatrix, projectionMatrix);
-	            this.decomposeProjectionMatrix();
-	        },
-	        /**
-	         * Update projection matrix, called after update
-	         */
-	        updateProjectionMatrix: function () {},
-
-	        /**
-	         * Cast a picking ray from camera near plane to far plane
-	         * @method
-	         * @param {qtek.math.Vector2} ndc
-	         * @param {qtek.math.Ray} [out]
-	         * @return {qtek.math.Ray}
-	         */
-	        castRay: (function () {
-	            var v4 = vec4.create();
-	            return function (ndc, out) {
-	                var ray = out !== undefined ? out : new Ray();
-	                var x = ndc._array[0];
-	                var y = ndc._array[1];
-	                vec4.set(v4, x, y, -1, 1);
-	                vec4.transformMat4(v4, v4, this.invProjectionMatrix._array);
-	                vec4.transformMat4(v4, v4, this.worldTransform._array);
-	                vec3.scale(ray.origin._array, v4, 1 / v4[3]);
-
-	                vec4.set(v4, x, y, 1, 1);
-	                vec4.transformMat4(v4, v4, this.invProjectionMatrix._array);
-	                vec4.transformMat4(v4, v4, this.worldTransform._array);
-	                vec3.scale(v4, v4, 1 / v4[3]);
-	                vec3.sub(ray.direction._array, v4, ray.origin._array);
-
-	                vec3.normalize(ray.direction._array, ray.direction._array);
-	                ray.direction._dirty = true;
-	                ray.origin._dirty = true;
-
-	                return ray;
-	            };
-	        })()
-
-	        /**
-	         * @method
-	         * @name clone
-	         * @return {qtek.Camera}
-	         * @memberOf qtek.Camera.prototype
-	         */
-	    });
-
-	    module.exports = Camera;
-
-
-/***/ },
-/* 80 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-
-	    var Camera = __webpack_require__(79);
+	    var Camera = __webpack_require__(51);
 	    /**
 	     * @constructor qtek.camera.Orthographic
 	     * @extends qtek.Camera
@@ -26168,18 +28169,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 81 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(82);
+	__webpack_require__(91);
 
-	__webpack_require__(100);
-	__webpack_require__(102);
+	__webpack_require__(92);
+	__webpack_require__(94);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(83), 'bar3D'
+	    __webpack_require__(95), 'bar3D'
 	));
 
 	echarts.registerProcessor(function (ecModel, api) {
@@ -26192,7 +28193,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 82 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -26219,7 +28220,427 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 83 */
+/* 92 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+	var graphicGL = __webpack_require__(41);
+	var BarsGeometry = __webpack_require__(93);
+
+	graphicGL.Shader.import(__webpack_require__(77));
+	graphicGL.Shader.import(__webpack_require__(78));
+
+	function getShader(shading) {
+	    var shader = graphicGL.createShader('ecgl.' + shading);
+	    shader.define('both', 'VERTEX_COLOR');
+	    return shader;
+	}
+
+	module.exports = echarts.extendChartView({
+
+	    type: 'bar3D',
+
+	    init: function (ecModel, api) {
+
+	        this.groupGL = new graphicGL.Node();
+
+	        var barMesh = new graphicGL.Mesh({
+	            geometry: new BarsGeometry({
+	                dynamic: true
+	            }),
+	            ignorePicking: true
+	        });
+	        var barMeshTransparent = new graphicGL.Mesh({
+	            geometry: new BarsGeometry({
+	                dynamic: true
+	            }),
+	            ignorePicking: true
+	        });
+
+	        this.groupGL.add(barMesh);
+	        this.groupGL.add(barMeshTransparent);
+
+	        this._albedoMaterial = new graphicGL.Material({
+	            shader: getShader('albedo')
+	        });
+	        this._albedoTransarentMaterial = new graphicGL.Material({
+	            shader: this._albedoMaterial.shader,
+	            transparent: true,
+	            depthMask: false
+	        });
+	        this._lambertMaterial = new graphicGL.Material({
+	            shader: getShader('lambert')
+	        });
+	        this._lambertTransarentMaterial = new graphicGL.Material({
+	            shader: this._lambertMaterial.shader,
+	            transparent: true,
+	            depthMask: false
+	        });
+
+	        this._barMesh = barMesh;
+	        this._barMeshTransparent = barMeshTransparent;
+	    },
+
+	    render: function (seriesModel, ecModel, api) {
+	        this.groupGL.add(this._barMesh);
+	        this.groupGL.add(this._barMeshTransparent);
+
+	        var coordSys = seriesModel.coordinateSystem;
+	        if (coordSys.type === 'globe') {
+	            coordSys.viewGL.add(this.groupGL);
+
+	            this._renderOnGlobe(seriesModel, api);
+	        }
+	    },
+
+	    _renderOnGlobe: function (seriesModel, api) {
+	        var data = seriesModel.getData();
+	        var shading = seriesModel.get('shading');
+	        var enableNormal = false;
+	        var self = this;
+	        if (shading === 'color') {
+	            this._barMesh.material = this._albedoMaterial;
+	            this._barMeshTransparent.material = this._albedoTransarentMaterial;
+	        }
+	        else if (shading === 'lambert') {
+	            enableNormal = true;
+	            this._barMesh.material = this._lambertMaterial;
+	            this._barMeshTransparent.material = this._lambertTransarentMaterial;
+	        }
+	        else {
+	            console.warn('Unkonw shading ' + shading);
+	            this._barMesh.material = this._albedoMaterial;
+	            this._barMeshTransparent.material = this._albedoTransarentMaterial;
+	        }
+
+	        this._barMesh.geometry.resetOffset();
+	        this._barMeshTransparent.geometry.resetOffset();
+
+	        var transparentBarCount = 0;
+	        var opaqueBarCount = 0;
+
+	        var colorArr = [];
+	        var vertexColors = new Float32Array(data.count() * 4);
+	        var colorOffset = 0;
+	        // Seperate opaque and transparent bars.
+	        data.each(function (idx) {
+	            var color = data.getItemVisual(idx, 'color');
+
+	            var opacity = data.getItemVisual(idx, 'opacity');
+	            if (opacity == null) {
+	                opacity = 1;
+	            }
+
+	            echarts.color.parse(color, colorArr);
+	            vertexColors[colorOffset++] = colorArr[0] / 255;
+	            vertexColors[colorOffset++] = colorArr[1] / 255;
+	            vertexColors[colorOffset++] = colorArr[2] / 255;
+	            vertexColors[colorOffset++] = colorArr[3] * opacity;
+
+	            if (colorArr[3] < 0.99) {
+	                if (colorArr[3] > 0) {
+	                    transparentBarCount++;
+	                }
+	            }
+	            else {
+	                opaqueBarCount++;
+	            }
+	        });
+	        this._barMesh.geometry.setBarCount(opaqueBarCount, enableNormal);
+	        this._barMeshTransparent.geometry.setBarCount(transparentBarCount, enableNormal);
+
+	        var barSize = seriesModel.get('barSize');
+	        if (!echarts.util.isArray(barSize)) {
+	            barSize = [barSize, barSize];
+	        }
+	        data.each(function (idx) {
+	            var layout = data.getItemLayout(idx);
+	            var start = layout[0];
+	            var end = layout[1];
+	            var orient = graphicGL.Vector3.UP._array;
+
+	            var idx4 = idx * 4;
+	            colorArr[0] = vertexColors[idx4++];
+	            colorArr[1] = vertexColors[idx4++];
+	            colorArr[2] = vertexColors[idx4++];
+	            colorArr[3] = vertexColors[idx4++];
+	            if (colorArr[3] < 0.99) {
+	                if (colorArr[3] > 0) {
+	                    self._barMeshTransparent.geometry.addBar(start, end, orient, barSize, colorArr);
+	                }
+	            }
+	            else {
+	                self._barMesh.geometry.addBar(start, end, orient, barSize, colorArr);
+	            }
+	        });
+
+	        this._barMesh.geometry.dirty();
+	        this._barMeshTransparent.geometry.dirty();
+	    },
+
+	    remove: function () {
+	        this.groupGL.removeAll();
+	    },
+
+	    dispose: function () {
+	        this.groupGL.removeAll();
+	    }
+	});
+
+/***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Geometry collecting bars data
+	 *
+	 * @module echarts-gl/chart/bars/BarsGeometry
+	 * @author Yi Shen(http://github.com/pissang)
+	 */
+
+	var StaticGeometry = __webpack_require__(32);
+
+	var glMatrix = __webpack_require__(15);
+	var vec3 = glMatrix.vec3;
+
+	/**
+	 * @constructor
+	 * @alias module:echarts-gl/chart/bars/BarsGeometry
+	 * @extends qtek.StaticGeometry
+	 */
+	var BarsGeometry = StaticGeometry.extend(function () {
+	    return {
+
+	        attributes: {
+	            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
+	            normal: new StaticGeometry.Attribute('normal', 'float', 3, 'NORMAL'),
+	            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+	        },
+	        _vertexOffset: 0,
+	        _faceOffset: 0
+	    };
+	},
+	/** @lends module:echarts-gl/chart/bars/BarsGeometry.prototype */
+	{
+
+	    resetOffset: function () {
+	        this._vertexOffset = 0;
+	        this._faceOffset = 0;
+	    },
+
+	    setBarCount: function (barCount, enableNormal) {
+	        var vertexCount = this.getBarVertexCount(enableNormal) * barCount;
+	        var faceCount = this.getBarFaceCount(enableNormal) * barCount;
+
+	        if (this.vertexCount !== vertexCount) {
+	            this.attributes.position.init(vertexCount);
+	            if (enableNormal) {
+	                this.attributes.normal.init(vertexCount);
+	            }
+	            else {
+	                this.attributes.normal.value = null;
+	            }
+	            this.attributes.color.init(vertexCount);
+	        }
+
+	        if (this.faceCount !== faceCount) {
+	            this.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
+	        }
+
+	        this._enableNormal = enableNormal;
+	    },
+
+	    getBarVertexCount: function (enableNormal) {
+	        return enableNormal ? 24 : 8;
+	    },
+
+	    getBarFaceCount: function () {
+	        return 12;
+	    },
+
+	    /**
+	     * Add a bar
+	     * @param {Array.<number>} start
+	     * @param {Array.<number>} end
+	     * @param {Array.<number>} orient  right direction
+	     * @param {Array.<number>} size size on x and z
+	     * @param {Array.<number>} color
+	     */
+	    addBar: (function () {
+	        var v3Create = vec3.create;
+	        var v3ScaleAndAdd = vec3.scaleAndAdd;
+
+	        var px = v3Create();
+	        var py = v3Create();
+	        var pz = v3Create();
+	        var nx = v3Create();
+	        var ny = v3Create();
+	        var nz = v3Create();
+
+	        var pts = [];
+	        var normals = [];
+	        for (var i = 0; i < 8; i++) {
+	            pts[i] = v3Create();
+	        }
+
+	        var cubeFaces4 = [
+	            // PX
+	            [0, 1, 5, 4],
+	            // NX
+	            [2, 3, 7, 6],
+	            // PY
+	            [4, 5, 6, 7],
+	            // NY
+	            [3, 2, 1, 0],
+	            // PZ
+	            [0, 4, 7, 3],
+	            // NZ
+	            [1, 2, 6, 5]
+	        ];
+	        var face4To3 = [
+	            0, 1, 2, 0, 2, 3
+	        ];
+	        var cubeFaces3 = [];
+	        for (var i = 0; i < cubeFaces4.length; i++) {
+	            var face4 = cubeFaces4[i];
+	            for (var j = 0; j < 2; j++) {
+	                var face = [];
+	                for (var k = 0; k < 3; k++) {
+	                    face.push(face4[face4To3[j * 3 + k]]);
+	                }
+	                cubeFaces3.push(face);
+	            }
+	        }
+	        return function (start, end, orient, size, color) {
+	            vec3.sub(py, end, start);
+	            vec3.normalize(py, py);
+	            // x * y => z
+	            vec3.cross(pz, orient, py);
+	            vec3.normalize(pz, pz);
+	            // y * z => x
+	            vec3.cross(px, py, pz);
+	            vec3.normalize(pz, pz);
+
+	            vec3.negate(nx, px);
+	            vec3.negate(ny, py);
+	            vec3.negate(nz, pz);
+
+	            v3ScaleAndAdd(pts[0], start, px, size[0]);
+	            v3ScaleAndAdd(pts[0], pts[0], pz, size[1]);
+	            v3ScaleAndAdd(pts[1], start, px, size[0]);
+	            v3ScaleAndAdd(pts[1], pts[1], nz, size[1]);
+	            v3ScaleAndAdd(pts[2], start, nx, size[0]);
+	            v3ScaleAndAdd(pts[2], pts[2], nz, size[1]);
+	            v3ScaleAndAdd(pts[3], start, nx, size[0]);
+	            v3ScaleAndAdd(pts[3], pts[3], pz, size[1]);
+
+	            v3ScaleAndAdd(pts[4], end, px, size[0]);
+	            v3ScaleAndAdd(pts[4], pts[4], pz, size[1]);
+	            v3ScaleAndAdd(pts[5], end, px, size[0]);
+	            v3ScaleAndAdd(pts[5], pts[5], nz, size[1]);
+	            v3ScaleAndAdd(pts[6], end, nx, size[0]);
+	            v3ScaleAndAdd(pts[6], pts[6], nz, size[1]);
+	            v3ScaleAndAdd(pts[7], end, nx, size[0]);
+	            v3ScaleAndAdd(pts[7], pts[7], pz, size[1]);
+
+	            var attributes = this.attributes;
+	            if (this._enableNormal) {
+	                normals[0] = px;
+	                normals[1] = nx;
+	                normals[2] = py;
+	                normals[3] = ny;
+	                normals[4] = pz;
+	                normals[5] = nz;
+
+	                var vertexOffset = this._vertexOffset;
+	                for (var i = 0; i < cubeFaces4.length; i++) {
+	                    var idx3 = this._faceOffset * 3;
+	                    for (var k = 0; k < 6; k++) {
+	                        this.faces[idx3++] = vertexOffset + face4To3[k];
+	                    }
+	                    vertexOffset += 4;
+	                    this._faceOffset += 2;
+	                }
+
+	                for (var i = 0; i < cubeFaces4.length; i++) {
+	                    var normal = normals[i];
+	                    for (var k = 0; k < 4; k++) {
+	                        var idx = cubeFaces4[i][k];
+	                        attributes.position.set(this._vertexOffset, pts[idx]);
+	                        attributes.normal.set(this._vertexOffset, normal);
+	                        attributes.color.set(this._vertexOffset++, color);
+	                    }
+	                }
+	            }
+	            else {
+	                for (var i = 0; i < cubeFaces3.length; i++) {
+	                    var idx3 = this._faceOffset * 3;
+	                    for (var k = 0; k < 3; k++) {
+	                        this.faces[idx3 + k] = cubeFaces3[i][k] + this._vertexOffset;
+	                    }
+	                    this._faceOffset++;
+	                }
+
+	                for (var i = 0; i < pts.length; i++) {
+	                    attributes.position.set(this._vertexOffset, pts[i]);
+	                    attributes.color.set(this._vertexOffset++, color);
+	                }
+	            }
+	        };
+	    })()
+	});
+
+	module.exports = BarsGeometry;
+
+/***/ },
+/* 94 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	module.exports = echarts.extendSeriesModel({
+
+	    type: 'series.bar3D',
+
+	    dependencies: ['globe'],
+
+	    getInitialData: function (option, ecModel) {
+	        var data = new echarts.List(['x', 'y', 'z'], this);
+	        data.initData(option.data);
+	        return data;
+	    },
+
+	    defaultOption: {
+
+	        coordinateSystem: 'globe',
+
+	        globeIndex: 0,
+
+	        zlevel: 10,
+
+	        // Bar width and depth
+	        barSize: [1, 1],
+
+	        // Shading of globe
+	        // 'color', 'lambert'
+	        // TODO, 'realastic', 'toon'
+	        shading: 'color',
+
+	        // If coordinateSystem is globe, value will be mapped
+	        // from minHeight to maxHeight
+	        minHeight: 0,
+	        maxHeight: 100,
+
+	        itemStyle: {
+	            normal: {
+	                opacity: 1
+	            }
+	        }
+	    }
+	});
+
+/***/ },
+/* 95 */
 /***/ function(module, exports) {
 
 	module.exports = function (seriesType, ecModel, api) {
@@ -26245,29 +28666,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 84 */
+/* 96 */
 /***/ function(module, exports) {
 
 	
 
 /***/ },
-/* 85 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(86);
+	__webpack_require__(98);
 
-	__webpack_require__(87);
-	__webpack_require__(94);
+	__webpack_require__(99);
+	__webpack_require__(106);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(83), 'lines3D'
+	    __webpack_require__(95), 'lines3D'
 	));
 
 
 /***/ },
-/* 86 */
+/* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -26354,15 +28775,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 87 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(39);
-	var LinesGeometry = __webpack_require__(88);
-	var CurveAnimatingPointsMesh = __webpack_require__(89);
+	var graphicGL = __webpack_require__(41);
+	var LinesGeometry = __webpack_require__(100);
+	var CurveAnimatingPointsMesh = __webpack_require__(101);
 
-	graphicGL.Shader.import(__webpack_require__(93));
+	graphicGL.Shader.import(__webpack_require__(105));
 
 	module.exports = echarts.extendChartView({
 
@@ -26374,10 +28795,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // TODO Windows chrome not support lineWidth > 1
 	        this._linesMesh = new graphicGL.Mesh({
 	            material: new graphicGL.Material({
-	                shader: new graphicGL.Shader({
-	                    vertex: graphicGL.Shader.source('ecgl.lines.vertex'),
-	                    fragment: graphicGL.Shader.source('ecgl.lines.fragment')
-	                }),
+	                shader: graphicGL.createShader('ecgl.lines'),
 	                transparent: true
 	            }),
 	            mode: graphicGL.Mesh.LINES,
@@ -26432,7 +28850,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.groupGL.remove(curveAnimatingPointsMesh);
 	        }
 
-	        this._linesMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
+
+	        this._linesMesh.material.blend = this._curveAnimatingPointsMesh.material.blend
+	            = seriesModel.get('blendMode') === 'lighter'
 	            ? graphicGL.additiveBlend : null;
 	    },
 
@@ -26479,7 +28899,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 88 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -26627,16 +29047,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LinesGeometry;
 
 /***/ },
-/* 89 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(39);
-	var spriteUtil = __webpack_require__(90);
+	var graphicGL = __webpack_require__(41);
+	var spriteUtil = __webpack_require__(102);
 
-	var CurveAnimatingPointsGeometry = __webpack_require__(91);
+	var CurveAnimatingPointsGeometry = __webpack_require__(103);
 
-	graphicGL.Shader.import(__webpack_require__(92));
+	graphicGL.Shader.import(__webpack_require__(104));
 
 	module.exports = graphicGL.Mesh.extend(function () {
 
@@ -26717,7 +29137,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 90 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -26817,7 +29237,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = spriteUtil;
 
 /***/ },
-/* 91 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -26880,7 +29300,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    getPointVertexCount: function (p0, p1, p2, p3) {
 	        var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
 	        // TODO Consider time
-	        var count = Math.max(Math.min(Math.round((len + 1) / this.scale * 40), 15), 3);
+	        var count = Math.max(Math.min(Math.round((len + 1) / this.scale * 40), 15), 5);
 	        return count;
 	    },
 	    /**
@@ -26913,19 +29333,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = CurveAnimatingPointsGeometry;
 
 /***/ },
-/* 92 */
+/* 104 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.curveAnimatingPoints.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float percent : 0.0;\n\nattribute vec3 p0;\nattribute vec3 p1;\nattribute vec3 p2;\nattribute vec3 p3;\nattribute vec4 color : COLOR;\n\nattribute float offset;\nattribute float size;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    float t = mod(offset + percent, 1.0);\n    float onet = 1.0 - t;\n    vec3 position = onet * onet * (onet * p0 + 3.0 * t * p1)\n        + t * t * (t * p3 + 3.0 * onet * p2);\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    gl_PointSize = size;\n\n    v_Color = color;\n}\n\n@end\n\n@export ecgl.curveAnimatingPoints.fragment\n\nvarying vec4 v_Color;\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = v_Color;\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n}\n@end"
 
 /***/ },
-/* 93 */
+/* 105 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.lines.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha) * v_Color;\n}\n@end"
 
 /***/ },
-/* 94 */
+/* 106 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -26988,20 +29408,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 95 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(96);
-	__webpack_require__(97);
+	__webpack_require__(108);
+	__webpack_require__(109);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(99), 'scatterGL', 'circle', null
+	    __webpack_require__(111), 'scatterGL', 'circle', null
 	));
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(83), 'scatterGL'
+	    __webpack_require__(95), 'scatterGL'
 	));
 
 	echarts.registerLayout(function (ecModel, api) {
@@ -27037,7 +29457,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 96 */
+/* 108 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -27084,15 +29504,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 97 */
+/* 109 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(39);
-	var viewGL = __webpack_require__(77);
-	var spriteUtil = __webpack_require__(90);
+	var graphicGL = __webpack_require__(41);
+	var viewGL = __webpack_require__(88);
+	var spriteUtil = __webpack_require__(102);
 
-	graphicGL.Shader.import(__webpack_require__(98));
+	graphicGL.Shader.import(__webpack_require__(110));
 
 	echarts.extendChartView({
 
@@ -27107,10 +29527,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var mesh = new graphicGL.Mesh({
 	            material: new graphicGL.Material({
-	                shader: new graphicGL.Shader({
-	                    vertex: graphicGL.Shader.source('ecgl.points.vertex'),
-	                    fragment: graphicGL.Shader.source('ecgl.points.fragment')
-	                }),
+	                shader: graphicGL.createShader('ecgl.points'),
 	                transparent: true,
 	                depthMask: false
 	            }),
@@ -27316,13 +29733,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 98 */
+/* 110 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.points.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.points.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = color;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end"
 
 /***/ },
-/* 99 */
+/* 111 */
 /***/ function(module, exports) {
 
 	
@@ -27369,429 +29786,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	    };
 
-
-/***/ },
-/* 100 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(39);
-	var BarsGeometry = __webpack_require__(101);
-
-	graphicGL.Shader.import(__webpack_require__(66));
-	graphicGL.Shader.import(__webpack_require__(67));
-
-	function getShader(shading) {
-	    var shader = new graphicGL.Shader({
-	        vertex: graphicGL.Shader.source('ecgl.' + shading + '.vertex'),
-	        fragment: graphicGL.Shader.source('ecgl.' + shading + '.fragment')
-	    });
-	    shader.define('both', 'VERTEX_COLOR');
-	    return shader;
-	}
-
-	module.exports = echarts.extendChartView({
-
-	    type: 'bar3D',
-
-	    init: function (ecModel, api) {
-
-	        this.groupGL = new graphicGL.Node();
-
-	        var barMesh = new graphicGL.Mesh({
-	            geometry: new BarsGeometry({
-	                dynamic: true
-	            }),
-	            ignorePicking: true
-	        });
-	        var barMeshTransparent = new graphicGL.Mesh({
-	            geometry: new BarsGeometry({
-	                dynamic: true
-	            }),
-	            ignorePicking: true
-	        });
-
-	        this.groupGL.add(barMesh);
-	        this.groupGL.add(barMeshTransparent);
-
-	        this._albedoMaterial = new graphicGL.Material({
-	            shader: getShader('albedo')
-	        });
-	        this._albedoTransarentMaterial = new graphicGL.Material({
-	            shader: this._albedoMaterial.shader,
-	            transparent: true,
-	            depthMask: false
-	        });
-	        this._lambertMaterial = new graphicGL.Material({
-	            shader: getShader('lambert')
-	        });
-	        this._lambertTransarentMaterial = new graphicGL.Material({
-	            shader: this._lambertMaterial.shader,
-	            transparent: true,
-	            depthMask: false
-	        });
-
-	        this._barMesh = barMesh;
-	        this._barMeshTransparent = barMeshTransparent;
-	    },
-
-	    render: function (seriesModel, ecModel, api) {
-	        this.groupGL.add(this._barMesh);
-	        this.groupGL.add(this._barMeshTransparent);
-
-	        var coordSys = seriesModel.coordinateSystem;
-	        if (coordSys.type === 'globe') {
-	            coordSys.viewGL.add(this.groupGL);
-
-	            this._renderOnGlobe(seriesModel, api);
-	        }
-	    },
-
-	    _renderOnGlobe: function (seriesModel, api) {
-	        var data = seriesModel.getData();
-	        var shading = seriesModel.get('shading');
-	        var enableNormal = false;
-	        var self = this;
-	        if (shading === 'color') {
-	            this._barMesh.material = this._albedoMaterial;
-	            this._barMeshTransparent.material = this._albedoTransarentMaterial;
-	        }
-	        else if (shading === 'lambert') {
-	            enableNormal = true;
-	            this._barMesh.material = this._lambertMaterial;
-	            this._barMeshTransparent.material = this._lambertTransarentMaterial;
-	        }
-	        else {
-	            console.warn('Unkonw shading ' + shading);
-	            this._barMesh.material = this._albedoMaterial;
-	            this._barMeshTransparent.material = this._albedoTransarentMaterial;
-	        }
-
-	        this._barMesh.geometry.resetOffset();
-	        this._barMeshTransparent.geometry.resetOffset();
-
-	        var transparentBarCount = 0;
-	        var opaqueBarCount = 0;
-
-	        var colorArr = [];
-	        var vertexColors = new Float32Array(data.count() * 4);
-	        var colorOffset = 0;
-	        // Seperate opaque and transparent bars.
-	        data.each(function (idx) {
-	            var color = data.getItemVisual(idx, 'color');
-
-	            var opacity = data.getItemVisual(idx, 'opacity');
-	            if (opacity == null) {
-	                opacity = 1;
-	            }
-
-	            echarts.color.parse(color, colorArr);
-	            vertexColors[colorOffset++] = colorArr[0] / 255;
-	            vertexColors[colorOffset++] = colorArr[1] / 255;
-	            vertexColors[colorOffset++] = colorArr[2] / 255;
-	            vertexColors[colorOffset++] = colorArr[3] * opacity;
-
-	            if (colorArr[3] < 0.99) {
-	                if (colorArr[3] > 0) {
-	                    transparentBarCount++;
-	                }
-	            }
-	            else {
-	                opaqueBarCount++;
-	            }
-	        });
-	        this._barMesh.geometry.setBarCount(opaqueBarCount, enableNormal);
-	        this._barMeshTransparent.geometry.setBarCount(transparentBarCount, enableNormal);
-
-	        var barSize = seriesModel.get('barSize');
-	        if (!echarts.util.isArray(barSize)) {
-	            barSize = [barSize, barSize];
-	        }
-	        data.each(function (idx) {
-	            var layout = data.getItemLayout(idx);
-	            var start = layout[0];
-	            var end = layout[1];
-	            var orient = graphicGL.Vector3.UP._array;
-
-	            var idx4 = idx * 4;
-	            colorArr[0] = vertexColors[idx4++];
-	            colorArr[1] = vertexColors[idx4++];
-	            colorArr[2] = vertexColors[idx4++];
-	            colorArr[3] = vertexColors[idx4++];
-	            if (colorArr[3] < 0.99) {
-	                if (colorArr[3] > 0) {
-	                    self._barMeshTransparent.geometry.addBar(start, end, orient, barSize, colorArr);
-	                }
-	            }
-	            else {
-	                self._barMesh.geometry.addBar(start, end, orient, barSize, colorArr);
-	            }
-	        });
-
-	        this._barMesh.geometry.dirty();
-	        this._barMeshTransparent.geometry.dirty();
-	    },
-
-	    remove: function () {
-	        this.groupGL.removeAll();
-	    },
-
-	    dispose: function () {
-	        this.groupGL.removeAll();
-	    }
-	});
-
-/***/ },
-/* 101 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Geometry collecting bars data
-	 *
-	 * @module echarts-gl/chart/bars/BarsGeometry
-	 * @author Yi Shen(http://github.com/pissang)
-	 */
-
-	var StaticGeometry = __webpack_require__(32);
-
-	var glMatrix = __webpack_require__(15);
-	var vec3 = glMatrix.vec3;
-
-	/**
-	 * @constructor
-	 * @alias module:echarts-gl/chart/bars/BarsGeometry
-	 * @extends qtek.StaticGeometry
-	 */
-	var BarsGeometry = StaticGeometry.extend(function () {
-	    return {
-
-	        attributes: {
-	            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
-	            normal: new StaticGeometry.Attribute('normal', 'float', 3, 'NORMAL'),
-	            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
-	        },
-	        _vertexOffset: 0,
-	        _faceOffset: 0
-	    };
-	},
-	/** @lends module:echarts-gl/chart/bars/BarsGeometry.prototype */
-	{
-
-	    resetOffset: function () {
-	        this._vertexOffset = 0;
-	        this._faceOffset = 0;
-	    },
-
-	    setBarCount: function (barCount, enableNormal) {
-	        var vertexCount = this.getBarVertexCount(enableNormal) * barCount;
-	        var faceCount = this.getBarFaceCount(enableNormal) * barCount;
-
-	        if (this.vertexCount !== vertexCount) {
-	            this.attributes.position.init(vertexCount);
-	            if (enableNormal) {
-	                this.attributes.normal.init(vertexCount);
-	            }
-	            else {
-	                this.attributes.normal.value = null;
-	            }
-	            this.attributes.color.init(vertexCount);
-	        }
-
-	        if (this.faceCount !== faceCount) {
-	            this.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
-	        }
-
-	        this._enableNormal = enableNormal;
-	    },
-
-	    getBarVertexCount: function (enableNormal) {
-	        return enableNormal ? 24 : 8;
-	    },
-
-	    getBarFaceCount: function () {
-	        return 12;
-	    },
-
-	    /**
-	     * Add a bar
-	     * @param {Array.<number>} start
-	     * @param {Array.<number>} end
-	     * @param {Array.<number>} orient  right direction
-	     * @param {Array.<number>} size size on x and z
-	     * @param {Array.<number>} color
-	     */
-	    addBar: (function () {
-	        var v3Create = vec3.create;
-	        var v3ScaleAndAdd = vec3.scaleAndAdd;
-
-	        var px = v3Create();
-	        var py = v3Create();
-	        var pz = v3Create();
-	        var nx = v3Create();
-	        var ny = v3Create();
-	        var nz = v3Create();
-
-	        var pts = [];
-	        var normals = [];
-	        for (var i = 0; i < 8; i++) {
-	            pts[i] = v3Create();
-	        }
-
-	        var cubeFaces4 = [
-	            // PX
-	            [0, 1, 5, 4],
-	            // NX
-	            [2, 3, 7, 6],
-	            // PY
-	            [4, 5, 6, 7],
-	            // NY
-	            [3, 2, 1, 0],
-	            // PZ
-	            [0, 4, 7, 3],
-	            // NZ
-	            [1, 2, 6, 5]
-	        ];
-	        var face4To3 = [
-	            0, 1, 2, 0, 2, 3
-	        ];
-	        var cubeFaces3 = [];
-	        for (var i = 0; i < cubeFaces4.length; i++) {
-	            var face4 = cubeFaces4[i];
-	            for (var j = 0; j < 2; j++) {
-	                var face = [];
-	                for (var k = 0; k < 3; k++) {
-	                    face.push(face4[face4To3[j * 3 + k]]);
-	                }
-	                cubeFaces3.push(face);
-	            }
-	        }
-	        return function (start, end, orient, size, color) {
-	            vec3.sub(py, end, start);
-	            vec3.normalize(py, py);
-	            // x * y => z
-	            vec3.cross(pz, orient, py);
-	            vec3.normalize(pz, pz);
-	            // y * z => x
-	            vec3.cross(px, py, pz);
-	            vec3.normalize(pz, pz);
-
-	            vec3.negate(nx, px);
-	            vec3.negate(ny, py);
-	            vec3.negate(nz, pz);
-
-	            v3ScaleAndAdd(pts[0], start, px, size[0]);
-	            v3ScaleAndAdd(pts[0], pts[0], pz, size[1]);
-	            v3ScaleAndAdd(pts[1], start, px, size[0]);
-	            v3ScaleAndAdd(pts[1], pts[1], nz, size[1]);
-	            v3ScaleAndAdd(pts[2], start, nx, size[0]);
-	            v3ScaleAndAdd(pts[2], pts[2], nz, size[1]);
-	            v3ScaleAndAdd(pts[3], start, nx, size[0]);
-	            v3ScaleAndAdd(pts[3], pts[3], pz, size[1]);
-
-	            v3ScaleAndAdd(pts[4], end, px, size[0]);
-	            v3ScaleAndAdd(pts[4], pts[4], pz, size[1]);
-	            v3ScaleAndAdd(pts[5], end, px, size[0]);
-	            v3ScaleAndAdd(pts[5], pts[5], nz, size[1]);
-	            v3ScaleAndAdd(pts[6], end, nx, size[0]);
-	            v3ScaleAndAdd(pts[6], pts[6], nz, size[1]);
-	            v3ScaleAndAdd(pts[7], end, nx, size[0]);
-	            v3ScaleAndAdd(pts[7], pts[7], pz, size[1]);
-
-	            var attributes = this.attributes;
-	            if (this._enableNormal) {
-	                normals[0] = px;
-	                normals[1] = nx;
-	                normals[2] = py;
-	                normals[3] = ny;
-	                normals[4] = pz;
-	                normals[5] = nz;
-
-	                var vertexOffset = this._vertexOffset;
-	                for (var i = 0; i < cubeFaces4.length; i++) {
-	                    var idx3 = this._faceOffset * 3;
-	                    for (var k = 0; k < 6; k++) {
-	                        this.faces[idx3++] = vertexOffset + face4To3[k];
-	                    }
-	                    vertexOffset += 4;
-	                    this._faceOffset += 2;
-	                }
-
-	                for (var i = 0; i < cubeFaces4.length; i++) {
-	                    var normal = normals[i];
-	                    for (var k = 0; k < 4; k++) {
-	                        var idx = cubeFaces4[i][k];
-	                        attributes.position.set(this._vertexOffset, pts[idx]);
-	                        attributes.normal.set(this._vertexOffset, normal);
-	                        attributes.color.set(this._vertexOffset++, color);
-	                    }
-	                }
-	            }
-	            else {
-	                for (var i = 0; i < cubeFaces3.length; i++) {
-	                    var idx3 = this._faceOffset * 3;
-	                    for (var k = 0; k < 3; k++) {
-	                        this.faces[idx3 + k] = cubeFaces3[i][k] + this._vertexOffset;
-	                    }
-	                    this._faceOffset++;
-	                }
-
-	                for (var i = 0; i < pts.length; i++) {
-	                    attributes.position.set(this._vertexOffset, pts[i]);
-	                    attributes.color.set(this._vertexOffset++, color);
-	                }
-	            }
-	        };
-	    })()
-	});
-
-	module.exports = BarsGeometry;
-
-/***/ },
-/* 102 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-
-	module.exports = echarts.extendSeriesModel({
-
-	    type: 'series.bar3D',
-
-	    dependencies: ['globe'],
-
-	    getInitialData: function (option, ecModel) {
-	        var data = new echarts.List(['x', 'y', 'z'], this);
-	        data.initData(option.data);
-	        return data;
-	    },
-
-	    defaultOption: {
-
-	        coordinateSystem: 'globe',
-
-	        globeIndex: 0,
-
-	        zlevel: 10,
-
-	        // Bar width and depth
-	        barSize: [1, 1],
-
-	        // Shading of globe
-	        // 'color', 'lambert'
-	        // TODO, 'realastic', 'toon'
-	        shading: 'color',
-
-	        // If coordinateSystem is globe, value will be mapped
-	        // from minHeight to maxHeight
-	        minHeight: 0,
-	        maxHeight: 100,
-
-	        itemStyle: {
-	            normal: {
-	                opacity: 1
-	            }
-	        }
-	    }
-	});
 
 /***/ }
 /******/ ])

@@ -153,6 +153,7 @@ graphicGL.Frustum = require('qtek/lib/math/Frustum');
 
 // Texture utilities
 
+var blankImage = textureUtil.createBlank('rgba(255,255,255,0)');
 /**
  * @param {string|HTMLImageElement|HTMLCanvasElement} imgValue
  * @param {module:echarts/ExtensionAPI} api
