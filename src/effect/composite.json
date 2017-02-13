@@ -19,7 +19,8 @@
                 "color": {
                     "parameters": {
                         "width": "expr(width * dpr / 2)",
-                        "height": "expr(height * dpr / 2)"
+                        "height": "expr(height * dpr / 2)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -38,7 +39,8 @@
                 "color": {
                     "parameters": {
                         "width": "expr(width * dpr / 4)",
-                        "height": "expr(height * dpr / 4)"
+                        "height": "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -58,12 +60,13 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 4)",
-                        "height" : "expr(height * dpr / 4)"
+                        "height" : "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
             "parameters" : {
-                "threshold" : 4,
+                "threshold": 3,
                 "scale": 4,
                 "textureSize": "expr([width * dpr / 4, height * dpr / 4])"
             },
@@ -82,12 +85,13 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 4)",
-                        "height" : "expr(height * dpr / 4)"
+                        "height" : "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
             "parameters" : {
-                "threshold": 20,
+                "threshold": 8,
                 "scale": 0.01
             }
         },
@@ -102,7 +106,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 8)",
-                        "height" : "expr(height * dpr / 8)"
+                        "height" : "expr(height * dpr / 8)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -120,7 +125,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 16)",
-                        "height" : "expr(height * dpr / 16)"
+                        "height" : "expr(height * dpr / 16)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -138,7 +144,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 32)",
-                        "height" : "expr(height * dpr / 32)"
+                        "height" : "expr(height * dpr / 32)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -158,7 +165,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 16)",
-                        "height" : "expr(height * dpr / 16)"
+                        "height" : "expr(height * dpr / 16)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -178,7 +186,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 16)",
-                        "height" : "expr(height * dpr / 16)"
+                        "height" : "expr(height * dpr / 16)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -201,7 +210,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 8)",
-                        "height" : "expr(height * dpr / 8)"
+                        "height" : "expr(height * dpr / 8)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -221,7 +231,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 8)",
-                        "height" : "expr(height * dpr / 8)"
+                        "height" : "expr(height * dpr / 8)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -242,7 +253,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 8)",
-                        "height" : "expr(height * dpr / 8)"
+                        "height" : "expr(height * dpr / 8)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -263,7 +275,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 4)",
-                        "height" : "expr(height * dpr / 4)"
+                        "height" : "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -283,7 +296,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 4)",
-                        "height" : "expr(height * dpr / 4)"
+                        "height" : "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -304,7 +318,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 4)",
-                        "height" : "expr(height * dpr / 4)"
+                        "height" : "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -360,10 +375,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width * dpr / 2)",
-                        "height": "expr(height * dpr / 2)"
+                        "height": "expr(height * dpr / 2)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -382,10 +396,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width * dpr / 2)",
-                        "height": "expr(height * dpr / 2)"
+                        "height": "expr(height * dpr / 2)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -403,10 +416,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width * dpr / 2)",
-                        "height": "expr(height * dpr / 2)"
+                        "height": "expr(height * dpr / 2)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -425,10 +437,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width * dpr / 2)",
-                        "height": "expr(height * dpr / 2)"
+                        "height": "expr(height * dpr / 2)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -447,10 +458,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width * dpr / 2)",
-                        "height": "expr(height * dpr / 2)"
+                        "height": "expr(height * dpr / 2)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -471,10 +481,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width * dpr / 2)",
-                        "height": "expr(height * dpr / 2)"
+                        "height": "expr(height * dpr / 2)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -496,10 +505,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width * dpr / 2)",
-                        "height": "expr(height * dpr / 2)"
+                        "height": "expr(height * dpr / 2)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -593,10 +601,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width)",
-                        "height": "expr(height)"
+                        "height": "expr(height)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -615,10 +622,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width)",
-                        "height": "expr(height)"
+                        "height": "expr(height)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -661,10 +667,9 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "minFilter": "NEAREST",
-                        "magFilter": "NEAREST",
                         "width": "expr(width)",
-                        "height": "expr(height)"
+                        "height": "expr(height)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             }
@@ -680,7 +685,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 4)",
-                        "height" : "expr(height * dpr / 4)"
+                        "height" : "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -699,7 +705,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 4)",
-                        "height" : "expr(height * dpr / 4)"
+                        "height" : "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -719,7 +726,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr / 4)",
-                        "height" : "expr(height * dpr / 4)"
+                        "height" : "expr(height * dpr / 4)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
