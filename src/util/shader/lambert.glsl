@@ -65,6 +65,8 @@ uniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];
 uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
 #endif
 
+uniform float emissionIntensity: 1.0;
+
 #ifdef BUMPMAP_ENABLED
 uniform sampler2D bumpMap;
 uniform float bumpScale : 1.0;
@@ -181,7 +183,7 @@ vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
 
 #if (LAYER_EMISSIVEMAP_COUNT > 0)
     for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
-        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);
+        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * emissionIntensity;
         gl_FragColor.rgb += texel2.rgb;
     }}
 #endif

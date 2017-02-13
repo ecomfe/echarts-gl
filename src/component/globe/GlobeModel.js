@@ -101,6 +101,9 @@ var GlobeModel = echarts.extendComponentModel({
 
             ambientIntensity: 0.1,
 
+            // Intensity of mission from emissive layers
+            emissionIntensity: 1,
+
             // Time, default it will use system time
             time: ''
         },

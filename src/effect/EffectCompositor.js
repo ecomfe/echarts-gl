@@ -17,7 +17,7 @@ Shader['import'](require('qtek/lib/shader/source/compositor/hdr.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/dof.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/lensflare.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/blend.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/fxaa3.essl'));
+Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
 
 function EffectCompositor() {
     this._sourceTexture = new Texture2D({

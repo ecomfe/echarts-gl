@@ -366,6 +366,8 @@ module.exports = echarts.extendComponentView({
         sunLight.position.z = r0 * Math.sin(pos.azimuth);
         sunLight.lookAt(earthMesh.getWorldPosition());
 
+        // Emission
+        earthMesh.material.set('emissionIntensity', lightModel.get('emissionIntensity'));
     },
 
     dispose: function (ecModel, api) {
