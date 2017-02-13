@@ -105,6 +105,15 @@ var GlobeModel = echarts.extendComponentModel({
             time: ''
         },
 
+        postEffect: {
+            enable: false,
+
+            bloom: {
+                enable: true,
+                intensity: 0.1
+            }
+        },
+
         // Configuration abount view control
         viewControl: {
             // If rotate on on init

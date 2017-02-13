@@ -97,6 +97,10 @@ EChartsGL.prototype.update = function (ecModel, api) {
         return layerGL;
     }
 
+    for (var zlevel in this._layers) {
+        this._layers[zlevel].removeViewsAll();
+    }
+
     ecModel.eachComponent(function (componentType, componentModel) {
         if (componentType !== 'series') {
             var view = api.getViewOfComponentModel(componentModel);
@@ -153,6 +157,8 @@ echarts.registerPostUpdate(function (ecModel, api) {
     egl.update(ecModel, api);
 });
 
+var Shader = require('qtek/lib/Shader');
 // Some common shaders
+Shader['import'](require('qtek/lib/shader/source/util.essl'));
 
 module.exports = EChartsGL;

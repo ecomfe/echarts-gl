@@ -18,14 +18,16 @@
             // http://visibleearth.nasa.gov/view_cat.php?categoryID=1484
             chart.setOption({
                 globe: {
-                    autoRotate: false,
-
                     baseTexture: 'asset/world.topo.bathy.200401.jpg',
                     heightTexture: 'asset/elev_bump_4k.jpg',
 
                     displacementScale: 0.1,
 
                     shading: 'lambert',
+
+                    postEffect: {
+                        enable: true
+                    },
 
                     light: {
                         ambientIntensity: 0.1,

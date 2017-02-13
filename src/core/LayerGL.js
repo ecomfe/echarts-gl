@@ -16,7 +16,7 @@
 
 var Renderer = require('qtek/lib/Renderer');
 var RayPicking = require('qtek/lib/picking/RayPicking');
-var Texture = require('qtek/lib/Texture2D');
+var Texture = require('qtek/lib/Texture');
 
 // PENDING
 var Eventful = require('zrender/lib/mixin/Eventful');
@@ -80,6 +80,8 @@ var LayerGL = function (id, zr) {
     this.views = [];
 
     this._initHandlers();
+
+    this._viewsToDispose = [];
 };
 
 /**
@@ -105,6 +107,11 @@ LayerGL.prototype.addView = function (view) {
     if (view.layer === this) {
         return;
     }
+    // If needs to dispose in this layer. unmark it.
+    var idx = this._viewsToDispose.indexOf(view);
+    if (idx >= 0) {
+        this._viewsToDispose.splice(idx, 1);
+    }
 
     this.views.push(view);
 
@@ -119,6 +126,13 @@ LayerGL.prototype.addView = function (view) {
     });
 };
 
+function removeFromZr(node) {
+    var zr = node.__zr;
+    node.__zr = null;
+    if (zr && node.removeAnimatorsFromZr) {
+        node.removeAnimatorsFromZr(zr);
+    }
+}
 /**
  * @param {module:echarts-gl/core/ViewGL} view
  */
@@ -130,17 +144,28 @@ LayerGL.prototype.removeView = function (view) {
     var idx = this.views.indexOf(view);
     if (idx >= 0) {
         this.views.splice(idx, 1);
-
-        view.scene.traverse(function (node) {
-            var zr = node.__zr;
-            node.__zr = null;
-            if (zr && node.removeAnimatorsFromZr) {
-                node.removeAnimatorsFromZr(zr);
-            }
-        }, this);
-
+        view.scene.traverse(removeFromZr, this);
         view.layer = null;
+
+        // Mark to dispose in this layer.
+        this._viewsToDispose.push(view);
     }
+};
+
+/**
+ * Remove all views
+ */
+LayerGL.prototype.removeViewsAll = function () {
+    this.views.forEach(function (view) {
+        view.scene.traverse(removeFromZr, this);
+        view.layer = null;
+
+        // Mark to dispose in this layer.
+        this._viewsToDispose.push(view);
+    }, this);
+
+    this.views.length = 0;
+
 };
 
 /**
@@ -185,7 +210,8 @@ LayerGL.prototype.clearColor = function () {
  */
 LayerGL.prototype.needsRefresh = function () {
     this.zr.refresh();
-}
+};
+
 /**
  * Refresh the layer, will be invoked by zrender
  */
@@ -194,15 +220,18 @@ LayerGL.prototype.refresh = function () {
 
     this.renderer.saveViewport();
     for (var i = 0; i < this.views.length; i++) {
-        var viewGL = this.views[i];
-
-        this.renderer.setViewport(viewGL.viewport);
-        this.renderer.render(viewGL.scene, viewGL.camera);
+        this.views[i].render(this.renderer);
     }
     this.renderer.restoreViewport();
 
     // Auto dispose unused resources on GPU, like program(shader), texture, geometry(buffers)
     this._trackAndClean();
+
+    // Dispose trashed views
+    for (var i = 0; i < this._viewsToDispose.length; i++) {
+        this._viewsToDispose[i].dispose(this.renderer);
+    }
+    this._viewsToDispose.length = 0;
 };
 
 
@@ -269,9 +298,9 @@ LayerGL.prototype._trackAndClean = function () {
                     addToMap(texturesMap, val);
                 }
                 else if (val instanceof Array) {
-                    for (var i = 0; i < val.length; i++) {
-                        if (val[i] instanceof Texture) {
-                            addToMap(texturesMap, val[i]);
+                    for (var k = 0; k < val.length; k++) {
+                        if (val[k] instanceof Texture) {
+                            addToMap(texturesMap, val[k]);
                         }
                     }
                 }

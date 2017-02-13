@@ -92,6 +92,9 @@ module.exports = echarts.extendComponentView({
         // Add self to scene;
         coordSys.viewGL.add(this.groupGL);
 
+        // Set post effect
+        coordSys.viewGL.setPostEffect(globeModel.getModel('postEffect'));
+
         var earthMesh = this._earthMesh;
 
         earthMesh.geometry = this._sphereGeometry;
