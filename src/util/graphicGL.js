@@ -197,6 +197,8 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
         }
         else {
             textureObj.texture.surface.setECharts(imgValue);
+
+            cb && cb(textureObj.texture);
         }
         return textureObj.texture;
     }
