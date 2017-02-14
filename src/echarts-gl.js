@@ -84,8 +84,11 @@ EChartsGL.prototype.update = function (ecModel, api) {
                 var img = new echarts.graphic.Image({
                     z: 1e4,
                     style: {
-                        image: layerGL.renderer.canvas
-                    }
+                        image: layerGL.renderer.canvas,
+                        width: layerGL.renderer.getWidth(),
+                        height: layerGL.renderer.getHeight()
+                    },
+                    silent: true
                 });
 
                 zr.add(img);
