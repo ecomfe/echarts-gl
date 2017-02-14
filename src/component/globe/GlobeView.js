@@ -123,6 +123,8 @@ module.exports = echarts.extendComponentView({
             anisotropic: 8
         });
 
+        earthMesh.material.shader[globeModel.get('postEffect.enable') ? 'define' : 'unDefine']('fragment', 'SRGB_DECODE');
+
         this._updateLight(globeModel, api);
 
         this._displaceVertices(globeModel, api);

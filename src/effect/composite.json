@@ -46,7 +46,7 @@
                 }
             },
             "parameters" : {
-                "threshold" : 4,
+                "threshold" : 2,
                 "scale": 4,
                 "textureSize": "expr([width * dpr / 2, height / 2])"
             }
@@ -425,7 +425,8 @@
                 "color" : {
                     "parameters" : {
                         "width" : "expr(width * dpr)",
-                        "height" : "expr(height * dpr)"
+                        "height" : "expr(height * dpr)",
+                        "type": "HALF_FLOAT"
                     }
                 }
             },
@@ -880,6 +881,9 @@
                         "height" : "expr(height * dpr)"
                     }
                 }
+            },
+            "parameters": {
+                "bloomIntensity": 0.03
             }
         },
         {

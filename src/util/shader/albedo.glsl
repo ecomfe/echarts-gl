@@ -50,6 +50,8 @@ uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
 
 varying vec2 v_Texcoord;
 
+@import qtek.util.srgb
+
 void main()
 {
     gl_FragColor = vec4(color, alpha);
@@ -61,11 +63,17 @@ void main()
     vec4 albedoTexel = vec4(1.0);
 #ifdef DIFFUSEMAP_ENABLED
     albedoTexel = texture2D(diffuseMap, v_Texcoord);
+    #ifdef SRGB_DECODE
+    albedoTexel = sRGBToLinear(albedoTexel);
+    #endif
 #endif
 
 #if (LAYER_DIFFUSEMAP_COUNT > 0)
     for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{
         vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);
+        #ifdef SRGB_DECODE
+        texel2 = sRGBToLinear(texel2);
+        #endif
         // source-over blend
         albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);
         albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;
