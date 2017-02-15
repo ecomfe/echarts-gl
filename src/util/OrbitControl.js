@@ -70,7 +70,7 @@ var OrbitControl = Base.extend(function () {
 
         _panVelocity: new Vector2(),
 
-        _distance: 100,
+        _distance: 500,
 
         _zoomSpeed: 0,
 
@@ -90,7 +90,7 @@ var OrbitControl = Base.extend(function () {
         this.zr.on('mousedown', this._mouseDownHandler, this);
         this.zr.on('mousewheel', this._mouseWheelHandler, this);
 
-        this._decomposeRotation();
+        this._decomposeTransform();
 
         this.zr.animation.on('frame', this._update, this);
     },
@@ -122,12 +122,12 @@ var OrbitControl = Base.extend(function () {
      */
     setDistance: function (distance) {
         this._distance = distance;
-        this._needsUpdate = false;
+        this._needsUpdate = true;
     },
 
     setCamera: function (target) {
         this._camera = target;
-        this._decomposeRotation();
+        this._decomposeTransform();
     },
 
     /**
@@ -190,7 +190,7 @@ var OrbitControl = Base.extend(function () {
         //         })
         //         .done(function () {
         //             self._animating = false;
-        //             self._decomposeRotation();
+        //             self._decomposeTransform();
         //         })
         //         .start(opts.easing || 'Linear')
         // );
@@ -209,7 +209,6 @@ var OrbitControl = Base.extend(function () {
         var self = this;
 
         distance = Math.max(Math.min(this.maxDistance, distance), this.minDistance);
-        this._animating = true;
         return this._addAnimator(
             zr.animation.animate(this)
                 .when(opts.time || 1000, {
@@ -217,12 +216,8 @@ var OrbitControl = Base.extend(function () {
                 })
                 .during(function () {
                     self._setDistance(self._distance);
-                    zr.refresh();
                 })
-                .done(function () {
-                    self._animating = false;
-                })
-                .start(opts.easing || 'Linear')
+                .start(opts.easing || 'linear')
         );
     },
 
@@ -242,9 +237,6 @@ var OrbitControl = Base.extend(function () {
      * @param  {number} deltaTime Frame time
      */
     _update: function (deltaTime) {
-        if (this._animating) {
-            return;
-        }
 
         if (this._rotating) {
             this._rotateY -= deltaTime * 1e-4;
@@ -286,7 +278,6 @@ var OrbitControl = Base.extend(function () {
         this._rotateX = (velocity.x + this._rotateX) % (Math.PI * 2);
 
         this._rotateX = Math.max(Math.min(this._rotateX, Math.PI / 2), -Math.PI / 2);
-
 
         this._camera.rotateAround(this.origin, Vector3.UP, -this._rotateY);
         var xAxis = this._camera.localTransform.x;
@@ -361,7 +352,7 @@ var OrbitControl = Base.extend(function () {
         v.normalize().scale(speed);
     },
 
-    _decomposeRotation: function () {
+    _decomposeTransform: function () {
         if (!this._camera) {
             return;
         }

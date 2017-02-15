@@ -231,18 +231,6 @@ module.exports = echarts.extendComponentView({
 
         var camera = coordSys.viewGL.camera;
 
-        var position = viewControlModel.get('position');
-        var quaternion = viewControlModel.get('quaternion');
-        if (position != null) {
-            camera.position.setArray(position);
-        }
-        else {
-            camera.position.z = coordSys.radius
-                + viewControlModel.get('distance');
-        }
-        if (quaternion != null) {
-            camera.lookAt(graphicGL.Vector3.ZERO);
-        }
 
         function makeAction() {
             return {
@@ -253,7 +241,6 @@ module.exports = echarts.extendComponentView({
                 globeId: globeModel.id
             };
         }
-        api.dispatchAction(makeAction());
 
         // Update control
         var control = this._control;
@@ -265,7 +252,20 @@ module.exports = echarts.extendComponentView({
         control.minDistance = viewControlModel.get('minDistance') + coordSys.radius;
         control.maxDistance = viewControlModel.get('maxDistance') + coordSys.radius;
 
-        control.setDistance(viewControlModel.get('distance') + coordSys.radius);
+        var position = viewControlModel.get('position');
+        var quaternion = viewControlModel.get('quaternion');
+        if (position != null) {
+            camera.position.setArray(position);
+        }
+        else {
+            control.zoomTo({
+                distance: viewControlModel.get('distance') + coordSys.radius
+            });
+        }
+        if (quaternion != null) {
+            camera.rotation.setArray(quaternion);
+        }
+        // TODO decompose control
 
         control.off('update');
         control.on('update', function () {

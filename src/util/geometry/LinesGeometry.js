@@ -62,6 +62,13 @@ var LinesGeometry = StaticGeometry.extend(function () {
         var step = 1 / (len + 1) * this.segmentScale;
         return Math.ceil(1 / step) * 2 + 1;
     },
+
+    /**
+     * Get vertex count of line
+     */
+    getLineVertexCount: function () {
+        return 2;
+    },
     /**
      * Add a cubic curve
      * @param {Array.<number>} p0
@@ -137,6 +144,22 @@ var LinesGeometry = StaticGeometry.extend(function () {
             ddfx += dddfx; ddfy += dddfy; ddfz += dddfz;
             t += step;
         }
+    },
+
+    /**
+     * Add a straight line
+     * @param {Array.<number>} p0
+     * @param {Array.<number>} p1
+     * @param {Array.<number>} color
+     */
+    addLine: function (p0, p1, color) {
+        this.attributes.position.set(this._offset, p0);
+        this.attributes.position.set(this._offset + 1, p1);
+
+        this.attributes.color.set(this._offset, color);
+        this.attributes.color.set(this._offset + 1, color);
+
+        this._offset += 2;
     }
 });
 

@@ -1,6 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
-var LinesGeometry = require('./LinesGeometry');
+var LinesGeometry = require('../../util/geometry/LinesGeometry');
 var CurveAnimatingPointsMesh = require('./CurveAnimatingPointsMesh');
 
 graphicGL.Shader.import(require('text!./shader/lines.glsl'));

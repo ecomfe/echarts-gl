@@ -2,6 +2,7 @@ var Globe = require('./globe/Globe');
 var echarts = require('echarts/lib/echarts');
 var layoutUtil = require('echarts/lib/util/layout');
 var ViewGL = require('../core/ViewGL');
+var retrieve = require('../util/retrieve');
 
 function resizeGlobe(globeModel, api) {
     // Use left/top/width/height
@@ -43,16 +44,23 @@ var globeCreator = {
 
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'globe') {
-                var globeIndex = seriesModel.get('globeIndex');
-                var coordSys = globeList[globeIndex];
+                var globeModel = seriesModel.getReferringComponents('globe')[0];
 
-                if (!coordSys) {
-                    console.warn('globe %s not exists', globeIndex);
+                if (!globeModel) {
+                    throw new Error('globe "' + retrieve.firstNotNull(
+                        seriesModel.get('globe3DIndex'),
+                        seriesModel.get('globe3DId'),
+                        0
+                    ) + '" not found');
                 }
+
+                var coordSys = globeModel.coordinateSystem;
 
                 seriesModel.coordinateSystem = coordSys;
             }
         });
+
+        return globeList;
     }
 };
 

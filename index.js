@@ -1,5 +1,6 @@
 require('./src/echarts-gl');
 
+require('./src/component/grid3D');
 require('./src/component/geo3D');
 require('./src/component/globe');
 

@@ -1,11 +1,11 @@
-var Globe = require('./globe/Globe');
+var Geo3D = require('./geo3D/Geo3D');
 var echarts = require('echarts/lib/echarts');
 var layoutUtil = require('echarts/lib/util/layout');
 var ViewGL = require('../core/ViewGL');
 
-function resizeGlobe(globeModel, api) {
+function resizeGeo3D(geo3DModel, api) {
     // Use left/top/width/height
-    var boxLayoutOption = globeModel.getBoxLayoutParams();
+    var boxLayoutOption = geo3DModel.getBoxLayoutParams();
 
     var viewport = layoutUtil.getLayoutRect(boxLayoutOption, {
         width: api.getWidth(),
@@ -13,41 +13,39 @@ function resizeGlobe(globeModel, api) {
     });
 
     this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
-
-    this.radius = globeModel.get('globeRadius');
 }
 
 var geo3DCreator = {
 
-    dimensions: Globe.prototype.dimensions,
+    dimensions: Geo3D.prototype.dimensions,
 
     create: function (ecModel, api) {
 
-        var globeList = [];
+        var geo3DList = [];
 
-        ecModel.eachComponent('globe', function (globeModel) {
+        ecModel.eachComponent('geo3D', function (geo3DModel) {
 
             // FIXME
-            globeModel.__viewGL = globeModel.__viewGL || new ViewGL();
+            geo3DModel.__viewGL = geo3DModel.__viewGL || new ViewGL();
 
-            var globe = new Globe();
-            globe.viewGL = globeModel.__viewGL;
+            var geo3D = new Geo3D();
+            geo3D.viewGL = geo3DModel.__viewGL;
 
-            globeModel.coordinateSystem = globe;
-            globeList.push(globe);
+            geo3DModel.coordinateSystem = geo3D;
+            geo3DList.push(geo3D);
 
             // Inject resize
-            globe.resize = resizeGlobe;
-            globe.resize(globeModel, api);
+            geo3D.resize = resizeGeo3D;
+            geo3D.resize(geo3DModel, api);
         });
 
         ecModel.eachSeries(function (seriesModel) {
-            if (seriesModel.get('coordinateSystem') === 'globe') {
-                var globeIndex = seriesModel.get('globeIndex');
-                var coordSys = globeList[globeIndex];
+            if (seriesModel.get('coordinateSystem') === 'geo3D') {
+                var geo3DIndex = seriesModel.get('geo3DIndex');
+                var coordSys = geo3DList[geo3DIndex];
 
                 if (!coordSys) {
-                    console.warn('globe %s not exists', globeIndex);
+                    console.warn('geo3D %s not exists', geo3DIndex);
                 }
 
                 seriesModel.coordinateSystem = coordSys;
