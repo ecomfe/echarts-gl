@@ -26,7 +26,6 @@ module.exports = echarts.extendChartView({
             geometry: new LinesGeometry({
                 dynamic: true
             }),
-            culling: false,
             ignorePicking: true
         });
 

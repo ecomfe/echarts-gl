@@ -27,7 +27,7 @@ var defaultOption = {
         // 属性lineStyle控制线条样式
         lineStyle: {
             color: '#333',
-            width: 1,
+            width: 3,
             type: 'solid'
         }
     },

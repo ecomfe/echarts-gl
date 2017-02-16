@@ -26,6 +26,24 @@ function getAxisType(axisDim, option) {
     return option.type || (option.data ? 'category' : 'value');
 }
 
-createAxis3DModel('x', Axis3DModel, getAxisType);
-createAxis3DModel('y', Axis3DModel, getAxisType);
-createAxis3DModel('z', Axis3DModel, getAxisType);
+createAxis3DModel('x', Axis3DModel, getAxisType, {
+    axisLine: {
+        lineStyle: {
+            color: '#f00'
+        }
+    }
+});
+createAxis3DModel('y', Axis3DModel, getAxisType, {
+    axisLine: {
+        lineStyle: {
+            color: '#0f0'
+        }
+    }
+});
+createAxis3DModel('z', Axis3DModel, getAxisType, {
+    axisLine: {
+        lineStyle: {
+            color: '#00f'
+        }
+    }
+});
