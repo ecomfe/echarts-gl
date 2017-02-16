@@ -246,26 +246,7 @@ module.exports = echarts.extendComponentView({
         var control = this._control;
         control.setCamera(camera);
 
-        control.autoRotate = viewControlModel.get('autoRotate');
-        control.autoRotateAfterStill = viewControlModel.get('autoRotateAfterStill');
-
-        control.minDistance = viewControlModel.get('minDistance') + coordSys.radius;
-        control.maxDistance = viewControlModel.get('maxDistance') + coordSys.radius;
-
-        var position = viewControlModel.get('position');
-        var quaternion = viewControlModel.get('quaternion');
-        if (position != null) {
-            camera.position.setArray(position);
-        }
-        else {
-            control.zoomTo({
-                distance: viewControlModel.get('distance') + coordSys.radius
-            });
-        }
-        if (quaternion != null) {
-            camera.rotation.setArray(quaternion);
-        }
-        // TODO decompose control
+        control.setFromViewControlModel(viewControlModel, coordSys.radius);
 
         control.off('update');
         control.on('update', function () {

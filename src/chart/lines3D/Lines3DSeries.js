@@ -50,8 +50,9 @@ echarts.extendSeriesModel({
 
         lineStyle: {
             normal: {
+                width: 1,
+                opacity: 0.5
                 // color
-                // opacity
             }
         }
     }

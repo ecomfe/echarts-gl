@@ -84,17 +84,22 @@ EChartsGL.prototype.update = function (ecModel, api) {
                 var img = new echarts.graphic.Image({
                     z: 1e4,
                     style: {
-                        image: layerGL.renderer.canvas,
-                        width: layerGL.renderer.getWidth(),
-                        height: layerGL.renderer.getHeight()
+                        image: layerGL.renderer.canvas
                     },
                     silent: true
                 });
+                layerGL.__hostImage = img;
 
                 zr.add(img);
             }
 
             zr.painter.insertLayer(zlevel, layerGL);
+        }
+        if (layerGL.__hostImage) {
+            layerGL.__hostImage.setStyle({
+                width: layerGL.renderer.getWidth(),
+                height: layerGL.renderer.getHeight()
+            });
         }
 
         return layerGL;

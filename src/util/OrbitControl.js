@@ -130,6 +130,32 @@ var OrbitControl = Base.extend(function () {
         this._decomposeTransform();
     },
 
+    setFromViewControlModel: function (viewControlModel, baseDistance) {
+        var camera = this._camera;
+
+        this.autoRotate = viewControlModel.get('autoRotate');
+        this.autoRotateAfterStill = viewControlModel.get('autoRotateAfterStill');
+
+        this.minDistance = viewControlModel.get('minDistance') + baseDistance;
+        this.maxDistance = viewControlModel.get('maxDistance') + baseDistance;
+
+        var position = viewControlModel.get('position');
+        var quaternion = viewControlModel.get('quaternion');
+        if (position != null) {
+            camera.position.setArray(position);
+        }
+        else {
+            this.zoomTo({
+                distance: viewControlModel.get('distance') + baseDistance
+            });
+        }
+        if (quaternion != null) {
+            camera.rotation.setArray(quaternion);
+        }
+        // TODO decompose control
+
+    },
+
     /**
      * Rotation to animation, Params can be target quaternion or x, y, z axis
      * @example

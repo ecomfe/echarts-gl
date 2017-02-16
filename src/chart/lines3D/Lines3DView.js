@@ -1,9 +1,9 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
-var LinesGeometry = require('../../util/geometry/LinesGeometry');
+var LinesGeometry = require('../../util/geometry/Lines3D');
 var CurveAnimatingPointsMesh = require('./CurveAnimatingPointsMesh');
 
-graphicGL.Shader.import(require('text!./shader/lines.glsl'));
+graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
 module.exports = echarts.extendChartView({
 
@@ -12,16 +12,21 @@ module.exports = echarts.extendChartView({
     init: function (ecModel, api) {
         this.groupGL = new graphicGL.Node();
 
+        this._nativeLinesMaterial = new graphicGL.Material({
+            shader: graphicGL.createShader('ecgl.lines3D'),
+            transparent: true
+        });
+
+        this._projectedLinesMaterial = new graphicGL.Material({
+            shader: graphicGL.createShader('ecgl.meshLines3D'),
+            transparent: true
+        });
         // TODO Windows chrome not support lineWidth > 1
         this._linesMesh = new graphicGL.Mesh({
-            material: new graphicGL.Material({
-                shader: graphicGL.createShader('ecgl.lines'),
-                transparent: true
-            }),
-            mode: graphicGL.Mesh.LINES,
             geometry: new LinesGeometry({
                 dynamic: true
             }),
+            culling: false,
             ignorePicking: true
         });
 
@@ -40,7 +45,7 @@ module.exports = echarts.extendChartView({
             viewGL.add(this.groupGL);
 
             if (data.getLayout('lineType') === 'cubicBezier') {
-                this._generateBezierCurvesOnGlobe(seriesModel);
+                this._generateBezierCurvesOnGlobe(seriesModel, ecModel, api);
             }
         }
 
@@ -70,24 +75,51 @@ module.exports = echarts.extendChartView({
             this.groupGL.remove(curveAnimatingPointsMesh);
         }
 
-
         this._linesMesh.material.blend = this._curveAnimatingPointsMesh.material.blend
             = seriesModel.get('blendMode') === 'lighter'
             ? graphicGL.additiveBlend : null;
     },
 
-    _generateBezierCurvesOnGlobe: function (seriesModel) {
+    _generateBezierCurvesOnGlobe: function (seriesModel, ecModel, api) {
         var data = seriesModel.getData();
         var coordSys = seriesModel.coordinateSystem;
         var geometry = this._linesMesh.geometry;
+
+        geometry.expandLine = true;
+
         geometry.segmentScale = coordSys.radius / 20;
 
+        var lineWidthQueryPath = 'lineStyle.normal.width'.split('.');
+        var dpr = api.getDevicePixelRatio();
+        var canUseNativeLine = true;
+        var maxLineWidth = 0;
+        data.each(function (idx) {
+            var itemModel = data.getItemModel(idx);
+            var lineWidth = itemModel.get(lineWidthQueryPath);
+            if (lineWidth == null) {
+                lineWidth = 1;
+            }
+            data.setItemVisual(idx, 'lineWidth', lineWidth);
+            maxLineWidth = Math.max(lineWidth, maxLineWidth);
+        });
+        var canUseNativeLine = maxLineWidth * dpr <= 1;
+        // Must set useNativeLine before calling any other methods
+        geometry.useNativeLine = canUseNativeLine;
+
         var nVertex = 0;
+        var nFace = 0;
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
             nVertex += geometry.getCubicCurveVertexCount(pts[0], pts[1], pts[2], pts[3]);
+            nFace += geometry.getCubicCurveFaceCount(pts[0], pts[1], pts[2], pts[3]);
         });
+
+        this._linesMesh.material = canUseNativeLine ? this._nativeLinesMaterial : this._projectedLinesMaterial;
+        this._linesMesh.mode = canUseNativeLine ? graphicGL.Mesh.LINES : graphicGL.Mesh.TRIANGLES;
+        // this._linesMesh.mode = graphicGL.Mesh.POINTS;
+
         geometry.setVertexCount(nVertex);
+        geometry.setFaceCount(nFace);
         geometry.resetOffset();
 
         var colorArr = [];
@@ -95,6 +127,7 @@ module.exports = echarts.extendChartView({
             var pts = data.getItemLayout(idx);
             var color = data.getItemVisual(idx, 'color');
             var opacity = data.getItemVisual(idx, 'opacity');
+            var lineWidth = data.getItemVisual(idx, 'lineWidth') * dpr;
             if (opacity == null) {
                 opacity = 1;
             }
@@ -103,7 +136,7 @@ module.exports = echarts.extendChartView({
             colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
             colorArr[3] *= opacity;
 
-            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr);
+            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr, lineWidth);
         });
 
         geometry.dirty();
