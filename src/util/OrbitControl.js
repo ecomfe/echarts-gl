@@ -241,7 +241,7 @@ var OrbitControl = Base.extend(function () {
                     _distance: distance
                 })
                 .during(function () {
-                    self._setDistance(self._distance);
+                    self._needsUpdate = true;
                 })
                 .start(opts.easing || 'linear')
         );

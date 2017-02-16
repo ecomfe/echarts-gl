@@ -246,6 +246,7 @@ module.exports = echarts.extendComponentView({
         var control = this._control;
         control.setCamera(camera);
 
+        control.setDistance(coordSys.radius * 4);
         control.setFromViewControlModel(viewControlModel, coordSys.radius);
 
         control.off('update');
