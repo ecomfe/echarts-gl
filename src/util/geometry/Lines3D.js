@@ -141,7 +141,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @return {number}
      */
     getLineVertexCount: function () {
-        return !this.useNativeLine ? 4 : 2;
+        return this.getPolylineVertexCount(2);
     },
 
     /**
@@ -149,8 +149,17 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @return {number}
      */
     getLineFaceCount: function () {
-        return !this.useNativeLine ? 2 : 0;
+        return this.getPolylineFaceCount(2);
     },
+
+    getPolylineVertexCount: function (points) {
+        return !this.useNativeLine ? ((points.length - 1) * 2 + 2) : (points.length - 1) * 2;
+    },
+
+    getPolylineFaceCount: function (points) {
+        return !this.useNativeLine ? (points.length - 1) * 2 : 0;
+    },
+
     /**
      * Add a cubic curve
      * @param {Array.<number>} p0
@@ -205,33 +214,90 @@ var LinesGeometry = StaticGeometry.extend(function () {
         var dddfy = tmp2y * pre5;
         var dddfz = tmp2z * pre5;
 
+        var t = 0;
+
+        var k = 0;
+        var segCount = Math.ceil(1 / step);
+
+        var points = new Float32Array((segCount + 1) * 3);
+        var points = [];
+        var offset = 0;
+        for (var k = 0; k < segCount + 1; k++) {
+            points[offset++] = fx;
+            points[offset++] = fy;
+            points[offset++] = fz;
+
+            fx += dfx; fy += dfy; fz += dfz;
+            dfx += ddfx; dfy += ddfy; dfz += ddfz;
+            ddfx += dddfx; ddfy += dddfy; ddfz += dddfz;
+            t += step;
+        }
+
+        this.addPolyline(points, color, lineWidth);
+    },
+
+    /**
+     * Add a straight line
+     * @param {Array.<number>} p0
+     * @param {Array.<number>} p1
+     * @param {Array.<number>} color
+     * @param {number} [lineWidth=1]
+     */
+    addLine: function (p0, p1, color, lineWidth) {
+        this.addPolyline([p0, p1], color, lineWidth);
+    },
+
+    /**
+     * Add a straight line
+     * @param {Array.<Array> | Array.<number>} points
+     * @param {Array.<number>} color
+     * @param {number} [lineWidth=1]
+     */
+    addPolyline: function (points, color, lineWidth) {
+        if (!points.length) {
+            return;
+        }
+
+        var is2DArray = typeof points[0] !== 'number';
         var positionAttr = this.attributes.position;
         var positionPrevAttr = this.attributes.positionPrev;
         var positionNextAttr = this.attributes.positionNext;
         var colorAttr = this.attributes.color;
         var offsetAttr = this.attributes.offset;
-        var t = 0;
-        var posTmp = [];
+        var faces = this.faces;
 
-        var k = 0;
-        var segCount = Math.ceil(1 / step);
+        if (lineWidth == null) {
+            lineWidth = 1;
+        }
 
-        var iterCount = !this.useNativeLine ? (segCount + 1) : segCount;
         var vertexOffset = this._vertexOffset;
+        var pointCount = is2DArray ? points.length : points.length / 3;
+        var iterCount = !this.useNativeLine ? pointCount : (pointCount - 1);
+        var point;
         for (var k = 0; k < iterCount; k++) {
-            posTmp[0] = fx; posTmp[1] = fy; posTmp[2] = fz;
+            if (is2DArray) {
+                point = points[k];
+            }
+            else {
+                point = point || [];
+                point[0] = points[k * 3];
+                point[1] = points[k * 3 + 1];
+                point[2] = points[k * 3 + 2];
+            }
             if (!this.useNativeLine) {
-                if (k < iterCount - 1) {
-                    positionPrevAttr.set(vertexOffset + 2, posTmp);
-                    positionPrevAttr.set(vertexOffset + 3, posTmp);
+                if (k < iterCount) {
+                    // Set to next two points
+                    positionPrevAttr.set(vertexOffset + 2, point);
+                    positionPrevAttr.set(vertexOffset + 3, point);
                 }
                 if (k > 0) {
-                    positionNextAttr.set(vertexOffset - 2, posTmp);
-                    positionNextAttr.set(vertexOffset - 1, posTmp);
+                    // Set to previous two points
+                    positionNextAttr.set(vertexOffset - 2, point);
+                    positionNextAttr.set(vertexOffset - 1, point);
                 }
 
-                positionAttr.set(vertexOffset, posTmp);
-                positionAttr.set(vertexOffset + 1, posTmp);
+                positionAttr.set(vertexOffset, point);
+                positionAttr.set(vertexOffset + 1, point);
 
                 colorAttr.set(vertexOffset, color);
                 colorAttr.set(vertexOffset + 1, color);
@@ -248,17 +314,10 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 }
                 else {
                     colorAttr.set(vertexOffset, color);
-                    positionAttr.set(vertexOffset, posTmp);
+                    positionAttr.set(vertexOffset, point);
                 }
                 vertexOffset++;
             }
-
-            fx += dfx; fy += dfy; fz += dfz;
-            dfx += ddfx; dfy += ddfy; dfz += ddfz;
-            ddfx += dddfx; ddfy += dddfy; ddfz += dddfz;
-            t += step;
-
-            posTmp[0] = fx; posTmp[1] = fy; posTmp[2] = fz;
 
             if (!this.useNativeLine) {
                 if (k > 0) {
@@ -280,15 +339,13 @@ var LinesGeometry = StaticGeometry.extend(function () {
             }
             else {
                 colorAttr.set(vertexOffset, color);
-                positionAttr.set(vertexOffset, posTmp);
+                positionAttr.set(vertexOffset, point);
                 vertexOffset++;
             }
         }
         if (!this.useNativeLine) {
-
             var start = this._vertexOffset;
-            // PENDING
-            var end = this._vertexOffset + segCount * 2;
+            var end = this._vertexOffset + points.length * 2;
             positionPrevAttr.copy(start, start + 2);
             positionPrevAttr.copy(start + 1, start + 3);
             positionNextAttr.copy(end - 1, end - 3);
@@ -296,42 +353,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         }
 
         this._vertexOffset = vertexOffset;
-    },
-
-    /**
-     * Add a straight line
-     * @param {Array.<number>} p0
-     * @param {Array.<number>} p1
-     * @param {Array.<number>} color
-     */
-    addLine: function (p0, p1, color) {
-
-        var positionAttr = this.attributes.position;
-        var positionPrevAttr = this.attributes.positionPrev;
-        var positionNextAttr = this.attributes.positionNext;
-        var colorAttr = this.attributes.color;
-        var offsetAttr = this.attributes.offset;
-
-        if (!this.useNativeLine) {
-            for (var i = 0; i < 4; i++) {
-                positionAttr.set(this._vertexOffset + i, i < 2 ? p0 : p1);
-                colorAttr.set(this._vertexOffset + i, color);
-            }
-        }
-        else {
-
-            positionAttr.set(this._vertexOffset, p0);
-            positionAttr.set(this._vertexOffset + 1, p1);
-
-            colorAttr.set(this._vertexOffset, color);
-            colorAttr.set(this._vertexOffset + 1, color);
-
-            this._vertexOffset += 2;
-        }
-
-    },
-
-    addPolyline: function (points) {}
+    }
 });
 
 module.exports = LinesGeometry;
