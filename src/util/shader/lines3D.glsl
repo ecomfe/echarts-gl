@@ -38,37 +38,54 @@ attribute float offset;
 attribute vec4 a_Color : COLOR;
 
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
-
 uniform vec4 viewport : VIEWPORT;
+uniform float near : NEAR;
 
 varying vec4 v_Color;
 varying float v_Miter;
 
+vec4 clipNear(vec4 p1, vec4 p2) {
+    float n = (p1.w - near) / (p1.w - p2.w);
+    float xc = n * p1.x + (1.0-n) * p2.x;
+    float yc = n * p1.y + (1.0-n) * p2.y;
+    return vec4(xc, yc, -near, near);
+}
+
 void main()
 {
-    vec4 previousProjected = worldViewProjection * vec4(positionPrev, 1.0);
-    vec4 currentProjected = worldViewProjection * vec4(position, 1.0);
-    vec4 nextProjected = worldViewProjection * vec4(positionNext, 1.0);
+    vec4 prevProj = worldViewProjection * vec4(positionPrev, 1.0);
+    vec4 currProj = worldViewProjection * vec4(position, 1.0);
+    vec4 nextProj = worldViewProjection * vec4(positionNext, 1.0);
 
-    vec2 previousScreen = (previousProjected.xy / previousProjected.w + 1.0) * 0.5 * viewport.zw;
-    vec2 currentScreen = (currentProjected.xy / currentProjected.w + 1.0) * 0.5 * viewport.zw;
-    vec2 nextScreen = (nextProjected.xy / nextProjected.w + 1.0) * 0.5 * viewport.zw;
+    if (currProj.w < 0.0) {
+        if (prevProj.w < 0.0) {
+            currProj = clipNear(currProj, nextProj);
+        }
+        else {
+            currProj = clipNear(currProj, prevProj);
+        }
+    }
+
+    vec2 prevScreen = (prevProj.xy / abs(prevProj.w) + 1.0) * 0.5 * viewport.zw;
+    vec2 currScreen = (currProj.xy / abs(currProj.w) + 1.0) * 0.5 * viewport.zw;
+    vec2 nextScreen = (nextProj.xy / abs(nextProj.w) + 1.0) * 0.5 * viewport.zw;
+
 
     vec2 dir;
     float len = offset;
     // Start point
     if (position == positionPrev) {
-        dir = normalize(nextScreen - currentScreen);
+        dir = normalize(nextScreen - currScreen);
         v_Miter = 1.0;
     }
     // End point
     else if (position == positionNext) {
-        dir = normalize(currentScreen - previousScreen);
+        dir = normalize(currScreen - prevScreen);
         v_Miter = 1.0;
     }
     else {
-        vec2 dirA = normalize(currentScreen - previousScreen);
-        vec2 dirB = normalize(nextScreen - currentScreen);
+        vec2 dirA = normalize(currScreen - prevScreen);
+        vec2 dirB = normalize(nextScreen - currScreen);
 
         vec2 tanget = normalize(dirA + dirB);
 
@@ -78,11 +95,11 @@ void main()
     }
 
     dir = vec2(-dir.y, dir.x) * len;
-    currentScreen += dir;
+    currScreen += dir;
 
-    currentProjected.xy = (currentScreen / viewport.zw - 0.5) * 2.0 * currentProjected.w;
+    currProj.xy = (currScreen / viewport.zw - 0.5) * 2.0 * abs(currProj.w);
     // PENDING
-    gl_Position = currentProjected;
+    gl_Position = currProj;
     gl_PointSize = 4.0;
     v_Color = a_Color;
 }
