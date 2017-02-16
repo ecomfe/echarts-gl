@@ -46,9 +46,7 @@ varying float v_Miter;
 
 vec4 clipNear(vec4 p1, vec4 p2) {
     float n = (p1.w - near) / (p1.w - p2.w);
-    float xc = n * p1.x + (1.0-n) * p2.x;
-    float yc = n * p1.y + (1.0-n) * p2.y;
-    return vec4(xc, yc, -near, near);
+    return vec4(mix(p2.xy, p1.xy, n), -near, near);
 }
 
 void main()
