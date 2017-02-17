@@ -4,6 +4,8 @@ var Cartesian = require('echarts/lib/coord/cartesian/Cartesian');
 function Cartesian3D(name) {
 
     Cartesian.call(this, name);
+
+    this.size = [0, 0, 0];
 }
 
 Cartesian3D.prototype = {

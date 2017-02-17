@@ -27,9 +27,11 @@ function resizeCartesian3D(grid3DModel, api) {
             }
         }, this);
     }
-    this.getAxis('x').setExtent(0, boxWidth);
-    this.getAxis('y').setExtent(0, boxDepth);
-    this.getAxis('z').setExtent(0, boxHeight);
+    this.getAxis('x').setExtent(-boxWidth / 2, boxWidth / 2);
+    this.getAxis('y').setExtent(-boxDepth / 2, boxDepth / 2);
+    this.getAxis('z').setExtent(-boxHeight / 2, boxHeight / 2);
+
+    this.size = [boxWidth, boxHeight, boxDepth];
 }
 
 var grid3DCreator = {

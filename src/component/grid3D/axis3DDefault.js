@@ -10,7 +10,7 @@ var defaultOption = {
     // 坐标轴名字，默认为空
     name: '',
     // 坐标轴名字位置，支持'start' | 'middle' | 'end'
-    nameLocation: 'end',
+    nameLocation: 'middle',
     // 坐标轴名字旋转，degree。
     nameRotate: null, // Adapt to axis rotate, when nameLocation is 'middle'.
 

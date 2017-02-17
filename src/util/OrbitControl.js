@@ -130,6 +130,10 @@ var OrbitControl = Base.extend(function () {
         this._decomposeTransform();
     },
 
+    getCamera: function () {
+        return this._camera;
+    },
+
     setFromViewControlModel: function (viewControlModel, baseDistance) {
         var camera = this._camera;
 

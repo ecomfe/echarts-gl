@@ -2,10 +2,16 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var OrbitControl = require('../../util/OrbitControl');
 var Lines3DGeometry = require('../../util/geometry/Lines3D');
-var parseColor = echarts.color.parse;
+var PlanesGeometry = require('../../util/geometry/Planes');
 var retrieve = require('../../util/retrieve');
 
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
+graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
+
+var parseColor = function (colorStr) {
+    var colorArr = echarts.color.parse(colorStr || '#000');
+    return [colorArr[0] / 255, colorArr[1] / 255, colorArr[2] / 255, colorArr[3]];
+}
 
 var dims = ['x', 'y', 'z'];
 
@@ -23,11 +29,36 @@ var dimMap = {
     // Bottom to up
     z: 1
 };
-var otherDimsMap = {
-    x: ['y', 'z'],
-    y: ['x', 'z'],
-    z: ['x', 'y']
-};
+
+
+function updateFacePosition(face, node, size) {
+    switch(face) {
+        case 'px':
+            node.position.set(size[0] / 2, 0, 0);
+            node.rotation.rotateY(Math.PI / 2);
+            break;
+        case 'nx':
+            node.position.set(-size[0] / 2, 0, 0);
+            node.rotation.rotateY(-Math.PI / 2);
+            break;
+        case 'py':
+            node.position.set(0, size[1] / 2, 0);
+            node.rotation.rotateX(-Math.PI / 2);
+            break;
+        case 'ny':
+            node.position.set(0, -size[1] / 2, 0);
+            node.rotation.rotateX(Math.PI / 2);
+            break;
+        case 'pz':
+            node.position.set(0, 0, size[2] / 2);
+            break;
+        case 'nz':
+            node.position.set(0, 0, -size[2] / 2);
+            node.rotation.rotateY(Math.PI);
+            break;
+    }
+}
+
 function ifIgnoreOnTick(axis, i, interval) {
     var rawTick;
     var scale = axis.scale;
@@ -49,9 +80,14 @@ module.exports = echarts.extendComponentView({
     init: function (ecModel, api) {
 
         var linesMaterial = new graphicGL.Material({
-            transparent: true,
+            // transparent: true,
             shader: graphicGL.createShader('ecgl.meshLines3D')
         });
+        var planeMaterial = new graphicGL.Material({
+            // transparent: true,
+            shader: graphicGL.createShader('ecgl.albedo')
+        });
+
         this.groupGL = new graphicGL.Node();
 
         this._control = new OrbitControl({
@@ -59,20 +95,63 @@ module.exports = echarts.extendComponentView({
         });
         this._control.init();
 
-        this._axisLinesMesh = new graphicGL.Mesh({
-            geometry: new Lines3DGeometry({
-                useNativeLine: false
-            }),
-            material: linesMaterial,
-            ignorePicking: true
-        });
-        this.groupGL.add(this._axisLinesMesh);
+        this._faces = [
+            // dim0, dim1, plane on the cube
+            ['y', 'z', 'nx'],
+            ['y', 'z', 'px'],
+            ['x', 'y', 'ny'],
+            ['x', 'y', 'py'],
+            ['x', 'z', 'nz'],
+            ['x', 'z', 'pz']
+        ].map(function (dimInfo) {
+            var node = new graphicGL.Node();
+            this.groupGL.add(node);
+            var linesMesh = new graphicGL.Mesh({
+                geometry: new Lines3DGeometry({
+                    useNativeLine: false
+                }),
+                material: linesMaterial,
+                ignorePicking: true
+            });
+            var planesMesh = new graphicGL.Mesh({
+                geometry: new PlanesGeometry(),
+                material: planeMaterial
+            });
+            node.add(linesMesh);
+            node.add(planesMesh);
+
+            return {
+                node: node,
+                linesMesh: linesMesh,
+                planesMesh: planesMesh,
+
+                dims: dimInfo
+            };
+        }, this);
+
+        this._axes = dims.map(function (dim) {
+            var linesMesh = new graphicGL.Mesh({
+                geometry: new Lines3DGeometry({
+                    useNativeLine: false
+                }),
+                material: linesMaterial,
+                ignorePicking: true
+            });
+            var node = new graphicGL.Node();
+            node.add(linesMesh);
+            this.groupGL.add(node);
+
+            return {
+                node: node,
+                linesMesh: linesMesh,
+                dim: dim
+            };
+        }, this);
     },
 
     render: function (grid3DModel, ecModel, api) {
 
         var cartesian = grid3DModel.coordinateSystem;
-
         cartesian.viewGL.add(this.groupGL);
 
         var control = this._control;
@@ -81,34 +160,75 @@ module.exports = echarts.extendComponentView({
         var viewControlModel = grid3DModel.getModel('viewControl');
         control.setFromViewControlModel(viewControlModel, 0);
 
-
-        this._axisLinesMesh.geometry.convertToDynamicArray(true);
-        dims.forEach(function (dim) {
-            this._renderAxis(dim, grid3DModel, ecModel, api);
+        this._faces.forEach(function (faceInfo) {
+            this._renderFace(faceInfo, grid3DModel, ecModel, api);
+            updateFacePosition(faceInfo.dims[2], faceInfo.node, cartesian.size);
         }, this);
-        this._axisLinesMesh.geometry.convertToTypedArray();
+
+        this._axes.forEach(function (axisInfo) {
+            var axis = cartesian.getAxis(axisInfo.dim);
+            this._renderAxisLine(axisInfo.linesMesh.geometry, axis, grid3DModel, api);
+        }, this);
+
+        control.off('update');
+        control.on('update', this._onCameraChange, this);
     },
 
-    _renderAxis: function (dim, grid3DModel, ecModel, api) {
-        var cartesian = grid3DModel.coordinateSystem;
-        var axis = cartesian.getAxis(dim);
-        var geometry = this._axisLinesMesh.geometry;
+    _onCameraChange: function () {
+        this._updateFaceVisibility();
+        this._updateAxisLinePosition();
+    },
 
-        this._renderSplitLines(geometry, axis, grid3DModel, api);
-        this._renderAxisLine(geometry, axis, grid3DModel, api);
+    _updateFaceVisibility: function () {
+        var camera = this._control.getCamera();
+        var viewSpacePos = new graphicGL.Vector3();
+        camera.update();
+        for (var idx = 0; idx < this._faces.length / 2; idx++) {
+            var depths = [];
+            for (var k = 0; k < 2; k++) {
+                var face = this._faces[idx * 2 + k];
+                face.node.getWorldPosition(viewSpacePos);
+                viewSpacePos.transformMat4(camera.viewMatrix);
+                depths[k] = viewSpacePos.z;
+            }
+            // Set the front face invisible
+            var frontIndex = depths[0] > depths[1] ? 0 : 1;
+            var frontFace = this._faces[idx * 2 + frontIndex];
+            var backFace = this._faces[idx * 2 + 1 - frontIndex];
+            // Update rotation.
+            frontFace.node.invisible = true;
+            backFace.node.invisible = false;
+        }
+    },
+
+    _updateAxisLinePosition: function () {
+
+    },
+
+    _renderFace: function (faceInfo, grid3DModel, ecModel, api) {
+        var cartesian = grid3DModel.coordinateSystem;
+        var axes = [
+            cartesian.getAxis(faceInfo.dims[0]),
+            cartesian.getAxis(faceInfo.dims[1])
+        ];
+        var lineGeometry = faceInfo.linesMesh.geometry;
+
+        lineGeometry.convertToDynamicArray(true);
+        this._renderSplitLines(lineGeometry, axes, grid3DModel, api);
+        lineGeometry.convertToTypedArray();
     },
 
     _renderAxisLine: function (geometry, axis, grid3DModel, api) {
-
+        geometry.convertToDynamicArray(true);
         var axisModel = axis.model;
-        var dim = axis.dim;
         var extent = axis.getExtent();
 
         // Render axisLine
         if (axisModel.get('axisLine.show')) {
             var axisLineStyleModel = axisModel.getModel('axisLine.lineStyle');
             var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
-            p1[dimMap[dim]] = extent[1];
+            p0[0] = extent[0];
+            p1[0] = extent[1];
 
             var color = parseColor(axisLineStyleModel.get('color'));
             var lineWidth = retrieve.firstNotNull(axisLineStyleModel.get('width'), 1.0);
@@ -116,52 +236,87 @@ module.exports = echarts.extendComponentView({
             color[3] *= opacity;
             geometry.addLine(p0, p1, color, lineWidth);
         }
-    },
-
-    _renderSplitLines: function (geometry, axis, grid3DModel, api) {
-        var axisModel = axis.model;
-        var dim = axis.dim;
-        var extent = axis.getExtent();
-
-        if (axis.scale.isBlank()) {
-            return;
-        }
-
-        // Render splitLines
-        if (axisModel.get('splitLine.show')) {
-            var splitLineModel = axisModel.getModel('splitLine');
-            var lineStyleModel = splitLineModel.getModel('lineStyle');
-            var lineColors = lineStyleModel.get('color');
+        // Render axis ticksCoords
+        if (axisModel.get('axisTick.show')) {
+            var axisTickModel = axisModel.getModel('axisTick');
+            var lineStyleModel = axisTickModel.getModel('lineStyle');
+            var lineColor = parseColor(
+                lineStyleModel.get('color') || axisModel.get('axisLine.lineStyle.color')
+            );
             var opacity = retrieve.firstNotNull(lineStyleModel.get('opacity'), 1.0);
             var lineWidth = retrieve.firstNotNull(lineStyleModel.get('width'), 1.0);
-            // TODO Automatic interval
-            var intervalFunc = splitLineModel.get('interval') || axisModel.get('axisLabel.interval');
-            lineColors = echarts.util.isArray(lineColors) ? lineColors : [lineColors];
-
+            lineColor[3] *= opacity;
             var ticksCoords = axis.getTicksCoords();
+            // TODO Automatic interval
+            var intervalFunc = axisTickModel.get('interval') || axisModel.get('axisLabel.interval');
+            var tickLength = axisTickModel.get('length');
 
-            var count = 0;
-            // Not render first splitLine to avoid cover the axisLine.
-            var startTick = axisModel.get('axisLine.show') ? 1 : 0;
-            for (var i = startTick; i < ticksCoords.length; i++) {
+            for (var i = 0; i < ticksCoords.length; i++) {
                 if (ifIgnoreOnTick(axis, i, intervalFunc)) {
                     continue;
                 }
                 var tickCoord = ticksCoords[i];
-                var lineColor = parseColor(lineColors[count % lineColors.length]);
                 lineColor[3] *= opacity;
-                for (var k = 0; k < 2; k++) {
-                    var otherDim = otherDimsMap[dim][k];
-                    var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
-                    p0[dimMap[dim]] = p1[dimMap[dim]] = tickCoord;
-                    p1[dimMap[otherDim]] = extent[1];
 
-                    geometry.addLine(p0, p1, lineColor, lineWidth);
-                }
+                var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
+                // 0 - x, 1 - y
+                p0[0] = p1[0] = tickCoord;
+                p1[2] = tickLength;
 
-                count++;
+                geometry.addLine(p0, p1, lineColor, lineWidth);
             }
         }
+        geometry.convertToTypedArray();
+    },
+
+    _renderSplitLines: function (geometry, axes, grid3DModel, api) {
+
+        axes.forEach(function (axis, idx) {
+            var axisModel = axis.model;
+            var extent = axis.getExtent();
+
+            if (axis.scale.isBlank()) {
+                return;
+            }
+
+            // Render splitLines
+            if (axisModel.get('splitLine.show')) {
+                var splitLineModel = axisModel.getModel('splitLine');
+                var lineStyleModel = splitLineModel.getModel('lineStyle');
+                var lineColors = lineStyleModel.get('color');
+                var opacity = retrieve.firstNotNull(lineStyleModel.get('opacity'), 1.0);
+                var lineWidth = retrieve.firstNotNull(lineStyleModel.get('width'), 1.0);
+                // TODO Automatic interval
+                var intervalFunc = splitLineModel.get('interval') || axisModel.get('axisLabel.interval');
+                lineColors = echarts.util.isArray(lineColors) ? lineColors : [lineColors];
+
+                var ticksCoords = axis.getTicksCoords();
+
+                var count = 0;
+                for (var i = 0; i < ticksCoords.length; i++) {
+                    if (ifIgnoreOnTick(axis, i, intervalFunc)) {
+                        continue;
+                    }
+                    var tickCoord = ticksCoords[i];
+                    var lineColor = parseColor(lineColors[count % lineColors.length]);
+                    lineColor[3] *= opacity;
+
+                    var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
+                    // 0 - x, 1 - y
+                    p0[idx] = p1[idx] = tickCoord;
+                    p0[1 - idx] = extent[0];
+                    p1[1 - idx] = extent[1];
+
+                    geometry.addLine(p0, p1, lineColor, lineWidth);
+
+                    count++;
+                }
+            }
+        });
+    },
+
+    _renderAxisLabel: function () {
+
     },
 
     dispose: function () {

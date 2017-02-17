@@ -2,19 +2,21 @@
  * Lines geometry
  * Use screen space projected lines lineWidth > MAX_LINE_WIDTH
  * https://mattdesl.svbtle.com/drawing-lines-is-hard
- * @module echarts-gl/chart/lines3D/LinesGeometry
+ * @module echarts-gl/util/geometry/LinesGeometry
  * @author Yi Shen(http://github.com/pissang)
  */
 
 var StaticGeometry = require('qtek/lib/StaticGeometry');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var echarts = require('echarts/lib/echarts');
+var dynamicConvertMixin = require('./dynamicConvertMixin');
 
 // var CURVE_RECURSION_LIMIT = 8;
 // var CURVE_COLLINEAR_EPSILON = 40;
 
 /**
  * @constructor
- * @alias module:echarts-gl/chart/lines3D/LinesGeometry
+ * @alias module:echarts-gl/util/geometry/LinesGeometry
  * @extends qtek.StaticGeometry
  */
 
@@ -37,7 +39,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         }
     };
 },
-/** @lends module: echarts-gl/chart/lines3D/LinesGeometry.prototype */
+/** @lends module: echarts-gl/util/geometry/LinesGeometry.prototype */
 {
 
     /**
@@ -63,8 +65,6 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 attributes.offset.init(nVertex);
             }
 
-            this._vertexOffset = 0;
-
             if (nVertex > 0xffff) {
                 if (this.faces instanceof Uint16Array) {
                     this.faces = new Uint32Array(this.faces);
@@ -75,42 +75,6 @@ var LinesGeometry = StaticGeometry.extend(function () {
                     this.faces = new Uint16Array(this.faces);
                 }
             }
-        }
-    },
-
-    convertToDynamicArray: function (clear) {
-        if (clear) {
-            this.resetOffset();
-        }
-        var attributes = this.attributes;
-        for (var name in attributes) {
-            if (clear || !attributes[name].value) {
-                attributes[name].value = [];
-            }
-            else {
-                attributes[name].value = Array.prototype.slice.call(attributes[name].value);
-            }
-        }
-        if (clear || !this.faces) {
-            this.faces = [];
-        }
-        else {
-            this.faces = Array.prototype.slice.call(this.faces);
-        }
-    },
-
-    convertToTypedArray: function () {
-        var attributes = this.attributes;
-        for (var name in attributes) {
-            if (attributes[name].value && attributes[name].value.length > 0) {
-                attributes[name].value = new Float32Array(attributes[name].value);
-            }
-            else {
-                attributes[name].value = null;
-            }
-        }
-        if (this.faces && this.faces.length > 0) {
-            this.faces = this.vertexCount > 0xffff ? new Uint32Array(this.faces) : new Uint16Array(this.faces);
         }
     },
 
@@ -391,5 +355,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         this._vertexOffset = vertexOffset;
     }
 });
+
+echarts.util.defaults(LinesGeometry.prototype, dynamicConvertMixin);
 
 module.exports = LinesGeometry;

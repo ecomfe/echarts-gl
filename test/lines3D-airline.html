@@ -46,18 +46,25 @@
                         type: 'lines3D',
                         name: airlineName,
 
-                        effect: {
-                            show: true,
-                            symbolSize: 3
-                        },
+                        // effect: {
+                        //     show: true,
+                        //     symbolSize: 4
+                        // },
 
                         lineStyle: {
                             normal: {
+                                width: 2,
                                 color: 'rgb(50, 50, 150)',
                                 opacity: 0.6
                             }
                         },
                         blendMode: 'lighter',
+
+                        // data: [
+                        //     [
+                        //         [0, 0], [180, 0]
+                        //     ]
+                        // ]
                         data: routes.map(function (item) {
                             return [airports[item[1]].coord, airports[item[2]].coord];
                         })
@@ -82,6 +89,10 @@
                         light: {
                             ambientIntensity: 0.4,
                             sunIntensity: 0.4
+                        },
+
+                        viewControl: {
+                            autoRotate: false
                         }
                     },
                     series: series
