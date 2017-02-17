@@ -321,7 +321,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 point[2] = points[k * 3 + 2];
             }
             if (!this.useNativeLine) {
-                if (k < iterCount) {
+                if (k < iterCount - 1) {
                     // Set to next two points
                     positionPrevAttr.set(vertexOffset + 2, point);
                     positionPrevAttr.set(vertexOffset + 3, point);

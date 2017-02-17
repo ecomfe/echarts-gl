@@ -46,7 +46,8 @@ varying float v_Miter;
 
 vec4 clipNear(vec4 p1, vec4 p2) {
     float n = (p1.w - near) / (p1.w - p2.w);
-    return vec4(mix(p2.xy, p1.xy, n), -near, near);
+    // PENDING
+    return vec4(mix(p1.xy, p2.xy, n), -near, near);
 }
 
 void main()
@@ -67,7 +68,6 @@ void main()
     vec2 prevScreen = (prevProj.xy / abs(prevProj.w) + 1.0) * 0.5 * viewport.zw;
     vec2 currScreen = (currProj.xy / abs(currProj.w) + 1.0) * 0.5 * viewport.zw;
     vec2 nextScreen = (nextProj.xy / abs(nextProj.w) + 1.0) * 0.5 * viewport.zw;
-
 
     vec2 dir;
     float len = offset;
@@ -96,7 +96,6 @@ void main()
     currScreen += dir;
 
     currProj.xy = (currScreen / viewport.zw - 0.5) * 2.0 * abs(currProj.w);
-    // PENDING
     gl_Position = currProj;
     gl_PointSize = 4.0;
     v_Color = a_Color;

@@ -86,7 +86,7 @@ var categoryAxis = echarts.util.merge({
         // show: false
     // },
     splitLine: {
-        show: false
+        show: true
     },
     // 坐标轴小标记
     axisTick: {

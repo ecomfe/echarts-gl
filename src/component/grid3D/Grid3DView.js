@@ -22,7 +22,25 @@ var dimMap = {
     y: 2,
     // Bottom to up
     z: 1
-}
+};
+var otherDimsMap = {
+    x: ['y', 'z'],
+    y: ['x', 'z'],
+    z: ['x', 'y']
+};
+function ifIgnoreOnTick(axis, i, interval) {
+    var rawTick;
+    var scale = axis.scale;
+    return scale.type === 'ordinal'
+        && (
+            typeof interval === 'function'
+                ? (
+                    rawTick = scale.getTicks()[i],
+                    !interval(rawTick, scale.getLabel(rawTick))
+                )
+                : i % (interval + 1)
+        );
+};
 
 module.exports = echarts.extendComponentView({
 
@@ -41,14 +59,14 @@ module.exports = echarts.extendComponentView({
         });
         this._control.init();
 
-        this._axisMesh = new graphicGL.Mesh({
+        this._axisLinesMesh = new graphicGL.Mesh({
             geometry: new Lines3DGeometry({
                 useNativeLine: false
             }),
             material: linesMaterial,
             ignorePicking: true
         });
-        this.groupGL.add(this._axisMesh);
+        this.groupGL.add(this._axisLinesMesh);
     },
 
     render: function (grid3DModel, ecModel, api) {
@@ -64,21 +82,26 @@ module.exports = echarts.extendComponentView({
         control.setFromViewControlModel(viewControlModel, 0);
 
 
-        this._axisMesh.geometry.convertToDynamicArray(true);
+        this._axisLinesMesh.geometry.convertToDynamicArray(true);
         dims.forEach(function (dim) {
             this._renderAxis(dim, grid3DModel, ecModel, api);
         }, this);
-        this._axisMesh.geometry.convertToTypedArray();
+        this._axisLinesMesh.geometry.convertToTypedArray();
     },
 
     _renderAxis: function (dim, grid3DModel, ecModel, api) {
-
-        var geometry = this._axisMesh.geometry;
-
         var cartesian = grid3DModel.coordinateSystem;
         var axis = cartesian.getAxis(dim);
-        var axisModel = axis.model;
+        var geometry = this._axisLinesMesh.geometry;
 
+        this._renderSplitLines(geometry, axis, grid3DModel, api);
+        this._renderAxisLine(geometry, axis, grid3DModel, api);
+    },
+
+    _renderAxisLine: function (geometry, axis, grid3DModel, api) {
+
+        var axisModel = axis.model;
+        var dim = axis.dim;
         var extent = axis.getExtent();
 
         // Render axisLine
@@ -88,10 +111,56 @@ module.exports = echarts.extendComponentView({
             p1[dimMap[dim]] = extent[1];
 
             var color = parseColor(axisLineStyleModel.get('color'));
-            var lineWidth = axisLineStyleModel.get('width');
+            var lineWidth = retrieve.firstNotNull(axisLineStyleModel.get('width'), 1.0);
             var opacity = retrieve.firstNotNull(axisLineStyleModel.get('opacity'), 1.0);
             color[3] *= opacity;
             geometry.addLine(p0, p1, color, lineWidth);
+        }
+    },
+
+    _renderSplitLines: function (geometry, axis, grid3DModel, api) {
+        var axisModel = axis.model;
+        var dim = axis.dim;
+        var extent = axis.getExtent();
+
+        if (axis.scale.isBlank()) {
+            return;
+        }
+
+        // Render splitLines
+        if (axisModel.get('splitLine.show')) {
+            var splitLineModel = axisModel.getModel('splitLine');
+            var lineStyleModel = splitLineModel.getModel('lineStyle');
+            var lineColors = lineStyleModel.get('color');
+            var opacity = retrieve.firstNotNull(lineStyleModel.get('opacity'), 1.0);
+            var lineWidth = retrieve.firstNotNull(lineStyleModel.get('width'), 1.0);
+            // TODO Automatic interval
+            var intervalFunc = splitLineModel.get('interval') || axisModel.get('axisLabel.interval');
+            lineColors = echarts.util.isArray(lineColors) ? lineColors : [lineColors];
+
+            var ticksCoords = axis.getTicksCoords();
+
+            var count = 0;
+            // Not render first splitLine to avoid cover the axisLine.
+            var startTick = axisModel.get('axisLine.show') ? 1 : 0;
+            for (var i = startTick; i < ticksCoords.length; i++) {
+                if (ifIgnoreOnTick(axis, i, intervalFunc)) {
+                    continue;
+                }
+                var tickCoord = ticksCoords[i];
+                var lineColor = parseColor(lineColors[count % lineColors.length]);
+                lineColor[3] *= opacity;
+                for (var k = 0; k < 2; k++) {
+                    var otherDim = otherDimsMap[dim][k];
+                    var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
+                    p0[dimMap[dim]] = p1[dimMap[dim]] = tickCoord;
+                    p1[dimMap[otherDim]] = extent[1];
+
+                    geometry.addLine(p0, p1, lineColor, lineWidth);
+                }
+
+                count++;
+            }
         }
     },
 
