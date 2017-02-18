@@ -151,11 +151,14 @@ module.exports = echarts.extendComponentView({
 
     render: function (grid3DModel, ecModel, api) {
 
+        this._model = grid3DModel;
+
         var cartesian = grid3DModel.coordinateSystem;
         cartesian.viewGL.add(this.groupGL);
 
         var control = this._control;
         control.setCamera(cartesian.viewGL.camera);
+
 
         var viewControlModel = grid3DModel.getModel('viewControl');
         control.setFromViewControlModel(viewControlModel, 0);
@@ -202,7 +205,32 @@ module.exports = echarts.extendComponentView({
     },
 
     _updateAxisLinePosition: function () {
+        var cartesian = this._model.coordinateSystem;
+        var size = cartesian.size;
 
+        var xAxisNode = this._axes[0].node;
+        var yAxisNode = this._axes[1].node;
+        var zAxisNode = this._axes[2].node;
+
+        var faces = this._faces;
+        // Notice: in cartesian up axis is z, but in webgl up axis is y.
+        var xAxisZOffset = (faces[4].node.invisible ? -size[2] : size[2]) / 2;
+        var xAxisYOffset = (faces[2].node.invisible ? size[2] : -size[2]) / 2;
+        var yAxisXOffset = (faces[0].node.invisible ? -size[2] : size[2]) / 2;
+        var yAxisYOffset = (faces[2].node.invisible ? size[2] : -size[2]) / 2;
+        var zAxisXOffset = (faces[0].node.invisible ? size[2] : -size[2]) / 2;
+        var zAxisZOffset = (faces[4].node.invisible ? -size[2] : size[2]) / 2;
+
+        xAxisNode.rotation.identity();
+        yAxisNode.rotation.identity();
+        zAxisNode.rotation.identity();
+        faces[4].node.invisible && xAxisNode.rotation.rotateX(Math.PI);
+        faces[0].node.invisible && yAxisNode.rotation.rotateZ(Math.PI);
+        faces[4].node.invisible && zAxisNode.rotation.rotateY(Math.PI);
+
+        xAxisNode.position.set(0, xAxisYOffset, xAxisZOffset);
+        yAxisNode.position.set(yAxisXOffset, yAxisYOffset, 0); // Actually z
+        zAxisNode.position.set(zAxisXOffset, 0, zAxisZOffset); // Actually y
     },
 
     _renderFace: function (faceInfo, grid3DModel, ecModel, api) {
@@ -227,8 +255,9 @@ module.exports = echarts.extendComponentView({
         if (axisModel.get('axisLine.show')) {
             var axisLineStyleModel = axisModel.getModel('axisLine.lineStyle');
             var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
-            p0[0] = extent[0];
-            p1[0] = extent[1];
+            var idx = dimMap[axis.dim];
+            p0[idx] = extent[0];
+            p1[idx] = extent[1];
 
             var color = parseColor(axisLineStyleModel.get('color'));
             var lineWidth = retrieve.firstNotNull(axisLineStyleModel.get('width'), 1.0);
@@ -251,6 +280,9 @@ module.exports = echarts.extendComponentView({
             var intervalFunc = axisTickModel.get('interval') || axisModel.get('axisLabel.interval');
             var tickLength = axisTickModel.get('length');
 
+            var otherDim = {
+                x: 'y', y: 'x', z: 'y'
+            };
             for (var i = 0; i < ticksCoords.length; i++) {
                 if (ifIgnoreOnTick(axis, i, intervalFunc)) {
                     continue;
@@ -259,9 +291,11 @@ module.exports = echarts.extendComponentView({
                 lineColor[3] *= opacity;
 
                 var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
+                var idx = dimMap[axis.dim];
+                var otherIdx = dimMap[otherDim[axis.dim]];
                 // 0 - x, 1 - y
-                p0[0] = p1[0] = tickCoord;
-                p1[2] = tickLength;
+                p0[idx] = p1[idx] = tickCoord;
+                p1[otherIdx] = tickLength;
 
                 geometry.addLine(p0, p1, lineColor, lineWidth);
             }

@@ -38,7 +38,7 @@ var defaultOption = {
         // 控制小标记是否在grid里
         inside: false,
         // 属性length控制线长
-        length: 5,
+        length: 3,
         // 属性lineStyle控制线条样式
         lineStyle: {
             width: 1
