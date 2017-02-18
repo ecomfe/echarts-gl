@@ -1,9 +1,13 @@
+// TODO splitArea, axisLabel
+
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var OrbitControl = require('../../util/OrbitControl');
 var Lines3DGeometry = require('../../util/geometry/Lines3D');
 var PlanesGeometry = require('../../util/geometry/Planes');
 var retrieve = require('../../util/retrieve');
+var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
+var LabelsMesh = require('../../util/mesh/LabelsMesh');
 
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
@@ -137,16 +141,24 @@ module.exports = echarts.extendComponentView({
                 material: linesMaterial,
                 ignorePicking: true
             });
+            var axisLabelsMesh = new LabelsMesh();
             var node = new graphicGL.Node();
             node.add(linesMesh);
+            node.add(axisLabelsMesh);
             this.groupGL.add(node);
 
             return {
                 node: node,
                 linesMesh: linesMesh,
+                labelsMesh: axisLabelsMesh,
                 dim: dim
             };
         }, this);
+
+        this._textureSurface = new ZRTextureAtlasSurface(512, 512, api.getDevicePixelRatio());
+        this._textureSurface.onupdate = function () {
+            api.getZr().refresh();
+        };
     },
 
     render: function (grid3DModel, ecModel, api) {
@@ -170,7 +182,7 @@ module.exports = echarts.extendComponentView({
 
         this._axes.forEach(function (axisInfo) {
             var axis = cartesian.getAxis(axisInfo.dim);
-            this._renderAxisLine(axisInfo.linesMesh.geometry, axis, grid3DModel, api);
+            this._renderAxisLine(axisInfo, axis, grid3DModel, api);
         }, this);
 
         control.off('update');
@@ -246,8 +258,11 @@ module.exports = echarts.extendComponentView({
         lineGeometry.convertToTypedArray();
     },
 
-    _renderAxisLine: function (geometry, axis, grid3DModel, api) {
-        geometry.convertToDynamicArray(true);
+    _renderAxisLine: function (axisInfo, axis, grid3DModel, api) {
+        var linesGeo = axisInfo.linesMesh.geometry;
+        var labelsGeo = axisInfo.labelsMesh.geometry;
+        linesGeo.convertToDynamicArray(true);
+        labelsGeo.convertToDynamicArray(true);
         var axisModel = axis.model;
         var extent = axis.getExtent();
 
@@ -263,8 +278,11 @@ module.exports = echarts.extendComponentView({
             var lineWidth = retrieve.firstNotNull(axisLineStyleModel.get('width'), 1.0);
             var opacity = retrieve.firstNotNull(axisLineStyleModel.get('opacity'), 1.0);
             color[3] *= opacity;
-            geometry.addLine(p0, p1, color, lineWidth);
+            linesGeo.addLine(p0, p1, color, lineWidth);
         }
+        var otherDim = {
+            x: 'y', y: 'x', z: 'y'
+        };
         // Render axis ticksCoords
         if (axisModel.get('axisTick.show')) {
             var axisTickModel = axisModel.getModel('axisTick');
@@ -272,23 +290,18 @@ module.exports = echarts.extendComponentView({
             var lineColor = parseColor(
                 lineStyleModel.get('color') || axisModel.get('axisLine.lineStyle.color')
             );
-            var opacity = retrieve.firstNotNull(lineStyleModel.get('opacity'), 1.0);
             var lineWidth = retrieve.firstNotNull(lineStyleModel.get('width'), 1.0);
-            lineColor[3] *= opacity;
+            lineColor[3] *= retrieve.firstNotNull(lineStyleModel.get('opacity'), 1.0);
             var ticksCoords = axis.getTicksCoords();
             // TODO Automatic interval
             var intervalFunc = axisTickModel.get('interval') || axisModel.get('axisLabel.interval');
             var tickLength = axisTickModel.get('length');
 
-            var otherDim = {
-                x: 'y', y: 'x', z: 'y'
-            };
             for (var i = 0; i < ticksCoords.length; i++) {
                 if (ifIgnoreOnTick(axis, i, intervalFunc)) {
                     continue;
                 }
                 var tickCoord = ticksCoords[i];
-                lineColor[3] *= opacity;
 
                 var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
                 var idx = dimMap[axis.dim];
@@ -297,10 +310,54 @@ module.exports = echarts.extendComponentView({
                 p0[idx] = p1[idx] = tickCoord;
                 p1[otherIdx] = tickLength;
 
-                geometry.addLine(p0, p1, lineColor, lineWidth);
+                linesGeo.addLine(p0, p1, lineColor, lineWidth);
             }
         }
-        geometry.convertToTypedArray();
+
+        if (axisModel.get('axisLabel.show')) {
+            this._textureSurface.clear();
+            var axisLabelModel = axisModel.getModel('axisLabel');
+            var textStyleModel = axisLabelModel.getModel('textStyle');
+            var ticksCoords = axis.getTicksCoords();
+            // TODO Automatic interval
+            var intervalFunc = axisModel.get('axisLabel.interval');
+
+            var labelMargin = axisLabelModel.get('margin');
+
+            var labels = axisModel.getFormattedLabels();
+            var dpr = api.getDevicePixelRatio();
+            for (var i = 0; i < ticksCoords.length; i++) {
+                if (ifIgnoreOnTick(axis, i, intervalFunc)) {
+                    continue;
+                }
+                var tickCoord = ticksCoords[i];
+
+                var p = [0, 0, 0];
+                var idx = dimMap[axis.dim];
+                var otherIdx = dimMap[otherDim[axis.dim]];
+                // 0 - x, 1 - y
+                p[idx] = p[idx] = tickCoord;
+                p[otherIdx] = labelMargin;
+
+                var textEl = new echarts.graphic.Text({
+                    style: {
+                        text: labels[i],
+                        fill: '#fff',
+                        textVerticalAlign: 'top',
+                        textAlign: 'left'
+                    }
+                });
+                var coords = this._textureSurface.add(textEl);
+                var rect = textEl.getBoundingRect();
+                labelsGeo.addSprite(p, [rect.width * dpr, rect.height * dpr], coords);
+            }
+        }
+
+        this._textureSurface.getTexture().flipY = false;
+        axisInfo.labelsMesh.material.set('textureAtlas', this._textureSurface.getTexture());
+
+        linesGeo.convertToTypedArray();
+        labelsGeo.convertToTypedArray();
     },
 
     _renderSplitLines: function (geometry, axes, grid3DModel, api) {

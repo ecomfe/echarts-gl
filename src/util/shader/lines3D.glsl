@@ -97,7 +97,7 @@ void main()
 
     currProj.xy = (currScreen / viewport.zw - 0.5) * 2.0 * abs(currProj.w);
     gl_Position = currProj;
-    gl_PointSize = 4.0;
+
     v_Color = a_Color;
 }
 @end

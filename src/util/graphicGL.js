@@ -180,7 +180,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
         var textureObj = textureCache.get(prefix + id);
         if (!textureObj) {
             var surface = new EChartsSurface(imgValue);
-            surface.textureupdated = function () {
+            surface.onupdate = function () {
                 api.getZr().refresh();
             };
             textureObj = {

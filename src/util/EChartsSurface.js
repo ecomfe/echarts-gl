@@ -49,7 +49,7 @@ var EChartsSurface = function (chart) {
     }
 
     // Texture updated callback;
-    this.textureupdated = null;
+    this.onupdate = null;
 };
 
 EChartsSurface.prototype = {
@@ -78,14 +78,14 @@ EChartsSurface.prototype = {
                 oldRefreshImmediately.call(this);
                 self._texture.dirty();
 
-                self.textureupdated && self.textureupdated();
+                self.onupdate && self.onupdate();
             };
             zr.__oldRefreshImmediately = oldRefreshImmediately;
         }
 
         this._texture.image = canvas;
         this._texture.dirty();
-        this.textureupdated && this.textureupdated();
+        this.onupdate && this.onupdate();
     },
 
     /**
