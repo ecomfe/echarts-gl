@@ -1,4 +1,4 @@
-// TODO splitArea, axisLabel
+// TODO splitArea
 
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
@@ -181,6 +181,8 @@ module.exports = echarts.extendComponentView({
         var viewControlModel = grid3DModel.getModel('viewControl');
         control.setFromViewControlModel(viewControlModel, 0);
 
+        this._textureSurface.clear();
+
         this._faces.forEach(function (faceInfo) {
             this._renderFace(faceInfo, grid3DModel, ecModel, api);
             updateFacePosition(faceInfo.dims[2], faceInfo.node, cartesian.size);
@@ -304,6 +306,7 @@ module.exports = echarts.extendComponentView({
                 }
             }
 
+            // axis labels
             var dpr = this._api.getDevicePixelRatio();
             for (var i = 0; i < axisInfo.labelElements.length; i++) {
                 var labelEl = axisInfo.labelElements[i];
@@ -311,6 +314,11 @@ module.exports = echarts.extendComponentView({
 
                 labelGeo.setSpriteAlign(i, [rect.width * dpr, rect.height * dpr], textAlign, verticalAlign);
             }
+            // name label
+            var nameLabelEl = axisInfo.nameLabelElement;
+            var rect = nameLabelEl.getBoundingRect();
+            labelGeo.setSpriteAlign(nameLabelEl.__idx, [rect.width * dpr, rect.height * dpr], textAlign, verticalAlign);
+
             labelGeo.dirty();
         }, this);
     },
@@ -361,7 +369,7 @@ module.exports = echarts.extendComponentView({
             var axisTickModel = axisModel.getModel('axisTick');
             var lineStyleModel = axisTickModel.getModel('lineStyle');
             var lineColor = parseColor(
-                lineStyleModel.get('color') || axisModel.get('axisLine.lineStyle.color')
+                retrieve.firstNotNull(lineStyleModel.get('color'), axisModel.get('axisLine.lineStyle.color'))
             );
             var lineWidth = retrieve.firstNotNull(lineStyleModel.get('width'), 1.0);
             lineColor[3] *= retrieve.firstNotNull(lineStyleModel.get('opacity'), 1.0);
@@ -379,7 +387,7 @@ module.exports = echarts.extendComponentView({
                 var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
                 var idx = dimMap[axis.dim];
                 var otherIdx = dimMap[otherDim[axis.dim]];
-                // 0 - x, 1 - y
+                // 0 : x, 1 : y
                 p0[idx] = p1[idx] = tickCoord;
                 p1[otherIdx] = tickLength;
 
@@ -387,19 +395,21 @@ module.exports = echarts.extendComponentView({
             }
         }
 
+        axisInfo.labelElements = [];
+        var dpr = api.getDevicePixelRatio();
         if (axisModel.get('axisLabel.show')) {
-            this._textureSurface.clear();
             var axisLabelModel = axisModel.getModel('axisLabel');
             var textStyleModel = axisLabelModel.getModel('textStyle');
             var ticksCoords = axis.getTicksCoords();
+            var labelColor = retrieve.firstNotNull(
+                textStyleModel.get('color'), axisModel.get('axisLine.lineStyle.color')
+            );
             // TODO Automatic interval
             var intervalFunc = axisModel.get('axisLabel.interval');
 
             var labelMargin = axisLabelModel.get('margin');
 
             var labels = axisModel.getFormattedLabels();
-            var dpr = api.getDevicePixelRatio();
-            axisInfo.labelElements = [];
             for (var i = 0; i < ticksCoords.length; i++) {
                 if (ifIgnoreOnTick(axis, i, intervalFunc)) {
                     continue;
@@ -409,14 +419,15 @@ module.exports = echarts.extendComponentView({
                 var p = [0, 0, 0];
                 var idx = dimMap[axis.dim];
                 var otherIdx = dimMap[otherDim[axis.dim]];
-                // 0 - x, 1 - y
+                // 0 : x, 1 : y
                 p[idx] = p[idx] = tickCoord;
                 p[otherIdx] = labelMargin;
 
                 var textEl = new echarts.graphic.Text({
                     style: {
                         text: labels[i],
-                        fill: '#fff',
+                        fill: labelColor,
+                        font: textStyleModel.getFont(),
                         textVerticalAlign: 'top',
                         textAlign: 'left'
                     }
@@ -427,6 +438,35 @@ module.exports = echarts.extendComponentView({
 
                 axisInfo.labelElements.push(textEl);
             }
+        }
+
+        if (axisModel.get('name')) {
+            var nameTextStyleModel = axisModel.getModel('nameTextStyle');
+            var p = [0, 0, 0];
+            var idx = dimMap[axis.dim];
+            var otherIdx = dimMap[otherDim[axis.dim]];
+            var labelColor = retrieve.firstNotNull(
+                nameTextStyleModel.get('color'), axisModel.get('axisLine.lineStyle.color')
+            );
+            // TODO start and end
+            p[idx] = p[idx] = (extent[0] + extent[1]) / 2;
+            p[otherIdx] = axisModel.get('nameGap');
+
+            var textEl = new echarts.graphic.Text({
+                style: {
+                    text: axisModel.get('name'),
+                    fill: labelColor,
+                    font: nameTextStyleModel.getFont(),
+                    textVerticalAlign: 'top',
+                    textAlign: 'left'
+                }
+            });
+            var coords = this._textureSurface.add(textEl);
+            var rect = textEl.getBoundingRect();
+            labelsGeo.addSprite(p, [rect.width * dpr, rect.height * dpr], coords);
+
+            textEl.__idx = axisInfo.labelElements.length;
+            axisInfo.nameLabelElement = textEl;
         }
 
         this._textureSurface.getTexture().flipY = false;

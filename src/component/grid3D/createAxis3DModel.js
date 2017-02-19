@@ -27,10 +27,7 @@ module.exports = function (dim, BaseAxisModelClass, axisTypeDefaulter, extraDefa
             },
 
             defaultOption: echarts.util.merge(
-                echarts.util.merge(
-                    {},
-                    axisDefault[axisType + 'Axis']
-                ),
+                echarts.util.clone(axisDefault[axisType + 'Axis']),
                 extraDefaultOption || {},
                 true
             )

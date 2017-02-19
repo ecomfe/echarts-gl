@@ -15,9 +15,11 @@ var defaultOption = {
     nameRotate: null, // Adapt to axis rotate, when nameLocation is 'middle'.
 
     // 坐标轴文字样式，默认取全局样式
-    nameTextStyle: {},
+    nameTextStyle: {
+        fontSize: 16
+    },
     // 文字与轴线距离
-    nameGap: 15,
+    nameGap: 20,
 
     // 坐标轴线
     axisLine: {
