@@ -36,6 +36,7 @@ var dimMap = {
 
 
 function updateFacePosition(face, node, size) {
+    node.rotation.identity();
     switch(face) {
         case 'px':
             node.position.set(size[0] / 2, 0, 0);
@@ -112,7 +113,8 @@ module.exports = echarts.extendComponentView({
             this.groupGL.add(node);
             var linesMesh = new graphicGL.Mesh({
                 geometry: new Lines3DGeometry({
-                    useNativeLine: false
+                    useNativeLine: false,
+                    dynamic: true
                 }),
                 material: linesMaterial,
                 ignorePicking: true
@@ -136,7 +138,8 @@ module.exports = echarts.extendComponentView({
         this._axes = dims.map(function (dim) {
             var linesMesh = new graphicGL.Mesh({
                 geometry: new Lines3DGeometry({
-                    useNativeLine: false
+                    useNativeLine: false,
+                    dynamic: true
                 }),
                 material: linesMaterial,
                 ignorePicking: true
@@ -148,10 +151,12 @@ module.exports = echarts.extendComponentView({
             this.groupGL.add(node);
 
             return {
+                dim: dim,
                 node: node,
                 linesMesh: linesMesh,
                 labelsMesh: axisLabelsMesh,
-                dim: dim
+                axisLineCoords: null,
+                labelElements: []
             };
         }, this);
 
@@ -164,6 +169,7 @@ module.exports = echarts.extendComponentView({
     render: function (grid3DModel, ecModel, api) {
 
         this._model = grid3DModel;
+        this._api = api;
 
         var cartesian = grid3DModel.coordinateSystem;
         cartesian.viewGL.add(this.groupGL);
@@ -185,7 +191,6 @@ module.exports = echarts.extendComponentView({
             this._renderAxisLine(axisInfo, axis, grid3DModel, api);
         }, this);
 
-        control.off('update');
         control.on('update', this._onCameraChange, this);
     },
 
@@ -243,6 +248,71 @@ module.exports = echarts.extendComponentView({
         xAxisNode.position.set(0, xAxisYOffset, xAxisZOffset);
         yAxisNode.position.set(yAxisXOffset, yAxisYOffset, 0); // Actually z
         zAxisNode.position.set(zAxisXOffset, 0, zAxisZOffset); // Actually y
+
+        xAxisNode.update();
+        yAxisNode.update();
+        zAxisNode.update();
+
+        this._updateAxisLabelAlign();
+    },
+
+    _updateAxisLabelAlign: function () {
+        // var cartesian = this._model.coordinateSystem;
+        var camera = this._control.getCamera();
+        var coords = [new graphicGL.Vector4(), new graphicGL.Vector4()];
+        var center = new graphicGL.Vector4();
+        this.groupGL.getWorldPosition(center);
+        center.w = 1.0;
+        center.transformMat4(camera.viewMatrix)
+            .transformMat4(camera.projectionMatrix);
+        center.x /= center.w;
+        center.y /= center.w;
+        this._axes.forEach(function (axisInfo) {
+            var lineCoords = axisInfo.axisLineCoords;
+            var labelGeo = axisInfo.labelsMesh.geometry;
+            for (var i = 0; i < coords.length; i++) {
+                coords[i].setArray(lineCoords[i]);
+                coords[i].w = 1.0;
+                coords[i].transformMat4(axisInfo.node.worldTransform)
+                    .transformMat4(camera.viewMatrix)
+                    .transformMat4(camera.projectionMatrix);
+                coords[i].x /= coords[i].w;
+                coords[i].y /= coords[i].w;
+            }
+            var dx = coords[1].x - coords[0].x;
+            var dy = coords[1].y - coords[0].y;
+            var cx = (coords[1].x + coords[0].x) / 2;
+            var cy = (coords[1].y + coords[0].y) / 2;
+            var textAlign;
+            var verticalAlign;
+            if (Math.abs(dy / dx) < 0.5) {
+                textAlign = 'center';
+                if (cy > center.y) {
+                    verticalAlign = 'bottom';
+                }
+                else {
+                    verticalAlign = 'top';
+                }
+            }
+            else {
+                verticalAlign = 'middle';
+                if (cx > center.x) {
+                    textAlign = 'left';
+                }
+                else {
+                    textAlign = 'right';
+                }
+            }
+
+            var dpr = this._api.getDevicePixelRatio();
+            for (var i = 0; i < axisInfo.labelElements.length; i++) {
+                var labelEl = axisInfo.labelElements[i];
+                var rect = labelEl.getBoundingRect();
+
+                labelGeo.setSpriteAlign(i, [rect.width * dpr, rect.height * dpr], textAlign, verticalAlign);
+            }
+            labelGeo.dirty();
+        }, this);
     },
 
     _renderFace: function (faceInfo, grid3DModel, ecModel, api) {
@@ -273,6 +343,9 @@ module.exports = echarts.extendComponentView({
             var idx = dimMap[axis.dim];
             p0[idx] = extent[0];
             p1[idx] = extent[1];
+
+            // Save some useful info.
+            axisInfo.axisLineCoords =[p0, p1];
 
             var color = parseColor(axisLineStyleModel.get('color'));
             var lineWidth = retrieve.firstNotNull(axisLineStyleModel.get('width'), 1.0);
@@ -326,6 +399,7 @@ module.exports = echarts.extendComponentView({
 
             var labels = axisModel.getFormattedLabels();
             var dpr = api.getDevicePixelRatio();
+            axisInfo.labelElements = [];
             for (var i = 0; i < ticksCoords.length; i++) {
                 if (ifIgnoreOnTick(axis, i, intervalFunc)) {
                     continue;
@@ -350,6 +424,8 @@ module.exports = echarts.extendComponentView({
                 var coords = this._textureSurface.add(textEl);
                 var rect = textEl.getBoundingRect();
                 labelsGeo.addSprite(p, [rect.width * dpr, rect.height * dpr], coords);
+
+                axisInfo.labelElements.push(textEl);
             }
         }
 

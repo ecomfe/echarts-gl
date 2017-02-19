@@ -41,25 +41,15 @@ var SpritesGeometry = StaticGeometry.extend(function () {
             this.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
         }
     },
-    /**
-     * Add sprite
-     * @param {Array.<number>} position
-     * @param {Array.<number>} size
-     * @param {Array.<Array>} coords [leftBottom, rightTop]
-     * @param {string} [align='left'] 'left' 'center' 'right'
-     * @param {string} [verticalAlign='top'] 'top' 'middle' 'bottom'
-     */
-    addSprite: function (position, size, coords, align, verticalAlign) {
+
+    setSpriteAlign: function (spriteOffset, size, align, verticalAlign) {
         if (align == null) {
             align = 'left';
         }
         if (verticalAlign == null) {
             verticalAlign = 'top';
         }
-        var attributes = this.attributes;
-        for (var i = 0; i < 4; i++) {
-            attributes.position.set(this._vertexOffset + i, position);
-        }
+
         var leftOffset, topOffset, rightOffset, bottomOffset;
         switch (align) {
             case 'left':
@@ -77,7 +67,7 @@ var SpritesGeometry = StaticGeometry.extend(function () {
                 break;
         }
         switch (verticalAlign) {
-            case 'top':
+            case 'bottom':
                 topOffset = 0;
                 bottomOffset = size[1];
                 break;
@@ -85,25 +75,44 @@ var SpritesGeometry = StaticGeometry.extend(function () {
                 topOffset = -size[1] / 2;
                 bottomOffset = size[1] / 2;
                 break;
-            case 'bottom':
+            case 'top':
                 topOffset = -size[1];
                 bottomOffset = 0;
                 break;
         }
         // 3----2
         // 0----1
-        var vertexOffset = this._vertexOffset;
-        var offsetAttr = attributes.offset;
-        var texcoordAttr = attributes.texcoord;
+        var vertexOffset = spriteOffset * 4;
+        var offsetAttr = this.attributes.offset;
         offsetAttr.set(vertexOffset, [leftOffset, bottomOffset]);
         offsetAttr.set(vertexOffset + 1, [rightOffset, bottomOffset]);
         offsetAttr.set(vertexOffset + 2, [rightOffset, topOffset]);
         offsetAttr.set(vertexOffset + 3, [leftOffset, topOffset]);
+    },
+    /**
+     * Add sprite
+     * @param {Array.<number>} position
+     * @param {Array.<number>} size
+     * @param {Array.<Array>} coords [leftBottom, rightTop]
+     * @param {string} [align='left'] 'left' 'center' 'right'
+     * @param {string} [verticalAlign='top'] 'top' 'middle' 'bottom'
+     */
+    addSprite: function (position, size, coords, align, verticalAlign) {
+        var attributes = this.attributes;
+        for (var i = 0; i < 4; i++) {
+            attributes.position.set(this._vertexOffset + i, position);
+        }
+        // 3----2
+        // 0----1
+        var vertexOffset = this._vertexOffset;
+        var texcoordAttr = attributes.texcoord;
 
         texcoordAttr.set(vertexOffset, [coords[0][0], coords[0][1]]);
         texcoordAttr.set(vertexOffset + 1, [coords[1][0], coords[0][1]]);
         texcoordAttr.set(vertexOffset + 2, [coords[1][0], coords[1][1]]);
         texcoordAttr.set(vertexOffset + 3, [coords[0][0], coords[1][1]]);
+
+        this.setSpriteAlign(vertexOffset / 4, size, align, verticalAlign);
 
         for (var i = 0; i < squareFaces.length; i++) {
             this.faces[this._faceOffset * 3 + i] = squareFaces[i] + vertexOffset;

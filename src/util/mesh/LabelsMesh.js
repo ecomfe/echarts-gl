@@ -4,7 +4,9 @@ var SpritesGeometry = require('../geometry/Sprites');
 graphicGL.Shader.import(require('text!../shader/labels3D.glsl'));
 
 module.exports = graphicGL.Mesh.extend(function () {
-    var geometry = new SpritesGeometry();
+    var geometry = new SpritesGeometry({
+        dynamic: true
+    });
     var material = new graphicGL.Material({
         shader: graphicGL.createShader('ecgl.labels3D'),
         transparent: true,
