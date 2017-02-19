@@ -1,4 +1,5 @@
 // TODO splitArea
+// TODO orthographic camera
 
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
@@ -173,6 +174,8 @@ module.exports = echarts.extendComponentView({
 
         var cartesian = grid3DModel.coordinateSystem;
         cartesian.viewGL.add(this.groupGL);
+
+        // cartesian.viewGL.setCameraType(grid3DModel.get('viewControl.projection'));
 
         var control = this._control;
         control.setCamera(cartesian.viewGL.camera);

@@ -40,8 +40,24 @@ function ViewGL(cameraType) {
  * @param {string} cameraType 'perspective' | 'orthographic'
  */
 ViewGL.prototype.setCameraType = function (cameraType) {
-    this.camera = cameraType === 'perspective'
-        ? new PerspectiveCamera() : new OrthographicCamera();
+    var oldCamera = this.camera;
+    oldCamera && oldCamera.update();
+    if (cameraType === 'perspective') {
+        if (!(this.camera instanceof PerspectiveCamera)) {
+            this.camera = new PerspectiveCamera();
+            if (oldCamera) {
+                this.camera.setLocalTransform(oldCamera.localTransform);
+            }
+        }
+    }
+    else {
+        if (!(this.camera instanceof OrthographicCamera)) {
+            this.camera = new OrthographicCamera();
+            if (oldCamera) {
+                this.camera.setLocalTransform(oldCamera.localTransform);
+            }
+        }
+    }
 };
 
 /**

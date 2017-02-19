@@ -1,8 +1,8 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
-var viewGL = require('../../core/ViewGL');
+var ViewGL = require('../../core/ViewGL');
 
-var Points2DMesh = require('../common/Points2DMesh');
+var Points2DMesh = require('../common/PointsMesh');
 
 echarts.extendChartView({
 
@@ -11,11 +11,13 @@ echarts.extendChartView({
     init: function (ecModel, api) {
 
         this.groupGL = new graphicGL.Node();
-        this.viewGL = new viewGL('orthographic');
+        this.viewGL = new ViewGL('orthographic');
 
         this.viewGL.add(this.groupGL);
 
-        var mesh = new Points2DMesh();
+        var mesh = new Points2DMesh({
+            is2D: true
+        });
         this._pointsMesh = mesh;
     },
 

@@ -26,7 +26,9 @@ module.exports = graphicGL.Mesh.extend(function () {
     return {
         geometry: geometry,
         material: material,
-        mode: graphicGL.Mesh.POINTS
+        mode: graphicGL.Mesh.POINTS,
+        // 2D or 3D
+        is2D: true
     };
 }, {
 
@@ -67,6 +69,7 @@ module.exports = graphicGL.Mesh.extend(function () {
         // TODO image symbol
         // TODO, shadowOffsetX, shadowOffsetY may not work well.
         var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
+        itemStyle.fill = data.getVisual('color');
         var margin = spriteUtil.getMarginByStyle(itemStyle);
         if (hasItemColor) {
             itemStyle.fill = '#ffffff';
@@ -80,10 +83,10 @@ module.exports = graphicGL.Mesh.extend(function () {
             }
         }
         spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, itemStyle, this._symbolTexture.image);
-        document.body.appendChild(this._symbolTexture.image);
 
-        var diffX = (margin.right - margin.left) / 2;
-        var diffY = (margin.bottom - margin.top) / 2;
+        // TODO
+        // var diffX = (margin.right - margin.left) / 2;
+        // var diffY = (margin.bottom - margin.top) / 2;
         var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
 
         var points = data.getLayout('points');
@@ -97,13 +100,21 @@ module.exports = graphicGL.Mesh.extend(function () {
         var colorArr = attributes.color.value;
 
         var rgbaArr = [];
+        var is2D = this.is2D;
         for (var i = 0; i < data.count(); i++) {
             var i4 = i * 4;
             var i3 = i * 3;
             var i2 = i * 2;
-            positionArr[i3] = points[i2] + diffX;
-            positionArr[i3 + 1] = points[i2 + 1] + diffY;
-            positionArr[i3 + 2] = -10;
+            if (is2D) {
+                positionArr[i3] = points[i2];
+                positionArr[i3 + 1] = points[i2 + 1];
+                positionArr[i3 + 2] = -10;
+            }
+            else {
+                positionArr[i3] = points[i3];
+                positionArr[i3 + 1] = points[i3 + 1];
+                positionArr[i3 + 2] = points[i3 + 2];
+            }
 
             if (vertexColor) {
                 if (!hasItemColor && hasItemOpacity) {
@@ -133,11 +144,18 @@ module.exports = graphicGL.Mesh.extend(function () {
         var data = seriesModel.getData();
         var positionArr = this.geometry.attributes.position.value;
         var points = data.getLayout('points');
-        for (var i = 0; i < points.length / 2; i++) {
-            var i3 = i * 3;
-            var i2 = i * 2;
-            positionArr[i3] = points[i2];
-            positionArr[i3 + 1] = points[i2 + 1];
+        if (this.is2D) {
+            for (var i = 0; i < points.length / 2; i++) {
+                var i3 = i * 3;
+                var i2 = i * 2;
+                positionArr[i3] = points[i2];
+                positionArr[i3 + 1] = points[i2 + 1];
+            }
+        }
+        else {
+            for (var i = 0; i < points.length; i++) {
+                positionArr[i] = points[i];
+            }
         }
         this.geometry.dirty();
     },

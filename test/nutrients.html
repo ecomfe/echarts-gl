@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Grid3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            var indices = {
+                name: 0,
+                group: 1,
+                id: 16
+            };
+            var schema = [
+                {name: 'name', index: 0},
+                {name: 'group', index: 1},
+                {name: 'protein', index: 2},
+                {name: 'calcium', index: 3},
+                {name: 'sodium', index: 4},
+                {name: 'fiber', index: 5},
+                {name: 'vitaminc', index: 6},
+                {name: 'potassium', index: 7},
+                {name: 'carbohydrate', index: 8},
+                {name: 'sugars', index: 9},
+                {name: 'fat', index: 10},
+                {name: 'water', index: 11},
+                {name: 'calories', index: 12},
+                {name: 'saturated', index: 13},
+                {name: 'monounsat', index: 14},
+                {name: 'polyunsat', index: 15},
+                {name: 'id', index: 16}
+            ];
+
+            var fieldIndices = schema.reduce(function (obj, item) {
+                obj[item.name] = item.index;
+                return obj;
+            }, {});
+
+            var groupCategories = [];
+            var groupColors = [];
+            var data;
+            $.getJSON('./data/nutrients.json', function (data) {
+
+                var axisLine = {
+                    lineStyle: {
+                        color: '#fff'
+                    }
+                };
+                chart.setOption({
+                    xAxis3D: {
+                        type: 'value',
+                        axisLine: axisLine
+                    },
+                    yAxis3D: {
+                        type: 'value',
+                        axisLine: axisLine
+                    },
+                    zAxis3D: {
+                        type: 'value',
+                        axisLine: axisLine
+                    },
+                    grid3D: {
+                        viewControl: {
+                            // projection: 'orthographic'
+                        }
+                    },
+                    series: [{
+                        type: 'scatter3D',
+                        data: data.map(function (item, idx) {
+                            return [item[2], item[3], item[4], idx];
+                        })
+                    }]
+                });
+
+            });
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

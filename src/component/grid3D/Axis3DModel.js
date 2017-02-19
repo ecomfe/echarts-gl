@@ -12,7 +12,7 @@ var Axis3DModel = echarts.extendComponentModel({
      */
     getCoordSysModel: function () {
         return this.ecModel.queryComponents({
-            mainType: 'grid',
+            mainType: 'grid3D',
             index: this.option.gridIndex,
             id: this.option.gridId
         })[0];

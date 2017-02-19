@@ -27,6 +27,9 @@ var Grid3DModel = echarts.extendComponentModel({
 
         viewControl: {
 
+            // perspective, orthographic
+            projection: 'perspective',
+
             // If rotate on on init
             autoRotate: false,
 
