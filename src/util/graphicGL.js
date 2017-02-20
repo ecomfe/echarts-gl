@@ -279,4 +279,17 @@ graphicGL.additiveBlend = function (gl) {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 };
 
+/**
+ * @param {string} colorStr
+ * @param {Array.<number>} [rgba]
+ * @return {Array.<number>} rgba
+ */
+graphicGL.parseColor = function (colorStr, rgba) {
+    rgba = echarts.color.parse(colorStr, rgba);
+    rgba[0] /= 255;
+    rgba[1] /= 255;
+    rgba[2] /= 255;
+    return rgba;
+};
+
 module.exports = graphicGL;

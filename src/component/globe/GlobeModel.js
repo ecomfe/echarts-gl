@@ -97,15 +97,21 @@ var GlobeModel = echarts.extendComponentModel({
 
         // Light is available when material.shading is not color
         light: {
-            sunIntensity: 1,
 
-            ambientIntensity: 0.1,
-
-            // Intensity of mission from emissive layers
-            emissionIntensity: 1,
-
-            // Time, default it will use system time
-            time: ''
+            sun: {
+                // Time, default it will use system time
+                time: '',
+                color: '#fff',
+                intensity: 1
+            },
+            ambient: {
+                color: '#fff',
+                intensity: 0.2
+            },
+            // Emission from emissive layers
+            emission: {
+                intensity: 1
+            }
         },
 
         postEffect: {

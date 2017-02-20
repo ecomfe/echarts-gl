@@ -22,7 +22,15 @@ var Grid3DModel = echarts.extendComponentModel({
         boxDepth: 100,
 
         light: {
-            enable: false
+            main: {
+                position: [1, 1, 1],
+                color: '#fff',
+                intensity: 1.0
+            },
+            ambient: {
+                color: '#fff',
+                intensity: 0.2
+            }
         },
 
         viewControl: {

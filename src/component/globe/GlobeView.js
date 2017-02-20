@@ -335,8 +335,12 @@ module.exports = echarts.extendComponentView({
         var ambientLight = this._ambientLight;
 
         var lightModel = globeModel.getModel('light');
-        sunLight.intensity = lightModel.get('sunIntensity');
-        ambientLight.intensity = lightModel.get('ambientIntensity');
+        var sunLightModel = lightModel.getModel('sun');
+        var ambientLightModel = lightModel.getModel('ambient');
+        sunLight.intensity = sunLightModel.get('intensity');
+        ambientLight.intensity = ambientLightModel.get('intensity');
+        sunLight.color = graphicGL.parseColor(sunLightModel.get('color')).slice(0, 3);
+        ambientLight.color = graphicGL.parseColor(ambientLightModel.get('color')).slice(0, 3);
 
         // Put sun in the right position
         var time = lightModel.get('time') || new Date();
@@ -351,7 +355,7 @@ module.exports = echarts.extendComponentView({
         sunLight.lookAt(earthMesh.getWorldPosition());
 
         // Emission
-        earthMesh.material.set('emissionIntensity', lightModel.get('emissionIntensity'));
+        earthMesh.material.set('emissionIntensity', lightModel.get('emission.intensity'));
     },
 
     dispose: function (ecModel, api) {

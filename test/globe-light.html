@@ -28,8 +28,13 @@
                     shading: 'lambert',
 
                     light: {
-                        ambientIntensity: 0.1,
-                        sunIntensity: 2
+                        ambient: {
+                            intensity: 0.1
+                        },
+                        sun: {
+                            color: 'yellow',
+                            intensity: 2
+                        }
                     }
                 },
                 series: []
