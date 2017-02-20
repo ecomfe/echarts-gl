@@ -12,11 +12,6 @@ var LabelsMesh = require('../../util/mesh/LabelsMesh');
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
 
-var parseColor = function (colorStr) {
-    var colorArr = echarts.color.parse(colorStr || '#000');
-    return [colorArr[0] / 255, colorArr[1] / 255, colorArr[2] / 255, colorArr[3]];
-}
-
 var dims = ['x', 'y', 'z'];
 
 dims.forEach(function (dim) {
@@ -164,6 +159,19 @@ module.exports = echarts.extendComponentView({
         this._textureSurface.onupdate = function () {
             api.getZr().refresh();
         };
+
+        /**
+         * @type {qtek.light.Directional}
+         */
+        this._mainLight = new graphicGL.DirectionalLight();
+
+        /**
+         * @type {qtek.light.Ambient}
+         */
+        this._ambientLight = new graphicGL.AmbientLight();
+
+        this.groupGL.add(this._ambientLight);
+        this.groupGL.add(this._mainLight);
     },
 
     render: function (grid3DModel, ecModel, api) {
@@ -196,6 +204,8 @@ module.exports = echarts.extendComponentView({
         }, this);
 
         control.on('update', this._onCameraChange, this);
+
+        this._updateLight(grid3DModel, api);
     },
 
     _onCameraChange: function () {
@@ -357,7 +367,7 @@ module.exports = echarts.extendComponentView({
             // Save some useful info.
             axisInfo.axisLineCoords =[p0, p1];
 
-            var color = parseColor(axisLineStyleModel.get('color'));
+            var color = graphicGL.parseColor(axisLineStyleModel.get('color'));
             var lineWidth = retrieve.firstNotNull(axisLineStyleModel.get('width'), 1.0);
             var opacity = retrieve.firstNotNull(axisLineStyleModel.get('opacity'), 1.0);
             color[3] *= opacity;
@@ -370,7 +380,7 @@ module.exports = echarts.extendComponentView({
         if (axisModel.get('axisTick.show')) {
             var axisTickModel = axisModel.getModel('axisTick');
             var lineStyleModel = axisTickModel.getModel('lineStyle');
-            var lineColor = parseColor(
+            var lineColor = graphicGL.parseColor(
                 retrieve.firstNotNull(lineStyleModel.get('color'), axisModel.get('axisLine.lineStyle.color'))
             );
             var lineWidth = retrieve.firstNotNull(lineStyleModel.get('width'), 1.0);
@@ -507,7 +517,7 @@ module.exports = echarts.extendComponentView({
                         continue;
                     }
                     var tickCoord = ticksCoords[i];
-                    var lineColor = parseColor(lineColors[count % lineColors.length]);
+                    var lineColor = graphicGL.parseColor(lineColors[count % lineColors.length]);
                     lineColor[3] *= opacity;
 
                     var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
@@ -524,8 +534,22 @@ module.exports = echarts.extendComponentView({
         });
     },
 
-    _renderAxisLabel: function () {
+    _updateLight: function (globeModel, api) {
 
+        var mainLight = this._mainLight;
+        var ambientLight = this._ambientLight;
+
+        var lightModel = globeModel.getModel('light');
+        var mainLightModel = lightModel.getModel('main');
+        var ambientLightModel = lightModel.getModel('ambient');
+
+        mainLight.intensity = mainLightModel.get('intensity');
+        ambientLight.intensity = ambientLightModel.get('intensity');
+        mainLight.color = graphicGL.parseColor(mainLightModel.get('color')).slice(0, 3);
+        ambientLight.color = graphicGL.parseColor(ambientLightModel.get('color')).slice(0, 3);
+
+        mainLight.position.setArray(mainLightModel.get('position'));
+        mainLight.lookAt(graphicGL.Vector3.ZERO);
     },
 
     dispose: function () {

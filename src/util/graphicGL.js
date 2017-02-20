@@ -285,7 +285,7 @@ graphicGL.additiveBlend = function (gl) {
  * @return {Array.<number>} rgba
  */
 graphicGL.parseColor = function (colorStr, rgba) {
-    rgba = echarts.color.parse(colorStr, rgba);
+    rgba = echarts.color.parse(colorStr || '#000', rgba);
     rgba[0] /= 255;
     rgba[1] /= 255;
     rgba[2] /= 255;

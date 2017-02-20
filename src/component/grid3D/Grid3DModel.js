@@ -29,7 +29,7 @@ var Grid3DModel = echarts.extendComponentModel({
             },
             ambient: {
                 color: '#fff',
-                intensity: 0.2
+                intensity: 0.1
             }
         },
 
