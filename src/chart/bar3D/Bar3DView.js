@@ -1,6 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
-var BarsGeometry = require('./BarsGeometry');
+var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
 
 graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
 graphicGL.Shader.import(require('text!../../util/shader/lambert.glsl'));
@@ -88,8 +88,23 @@ module.exports = echarts.extendChartView({
             this._barMeshTransparent.material = this._albedoTransarentMaterial;
         }
 
+        this._barMesh.geometry.enableNormal = enableNormal;
+        this._barMeshTransparent.geometry.enableNormal = enableNormal;
+
         this._barMesh.geometry.resetOffset();
         this._barMeshTransparent.geometry.resetOffset();
+
+        // Bevel settings
+        var bevelSegments = 0;
+        if (seriesModel.get('bevel')) {
+            bevelSegments = 2;
+        }
+        this._barMesh.geometry.bevelSegments = bevelSegments;
+        this._barMeshTransparent.geometry.bevelSegments = bevelSegments;
+
+        this._barMesh.geometry.bevelSize = 1;
+        this._barMeshTransparent.bevelSize = 1;
+
 
         var transparentBarCount = 0;
         var opaqueBarCount = 0;
@@ -121,8 +136,9 @@ module.exports = echarts.extendChartView({
                 opaqueBarCount++;
             }
         });
-        this._barMesh.geometry.setBarCount(opaqueBarCount, enableNormal);
-        this._barMeshTransparent.geometry.setBarCount(transparentBarCount, enableNormal);
+
+        this._barMesh.geometry.setBarCount(opaqueBarCount);
+        this._barMeshTransparent.geometry.setBarCount(transparentBarCount);
 
         var orient = data.getLayout('orient');
         data.each(function (idx) {

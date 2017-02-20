@@ -33,16 +33,6 @@
                             color: '#fff'
                         }
                     },
-                    axisTick: {
-                        lineStyle: {
-                            width: 3
-                        }
-                    },
-                    splitLine: {
-                        lineStyle: {
-                            width: 2,
-                        }
-                    },
                     axisLabel: {
                         textStyle: {
                             fontSize: 14
@@ -59,16 +49,6 @@
                     axisLine: {
                         lineStyle: {
                             color: '#fff'
-                        }
-                    },
-                    axisTick: {
-                        lineStyle: {
-                            width: 3
-                        }
-                    },
-                    splitLine: {
-                        lineStyle: {
-                            width: 2,
                         }
                     },
                     axisLabel: {
@@ -109,6 +89,7 @@
                 series: [{
                     type: 'bar3D',
                     data: data,
+                    bevel: true,
                     shading: 'lambert'
                 }]
             });
