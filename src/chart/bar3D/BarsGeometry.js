@@ -132,23 +132,23 @@ var BarsGeometry = StaticGeometry.extend(function () {
             vec3.negate(ny, py);
             vec3.negate(nz, pz);
 
-            v3ScaleAndAdd(pts[0], start, px, size[0]);
-            v3ScaleAndAdd(pts[0], pts[0], pz, size[1]);
-            v3ScaleAndAdd(pts[1], start, px, size[0]);
-            v3ScaleAndAdd(pts[1], pts[1], nz, size[1]);
-            v3ScaleAndAdd(pts[2], start, nx, size[0]);
-            v3ScaleAndAdd(pts[2], pts[2], nz, size[1]);
-            v3ScaleAndAdd(pts[3], start, nx, size[0]);
-            v3ScaleAndAdd(pts[3], pts[3], pz, size[1]);
+            v3ScaleAndAdd(pts[0], start, px, size[0] / 2);
+            v3ScaleAndAdd(pts[0], pts[0], pz, size[1] / 2);
+            v3ScaleAndAdd(pts[1], start, px, size[0] / 2);
+            v3ScaleAndAdd(pts[1], pts[1], nz, size[1] / 2);
+            v3ScaleAndAdd(pts[2], start, nx, size[0] / 2);
+            v3ScaleAndAdd(pts[2], pts[2], nz, size[1] / 2);
+            v3ScaleAndAdd(pts[3], start, nx, size[0] / 2);
+            v3ScaleAndAdd(pts[3], pts[3], pz, size[1] / 2);
 
-            v3ScaleAndAdd(pts[4], end, px, size[0]);
-            v3ScaleAndAdd(pts[4], pts[4], pz, size[1]);
-            v3ScaleAndAdd(pts[5], end, px, size[0]);
-            v3ScaleAndAdd(pts[5], pts[5], nz, size[1]);
-            v3ScaleAndAdd(pts[6], end, nx, size[0]);
-            v3ScaleAndAdd(pts[6], pts[6], nz, size[1]);
-            v3ScaleAndAdd(pts[7], end, nx, size[0]);
-            v3ScaleAndAdd(pts[7], pts[7], pz, size[1]);
+            v3ScaleAndAdd(pts[4], end, px, size[0] / 2);
+            v3ScaleAndAdd(pts[4], pts[4], pz, size[1] / 2);
+            v3ScaleAndAdd(pts[5], end, px, size[0] / 2);
+            v3ScaleAndAdd(pts[5], pts[5], nz, size[1] / 2);
+            v3ScaleAndAdd(pts[6], end, nx, size[0] / 2);
+            v3ScaleAndAdd(pts[6], pts[6], nz, size[1] / 2);
+            v3ScaleAndAdd(pts[7], end, nx, size[0] / 2);
+            v3ScaleAndAdd(pts[7], pts[7], pz, size[1] / 2);
 
             var attributes = this.attributes;
             if (this._enableNormal) {

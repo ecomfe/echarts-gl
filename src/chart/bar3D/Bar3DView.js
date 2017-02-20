@@ -61,14 +61,14 @@ module.exports = echarts.extendChartView({
         this.groupGL.add(this._barMeshTransparent);
 
         var coordSys = seriesModel.coordinateSystem;
-        if (coordSys.type === 'globe') {
+        if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
 
-            this._renderOnGlobe(seriesModel, api);
         }
+        this._doRender(seriesModel, api);
     },
 
-    _renderOnGlobe: function (seriesModel, api) {
+    _doRender: function (seriesModel, api) {
         var data = seriesModel.getData();
         var shading = seriesModel.get('shading');
         var enableNormal = false;
@@ -124,15 +124,12 @@ module.exports = echarts.extendChartView({
         this._barMesh.geometry.setBarCount(opaqueBarCount, enableNormal);
         this._barMeshTransparent.geometry.setBarCount(transparentBarCount, enableNormal);
 
-        var barSize = seriesModel.get('barSize');
-        if (!echarts.util.isArray(barSize)) {
-            barSize = [barSize, barSize];
-        }
+        var barSize = data.getLayout('barSize');
+        var orient = data.getLayout('orient');
         data.each(function (idx) {
             var layout = data.getItemLayout(idx);
             var start = layout[0];
             var end = layout[1];
-            var orient = graphicGL.Vector3.UP._array;
 
             var idx4 = idx * 4;
             colorArr[0] = vertexColors[idx4++];

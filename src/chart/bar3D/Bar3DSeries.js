@@ -14,7 +14,7 @@ module.exports = echarts.extendSeriesModel({
 
     defaultOption: {
 
-        coordinateSystem: 'globe',
+        coordinateSystem: 'cartesian3D',
 
         globeIndex: 0,
 
@@ -25,7 +25,10 @@ module.exports = echarts.extendSeriesModel({
         zlevel: 10,
 
         // Bar width and depth
-        barSize: [1, 1],
+        // barSize: [1, 1],
+
+        // On grid plane when coordinateSystem is cartesian3D
+        onGridPlane: 'xy',
 
         // Shading of globe
         // 'color', 'lambert'
