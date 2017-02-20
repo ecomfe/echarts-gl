@@ -1,4 +1,3 @@
-// TODO splitArea
 // TODO orthographic camera
 
 var echarts = require('echarts/lib/echarts');
@@ -403,7 +402,7 @@ module.exports = echarts.extendComponentView({
         if (axisModel.get('axisLabel.show')) {
             var axisLabelModel = axisModel.getModel('axisLabel');
             var textStyleModel = axisLabelModel.getModel('textStyle');
-            var ticksCoords = axis.getTicksCoords();
+            var labelsCoords = axis.getLabelsCoords();
             var labelColor = retrieve.firstNotNull(
                 textStyleModel.get('color'), axisModel.get('axisLine.lineStyle.color')
             );
@@ -413,11 +412,11 @@ module.exports = echarts.extendComponentView({
             var labelMargin = axisLabelModel.get('margin');
 
             var labels = axisModel.getFormattedLabels();
-            for (var i = 0; i < ticksCoords.length; i++) {
+            for (var i = 0; i < labelsCoords.length; i++) {
                 if (ifIgnoreOnTick(axis, i, intervalFunc)) {
                     continue;
                 }
-                var tickCoord = ticksCoords[i];
+                var tickCoord = labelsCoords[i];
 
                 var p = [0, 0, 0];
                 var idx = dimMap[axis.dim];

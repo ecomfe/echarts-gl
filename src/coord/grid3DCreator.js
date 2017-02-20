@@ -118,6 +118,10 @@ var grid3DCreator = {
                     dataExtents[dim][axisModel.componentIndex] || [Infinity, -Infinity], axisModel
                 );
                 axis = new Axis3D(dim, scale);
+                axis.type = axisModel.get('type');
+                var isCategory = axis.type === 'category';
+                axis.onBand = isCategory && axisModel.get('boundaryGap');
+                axis.inverse = axisModel.get('inverse');
 
                 axisModel.axis = axis;
                 axis.model = axisModel;

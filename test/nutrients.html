@@ -56,6 +56,14 @@
                     }
                 };
                 chart.setOption({
+                    visualMap: {
+                        show: false,
+                        dimension: 0,
+                        max: 100,
+                        inRange: {
+                            colorLightness: [0.3, 0.9]
+                        }
+                    },
                     xAxis3D: {
                         type: 'value',
                         axisLine: axisLine
@@ -76,7 +84,7 @@
                     series: [{
                         type: 'scatter3D',
                         data: data.map(function (item, idx) {
-                            return [item[2], item[3], item[4], idx];
+                            return [item[2], item[3], item[4], item[5], idx];
                         })
                     }]
                 });

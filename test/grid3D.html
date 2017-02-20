@@ -17,8 +17,8 @@
 
             chart.setOption({
                 xAxis3D: {
-                    type: 'value',
-                    // splitNumber: 10,
+                    type: 'category',
+                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                     axisLine: {
                         lineStyle: {
                             width: 5,
@@ -41,12 +41,11 @@
                         textStyle: {
                             fontSize: 14
                         }
-                    },
-                    min: 0, max: 100
+                    }
                 },
                 yAxis3D: {
-                    type: 'value',
-                    // splitNumber: 10,
+                    type: 'category',
+                    data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
                     axisLine: {
                         lineStyle: {
                             width: 5,
@@ -69,8 +68,7 @@
                         textStyle: {
                             fontSize: 14
                         }
-                    },
-                    min: 0, max: 100
+                    }
                 },
                 zAxis3D: {
                     type: 'value',
