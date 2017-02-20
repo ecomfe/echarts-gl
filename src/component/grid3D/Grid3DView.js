@@ -246,10 +246,10 @@ module.exports = echarts.extendComponentView({
         var faces = this._faces;
         // Notice: in cartesian up axis is z, but in webgl up axis is y.
         var xAxisZOffset = (faces[4].node.invisible ? -size[2] : size[2]) / 2;
-        var xAxisYOffset = (faces[2].node.invisible ? size[2] : -size[2]) / 2;
-        var yAxisXOffset = (faces[0].node.invisible ? -size[2] : size[2]) / 2;
-        var yAxisYOffset = (faces[2].node.invisible ? size[2] : -size[2]) / 2;
-        var zAxisXOffset = (faces[0].node.invisible ? size[2] : -size[2]) / 2;
+        var xAxisYOffset = (faces[2].node.invisible ? size[1] : -size[1]) / 2;
+        var yAxisXOffset = (faces[0].node.invisible ? -size[0] : size[0]) / 2;
+        var yAxisYOffset = (faces[2].node.invisible ? size[1] : -size[1]) / 2;
+        var zAxisXOffset = (faces[0].node.invisible ? size[0] : -size[0]) / 2;
         var zAxisZOffset = (faces[4].node.invisible ? -size[2] : size[2]) / 2;
 
         xAxisNode.rotation.identity();
@@ -492,7 +492,7 @@ module.exports = echarts.extendComponentView({
 
         axes.forEach(function (axis, idx) {
             var axisModel = axis.model;
-            var extent = axis.getExtent();
+            var otherExtent = axes[1 - idx].getExtent();
 
             if (axis.scale.isBlank()) {
                 return;
@@ -523,8 +523,8 @@ module.exports = echarts.extendComponentView({
                     var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
                     // 0 - x, 1 - y
                     p0[idx] = p1[idx] = tickCoord;
-                    p0[1 - idx] = extent[0];
-                    p1[1 - idx] = extent[1];
+                    p0[1 - idx] = otherExtent[0];
+                    p1[1 - idx] = otherExtent[1];
 
                     geometry.addLine(p0, p1, lineColor, lineWidth);
 

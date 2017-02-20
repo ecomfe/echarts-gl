@@ -44,14 +44,14 @@ function cartesian3DLayout(seriesModel, coordSys) {
         var xAxis = coordSys.getAxis('x');
         var yAxis = coordSys.getAxis('y');
         if (xAxis.type === 'category') {
-            barWidth = xAxis.getBandWidth() * 0.6;
+            barWidth = xAxis.getBandWidth() * 0.7;
         }
         else {
             // PENDING
             barWidth = Math.round(size[0] / Math.sqrt(data.count())) * 0.6;
         }
         if (yAxis.type === 'category') {
-            barDepth = yAxis.getBandWidth() * 0.6;
+            barDepth = yAxis.getBandWidth() * 0.7;
         }
         else {
             barDepth = Math.round(size[1] / Math.sqrt(data.count())) * 0.6;
