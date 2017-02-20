@@ -24,8 +24,10 @@ module.exports = echarts.extendSeriesModel({
 
         zlevel: 10,
 
-        // If has bevel
-        bevel: false,
+        // bevelSize, 0 has no bevel
+        bevelSize: 0,
+        // higher is smoother
+        bevelSmoothness: 2,
 
         // Bar width and depth
         // barSize: [1, 1],

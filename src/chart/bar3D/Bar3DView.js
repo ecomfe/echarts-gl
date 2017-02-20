@@ -95,16 +95,13 @@ module.exports = echarts.extendChartView({
         this._barMeshTransparent.geometry.resetOffset();
 
         // Bevel settings
-        var bevelSegments = 0;
-        if (seriesModel.get('bevel')) {
-            bevelSegments = 2;
-        }
+        var bevelSize = seriesModel.get('bevelSize');
+        var bevelSegments = seriesModel.get('bevelSmoothness');
         this._barMesh.geometry.bevelSegments = bevelSegments;
         this._barMeshTransparent.geometry.bevelSegments = bevelSegments;
 
-        this._barMesh.geometry.bevelSize = 1;
-        this._barMeshTransparent.bevelSize = 1;
-
+        this._barMesh.geometry.bevelSize = bevelSize;
+        this._barMeshTransparent.bevelSize = bevelSize;
 
         var transparentBarCount = 0;
         var opaqueBarCount = 0;

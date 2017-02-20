@@ -141,7 +141,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
                 cubeFaces3.push(face);
             }
         }
-        return function (start, dir, leftDir, size, bevelSize, color) {
+        return function (start, dir, leftDir, size, color) {
 
             if (this.bevelSize > 0 && this.bevelSegments > 0) {
                 this.addBevelBar(start, dir, leftDir, size, this.bevelSize, this.bevelSegments, color);
@@ -280,7 +280,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
 
                 for (var m = 0; m <= bevelSegments; m++) {
                     for (var j = 0; j < 4; j++) {
-                        if (m === 0) {
+                        if ((m === 0 && i === 0) || (i === 1 && m === bevelSegments)) {
                             endIndices[i].push(vertexOffset);
                         }
                         for (var n = 0; n <= bevelSegments; n++) {
