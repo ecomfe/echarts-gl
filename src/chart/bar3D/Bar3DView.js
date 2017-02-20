@@ -124,12 +124,12 @@ module.exports = echarts.extendChartView({
         this._barMesh.geometry.setBarCount(opaqueBarCount, enableNormal);
         this._barMeshTransparent.geometry.setBarCount(transparentBarCount, enableNormal);
 
-        var barSize = data.getLayout('barSize');
         var orient = data.getLayout('orient');
         data.each(function (idx) {
             var layout = data.getItemLayout(idx);
             var start = layout[0];
-            var end = layout[1];
+            var dir = layout[1];
+            var size = layout[2];
 
             var idx4 = idx * 4;
             colorArr[0] = vertexColors[idx4++];
@@ -138,11 +138,11 @@ module.exports = echarts.extendChartView({
             colorArr[3] = vertexColors[idx4++];
             if (colorArr[3] < 0.99) {
                 if (colorArr[3] > 0) {
-                    self._barMeshTransparent.geometry.addBar(start, end, orient, barSize, colorArr);
+                    self._barMeshTransparent.geometry.addBar(start, dir, orient, size, colorArr);
                 }
             }
             else {
-                self._barMesh.geometry.addBar(start, end, orient, barSize, colorArr);
+                self._barMesh.geometry.addBar(start, dir, orient, size, colorArr);
             }
         });
 

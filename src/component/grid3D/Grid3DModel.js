@@ -23,13 +23,13 @@ var Grid3DModel = echarts.extendComponentModel({
 
         light: {
             main: {
-                position: [1, 1, 1],
+                position: [0.6, 0.6, 1],
                 color: '#fff',
                 intensity: 1.0
             },
             ambient: {
                 color: '#fff',
-                intensity: 0.1
+                intensity: 0.4
             }
         },
 

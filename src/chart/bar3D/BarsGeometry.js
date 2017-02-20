@@ -77,6 +77,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
         var v3Create = vec3.create;
         var v3ScaleAndAdd = vec3.scaleAndAdd;
 
+        var end = v3Create();
         var px = v3Create();
         var py = v3Create();
         var pz = v3Create();
@@ -118,11 +119,11 @@ var BarsGeometry = StaticGeometry.extend(function () {
                 cubeFaces3.push(face);
             }
         }
-        return function (start, end, orient, size, color) {
-            vec3.sub(py, end, start);
+        return function (start, dir, leftDir, size, color) {
+            vec3.copy(py, dir);
             vec3.normalize(py, py);
             // x * y => z
-            vec3.cross(pz, orient, py);
+            vec3.cross(pz, leftDir, py);
             vec3.normalize(pz, pz);
             // y * z => x
             vec3.cross(px, py, pz);
@@ -133,22 +134,24 @@ var BarsGeometry = StaticGeometry.extend(function () {
             vec3.negate(nz, pz);
 
             v3ScaleAndAdd(pts[0], start, px, size[0] / 2);
-            v3ScaleAndAdd(pts[0], pts[0], pz, size[1] / 2);
+            v3ScaleAndAdd(pts[0], pts[0], pz, size[2] / 2);
             v3ScaleAndAdd(pts[1], start, px, size[0] / 2);
-            v3ScaleAndAdd(pts[1], pts[1], nz, size[1] / 2);
+            v3ScaleAndAdd(pts[1], pts[1], nz, size[2] / 2);
             v3ScaleAndAdd(pts[2], start, nx, size[0] / 2);
-            v3ScaleAndAdd(pts[2], pts[2], nz, size[1] / 2);
+            v3ScaleAndAdd(pts[2], pts[2], nz, size[2] / 2);
             v3ScaleAndAdd(pts[3], start, nx, size[0] / 2);
-            v3ScaleAndAdd(pts[3], pts[3], pz, size[1] / 2);
+            v3ScaleAndAdd(pts[3], pts[3], pz, size[2] / 2);
+
+            v3ScaleAndAdd(end, start, py, size[1]);
 
             v3ScaleAndAdd(pts[4], end, px, size[0] / 2);
-            v3ScaleAndAdd(pts[4], pts[4], pz, size[1] / 2);
+            v3ScaleAndAdd(pts[4], pts[4], pz, size[2] / 2);
             v3ScaleAndAdd(pts[5], end, px, size[0] / 2);
-            v3ScaleAndAdd(pts[5], pts[5], nz, size[1] / 2);
+            v3ScaleAndAdd(pts[5], pts[5], nz, size[2] / 2);
             v3ScaleAndAdd(pts[6], end, nx, size[0] / 2);
-            v3ScaleAndAdd(pts[6], pts[6], nz, size[1] / 2);
+            v3ScaleAndAdd(pts[6], pts[6], nz, size[2] / 2);
             v3ScaleAndAdd(pts[7], end, nx, size[0] / 2);
-            v3ScaleAndAdd(pts[7], pts[7], pz, size[1] / 2);
+            v3ScaleAndAdd(pts[7], pts[7], pz, size[2] / 2);
 
             var attributes = this.attributes;
             if (this._enableNormal) {

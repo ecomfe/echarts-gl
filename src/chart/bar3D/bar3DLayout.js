@@ -1,18 +1,12 @@
 var echarts = require('echarts/lib/echarts');
 var Vector3 = require('qtek/lib/math/Vector3');
+var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
 function globeLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var extent = data.getDataExtent('z', true);
     var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
     var isZeroExtent = Math.abs(extent[1] - extent[0]) < 1e-10;
-    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
-        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, extent, heightExtent);
-        var start = coordSys.dataToPoint([lng, lat, 0]);
-        var end = coordSys.dataToPoint([lng, lat, height]);
-        data.setItemLayout(idx, [start, end]);
-    });
-
     var barSize = seriesModel.get('barSize');
     if (barSize == null) {
         var perimeter = coordSys.radius * Math.PI * 2;
@@ -25,7 +19,14 @@ function globeLayout(seriesModel, coordSys) {
     else if (!echarts.util.isArray(barSize)) {
         barSize = [barSize, barSize];
     }
-    data.setLayout('barSize', barSize);
+    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
+        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, extent, heightExtent);
+        var start = coordSys.dataToPoint([lng, lat, 0]);
+        var end = coordSys.dataToPoint([lng, lat, height]);
+        var dir = vec3.sub([], end, start);
+        var size = [barSize[0], height, barSize[1]];
+        data.setItemLayout(idx, [start, dir, size]);
+    });
 
     data.setLayout('orient', Vector3.UP._array);
 }
@@ -34,14 +35,6 @@ function cartesian3DLayout(seriesModel, coordSys) {
 
     var data = seriesModel.getData();
     var barOnPlane = seriesModel.get('onGridPlane');
-    data.each(['x', 'y', 'z'], function (x, y, z, idx) {
-        // TODO On the face or on the zero barOnPlane
-        // TODO zAxis is inversed
-        // TODO On different plane.
-        var start = coordSys.dataToPoint([x, y, 0]);
-        var end = coordSys.dataToPoint([x, y, z]);
-        data.setItemLayout(idx, [start, end]);
-    });
 
     var barSize = seriesModel.get('barSize');
     if (barSize == null) {
@@ -69,7 +62,18 @@ function cartesian3DLayout(seriesModel, coordSys) {
         barSize = [barSize, barSize];
     }
 
-    data.setLayout('barSize', barSize);
+    var dir = [0, 1, 0];
+    data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+        // TODO On the face or on the zero barOnPlane
+        // TODO zAxis is inversed
+        // TODO On different plane.
+        var start = coordSys.dataToPoint([x, y, 0]);
+        var end = coordSys.dataToPoint([x, y, z]);
+        var size = [barSize[0], vec3.dist(start, end), barSize[1]];
+        data.setItemLayout(idx, [start, dir, size]);
+    });
+
+
     data.setLayout('orient', [1, 0, 0]);
 }
 
