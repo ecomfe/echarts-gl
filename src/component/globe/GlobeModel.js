@@ -120,6 +120,10 @@ var GlobeModel = echarts.extendComponentModel({
             bloom: {
                 enable: true,
                 intensity: 0.1
+            },
+
+            FXAA: {
+                enable: true
             }
         },
         // Temporal super sampling when the picture is still.

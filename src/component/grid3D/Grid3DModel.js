@@ -39,6 +39,11 @@ var Grid3DModel = echarts.extendComponentModel({
             bloom: {
                 enable: true,
                 intensity: 0.1
+            },
+
+            FXAA: {
+                // Enable fxaa will cause grid label blurry
+                enable: false
             }
         },
         // Temporal super sampling when the picture is still.
