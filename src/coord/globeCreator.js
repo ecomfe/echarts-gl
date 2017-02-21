@@ -13,7 +13,7 @@ function resizeGlobe(globeModel, api) {
         height: api.getHeight()
     });
 
-    this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+    this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 
     this.radius = globeModel.get('globeRadius');
 }

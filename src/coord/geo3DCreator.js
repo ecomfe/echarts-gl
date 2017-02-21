@@ -12,7 +12,7 @@ function resizeGeo3D(geo3DModel, api) {
         height: api.getHeight()
     });
 
-    this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+    this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 }
 
 var geo3DCreator = {

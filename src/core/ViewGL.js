@@ -66,18 +66,21 @@ ViewGL.prototype.setCameraType = function (cameraType) {
  * @param {number} y Viewport left bottom y
  * @param {number} width Viewport height
  * @param {number} height Viewport height
+ * @param {number} [dpr=1]
  */
-ViewGL.prototype.setViewport = function (x, y, width, height) {
+ViewGL.prototype.setViewport = function (x, y, width, height, dpr) {
     if (this.camera instanceof PerspectiveCamera) {
         this.camera.aspect = width / height;
     }
+    dpr = dpr || 1;
 
     this.viewport.x = x;
     this.viewport.y = y;
     this.viewport.width = width;
     this.viewport.height = height;
+    this.viewport.devicePixelRatio = dpr;
 
-    this._compositor.resize(width, height);
+    this._compositor.resize(width * dpr, height * dpr);
 };
 
 /**
@@ -114,6 +117,10 @@ ViewGL.prototype.dispose = function (renderer) {
  */
 ViewGL.prototype.setPostEffect = function (postEffectModel) {
     this._enablePostEffect = postEffectModel.get('enable');
+};
+
+ViewGL.prototype.isLinearSpace = function () {
+    return this._enablePostEffect;
 };
 
 // Proxies

@@ -120,7 +120,12 @@ void main()
     gl_FragColor = vec4(color, alpha);
 
 #ifdef VERTEX_COLOR
+    // PENDING
+    #ifdef SRGB_DECODE
+    gl_FragColor *= sRGBToLinear(v_Color);
+    #else
     gl_FragColor *= v_Color;
+    #endif
 #endif
 
     vec4 albedoTexel = vec4(1.0);

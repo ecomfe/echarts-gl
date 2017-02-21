@@ -61,11 +61,16 @@ module.exports = echarts.extendChartView({
         this.groupGL.add(this._barMeshTransparent);
 
         var coordSys = seriesModel.coordinateSystem;
+        this._doRender(seriesModel, api);
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
 
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            this._barMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            this._barMeshTransparent.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
-        this._doRender(seriesModel, api);
+
+
     },
 
     _doRender: function (seriesModel, api) {

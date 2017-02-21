@@ -24,7 +24,7 @@ echarts.extendChartView({
     render: function (seriesModel, ecModel, api) {
         this.groupGL.add(this._pointsMesh);
 
-        this._updateCamera(api.getWidth(), api.getHeight());
+        this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
 
         this._pointsMesh.updateData(seriesModel, ecModel, api);
     },
@@ -33,8 +33,8 @@ echarts.extendChartView({
         this._pointsMesh.updateLayout(seriesModel, ecModel, api);
     },
 
-    _updateCamera: function (width, height) {
-        this.viewGL.setViewport(0, 0, width, height);
+    _updateCamera: function (width, height, dpr) {
+        this.viewGL.setViewport(0, 0, width, height, dpr);
         var camera = this.viewGL.camera;
         camera.left = camera.top = 0;
         camera.bottom = height;

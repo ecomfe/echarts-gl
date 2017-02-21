@@ -33,6 +33,15 @@ var Grid3DModel = echarts.extendComponentModel({
             }
         },
 
+        postEffect: {
+            enable: false,
+
+            bloom: {
+                enable: true,
+                intensity: 0.1
+            }
+        },
+
         viewControl: {
 
             // perspective, orthographic

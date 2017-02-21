@@ -206,6 +206,10 @@ module.exports = echarts.extendComponentView({
         control.on('update', this._onCameraChange, this);
 
         this._updateLight(grid3DModel, api);
+
+
+        // Set post effect
+        cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
     },
 
     _onCameraChange: function () {
