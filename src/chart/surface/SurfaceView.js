@@ -1,5 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
+var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
 graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
 graphicGL.Shader.import(require('text!../../util/shader/lambert.glsl'));
@@ -19,6 +20,7 @@ echarts.extendChartView({
             shader: graphicGL.createShader('ecgl.albedo')
         });
         lambertMaterial.shader.define('both', 'VERTEX_COLOR');
+        albedoMaterial.shader.define('both', 'VERTEX_COLOR');
 
         this._lambertMaterial = lambertMaterial;
         this._albedoMaterial = albedoMaterial;
@@ -57,8 +59,14 @@ echarts.extendChartView({
         var geometry = this._surfaceMesh.geometry;
 
         var isParametric = seriesModel.get('parametric');
+
         var dataShape = this._getDataShape(data, isParametric);
 
+        this._updateGeometry(geometry, seriesModel, dataShape);
+    },
+
+    _updateGeometry: function (geometry, seriesModel, dataShape) {
+        var data = seriesModel.getData();
         var points = data.getLayout('points');
         var offset = 0;
         var positionAttr = geometry.attributes.position;
@@ -88,8 +96,27 @@ echarts.extendChartView({
         }
         geometry.initFacesFromArray(faces);
 
-        if (shading === 'lambert') {
+        if (seriesModel.get('shading') === 'lambert') {
             geometry.generateVertexNormals();
+            // Flip inside normals
+            // PENDING better algorithm ?
+
+            geometry.updateBoundingBox();
+            var bbox = geometry.boundingBox;
+            var center = new graphicGL.Vector3();
+            center.add(bbox.min).add(bbox.max).scale(0.5);
+            center = center._array;
+            var normal = [];
+            var pos = [];
+            for (var i = 0; i < geometry.vertexCount; i++) {
+                normalAttr.get(i, normal);
+                positionAttr.get(i, pos);
+                vec3.sub(pos, pos, center);
+                if (vec3.dot(normal, pos) < 0) {
+                    vec3.negate(normal, normal);
+                    normalAttr.set(i, normal);
+                }
+            }
         }
     },
 

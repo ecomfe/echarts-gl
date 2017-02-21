@@ -24,18 +24,14 @@ echarts.extendSeriesModel({
                 var xOpts = surfaceEquation.x || {};
                 var yOpts = surfaceEquation.y || {};
 
-                if (!validateDimension(xOpts)) {
-                    if (__DEV__) {
-                        console.error('Invalid surfaceEquation.x');
+                ['x', 'y'].forEach(function (dim) {
+                    if (!validateDimension(surfaceEquation[dim])) {
+                        if (__DEV__) {
+                            console.error('Invalid surfaceEquation.%s', dim);
+                        }
+                        return;
                     }
-                    return;
-                }
-                if (!validateDimension(yOpts)) {
-                    if (__DEV__) {
-                        console.error('Invalid surfaceEquation.y');
-                    }
-                    return;
-                }
+                });
                 if (typeof surfaceEquation.z !== 'function') {
                     if (__DEV__) {
                         console.error('surfaceEquation.z needs to be function');
@@ -55,31 +51,29 @@ echarts.extendSeriesModel({
                 var uOpts = parametricSurfaceEquation.u || {};
                 var vOpts = parametricSurfaceEquation.v || {};
 
-                if (!validateDimension(uOpts)) {
-                    if (__DEV__) {
-                        console.error('Invalid parametricSurfaceEquation.u');
+                ['u', 'v'].forEach(function (dim) {
+                    if (!validateDimension(parametricSurfaceEquation[dim])) {
+                        if (__DEV__) {
+                            console.error('Invalid parametricSurfaceEquation.%s', dim);
+                        }
+                        return;
                     }
-                    return;
-                }
-                if (!validateDimension(vOpts)) {
-                    if (__DEV__) {
-                        console.error('Invalid parametricSurfaceEquation.v');
+                });
+                ['x', 'y', 'z'].forEach(function (dim) {
+                    if (typeof parametricSurfaceEquation[dim] !== 'function') {
+                        if (__DEV__) {
+                            console.error('parametricSurfaceEquation.%s needs to be function', dim);
+                        }
+                        return;
                     }
-                    return;
-                }
-                if (typeof parametricSurfaceEquation.f !== 'function') {
-                    if (__DEV__) {
-                        console.error('parametricSurfaceEquation.f needs to be function');
-                    }
-                    return;
-                }
+                });
 
                 for (var v = vOpts.min; v <= vOpts.max; v += vOpts.step) {
                     for (var u = uOpts.min; u <= uOpts.max; u += uOpts.step) {
-                        var pt = parametricSurfaceEquation.f(u, v);
-                        pt.push(u);
-                        pt.push(v);
-                        data.push(pt);
+                        var x = parametricSurfaceEquation.x(u, v);
+                        var y = parametricSurfaceEquation.y(u, v);
+                        var z = parametricSurfaceEquation.z(u, v);
+                        data.push([x, y, z, u, v]);
                     }
                 }
             }
@@ -141,7 +135,9 @@ echarts.extendSeriesModel({
                 step: 0.1
             },
             // [x, y, z] = f(x, y)
-            f: null
+            x: null,
+            y: null,
+            z: null
         },
 
         areaStyle: {
