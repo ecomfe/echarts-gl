@@ -236,8 +236,9 @@ module.exports = echarts.extendComponentView({
         function makeAction() {
             return {
                 type: 'globeUpdateCamera',
-                position: camera.position.toArray(),
-                quaternion: camera.rotation.toArray(),
+                alpha: control.getAlpha(),
+                beta: control.getBeta(),
+                distance: control.getDistance() - coordSys.radius,
                 from: this.uid,
                 globeId: globeModel.id
             };
@@ -247,7 +248,6 @@ module.exports = echarts.extendComponentView({
         var control = this._control;
         control.setCamera(camera);
 
-        control.setDistance(coordSys.radius * 4);
         control.setFromViewControlModel(viewControlModel, coordSys.radius);
 
         control.off('update');

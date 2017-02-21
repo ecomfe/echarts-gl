@@ -13,6 +13,6 @@ echarts.registerAction({
     ecModel.eachComponent({
         mainType: 'globe', query: payload
     }, function (componentModel) {
-        componentModel.setView(payload.position, payload.quaternion);
+        componentModel.setView(payload);
     });
 });

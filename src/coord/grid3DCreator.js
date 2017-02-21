@@ -28,7 +28,8 @@ function resizeCartesian3D(grid3DModel, api) {
         }, this);
     }
     this.getAxis('x').setExtent(-boxWidth / 2, boxWidth / 2);
-    this.getAxis('y').setExtent(-boxDepth / 2, boxDepth / 2);
+    // From near to far
+    this.getAxis('y').setExtent(boxDepth / 2, -boxDepth / 2);
     this.getAxis('z').setExtent(-boxHeight / 2, boxHeight / 2);
 
     this.size = [boxWidth, boxHeight, boxDepth];

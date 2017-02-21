@@ -151,9 +151,12 @@ var GlobeModel = echarts.extendComponentModel({
             // Max distance to the surface of globe
             maxDistance: 400,
 
-            // Position and quaternion of camera, override all other properties
-            position: null,
-            quaternion: null
+            // Alpha angle for top-down rotation
+            // Positive to rotate to top.
+            alpha: 0,
+            // beta angle for left-right rotation
+            // Positive to rotate to right.
+            beta: 0
         },
 
         // {
@@ -173,9 +176,18 @@ var GlobeModel = echarts.extendComponentModel({
         layers: []
     },
 
-    setView: function (position, quaternion) {
-        this.option.viewControl.position = position;
-        this.option.viewControl.quaternion = quaternion;
+    setView: function (opts) {
+        opts = opts || {};
+        this.option.viewControl = this.option.viewControl || {};
+        if (opts.alpha != null) {
+            this.option.viewControl.alpha = opts.alpha;
+        }
+        if (opts.beta != null) {
+            this.option.viewControl.beta = opts.beta;
+        }
+        if (opts.distance != null) {
+            this.option.viewControl.distance = opts.distance;
+        }
     }
 });
 

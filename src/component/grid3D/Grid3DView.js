@@ -203,19 +203,29 @@ module.exports = echarts.extendComponentView({
             this._renderAxisLine(axisInfo, axis, grid3DModel, api);
         }, this);
 
-        control.on('update', this._onCameraChange, this);
+        control.off('update');
+        control.on('update', this._onCameraChange.bind(this, grid3DModel, api), this);
 
         this._updateLight(grid3DModel, api);
-
 
         // Set post effect
         cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
         cartesian.viewGL.setTemporalSuperSampling(grid3DModel.getModel('temporalSuperSampling'));
     },
 
-    _onCameraChange: function () {
+    _onCameraChange: function (grid3DModel, api) {
         this._updateFaceVisibility();
         this._updateAxisLinePosition();
+        var control = this._control;
+
+        api.dispatchAction({
+            type: 'grid3DUpdateCamera',
+            alpha: control.getAlpha(),
+            beta: control.getBeta(),
+            distance: control.getDistance(),
+            from: this.uid,
+            grid3DId: grid3DModel.id
+        });
     },
 
     _updateFaceVisibility: function () {
