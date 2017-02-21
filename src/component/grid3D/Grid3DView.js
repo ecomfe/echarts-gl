@@ -565,7 +565,10 @@ module.exports = echarts.extendComponentView({
         mainLight.color = graphicGL.parseColor(mainLightModel.get('color')).slice(0, 3);
         ambientLight.color = graphicGL.parseColor(ambientLightModel.get('color')).slice(0, 3);
 
-        mainLight.position.setArray(mainLightModel.get('position'));
+        var alpha = mainLightModel.get('alpha') || 0;
+        var beta = mainLightModel.get('beta') || 0;
+        console.log(graphicGL.directionFromAlphaBeta(alpha, beta));
+        mainLight.position.setArray(graphicGL.directionFromAlphaBeta(alpha, beta));
         mainLight.lookAt(graphicGL.Vector3.ZERO);
     },
 

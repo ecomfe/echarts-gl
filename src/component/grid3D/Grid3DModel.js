@@ -23,7 +23,13 @@ var Grid3DModel = echarts.extendComponentModel({
 
         light: {
             main: {
-                position: [0.6, 0.6, 1],
+                // Alpha angle for top-down rotation
+                // Positive to rotate to top.
+                alpha: 30,
+                // beta angle for left-right rotation
+                // Positive to rotate to right.
+                beta: 40,
+
                 color: '#fff',
                 intensity: 1.0
             },
