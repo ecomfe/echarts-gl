@@ -131,7 +131,7 @@ var OrbitControl = Base.extend(function () {
      * Which means camera rotation around x axis.
      */
     getAlpha: function () {
-        return -this._theta;
+        return this._theta / Math.PI * 180;
     },
 
     /**
@@ -141,7 +141,7 @@ var OrbitControl = Base.extend(function () {
      * Which means camera rotation around y axis.
      */
     getBeta: function () {
-        return -this._phi;
+        return -this._phi / Math.PI * 180;
     },
 
     /**
@@ -149,7 +149,7 @@ var OrbitControl = Base.extend(function () {
      * @param {number} alpha
      */
     setAlpha: function (alpha) {
-        this._theta = -alpha;
+        this._theta = alpha / 180 * Math.PI;
         this._needsUpdate = true;
     },
 
@@ -158,7 +158,7 @@ var OrbitControl = Base.extend(function () {
      * @param {number} beta
      */
     setBeta: function (beta) {
-        this._phi = -beta;
+        this._phi = -beta / 180 * Math.PI;
         this._needsUpdate = true;
     },
 

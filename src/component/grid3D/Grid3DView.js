@@ -371,6 +371,7 @@ module.exports = echarts.extendComponentView({
         var axisModel = axis.model;
         var extent = axis.getExtent();
 
+        var dpr = api.getDevicePixelRatio();
         // Render axisLine
         if (axisModel.get('axisLine.show')) {
             var axisLineStyleModel = axisModel.getModel('axisLine.lineStyle');
@@ -386,7 +387,7 @@ module.exports = echarts.extendComponentView({
             var lineWidth = retrieve.firstNotNull(axisLineStyleModel.get('width'), 1.0);
             var opacity = retrieve.firstNotNull(axisLineStyleModel.get('opacity'), 1.0);
             color[3] *= opacity;
-            linesGeo.addLine(p0, p1, color, lineWidth);
+            linesGeo.addLine(p0, p1, color, lineWidth * dpr);
         }
         var otherDim = {
             x: 'y', y: 'x', z: 'y'
@@ -418,7 +419,7 @@ module.exports = echarts.extendComponentView({
                 p0[idx] = p1[idx] = tickCoord;
                 p1[otherIdx] = tickLength;
 
-                linesGeo.addLine(p0, p1, lineColor, lineWidth);
+                linesGeo.addLine(p0, p1, lineColor, lineWidth * dpr);
             }
         }
 
@@ -505,6 +506,7 @@ module.exports = echarts.extendComponentView({
 
     _renderSplitLines: function (geometry, axes, grid3DModel, api) {
 
+        var dpr = api.getDevicePixelRatio();
         axes.forEach(function (axis, idx) {
             var axisModel = axis.model;
             var otherExtent = axes[1 - idx].getExtent();
@@ -541,7 +543,7 @@ module.exports = echarts.extendComponentView({
                     p0[1 - idx] = otherExtent[0];
                     p1[1 - idx] = otherExtent[1];
 
-                    geometry.addLine(p0, p1, lineColor, lineWidth);
+                    geometry.addLine(p0, p1, lineColor, lineWidth * dpr);
 
                     count++;
                 }

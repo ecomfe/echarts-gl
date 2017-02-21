@@ -64,7 +64,7 @@ var Grid3DModel = echarts.extendComponentModel({
             autoRotateAfterStill: 3,
 
             // Distance to the surface of globe.
-            distance: 150,
+            distance: 200,
 
             // Min distance to the surface of globe
             minDistance: 40,
@@ -73,10 +73,10 @@ var Grid3DModel = echarts.extendComponentModel({
 
             // Alpha angle for top-down rotation
             // Positive to rotate to top.
-            alpha: 0,
+            alpha: 30,
             // beta angle for left-right rotation
             // Positive to rotate to right.
-            beta: 0
+            beta: 30
         }
     },
 
