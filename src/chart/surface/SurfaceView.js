@@ -101,20 +101,34 @@ echarts.extendChartView({
             // Flip inside normals
             // PENDING better algorithm ?
 
-            geometry.updateBoundingBox();
-            var bbox = geometry.boundingBox;
-            var center = new graphicGL.Vector3();
-            center.add(bbox.min).add(bbox.max).scale(0.5);
-            center = center._array;
+            var isParametric = seriesModel.get('parametric');
+            var center = [0, 0, 0];
+            if (isParametric) {
+                center = new graphicGL.Vector3();
+                geometry.updateBoundingBox();
+                var bbox = geometry.boundingBox;
+                center.add(bbox.min).add(bbox.max).scale(0.5);
+                center = center._array;
+            }
             var normal = [];
             var pos = [];
+            var up = [0, 1, 0];
             for (var i = 0; i < geometry.vertexCount; i++) {
                 normalAttr.get(i, normal);
-                positionAttr.get(i, pos);
-                vec3.sub(pos, pos, center);
-                if (vec3.dot(normal, pos) < 0) {
-                    vec3.negate(normal, normal);
-                    normalAttr.set(i, normal);
+                if (isParametric) {
+                    positionAttr.get(i, pos);
+                    vec3.sub(pos, pos, center);
+                    if (vec3.dot(normal, pos) < 0) {
+                        vec3.negate(normal, normal);
+                        normalAttr.set(i, normal);
+                    }
+                }
+                else {
+                    // Always face up
+                    if (vec3.dot(normal, up) < 0) {
+                        vec3.negate(normal, normal);
+                        normalAttr.set(i, normal);
+                    }
                 }
             }
         }
