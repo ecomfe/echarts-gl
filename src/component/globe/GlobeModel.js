@@ -122,6 +122,10 @@ var GlobeModel = echarts.extendComponentModel({
                 intensity: 0.1
             }
         },
+        // Temporal super sampling when the picture is still.
+        temporalSuperSampling: {
+            enable: false
+        },
 
         // Configuration abount view control
         viewControl: {

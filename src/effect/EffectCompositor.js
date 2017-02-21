@@ -49,8 +49,12 @@ EffectCompositor.prototype.getSourceFrameBuffer = function () {
     return this._framebuffer;
 };
 
-EffectCompositor.prototype.composite = function (renderer) {
-    this._compositor.render(renderer);
+EffectCompositor.prototype.disableFXAA = function () {
+
+};
+
+EffectCompositor.prototype.composite = function (renderer, framebuffer) {
+    this._compositor.render(renderer, framebuffer);
 };
 
 EffectCompositor.prototype.dispose = function (gl) {

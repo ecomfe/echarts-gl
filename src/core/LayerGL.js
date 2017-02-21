@@ -234,7 +234,6 @@ LayerGL.prototype.refresh = function () {
     this._viewsToDispose.length = 0;
 };
 
-
 function getId(resource) {
     return resource.__GUID__;
 }

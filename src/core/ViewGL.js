@@ -8,6 +8,11 @@ var PerspectiveCamera = require('qtek/lib/camera/Perspective');
 var OrthographicCamera = require('qtek/lib/camera/Orthographic');
 
 var EffectCompositor = require('../effect/EffectCompositor');
+var TemporalSuperSampling = require('../effect/TemporalSuperSampling');
+
+var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
+
+var accumulatingId = 1;
 /**
  * @constructor
  * @alias module:echarts-gl/core/ViewGL
@@ -33,6 +38,19 @@ function ViewGL(cameraType) {
     this.setCameraType(cameraType);
 
     this._compositor = new EffectCompositor();
+
+    this._temporalSS = new TemporalSuperSampling();
+
+    /**
+     * Current accumulating id.
+     */
+    this._accumulatingId = 0;
+
+    this.scene.on('beforerender', function (renderer, scene, camera) {
+        if (this._enableTemporalSS) {
+            this._temporalSS.jitterProjection(renderer, camera);
+        }
+    }, this);
 }
 
 /**
@@ -81,6 +99,7 @@ ViewGL.prototype.setViewport = function (x, y, width, height, dpr) {
     this.viewport.devicePixelRatio = dpr;
 
     this._compositor.resize(width * dpr, height * dpr);
+    this._temporalSS.resize(width * dpr, height * dpr);
 };
 
 /**
@@ -93,6 +112,46 @@ ViewGL.prototype.containPoint = function (x, y) {
 };
 
 ViewGL.prototype.render = function (renderer) {
+    this._stopAccumulating(renderer);
+
+    this._doRender(renderer);
+
+    if (this._enableTemporalSS) {
+        this._startAccumulating(renderer);
+    }
+};
+
+ViewGL.prototype._stopAccumulating = function () {
+    this._accumulatingId = 0;
+    this._temporalSS.resetFrame();
+};
+
+ViewGL.prototype._startAccumulating = function (renderer) {
+    var self = this;
+
+    this._temporalSS.resetFrame();
+
+    this._accumulatingId = accumulatingId++;
+
+    function accumulate(id) {
+        if (!self._accumulatingId || id !== self._accumulatingId) {
+            return;
+        }
+        if (!self._temporalSS.isFinished()) {
+            self._doRender(renderer);
+            requestAnimationFrame(function () {
+                accumulate(id);
+            });
+        }
+    }
+
+    requestAnimationFrame(function () {
+        accumulate(self._accumulatingId);
+    });
+};
+
+ViewGL.prototype._doRender = function (renderer) {
+
     if (this._enablePostEffect) {
         var frameBuffer = this._compositor.getSourceFrameBuffer();
         frameBuffer.bind(renderer);
@@ -100,23 +159,47 @@ ViewGL.prototype.render = function (renderer) {
         renderer.render(this.scene, this.camera);
         frameBuffer.unbind(renderer);
 
-        renderer.setViewport(this.viewport);
-        this._compositor.composite(renderer);
+        if (this._enableTemporalSS && this._accumulatingId > 0) {
+            this._compositor.composite(renderer, this._temporalSS.getSourceFrameBuffer());
+            renderer.setViewport(this.viewport);
+            this._temporalSS.render(renderer);
+        }
+        else {
+            renderer.setViewport(this.viewport);
+            this._compositor.composite(renderer);
+        }
     }
     else {
-        renderer.setViewport(this.viewport);
-        renderer.render(this.scene, this.camera);
+        if (this._enableTemporalSS && this._accumulatingId > 0) {
+            var frameBuffer = this._temporalSS.getSourceFrameBuffer();
+            frameBuffer.bind(renderer);
+            renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
+            renderer.render(this.scene, this.camera);
+            frameBuffer.unbind(renderer);
+
+            renderer.setViewport(this.viewport);
+            this._temporalSS.render(renderer);
+        }
+        else {
+            renderer.setViewport(this.viewport);
+            renderer.render(this.scene, this.camera);
+        }
     }
-};
+}
 
 ViewGL.prototype.dispose = function (renderer) {
     this._compositor.dispose(renderer.gl);
+    this._temporalSS.dispose(renderer.gl);
 };
 /**
  * @param {module:echarts/Model} Post effect model
  */
 ViewGL.prototype.setPostEffect = function (postEffectModel) {
     this._enablePostEffect = postEffectModel.get('enable');
+};
+
+ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {
+    this._enableTemporalSS = temporalSuperSamplingModel.get('enable');
 };
 
 ViewGL.prototype.isLinearSpace = function () {

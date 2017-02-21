@@ -210,6 +210,7 @@ module.exports = echarts.extendComponentView({
 
         // Set post effect
         cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
+        cartesian.viewGL.setTemporalSuperSampling(grid3DModel.getModel('temporalSuperSampling'));
     },
 
     _onCameraChange: function () {

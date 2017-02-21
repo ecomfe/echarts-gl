@@ -94,6 +94,7 @@ module.exports = echarts.extendComponentView({
 
         // Set post effect
         coordSys.viewGL.setPostEffect(globeModel.getModel('postEffect'));
+        coordSys.viewGL.setTemporalSuperSampling(globeModel.getModel('temporalSuperSampling'));
 
         var earthMesh = this._earthMesh;
 
