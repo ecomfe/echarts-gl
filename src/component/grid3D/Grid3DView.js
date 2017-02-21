@@ -567,7 +567,6 @@ module.exports = echarts.extendComponentView({
 
         var alpha = mainLightModel.get('alpha') || 0;
         var beta = mainLightModel.get('beta') || 0;
-        console.log(graphicGL.directionFromAlphaBeta(alpha, beta));
         mainLight.position.setArray(graphicGL.directionFromAlphaBeta(alpha, beta));
         mainLight.lookAt(graphicGL.Vector3.ZERO);
     },

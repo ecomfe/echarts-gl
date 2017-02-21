@@ -2,81 +2,97 @@ var echarts = require('echarts/lib/echarts');
 
 echarts.extendSeriesModel({
 
-    type: 'series.scatter3D',
+    type: 'series.surface',
 
     dependencies: ['globe', 'grid3D', 'geo3D'],
 
-    // Row count and column count of data.
-    rowCount: 0,
-
-    columnCount: 0,
+    visualColorAccessPath: 'areaStyle.normal.color',
 
     getInitialData: function (option, ecModel) {
         var data = option.data;
-        if (!data) {
-            data = [];
-            // From surface equation
-            var surfaceEquation = option.surfaceEquation || {};
-            var xOpts = surfaceEquation.x || {};
-            var yOpts = surfaceEquation.y || {};
 
-            if (isNaN(xOpts.min) || isNaN(xOpts.max) || isNaN(xOpts.step)) {
-                if (__DEV__) {
-                    console.error('Invalid surfaceEquation.x');
-                }
-                return;
-            }
-            if (isNaN(yOpts.min) || isNaN(yOpts.max) || isNaN(yOpts.step)) {
-                if (__DEV__) {
-                    console.error('Invalid surfaceEquation.y');
-                }
-                return;
-            }
-            if (typeof surfaceEquation.z !== 'function') {
-                if (__DEV__) {
-                    console.error('surfaceEquation.z needs to be function');
-                }
-                return;
-            }
-
-            for (var y = 0; y <= yOpts.max; y += yOpts.step) {
-                for (var x = 0; x <= xOpts.max; x += xOpts.step) {
-                    var z = surfaceEquation.z(x, y);
-                    data.push([x, y, z]);
-                }
-            }
+        function validateDimension(dimOpts) {
+            return !(isNaN(dimOpts.min) || isNaN(dimOpts.max) || isNaN(dimOpts.step));
         }
 
-        // Check row and column
+        if (!data) {
+            data = [];
 
-        var list = new echarts.List(['x', 'y', 'z'], this);
-        list.initData(option.data);
+            if (!option.parametric) {
+                // From surface equation
+                var surfaceEquation = option.surfaceEquation || {};
+                var xOpts = surfaceEquation.x || {};
+                var yOpts = surfaceEquation.y || {};
 
-        var prevX = -Infinity;
-        var rowCount = 0;
-        var columnCount = 0;
-        var prevRowCount = 0;
-        // Check data format
-        for (var i = 0; i < list.count(); i++) {
-            var x = list.get('x', i);
-            if (x < prevX) {
-                if (prevRowCount !== rowCount) {
+                if (!validateDimension(xOpts)) {
                     if (__DEV__) {
-                        console.error('Invalid data. data should be a row major 2d array.')
+                        console.error('Invalid surfaceEquation.x');
                     }
                     return;
                 }
-                // A new row.
-                prevRowCount = rowCount;
-                rowCount = 0;
-                columnCount++;
+                if (!validateDimension(yOpts)) {
+                    if (__DEV__) {
+                        console.error('Invalid surfaceEquation.y');
+                    }
+                    return;
+                }
+                if (typeof surfaceEquation.z !== 'function') {
+                    if (__DEV__) {
+                        console.error('surfaceEquation.z needs to be function');
+                    }
+                    return;
+                }
+
+                for (var y = yOpts.min; y <= yOpts.max; y += yOpts.step) {
+                    for (var x = xOpts.min; x <= xOpts.max; x += xOpts.step) {
+                        var z = surfaceEquation.z(x, y);
+                        data.push([x, y, z]);
+                    }
+                }
             }
-            prevX = x;
-            rowCount++;
+            else {
+                var parametricSurfaceEquation = option.parametricSurfaceEquation || {};
+                var uOpts = parametricSurfaceEquation.u || {};
+                var vOpts = parametricSurfaceEquation.v || {};
+
+                if (!validateDimension(uOpts)) {
+                    if (__DEV__) {
+                        console.error('Invalid parametricSurfaceEquation.u');
+                    }
+                    return;
+                }
+                if (!validateDimension(vOpts)) {
+                    if (__DEV__) {
+                        console.error('Invalid parametricSurfaceEquation.v');
+                    }
+                    return;
+                }
+                if (typeof parametricSurfaceEquation.f !== 'function') {
+                    if (__DEV__) {
+                        console.error('parametricSurfaceEquation.f needs to be function');
+                    }
+                    return;
+                }
+
+                for (var v = vOpts.min; v <= vOpts.max; v += vOpts.step) {
+                    for (var u = uOpts.min; u <= uOpts.max; u += uOpts.step) {
+                        var pt = parametricSurfaceEquation.f(u, v);
+                        pt.push(u);
+                        pt.push(v);
+                        data.push(pt);
+                    }
+                }
+            }
         }
 
-        this.rowCount = rowCount;
-        this.columnCount = columnCount;
+        var dims = ['x', 'y', 'z'];
+        if (option.parametric) {
+            dims.push('u', 'v');
+        }
+        // Check row and column
+
+        var list = new echarts.List(dims, this);
+        list.initData(data);
 
         return list;
     },
