@@ -13,6 +13,12 @@ var EChartsSurface = require('./EChartsSurface');
 var animatableMixin = require('./animatableMixin');
 echarts.util.extend(Node3D.prototype, animatableMixin);
 
+// Some common shaders
+Shader.import(require('qtek/lib/shader/source/util.essl'));
+Shader.import(require('text!./shader/albedo.glsl'));
+Shader.import(require('text!./shader/lambert.glsl'));
+Shader.import(require('text!./shader/realastic.glsl'));
+
 function isValueNone(value) {
     return !value || value === 'none';
 }

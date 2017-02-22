@@ -5,10 +5,6 @@ var OrbitControl = require('../../util/OrbitControl');
 
 var sunCalc = require('../../util/sunCalc');
 
-
-graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
-graphicGL.Shader.import(require('text!../../util/shader/lambert.glsl'));
-
 module.exports = echarts.extendComponentView({
 
     type: 'globe',
@@ -18,23 +14,15 @@ module.exports = echarts.extendComponentView({
     init: function (ecModel, api) {
         this.groupGL = new graphicGL.Node();
 
-        /**
-         * @type {qtek.Shader}
-         * @private
-         */
-        var lambertShader = graphicGL.createShader('ecgl.lambert');
-        this._lambertMaterial = new graphicGL.Material({
-            shader: lambertShader
+        var materials = {};
+        ['lambert', 'albedo', 'realastic'].forEach(function (shading) {
+            materials[shading] = new graphicGL.Material({
+                shader: graphicGL.createShader('ecgl.' + shading)
+            });
+            materials[shading].shader.define('both', 'VERTEX_COLOR');
         });
 
-        /**
-         * @type {qtek.Shader}
-         * @private
-         */
-        var albedoShader = graphicGL.createShader('ecgl.albedo');
-        this._albedoMaterial = new graphicGL.Material({
-            shader: albedoShader
-        });
+        this._materials = materials;
 
         /**
          * @type {qtek.geometry.Sphere}
@@ -100,15 +88,14 @@ module.exports = echarts.extendComponentView({
 
         earthMesh.geometry = this._sphereGeometry;
 
-        if (shading === 'color') {
-            earthMesh.material = this._albedoMaterial;
-        }
-        else if (shading === 'lambert') {
-            earthMesh.material = this._lambertMaterial;
+        if (this._materials[shading]) {
+            earthMesh.material = this._materials[shading];
         }
         else {
-            console.warn('Unkonw shading ' + shading);
-            earthMesh.material = this._albedoMaterial;
+            if (__DEV__) {
+                console.warn('Unkonw shading ' + shading);
+            }
+            this._surfaceMesh.material = this._materials.lambert;
         }
 
         earthMesh.scale.set(coordSys.radius, coordSys.radius, coordSys.radius);

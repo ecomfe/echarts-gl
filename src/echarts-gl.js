@@ -166,7 +166,5 @@ echarts.registerPostUpdate(function (ecModel, api) {
 });
 
 var Shader = require('qtek/lib/Shader');
-// Some common shaders
-Shader['import'](require('qtek/lib/shader/source/util.essl'));
 
 module.exports = EChartsGL;

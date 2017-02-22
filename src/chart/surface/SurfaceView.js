@@ -2,9 +2,6 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
-graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
-graphicGL.Shader.import(require('text!../../util/shader/lambert.glsl'));
-
 echarts.extendChartView({
 
     type: 'surface',
@@ -13,20 +10,19 @@ echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
 
-        var lambertMaterial = new graphicGL.Material({
-            shader: graphicGL.createShader('ecgl.lambert')
+        var materials = {};
+        ['lambert', 'albedo', 'realastic'].forEach(function (shading) {
+            materials[shading] = new graphicGL.Material({
+                shader: graphicGL.createShader('ecgl.' + shading)
+            });
+            materials[shading].shader.define('both', 'VERTEX_COLOR');
         });
-        var albedoMaterial = new graphicGL.Material({
-            shader: graphicGL.createShader('ecgl.albedo')
-        });
-        lambertMaterial.shader.define('both', 'VERTEX_COLOR');
-        albedoMaterial.shader.define('both', 'VERTEX_COLOR');
 
-        this._lambertMaterial = lambertMaterial;
-        this._albedoMaterial = albedoMaterial;
+        this._materials = materials;
+
         var mesh = new graphicGL.Mesh({
             geometry: new graphicGL.Geometry(),
-            material: lambertMaterial,
+            material: materials.lambert,
             culling: false
         });
 
@@ -43,17 +39,14 @@ echarts.extendChartView({
         var shading = seriesModel.get('shading');
         var data = seriesModel.getData();
 
-        if (shading === 'albedo') {
-            this._surfaceMesh.material = this._albedoMaterial;
-        }
-        else if (shading === 'lambert') {
-            this._surfaceMesh.material = this._lambertMaterial;
+        if (this._materials[shading]) {
+            this._surfaceMesh.material = this._materials[shading];
         }
         else {
             if (__DEV__) {
                 console.error('Unkown shading %s', shading);
             }
-            this._surfaceMesh.material = this._lambertMaterial;
+            this._surfaceMesh.material = this._materials.lambert;
         }
 
         var geometry = this._surfaceMesh.geometry;

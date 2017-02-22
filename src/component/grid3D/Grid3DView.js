@@ -9,9 +9,6 @@ var retrieve = require('../../util/retrieve');
 var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
 var LabelsMesh = require('../../util/mesh/LabelsMesh');
 
-graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
-graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
-
 var dims = ['x', 'y', 'z'];
 
 dims.forEach(function (dim) {

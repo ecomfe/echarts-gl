@@ -155,11 +155,8 @@ void main()
 
 #ifdef BUMPMAP_ENABLED
     N = perturbNormalArb(v_WorldPosition, v_Normal, N);
-    #ifdef FLAT
-        ambientFactor = dot(P, N);
-    #else
-        ambientFactor = dot(v_Normal, N);
-    #endif
+    // PENDING
+    ambientFactor = dot(v_Normal, N);
 #endif
 
 vec3 diffuseColor = vec3(0.0, 0.0, 0.0);

@@ -1,7 +1,3 @@
-/**
- * http://en.wikipedia.org/wiki/Lambertian_reflectance
- */
-
 @export ecgl.realastic.vertex
 
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
@@ -48,11 +44,6 @@ void main()
 #define LAYER_EMISSIVEMAP_COUNT 0
 #define PI 3.14159265358979
 
-varying vec2 v_Texcoord;
-
-varying vec3 v_Normal;
-varying vec3 v_WorldPosition;
-
 #ifdef DIFFUSEMAP_ENABLED
 uniform sampler2D diffuseMap;
 #endif
@@ -64,6 +55,8 @@ uniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];
 #if (LAYER_EMISSIVEMAP_COUNT > 0)
 uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
 #endif
+
+uniform float emissionIntensity: 1.0;
 
 #ifdef BUMPMAP_ENABLED
 uniform sampler2D bumpMap;
@@ -100,9 +93,23 @@ vec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)
 uniform vec3 color : [1.0, 1.0, 1.0];
 uniform float alpha : 1.0;
 
+uniform float metalness : 0.0;
+uniform float roughness : 0.5;
+
+uniform mat4 viewInverse : VIEWINVERSE;
+
 #ifdef AMBIENT_LIGHT_COUNT
 @import qtek.header.ambient_light
 #endif
+
+#ifdef AMBIENT_SH_LIGHT_COUNT
+@import qtek.header.ambient_sh_light
+#endif
+
+#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT
+@import qtek.header.ambient_cubemap_light
+#endif
+
 #ifdef DIRECTIONAL_LIGHT_COUNT
 @import qtek.header.directional_light
 #endif
@@ -111,81 +118,165 @@ uniform float alpha : 1.0;
 varying vec4 v_Color;
 #endif
 
+varying vec2 v_Texcoord;
+
+varying vec3 v_Normal;
+varying vec3 v_WorldPosition;
+
+@import qtek.util.srgb
+
+@import qtek.util.rgbm
+
+float G_Smith(float g, float ndv, float ndl)
+{
+    // float k = (roughness+1.0) * (roughness+1.0) * 0.125;
+    float roughness = 1.0 - g;
+    float k = roughness * roughness / 2.0;
+    float G1V = ndv / (ndv * (1.0 - k) + k);
+    float G1L = ndl / (ndl * (1.0 - k) + k);
+    return G1L * G1V;
+}
+// Fresnel
+vec3 F_Schlick(float ndv, vec3 spec) {
+    return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);
+}
+
+float D_Phong(float g, float ndh) {
+    // from black ops 2
+    float a = pow(8192.0, g);
+    return (a + 2.0) / 8.0 * pow(ndh, a);
+}
+
+float D_GGX(float g, float ndh) {
+    float r = 1.0 - g;
+    float a = r * r;
+    float tmp = ndh * ndh * (a - 1.0) + 1.0;
+    return a / (PI * tmp * tmp);
+}
+
 void main()
 {
-    gl_FragColor = vec4(color, alpha);
 
+    vec4 albedoColor = vec4(color, alpha);
+
+    vec3 eyePos = viewInverse[3].xyz;
+    vec3 V = normalize(eyePos - v_WorldPosition);
 #ifdef VERTEX_COLOR
-    gl_FragColor *= v_Color;
+    // PENDING
+    #ifdef SRGB_DECODE
+    albedoColor *= sRGBToLinear(v_Color);
+    #else
+    albedoColor *= v_Color;
+    #endif
 #endif
 
     vec4 albedoTexel = vec4(1.0);
 #ifdef DIFFUSEMAP_ENABLED
     albedoTexel = texture2D(diffuseMap, v_Texcoord);
+    #ifdef SRGB_DECODE
+    albedoTexel = sRGBToLinear(albedoTexel);
+    #endif
 #endif
 
 #if (LAYER_DIFFUSEMAP_COUNT > 0)
     for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{
         vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);
+        #ifdef SRGB_DECODE
+        texel2 = sRGBToLinear(texel2);
+        #endif
         // source-over blend
         albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);
         albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;
     }}
 #endif
-    gl_FragColor *= albedoTexel;
+    albedoColor *= albedoTexel;
+
+    vec3 baseColor = albedoColor.rgb;
+    albedoColor.rgb = baseColor * (1.0 - metalness);
+    vec3 specFactor = mix(vec3(0.04), baseColor, m);
+
+    float g = 1.0 - roughness;
 
     vec3 N = v_Normal;
-    vec3 P = v_WorldPosition;
     float ambientFactor = 1.0;
 
 #ifdef BUMPMAP_ENABLED
     N = perturbNormalArb(v_WorldPosition, v_Normal, N);
-    #ifdef FLAT
-        ambientFactor = dot(P, N);
-    #else
-        ambientFactor = dot(v_Normal, N);
-    #endif
+    // PENDING
+    ambientFactor = dot(v_Normal, N);
 #endif
 
-vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
+vec3 diffuseTerm = vec3(0.0);
+vec3 specularTerm = vec3(0.0);
+
+    float ndv = clamp(dot(N, V), 0.0, 1.0);
+    vec3 fresnelTerm = F_Schlick(ndv, specFactor);
 
 #ifdef AMBIENT_LIGHT_COUNT
-    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)
-    {
+    for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)
+    {{
         // Multiply a dot factor to make sure the bump detail can be seen
         // in the dark side
-        diffuseColor += ambientLightColor[i] * ambientFactor;
-    }
-#endif
-#ifdef DIRECTIONAL_LIGHT_COUNT
-    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)
-    {
-        vec3 lightDirection = -directionalLightDirection[i];
-        vec3 lightColor = directionalLightColor[i];
-
-        float ndl = dot(N, normalize(lightDirection));
-
-        float shadowContrib = 1.0;
-        #if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)
-            if(shadowEnabled)
-            {
-                shadowContrib = shadowContribs[i];
-            }
-        #endif
-
-        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0) * shadowContrib;
-    }
-#endif
-
-    gl_FragColor.rgb *= diffuseColor;
-
-#if (LAYER_EMISSIVEMAP_COUNT > 0)
-    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
-        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);
-        gl_FragColor.rgb += texel2.rgb;
+        diffuseTerm += ambientLightColor[_idx_] * ambientFactor;
     }}
 #endif
 
+#ifdef AMBIENT_SH_LIGHT_COUNT
+    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)
+    {{
+        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];
+    }}
+#endif
+
+#ifdef DIRECTIONAL_LIGHT_COUNT
+    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)
+    {
+        vec3 L = -directionalLightDirection[i];
+        vec3 lc = directionalLightColor[i];
+
+        vec3 H = normalize(L + V);
+        float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);
+        float ndh = clamp(dot(N, H), 0.0, 1.0);
+
+        vec3 li = lc * ndl;
+
+        diffuseTerm += li;
+        specularTerm += li * fresnelTerm * D_Phong(g, ndh);
+    }
+#endif
+
+
+#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT
+    vec3 L = reflect(-V, N);
+    float rough2 = clamp(1.0 - g, 0.0, 1.0);
+    // FIXME fixed maxMipmapLevel ?
+    float bias2 = rough2 * 5.0;
+    // One brdf lookup is enough
+    vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;
+    vec3 envWeight2 = spec * brdfParam2.x + brdfParam2.y;
+    vec3 envTexel2;
+    for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)
+    {{
+        envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);
+        // TODO mix ?
+        specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2;
+    }}
+#endif
+
+    gl_FragColor.rgb *= diffuseTerm;
+    gl_FragColor.rgb += specularTerm;
+
+    #ifdef SRGB_ENCODE
+    gl_FragColor = linearTosRGB(gl_FragColor);
+    #endif
+
+#if (LAYER_EMISSIVEMAP_COUNT > 0)
+    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
+        // PENDING sRGB ?
+        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * emissionIntensity;
+        gl_FragColor.rgb += texel2.rgb;
+    }}
+#endif
 }
 
 @end

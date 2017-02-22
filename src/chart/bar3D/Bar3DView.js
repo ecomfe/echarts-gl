@@ -2,9 +2,6 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
 
-graphicGL.Shader.import(require('text!../../util/shader/albedo.glsl'));
-graphicGL.Shader.import(require('text!../../util/shader/lambert.glsl'));
-
 function getShader(shading) {
     var shader = graphicGL.createShader('ecgl.' + shading);
     shader.define('both', 'VERTEX_COLOR');

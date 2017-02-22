@@ -56,15 +56,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	__webpack_require__(1);
 
-	__webpack_require__(36);
-	__webpack_require__(125);
-	__webpack_require__(126);
+	__webpack_require__(35);
+	__webpack_require__(129);
+	__webpack_require__(130);
 
-	__webpack_require__(133);
-	__webpack_require__(139);
-	__webpack_require__(146);
+	__webpack_require__(136);
+	__webpack_require__(142);
+	__webpack_require__(149);
+	__webpack_require__(157);
 
-	__webpack_require__(153);
+	__webpack_require__(161);
 
 /***/ },
 /* 1 */
@@ -238,8 +239,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 	var Shader = __webpack_require__(18);
-	// Some common shaders
-	Shader['import'](__webpack_require__(35));
 
 	module.exports = EChartsGL;
 
@@ -496,7 +495,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    this._viewsToDispose.length = 0;
 	};
-
 
 	function getId(resource) {
 	    return resource.__GUID__;
@@ -3921,10 +3919,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /**
 	     * Convert rotation matrix to euler angle
 	     * from three.js
-	     * @param  {[type]} v     [description]
-	     * @param  {[type]} m     [description]
-	     * @param  {[type]} order [description]
-	     * @return {[type]}       [description]
 	     */
 	    Vector3.eulerFromMat3 = function (out, m, order) {
 	        // assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
@@ -15934,7 +15928,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this.useFace && (this.faces != null);
 	        },
 
-	        initFaceFromArray: function (array) {
+	        initFacesFromArray: function (array) {
 	            var value;
 	            var ArrayConstructor = this.vertexCount > 0xffff
 	                ? vendor.Uint32Array : vendor.Uint16Array;
@@ -16100,7 +16094,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            if (!normals || normals.length !== positions.length) {
 	                normals = attributes.normal.value = new vendor.Float32Array(positions.length);
-	            } else {
+	            }
+	            else {
 	                // Reset
 	                for (var i = 0; i < normals.length; i++) {
 	                    normals[i] = 0;
@@ -17347,28 +17342,33 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 35 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
-	module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    const highp float a = 12.9898, b = 78.233, c = 43758.5453;\n    highp float dt = dot(uv.xy, vec2(a,b)), sn = mod(dt, 3.141592653589793);\n    return fract(sin(sn) * c);\n}\n@end\n\n@export qtek.util.calculate_attenuation\n\nuniform float attenuationFactor : 5.0;\n\nfloat lightAttenuation(float dist, float range)\n{\n    float attenuation = 1.0;\n    attenuation = dist*dist/(range*range+1.0);\n    float att_s = attenuationFactor;\n    attenuation = 1.0/(attenuation*att_s+1.0);\n    att_s = 1.0/(att_s+1.0);\n    attenuation = attenuation - att_s;\n    attenuation /= 1.0 - att_s;\n    return clamp(attenuation, 0.0, 1.0);\n}\n\n@end\n\n@export qtek.util.edge_factor\n\nfloat edgeFactor(float width)\n{\n    vec3 d = fwidth(v_Barycentric);\n    vec3 a3 = smoothstep(vec3(0.0), d * width, v_Barycentric);\n    return min(min(a3.x, a3.y), a3.z);\n}\n\n@end\n\n@export qtek.util.encode_float\nvec4 encodeFloat(const in float depth)\n{\n            \n            \n    const vec4 bitShifts = vec4(256.0*256.0*256.0, 256.0*256.0, 256.0, 1.0);\n    const vec4 bit_mask  = vec4(0.0, 1.0/256.0, 1.0/256.0, 1.0/256.0);\n    vec4 res = fract(depth * bitShifts);\n    res -= res.xxyz * bit_mask;\n\n    return res;\n}\n@end\n\n@export qtek.util.decode_float\nfloat decodeFloat(const in vec4 color)\n{\n            \n    \n    const vec4 bitShifts = vec4(1.0/(256.0*256.0*256.0), 1.0/(256.0*256.0), 1.0/256.0, 1.0);\n    return dot(color, bitShifts);\n}\n@end\n\n\n@export qtek.util.float\n@import qtek.util.encode_float\n@import qtek.util.decode_float\n@end\n\n\n\n@export qtek.util.rgbm_decode\nvec3 RGBMDecode(vec4 rgbm, float range) {\n  return range * rgbm.rgb * rgbm.a;\n    }\n@end\n\n@export qtek.util.rgbm_encode\nvec4 RGBMEncode(vec3 color, float range) {\n    if (dot(color, color) == 0.0) {\n        return vec4(0.0);\n    }\n    vec4 rgbm;\n    color /= range;\n    rgbm.a = clamp(max(max(color.r, color.g), max(color.b, 1e-6)), 0.0, 1.0);\n    rgbm.a = ceil(rgbm.a * 255.0) / 255.0;\n    rgbm.rgb = color / rgbm.a;\n    return rgbm;\n}\n@end\n\n@export qtek.util.rgbm\n@import qtek.util.rgbm_decode\n@import qtek.util.rgbm_encode\n\nvec4 decodeHDR(vec4 color)\n{\n#if defined(RGBM_DECODE) || defined(RGBM)\n    return vec4(RGBMDecode(color, 51.5), 1.0);\n#else\n    return color;\n#endif\n}\n\nvec4 encodeHDR(vec4 color)\n{\n#if defined(RGBM_ENCODE) || defined(RGBM)\n    return RGBMEncode(color.xyz, 51.5);\n#else\n    return color;\n#endif\n}\n\n@end\n\n\n@export qtek.util.srgb\n\nvec4 sRGBToLinear(in vec4 value) {\n    return vec4(mix(pow(value.rgb * 0.9478672986 + vec3(0.0521327014), vec3(2.4)), value.rgb * 0.0773993808, vec3(lessThanEqual(value.rgb, vec3(0.04045)))), value.w);\n}\n\nvec4 linearTosRGB(in vec4 value) {\n    return vec4(mix(pow(value.rgb, vec3(0.41666)) * 1.055 - vec3(0.055), value.rgb * 12.92, vec3(lessThanEqual(value.rgb, vec3(0.0031308)))), value.w);\n}\n@end\n\n\n@export qtek.chunk.skin_matrix\n\nmat4 skinMatrixWS;\nif (joint.x >= 0.0)\n{\n    skinMatrixWS = skinMatrix[int(joint.x)] * weight.x;\n}\nif (joint.y >= 0.0)\n{\n    skinMatrixWS += skinMatrix[int(joint.y)] * weight.y;\n}\nif (joint.z >= 0.0)\n{\n    skinMatrixWS += skinMatrix[int(joint.z)] * weight.z;\n}\nif (joint.w >= 0.0)\n{\n    skinMatrixWS += skinMatrix[int(joint.w)] * (1.0-weight.x-weight.y-weight.z);\n}\n@end\n\n\n\n@export qtek.util.parallax_correct\n\nvec3 parallaxCorrect(in vec3 dir, in vec3 pos, in vec3 boxMin, in vec3 boxMax) {\n            vec3 first = (boxMax - pos) / dir;\n    vec3 second = (boxMin - pos) / dir;\n\n    vec3 further = max(first, second);\n    float dist = min(further.x, min(further.y, further.z));\n\n    vec3 fixedPos = pos + dir * dist;\n    vec3 boxCenter = (boxMax + boxMin) * 0.5;\n\n    return normalize(fixedPos - boxCenter);\n}\n\n@end\n\n\n\n@export qtek.util.clamp_sample\nvec4 clampSample(const in sampler2D texture, const in vec2 coord)\n{\n#ifdef STEREO\n            float eye = step(0.5, coord.x) * 0.5;\n    vec2 coordClamped = clamp(coord, vec2(eye, 0.0), vec2(0.5 + eye, 1.0));\n#else\n    vec2 coordClamped = clamp(coord, vec2(0.0), vec2(1.0));\n#endif\n    return texture2D(texture, coordClamped);\n}\n@end";
+	__webpack_require__(36);
+	__webpack_require__(39);
+	__webpack_require__(40);
 
+	__webpack_require__(90);
+
+	var echarts = __webpack_require__(2);
+	echarts.registerAction({
+	    type: 'grid3DUpdateCamera',
+	    event: 'grid3dupdatecamera',
+	    update: 'none'
+	}, function (payload, ecModel) {
+	    ecModel.eachComponent({
+	        mainType: 'grid3D', query: payload
+	    }, function (componentModel) {
+	        componentModel.setView(payload);
+	    });
+	});
 
 /***/ },
 /* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(37);
-	__webpack_require__(40);
-	__webpack_require__(41);
-
-	__webpack_require__(89);
-
-/***/ },
-/* 37 */
-/***/ function(module, exports, __webpack_require__) {
-
 	var echarts = __webpack_require__(2);
-	var createAxis3DModel = __webpack_require__(38);
+	var createAxis3DModel = __webpack_require__(37);
 
 	var Axis3DModel = echarts.extendComponentModel({
 
@@ -17421,11 +17421,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 38 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var axisDefault = __webpack_require__(39);
+	var axisDefault = __webpack_require__(38);
 
 	var AXIS_TYPES = ['value', 'category', 'time', 'log'];
 	/**
@@ -17468,7 +17468,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 39 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -17585,7 +17585,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // 脱离0值比例，放大聚焦到最终_min，_max区间
 	    // scale: false,
 	    // 分割段数，默认为5
-	    splitNumber: 5
+	    splitNumber: 4
 	    // Minimum interval
 	    // minInterval: null
 	}, defaultOption);
@@ -17609,7 +17609,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 40 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -17637,7 +17637,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        light: {
 	            main: {
-	                position: [0.6, 0.6, 1],
+	                // Alpha angle for top-down rotation
+	                // Positive to rotate to top.
+	                alpha: 30,
+	                // beta angle for left-right rotation
+	                // Positive to rotate to right.
+	                beta: 40,
+
 	                color: '#fff',
 	                intensity: 1.0
 	            },
@@ -17645,6 +17651,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	                color: '#fff',
 	                intensity: 0.4
 	            }
+	        },
+
+	        postEffect: {
+	            enable: false,
+
+	            bloom: {
+	                enable: true,
+	                intensity: 0.1
+	            },
+
+	            FXAA: {
+	                // Enable fxaa will cause grid label blurry
+	                enable: false
+	            }
+	        },
+	        // Temporal super sampling when the picture is still.
+	        temporalSuperSampling: {
+	            enable: false
 	        },
 
 	        viewControl: {
@@ -17660,16 +17684,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	            autoRotateAfterStill: 3,
 
 	            // Distance to the surface of globe.
-	            distance: 150,
+	            distance: 200,
 
 	            // Min distance to the surface of globe
 	            minDistance: 40,
 	            // Max distance to the surface of globe
 	            maxDistance: 400,
 
-	            // Position and quaternion of camera, override all other properties
-	            position: null,
-	            quaternion: null
+	            // Alpha angle for top-down rotation
+	            // Positive to rotate to top.
+	            alpha: 30,
+	            // beta angle for left-right rotation
+	            // Positive to rotate to right.
+	            beta: 30
+	        }
+	    },
+
+	    setView: function (opts) {
+	        opts = opts || {};
+	        this.option.viewControl = this.option.viewControl || {};
+	        if (opts.alpha != null) {
+	            this.option.viewControl.alpha = opts.alpha;
+	        }
+	        if (opts.beta != null) {
+	            this.option.viewControl.beta = opts.beta;
+	        }
+	        if (opts.distance != null) {
+	            this.option.viewControl.distance = opts.distance;
 	        }
 	    }
 	});
@@ -17679,22 +17720,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 41 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// TODO orthographic camera
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(42);
-	var OrbitControl = __webpack_require__(78);
-	var Lines3DGeometry = __webpack_require__(79);
-	var PlanesGeometry = __webpack_require__(81);
-	var retrieve = __webpack_require__(82);
-	var ZRTextureAtlasSurface = __webpack_require__(83);
-	var LabelsMesh = __webpack_require__(84);
-
-	graphicGL.Shader.import(__webpack_require__(87));
-	graphicGL.Shader.import(__webpack_require__(88));
+	var graphicGL = __webpack_require__(41);
+	var OrbitControl = __webpack_require__(81);
+	var Lines3DGeometry = __webpack_require__(82);
+	var PlanesGeometry = __webpack_require__(84);
+	var retrieve = __webpack_require__(85);
+	var ZRTextureAtlasSurface = __webpack_require__(86);
+	var LabelsMesh = __webpack_require__(87);
 
 	var dims = ['x', 'y', 'z'];
 
@@ -17887,14 +17925,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._renderAxisLine(axisInfo, axis, grid3DModel, api);
 	        }, this);
 
-	        control.on('update', this._onCameraChange, this);
+	        control.off('update');
+	        control.on('update', this._onCameraChange.bind(this, grid3DModel, api), this);
 
 	        this._updateLight(grid3DModel, api);
+
+	        // Set post effect
+	        cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
+	        cartesian.viewGL.setTemporalSuperSampling(grid3DModel.getModel('temporalSuperSampling'));
 	    },
 
-	    _onCameraChange: function () {
+	    _onCameraChange: function (grid3DModel, api) {
 	        this._updateFaceVisibility();
 	        this._updateAxisLinePosition();
+	        var control = this._control;
+
+	        api.dispatchAction({
+	            type: 'grid3DUpdateCamera',
+	            alpha: control.getAlpha(),
+	            beta: control.getBeta(),
+	            distance: control.getDistance(),
+	            from: this.uid,
+	            grid3DId: grid3DModel.id
+	        });
 	    },
 
 	    _updateFaceVisibility: function () {
@@ -18040,6 +18093,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var axisModel = axis.model;
 	        var extent = axis.getExtent();
 
+	        var dpr = api.getDevicePixelRatio();
 	        // Render axisLine
 	        if (axisModel.get('axisLine.show')) {
 	            var axisLineStyleModel = axisModel.getModel('axisLine.lineStyle');
@@ -18055,7 +18109,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var lineWidth = retrieve.firstNotNull(axisLineStyleModel.get('width'), 1.0);
 	            var opacity = retrieve.firstNotNull(axisLineStyleModel.get('opacity'), 1.0);
 	            color[3] *= opacity;
-	            linesGeo.addLine(p0, p1, color, lineWidth);
+	            linesGeo.addLine(p0, p1, color, lineWidth * dpr);
 	        }
 	        var otherDim = {
 	            x: 'y', y: 'x', z: 'y'
@@ -18087,7 +18141,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                p0[idx] = p1[idx] = tickCoord;
 	                p1[otherIdx] = tickLength;
 
-	                linesGeo.addLine(p0, p1, lineColor, lineWidth);
+	                linesGeo.addLine(p0, p1, lineColor, lineWidth * dpr);
 	            }
 	        }
 
@@ -18174,6 +18228,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    _renderSplitLines: function (geometry, axes, grid3DModel, api) {
 
+	        var dpr = api.getDevicePixelRatio();
 	        axes.forEach(function (axis, idx) {
 	            var axisModel = axis.model;
 	            var otherExtent = axes[1 - idx].getExtent();
@@ -18210,7 +18265,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    p0[1 - idx] = otherExtent[0];
 	                    p1[1 - idx] = otherExtent[1];
 
-	                    geometry.addLine(p0, p1, lineColor, lineWidth);
+	                    geometry.addLine(p0, p1, lineColor, lineWidth * dpr);
 
 	                    count++;
 	                }
@@ -18232,7 +18287,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        mainLight.color = graphicGL.parseColor(mainLightModel.get('color')).slice(0, 3);
 	        ambientLight.color = graphicGL.parseColor(ambientLightModel.get('color')).slice(0, 3);
 
-	        mainLight.position.setArray(mainLightModel.get('position'));
+	        var alpha = mainLightModel.get('alpha') || 0;
+	        var beta = mainLightModel.get('beta') || 0;
+	        mainLight.position.setArray(graphicGL.directionFromAlphaBeta(alpha, beta));
 	        mainLight.lookAt(graphicGL.Vector3.ZERO);
 	    },
 
@@ -18242,23 +18299,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 42 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Mesh = __webpack_require__(43);
-	var Texture2D = __webpack_require__(44);
+	var Mesh = __webpack_require__(42);
+	var Texture2D = __webpack_require__(43);
 	var Shader = __webpack_require__(18);
 	var Material = __webpack_require__(20);
 	var Node3D = __webpack_require__(28);
 	var StaticGeometry = __webpack_require__(32);
 	var echarts = __webpack_require__(2);
-	var Scene = __webpack_require__(46);
-	var LRUCache = __webpack_require__(48);
-	var textureUtil = __webpack_require__(49);
-	var EChartsSurface = __webpack_require__(62);
+	var Scene = __webpack_require__(45);
+	var LRUCache = __webpack_require__(47);
+	var textureUtil = __webpack_require__(48);
+	var EChartsSurface = __webpack_require__(61);
 
-	var animatableMixin = __webpack_require__(63);
+	var animatableMixin = __webpack_require__(62);
 	echarts.util.extend(Node3D.prototype, animatableMixin);
+
+	// Some common shaders
+	Shader.import(__webpack_require__(67));
+	Shader.import(__webpack_require__(68));
+	Shader.import(__webpack_require__(69));
+	Shader.import(__webpack_require__(70));
 
 	function isValueNone(value) {
 	    return !value || value === 'none';
@@ -18369,34 +18432,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Geometries
 	graphicGL.Geometry = StaticGeometry;
 
-	graphicGL.SphereGeometry = __webpack_require__(59);
+	graphicGL.SphereGeometry = __webpack_require__(58);
 
-	graphicGL.PlaneGeometry = __webpack_require__(68);
+	graphicGL.PlaneGeometry = __webpack_require__(71);
 
-	graphicGL.CubeGeometry = __webpack_require__(69);
+	graphicGL.CubeGeometry = __webpack_require__(72);
 
 	// Lights
-	graphicGL.AmbientLight = __webpack_require__(70);
-	graphicGL.DirectionalLight = __webpack_require__(71);
-	graphicGL.PointLight = __webpack_require__(72);
-	graphicGL.SpotLight = __webpack_require__(73);
+	graphicGL.AmbientLight = __webpack_require__(73);
+	graphicGL.DirectionalLight = __webpack_require__(74);
+	graphicGL.PointLight = __webpack_require__(75);
+	graphicGL.SpotLight = __webpack_require__(76);
 
 	// Math
 	graphicGL.Vector2 = __webpack_require__(22);
 	graphicGL.Vector3 = __webpack_require__(14);
-	graphicGL.Vector4 = __webpack_require__(74);
+	graphicGL.Vector4 = __webpack_require__(77);
 
 	graphicGL.Quaternion = __webpack_require__(29);
 
-	graphicGL.Matrix2 = __webpack_require__(75);
-	graphicGL.Matrix2d = __webpack_require__(76);
-	graphicGL.Matrix3 = __webpack_require__(77);
+	graphicGL.Matrix2 = __webpack_require__(78);
+	graphicGL.Matrix2d = __webpack_require__(79);
+	graphicGL.Matrix3 = __webpack_require__(80);
 	graphicGL.Matrix4 = __webpack_require__(16);
 
-	graphicGL.Plane = __webpack_require__(56);
+	graphicGL.Plane = __webpack_require__(55);
 	graphicGL.Ray = __webpack_require__(26);
 	graphicGL.BoundingBox = __webpack_require__(13);
-	graphicGL.Frustum = __webpack_require__(55);
+	graphicGL.Frustum = __webpack_require__(54);
 
 	// Texture utilities
 
@@ -18539,10 +18602,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return rgba;
 	};
 
+	/**
+	 * Convert alpha beta rotation to direction.
+	 * @param {number} alpha
+	 * @param {number} beta
+	 * @return {Array.<number>}
+	 */
+	graphicGL.directionFromAlphaBeta = function (alpha, beta) {
+	    var theta = alpha / 180 * Math.PI + Math.PI / 2;
+	    var phi = -beta / 180 * Math.PI + Math.PI / 2;
+
+	    var dir = [];
+	    var r = Math.sin(theta);
+	    dir[0] = r * Math.cos(phi);
+	    dir[1] = -Math.cos(theta);
+	    dir[2] = r * Math.sin(phi);
+
+	    return dir;
+	};
+
 	module.exports = graphicGL;
 
 /***/ },
-/* 43 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -18605,7 +18687,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 44 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -18613,7 +18695,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var Texture = __webpack_require__(21);
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
-	    var mathUtil = __webpack_require__(45);
+	    var mathUtil = __webpack_require__(44);
 	    var isPowerOfTwo = mathUtil.isPowerOfTwo;
 
 	    /**
@@ -18796,7 +18878,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 45 */
+/* 44 */
 /***/ function(module, exports) {
 
 	
@@ -18827,14 +18909,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 46 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Node = __webpack_require__(28);
-	    var Light = __webpack_require__(47);
+	    var Light = __webpack_require__(46);
 	    var BoundingBox = __webpack_require__(13);
 
 	    /**
@@ -19180,7 +19262,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 47 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -19256,7 +19338,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 48 */
+/* 47 */
 /***/ function(module, exports) {
 
 	// Simple LRU cache use doubly linked list
@@ -19450,21 +19532,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 49 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Texture2D = __webpack_require__(44);
-	    var TextureCube = __webpack_require__(50);
-	    var request = __webpack_require__(51);
-	    var EnvironmentMapPass = __webpack_require__(52);
-	    var Skydome = __webpack_require__(58);
-	    var Scene = __webpack_require__(46);
+	    var Texture2D = __webpack_require__(43);
+	    var TextureCube = __webpack_require__(49);
+	    var Texture = __webpack_require__(21);
+	    var request = __webpack_require__(50);
+	    var EnvironmentMapPass = __webpack_require__(51);
+	    var Skydome = __webpack_require__(57);
+	    var Scene = __webpack_require__(45);
 
-	    var dds = __webpack_require__(60);
-	    var hdr = __webpack_require__(61);
+	    var dds = __webpack_require__(59);
+	    var hdr = __webpack_require__(60);
 
 	    /**
 	     * @namespace qtek.util.texture
@@ -19493,7 +19576,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (path.match(/.hdr$/)) {
 	                    texture = new Texture2D({
 	                        width: 0,
-	                        height: 0
+	                        height: 0,
+	                        type: Texture.HALF_FLOAT
 	                    });
 	                    textureUtil._fetchTexture(
 	                        path,
@@ -19679,7 +19763,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 50 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -19688,7 +19772,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
 	    var util = __webpack_require__(9);
-	    var mathUtil = __webpack_require__(45);
+	    var mathUtil = __webpack_require__(44);
 	    var isPowerOfTwo = mathUtil.isPowerOfTwo;
 
 	    var targetList = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
@@ -19908,7 +19992,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 51 */
+/* 50 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -19951,15 +20035,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 52 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
 	    var Base = __webpack_require__(6);
 	    var Vector3 = __webpack_require__(14);
-	    var PerspectiveCamera = __webpack_require__(53);
-	    var FrameBuffer = __webpack_require__(57);
+	    var PerspectiveCamera = __webpack_require__(52);
+	    var FrameBuffer = __webpack_require__(56);
 
 	    var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
 
@@ -20104,13 +20188,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 53 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Camera = __webpack_require__(54);
+	    var Camera = __webpack_require__(53);
 
 	    /**
 	     * @constructor qtek.camera.Perspective
@@ -20173,7 +20257,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 54 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20181,7 +20265,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var Node = __webpack_require__(28);
 	    var Matrix4 = __webpack_require__(16);
-	    var Frustum = __webpack_require__(55);
+	    var Frustum = __webpack_require__(54);
 	    var Ray = __webpack_require__(26);
 
 	    var glMatrix = __webpack_require__(15);
@@ -20304,7 +20388,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 55 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20312,7 +20396,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var Vector3 = __webpack_require__(14);
 	    var BoundingBox = __webpack_require__(13);
-	    var Plane = __webpack_require__(56);
+	    var Plane = __webpack_require__(55);
 
 	    var glMatrix = __webpack_require__(15);
 	    var vec3 = glMatrix.vec3;
@@ -20498,7 +20582,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 56 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20675,7 +20759,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 57 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20683,7 +20767,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var Base = __webpack_require__(6);
 	    var Texture = __webpack_require__(21);
-	    var TextureCube = __webpack_require__(50);
+	    var TextureCube = __webpack_require__(49);
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
 	    var Cache = __webpack_require__(19);
@@ -21077,17 +21161,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 58 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	    var Mesh = __webpack_require__(43);
-	    var SphereGeometry = __webpack_require__(59);
+	    var Mesh = __webpack_require__(42);
+	    var SphereGeometry = __webpack_require__(58);
 	    var Shader = __webpack_require__(18);
 	    var Material = __webpack_require__(20);
-
-	    var skydomeShader;
 
 	    /**
 	     * @constructor qtek.plugin.Skydome
@@ -21102,13 +21184,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    var Skydome = Mesh.extend(function () {
 
-	        if (!skydomeShader) {
-	            skydomeShader = new Shader({
-	                vertex: Shader.source('qtek.basic.vertex'),
-	                fragment: Shader.source('qtek.basic.fragment')
-	            });
-	            skydomeShader.enableTexture('diffuseMap');
-	        }
+	        var skydomeShader = new Shader({
+	            vertex: Shader.source('qtek.basic.vertex'),
+	            fragment: Shader.source('qtek.basic.fragment')
+	        });
+	        skydomeShader.enableTexture('diffuseMap');
 
 	        var material = new Material({
 	            shader: skydomeShader,
@@ -21188,7 +21268,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 59 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -21316,7 +21396,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            attributes.texcoord0.fromArray(texcoords);
 	            attributes.normal.fromArray(normals);
 
-	            this.initFaceFromArray(faces);
+	            this.initFacesFromArray(faces);
 
 
 	            this.boundingBox = new BoundingBox();
@@ -21329,15 +21409,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 60 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Texture = __webpack_require__(21);
-	    var Texture2D = __webpack_require__(44);
-	    var TextureCube = __webpack_require__(50);
+	    var Texture2D = __webpack_require__(43);
+	    var TextureCube = __webpack_require__(49);
 
 	    // http://msdn.microsoft.com/en-us/library/windows/desktop/bb943991(v=vs.85).aspx
 	    // https://github.com/toji/webgl-texture-utils/blob/master/texture-util/dds.js
@@ -21494,14 +21574,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Texture = __webpack_require__(21);
-	    var Texture2D = __webpack_require__(44);
+	    var Texture2D = __webpack_require__(43);
 	    var toChar = String.fromCharCode;
 
 	    var MINELEN = 8;
@@ -21666,6 +21746,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            texture.width = width;
 	            texture.height = height;
 	            texture.pixels = pixels;
+	            // HALF_FLOAT can't use Float32Array
 	            texture.type = Texture.FLOAT;
 	            return texture;
 	        },
@@ -21679,7 +21760,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -21690,7 +21771,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @author Yi Shen(http://github.com/pissang)
 	 */
 
-	var Texture2D = __webpack_require__(44);
+	var Texture2D = __webpack_require__(43);
 	var Vector3 = __webpack_require__(14);
 	var Vector2 = __webpack_require__(22);
 
@@ -21858,10 +21939,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = EChartsSurface;
 
 /***/ },
-/* 63 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Animator = __webpack_require__(64);
+	var Animator = __webpack_require__(63);
 
 	var animatableMixin = {
 
@@ -21956,7 +22037,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = animatableMixin;
 
 /***/ },
-/* 64 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -21964,8 +22045,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var Clip = __webpack_require__(65);
-	    var color = __webpack_require__(67);
+	    var Clip = __webpack_require__(64);
+	    var color = __webpack_require__(66);
 	    var util = __webpack_require__(34);
 	    var isArrayLike = util.isArrayLike;
 
@@ -22592,7 +22673,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 65 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -22611,7 +22692,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var easingFuncs = __webpack_require__(66);
+	    var easingFuncs = __webpack_require__(65);
 
 	    function Clip(options) {
 
@@ -22704,7 +22785,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 66 */
+/* 65 */
 /***/ function(module, exports) {
 
 	/**
@@ -23055,7 +23136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 67 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -23063,7 +23144,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var LRU = __webpack_require__(48);
+	    var LRU = __webpack_require__(47);
 
 	    var kCSSColorTable = {
 	        'transparent': [0,0,0,0], 'aliceblue': [240,248,255,1],
@@ -23587,7 +23668,33 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
+/* 67 */
+/***/ function(module, exports) {
+
+	
+	module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    const highp float a = 12.9898, b = 78.233, c = 43758.5453;\n    highp float dt = dot(uv.xy, vec2(a,b)), sn = mod(dt, 3.141592653589793);\n    return fract(sin(sn) * c);\n}\n@end\n\n@export qtek.util.calculate_attenuation\n\nuniform float attenuationFactor : 5.0;\n\nfloat lightAttenuation(float dist, float range)\n{\n    float attenuation = 1.0;\n    attenuation = dist*dist/(range*range+1.0);\n    float att_s = attenuationFactor;\n    attenuation = 1.0/(attenuation*att_s+1.0);\n    att_s = 1.0/(att_s+1.0);\n    attenuation = attenuation - att_s;\n    attenuation /= 1.0 - att_s;\n    return clamp(attenuation, 0.0, 1.0);\n}\n\n@end\n\n@export qtek.util.edge_factor\n\nfloat edgeFactor(float width)\n{\n    vec3 d = fwidth(v_Barycentric);\n    vec3 a3 = smoothstep(vec3(0.0), d * width, v_Barycentric);\n    return min(min(a3.x, a3.y), a3.z);\n}\n\n@end\n\n@export qtek.util.encode_float\nvec4 encodeFloat(const in float depth)\n{\n            \n            \n    const vec4 bitShifts = vec4(256.0*256.0*256.0, 256.0*256.0, 256.0, 1.0);\n    const vec4 bit_mask  = vec4(0.0, 1.0/256.0, 1.0/256.0, 1.0/256.0);\n    vec4 res = fract(depth * bitShifts);\n    res -= res.xxyz * bit_mask;\n\n    return res;\n}\n@end\n\n@export qtek.util.decode_float\nfloat decodeFloat(const in vec4 color)\n{\n            \n    \n    const vec4 bitShifts = vec4(1.0/(256.0*256.0*256.0), 1.0/(256.0*256.0), 1.0/256.0, 1.0);\n    return dot(color, bitShifts);\n}\n@end\n\n\n@export qtek.util.float\n@import qtek.util.encode_float\n@import qtek.util.decode_float\n@end\n\n\n\n@export qtek.util.rgbm_decode\nvec3 RGBMDecode(vec4 rgbm, float range) {\n  return range * rgbm.rgb * rgbm.a;\n    }\n@end\n\n@export qtek.util.rgbm_encode\nvec4 RGBMEncode(vec3 color, float range) {\n    if (dot(color, color) == 0.0) {\n        return vec4(0.0);\n    }\n    vec4 rgbm;\n    color /= range;\n    rgbm.a = clamp(max(max(color.r, color.g), max(color.b, 1e-6)), 0.0, 1.0);\n    rgbm.a = ceil(rgbm.a * 255.0) / 255.0;\n    rgbm.rgb = color / rgbm.a;\n    return rgbm;\n}\n@end\n\n@export qtek.util.rgbm\n@import qtek.util.rgbm_decode\n@import qtek.util.rgbm_encode\n\nvec4 decodeHDR(vec4 color)\n{\n#if defined(RGBM_DECODE) || defined(RGBM)\n    return vec4(RGBMDecode(color, 51.5), 1.0);\n#else\n    return color;\n#endif\n}\n\nvec4 encodeHDR(vec4 color)\n{\n#if defined(RGBM_ENCODE) || defined(RGBM)\n    return RGBMEncode(color.xyz, 51.5);\n#else\n    return color;\n#endif\n}\n\n@end\n\n\n@export qtek.util.srgb\n\nvec4 sRGBToLinear(in vec4 value) {\n    return vec4(mix(pow(value.rgb * 0.9478672986 + vec3(0.0521327014), vec3(2.4)), value.rgb * 0.0773993808, vec3(lessThanEqual(value.rgb, vec3(0.04045)))), value.w);\n}\n\nvec4 linearTosRGB(in vec4 value) {\n    return vec4(mix(pow(value.rgb, vec3(0.41666)) * 1.055 - vec3(0.055), value.rgb * 12.92, vec3(lessThanEqual(value.rgb, vec3(0.0031308)))), value.w);\n}\n@end\n\n\n@export qtek.chunk.skin_matrix\n\nmat4 skinMatrixWS;\nif (joint.x >= 0.0)\n{\n    skinMatrixWS = skinMatrix[int(joint.x)] * weight.x;\n}\nif (joint.y >= 0.0)\n{\n    skinMatrixWS += skinMatrix[int(joint.y)] * weight.y;\n}\nif (joint.z >= 0.0)\n{\n    skinMatrixWS += skinMatrix[int(joint.z)] * weight.z;\n}\nif (joint.w >= 0.0)\n{\n    skinMatrixWS += skinMatrix[int(joint.w)] * (1.0-weight.x-weight.y-weight.z);\n}\n@end\n\n\n\n@export qtek.util.parallax_correct\n\nvec3 parallaxCorrect(in vec3 dir, in vec3 pos, in vec3 boxMin, in vec3 boxMax) {\n            vec3 first = (boxMax - pos) / dir;\n    vec3 second = (boxMin - pos) / dir;\n\n    vec3 further = max(first, second);\n    float dist = min(further.x, min(further.y, further.z));\n\n    vec3 fixedPos = pos + dir * dist;\n    vec3 boxCenter = (boxMax + boxMin) * 0.5;\n\n    return normalize(fixedPos - boxCenter);\n}\n\n@end\n\n\n\n@export qtek.util.clamp_sample\nvec4 clampSample(const in sampler2D texture, const in vec2 coord)\n{\n#ifdef STEREO\n            float eye = step(0.5, coord.x) * 0.5;\n    vec2 coordClamped = clamp(coord, vec2(eye, 0.0), vec2(0.5 + eye, 1.0));\n#else\n    vec2 coordClamped = clamp(coord, vec2(0.0), vec2(1.0));\n#endif\n    return texture2D(texture, coordClamped);\n}\n@end";
+
+
+/***/ },
 /* 68 */
+/***/ function(module, exports) {
+
+	module.exports = "@export ecgl.albedo.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec2 uvRepeat: [1, 1];\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position: POSITION;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Texcoord = texcoord * uvRepeat;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.albedo.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\nuniform sampler2D diffuseMap;\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.srgb\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n        // source-over blend\n        albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        // PENDING BLEND?\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);\n        gl_FragColor.rgb += texel2.rgb * texel2.a * emissionIntensity;\n    }}\n#endif\n}\n@end"
+
+/***/ },
+/* 69 */
+/***/ function(module, exports) {
+
+	module.exports = "/**\n * http://en.wikipedia.org/wiki/Lambertian_reflectance\n */\n\n@export ecgl.lambert.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n// Derivative maps - bump mapping unparametrized surfaces by Morten Mikkelsen\n//  http://mmikkelsen3d.blogspot.sk/2011/07/derivative-maps.html\n\n// Evaluate the derivative of the height w.r.t. screen-space using forward differencing (listing 2)\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import qtek.util.srgb\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef VERTEX_COLOR\n    // PENDING\n    #ifdef SRGB_DECODE\n    gl_FragColor *= sRGBToLinear(v_Color);\n    #else\n    gl_FragColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n        // source-over blend\n        albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n    vec3 N = v_Normal;\n    vec3 P = v_WorldPosition;\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n    // PENDING\n    ambientFactor = dot(v_Normal, N);\n#endif\n\nvec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n        // Multiply a dot factor to make sure the bump detail can be seen\n        // in the dark side\n        diffuseColor += ambientLightColor[i] * ambientFactor;\n    }\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float ndl = dot(N, normalize(lightDirection));\n\n        float shadowContrib = 1.0;\n        #if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n            if(shadowEnabled)\n            {\n                shadowContrib = shadowContribs[i];\n            }\n        #endif\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0) * shadowContrib;\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * emissionIntensity;\n        gl_FragColor.rgb += texel2.rgb;\n    }}\n#endif\n\n}\n\n@end"
+
+/***/ },
+/* 70 */
+/***/ function(module, exports) {
+
+	module.exports = "@export ecgl.realastic.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n\n@export ecgl.realastic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n// Derivative maps - bump mapping unparametrized surfaces by Morten Mikkelsen\n//  http://mmikkelsen3d.blogspot.sk/2011/07/derivative-maps.html\n\n// Evaluate the derivative of the height w.r.t. screen-space using forward differencing (listing 2)\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\nfloat G_Smith(float g, float ndv, float ndl)\n{\n    // float k = (roughness+1.0) * (roughness+1.0) * 0.125;\n    float roughness = 1.0 - g;\n    float k = roughness * roughness / 2.0;\n    float G1V = ndv / (ndv * (1.0 - k) + k);\n    float G1L = ndl / (ndl * (1.0 - k) + k);\n    return G1L * G1V;\n}\n// Fresnel\nvec3 F_Schlick(float ndv, vec3 spec) {\n    return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n    // from black ops 2\n    float a = pow(8192.0, g);\n    return (a + 2.0) / 8.0 * pow(ndh, a);\n}\n\nfloat D_GGX(float g, float ndh) {\n    float r = 1.0 - g;\n    float a = r * r;\n    float tmp = ndh * ndh * (a - 1.0) + 1.0;\n    return a / (PI * tmp * tmp);\n}\n\nvoid main()\n{\n\n    vec4 albedoColor = vec4(color, alpha);\n\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n    // PENDING\n    #ifdef SRGB_DECODE\n    albedoColor *= sRGBToLinear(v_Color);\n    #else\n    albedoColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n        // source-over blend\n        albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    albedoColor *= albedoTexel;\n\n    vec3 baseColor = albedoColor.rgb;\n    albedoColor.rgb = baseColor * (1.0 - metalness);\n    vec3 specFactor = mix(vec3(0.04), baseColor, m);\n\n    float g = 1.0 - roughness;\n\n    vec3 N = v_Normal;\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n    // PENDING\n    ambientFactor = dot(v_Normal, N);\n#endif\n\nvec3 diffuseTerm = vec3(0.0);\nvec3 specularTerm = vec3(0.0);\n\n    float ndv = clamp(dot(N, V), 0.0, 1.0);\n    vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n    {{\n        // Multiply a dot factor to make sure the bump detail can be seen\n        // in the dark side\n        diffuseTerm += ambientLightColor[_idx_] * ambientFactor;\n    }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];\n    }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 L = -directionalLightDirection[i];\n        vec3 lc = directionalLightColor[i];\n\n        vec3 H = normalize(L + V);\n        float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n        float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n        vec3 li = lc * ndl;\n\n        diffuseTerm += li;\n        specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n    }\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n    vec3 L = reflect(-V, N);\n    float rough2 = clamp(1.0 - g, 0.0, 1.0);\n    // FIXME fixed maxMipmapLevel ?\n    float bias2 = rough2 * 5.0;\n    // One brdf lookup is enough\n    vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n    vec3 envWeight2 = spec * brdfParam2.x + brdfParam2.y;\n    vec3 envTexel2;\n    for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n    {{\n        envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n        // TODO mix ?\n        specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2;\n    }}\n#endif\n\n    gl_FragColor.rgb *= diffuseTerm;\n    gl_FragColor.rgb += specularTerm;\n\n    #ifdef SRGB_ENCODE\n    gl_FragColor = linearTosRGB(gl_FragColor);\n    #endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        // PENDING sRGB ?\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * emissionIntensity;\n        gl_FragColor.rgb += texel2.rgb;\n    }}\n#endif\n}\n\n@end"
+
+/***/ },
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -23655,7 +23762,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            attributes.texcoord0.fromArray(texcoords);
 	            attributes.normal.fromArray(normals);
 
-	            this.initFaceFromArray(faces);
+	            this.initFacesFromArray(faces);
 
 	            this.boundingBox = new BoundingBox();
 	            this.boundingBox.min.set(-1, -1, 0);
@@ -23667,14 +23774,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 69 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var StaticGeometry = __webpack_require__(32);
-	    var Plane = __webpack_require__(68);
+	    var Plane = __webpack_require__(71);
 	    var Matrix4 = __webpack_require__(16);
 	    var Vector3 = __webpack_require__(14);
 	    var BoundingBox = __webpack_require__(13);
@@ -23812,13 +23919,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 70 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(47);
+	    var Light = __webpack_require__(46);
 
 	    /**
 	     * @constructor qtek.light.Ambient
@@ -23854,13 +23961,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 71 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(47);
+	    var Light = __webpack_require__(46);
 	    var Vector3 = __webpack_require__(14);
 
 	    /**
@@ -23937,13 +24044,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 72 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(47);
+	    var Light = __webpack_require__(46);
 
 	    /**
 	     * @constructor qtek.light.Point
@@ -24002,13 +24109,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 73 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(47);
+	    var Light = __webpack_require__(46);
 	    var Vector3 = __webpack_require__(14);
 
 	    /**
@@ -24114,7 +24221,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 74 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -24841,7 +24948,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25136,7 +25243,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 76 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25413,7 +25520,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 77 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25817,7 +25924,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 78 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -25882,8 +25989,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        _rotating: false,
 
-	        _rotateY: 0,
-	        _rotateX: 0,
+	        // Rotation around yAxis
+	        _phi: 0,
+	        // Rotation around xAxis
+	        _theta: 0,
 
 	        _mouseX: 0,
 	        _mouseY: 0,
@@ -25896,8 +26005,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        _zoomSpeed: 0,
 
-	        _animating: false,
-
 	        _stillTimeout: 0,
 
 	        _animators: []
@@ -25908,7 +26015,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * Mouse event binding
 	     */
 	    init: function () {
-	        this._animating = false;
 	        this.zr.on('mousedown', this._mouseDownHandler, this);
 	        this.zr.on('mousewheel', this._mouseWheelHandler, this);
 
@@ -25947,9 +26053,49 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._needsUpdate = true;
 	    },
 
+	    /**
+	     * Get alpha rotation
+	     * Alpha angle for top-down rotation. Positive to rotate to top.
+	     *
+	     * Which means camera rotation around x axis.
+	     */
+	    getAlpha: function () {
+	        return this._theta / Math.PI * 180;
+	    },
+
+	    /**
+	     * Get beta rotation
+	     * Beta angle for left-right rotation. Positive to rotate to right.
+	     *
+	     * Which means camera rotation around y axis.
+	     */
+	    getBeta: function () {
+	        return -this._phi / Math.PI * 180;
+	    },
+
+	    /**
+	     * Set alpha rotation angle
+	     * @param {number} alpha
+	     */
+	    setAlpha: function (alpha) {
+	        this._theta = alpha / 180 * Math.PI;
+	        this._needsUpdate = true;
+	    },
+
+	    /**
+	     * Set beta rotation angle
+	     * @param {number} beta
+	     */
+	    setBeta: function (beta) {
+	        this._phi = -beta / 180 * Math.PI;
+	        this._needsUpdate = true;
+	    },
+
 	    setCamera: function (target) {
 	        this._camera = target;
 	        this._decomposeTransform();
+
+	        this._needsUpdate = true;
 	    },
 
 	    getCamera: function () {
@@ -25957,29 +26103,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 
 	    setFromViewControlModel: function (viewControlModel, baseDistance) {
-	        var camera = this._camera;
-
 	        this.autoRotate = viewControlModel.get('autoRotate');
 	        this.autoRotateAfterStill = viewControlModel.get('autoRotateAfterStill');
 
 	        this.minDistance = viewControlModel.get('minDistance') + baseDistance;
 	        this.maxDistance = viewControlModel.get('maxDistance') + baseDistance;
 
-	        var position = viewControlModel.get('position');
-	        var quaternion = viewControlModel.get('quaternion');
-	        if (position != null) {
-	            camera.position.setArray(position);
-	        }
-	        else {
+	        var targetDistance = viewControlModel.get('distance') + baseDistance;
+	        if (this._distance !== targetDistance) {
 	            this.zoomTo({
-	                distance: viewControlModel.get('distance') + baseDistance
+	                distance: targetDistance
 	            });
 	        }
-	        if (quaternion != null) {
-	            camera.rotation.setArray(quaternion);
-	        }
-	        // TODO decompose control
-
+	        this.setAlpha(viewControlModel.get('alpha') || 0);
+	        this.setBeta(viewControlModel.get('beta') || 0);
 	    },
 
 	    /**
@@ -26005,7 +26142,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param {qtek.math.Vector3} [opts.y]
 	     * @param {qtek.math.Vector3} [opts.z]
 	     * @param {number} [opts.time=1000]
-	     * @param {number} [opts.easing='Linear']
+	     * @param {number} [opts.easing='linear']
 	     */
 	    rotateTo: function (opts) {
 	        var toQuat;
@@ -26028,7 +26165,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        // var target = this._camera;
 	        // var fromQuat = target.rotation.clone();
-	        // this._animating = true;
 	        // return this._addAnimator(
 	        //     zr.animation.animate(obj)
 	        //         .when(opts.time || 1000, {
@@ -26040,12 +26176,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //             );
 	        //             zr.refresh();
 	        //         })
-	        //         .done(function () {
-	        //             self._animating = false;
-	        //             self._decomposeTransform();
-	        //         })
-	        //         .start(opts.easing || 'Linear')
-	        // );
+	        // ).start(opts.easing || 'linear')
 	    },
 
 	    /**
@@ -26053,7 +26184,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param {Object} opts
 	     * @param {number} opts.distance
 	     * @param {number} [opts.time=1000]
-	     * @param {number} [opts.easing='Linear']
+	     * @param {number} [opts.easing='linear']
 	     */
 	    zoomTo: function (opts) {
 	        var zr = this.zr;
@@ -26069,8 +26200,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                .during(function () {
 	                    self._needsUpdate = true;
 	                })
-	                .start(opts.easing || 'linear')
-	        );
+	        ).start(opts.easing || 'linear');
 	    },
 
 	    /**
@@ -26081,9 +26211,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._animators[i].stop();
 	        }
 	        this._animators.length = 0;
-	        this._animating = false;
 	    },
 
+	    _isAnimating: function () {
+	        return this._animators.length > 0;
+	    },
 	    /**
 	     * Call update each frame
 	     * @param  {number} deltaTime Frame time
@@ -26091,13 +26223,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _update: function (deltaTime) {
 
 	        if (this._rotating) {
-	            this._rotateY -= deltaTime * 1e-4;
+	            this._phi -= deltaTime * 1e-4;
 	            this._needsUpdate = true;
 	        }
 	        else if (this._rotateVelocity.len() > 0) {
 	            this._needsUpdate = true;
 	        }
-	        if (Math.abs(this._zoomSpeed) > 1e-3) {
+	        if (Math.abs(this._zoomSpeed) > 0.1) {
+	            this._needsUpdate = true;
+	        }
+	        if (this._panVelocity.len() > 0) {
 	            this._needsUpdate = true;
 	        }
 
@@ -26105,82 +26240,75 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return;
 	        }
 
-	        this._camera.rotation.identity();
+	        this._updateDistance(deltaTime);
+	        this._updateRotate(deltaTime);
+	        this._updatePan(deltaTime);
+
 	        this._camera.update();
 
-	        this._updateDistance(deltaTime);
-
-	        if (this.mode === 'rotate') {
-	            this._updateRotate(deltaTime);
-	        }
-	        else if (this.mode === 'pan') {
-	            this._updatePan(deltaTime);
-	        }
+	        this._updateTransform();
 
 	        this.zr.refresh();
 	        this.trigger('update');
+
 	        this._needsUpdate = false;
 	    },
 
-	    _updateRotate: function (deltaTime) {
-
+	    _updateRotate: function () {
 
 	        var velocity = this._rotateVelocity;
-	        this._rotateY = (velocity.y + this._rotateY) % (Math.PI * 2);
-	        this._rotateX = (velocity.x + this._rotateX) % (Math.PI * 2);
+	        this._phi = (velocity.y + this._phi) % (Math.PI * 2);
+	        this._theta = (velocity.x + this._theta) % (Math.PI * 2);
 
-	        this._rotateX = Math.max(Math.min(this._rotateX, Math.PI / 2), -Math.PI / 2);
+	        this._theta = Math.max(Math.min(this._theta, Math.PI / 2), -Math.PI / 2);
 
-	        this._camera.rotateAround(this.origin, Vector3.UP, -this._rotateY);
-	        var xAxis = this._camera.localTransform.x;
-	        this._camera.rotateAround(this.origin, xAxis, -this._rotateX);
 
-	        // Rotate speed damping
 	        this._vectorDamping(velocity, 0.8);
-
 	    },
 
 	    _updateDistance: function (deltaTime) {
-
 	        this._setDistance(this._distance + this._zoomSpeed);
-
-	        // Zoom speed damping
 	        this._zoomSpeed *= 0.8;
 	    },
 
 	    _setDistance: function (distance) {
 	        this._distance = Math.max(Math.min(distance, this.maxDistance), this.minDistance);
-	        var distance = this._distance;
-
-	        var camera = this._camera;
-
-	        var position = this.origin;
-	        camera.position.copy(position).scaleAndAdd(
-	            camera.worldTransform.z, distance
-	        );
 	    },
 
 	    _updatePan: function (deltaTime) {
-	        var velocity = this._panVelocity;
 
-	        // TODO
-	        // var target = this._camera;
-	        // var yAxis = target.worldTransform.y;
-	        // var xAxis = target.worldTransform.x;
+	        var velocity = this._rotateVelocity;
+	        var len = this._distance;
 
-	        // // FIXME Assume origin is ZERO
-	        // var len = this.camera.position.len();
-	        // // PENDING
-	        // target.position
-	        //     .scaleAndAdd(xAxis, velocity.x * len / 400)
-	        //     .scaleAndAdd(yAxis, velocity.y * len / 400);
+	        var target = this._camera;
+	        var yAxis = target.worldTransform.y;
+	        var xAxis = target.worldTransform.x;
 
-	        // Pan damping
+	        // PENDING
+	        this.origin
+	            .scaleAndAdd(xAxis, velocity.x * len / 400)
+	            .scaleAndAdd(yAxis, velocity.y * len / 400);
+
 	        this._vectorDamping(velocity, 0.8);
+	    },
 
-	        if (velocity.len() > 0) {
-	            this._needsUpdate = true;
-	        }
+	    _updateTransform: function () {
+	        var camera = this._camera;
+
+	        var dir = new Vector3();
+	        var theta = this._theta + Math.PI / 2;
+	        var phi = this._phi + Math.PI / 2;
+	        var r = Math.sin(theta);
+
+	        dir.x = r * Math.cos(phi);
+	        dir.y = -Math.cos(theta);
+	        dir.z = r * Math.sin(phi);
+
+	        camera.position.copy(this.origin).scaleAndAdd(dir, this._distance);
+	        camera.rotation.identity()
+	            // First around y, then around x
+	            .rotateY(-this._phi)
+	            .rotateX(-this._theta);
 	    },
 
 	    _startCountingStill: function () {
@@ -26205,19 +26333,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 
 	    _decomposeTransform: function () {
-	        if (!this._camera) {
-	            return;
-	        }
+	    //     if (!this._camera) {
+	    //         return;
+	    //     }
 
-	        // TODO
-	        // var euler = new Vector3();
-	        // // Z Rotate at last so it can be zero
-	        // euler.eulerFromQuat(
-	        //     this._camera.rotation.normalize(), 'ZXY'
-	        // );
+	    //     // TODO
+	    //     var euler = new Vector3();
+	    //     // Z Rotate at last so it can be zero
+	    //     euler.eulerFromQuat(
+	    //         this._camera.rotation.normalize(), 'ZXY'
+	    //     );
 
-	        // this._rotateX = euler.x;
-	        // this._rotateY = euler.y;
+	    //     this._theta = euler.x;
+	    //     this._phi = euler.y;
+
+	    //     this._theta = Math.max(Math.min(this._theta, Math.PI / 2), -Math.PI / 2);
+
+	    //     this._setDistance(this._camera.position.dist(this.origin));
 	    },
 
 	    _mouseDownHandler: function (e) {
@@ -26225,7 +26357,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // If mouseon some zrender element.
 	            return;
 	        }
-	        if (this._animating) {
+	        if (this._isAnimating()) {
 	            return;
 	        }
 	        this.zr.on('mousemove', this._mouseMoveHandler, this);
@@ -26249,7 +26381,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 
 	    _mouseMoveHandler: function (e) {
-	        if (this._animating) {
+	        if (this._isAnimating()) {
 	            return;
 	        }
 	        e = e.event;
@@ -26268,7 +26400,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 
 	    _mouseWheelHandler: function (e) {
-	        if (this._animating) {
+	        if (this._isAnimating()) {
 	            return;
 	        }
 	        e = e.event;
@@ -26328,7 +26460,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = OrbitControl;
 
 /***/ },
-/* 79 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -26342,7 +26474,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var StaticGeometry = __webpack_require__(32);
 	var vec3 = __webpack_require__(15).vec3;
 	var echarts = __webpack_require__(2);
-	var dynamicConvertMixin = __webpack_require__(80);
+	var dynamicConvertMixin = __webpack_require__(83);
 
 	// var CURVE_RECURSION_LIMIT = 8;
 	// var CURVE_COLLINEAR_EPSILON = 40;
@@ -26694,7 +26826,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LinesGeometry;
 
 /***/ },
-/* 80 */
+/* 83 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -26736,7 +26868,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 81 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -26750,7 +26882,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var StaticGeometry = __webpack_require__(32);
 	var vec3 = __webpack_require__(15).vec3;
 	var echarts = __webpack_require__(2);
-	var dynamicConvertMixin = __webpack_require__(80);
+	var dynamicConvertMixin = __webpack_require__(83);
 
 	// var CURVE_RECURSION_LIMIT = 8;
 	// var CURVE_COLLINEAR_EPSILON = 40;
@@ -26824,7 +26956,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = PlanesGeometry;
 
 /***/ },
-/* 82 */
+/* 85 */
 /***/ function(module, exports) {
 
 	var retrieve = {
@@ -26841,7 +26973,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = retrieve;
 
 /***/ },
-/* 83 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -26851,7 +26983,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(42);
+	var graphicGL = __webpack_require__(41);
 	/**
 	 * constructor
 	 * @alias module:echarts-gl/util/ZRTextureAtlasSurface
@@ -27083,13 +27215,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ZRTextureAtlasSurface;
 
 /***/ },
-/* 84 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var graphicGL = __webpack_require__(42);
-	var SpritesGeometry = __webpack_require__(85);
+	var graphicGL = __webpack_require__(41);
+	var SpritesGeometry = __webpack_require__(88);
 
-	graphicGL.Shader.import(__webpack_require__(86));
+	graphicGL.Shader.import(__webpack_require__(89));
 
 	module.exports = graphicGL.Mesh.extend(function () {
 	    var geometry = new SpritesGeometry({
@@ -27109,7 +27241,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 85 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -27120,7 +27252,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var echarts = __webpack_require__(2);
 	var StaticGeometry = __webpack_require__(32);
-	var dynamicConvertMixin = __webpack_require__(80);
+	var dynamicConvertMixin = __webpack_require__(83);
 
 	var squareFaces = [
 	    0, 1, 2, 0, 2, 3
@@ -27242,33 +27374,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = SpritesGeometry;
 
 /***/ },
-/* 86 */
+/* 89 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.labels3D.vertex\n\n// https://mattdesl.svbtle.com/drawing-lines-is-hard\nattribute vec3 position: POSITION;\nattribute vec2 texcoord: TEXCOORD_0;\nattribute vec2 offset;\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    vec4 proj = worldViewProjection * vec4(position, 1.0);\n\n    vec2 screen = (proj.xy / abs(proj.w) + 1.0) * 0.5 * viewport.zw;\n\n    screen += offset;\n\n    proj.xy = (screen / viewport.zw - 0.5) * 2.0 * abs(proj.w);\n    gl_Position = proj;\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n    v_Texcoord = texcoord;\n\n    gl_PointSize = 10.0;\n}\n@end\n\n\n@export ecgl.labels3D.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\nuniform sampler2D textureAtlas;\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\nvarying float v_Miter;\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha) * texture2D(textureAtlas, v_Texcoord);\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n}\n\n@end"
 
 /***/ },
-/* 87 */
-/***/ function(module, exports) {
-
-	module.exports = "@export ecgl.lines3D.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines3D.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha) * v_Color;\n}\n@end\n\n\n@export ecgl.meshLines3D.vertex\n\n// https://mattdesl.svbtle.com/drawing-lines-is-hard\nattribute vec3 position: POSITION;\nattribute vec3 positionPrev;\nattribute vec3 positionNext;\nattribute float offset;\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\nuniform float near : NEAR;\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvec4 clipNear(vec4 p1, vec4 p2) {\n    float n = (p1.w - near) / (p1.w - p2.w);\n    // PENDING\n    return vec4(mix(p1.xy, p2.xy, n), -near, near);\n}\n\nvoid main()\n{\n    vec4 prevProj = worldViewProjection * vec4(positionPrev, 1.0);\n    vec4 currProj = worldViewProjection * vec4(position, 1.0);\n    vec4 nextProj = worldViewProjection * vec4(positionNext, 1.0);\n\n    if (currProj.w < 0.0) {\n        if (prevProj.w < 0.0) {\n            currProj = clipNear(currProj, nextProj);\n        }\n        else {\n            currProj = clipNear(currProj, prevProj);\n        }\n    }\n\n    vec2 prevScreen = (prevProj.xy / abs(prevProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 currScreen = (currProj.xy / abs(currProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 nextScreen = (nextProj.xy / abs(nextProj.w) + 1.0) * 0.5 * viewport.zw;\n\n    vec2 dir;\n    float len = offset;\n    // Start point\n    if (position == positionPrev) {\n        dir = normalize(nextScreen - currScreen);\n        v_Miter = 1.0;\n    }\n    // End point\n    else if (position == positionNext) {\n        dir = normalize(currScreen - prevScreen);\n        v_Miter = 1.0;\n    }\n    else {\n        vec2 dirA = normalize(currScreen - prevScreen);\n        vec2 dirB = normalize(nextScreen - currScreen);\n\n        vec2 tanget = normalize(dirA + dirB);\n\n        v_Miter = 1.0 / max(dot(tanget, dirA), 0.5);\n        len *= v_Miter;\n        dir = tanget;\n    }\n\n    dir = vec2(-dir.y, dir.x) * len;\n    currScreen += dir;\n\n    currProj.xy = (currScreen / viewport.zw - 0.5) * 2.0 * abs(currProj.w);\n    gl_Position = currProj;\n\n    v_Color = a_Color;\n}\n@end\n\n\n@export ecgl.meshLines3D.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvoid main()\n{\n    // TODO Fadeout pixels v_Miter > 1\n    gl_FragColor = vec4(color, alpha) * v_Color;\n}\n\n@end"
-
-/***/ },
-/* 88 */
-/***/ function(module, exports) {
-
-	module.exports = "@export ecgl.albedo.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec2 uvRepeat: [1, 1];\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position: POSITION;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Texcoord = texcoord * uvRepeat;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.albedo.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\nuniform sampler2D diffuseMap;\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.srgb\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n        // source-over blend\n        albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        // PENDING BLEND?\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);\n        gl_FragColor.rgb += texel2.rgb * texel2.a * emissionIntensity;\n    }}\n#endif\n}\n@end"
-
-/***/ },
-/* 89 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cartesian3D = __webpack_require__(90);
-	var Axis3D = __webpack_require__(92);
+	var Cartesian3D = __webpack_require__(91);
+	var Axis3D = __webpack_require__(93);
 	var echarts = __webpack_require__(2);
-	var layoutUtil = __webpack_require__(93);
-	var ViewGL = __webpack_require__(100);
-	var retrieve = __webpack_require__(82);
+	var layoutUtil = __webpack_require__(94);
+	var ViewGL = __webpack_require__(101);
+	var retrieve = __webpack_require__(85);
 
 	function resizeCartesian3D(grid3DModel, api) {
 	    // Use left/top/width/height
@@ -27279,7 +27399,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        height: api.getHeight()
 	    });
 
-	    this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+	    this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 
 	    var boxWidth = grid3DModel.get('boxWidth');
 	    var boxHeight = grid3DModel.get('boxHeight');
@@ -27293,7 +27413,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, this);
 	    }
 	    this.getAxis('x').setExtent(-boxWidth / 2, boxWidth / 2);
-	    this.getAxis('y').setExtent(-boxDepth / 2, boxDepth / 2);
+	    // From near to far
+	    this.getAxis('y').setExtent(boxDepth / 2, -boxDepth / 2);
 	    this.getAxis('z').setExtent(-boxHeight / 2, boxHeight / 2);
 
 	    this.size = [boxWidth, boxHeight, boxDepth];
@@ -27454,11 +27575,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = grid3DCreator;
 
 /***/ },
-/* 90 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var Cartesian = __webpack_require__(91);
+	var Cartesian = __webpack_require__(92);
 
 	function Cartesian3D(name) {
 
@@ -27497,7 +27618,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Cartesian3D;
 
 /***/ },
-/* 91 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27615,7 +27736,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 92 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -27634,7 +27755,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Axis3D;
 
 /***/ },
-/* 93 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27642,9 +27763,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	    var zrUtil = __webpack_require__(34);
-	    var BoundingRect = __webpack_require__(94);
-	    var numberUtil = __webpack_require__(97);
-	    var formatUtil = __webpack_require__(98);
+	    var BoundingRect = __webpack_require__(95);
+	    var numberUtil = __webpack_require__(98);
+	    var formatUtil = __webpack_require__(99);
 	    var parsePercent = numberUtil.parsePercent;
 	    var each = zrUtil.each;
 
@@ -28088,7 +28209,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28097,8 +28218,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var vec2 = __webpack_require__(95);
-	    var matrix = __webpack_require__(96);
+	    var vec2 = __webpack_require__(96);
+	    var matrix = __webpack_require__(97);
 
 	    var v2ApplyTransform = vec2.applyTransform;
 	    var mathMin = Math.min;
@@ -28292,7 +28413,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 95 */
+/* 96 */
 /***/ function(module, exports) {
 
 	
@@ -28578,7 +28699,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 96 */
+/* 97 */
 /***/ function(module, exports) {
 
 	
@@ -28742,7 +28863,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 97 */
+/* 98 */
 /***/ function(module, exports) {
 
 	/**
@@ -29075,14 +29196,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 98 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
 	    var zrUtil = __webpack_require__(34);
-	    var numberUtil = __webpack_require__(97);
-	    var textContain = __webpack_require__(99);
+	    var numberUtil = __webpack_require__(98);
+	    var textContain = __webpack_require__(100);
 
 	    var formatUtil = {};
 	    /**
@@ -29254,7 +29375,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 99 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -29264,7 +29385,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var TEXT_CACHE_MAX = 5000;
 
 	    var util = __webpack_require__(34);
-	    var BoundingRect = __webpack_require__(94);
+	    var BoundingRect = __webpack_require__(95);
 	    var retrieve = util.retrieve;
 
 	    function getTextWidth(text, textFont) {
@@ -29535,7 +29656,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 100 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -29543,11 +29664,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @author Yi Shen(http://github.com/pissang)
 	 */
 
-	var Scene = __webpack_require__(46);
-	var PerspectiveCamera = __webpack_require__(53);
-	var OrthographicCamera = __webpack_require__(101);
+	var Scene = __webpack_require__(45);
+	var PerspectiveCamera = __webpack_require__(52);
+	var OrthographicCamera = __webpack_require__(102);
 
-	var EffectCompositor = __webpack_require__(102);
+	var EffectCompositor = __webpack_require__(103);
+	var TemporalSuperSampling = __webpack_require__(126);
+
+	var requestAnimationFrame = __webpack_require__(128);
+
+	var accumulatingId = 1;
 	/**
 	 * @constructor
 	 * @alias module:echarts-gl/core/ViewGL
@@ -29573,6 +29699,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.setCameraType(cameraType);
 
 	    this._compositor = new EffectCompositor();
+
+	    this._temporalSS = new TemporalSuperSampling();
+
+	    /**
+	     * Current accumulating id.
+	     */
+	    this._accumulatingId = 0;
+
+	    this.scene.on('beforerender', function (renderer, scene, camera) {
+	        if (this._enableTemporalSS) {
+	            this._temporalSS.jitterProjection(renderer, camera);
+	        }
+	    }, this);
 	}
 
 	/**
@@ -29606,18 +29745,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {number} y Viewport left bottom y
 	 * @param {number} width Viewport height
 	 * @param {number} height Viewport height
+	 * @param {number} [dpr=1]
 	 */
-	ViewGL.prototype.setViewport = function (x, y, width, height) {
+	ViewGL.prototype.setViewport = function (x, y, width, height, dpr) {
 	    if (this.camera instanceof PerspectiveCamera) {
 	        this.camera.aspect = width / height;
 	    }
+	    dpr = dpr || 1;
 
 	    this.viewport.x = x;
 	    this.viewport.y = y;
 	    this.viewport.width = width;
 	    this.viewport.height = height;
+	    this.viewport.devicePixelRatio = dpr;
 
-	    this._compositor.resize(width, height);
+	    this._compositor.resize(width * dpr, height * dpr);
+	    this._temporalSS.resize(width * dpr, height * dpr);
 	};
 
 	/**
@@ -29630,6 +29773,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	ViewGL.prototype.render = function (renderer) {
+	    this._stopAccumulating(renderer);
+
+	    this._doRender(renderer);
+
+	    if (this._enableTemporalSS) {
+	        this._startAccumulating(renderer);
+	    }
+	};
+
+	ViewGL.prototype._stopAccumulating = function () {
+	    this._accumulatingId = 0;
+	    this._temporalSS.resetFrame();
+	};
+
+	ViewGL.prototype._startAccumulating = function (renderer) {
+	    var self = this;
+
+	    this._temporalSS.resetFrame();
+
+	    this._accumulatingId = accumulatingId++;
+
+	    function accumulate(id) {
+	        if (!self._accumulatingId || id !== self._accumulatingId) {
+	            return;
+	        }
+	        if (!self._temporalSS.isFinished()) {
+	            self._doRender(renderer);
+	            requestAnimationFrame(function () {
+	                accumulate(id);
+	            });
+	        }
+	    }
+
+	    requestAnimationFrame(function () {
+	        accumulate(self._accumulatingId);
+	    });
+	};
+
+	ViewGL.prototype._doRender = function (renderer) {
+
 	    if (this._enablePostEffect) {
 	        var frameBuffer = this._compositor.getSourceFrameBuffer();
 	        frameBuffer.bind(renderer);
@@ -29637,23 +29820,55 @@ return /******/ (function(modules) { // webpackBootstrap
 	        renderer.render(this.scene, this.camera);
 	        frameBuffer.unbind(renderer);
 
-	        renderer.setViewport(this.viewport);
-	        this._compositor.composite(renderer);
+	        if (this._enableTemporalSS && this._accumulatingId > 0) {
+	            this._compositor.composite(renderer, this._temporalSS.getSourceFrameBuffer());
+	            renderer.setViewport(this.viewport);
+	            this._temporalSS.render(renderer);
+	        }
+	        else {
+	            renderer.setViewport(this.viewport);
+	            this._compositor.composite(renderer);
+	        }
 	    }
 	    else {
-	        renderer.setViewport(this.viewport);
-	        renderer.render(this.scene, this.camera);
+	        if (this._enableTemporalSS && this._accumulatingId > 0) {
+	            var frameBuffer = this._temporalSS.getSourceFrameBuffer();
+	            frameBuffer.bind(renderer);
+	            renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
+	            renderer.render(this.scene, this.camera);
+	            frameBuffer.unbind(renderer);
+
+	            renderer.setViewport(this.viewport);
+	            this._temporalSS.render(renderer);
+	        }
+	        else {
+	            renderer.setViewport(this.viewport);
+	            renderer.render(this.scene, this.camera);
+	        }
 	    }
-	};
+	}
 
 	ViewGL.prototype.dispose = function (renderer) {
 	    this._compositor.dispose(renderer.gl);
+	    this._temporalSS.dispose(renderer.gl);
 	};
 	/**
 	 * @param {module:echarts/Model} Post effect model
 	 */
 	ViewGL.prototype.setPostEffect = function (postEffectModel) {
 	    this._enablePostEffect = postEffectModel.get('enable');
+	    var bloomModel = postEffectModel.getModel('bloom');
+	    var fxaaModel = postEffectModel.getModel('FXAA');
+	    fxaaModel.get('enable') ? this._compositor.enableFXAA() : this._compositor.disableFXAA();
+	    bloomModel.get('enable') ? this._compositor.enableBloom() : this._compositor.disableBloom();
+	};
+
+	ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {
+	    this._enableTemporalSS = temporalSuperSamplingModel.get('enable');
+	};
+
+	ViewGL.prototype.isLinearSpace = function () {
+	    return this._enablePostEffect;
 	};
 
 	// Proxies
@@ -29670,13 +29885,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ViewGL;
 
 /***/ },
-/* 101 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Camera = __webpack_require__(54);
+	    var Camera = __webpack_require__(53);
 	    /**
 	     * @constructor qtek.camera.Orthographic
 	     * @extends qtek.Camera
@@ -29745,19 +29960,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 102 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Compositor = __webpack_require__(103);
+	var Compositor = __webpack_require__(104);
 	var Shader = __webpack_require__(18);
-	var Texture2D = __webpack_require__(44);
+	var Texture2D = __webpack_require__(43);
 	var Texture = __webpack_require__(21);
-	var FrameBuffer = __webpack_require__(57);
-	var FXLoader = __webpack_require__(107);
+	var FrameBuffer = __webpack_require__(56);
+	var FXLoader = __webpack_require__(108);
 
-	var effectJson = JSON.parse(__webpack_require__(113));
+	var effectJson = JSON.parse(__webpack_require__(114));
 
-	Shader['import'](__webpack_require__(114));
 	Shader['import'](__webpack_require__(115));
 	Shader['import'](__webpack_require__(116));
 	Shader['import'](__webpack_require__(117));
@@ -29768,6 +29982,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Shader['import'](__webpack_require__(122));
 	Shader['import'](__webpack_require__(123));
 	Shader['import'](__webpack_require__(124));
+	Shader['import'](__webpack_require__(125));
 
 	function EffectCompositor() {
 	    this._sourceTexture = new Texture2D({
@@ -29782,6 +29997,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var sourceNode = this._compositor.getNodeByName('source');
 	    sourceNode.texture = this._sourceTexture;
+
+	    this._compositeNode = this._compositor.getNodeByName('composite');
+	    this._fxaaNode = this._compositor.getNodeByName('FXAA');
 	}
 
 	EffectCompositor.prototype.resize = function (width, height, dpr) {
@@ -29799,8 +30017,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return this._framebuffer;
 	};
 
-	EffectCompositor.prototype.composite = function (renderer) {
-	    this._compositor.render(renderer);
+	/**
+	 * Disable fxaa effect
+	 */
+	EffectCompositor.prototype.disableFXAA = function () {
+	    this._compositor.removeNode(this._fxaaNode);
+	    if (this._compositeNode.outputs) {
+	        this._compositeNode.__outputs = this._compositeNode.outputs;
+	    }
+	    this._compositeNode.outputs = null;
+	};
+
+	/**
+	 * Enable fxaa effect
+	 */
+	EffectCompositor.prototype.enableFXAA = function () {
+	    this._compositor.addNode(this._fxaaNode);
+	    if (this._compositeNode.__outputs) {
+	        this._compositeNode.outputs = this._compositeNode.__outputs;
+	    }
+	};
+	/**
+	 * Enable bloom effect
+	 */
+	EffectCompositor.prototype.enableBloom = function () {
+	    this._compositeNode.inputs.bloom = 'bloom_composite';
+	};
+
+	/**
+	 * Disable bloom effect
+	 */
+	EffectCompositor.prototype.disableBloom = function () {
+	    this._compositeNode.inputs.bloom = null;
+	};
+
+	EffectCompositor.prototype.composite = function (renderer, framebuffer) {
+	    this._compositor.render(renderer, framebuffer);
 	};
 
 	EffectCompositor.prototype.dispose = function (gl) {
@@ -29812,15 +30064,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = EffectCompositor;
 
 /***/ },
-/* 103 */
+/* 104 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Graph = __webpack_require__(104);
-	    var TexturePool = __webpack_require__(106);
-	    var FrameBuffer = __webpack_require__(57);
+	    var Graph = __webpack_require__(105);
+	    var TexturePool = __webpack_require__(107);
+	    var FrameBuffer = __webpack_require__(56);
 
 	    /**
 	     * Compositor provide graph based post processing
@@ -29845,9 +30097,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    {
 	        addNode: function(node) {
 	            Graph.prototype.addNode.call(this, node);
-	            if (!node.outputs) {
-	                this.addOutput(node);
-	            }
 	            node._compositor = this;
 	        },
 	        /**
@@ -29857,6 +30106,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (this._dirty) {
 	                this.update();
 	                this._dirty = false;
+
+	                this._outputs.length = 0;
+	                for (var i = 0; i < this.nodes.length; i++) {
+	                    if (!this.nodes[i].outputs) {
+	                        this._outputs.push(this.nodes[i]);
+	                    }
+	                }
 	            }
 
 	            for (var i = 0; i < this.nodes.length; i++) {
@@ -29876,16 +30132,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                // Clear up
 	                this.nodes[i].afterFrame();
 	            }
-	        },
-
-	        addOutput: function(node) {
-	            if (this._outputs.indexOf(node) < 0) {
-	                this._outputs.push(node);
-	            }
-	        },
-
-	        removeOutput: function(node) {
-	            this._outputs.splice(this._outputs.indexOf(node), 1);
 	        },
 
 	        allocateTexture: function (parameters) {
@@ -29913,14 +30159,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 104 */
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Base = __webpack_require__(6);
-	    var GraphNode = __webpack_require__(105);
+	    var GraphNode = __webpack_require__(106);
 
 	    /**
 	     * @constructor qtek.compositor.Graph
@@ -29948,17 +30194,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	         */
 	        addNode: function (node) {
 
+	            if (this.nodes.indexOf(node) >= 0) {
+	                return;
+	            }
+
 	            this.nodes.push(node);
 
 	            this._dirty = true;
 	        },
 	        /**
-	         * @param  {qtek.compositor.Node} node
+	         * @param  {qtek.compositor.Node|string} node
 	         */
 	        removeNode: function (node) {
-	            this.nodes.splice(this.nodes.indexOf(node), 1);
-
-	            this._dirty = true;
+	            if (typeof node === 'string') {
+	                node = this.getNodeByName(node);
+	            }
+	            var idx = this.nodes.indexOf(node);
+	            if (idx >= 0) {
+	                this.nodes.splice(idx, 1);
+	                this._dirty = true;
+	            }
 	        },
 	        /**
 	         * @param {string} name
@@ -30053,7 +30308,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 105 */
+/* 106 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30309,13 +30564,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 106 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Texture2D = __webpack_require__(44);
+	    var Texture2D = __webpack_require__(43);
 	    var glenum = __webpack_require__(11);
 	    var util = __webpack_require__(9);
 
@@ -30426,24 +30681,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 107 */
+/* 108 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Base = __webpack_require__(6);
-	    var request = __webpack_require__(51);
+	    var request = __webpack_require__(50);
 	    var util = __webpack_require__(9);
-	    var Compositor = __webpack_require__(103);
-	    var CompoNode = __webpack_require__(105);
-	    var CompoSceneNode = __webpack_require__(108);
-	    var CompoTextureNode = __webpack_require__(109);
-	    var CompoFilterNode = __webpack_require__(110);
+	    var Compositor = __webpack_require__(104);
+	    var CompoNode = __webpack_require__(106);
+	    var CompoSceneNode = __webpack_require__(109);
+	    var CompoTextureNode = __webpack_require__(110);
+	    var CompoFilterNode = __webpack_require__(111);
 	    var Shader = __webpack_require__(18);
 	    var Texture = __webpack_require__(21);
-	    var Texture2D = __webpack_require__(44);
-	    var TextureCube = __webpack_require__(50);
+	    var Texture2D = __webpack_require__(43);
+	    var TextureCube = __webpack_require__(49);
 
 	    var shaderSourceReg = /#source\((.*?)\)/;
 	    var urlReg = /#url\((.*?)\)/;
@@ -30829,16 +31084,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 108 */
+/* 109 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Node = __webpack_require__(105);
+	    var Node = __webpack_require__(106);
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
-	    var FrameBuffer = __webpack_require__(57);
+	    var FrameBuffer = __webpack_require__(56);
 
 	    /**
 	     * @constructor qtek.compositor.SceneNode
@@ -30934,13 +31189,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 109 */
+/* 110 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Node = __webpack_require__(105);
+	    var Node = __webpack_require__(106);
 
 	    /**
 	     * @constructor qtek.compositor.TextureNode
@@ -30974,14 +31229,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 110 */
+/* 111 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Pass = __webpack_require__(111);
-	    var Node = __webpack_require__(105);
+	    var Pass = __webpack_require__(112);
+	    var Node = __webpack_require__(106);
 
 	    // TODO curlnoise demo wrong
 
@@ -31346,22 +31601,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 111 */
+/* 112 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Base = __webpack_require__(6);
-	    var OrthoCamera = __webpack_require__(101);
-	    var Plane = __webpack_require__(68);
+	    var OrthoCamera = __webpack_require__(102);
+	    var Plane = __webpack_require__(71);
 	    var Shader = __webpack_require__(18);
 	    var Material = __webpack_require__(20);
-	    var Mesh = __webpack_require__(43);
+	    var Mesh = __webpack_require__(42);
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
 
-	    Shader['import'](__webpack_require__(112));
+	    Shader['import'](__webpack_require__(113));
 
 	    var planeGeo = new Plane();
 	    var mesh = new Mesh({
@@ -31562,7 +31817,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 112 */
+/* 113 */
 /***/ function(module, exports) {
 
 	
@@ -31570,13 +31825,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 113 */
+/* 114 */
 /***/ function(module, exports) {
 
 	module.exports = "{\n    \"type\" : \"compositor\",\n    \"nodes\" : [\n\n        {\n            \"name\": \"source\",\n            \"type\": \"texture\",\n            \"outputs\": {\n                \"color\": {}\n            }\n        },\n        {\n            \"name\": \"source_half\",\n            \"shader\": \"#source(qtek.compositor.downsample)\",\n            \"inputs\": {\n                \"texture\": \"source\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * dpr, height * dpr] )\"\n            }\n        },\n\n\n        {\n            \"name\" : \"bright\",\n            \"shader\" : \"#source(qtek.compositor.bright)\",\n            \"inputs\" : {\n                \"texture\" : \"source_half\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 2)\",\n                        \"height\" : \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"threshold\" : 2,\n                \"scale\": 4,\n                \"textureSize\": \"expr([width * dpr / 2, height / 2])\"\n            }\n        },\n        {\n            \"name\" : \"bright2\",\n            \"shader\" : \"#source(qtek.compositor.bright)\",\n            \"inputs\" : {\n                \"texture\": \"source_half\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 2)\",\n                        \"height\" : \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"threshold\": 20,\n                \"scale\": 0.01\n            }\n        },\n\n        {\n            \"name\": \"bright_downsample_4\",\n            \"shader\" : \"#source(qtek.compositor.downsample)\",\n            \"inputs\" : {\n                \"texture\" : \"bright\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 4)\",\n                        \"height\" : \"expr(height * dpr / 4)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * dpr / 2, height / 2] )\"\n            }\n        },\n        {\n            \"name\": \"bright_downsample_8\",\n            \"shader\" : \"#source(qtek.compositor.downsample)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_4\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 8)\",\n                        \"height\" : \"expr(height * dpr / 8)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * dpr / 4, height / 4] )\"\n            }\n        },\n        {\n            \"name\": \"bright_downsample_16\",\n            \"shader\" : \"#source(qtek.compositor.downsample)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_8\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 16)\",\n                        \"height\" : \"expr(height * dpr / 16)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * dpr / 8, height / 8] )\"\n            }\n        },\n        {\n            \"name\": \"bright_downsample_32\",\n            \"shader\" : \"#source(qtek.compositor.downsample)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_16\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 32)\",\n                        \"height\" : \"expr(height * dpr / 32)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * dpr / 16, height / 16] )\"\n            }\n        },\n\n\n        {\n            \"name\" : \"bright_upsample_16_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_32\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 16)\",\n                        \"height\" : \"expr(height * dpr / 16)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * dpr / 32, height / 32] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_16_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_16_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 16)\",\n                        \"height\" : \"expr(height * dpr / 16)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * dpr / 32, height * dpr / 32] )\"\n            }\n        },\n\n\n\n        {\n            \"name\" : \"bright_upsample_8_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_16\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 8)\",\n                        \"height\" : \"expr(height * dpr / 8)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * dpr / 16, height * dpr / 16] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_8_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_8_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 8)\",\n                        \"height\" : \"expr(height * dpr / 8)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * dpr / 16, height * dpr / 16] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_8_blend\",\n            \"shader\" : \"#source(qtek.compositor.blend)\",\n            \"inputs\" : {\n                \"texture1\" : \"bright_upsample_8_blur_v\",\n                \"texture2\" : \"bright_upsample_16_blur_v\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 8)\",\n                        \"height\" : \"expr(height * dpr / 8)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"weight1\" : 0.3,\n                \"weight2\" : 0.7\n            }\n        },\n\n\n        {\n            \"name\" : \"bright_upsample_4_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_8\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 4)\",\n                        \"height\" : \"expr(height * dpr / 4)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * dpr / 8, height * dpr / 8] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_4_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_4_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 4)\",\n                        \"height\" : \"expr(height * dpr / 4)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * dpr / 8, height * dpr / 8] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_4_blend\",\n            \"shader\" : \"#source(qtek.compositor.blend)\",\n            \"inputs\" : {\n                \"texture1\" : \"bright_upsample_4_blur_v\",\n                \"texture2\" : \"bright_upsample_8_blend\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 4)\",\n                        \"height\" : \"expr(height * dpr / 4)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"weight1\" : 0.3,\n                \"weight2\" : 0.7\n            }\n        },\n\n\n\n\n\n        {\n            \"name\" : \"bright_upsample_2_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_4\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 2)\",\n                        \"height\" : \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * dpr / 4, height * dpr / 4] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_2_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_2_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 2)\",\n                        \"height\" : \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * dpr / 4, height * dpr / 4] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_2_blend\",\n            \"shader\" : \"#source(qtek.compositor.blend)\",\n            \"inputs\" : {\n                \"texture1\" : \"bright_upsample_2_blur_v\",\n                \"texture2\" : \"bright_upsample_4_blend\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 2)\",\n                        \"height\" : \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"weight1\" : 0.3,\n                \"weight2\" : 0.7\n            }\n        },\n\n\n\n        {\n            \"name\" : \"bright_upsample_full_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr)\",\n                        \"height\" : \"expr(height * dpr)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_full_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_full_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr)\",\n                        \"height\" : \"expr(height * dpr)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            }\n        },\n        {\n            \"name\" : \"bloom_composite\",\n            \"shader\" : \"#source(qtek.compositor.blend)\",\n            \"inputs\" : {\n                \"texture1\" : \"bright_upsample_full_blur_v\",\n                \"texture2\" : \"bright_upsample_2_blend\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr)\",\n                        \"height\" : \"expr(height * dpr)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"weight1\" : 0.3,\n                \"weight2\" : 0.7\n            }\n        },\n\n\n        {\n            \"name\": \"coc\",\n            \"shader\": \"#source(qtek.compositor.dof.coc)\",\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"minFilter\": \"NEAREST\",\n                        \"magFilter\": \"NEAREST\",\n                        \"width\": \"expr(width * dpr)\",\n                        \"height\": \"expr(height * dpr)\"\n                    }\n                }\n            }\n        },\n\n        {\n            \"name\": \"coc_half\",\n            \"shader\": \"#source(qtek.compositor.dof.min_coc)\",\n            \"inputs\": {\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"minFilter\": \"NEAREST\",\n                        \"magFilter\": \"NEAREST\",\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr, height * dpr] )\"\n            }\n        },\n\n        {\n            \"name\": \"dof_source_half\",\n            \"shader\": \"#source(qtek.compositor.dof.downsample)\",\n            \"inputs\": {\n                \"texture\": \"source\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr, height * dpr] )\"\n            }\n        },\n\n        {\n            \"name\": \"dof_far_blur_hexangonal_1\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_1)\",\n            \"inputs\": {\n                \"texture\": \"dof_source_half\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            }\n        },\n        {\n            \"name\": \"dof_far_blur_hexangonal_2\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_2)\",\n            \"inputs\": {\n                \"texture\": \"dof_source_half\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            }\n        },\n        {\n            \"name\": \"dof_far_blur_hexangonal_3\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_3)\",\n            \"inputs\": {\n                \"texture1\": \"dof_far_blur_hexangonal_1\",\n                \"texture2\": \"dof_far_blur_hexangonal_2\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            }\n        },\n\n        {\n            \"name\": \"dof_near_blur_hexangonal_1\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_1)\",\n            \"inputs\": {\n                \"texture\": \"dof_source_half\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            },\n            \"defines\": {\n                \"BLUR_NEARFIELD\": null\n            }\n        },\n        {\n            \"name\": \"dof_near_blur_hexangonal_2\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_2)\",\n            \"inputs\": {\n                \"texture\": \"dof_source_half\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            },\n            \"defines\": {\n                \"BLUR_NEARFIELD\": null\n            }\n        },\n        {\n            \"name\": \"dof_near_blur_hexangonal_3\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_3)\",\n            \"inputs\": {\n                \"texture1\": \"dof_near_blur_hexangonal_1\",\n                \"texture2\": \"dof_near_blur_hexangonal_2\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            },\n            \"defines\": {\n                \"BLUR_NEARFIELD\": null\n            }\n        },\n\n\n        {\n            \"name\": \"dof_coc_blur_hexangonal_1\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_1)\",\n            \"inputs\": {\n                \"texture\": \"coc_half\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"minFilter\": \"NEAREST\",\n                        \"magFilter\": \"NEAREST\",\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            },\n            \"defines\": {\n                \"BLUR_COC\": null\n            }\n        },\n        {\n            \"name\": \"dof_coc_blur_hexangonal_2\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_2)\",\n            \"inputs\": {\n                \"texture\": \"coc_half\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"minFilter\": \"NEAREST\",\n                        \"magFilter\": \"NEAREST\",\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            },\n            \"defines\": {\n                \"BLUR_COC\": null\n            }\n        },\n        {\n            \"name\": \"dof_coc_blur_hexangonal_3\",\n            \"shader\": \"#source(qtek.compositor.dof.hexagonal_blur_3)\",\n            \"inputs\": {\n                \"texture1\": \"dof_coc_blur_hexangonal_1\",\n                \"texture2\": \"dof_coc_blur_hexangonal_2\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"minFilter\": \"NEAREST\",\n                        \"magFilter\": \"NEAREST\",\n                        \"width\": \"expr(width * dpr / 2)\",\n                        \"height\": \"expr(height * dpr / 2)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            },\n            \"defines\": {\n                \"BLUR_COC\": null\n            }\n        },\n\n        {\n            \"name\": \"dof_far_blur_upsample\",\n            \"shader\": \"#source(qtek.compositor.dof.upsample)\",\n            \"inputs\": {\n                \"texture\": \"dof_far_blur_hexangonal_3\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr)\",\n                        \"height\": \"expr(height * dpr)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            }\n        },\n\n        {\n            \"name\": \"dof_near_blur_upsample\",\n            \"shader\": \"#source(qtek.compositor.dof.upsample)\",\n            \"inputs\": {\n                \"texture\": \"dof_near_blur_hexangonal_3\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr)\",\n                        \"height\": \"expr(height * dpr)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            }\n        },\n\n        {\n            \"name\": \"dof_coc_blur_upsample\",\n            \"shader\": \"#source(qtek.compositor.dof.coc_upsample)\",\n            \"inputs\": {\n                \"coc\": \"dof_coc_blur_hexangonal_3\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"minFilter\": \"NEAREST\",\n                        \"magFilter\": \"NEAREST\",\n                        \"width\": \"expr(width * dpr)\",\n                        \"height\": \"expr(height * dpr)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * dpr / 2, height * dpr / 2] )\"\n            }\n        },\n\n        {\n            \"name\": \"dof_composite\",\n            \"shader\": \"#source(qtek.compositor.dof.composite)\",\n            \"inputs\": {\n                \"original\": \"source\",\n                \"blurred\": \"dof_far_blur_upsample\",\n                \"nearfield\": \"dof_near_blur_upsample\",\n                \"coc\": \"coc\",\n                \"nearcoc\": \"dof_coc_blur_upsample\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * dpr)\",\n                        \"height\": \"expr(height * dpr)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            }\n        },\n\n        {\n            \"name\" : \"lensflare\",\n            \"shader\" : \"#source(qtek.compositor.lensflare)\",\n            \"inputs\" : {\n                \"texture\" : \"bright2\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 2)\",\n                        \"height\" : \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\" : \"expr([width * dpr / 2, height * dpr / 2])\",\n                \"lensColor\" : \"#lenscolor\"\n            }\n        },\n        {\n            \"name\" : \"lensflare_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"lensflare\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 2)\",\n                        \"height\" : \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\" : \"expr([width * dpr / 2, height * dpr / 2])\"\n            }\n        },\n        {\n            \"name\" : \"lensflare_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"lensflare_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr / 2)\",\n                        \"height\" : \"expr(height * dpr / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\" : \"expr([width * dpr / 2, height * dpr / 2])\"\n            }\n        },\n        {\n            \"name\" : \"composite\",\n            \"shader\" : \"#source(qtek.compositor.hdr.composite)\",\n            \"inputs\" : {\n                \"texture\": \"source\",\n                \"bloom\" : \"bloom_composite\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * dpr)\",\n                        \"height\" : \"expr(height * dpr)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"bloomIntensity\": 0.03\n            }\n        },\n        {\n            \"name\" : \"FXAA\",\n            \"shader\" : \"#source(qtek.compositor.fxaa)\",\n            \"inputs\" : {\n                \"texture\" : \"composite\"\n            }\n        }\n    ]\n}"
 
 /***/ },
-/* 114 */
+/* 115 */
 /***/ function(module, exports) {
 
 	
@@ -31584,7 +31839,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 115 */
+/* 116 */
 /***/ function(module, exports) {
 
 	
@@ -31592,7 +31847,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 116 */
+/* 117 */
 /***/ function(module, exports) {
 
 	
@@ -31600,7 +31855,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 117 */
+/* 118 */
 /***/ function(module, exports) {
 
 	
@@ -31608,7 +31863,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 118 */
+/* 119 */
 /***/ function(module, exports) {
 
 	
@@ -31616,7 +31871,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 119 */
+/* 120 */
 /***/ function(module, exports) {
 
 	
@@ -31624,7 +31879,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 120 */
+/* 121 */
 /***/ function(module, exports) {
 
 	
@@ -31632,7 +31887,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 121 */
+/* 122 */
 /***/ function(module, exports) {
 
 	
@@ -31640,7 +31895,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 122 */
+/* 123 */
 /***/ function(module, exports) {
 
 	
@@ -31648,7 +31903,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 123 */
+/* 124 */
 /***/ function(module, exports) {
 
 	
@@ -31656,7 +31911,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 124 */
+/* 125 */
 /***/ function(module, exports) {
 
 	
@@ -31664,22 +31919,208 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 125 */
+/* 126 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Temporal Super Sample for static Scene
+	var halton = __webpack_require__(127);
+	var Pass = __webpack_require__(112);
+	var FrameBuffer = __webpack_require__(56);
+	var Texture2D = __webpack_require__(43);
+	var Shader = __webpack_require__(18);
+
+	function TemporalSuperSampling () {
+	    var haltonSequence = [];
+
+	    for (var i = 0; i < 20; i++) {
+	        haltonSequence.push([
+	            halton(i, 2), halton(i, 3)
+	        ]);
+	    }
+
+	    this._haltonSequence = haltonSequence;
+
+	    this._frame = 0;
+
+	    this._sourceTex = new Texture2D();
+	    this._sourceFb = new FrameBuffer({
+	        depthBuffer: false
+	    });
+	    this._sourceFb.attach(this._sourceTex);
+
+	    // Frame texture before temporal supersampling
+	    this._prevFrameTex = new Texture2D();
+	    this._outputTex = new Texture2D();
+
+	    var blendPass = this._blendPass = new Pass({
+	        fragment: Shader.source('qtek.compositor.blend')
+	    });
+	    blendPass.material.shader.disableTexturesAll();
+	    blendPass.material.shader.enableTexture(['texture1', 'texture2']);
+
+	    this._blendFb = new FrameBuffer({
+	        depthBuffer: false
+	    });
+
+	    this._outputPass = new Pass({
+	        fragment: Shader.source('qtek.compositor.output')
+	    });
+	}
+
+	TemporalSuperSampling.prototype = {
+
+	    constructor: TemporalSuperSampling,
+
+	    /**
+	     * Jitter camera projectionMatrix
+	     * @parma {qtek.Renderer} renderer
+	     * @param {qtek.Camera} camera
+	     */
+	    jitterProjection: function (renderer, camera) {
+	        var width = renderer.getWidth();
+	        var height = renderer.getHeight();
+
+	        var offset = this._haltonSequence[this._frame];
+	        camera.projectionMatrix._array[8] += (offset[0] * 2.0 - 1.0) / width;
+	        camera.projectionMatrix._array[9] += (offset[1] * 2.0 - 1.0) / height;
+	    },
+
+	    /**
+	     * Reset accumulating frame
+	     */
+	    resetFrame: function () {
+	        this._frame = 0;
+	    },
+
+	    /**
+	     * Get source framebuffer for usage
+	     */
+	    getSourceFrameBuffer: function () {
+	        return this._sourceFb;
+	    },
+
+	    resize: function (width, height) {
+	        if (this._sourceTex.width !== width || this._sourceTex.height !== height) {
+
+	            this._prevFrameTex.width = width;
+	            this._prevFrameTex.height = height;
+
+	            this._outputTex.width = width;
+	            this._outputTex.height = height;
+
+	            this._sourceTex.width = width;
+	            this._sourceTex.height = height;
+
+	            this._prevFrameTex.dirty();
+	            this._outputTex.dirty();
+	            this._sourceTex.dirty();
+	        }
+	    },
+
+	    isFinished: function () {
+	        return this._frame >= this._haltonSequence.length;
+	    },
+
+	    render: function (renderer) {
+	        var blendPass = this._blendPass;
+	        if (this._frame === 0) {
+	            // Direct output
+	            blendPass.setUniform('weight1', 0);
+	            blendPass.setUniform('weight2', 1);
+	        }
+	        else {
+	            blendPass.setUniform('weight1', 0.9);
+	            blendPass.setUniform('weight2', 0.1);
+	        }
+	        blendPass.setUniform('texture1', this._prevFrameTex);
+	        blendPass.setUniform('texture2', this._sourceTex);
+
+	        this._blendFb.attach(this._outputTex);
+	        this._blendFb.bind(renderer);
+	        blendPass.render(renderer);
+	        this._blendFb.unbind(renderer);
+
+	        this._outputPass.setUniform('texture', this._outputTex);
+	        this._outputPass.render(renderer);
+
+	        // Swap texture
+	        var tmp = this._prevFrameTex;
+	        this._prevFrameTex = this._outputTex;
+	        this._outputTex = tmp;
+
+	        this._frame++;
+	    },
+
+	    dispose: function (gl) {
+	        this._sourceFb.dispose(gl);
+	        this._blendFb.dispose(gl);
+	        this._prevFrameTex.dispose(gl);
+	        this._outputTex.dispose(gl);
+	        this._sourceTex.dispose(gl);
+	        this._outputPass.dispose(gl);
+	        this._blendPass.dispose(gl);
+	    }
+	};
+
+	module.exports = TemporalSuperSampling;
+
+/***/ },
+/* 127 */
+/***/ function(module, exports) {
+
+	
+	// Generate halton sequence
+	// https://en.wikipedia.org/wiki/Halton_sequence
+	function halton(index, base) {
+
+	    var result = 0;
+	    var f = 1 / base;
+	    var i = index;
+	    while (i > 0) {
+	        result = result + f * (i % base);
+	        i = Math.floor(i / base);
+	        f = f / base;
+	    }
+	    return result;
+	}
+
+
+	module.exports = halton;
+
+/***/ },
+/* 128 */
+/***/ function(module, exports) {
+
+	
+
+	    module.exports = (typeof window !== 'undefined' &&
+	                                    (window.requestAnimationFrame
+	                                    || window.msRequestAnimationFrame
+	                                    || window.mozRequestAnimationFrame
+	                                    || window.webkitRequestAnimationFrame))
+	                                || function (func) {
+	                                    setTimeout(func, 16);
+	                                };
+
+
+
+/***/ },
+/* 129 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
 
 /***/ },
-/* 126 */
+/* 130 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(127);
-	__webpack_require__(128);
-
 	__webpack_require__(131);
+	__webpack_require__(132);
+
+	__webpack_require__(134);
 
 	echarts.registerAction({
 	    type: 'globeUpdateCamera',
@@ -31689,12 +32130,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ecModel.eachComponent({
 	        mainType: 'globe', query: payload
 	    }, function (componentModel) {
-	        componentModel.setView(payload.position, payload.quaternion);
+	        componentModel.setView(payload);
 	    });
 	});
 
 /***/ },
-/* 127 */
+/* 131 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -31819,7 +32260,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            bloom: {
 	                enable: true,
 	                intensity: 0.1
+	            },
+
+	            FXAA: {
+	                enable: true
 	            }
+	        },
+	        // Temporal super sampling when the picture is still.
+	        temporalSuperSampling: {
+	            enable: false
 	        },
 
 	        // Configuration abount view control
@@ -31842,9 +32291,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // Max distance to the surface of globe
 	            maxDistance: 400,
 
-	            // Position and quaternion of camera, override all other properties
-	            position: null,
-	            quaternion: null
+	            // Alpha angle for top-down rotation
+	            // Positive to rotate to top.
+	            alpha: 0,
+	            // beta angle for left-right rotation
+	            // Positive to rotate to right.
+	            beta: 0
 	        },
 
 	        // {
@@ -31864,28 +32316,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	        layers: []
 	    },
 
-	    setView: function (position, quaternion) {
-	        this.option.viewControl.position = position;
-	        this.option.viewControl.quaternion = quaternion;
+	    setView: function (opts) {
+	        opts = opts || {};
+	        this.option.viewControl = this.option.viewControl || {};
+	        if (opts.alpha != null) {
+	            this.option.viewControl.alpha = opts.alpha;
+	        }
+	        if (opts.beta != null) {
+	            this.option.viewControl.beta = opts.beta;
+	        }
+	        if (opts.distance != null) {
+	            this.option.viewControl.distance = opts.distance;
+	        }
 	    }
 	});
 
 	module.exports = GlobeModel;
 
 /***/ },
-/* 128 */
+/* 132 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	var graphicGL = __webpack_require__(42);
-	var OrbitControl = __webpack_require__(78);
+	var graphicGL = __webpack_require__(41);
+	var OrbitControl = __webpack_require__(81);
 
-	var sunCalc = __webpack_require__(129);
-
-
-	graphicGL.Shader.import(__webpack_require__(88));
-	graphicGL.Shader.import(__webpack_require__(130));
+	var sunCalc = __webpack_require__(133);
 
 	module.exports = echarts.extendComponentView({
 
@@ -31896,23 +32353,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    init: function (ecModel, api) {
 	        this.groupGL = new graphicGL.Node();
 
-	        /**
-	         * @type {qtek.Shader}
-	         * @private
-	         */
-	        var lambertShader = graphicGL.createShader('ecgl.lambert');
-	        this._lambertMaterial = new graphicGL.Material({
-	            shader: lambertShader
+	        var materials = {};
+	        ['lambert', 'albedo', 'realastic'].forEach(function (shading) {
+	            materials[shading] = new graphicGL.Material({
+	                shader: graphicGL.createShader('ecgl.' + shading)
+	            });
+	            materials[shading].shader.define('both', 'VERTEX_COLOR');
 	        });
 
-	        /**
-	         * @type {qtek.Shader}
-	         * @private
-	         */
-	        var albedoShader = graphicGL.createShader('ecgl.albedo');
-	        this._albedoMaterial = new graphicGL.Material({
-	            shader: albedoShader
-	        });
+	        this._materials = materials;
 
 	        /**
 	         * @type {qtek.geometry.Sphere}
@@ -31972,20 +32421,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        // Set post effect
 	        coordSys.viewGL.setPostEffect(globeModel.getModel('postEffect'));
+	        coordSys.viewGL.setTemporalSuperSampling(globeModel.getModel('temporalSuperSampling'));
 
 	        var earthMesh = this._earthMesh;
 
 	        earthMesh.geometry = this._sphereGeometry;
 
-	        if (shading === 'color') {
-	            earthMesh.material = this._albedoMaterial;
-	        }
-	        else if (shading === 'lambert') {
-	            earthMesh.material = this._lambertMaterial;
+	        if (this._materials[shading]) {
+	            earthMesh.material = this._materials[shading];
 	        }
 	        else {
-	            console.warn('Unkonw shading ' + shading);
-	            earthMesh.material = this._albedoMaterial;
+	            if (true) {
+	                console.warn('Unkonw shading ' + shading);
+	            }
+	            this._surfaceMesh.material = this._materials.lambert;
 	        }
 
 	        earthMesh.scale.set(coordSys.radius, coordSys.radius, coordSys.radius);
@@ -32113,8 +32562,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        function makeAction() {
 	            return {
 	                type: 'globeUpdateCamera',
-	                position: camera.position.toArray(),
-	                quaternion: camera.rotation.toArray(),
+	                alpha: control.getAlpha(),
+	                beta: control.getBeta(),
+	                distance: control.getDistance() - coordSys.radius,
 	                from: this.uid,
 	                globeId: globeModel.id
 	            };
@@ -32124,7 +32574,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var control = this._control;
 	        control.setCamera(camera);
 
-	        control.setDistance(coordSys.radius * 4);
 	        control.setFromViewControlModel(viewControlModel, coordSys.radius);
 
 	        control.off('update');
@@ -32243,7 +32692,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 129 */
+/* 133 */
 /***/ function(module, exports) {
 
 	/*
@@ -32333,20 +32782,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = SunCalc;
 
 /***/ },
-/* 130 */
-/***/ function(module, exports) {
-
-	module.exports = "/**\n * http://en.wikipedia.org/wiki/Lambertian_reflectance\n */\n\n@export ecgl.lambert.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n// Derivative maps - bump mapping unparametrized surfaces by Morten Mikkelsen\n//  http://mmikkelsen3d.blogspot.sk/2011/07/derivative-maps.html\n\n// Evaluate the derivative of the height w.r.t. screen-space using forward differencing (listing 2)\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import qtek.util.srgb\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n        // source-over blend\n        albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n    vec3 N = v_Normal;\n    vec3 P = v_WorldPosition;\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n    #ifdef FLAT\n        ambientFactor = dot(P, N);\n    #else\n        ambientFactor = dot(v_Normal, N);\n    #endif\n#endif\n\nvec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n        // Multiply a dot factor to make sure the bump detail can be seen\n        // in the dark side\n        diffuseColor += ambientLightColor[i] * ambientFactor;\n    }\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float ndl = dot(N, normalize(lightDirection));\n\n        float shadowContrib = 1.0;\n        #if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n            if(shadowEnabled)\n            {\n                shadowContrib = shadowContribs[i];\n            }\n        #endif\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0) * shadowContrib;\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * emissionIntensity;\n        gl_FragColor.rgb += texel2.rgb;\n    }}\n#endif\n\n}\n\n@end"
-
-/***/ },
-/* 131 */
+/* 134 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Globe = __webpack_require__(132);
+	var Globe = __webpack_require__(135);
 	var echarts = __webpack_require__(2);
-	var layoutUtil = __webpack_require__(93);
-	var ViewGL = __webpack_require__(100);
-	var retrieve = __webpack_require__(82);
+	var layoutUtil = __webpack_require__(94);
+	var ViewGL = __webpack_require__(101);
+	var retrieve = __webpack_require__(85);
 
 	function resizeGlobe(globeModel, api) {
 	    // Use left/top/width/height
@@ -32357,7 +32800,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        height: api.getHeight()
 	    });
 
-	    this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+	    this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 
 	    this.radius = globeModel.get('globeRadius');
 	}
@@ -32413,7 +32856,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = globeCreator;
 
 /***/ },
-/* 132 */
+/* 135 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var glmatrix = __webpack_require__(15);
@@ -32485,18 +32928,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Globe;
 
 /***/ },
-/* 133 */
+/* 136 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(134);
-
-	__webpack_require__(135);
 	__webpack_require__(137);
 
+	__webpack_require__(138);
+	__webpack_require__(140);
+
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(138), 'bar3D'
+	    __webpack_require__(141), 'bar3D'
 	));
 
 	echarts.registerProcessor(function (ecModel, api) {
@@ -32509,7 +32952,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 134 */
+/* 137 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -32614,15 +33057,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 135 */
+/* 138 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(42);
-	var BarsGeometry = __webpack_require__(136);
-
-	graphicGL.Shader.import(__webpack_require__(88));
-	graphicGL.Shader.import(__webpack_require__(130));
+	var graphicGL = __webpack_require__(41);
+	var BarsGeometry = __webpack_require__(139);
 
 	function getShader(shading) {
 	    var shader = graphicGL.createShader('ecgl.' + shading);
@@ -32680,11 +33120,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.groupGL.add(this._barMeshTransparent);
 
 	        var coordSys = seriesModel.coordinateSystem;
+	        this._doRender(seriesModel, api);
 	        if (coordSys && coordSys.viewGL) {
 	            coordSys.viewGL.add(this.groupGL);
 
+	            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+	            this._barMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+	            this._barMeshTransparent.material.shader[methodName]('fragment', 'SRGB_DECODE');
 	        }
-	        this._doRender(seriesModel, api);
+
+
 	    },
 
 	    _doRender: function (seriesModel, api) {
@@ -32792,7 +33237,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 136 */
+/* 139 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -32803,7 +33248,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	var echarts = __webpack_require__(2);
-	var dynamicConvertMixin = __webpack_require__(80);
+	var dynamicConvertMixin = __webpack_require__(83);
 	var StaticGeometry = __webpack_require__(32);
 
 	var glMatrix = __webpack_require__(15);
@@ -33142,7 +33587,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = BarsGeometry;
 
 /***/ },
-/* 137 */
+/* 140 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -33201,7 +33646,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 138 */
+/* 141 */
 /***/ function(module, exports) {
 
 	module.exports = function (seriesType, ecModel, api) {
@@ -33227,20 +33672,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 139 */
+/* 142 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(140);
-	__webpack_require__(141);
+	__webpack_require__(143);
+	__webpack_require__(144);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(145), 'scatter3D', 'circle', null
+	    __webpack_require__(148), 'scatter3D', 'circle', null
 	));
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(138), 'scatter3D'
+	    __webpack_require__(141), 'scatter3D'
 	));
 
 	echarts.registerLayout(function (ecModel, api) {
@@ -33277,7 +33722,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 140 */
+/* 143 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -33321,13 +33766,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 141 */
+/* 144 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(42);
+	var graphicGL = __webpack_require__(41);
 
-	var PointsMesh = __webpack_require__(142);
+	var PointsMesh = __webpack_require__(145);
 
 	echarts.extendChartView({
 
@@ -33367,15 +33812,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 142 */
+/* 145 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(42);
-	var spriteUtil = __webpack_require__(143);
+	var graphicGL = __webpack_require__(41);
+	var spriteUtil = __webpack_require__(146);
 
 
-	graphicGL.Shader.import(__webpack_require__(144));
+	graphicGL.Shader.import(__webpack_require__(147));
 
 
 	module.exports = graphicGL.Mesh.extend(function () {
@@ -33581,7 +34026,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 143 */
+/* 146 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -33681,13 +34126,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = spriteUtil;
 
 /***/ },
-/* 144 */
+/* 147 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.points.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n}\n\n@end\n\n@export ecgl.points.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = color;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end"
 
 /***/ },
-/* 145 */
+/* 148 */
 /***/ function(module, exports) {
 
 	
@@ -33736,23 +34181,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 146 */
+/* 149 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(147);
+	__webpack_require__(150);
 
-	__webpack_require__(148);
-	__webpack_require__(152);
+	__webpack_require__(151);
+	__webpack_require__(156);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(138), 'lines3D'
+	    __webpack_require__(141), 'lines3D'
 	));
 
 
 /***/ },
-/* 147 */
+/* 150 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -33839,15 +34284,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 148 */
+/* 151 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(42);
-	var LinesGeometry = __webpack_require__(79);
-	var CurveAnimatingPointsMesh = __webpack_require__(149);
+	var graphicGL = __webpack_require__(41);
+	var LinesGeometry = __webpack_require__(82);
+	var CurveAnimatingPointsMesh = __webpack_require__(152);
 
-	graphicGL.Shader.import(__webpack_require__(87));
+	graphicGL.Shader.import(__webpack_require__(155));
 
 	module.exports = echarts.extendChartView({
 
@@ -33995,16 +34440,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 149 */
+/* 152 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(42);
-	var spriteUtil = __webpack_require__(143);
+	var graphicGL = __webpack_require__(41);
+	var spriteUtil = __webpack_require__(146);
 
-	var CurveAnimatingPointsGeometry = __webpack_require__(150);
+	var CurveAnimatingPointsGeometry = __webpack_require__(153);
 
-	graphicGL.Shader.import(__webpack_require__(151));
+	graphicGL.Shader.import(__webpack_require__(154));
 
 	module.exports = graphicGL.Mesh.extend(function () {
 
@@ -34085,7 +34530,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 150 */
+/* 153 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -34181,13 +34626,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = CurveAnimatingPointsGeometry;
 
 /***/ },
-/* 151 */
+/* 154 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.curveAnimatingPoints.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float percent : 0.0;\n\nattribute vec3 p0;\nattribute vec3 p1;\nattribute vec3 p2;\nattribute vec3 p3;\nattribute vec4 color : COLOR;\n\nattribute float offset;\nattribute float size;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    float t = mod(offset + percent, 1.0);\n    float onet = 1.0 - t;\n    vec3 position = onet * onet * (onet * p0 + 3.0 * t * p1)\n        + t * t * (t * p3 + 3.0 * onet * p2);\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    gl_PointSize = size;\n\n    v_Color = color;\n}\n\n@end\n\n@export ecgl.curveAnimatingPoints.fragment\n\nvarying vec4 v_Color;\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = v_Color;\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n}\n@end"
 
 /***/ },
-/* 152 */
+/* 155 */
+/***/ function(module, exports) {
+
+	module.exports = "@export ecgl.lines3D.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines3D.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha) * v_Color;\n}\n@end\n\n\n@export ecgl.meshLines3D.vertex\n\n// https://mattdesl.svbtle.com/drawing-lines-is-hard\nattribute vec3 position: POSITION;\nattribute vec3 positionPrev;\nattribute vec3 positionNext;\nattribute float offset;\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\nuniform float near : NEAR;\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvec4 clipNear(vec4 p1, vec4 p2) {\n    float n = (p1.w - near) / (p1.w - p2.w);\n    // PENDING\n    return vec4(mix(p1.xy, p2.xy, n), -near, near);\n}\n\nvoid main()\n{\n    vec4 prevProj = worldViewProjection * vec4(positionPrev, 1.0);\n    vec4 currProj = worldViewProjection * vec4(position, 1.0);\n    vec4 nextProj = worldViewProjection * vec4(positionNext, 1.0);\n\n    if (currProj.w < 0.0) {\n        if (prevProj.w < 0.0) {\n            currProj = clipNear(currProj, nextProj);\n        }\n        else {\n            currProj = clipNear(currProj, prevProj);\n        }\n    }\n\n    vec2 prevScreen = (prevProj.xy / abs(prevProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 currScreen = (currProj.xy / abs(currProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 nextScreen = (nextProj.xy / abs(nextProj.w) + 1.0) * 0.5 * viewport.zw;\n\n    vec2 dir;\n    float len = offset;\n    // Start point\n    if (position == positionPrev) {\n        dir = normalize(nextScreen - currScreen);\n        v_Miter = 1.0;\n    }\n    // End point\n    else if (position == positionNext) {\n        dir = normalize(currScreen - prevScreen);\n        v_Miter = 1.0;\n    }\n    else {\n        vec2 dirA = normalize(currScreen - prevScreen);\n        vec2 dirB = normalize(nextScreen - currScreen);\n\n        vec2 tanget = normalize(dirA + dirB);\n\n        v_Miter = 1.0 / max(dot(tanget, dirA), 0.5);\n        len *= v_Miter;\n        dir = tanget;\n    }\n\n    dir = vec2(-dir.y, dir.x) * len;\n    currScreen += dir;\n\n    currProj.xy = (currScreen / viewport.zw - 0.5) * 2.0 * abs(currProj.w);\n    gl_Position = currProj;\n\n    v_Color = a_Color;\n}\n@end\n\n\n@export ecgl.meshLines3D.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvoid main()\n{\n    // TODO Fadeout pixels v_Miter > 1\n    gl_FragColor = vec4(color, alpha) * v_Color;\n}\n\n@end"
+
+/***/ },
+/* 156 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -34251,20 +34702,385 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 153 */
+/* 157 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	__webpack_require__(158);
+	__webpack_require__(159);
+	__webpack_require__(160);
+
+/***/ },
+/* 158 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(154);
-	__webpack_require__(155);
+	echarts.extendSeriesModel({
+
+	    type: 'series.surface',
+
+	    dependencies: ['globe', 'grid3D', 'geo3D'],
+
+	    visualColorAccessPath: 'areaStyle.normal.color',
+
+	    getInitialData: function (option, ecModel) {
+	        var data = option.data;
+
+	        function validateDimension(dimOpts) {
+	            return !(isNaN(dimOpts.min) || isNaN(dimOpts.max) || isNaN(dimOpts.step));
+	        }
+
+	        if (!data) {
+	            data = [];
+
+	            if (!option.parametric) {
+	                // From surface equation
+	                var surfaceEquation = option.surfaceEquation || {};
+	                var xOpts = surfaceEquation.x || {};
+	                var yOpts = surfaceEquation.y || {};
+
+	                ['x', 'y'].forEach(function (dim) {
+	                    if (!validateDimension(surfaceEquation[dim])) {
+	                        if (true) {
+	                            console.error('Invalid surfaceEquation.%s', dim);
+	                        }
+	                        return;
+	                    }
+	                });
+	                if (typeof surfaceEquation.z !== 'function') {
+	                    if (true) {
+	                        console.error('surfaceEquation.z needs to be function');
+	                    }
+	                    return;
+	                }
+
+	                for (var y = yOpts.min; y <= yOpts.max; y += yOpts.step) {
+	                    for (var x = xOpts.min; x <= xOpts.max; x += xOpts.step) {
+	                        var z = surfaceEquation.z(x, y);
+	                        data.push([x, y, z]);
+	                    }
+	                }
+	            }
+	            else {
+	                var parametricSurfaceEquation = option.parametricSurfaceEquation || {};
+	                var uOpts = parametricSurfaceEquation.u || {};
+	                var vOpts = parametricSurfaceEquation.v || {};
+
+	                ['u', 'v'].forEach(function (dim) {
+	                    if (!validateDimension(parametricSurfaceEquation[dim])) {
+	                        if (true) {
+	                            console.error('Invalid parametricSurfaceEquation.%s', dim);
+	                        }
+	                        return;
+	                    }
+	                });
+	                ['x', 'y', 'z'].forEach(function (dim) {
+	                    if (typeof parametricSurfaceEquation[dim] !== 'function') {
+	                        if (true) {
+	                            console.error('parametricSurfaceEquation.%s needs to be function', dim);
+	                        }
+	                        return;
+	                    }
+	                });
+
+	                for (var v = vOpts.min; v <= vOpts.max; v += vOpts.step) {
+	                    for (var u = uOpts.min; u <= uOpts.max; u += uOpts.step) {
+	                        var x = parametricSurfaceEquation.x(u, v);
+	                        var y = parametricSurfaceEquation.y(u, v);
+	                        var z = parametricSurfaceEquation.z(u, v);
+	                        data.push([x, y, z, u, v]);
+	                    }
+	                }
+	            }
+	        }
+
+	        var dims = ['x', 'y', 'z'];
+	        if (option.parametric) {
+	            dims.push('u', 'v');
+	        }
+	        // Check row and column
+
+	        var list = new echarts.List(dims, this);
+	        list.initData(data);
+
+	        return list;
+	    },
+
+	    defaultOption: {
+	        coordinateSystem: 'cartesian3D',
+	        zlevel: 10,
+
+	        // Cartesian coordinate system
+	        xAxis3DIndex: 0,
+	        yAxis3DIndex: 0,
+	        zAxis3DIndex: 0,
+
+	        // Surface needs lambert shading to show the tangents
+	        shading: 'lambert',
+	        // If parametric surface
+	        parametric: false,
+	        /**
+	         * Generate surface data from z = f(x, y) equation
+	         */
+	        surfaceEquation: {
+	            // [min, max, step]
+	            x: {
+	                min: -1,
+	                max: 1,
+	                step: 0.1
+	            },
+	            y: {
+	                min: -1,
+	                max: 1,
+	                step: 0.1
+	            },
+	            z: null
+	        },
+
+	        parametricSurfaceEquation: {
+	            // [min, max, step]
+	            u: {
+	                min: -1,
+	                max: 1,
+	                step: 0.1
+	            },
+	            v: {
+	                min: -1,
+	                max: 1,
+	                step: 0.1
+	            },
+	            // [x, y, z] = f(x, y)
+	            x: null,
+	            y: null,
+	            z: null
+	        },
+
+	        areaStyle: {
+	            normal: {
+	            }
+	        }
+	    }
+	});
+
+/***/ },
+/* 159 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+	var graphicGL = __webpack_require__(41);
+	var vec3 = __webpack_require__(15).vec3;
+
+	echarts.extendChartView({
+
+	    type: 'surface',
+
+	    init: function (ecModel, api) {
+
+	        this.groupGL = new graphicGL.Node();
+
+	        var materials = {};
+	        ['lambert', 'albedo', 'realastic'].forEach(function (shading) {
+	            materials[shading] = new graphicGL.Material({
+	                shader: graphicGL.createShader('ecgl.' + shading)
+	            });
+	            materials[shading].shader.define('both', 'VERTEX_COLOR');
+	        });
+
+	        this._materials = materials;
+
+	        var mesh = new graphicGL.Mesh({
+	            geometry: new graphicGL.Geometry(),
+	            material: materials.lambert,
+	            culling: false
+	        });
+
+	        this._surfaceMesh = mesh;
+	        this.groupGL.add(this._surfaceMesh);
+	    },
+
+	    render: function (seriesModel, ecModel, api) {
+	        var coordSys = seriesModel.coordinateSystem;
+	        if (coordSys && coordSys.viewGL) {
+	            coordSys.viewGL.add(this.groupGL);
+	        }
+
+	        var shading = seriesModel.get('shading');
+	        var data = seriesModel.getData();
+
+	        if (this._materials[shading]) {
+	            this._surfaceMesh.material = this._materials[shading];
+	        }
+	        else {
+	            if (true) {
+	                console.error('Unkown shading %s', shading);
+	            }
+	            this._surfaceMesh.material = this._materials.lambert;
+	        }
+
+	        var geometry = this._surfaceMesh.geometry;
+
+	        var isParametric = seriesModel.get('parametric');
+
+	        var dataShape = this._getDataShape(data, isParametric);
+
+	        this._updateGeometry(geometry, seriesModel, dataShape);
+	    },
+
+	    _updateGeometry: function (geometry, seriesModel, dataShape) {
+	        var data = seriesModel.getData();
+	        var points = data.getLayout('points');
+	        var offset = 0;
+	        var positionAttr = geometry.attributes.position;
+	        var normalAttr = geometry.attributes.normal;
+	        var colorAttr = geometry.attributes.color;
+	        positionAttr.value = new Float32Array(points);
+	        normalAttr.init(geometry.vertexCount);
+	        colorAttr.init(geometry.vertexCount);
+	        for (var i = 0; i < dataShape.row; i++) {
+	            for (var j = 0; j < dataShape.column; j++) {
+	                var rgbaArr = graphicGL.parseColor(data.getItemVisual(offset, 'color'));
+	                colorAttr.set(offset++, rgbaArr);
+	            }
+	        }
+
+	        var faces = [];
+	        // Faces
+	        for (var i = 0; i < dataShape.row - 1; i++) {
+	            for (var j = 0; j < dataShape.column - 1; j++) {
+	                var i2 = i * dataShape.column + j;
+	                var i1 = i * dataShape.column + j + 1;
+	                var i4 = (i + 1) * dataShape.column + j + 1;
+	                var i3 = (i + 1) * dataShape.column + j;
+
+	                faces.push([i1, i4, i2], [i2, i4, i3]);
+	            }
+	        }
+	        geometry.initFacesFromArray(faces);
+
+	        if (seriesModel.get('shading') === 'lambert') {
+	            geometry.generateVertexNormals();
+	            // Flip inside normals
+	            // PENDING better algorithm ?
+
+	            var isParametric = seriesModel.get('parametric');
+	            var center = [0, 0, 0];
+	            if (isParametric) {
+	                center = new graphicGL.Vector3();
+	                geometry.updateBoundingBox();
+	                var bbox = geometry.boundingBox;
+	                center.add(bbox.min).add(bbox.max).scale(0.5);
+	                center = center._array;
+	            }
+	            var normal = [];
+	            var pos = [];
+	            var up = [0, 1, 0];
+	            for (var i = 0; i < geometry.vertexCount; i++) {
+	                normalAttr.get(i, normal);
+	                if (isParametric) {
+	                    positionAttr.get(i, pos);
+	                    vec3.sub(pos, pos, center);
+	                    if (vec3.dot(normal, pos) < 0) {
+	                        vec3.negate(normal, normal);
+	                        normalAttr.set(i, normal);
+	                    }
+	                }
+	                else {
+	                    // Always face up
+	                    if (vec3.dot(normal, up) < 0) {
+	                        vec3.negate(normal, normal);
+	                        normalAttr.set(i, normal);
+	                    }
+	                }
+	            }
+	        }
+	    },
+
+	    _getDataShape: function (data, isParametric) {
+
+	        var prevX = -Infinity;
+	        var rowCount = 0;
+	        var columnCount = 0;
+	        var prevColumnCount = 0;
+
+	        var rowDim = isParametric ? 'u' : 'x';
+
+	        // Check data format
+	        for (var i = 0; i < data.count(); i++) {
+	            var x = data.get(rowDim, i);
+	            if (x < prevX) {
+	                if (prevColumnCount && prevColumnCount !== columnCount) {
+	                    if (true) {
+	                        throw new Error('Invalid data. data should be a row major 2d array.')
+	                    }
+	                }
+	                // A new row.
+	                prevColumnCount = columnCount;
+	                columnCount = 0;
+	                rowCount++;
+	            }
+	            prevX = x;
+	            columnCount++;
+	        }
+
+	        return {
+	            row: rowCount + 1,
+	            column: columnCount
+	        };
+	    },
+
+	    dispose: function () {
+	        this.groupGL.removeAll();
+	    },
+
+	    remove: function () {
+	        this.groupGL.removeAll();
+	    }
+	});
+
+/***/ },
+/* 160 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	echarts.registerLayout(function (ecModel, api) {
+	    ecModel.eachSeriesByType('surface', function (surfaceModel) {
+	        var cartesian = surfaceModel.coordinateSystem;
+	        if (!cartesian || cartesian.type !== 'cartesian3D') {
+	            if (true) {
+	                console.error('Surface chart only support cartesian3D coordinateSystem');
+	            }
+	        }
+	        var data = surfaceModel.getData();
+	        var points = new Float32Array(3 * data.count());
+	        if (cartesian && cartesian.type === 'cartesian3D') {
+	            data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+	                var pt = cartesian.dataToPoint([x, y, z]);
+	                points[idx * 3] = pt[0];
+	                points[idx * 3 + 1] = pt[1];
+	                points[idx * 3 + 2] = pt[2];
+	            });
+	        }
+	        data.setLayout('points', points);
+	    });
+	});
+
+/***/ },
+/* 161 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	__webpack_require__(162);
+	__webpack_require__(163);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(145), 'scatterGL', 'circle', null
+	    __webpack_require__(148), 'scatterGL', 'circle', null
 	));
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(138), 'scatterGL'
+	    __webpack_require__(141), 'scatterGL'
 	));
 
 	echarts.registerLayout(function (ecModel, api) {
@@ -34300,7 +35116,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 154 */
+/* 162 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -34347,14 +35163,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 155 */
+/* 163 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(42);
-	var ViewGL = __webpack_require__(100);
+	var graphicGL = __webpack_require__(41);
+	var ViewGL = __webpack_require__(101);
 
-	var Points2DMesh = __webpack_require__(142);
+	var Points2DMesh = __webpack_require__(145);
 
 	echarts.extendChartView({
 
@@ -34376,7 +35192,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    render: function (seriesModel, ecModel, api) {
 	        this.groupGL.add(this._pointsMesh);
 
-	        this._updateCamera(api.getWidth(), api.getHeight());
+	        this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
 
 	        this._pointsMesh.updateData(seriesModel, ecModel, api);
 	    },
@@ -34385,8 +35201,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._pointsMesh.updateLayout(seriesModel, ecModel, api);
 	    },
 
-	    _updateCamera: function (width, height) {
-	        this.viewGL.setViewport(0, 0, width, height);
+	    _updateCamera: function (width, height, dpr) {
+	        this.viewGL.setViewport(0, 0, width, height, dpr);
 	        var camera = this.viewGL.camera;
 	        camera.left = camera.top = 0;
 	        camera.bottom = height;
