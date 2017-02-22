@@ -27,7 +27,9 @@ echarts.extendChartView({
         this._materials = materials;
 
         var mesh = new graphicGL.Mesh({
-            geometry: new graphicGL.Geometry(),
+            geometry: new graphicGL.Geometry({
+                dynamic: true
+            }),
             material: materials.lambert,
             culling: false
         });
@@ -139,6 +141,8 @@ echarts.extendChartView({
                 }
             }
         }
+
+        geometry.dirty();
     },
 
     _getDataShape: function (data, isParametric) {
