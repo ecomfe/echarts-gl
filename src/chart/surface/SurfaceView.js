@@ -109,37 +109,42 @@ echarts.extendChartView({
 
         if (seriesModel.get('shading') !== 'color') {
             geometry.generateVertexNormals();
-            // Flip inside normals
-            // PENDING better algorithm ?
-
             var isParametric = seriesModel.get('parametric');
             var center = [0, 0, 0];
-            if (isParametric) {
-                center = new graphicGL.Vector3();
-                geometry.updateBoundingBox();
-                var bbox = geometry.boundingBox;
-                center.add(bbox.min).add(bbox.max).scale(0.5);
-                center = center._array;
-            }
-            var normal = [];
-            var pos = [];
-            var up = [0, 1, 0];
-            for (var i = 0; i < geometry.vertexCount; i++) {
-                normalAttr.get(i, normal);
+            var flipNormals = seriesModel.get('flipNormals');
+            if (flipNormals == null || flipNormals == 'auto') {
+                var normal = [];
+                var pos = [];
+                var up = [0, 1, 0];
                 if (isParametric) {
-                    positionAttr.get(i, pos);
-                    vec3.sub(pos, pos, center);
-                    if (vec3.dot(normal, pos) < 0) {
-                        vec3.negate(normal, normal);
-                        normalAttr.set(i, normal);
+                    // PENDING better algorithm ?
+                    center = new graphicGL.Vector3();
+                    geometry.updateBoundingBox();
+                    var bbox = geometry.boundingBox;
+                    center.add(bbox.min).add(bbox.max).scale(0.5);
+                    center = center._array;
+                    var wrongNormalCount = 0;
+                    for (var i = 0; i < geometry.vertexCount; i++) {
+                        normalAttr.get(i, normal);
+                        positionAttr.get(i, pos);
+                        vec3.sub(pos, pos, center);
+                        if (vec3.dot(pos, normal) < 0) {
+                            wrongNormalCount++;
+                        }
                     }
+                    flipNormals = wrongNormalCount / geometry.vertexCount > 0.5;
                 }
                 else {
-                    // Always face up
-                    if (vec3.dot(normal, up) < 0) {
-                        vec3.negate(normal, normal);
-                        normalAttr.set(i, normal);
-                    }
+                    normalAttr.get(0, normal);
+                    flipNormals = vec3.dot(up, normal) < 0;
+                }
+            }
+            if (flipNormals) {
+                var normal = [];
+                for (var i = 0; i < geometry.vertexCount; i++) {
+                    normalAttr.get(i, normal);
+                    vec3.negate(normal, normal);
+                    normalAttr.set(i, normal);
                 }
             }
         }

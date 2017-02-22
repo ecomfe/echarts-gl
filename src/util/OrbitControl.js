@@ -325,20 +325,19 @@ var OrbitControl = Base.extend(function () {
         this._needsUpdate = false;
     },
 
-    _updateRotate: function () {
-
+    _updateRotate: function (deltaTime) {
         var velocity = this._rotateVelocity;
-        this._phi = (velocity.y + this._phi) % (Math.PI * 2);
-        this._theta = (velocity.x + this._theta) % (Math.PI * 2);
+        this._phi = (velocity.y * deltaTime / 20 + this._phi) % (Math.PI * 2);
+        this._theta = (velocity.x * deltaTime / 20 + this._theta) % (Math.PI * 2);
 
         this._theta = Math.max(Math.min(this._theta, Math.PI / 2), -Math.PI / 2);
 
 
-        this._vectorDamping(velocity, 0.8);
+        this._vectorDamping(velocity, 0.9);
     },
 
     _updateDistance: function (deltaTime) {
-        this._setDistance(this._distance + this._zoomSpeed);
+        this._setDistance(this._distance + this._zoomSpeed * deltaTime / 20);
         this._zoomSpeed *= 0.8;
     },
 

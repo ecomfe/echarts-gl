@@ -109,6 +109,11 @@ echarts.extendSeriesModel({
         },
         // If parametric surface
         parametric: false,
+
+        /**
+         * If flip surface normals
+         */
+        flipNormals: 'auto',
         /**
          * Generate surface data from z = f(x, y) equation
          */
