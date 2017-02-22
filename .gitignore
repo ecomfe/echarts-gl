@@ -170,3 +170,4 @@ node_modules
 doc/static
 doc/example/data/raw
 todo
+tmp

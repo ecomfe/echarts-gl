@@ -1,4 +1,4 @@
-@export ecgl.realastic.vertex
+@export ecgl.realistic.vertex
 
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 uniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;
@@ -38,11 +38,19 @@ void main()
 @end
 
 
-@export ecgl.realastic.fragment
+@export ecgl.realistic.fragment
 
 #define LAYER_DIFFUSEMAP_COUNT 0
 #define LAYER_EMISSIVEMAP_COUNT 0
 #define PI 3.14159265358979
+
+#ifdef VERTEX_COLOR
+varying vec4 v_Color;
+#endif
+
+varying vec2 v_Texcoord;
+varying vec3 v_Normal;
+varying vec3 v_WorldPosition;
 
 #ifdef DIFFUSEMAP_ENABLED
 uniform sampler2D diffuseMap;
@@ -114,28 +122,10 @@ uniform mat4 viewInverse : VIEWINVERSE;
 @import qtek.header.directional_light
 #endif
 
-#ifdef VERTEX_COLOR
-varying vec4 v_Color;
-#endif
-
-varying vec2 v_Texcoord;
-
-varying vec3 v_Normal;
-varying vec3 v_WorldPosition;
-
 @import qtek.util.srgb
 
 @import qtek.util.rgbm
 
-float G_Smith(float g, float ndv, float ndl)
-{
-    // float k = (roughness+1.0) * (roughness+1.0) * 0.125;
-    float roughness = 1.0 - g;
-    float k = roughness * roughness / 2.0;
-    float G1V = ndv / (ndv * (1.0 - k) + k);
-    float G1L = ndl / (ndl * (1.0 - k) + k);
-    return G1L * G1V;
-}
 // Fresnel
 vec3 F_Schlick(float ndv, vec3 spec) {
     return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);
@@ -146,14 +136,6 @@ float D_Phong(float g, float ndh) {
     float a = pow(8192.0, g);
     return (a + 2.0) / 8.0 * pow(ndh, a);
 }
-
-float D_GGX(float g, float ndh) {
-    float r = 1.0 - g;
-    float a = r * r;
-    float tmp = ndh * ndh * (a - 1.0) + 1.0;
-    return a / (PI * tmp * tmp);
-}
-
 void main()
 {
 
@@ -193,11 +175,12 @@ void main()
 
     vec3 baseColor = albedoColor.rgb;
     albedoColor.rgb = baseColor * (1.0 - metalness);
-    vec3 specFactor = mix(vec3(0.04), baseColor, m);
+    vec3 specFactor = mix(vec3(0.04), baseColor, metalness);
 
     float g = 1.0 - roughness;
 
     vec3 N = v_Normal;
+
     float ambientFactor = 1.0;
 
 #ifdef BUMPMAP_ENABLED
@@ -206,8 +189,8 @@ void main()
     ambientFactor = dot(v_Normal, N);
 #endif
 
-vec3 diffuseTerm = vec3(0.0);
-vec3 specularTerm = vec3(0.0);
+    vec3 diffuseTerm = vec3(0.0);
+    vec3 specularTerm = vec3(0.0);
 
     float ndv = clamp(dot(N, V), 0.0, 1.0);
     vec3 fresnelTerm = F_Schlick(ndv, specFactor);
@@ -229,10 +212,10 @@ vec3 specularTerm = vec3(0.0);
 #endif
 
 #ifdef DIRECTIONAL_LIGHT_COUNT
-    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)
-    {
-        vec3 L = -directionalLightDirection[i];
-        vec3 lc = directionalLightColor[i];
+    for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)
+    {{
+        vec3 L = -directionalLightDirection[_idx_];
+        vec3 lc = directionalLightColor[_idx_];
 
         vec3 H = normalize(L + V);
         float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);
@@ -242,7 +225,7 @@ vec3 specularTerm = vec3(0.0);
 
         diffuseTerm += li;
         specularTerm += li * fresnelTerm * D_Phong(g, ndh);
-    }
+    }}
 #endif
 
 
@@ -253,7 +236,7 @@ vec3 specularTerm = vec3(0.0);
     float bias2 = rough2 * 5.0;
     // One brdf lookup is enough
     vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;
-    vec3 envWeight2 = spec * brdfParam2.x + brdfParam2.y;
+    vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;
     vec3 envTexel2;
     for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)
     {{
@@ -263,15 +246,16 @@ vec3 specularTerm = vec3(0.0);
     }}
 #endif
 
-    gl_FragColor.rgb *= diffuseTerm;
-    gl_FragColor.rgb += specularTerm;
+    gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;
+    gl_FragColor.a = albedoColor.a;
 
     #ifdef SRGB_ENCODE
     gl_FragColor = linearTosRGB(gl_FragColor);
     #endif
 
 #if (LAYER_EMISSIVEMAP_COUNT > 0)
-    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
+    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)
+    {{
         // PENDING sRGB ?
         vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * emissionIntensity;
         gl_FragColor.rgb += texel2.rgb;

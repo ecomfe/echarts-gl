@@ -170,7 +170,7 @@ ViewGL.prototype._doRender = function (renderer) {
         }
     }
     else {
-        if (this._enableTemporalSS && this._accumulatingId > 0) {
+        // if (this._enableTemporalSS && this._accumulatingId > 0) {
             var frameBuffer = this._temporalSS.getSourceFrameBuffer();
             frameBuffer.bind(renderer);
             renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
@@ -179,11 +179,12 @@ ViewGL.prototype._doRender = function (renderer) {
 
             renderer.setViewport(this.viewport);
             this._temporalSS.render(renderer);
-        }
-        else {
-            renderer.setViewport(this.viewport);
-            renderer.render(this.scene, this.camera);
-        }
+        // TODO
+        // }
+        // else {
+        //     renderer.setViewport(this.viewport);
+        //     renderer.render(this.scene, this.camera);
+        // }
     }
 }
 

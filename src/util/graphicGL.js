@@ -9,6 +9,10 @@ var Scene = require('qtek/lib/Scene');
 var LRUCache = require('zrender/lib/core/LRU');
 var textureUtil = require('qtek/lib/util/texture');
 var EChartsSurface = require('./EChartsSurface');
+var AmbientCubemapLight = require('qtek/lib/light/AmbientCubemap');
+var AmbientSHLight = require('qtek/lib/light/AmbientSH');
+var shUtil = require('qtek/lib/util/sh');
+var retrieve = require('./retrieve');
 
 var animatableMixin = require('./animatableMixin');
 echarts.util.extend(Node3D.prototype, animatableMixin);
@@ -17,7 +21,7 @@ echarts.util.extend(Node3D.prototype, animatableMixin);
 Shader.import(require('qtek/lib/shader/source/util.essl'));
 Shader.import(require('text!./shader/albedo.glsl'));
 Shader.import(require('text!./shader/lambert.glsl'));
-Shader.import(require('text!./shader/realastic.glsl'));
+Shader.import(require('text!./shader/realistic.glsl'));
 
 function isValueNone(value) {
     return !value || value === 'none';
@@ -241,31 +245,84 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
             }
         }
         else {
-            var texture = new graphicGL.Texture2D({
-                image: new Image()
-            });
-            for (var i = 0; i < keys.length; i++) {
-                texture[keys[i]] = textureOpts[keys[i]];
-            }
-
-            textureObj = {
-                texture: texture,
-                callbacks: [cb]
-            };
-            texture.image.onload = function () {
-                texture.dirty();
-                textureObj.callbacks.forEach(function (cb) {
-                    cb && cb(texture);
+            if (imgValue.match(/.hdr$/)) {
+                textureObj = {
+                    callbacks: [cb]
+                };
+                var texture = textureUtil.loadTexture(imgValue, {
+                    exposure: textureOpts.exposure
+                }, function () {
+                    texture.dirty();
+                    textureObj.callbacks.forEach(function (cb) {
+                        cb && cb(texture);
+                    });
+                    textureObj.callbacks = null;
                 });
-                textureObj.callbacks = null;
-            };
-            texture.image.src = imgValue;
+                textureObj.texture = texture;
+                textureCache.put(prefix + imgValue, textureObj);
+            }
+            else {
+                var texture = new graphicGL.Texture2D({
+                    image: new Image()
+                });
+                for (var i = 0; i < keys.length; i++) {
+                    texture[keys[i]] = textureOpts[keys[i]];
+                }
 
-            textureCache.put(prefix + imgValue, textureObj);
+                textureObj = {
+                    texture: texture,
+                    callbacks: [cb]
+                };
+                var originalImage = texture.image;
+                originalImage.onload = function () {
+                    texture.image = originalImage;
+                    texture.dirty();
+                    textureObj.callbacks.forEach(function (cb) {
+                        cb && cb(texture);
+                    });
+                    textureObj.callbacks = null;
+                };
+                originalImage.src = imgValue;
+                // Use blank image as place holder.
+                texture.image = blankImage;
+
+                textureCache.put(prefix + imgValue, textureObj);
+            }
         }
 
         return textureObj.texture;
     }
+};
+
+/**
+ * Create ambientCubemap and ambientSH light. respectively to have specular and diffuse light
+ * @return {Object} { specular, diffuse }
+ */
+graphicGL.createAmbientCubemap = function (opt, renderer, api) {
+    opt = opt || {};
+    var textureUrl = opt.texture;
+    var exposure = retrieve.firstNotNull(opt.exposure, 1.0);
+
+    var ambientCubemap = new AmbientCubemapLight({
+        intensity: retrieve.firstNotNull(opt.specularIntensity, 1.0)
+    });
+    var ambientSH = new AmbientSHLight({
+        intensity: retrieve.firstNotNull(opt.diffuseIntensity, 1.0),
+        coefficients: [0.844, 0.712, 0.691, -0.037, 0.083, 0.167, 0.343, 0.288, 0.299, -0.041, -0.021, -0.009, -0.003, -0.041, -0.064, -0.011, -0.007, -0.004, -0.031, 0.034, 0.081, -0.060, -0.049, -0.060, 0.046, 0.056, 0.050]
+    });
+
+    ambientCubemap.cubemap = graphicGL.loadTexture(textureUrl, api, {
+        exposure: exposure
+    }, function () {
+        ambientCubemap.cubemap.flipY = false;
+        ambientCubemap.prefilter(renderer);
+        ambientSH.coefficients = shUtil.projectEnvironmentMap(renderer, ambientCubemap.cubemap);
+    });
+
+    return {
+        specular: ambientCubemap,
+        diffuse: ambientSH
+    };
 };
 
 /**

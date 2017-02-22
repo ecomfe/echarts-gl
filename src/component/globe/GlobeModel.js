@@ -91,14 +91,19 @@ var GlobeModel = echarts.extendComponentModel({
         globeRadius: 100,
 
         // Shading of globe
-        // 'color', 'lambert'
-        // TODO, 'realastic', 'toon'
+        // 'color', 'lambert', 'realistic'
+        // TODO, 'toon'
         shading: 'color',
+
+        realisticMaterial: {
+            roughness: 0.5,
+            metalness: 0
+        },
 
         // Light is available when material.shading is not color
         light: {
-
-            sun: {
+            // Main sun light
+            main: {
                 // Time, default it will use system time
                 time: '',
                 color: '#fff',
@@ -111,6 +116,17 @@ var GlobeModel = echarts.extendComponentModel({
             // Emission from emissive layers
             emission: {
                 intensity: 1
+            },
+            ambientCubemap: {
+                // Panorama environment texture,
+                // Support .hdr and commmon web formats.
+                texture: null,
+                // Available when texture is hdr.
+                exposure: 1,
+                // Intensity for diffuse term
+                diffuseIntensity: 0.5,
+                // Intensity for specular term, only available when shading is realastic
+                specularIntensity: 0.5
             }
         },
 

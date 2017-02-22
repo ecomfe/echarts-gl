@@ -25,16 +25,34 @@
 
                     displacementScale: 0.1,
 
-                    shading: 'lambert',
+                    shading: 'realistic',
+                    realisticMaterial: {
+                        roughness: 0.8,
+                        metalness: 0
+                    },
 
+                    postEffect: {
+                        enable: true
+                    },
+                    temporalSuperSampling: {
+                        enable: true
+                    },
                     light: {
                         ambient: {
-                            intensity: 0.1
+                            intensity: 0
                         },
-                        sun: {
-                            color: 'rgb(253, 184, 50)',
+                        main: {
                             intensity: 4
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/pisa.hdr',
+                            exposure: 2,
+                            diffuseIntensity: 1,
+                            specularIntensity: 2
                         }
+                    },
+                    viewControl: {
+                        autoRotate: false
                     }
                 },
                 series: []

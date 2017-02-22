@@ -100,8 +100,13 @@ echarts.extendSeriesModel({
         yAxis3DIndex: 0,
         zAxis3DIndex: 0,
 
-        // Surface needs lambert shading to show the tangents
+        // Surface needs lambert shading to show the difference
         shading: 'lambert',
+
+        realisticMaterial: {
+            roughness: 0.5,
+            metalness: 0
+        },
         // If parametric surface
         parametric: false,
         /**

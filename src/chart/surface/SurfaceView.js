@@ -1,17 +1,23 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
+var retrieve = require('../../util/retrieve');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
 echarts.extendChartView({
 
     type: 'surface',
 
+    __ecgl__: true,
+
     init: function (ecModel, api) {
 
         this.groupGL = new graphicGL.Node();
 
         var materials = {};
-        ['lambert', 'albedo', 'realastic'].forEach(function (shading) {
+        ['lambert', 'color', 'realistic'].forEach(function (shading) {
+            if (shading === 'color') {
+                shading = 'albedo';
+            }
             materials[shading] = new graphicGL.Material({
                 shader: graphicGL.createShader('ecgl.' + shading)
             });
@@ -48,6 +54,13 @@ echarts.extendChartView({
             }
             this._surfaceMesh.material = this._materials.lambert;
         }
+        if (shading === 'realistic') {
+            var matModel = seriesModel.getModel('realisticMaterial');
+            this._surfaceMesh.material.set({
+                roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
+                metalness: matModel.get('metalness') || 0
+            });
+        }
 
         var geometry = this._surfaceMesh.geometry;
 
@@ -70,6 +83,7 @@ echarts.extendChartView({
         colorAttr.init(geometry.vertexCount);
         for (var i = 0; i < dataShape.row; i++) {
             for (var j = 0; j < dataShape.column; j++) {
+                // TODO Opacity
                 var rgbaArr = graphicGL.parseColor(data.getItemVisual(offset, 'color'));
                 colorAttr.set(offset++, rgbaArr);
             }
@@ -89,7 +103,7 @@ echarts.extendChartView({
         }
         geometry.initFacesFromArray(faces);
 
-        if (seriesModel.get('shading') === 'lambert') {
+        if (seriesModel.get('shading') !== 'color') {
             geometry.generateVertexNormals();
             // Flip inside normals
             // PENDING better algorithm ?

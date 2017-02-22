@@ -19,9 +19,7 @@ function TemporalSuperSampling () {
     this._frame = 0;
 
     this._sourceTex = new Texture2D();
-    this._sourceFb = new FrameBuffer({
-        depthBuffer: false
-    });
+    this._sourceFb = new FrameBuffer();
     this._sourceFb.attach(this._sourceTex);
 
     // Frame texture before temporal supersampling

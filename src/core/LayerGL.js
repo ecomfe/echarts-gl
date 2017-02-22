@@ -312,6 +312,13 @@ LayerGL.prototype._trackAndClean = function () {
 
         trackQueue(scene.opaqueQueue);
         trackQueue(scene.transparentQueue);
+
+        for (var k = 0; k < scene.lights.length; k++) {
+            // Track AmbientCubemap
+            if (scene.lights[k].cubemap) {
+                addToMap(texturesMap, scene.lights[k].cubemap);
+            }
+        }
     }
     // Dispose those unsed resources
     var gl = this.renderer.gl;

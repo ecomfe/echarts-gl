@@ -4,10 +4,13 @@ var graphicGL = require('../../util/graphicGL');
 var OrbitControl = require('../../util/OrbitControl');
 
 var sunCalc = require('../../util/sunCalc');
+var retrieve = require('../../util/retrieve');
 
 module.exports = echarts.extendComponentView({
 
     type: 'globe',
+
+    __ecgl__: true,
 
     _displacementScale: 0,
 
@@ -15,11 +18,13 @@ module.exports = echarts.extendComponentView({
         this.groupGL = new graphicGL.Node();
 
         var materials = {};
-        ['lambert', 'albedo', 'realastic'].forEach(function (shading) {
+        ['lambert', 'color', 'realistic'].forEach(function (shading) {
+            if (shading === 'color') {
+                shading = 'albedo';
+            }
             materials[shading] = new graphicGL.Material({
                 shader: graphicGL.createShader('ecgl.' + shading)
             });
-            materials[shading].shader.define('both', 'VERTEX_COLOR');
         });
 
         this._materials = materials;
@@ -53,7 +58,7 @@ module.exports = echarts.extendComponentView({
         /**
          * @type {qtek.light.Directional}
          */
-        this._sunLight = new graphicGL.DirectionalLight();
+        this._mainLight = new graphicGL.DirectionalLight();
 
         /**
          * @type {qtek.light.Ambient}
@@ -62,7 +67,7 @@ module.exports = echarts.extendComponentView({
 
         this.groupGL.add(this._earthMesh);
         this.groupGL.add(this._ambientLight);
-        this.groupGL.add(this._sunLight);
+        this.groupGL.add(this._mainLight);
 
         this._control = new OrbitControl({
             zr: api.getZr()
@@ -95,7 +100,14 @@ module.exports = echarts.extendComponentView({
             if (__DEV__) {
                 console.warn('Unkonw shading ' + shading);
             }
-            this._surfaceMesh.material = this._materials.lambert;
+            earthMesh.material = this._materials.lambert;
+        }
+        if (shading === 'realistic') {
+            var matModel = globeModel.getModel('realisticMaterial');
+            earthMesh.material.set({
+                roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
+                metalness: matModel.get('metalness') || 0
+            });
         }
 
         earthMesh.scale.set(coordSys.radius, coordSys.radius, coordSys.radius);
@@ -121,6 +133,33 @@ module.exports = echarts.extendComponentView({
 
         this._updateLayers(globeModel, api);
     },
+
+    afterRender: function (grid3DModel, ecModel, api, layerGL) {
+        // Create ambient cubemap after render because we need to know the renderer.
+        // TODO
+        var renderer = layerGL.renderer;
+        var ambientCubemapModel = grid3DModel.getModel('light.ambientCubemap');
+
+        var textureUrl = ambientCubemapModel.get('texture');
+        if (textureUrl) {
+            this._cubemapLightsCache = this._cubemapLightsCache || {};
+            var lights = this._cubemapLightsCache[textureUrl];
+            if (!lights) {
+                lights = this._cubemapLightsCache[textureUrl]
+                    = graphicGL.createAmbientCubemap(ambientCubemapModel.option, renderer, api);
+            }
+            this.groupGL.add(lights.diffuse);
+            this.groupGL.add(lights.specular);
+
+            this._currentCubemapLights = lights;
+        }
+        else if (this._currentCubemapLights) {
+            this.groupGL.remove(this._currentCubemapLights.diffuse);
+            this.groupGL.remove(this._currentCubemapLights.specular);
+            this._currentCubemapLights = null;
+        }
+    },
+
 
     _updateLayers: function (globeModel, api) {
         var coordSys = globeModel.coordinateSystem;
@@ -319,28 +358,28 @@ module.exports = echarts.extendComponentView({
     _updateLight: function (globeModel, api) {
         var earthMesh = this._earthMesh;
 
-        var sunLight = this._sunLight;
+        var mainLight = this._mainLight;
         var ambientLight = this._ambientLight;
 
         var lightModel = globeModel.getModel('light');
-        var sunLightModel = lightModel.getModel('sun');
+        var mainLightModel = lightModel.getModel('main');
         var ambientLightModel = lightModel.getModel('ambient');
-        sunLight.intensity = sunLightModel.get('intensity');
+        mainLight.intensity = mainLightModel.get('intensity');
         ambientLight.intensity = ambientLightModel.get('intensity');
-        sunLight.color = graphicGL.parseColor(sunLightModel.get('color')).slice(0, 3);
+        mainLight.color = graphicGL.parseColor(mainLightModel.get('color')).slice(0, 3);
         ambientLight.color = graphicGL.parseColor(ambientLightModel.get('color')).slice(0, 3);
 
         // Put sun in the right position
-        var time = lightModel.get('time') || new Date();
+        var time = mainLightModel.get('time') || new Date();
 
         // http://en.wikipedia.org/wiki/Azimuth
         var pos = sunCalc.getPosition(Date.parse(time), 0, 0);
         var r0 = Math.cos(pos.altitude);
         // FIXME How to calculate the y ?
-        sunLight.position.y = -r0 * Math.cos(pos.azimuth);
-        sunLight.position.x = Math.sin(pos.altitude);
-        sunLight.position.z = r0 * Math.sin(pos.azimuth);
-        sunLight.lookAt(earthMesh.getWorldPosition());
+        mainLight.position.y = -r0 * Math.cos(pos.azimuth);
+        mainLight.position.x = Math.sin(pos.altitude);
+        mainLight.position.z = r0 * Math.sin(pos.azimuth);
+        mainLight.lookAt(earthMesh.getWorldPosition());
 
         // Emission
         earthMesh.material.set('emissionIntensity', lightModel.get('emission.intensity'));

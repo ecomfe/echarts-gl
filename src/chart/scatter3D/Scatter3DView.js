@@ -7,6 +7,8 @@ echarts.extendChartView({
 
     type: 'scatter3D',
 
+    __ecgl__: true,
+
     init: function (ecModel, api) {
 
         this.groupGL = new graphicGL.Node();

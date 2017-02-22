@@ -74,6 +74,8 @@ module.exports = echarts.extendComponentView({
 
     type: 'grid3D',
 
+    __ecgl__: true,
+
     init: function (ecModel, api) {
 
         var linesMaterial = new graphicGL.Material({
@@ -208,6 +210,32 @@ module.exports = echarts.extendComponentView({
         // Set post effect
         cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
         cartesian.viewGL.setTemporalSuperSampling(grid3DModel.getModel('temporalSuperSampling'));
+    },
+
+    afterRender: function (grid3DModel, ecModel, api, layerGL) {
+        // Create ambient cubemap after render because we need to know the renderer.
+        // TODO
+        var renderer = layerGL.renderer;
+        var ambientCubemapModel = grid3DModel.getModel('light.ambientCubemap');
+
+        var textureUrl = ambientCubemapModel.get('texture');
+        if (textureUrl) {
+            this._cubemapLightsCache = this._cubemapLightsCache || {};
+            var lights = this._cubemapLightsCache[textureUrl];
+            if (!lights) {
+                lights = this._cubemapLightsCache[textureUrl]
+                    = graphicGL.createAmbientCubemap(ambientCubemapModel.option, renderer, api);
+            }
+            this.groupGL.add(lights.diffuse);
+            this.groupGL.add(lights.specular);
+
+            this._currentCubemapLights = lights;
+        }
+        else if (this._currentCubemapLights) {
+            this.groupGL.remove(this._currentCubemapLights.diffuse);
+            this.groupGL.remove(this._currentCubemapLights.specular);
+            this._currentCubemapLights = null;
+        }
     },
 
     _onCameraChange: function (grid3DModel, api) {

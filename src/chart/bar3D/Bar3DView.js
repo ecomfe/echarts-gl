@@ -12,6 +12,8 @@ module.exports = echarts.extendChartView({
 
     type: 'bar3D',
 
+    __ecgl__: true,
+
     init: function (ecModel, api) {
 
         this.groupGL = new graphicGL.Node();
@@ -113,6 +115,9 @@ module.exports = echarts.extendChartView({
         var colorOffset = 0;
         // Seperate opaque and transparent bars.
         data.each(function (idx) {
+            if (!data.hasValue(idx)) {
+                return;
+            }
             var color = data.getItemVisual(idx, 'color');
 
             var opacity = data.getItemVisual(idx, 'opacity');
@@ -141,6 +146,9 @@ module.exports = echarts.extendChartView({
 
         var orient = data.getLayout('orient');
         data.each(function (idx) {
+            if (!data.hasValue(idx)) {
+                return;
+            }
             var layout = data.getItemLayout(idx);
             var start = layout[0];
             var dir = layout[1];

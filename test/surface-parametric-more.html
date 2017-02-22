@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Mollusc Shell - ECHARTS-GL</title>
+        <title>Famous Surfaces - ECHARTS-GL</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
         <link rel="stylesheet" href="./common.css">
@@ -15,12 +15,25 @@
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
+
+
             var axisLine = {
                 lineStyle: {
                     color: '#fff'
                 }
             };
             chart.setOption({
+                title: {
+                    text: 'Famous Surface',
+                    subtext: 'From Virtual Math Museum',
+                    sublink: 'http://virtualmathmuseum.org/Surface/gallery_o.html',
+                    testStyle: {
+                        color: '#fff'
+                    },
+                    subtextStyle: {
+                        color: '#fff'
+                    }
+                },
                 visualMap: {
                     show: false,
                     dimension: 2,
@@ -51,16 +64,7 @@
                     },
                     light: {
                         main: {
-                            intensity: 1
-                        },
-                        ambient: {
-                            intensity: 0
-                        },
-                        ambientCubemap: {
-                            texture: 'asset/pisa.hdr',
-                            exposure: 2,
-                            diffuseIntensity: 3,
-                            specularIntensity: 3
+                            intensity: 5
                         }
                     },
                     viewControl: {
@@ -70,11 +74,7 @@
                 series: [{
                     type: 'surface',
                     parametric: true,
-                    shading: 'realistic',
-                    realisticMaterial: {
-                        roughness: 0.4,
-                        metalness: 1
-                    },
+                    // shading: 'albedo',
                     parametricSurfaceEquation: {
                         u: {
                             min: -Math.PI,

@@ -112,9 +112,9 @@ EChartsGL.prototype.update = function (ecModel, api) {
     ecModel.eachComponent(function (componentType, componentModel) {
         if (componentType !== 'series') {
             var view = api.getViewOfComponentModel(componentModel);
-            var groupGL = view.groupGL;
             var coordSys = componentModel.coordinateSystem;
-            if (groupGL) {
+            // View with __ecgl__ flag is a echarts-gl component.
+            if (view.__ecgl__) {
                 var viewGL;
                 if (coordSys) {
                     if (!coordSys.viewGL) {
@@ -135,15 +135,18 @@ EChartsGL.prototype.update = function (ecModel, api) {
                 var layerGL = getLayerGL(componentModel);
 
                 layerGL.addView(viewGL);
+
+                view.afterRender && view.afterRender(
+                    componentModel, ecModel, api, layerGL
+                );
             }
         }
     });
 
     ecModel.eachSeries(function (seriesModel) {
         var chartView = api.getViewOfSeriesModel(seriesModel);
-        var groupGL = chartView.groupGL;
         var coordSys = seriesModel.coordinateSystem;
-        if (groupGL) {
+        if (chartView.__ecgl__) {
             if ((coordSys && !coordSys.viewGL) && !chartView.viewGL) {
                 console.error('Can\'t find viewGL of series ' + chartView.id);
                 return;
@@ -152,6 +155,10 @@ EChartsGL.prototype.update = function (ecModel, api) {
             // TODO Check zlevel not same with component of coordinate system ?
             var layerGL = getLayerGL(seriesModel);
             layerGL.addView(viewGL);
+
+            chartView.afterRender && chartView.afterRender(
+                seriesModel, ecModel, api, layerGL
+            );
         }
     });
 };

@@ -105,6 +105,10 @@ uniform float alpha : 1.0;
 #ifdef AMBIENT_LIGHT_COUNT
 @import qtek.header.ambient_light
 #endif
+#ifdef AMBIENT_SH_LIGHT_COUNT
+@import qtek.header.ambient_sh_light
+#endif
+
 #ifdef DIRECTIONAL_LIGHT_COUNT
 @import qtek.header.directional_light
 #endif
@@ -150,7 +154,6 @@ void main()
     gl_FragColor *= albedoTexel;
 
     vec3 N = v_Normal;
-    vec3 P = v_WorldPosition;
     float ambientFactor = 1.0;
 
 #ifdef BUMPMAP_ENABLED
@@ -159,7 +162,7 @@ void main()
     ambientFactor = dot(v_Normal, N);
 #endif
 
-vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
+    vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
 
 #ifdef AMBIENT_LIGHT_COUNT
     for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)
@@ -169,6 +172,12 @@ vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
         diffuseColor += ambientLightColor[i] * ambientFactor;
     }
 #endif
+#ifdef AMBIENT_SH_LIGHT_COUNT
+    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)
+    {{
+        diffuseColor += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];
+    }}
+#endif
 #ifdef DIRECTIONAL_LIGHT_COUNT
     for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)
     {
@@ -177,15 +186,7 @@ vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
 
         float ndl = dot(N, normalize(lightDirection));
 
-        float shadowContrib = 1.0;
-        #if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)
-            if(shadowEnabled)
-            {
-                shadowContrib = shadowContribs[i];
-            }
-        #endif
-
-        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0) * shadowContrib;
+        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);
     }
 #endif
 

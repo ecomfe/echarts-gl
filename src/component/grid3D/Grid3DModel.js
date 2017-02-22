@@ -36,6 +36,17 @@ var Grid3DModel = echarts.extendComponentModel({
             ambient: {
                 color: '#fff',
                 intensity: 0.4
+            },
+            ambientCubemap: {
+                // Panorama environment texture,
+                // Support .hdr and commmon web formats.
+                texture: null,
+                // Available when texture is hdr.
+                exposure: 1,
+                // Intensity for diffuse term
+                diffuseIntensity: 0.5,
+                // Intensity for specular term, only available when shading is realastic
+                specularIntensity: 0.5
             }
         },
 
