@@ -40,6 +40,11 @@ module.exports = echarts.extendSeriesModel({
         // TODO, 'realastic', 'toon'
         shading: 'color',
 
+        realisticMaterial: {
+            roughness: 0.5,
+            metalness: 0
+        },
+
         // If coordinateSystem is globe, value will be mapped
         // from minHeight to maxHeight
         minHeight: 0,

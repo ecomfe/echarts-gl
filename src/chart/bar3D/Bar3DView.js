@@ -1,5 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
+var retrieve = require('../../util/retrieve');
 var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
 
 function getShader(shading) {
@@ -34,22 +35,24 @@ module.exports = echarts.extendChartView({
         this.groupGL.add(barMesh);
         this.groupGL.add(barMeshTransparent);
 
-        this._albedoMaterial = new graphicGL.Material({
-            shader: getShader('albedo')
+        var materials = {};
+        var transparentMaterials = {};
+        ['lambert', 'color', 'realistic'].forEach(function (shading) {
+            if (shading === 'color') {
+                shading = 'albedo';
+            }
+            materials[shading] = new graphicGL.Material({
+                shader: getShader(shading)
+            });
+            transparentMaterials[shading] = new graphicGL.Material({
+                shader: getShader(shading),
+                transparent: true,
+                depthMask: false
+            });
         });
-        this._albedoTransarentMaterial = new graphicGL.Material({
-            shader: this._albedoMaterial.shader,
-            transparent: true,
-            depthMask: false
-        });
-        this._lambertMaterial = new graphicGL.Material({
-            shader: getShader('lambert')
-        });
-        this._lambertTransarentMaterial = new graphicGL.Material({
-            shader: this._lambertMaterial.shader,
-            transparent: true,
-            depthMask: false
-        });
+
+        this._materials = materials;
+        this._transparentMaterials = transparentMaterials;
 
         this._barMesh = barMesh;
         this._barMeshTransparent = barMeshTransparent;
@@ -69,27 +72,33 @@ module.exports = echarts.extendChartView({
             this._barMeshTransparent.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
-
     },
 
     _doRender: function (seriesModel, api) {
         var data = seriesModel.getData();
         var shading = seriesModel.get('shading');
-        var enableNormal = false;
+        var enableNormal = shading !== 'color';
         var self = this;
-        if (shading === 'color') {
-            this._barMesh.material = this._albedoMaterial;
-            this._barMeshTransparent.material = this._albedoTransarentMaterial;
-        }
-        else if (shading === 'lambert') {
-            enableNormal = true;
-            this._barMesh.material = this._lambertMaterial;
-            this._barMeshTransparent.material = this._lambertTransarentMaterial;
+
+        if (this._materials[shading]) {
+            this._barMesh.material = this._materials[shading];
+            this._barMeshTransparent.material = this._transparentMaterials[shading];
         }
         else {
-            console.warn('Unkonw shading ' + shading);
-            this._barMesh.material = this._albedoMaterial;
-            this._barMeshTransparent.material = this._albedoTransarentMaterial;
+            if (__DEV__) {
+                console.warn('Unkonw shading ' + shading);
+            }
+            this._barMesh.material = this._materials.lambert;
+            this._barMeshTransparent.material = this._transparentMaterials.lambert;
+        }
+        if (shading === 'realistic') {
+            var matModel = seriesModel.getModel('realisticMaterial');
+            var matOpt = {
+                roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
+                metalness: matModel.get('metalness') || 0
+            };
+            this._barMesh.material.set(matOpt);
+            this._barMeshTransparent.material.set(matOpt);
         }
 
         this._barMesh.geometry.enableNormal = enableNormal;

@@ -40,10 +40,6 @@ echarts.extendChartView({
 
     render: function (seriesModel, ecModel, api) {
         var coordSys = seriesModel.coordinateSystem;
-        if (coordSys && coordSys.viewGL) {
-            coordSys.viewGL.add(this.groupGL);
-        }
-
         var shading = seriesModel.get('shading');
         var data = seriesModel.getData();
 
@@ -62,6 +58,12 @@ echarts.extendChartView({
                 roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
                 metalness: matModel.get('metalness') || 0
             });
+        }
+
+        if (coordSys && coordSys.viewGL) {
+            coordSys.viewGL.add(this.groupGL);
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            this._surfaceMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
         var geometry = this._surfaceMesh.geometry;

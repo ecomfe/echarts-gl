@@ -74,7 +74,13 @@
                     },
                     light: {
                         main: {
-                            intensity: 8
+                            intensity: 1
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/pisa.hdr',
+                            exposure: 2,
+                            diffuseIntensity: 1,
+                            specularIntensity: 5
                         }
                     },
                     viewControl: {
@@ -88,7 +94,11 @@
                     }),
                     bevelSize: 0.8,
                     bevelSmoothness: 3,
-                    shading: 'lambert'
+                    shading: 'realistic',
+                    realisticMaterial: {
+                        roughness: 0.5,
+                        metalness: 1
+                    },
                 }]
             });
 

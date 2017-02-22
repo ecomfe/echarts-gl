@@ -201,6 +201,8 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     var fxaaModel = postEffectModel.getModel('FXAA');
     fxaaModel.get('enable') ? this._compositor.enableFXAA() : this._compositor.disableFXAA();
     bloomModel.get('enable') ? this._compositor.enableBloom() : this._compositor.disableBloom();
+
+    this._compositor.setBloomIntensity(bloomModel.get('intensity'));
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {

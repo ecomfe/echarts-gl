@@ -86,6 +86,10 @@ EffectCompositor.prototype.disableBloom = function () {
     this._compositeNode.inputs.bloom = null;
 };
 
+EffectCompositor.prototype.setBloomIntensity = function (value) {
+    this._compositeNode.setParameter('bloom', value);
+};
+
 EffectCompositor.prototype.composite = function (renderer, framebuffer) {
     this._compositor.render(renderer, framebuffer);
 };
