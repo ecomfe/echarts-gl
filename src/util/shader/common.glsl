@@ -49,7 +49,12 @@ float edgeFactor () {
 
 #if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)
     if (wireframeLineWidth > 0.) {
-        gl_FragColor.rgb = mix(wireframeLineColor, gl_FragColor.rgb, edgeFactor());
+        vec3 lineColor = wireframeLineColor;
+#ifdef SRGB_DECODE
+        lineColor = sRGBToLinear(vec4(lineColor, 1.0)).rgb;
+#endif
+
+        gl_FragColor.rgb = mix(lineColor, gl_FragColor.rgb, edgeFactor());
     }
 #endif
 @end
