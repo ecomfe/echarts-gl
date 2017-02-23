@@ -124,10 +124,13 @@ ViewGL.prototype.render = function (renderer) {
 ViewGL.prototype._stopAccumulating = function () {
     this._accumulatingId = 0;
     this._temporalSS.resetFrame();
+    clearTimeout(this._accumulatingTimeout);
 };
 
 ViewGL.prototype._startAccumulating = function (renderer) {
     var self = this;
+
+    clearTimeout(this._accumulatingTimeout);
 
     this._temporalSS.resetFrame();
 
@@ -145,9 +148,9 @@ ViewGL.prototype._startAccumulating = function (renderer) {
         }
     }
 
-    requestAnimationFrame(function () {
+    this._accumulatingTimeout = setTimeout(function () {
         accumulate(self._accumulatingId);
-    });
+    }, 50);
 };
 
 ViewGL.prototype._doRender = function (renderer) {
@@ -170,21 +173,22 @@ ViewGL.prototype._doRender = function (renderer) {
         }
     }
     else {
-        // if (this._enableTemporalSS && this._accumulatingId > 0) {
+        if (this._enableTemporalSS && this._accumulatingId > 0) {
             var frameBuffer = this._temporalSS.getSourceFrameBuffer();
             frameBuffer.bind(renderer);
-            renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
+            renderer.saveClear();
+            renderer.clearBit = renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT;
             renderer.render(this.scene, this.camera);
+            renderer.restoreClear();
             frameBuffer.unbind(renderer);
 
             renderer.setViewport(this.viewport);
             this._temporalSS.render(renderer);
-        // TODO
-        // }
-        // else {
-        //     renderer.setViewport(this.viewport);
-        //     renderer.render(this.scene, this.camera);
-        // }
+        }
+        else {
+            renderer.setViewport(this.viewport);
+            renderer.render(this.scene, this.camera);
+        }
     }
 }
 

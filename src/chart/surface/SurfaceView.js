@@ -33,6 +33,7 @@ echarts.extendChartView({
             material: materials.lambert,
             culling: false
         });
+        mesh.geometry.barycentric = new graphicGL.Geometry.Attribute('barycentric', 'float', 4, null),
 
         this._surfaceMesh = mesh;
         this.groupGL.add(this._surfaceMesh);
