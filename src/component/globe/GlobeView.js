@@ -19,9 +19,6 @@ module.exports = echarts.extendComponentView({
 
         var materials = {};
         ['lambert', 'color', 'realistic'].forEach(function (shading) {
-            if (shading === 'color') {
-                shading = 'albedo';
-            }
             materials[shading] = new graphicGL.Material({
                 shader: graphicGL.createShader('ecgl.' + shading)
             });
@@ -207,12 +204,12 @@ module.exports = echarts.extendComponentView({
                     overlayMesh.__lambertMaterial = overlayMesh.material;
                 }
                 else { // color
-                    overlayMesh.material = overlayMesh.__albedoMaterial || new graphicGL.Material({
-                        shader: graphicGL.createShader('ecgl.albedo'),
+                    overlayMesh.material = overlayMesh.__colorMaterial || new graphicGL.Material({
+                        shader: graphicGL.createShader('ecgl.color'),
                         transparent: true,
                         depthMask: false
                     });
-                    overlayMesh.__albedoMaterial = overlayMesh.material;
+                    overlayMesh.__colorMaterial = overlayMesh.material;
                 }
                 // overlay should be transparet if texture is not loaded yet.
                 overlayMesh.material.shader.enableTexture('diffuseMap');

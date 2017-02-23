@@ -38,9 +38,6 @@ module.exports = echarts.extendChartView({
         var materials = {};
         var transparentMaterials = {};
         ['lambert', 'color', 'realistic'].forEach(function (shading) {
-            if (shading === 'color') {
-                shading = 'albedo';
-            }
             materials[shading] = new graphicGL.Material({
                 shader: getShader(shading)
             });

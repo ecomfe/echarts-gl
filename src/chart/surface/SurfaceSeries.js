@@ -114,6 +114,12 @@ echarts.extendSeriesModel({
          * If flip surface normals
          */
         flipNormals: 'auto',
+
+        wireframe: {
+            show: true,
+            lineWidth: 2,
+            color: [0.5, 0.5, 0.5]
+        },
         /**
          * Generate surface data from z = f(x, y) equation
          */

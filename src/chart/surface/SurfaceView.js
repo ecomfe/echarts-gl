@@ -15,9 +15,6 @@ echarts.extendChartView({
 
         var materials = {};
         ['lambert', 'color', 'realistic'].forEach(function (shading) {
-            if (shading === 'color') {
-                shading = 'albedo';
-            }
             materials[shading] = new graphicGL.Material({
                 shader: graphicGL.createShader('ecgl.' + shading)
             });

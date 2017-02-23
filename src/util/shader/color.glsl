@@ -1,10 +1,16 @@
-@export ecgl.albedo.vertex
+@export ecgl.color.vertex
 
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 uniform vec2 uvRepeat: [1, 1];
 
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 position: POSITION;
+
+#ifdef WIREFRAME_QUAD
+attribute vec4 barycentric;
+#elif defined(WIREFRAME_TRIANGLE)
+attribute vec3 barycentric;
+#endif
 
 #ifdef VERTEX_COLOR
 attribute vec4 a_Color : COLOR;
@@ -25,7 +31,7 @@ void main()
 
 @end
 
-@export ecgl.albedo.fragment
+@export ecgl.color.fragment
 
 #define LAYER_DIFFUSEMAP_COUNT 0
 #define LAYER_EMISSIVEMAP_COUNT 0

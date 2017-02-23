@@ -84,7 +84,7 @@ module.exports = echarts.extendComponentView({
         });
         var planeMaterial = new graphicGL.Material({
             // transparent: true,
-            shader: graphicGL.createShader('ecgl.albedo')
+            shader: graphicGL.createShader('ecgl.color')
         });
 
         this.groupGL = new graphicGL.Node();
