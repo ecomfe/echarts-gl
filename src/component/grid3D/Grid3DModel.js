@@ -65,7 +65,7 @@ var Grid3DModel = echarts.extendComponentModel({
         },
         // Temporal super sampling when the picture is still.
         temporalSuperSampling: {
-            enable: false
+            enable: true
         },
 
         viewControl: {

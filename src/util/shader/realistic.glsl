@@ -11,6 +11,8 @@ attribute vec3 position : POSITION;
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 normal : NORMAL;
 
+@import ecgl.wireframe.common.vertexHeader
+
 #ifdef VERTEX_COLOR
 attribute vec4 a_Color : COLOR;
 varying vec4 v_Color;
@@ -33,6 +35,9 @@ void main()
 #ifdef VERTEX_COLOR
     v_Color = a_Color;
 #endif
+
+    @import ecgl.wireframe.common.vertexMain
+
 }
 
 @end
@@ -126,6 +131,8 @@ uniform mat4 viewInverse : VIEWINVERSE;
 
 @import qtek.util.rgbm
 
+@import ecgl.wireframe.common.fragmentHeader
+
 // Fresnel
 vec3 F_Schlick(float ndv, vec3 spec) {
     return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);
@@ -138,7 +145,6 @@ float D_Phong(float g, float ndh) {
 }
 void main()
 {
-
     vec4 albedoColor = vec4(color, alpha);
 
     vec3 eyePos = viewInverse[3].xyz;
@@ -261,6 +267,8 @@ void main()
         gl_FragColor.rgb += texel2.rgb;
     }}
 #endif
+
+    @import ecgl.wireframe.common.fragmentMain
 }
 
 @end

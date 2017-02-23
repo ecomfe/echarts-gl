@@ -117,8 +117,8 @@ echarts.extendSeriesModel({
 
         wireframe: {
             show: true,
-            lineWidth: 2,
-            color: [0.5, 0.5, 0.5]
+            lineWidth: 1,
+            lineColor: '#222'
         },
         /**
          * Generate surface data from z = f(x, y) equation
@@ -158,6 +158,7 @@ echarts.extendSeriesModel({
 
         areaStyle: {
             normal: {
+                // Color
             }
         }
     }

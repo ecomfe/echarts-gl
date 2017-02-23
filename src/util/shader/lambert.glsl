@@ -15,6 +15,8 @@ attribute vec3 position : POSITION;
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 normal : NORMAL;
 
+@import ecgl.wireframe.common.vertexHeader
+
 #ifdef VERTEX_COLOR
 attribute vec4 a_Color : COLOR;
 varying vec4 v_Color;
@@ -37,6 +39,8 @@ void main()
 #ifdef VERTEX_COLOR
     v_Color = a_Color;
 #endif
+
+    @import ecgl.wireframe.common.vertexMain
 }
 
 @end
@@ -119,6 +123,8 @@ varying vec4 v_Color;
 
 @import qtek.util.srgb
 
+@import ecgl.wireframe.common.fragmentHeader
+
 void main()
 {
     gl_FragColor = vec4(color, alpha);
@@ -199,6 +205,7 @@ void main()
     }}
 #endif
 
+    @import ecgl.wireframe.common.fragmentMain
 }
 
 @end

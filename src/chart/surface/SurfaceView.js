@@ -30,7 +30,7 @@ echarts.extendChartView({
             material: materials.lambert,
             culling: false
         });
-        mesh.geometry.barycentric = new graphicGL.Geometry.Attribute('barycentric', 'float', 4, null),
+        mesh.geometry.createAttribute('barycentric', 'float', 4, null),
 
         this._surfaceMesh = mesh;
         this.groupGL.add(this._surfaceMesh);
@@ -70,43 +70,188 @@ echarts.extendChartView({
 
         var dataShape = this._getDataShape(data, isParametric);
 
-        this._updateGeometry(geometry, seriesModel, dataShape);
+        var wireframeModel = seriesModel.getModel('wireframe');
+        var wireframeLineWidth = wireframeModel.get('lineWidth');
+        var showWireframe = wireframeModel.get('show') && wireframeLineWidth > 0;
+        this._updateGeometry(geometry, seriesModel, dataShape, showWireframe);
+
+        var material = this._surfaceMesh.material;
+        if (showWireframe) {
+            material.shader.define('WIREFRAME_QUAD');
+            material.set('wireframeLineWidth', wireframeLineWidth);
+            material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineColor')).slice(0, 3));
+        }
+        else {
+            material.shader.unDefine('WIREFRAME_QUAD');
+        }
     },
 
-    _updateGeometry: function (geometry, seriesModel, dataShape) {
+    _updateGeometry: function (geometry, seriesModel, dataShape, showWireframe) {
+
         var data = seriesModel.getData();
         var points = data.getLayout('points');
-        var offset = 0;
+
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
+        var barycentricAttr = geometry.attributes.barycentric;
         var colorAttr = geometry.attributes.color;
-        positionAttr.value = new Float32Array(points);
-        normalAttr.init(geometry.vertexCount);
+        var row = dataShape.row;
+        var column = dataShape.column;
+        var shading = seriesModel.get('shading');
+        var needsNormal = shading !== 'color';
+
+        if (showWireframe) {
+            var vertexCount = (row - 1) * (column - 1) * 4;
+            positionAttr.init(vertexCount);
+            barycentricAttr.init(vertexCount);
+        }
+        else {
+            positionAttr.value = new Float32Array(points);
+        }
         colorAttr.init(geometry.vertexCount);
-        for (var i = 0; i < dataShape.row; i++) {
-            for (var j = 0; j < dataShape.column; j++) {
+
+        var quadToTriangle = [0, 3, 1, 1, 3, 2];
+        // 3----2
+        // 0----1
+        // Make sure pixels on 1---3 edge will not have all channel 0.
+        // And pixels on four edges have at least one channel 0.
+        var quadBarycentric = [
+            [1, 1, 0, 0],
+            [0, 0, 1, 1],
+            [1, 0, 0, 1],
+            [1, 1, 0, 0]
+        ];
+
+        var faces = geometry.faces = new (geometry.vertexCount > 0xffff ? Uint32Array : Uint16Array)((row - 1) * (column - 1) * 6);
+        var getQuadIndices = function (i, j, out) {
+            out[1] = i * column + j;
+            out[0] = i * column + j + 1;
+            out[3] = (i + 1) * column + j + 1;
+            out[2] = (i + 1) * column + j;
+        };
+        if (showWireframe) {
+            var quadIndices = [];
+            var pos = [];
+            var faceOffset = 0;
+
+            if (needsNormal) {
+                normalAttr.init(geometry.vertexCount);
+            }
+
+            var pts = [[], [], []];
+            var v21 = [], v32 = [];
+            var normal = vec3.create();
+
+            var getFromArray = function (arr, idx, out) {
+                var idx3 = idx * 3;
+                out[0] = arr[idx3];
+                out[1] = arr[idx3 + 1];
+                out[2] = arr[idx3 + 2];
+                return out;
+            };
+            var vertexNormals = new Float32Array(points.length);
+            var vertexColors = new Float32Array(points.length / 3 * 4);
+
+            for (var i = 0; i < data.count(); i++) {
+                var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
+                for (var k = 0; k < 4; k++) {
+                    vertexColors[i * 4 + k] = rgbaArr[k];
+                }
+            }
+            for (var i = 0; i < row - 1; i++) {
+                for (var j = 0; j < column - 1; j++) {
+                    var dataIndex = i * (column - 1) + j;
+                    var vertexOffset = dataIndex * 4;
+
+                    getQuadIndices(i, j, quadIndices);
+
+                    for (var k = 0; k < 4; k++) {
+                        getFromArray(points, quadIndices[k], pos);
+                        positionAttr.set(vertexOffset + k, pos);
+                        barycentricAttr.set(vertexOffset + k, quadBarycentric[k]);
+                    }
+                    for (var k = 0; k < 6; k++) {
+                        faces[faceOffset++] = quadToTriangle[k] + vertexOffset;
+                    }
+                    // Vertex normals
+                    if (needsNormal) {
+                        for (var k = 0; k < 2; k++) {
+                            var k3 = k * 3;
+
+                            for (var m = 0; m < 3; m++) {
+                                var idx = quadIndices[quadToTriangle[k3] + m];
+                                getFromArray(points, idx, pts[m]);
+                            }
+
+                            vec3.sub(v21, pts[0], pts[1]);
+                            vec3.sub(v32, pts[1], pts[2]);
+                            vec3.cross(normal, v21, v32);
+                            // Weighted by the triangle area
+                            for (var m = 0; m < 3; m++) {
+                                var idx3 = quadIndices[quadToTriangle[k3] + m] * 3;
+                                vertexNormals[idx3] = vertexNormals[idx3] + normal[0];
+                                vertexNormals[idx3 + 1] = vertexNormals[idx3 + 1] + normal[1];
+                                vertexNormals[idx3 + 2] = vertexNormals[idx3 + 2] + normal[2];
+                            }
+                        }
+                    }
+
+                }
+            }
+            if (needsNormal) {
+                // Split normal and colors, write to the attributes.
+                var rgbaArr = [];
+                for (var i = 0; i < vertexNormals.length / 3; i++) {
+                    getFromArray(vertexNormals, i, normal);
+                    vec3.normalize(normal, normal);
+                    vertexNormals[i * 3] = normal[0];
+                    vertexNormals[i * 3 + 1] = normal[1];
+                    vertexNormals[i * 3 + 2] = normal[2];
+                }
+                for (var i = 0; i < row - 1; i++) {
+                    for (var j = 0; j < column - 1; j++) {
+                        var dataIndex = i * (column - 1) + j;
+                        var vertexOffset = dataIndex * 4;
+                        getQuadIndices(i, j, quadIndices);
+                        for (var k = 0; k < 4; k++) {
+                            getFromArray(vertexNormals, quadIndices[k], normal);
+                            for (var m = 0; m < 4; m++) {
+                                rgbaArr[m] = vertexColors[quadIndices[k] * 4 + m];
+                            }
+                            normalAttr.set(vertexOffset + k, normal);
+                            colorAttr.set(vertexOffset + k, rgbaArr);
+                        }
+                        dataIndex++;
+                    }
+                }
+            }
+        }
+        else {
+            for (var i = 0; i < data.count(); i++) {
                 // TODO Opacity
-                var rgbaArr = graphicGL.parseColor(data.getItemVisual(offset, 'color'));
-                colorAttr.set(offset++, rgbaArr);
+                var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
+                colorAttr.set(i, rgbaArr);
+            }
+            var quadIndices = [];
+            // Faces
+            var cursor = 0;
+            for (var i = 0; i < row - 1; i++) {
+                for (var j = 0; j < column - 1; j++) {
+
+                    getQuadIndices(i, j, quadIndices);
+
+                    for (var k = 0; k < 6; k++) {
+                        faces[cursor++] = quadIndices[quadToTriangle[k]];
+                    }
+                }
+            }
+            if (needsNormal) {
+                geometry.generateVertexNormals();
             }
         }
 
-        var faces = [];
-        // Faces
-        for (var i = 0; i < dataShape.row - 1; i++) {
-            for (var j = 0; j < dataShape.column - 1; j++) {
-                var i2 = i * dataShape.column + j;
-                var i1 = i * dataShape.column + j + 1;
-                var i4 = (i + 1) * dataShape.column + j + 1;
-                var i3 = (i + 1) * dataShape.column + j;
-
-                faces.push([i1, i4, i2], [i2, i4, i3]);
-            }
-        }
-        geometry.initFacesFromArray(faces);
-
-        if (seriesModel.get('shading') !== 'color') {
-            geometry.generateVertexNormals();
+        // Make normals look right.
+        if (needsNormal) {
             var isParametric = seriesModel.get('parametric');
             var center = [0, 0, 0];
             var flipNormals = seriesModel.get('flipNormals');

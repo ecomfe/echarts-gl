@@ -6,11 +6,7 @@ uniform vec2 uvRepeat: [1, 1];
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 position: POSITION;
 
-#ifdef WIREFRAME_QUAD
-attribute vec4 barycentric;
-#elif defined(WIREFRAME_TRIANGLE)
-attribute vec3 barycentric;
-#endif
+@import ecgl.wireframe.common.vertexHeader
 
 #ifdef VERTEX_COLOR
 attribute vec4 a_Color : COLOR;
@@ -27,6 +23,9 @@ void main()
 #ifdef VERTEX_COLOR
     v_Color = a_Color;
 #endif
+
+    @import ecgl.wireframe.common.vertexMain
+
 }
 
 @end
@@ -55,6 +54,8 @@ uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
 #endif
 
 varying vec2 v_Texcoord;
+
+@import ecgl.wireframe.common.fragmentHeader
 
 @import qtek.util.srgb
 
@@ -94,5 +95,9 @@ void main()
         gl_FragColor.rgb += texel2.rgb * texel2.a * emissionIntensity;
     }}
 #endif
+
+
+    @import ecgl.wireframe.common.fragmentMain
+
 }
 @end

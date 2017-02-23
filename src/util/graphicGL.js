@@ -19,6 +19,7 @@ echarts.util.extend(Node3D.prototype, animatableMixin);
 
 // Some common shaders
 Shader.import(require('qtek/lib/shader/source/util.essl'));
+Shader.import(require('text!./shader/common.glsl'));
 Shader.import(require('text!./shader/color.glsl'));
 Shader.import(require('text!./shader/lambert.glsl'));
 Shader.import(require('text!./shader/realistic.glsl'));
@@ -348,7 +349,7 @@ graphicGL.additiveBlend = function (gl) {
  * @return {Array.<number>} rgba
  */
 graphicGL.parseColor = function (colorStr, rgba) {
-    rgba = echarts.color.parse(colorStr || '#000', rgba);
+    rgba = echarts.color.parse(colorStr || '#000', rgba) || [0, 0, 0, 0];
     rgba[0] /= 255;
     rgba[1] /= 255;
     rgba[2] /= 255;
