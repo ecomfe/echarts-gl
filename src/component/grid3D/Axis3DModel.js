@@ -28,25 +28,10 @@ function getAxisType(axisDim, option) {
 
 createAxis3DModel('x', Axis3DModel, getAxisType, {
     name: 'X'
-    // axisLine: {
-    //     lineStyle: {
-    //         color: '#f00'
-    //     }
-    // }
 });
 createAxis3DModel('y', Axis3DModel, getAxisType, {
     name: 'Y'
-    // axisLine: {
-    //     lineStyle: {
-    //         color: '#0f0'
-    //     }
-    // }
 });
 createAxis3DModel('z', Axis3DModel, getAxisType, {
     name: 'Z'
-    // axisLine: {
-    //     lineStyle: {
-    //         color: '#00f'
-    //     }
-    // }
 });

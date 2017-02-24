@@ -3,20 +3,19 @@ var componentViewControlMixin = require('../common/componentViewControlMixin');
 var componentPostEffectMixin = require('../common/componentPostEffectMixin');
 var componentLightMixin = require('../common/componentLightMixin');
 
-
 function defaultId(option, idx) {
     option.id = option.id || option.name || (idx + '');
 }
-var GlobeModel = echarts.extendComponentModel({
+var Geo3DModel = echarts.extendComponentModel({
 
-    type: 'globe',
+    type: 'geo3D',
 
     layoutMode: 'box',
 
     coordinateSystem: null,
 
     init: function () {
-        GlobeModel.superApply(this, 'init', arguments);
+        Geo3DModel.superApply(this, 'init', arguments);
 
         echarts.util.each(this.option.layers, function (layerOption, idx) {
             echarts.util.merge(layerOption, this.defaultLayerOption);
@@ -28,7 +27,7 @@ var GlobeModel = echarts.extendComponentModel({
         // TODO test
         var oldLayers = this.option.layers;
         this.option.layers = null;
-        GlobeModel.superApply(this, 'mergeOption', arguments);
+        Geo3DModel.superApply(this, 'mergeOption', arguments);
 
         function createLayerMap(layers) {
             return echarts.util.reduce(layers, function (obj, layerOption, idx) {
@@ -78,20 +77,6 @@ var GlobeModel = echarts.extendComponentModel({
         width: '100%',
         height: '100%',
 
-        environmentTexture: '',
-
-        // Base albedo texture
-        baseTexture: '',
-
-        // Height texture for bump mapping and vertex displacement
-        heightTexture: '',
-
-        // Texture for vertex displacement, default use heightTexture
-        displacementTexture: '',
-        // Scale of vertex displacement, available only if displacementTexture is set.
-        displacementScale: 0,
-
-        globeRadius: 100,
 
         // Shading of globe
         // 'color', 'lambert', 'realistic'
@@ -101,47 +86,17 @@ var GlobeModel = echarts.extendComponentModel({
         realisticMaterial: {
             roughness: 0.5,
             metalness: 0
-        },
-
-        // Extend light
-        light: {
-            // Main sun light
-            main: {
-                // Time, default it will use system time
-                time: ''
-            },
-            // Emission from emissive layers
-            emission: {
-                intensity: 1
-            }
-        },
+        }
 
         // light
         // postEffect
         // temporalSuperSampling
         // viewControl
-
-
-        // {
-        //     show: true,
-        //     name: 'cloud',
-        //     type: 'overlay',
-        //     shading: 'lambert',
-        //     distance: 10,
-        //     texture: ''
-        // }
-        // {
-        //     type: 'blend',
-        //     blendTo: 'albedo'
-        //     blendType: 'source-over'
-        // }
-
-        layers: []
     }
 });
 
-echarts.util.merge(GlobeModel.prototype, componentViewControlMixin);
-echarts.util.merge(GlobeModel.prototype, componentPostEffectMixin);
-echarts.util.merge(GlobeModel.prototype, componentLightMixin);
+echarts.util.merge(Geo3DModel.prototype, componentViewControlMixin);
+echarts.util.merge(Geo3DModel.prototype, componentPostEffectMixin);
+echarts.util.merge(Geo3DModel.prototype, componentLightMixin);
 
-module.exports = GlobeModel;
+module.exports = Geo3DModel;

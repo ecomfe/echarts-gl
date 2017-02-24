@@ -1,4 +1,7 @@
 var echarts = require('echarts/lib/echarts');
+var componentViewControlMixin = require('../common/componentViewControlMixin');
+var componentPostEffectMixin = require('../common/componentPostEffectMixin');
+var componentLightMixin = require('../common/componentLightMixin');
 
 var Grid3DModel = echarts.extendComponentModel({
 
@@ -28,89 +31,30 @@ var Grid3DModel = echarts.extendComponentModel({
                 alpha: 30,
                 // beta angle for left-right rotation
                 // Positive to rotate to right.
-                beta: 40,
-
-                color: '#fff',
-                intensity: 1.0
+                beta: 40
             },
             ambient: {
-                color: '#fff',
                 intensity: 0.4
-            },
-            ambientCubemap: {
-                // Panorama environment texture,
-                // Support .hdr and commmon web formats.
-                texture: null,
-                // Available when texture is hdr.
-                exposure: 1,
-                // Intensity for diffuse term
-                diffuseIntensity: 0.5,
-                // Intensity for specular term, only available when shading is realastic
-                specularIntensity: 0.5
             }
-        },
-
-        postEffect: {
-            enable: false,
-
-            bloom: {
-                enable: true,
-                intensity: 0.1
-            },
-
-            FXAA: {
-                // Enable fxaa will cause grid label blurry
-                enable: false
-            }
-        },
-        // Temporal super sampling when the picture is still.
-        temporalSuperSampling: {
-            enable: true
         },
 
         viewControl: {
-
-            // perspective, orthographic
-            projection: 'perspective',
-
-            // If rotate on on init
             autoRotate: false,
 
-            // Start rotating after still for a given time
-            // default is 3 seconds
-            autoRotateAfterStill: 3,
-
-            // Distance to the surface of globe.
+            // Distance to the surface of grid3D.
             distance: 200,
 
-            // Min distance to the surface of globe
+            // Min distance to the surface of grid3D
             minDistance: 40,
-            // Max distance to the surface of globe
-            maxDistance: 400,
-
-            // Alpha angle for top-down rotation
-            // Positive to rotate to top.
-            alpha: 30,
-            // beta angle for left-right rotation
-            // Positive to rotate to right.
-            beta: 30
-        }
-    },
-
-    setView: function (opts) {
-        opts = opts || {};
-        this.option.viewControl = this.option.viewControl || {};
-        if (opts.alpha != null) {
-            this.option.viewControl.alpha = opts.alpha;
-        }
-        if (opts.beta != null) {
-            this.option.viewControl.beta = opts.beta;
-        }
-        if (opts.distance != null) {
-            this.option.viewControl.distance = opts.distance;
+            // Max distance to the surface of grid3D
+            maxDistance: 400
         }
     }
 });
+
+echarts.util.merge(Grid3DModel.prototype, componentViewControlMixin);
+echarts.util.merge(Grid3DModel.prototype, componentPostEffectMixin);
+echarts.util.merge(Grid3DModel.prototype, componentLightMixin);
 
 module.exports = Grid3DModel;
 

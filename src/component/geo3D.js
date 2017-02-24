@@ -1,1 +1,2 @@
-var echarts = require('echarts/lib/echarts');
+require('./geo3D/Geo3DModel');
+require('./geo3D/Geo3DView');
