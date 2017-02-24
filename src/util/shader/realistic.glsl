@@ -133,6 +133,8 @@ uniform mat4 viewInverse : VIEWINVERSE;
 
 @import ecgl.wireframe.common.fragmentHeader
 
+@import qtek.plugin.compute_shadow_map
+
 // Fresnel
 vec3 F_Schlick(float ndv, vec3 spec) {
     return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);
@@ -187,6 +189,12 @@ void main()
 
     vec3 N = v_Normal;
 
+#ifdef DOUBLE_SIDE
+    if (dot(N, V) < 0.0) {
+        N = -N;
+    }
+#endif
+
     float ambientFactor = 1.0;
 
 #ifdef BUMPMAP_ENABLED
@@ -218,6 +226,13 @@ void main()
 #endif
 
 #ifdef DIRECTIONAL_LIGHT_COUNT
+#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)
+    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];
+    if(shadowEnabled)
+    {
+        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);
+    }
+#endif
     for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)
     {{
         vec3 L = -directionalLightDirection[_idx_];
@@ -227,7 +242,15 @@ void main()
         float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);
         float ndh = clamp(dot(N, H), 0.0, 1.0);
 
-        vec3 li = lc * ndl;
+        float shadowContrib = 1.0;
+#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)
+        if (shadowEnabled)
+        {
+            shadowContrib = shadowContribsDir[_idx_];
+        }
+#endif
+
+        vec3 li = lc * ndl * shadowContrib;
 
         diffuseTerm += li;
         specularTerm += li * fresnelTerm * D_Phong(g, ndh);

@@ -4,6 +4,7 @@
  */
 
 var Scene = require('qtek/lib/Scene');
+var ShadowMapPass = require('qtek/lib/prePass/ShadowMap');
 var PerspectiveCamera = require('qtek/lib/camera/Perspective');
 var OrthographicCamera = require('qtek/lib/camera/Orthographic');
 
@@ -40,6 +41,8 @@ function ViewGL(cameraType) {
     this._compositor = new EffectCompositor();
 
     this._temporalSS = new TemporalSuperSampling();
+
+    this._shadowMapPass = new ShadowMapPass();
 
     /**
      * Current accumulating id.
@@ -155,6 +158,9 @@ ViewGL.prototype._startAccumulating = function (renderer) {
 
 ViewGL.prototype._doRender = function (renderer) {
 
+    this._shadowMapPass.render(renderer, this.scene, this.camera);
+    // Shadowmap will set clearColor.
+    renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
     if (this._enablePostEffect) {
         var frameBuffer = this._compositor.getSourceFrameBuffer();
         frameBuffer.bind(renderer);
@@ -190,11 +196,14 @@ ViewGL.prototype._doRender = function (renderer) {
             renderer.render(this.scene, this.camera);
         }
     }
+
+    // this._shadowMapPass.renderDebug(renderer);
 }
 
 ViewGL.prototype.dispose = function (renderer) {
     this._compositor.dispose(renderer.gl);
     this._temporalSS.dispose(renderer.gl);
+    this._shadowMapPass.dispose(renderer);
 };
 /**
  * @param {module:echarts/Model} Post effect model

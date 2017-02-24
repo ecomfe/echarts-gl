@@ -480,11 +480,11 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        var distance = Math.min(
+        var distance = Math.max(Math.min(
             this._distance - this.minDistance,
             this.maxDistance - this._distance
-        );
-        this._zoomSpeed = delta > 0 ? distance / 40 : -distance / 40;
+        ));
+        this._zoomSpeed = (delta > 0 ? 1 : -1) * Math.max(distance / 40, 0.5);
 
         this._rotating = false;
 

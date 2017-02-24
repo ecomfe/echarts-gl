@@ -68,6 +68,7 @@ echarts.extendSeriesModel({
                     }
                 });
 
+                // TODO array intermediate storage is needless.
                 for (var v = vOpts.min; v <= vOpts.max; v += vOpts.step) {
                     for (var u = uOpts.min; u <= uOpts.max; u += uOpts.step) {
                         var x = parametricSurfaceEquation.x(u, v);

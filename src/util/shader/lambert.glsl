@@ -106,6 +106,8 @@ vec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)
 uniform vec3 color : [1.0, 1.0, 1.0];
 uniform float alpha : 1.0;
 
+uniform mat4 viewInverse : VIEWINVERSE;
+
 #ifdef AMBIENT_LIGHT_COUNT
 @import qtek.header.ambient_light
 #endif
@@ -124,6 +126,8 @@ varying vec4 v_Color;
 @import qtek.util.srgb
 
 @import ecgl.wireframe.common.fragmentHeader
+
+@import qtek.plugin.compute_shadow_map
 
 void main()
 {
@@ -160,6 +164,15 @@ void main()
     gl_FragColor *= albedoTexel;
 
     vec3 N = v_Normal;
+#ifdef DOUBLE_SIDE
+    vec3 eyePos = viewInverse[3].xyz;
+    vec3 V = normalize(eyePos - v_WorldPosition);
+
+    if (dot(N, V) < 0.0) {
+        N = -N;
+    }
+#endif
+
     float ambientFactor = 1.0;
 
 #ifdef BUMPMAP_ENABLED
@@ -185,12 +198,27 @@ void main()
     }}
 #endif
 #ifdef DIRECTIONAL_LIGHT_COUNT
+#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)
+    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];
+    if(shadowEnabled)
+    {
+        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);
+    }
+#endif
     for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)
     {
         vec3 lightDirection = -directionalLightDirection[i];
         vec3 lightColor = directionalLightColor[i];
 
-        float ndl = dot(N, normalize(lightDirection));
+        float shadowContrib = 1.0;
+#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)
+        if (shadowEnabled)
+        {
+            shadowContrib = shadowContribsDir[i];
+        }
+#endif
+
+        float ndl = dot(N, normalize(lightDirection)) * shadowContrib;
 
         diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);
     }

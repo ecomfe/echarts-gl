@@ -376,6 +376,7 @@ LayerGL.prototype.pickObject = function (x, y) {
         if (viewGL.containPoint(x, y)) {
             this._picking.scene = viewGL.scene;
             this._picking.camera = viewGL.camera;
+            // TODO viewport
             this._picking.pickAll(x, y, output);
         }
     }

@@ -177,6 +177,9 @@ module.exports = echarts.extendChartView({
 
         this._barMesh.geometry.dirty();
         this._barMeshTransparent.geometry.dirty();
+
+        this._barMesh.geometry.updateBoundingBox();
+        this._barMeshTransparent.geometry.updateBoundingBox();
     },
 
     remove: function () {

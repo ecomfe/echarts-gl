@@ -15,6 +15,13 @@ function resizeGeo3D(geo3DModel, api) {
     this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 }
 
+
+if (__DEV__) {
+    var mapNotExistsError = function (name) {
+        console.error('Map ' + name + ' not exists. You can download map file on http://echarts.baidu.com/download-map.html');
+    };
+}
+
 var geo3DCreator = {
 
     dimensions: Geo3D.prototype.dimensions,
@@ -23,12 +30,29 @@ var geo3DCreator = {
 
         var geo3DList = [];
 
-        ecModel.eachComponent('geo3D', function (geo3DModel) {
+        if (!echarts.getMap) {
+            throw new Error('geo3D component depends on geo component')
+        }
+
+        ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
+
+            var name = geo3DModel.get('map');
+            var mapData = echarts.getMap(name);
+            if (__DEV__) {
+                if (!mapData) {
+                    mapNotExistsError(name);
+                }
+            }
 
             // FIXME
             geo3DModel.__viewGL = geo3DModel.__viewGL || new ViewGL();
 
-            var geo3D = new Geo3D();
+
+            var geo3D = new Geo3D(
+                name + idx, name,
+                mapData && mapData.geoJson, mapData && mapData.specialAreas,
+                geo3DModel.get('nameMap')
+            );
             geo3D.viewGL = geo3DModel.__viewGL;
 
             geo3DModel.coordinateSystem = geo3D;
