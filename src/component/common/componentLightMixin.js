@@ -4,6 +4,10 @@ module.exports = {
         light: {
             // Main light
             main: {
+                shadow: false,
+                // low, medium, high, extra
+                shadowQuality: 'high',
+
                 color: '#fff',
                 intensity: 1
             },

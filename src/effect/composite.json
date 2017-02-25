@@ -471,6 +471,10 @@
                         "height": "expr(height * dpr)"
                     }
                 }
+            },
+            "parameters": {
+                "focalDist": 50,
+                "focalRange": 30
             }
         },
 

@@ -374,5 +374,25 @@ graphicGL.directionFromAlphaBeta = function (alpha, beta) {
 
     return dir;
 };
+/**
+ * Get shadow resolution from shadowQuality configuration
+ */
+graphicGL.getShadowResolution = function (shadowQuality) {
+    var shadowResolution = 1024;
+    switch (shadowQuality) {
+        case 'low':
+            shadowResolution = 512;
+            break;
+        case 'medium':
+            break;
+        case 'high':
+            shadowResolution = 2048;
+            break;
+        case 'extra':
+            shadowResolution = 4096;
+            break;
+    }
+    return shadowResolution;
+};
 
 module.exports = graphicGL;

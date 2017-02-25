@@ -8,7 +8,9 @@ module.exports = {
                 enable: true,
                 intensity: 0.1
             },
-
+            // depthOfField: {
+            //     enable: false
+            // },
             FXAA: {
                 enable: false
             }

@@ -21,18 +21,26 @@ Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
 
 function EffectCompositor() {
     this._sourceTexture = new Texture2D({
-        type: Texture.FLOAT
+        type: Texture.HALF_FLOAT
+    });
+    this._depthTexture = new Texture2D({
+        format: Texture.DEPTH_COMPONENT,
+        type: Texture.UNSIGNED_INT
     });
 
     this._framebuffer = new FrameBuffer();
     this._framebuffer.attach(this._sourceTexture);
+    this._framebuffer.attach(this._depthTexture, FrameBuffer.DEPTH_ATTACHMENT)
 
     var loader = new FXLoader();
     this._compositor = loader.parse(effectJson);
 
     var sourceNode = this._compositor.getNodeByName('source');
     sourceNode.texture = this._sourceTexture;
+    var cocNode = this._compositor.getNodeByName('coc');
+    cocNode.setParameter('depth', this._depthTexture);
 
+    this._cocNode = cocNode;
     this._compositeNode = this._compositor.getNodeByName('composite');
     this._fxaaNode = this._compositor.getNodeByName('FXAA');
 }
@@ -45,6 +53,9 @@ EffectCompositor.prototype.resize = function (width, height, dpr) {
         this._sourceTexture.width = width;
         this._sourceTexture.height = height;
         this._sourceTexture.dirty();
+        this._depthTexture.width = width;
+        this._depthTexture.height = height;
+        this._depthTexture.dirty();
     }
 };
 
@@ -86,6 +97,19 @@ EffectCompositor.prototype.disableBloom = function () {
     this._compositeNode.inputs.bloom = null;
 };
 
+/**
+ * Enable depth of field effect
+ */
+EffectCompositor.prototype.enableDOF = function () {
+    this._compositeNode.inputs.texture = 'dof_composite';
+};
+/**
+ * Disable depth of field effect
+ */
+EffectCompositor.prototype.disableDOF = function () {
+    this._compositeNode.inputs.texture = 'source';
+};
+
 EffectCompositor.prototype.setBloomIntensity = function (value) {
     this._compositeNode.setParameter('bloom', value);
 };
@@ -96,6 +120,7 @@ EffectCompositor.prototype.composite = function (renderer, framebuffer) {
 
 EffectCompositor.prototype.dispose = function (gl) {
     this._sourceTexture.dispose(gl);
+    this._depthTexture.dispose(gl);
     this._framebuffer.dispose(gl);
     this._compositor.dispose(gl);
 };

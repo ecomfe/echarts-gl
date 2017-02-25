@@ -211,9 +211,11 @@ ViewGL.prototype.dispose = function (renderer) {
 ViewGL.prototype.setPostEffect = function (postEffectModel) {
     this._enablePostEffect = postEffectModel.get('enable');
     var bloomModel = postEffectModel.getModel('bloom');
+    var dofModel = postEffectModel.getModel('depthOfField');
     var fxaaModel = postEffectModel.getModel('FXAA');
     fxaaModel.get('enable') ? this._compositor.enableFXAA() : this._compositor.disableFXAA();
     bloomModel.get('enable') ? this._compositor.enableBloom() : this._compositor.disableBloom();
+    dofModel.get('enable') ? this._compositor.enableDOF() : this._compositor.disableDOF();
 
     this._compositor.setBloomIntensity(bloomModel.get('intensity'));
 };
