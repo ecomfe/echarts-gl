@@ -111,11 +111,6 @@ echarts.extendSeriesModel({
         // If parametric surface
         parametric: false,
 
-        /**
-         * If flip surface normals
-         */
-        flipNormals: 'auto',
-
         wireframe: {
             show: true,
             lineWidth: 1,

@@ -35,8 +35,9 @@ module.exports = echarts.extendComponentView({
             return;
         }
         geo3D.viewGL.add(this.groupGL);
-
+        console.profile('update');
         this._geo3DBuilder.update(geo3DModel);
+        console.profileEnd('update');
 
         var control = this._control;
         control.setCamera(geo3D.viewGL.camera);

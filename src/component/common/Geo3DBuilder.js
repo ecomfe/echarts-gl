@@ -181,6 +181,7 @@ Geo3DBuilder.prototype = {
 
         var faces = this.faces;
         var positionAttr = geometry.attributes.position;
+        var normalAttr = geometry.attributes.normal;
         var polygons = this._triangulationResults[region.name];
 
         var sideVertexCount = 0;
@@ -193,10 +194,11 @@ Geo3DBuilder.prototype = {
 
         // var vertexCount = sideVertexCount * (bevelSegments * 4 + 4);
         // var faceCount = sideFaceCount * 2 + sideVertexCount * 2 * (bevelSegments * 2 + 1);
-        var vertexCount = sideVertexCount * 2;
+        var vertexCount = sideVertexCount * 2 + sideVertexCount * 4;
         var faceCount = sideFaceCount * 2 + sideVertexCount * 2;
 
         positionAttr.init(vertexCount);
+        normalAttr.init(vertexCount);
         faces = geometry.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
 
         var vertexOffset = 0;
@@ -270,12 +272,15 @@ Geo3DBuilder.prototype = {
         //         faceOffset += 2;
         //     }
         // }
-        for (var i = 0; i < polygons.length; i++) {
+        var normalTop = [0, 1, 0];
+        var normalBottom = [0, -1, 0];
+        for (var p = 0; p < polygons.length; p++) {
             var startVertexOffset = vertexOffset;
+            var polygon = polygons[p];
             // BOTTOM
-            buildTopBottom(polygons[i], 0, bevelSize);
+            buildTopBottom(polygon, 0, bevelSize);
             // TOP
-            buildTopBottom(polygons[i], regionHeight, bevelSize);
+            buildTopBottom(polygon, regionHeight, bevelSize);
             // bevels
             // TODO. In detailed polygon lines after bevel will cross
             // for (var k = 0; k < bevelSegments; k++) {
@@ -287,38 +292,63 @@ Geo3DBuilder.prototype = {
             //     var insideOffset1 = Math.cos(next) * bevelSize;
 
             //     buildSide(
-            //         polygons[i],
+            //         polygon,
             //         delta0, delta1,
             //         insideOffset0, insideOffset1
             //     );
 
             //     buildSide(
-            //         polygons[i],
+            //         polygon,
             //         regionHeight - delta0, regionHeight - delta1,
             //         insideOffset0, insideOffset1
             //     );
             // }
             // Side
-            // buildSide(polygons[i], bevelSize, regionHeight - bevelSize, 0, 0);
+            // buildSide(polygon, bevelSize, regionHeight - bevelSize, 0, 0);
 
 
-            var ringVertexCount = polygons[i].points.length / 3;
+            var ringVertexCount = polygon.points.length / 3;
+            for (var v = 0; v < ringVertexCount; v++) {
+                normalAttr.set(startVertexOffset + v, normalBottom);
+                normalAttr.set(startVertexOffset + v + ringVertexCount, normalTop);
+            }
+
             var quadToTriangle = [0, 3, 1, 1, 3, 2];
-            var quad = [];
+
+            var quadPos = [[], [], [], []];
+            var a = [];
+            var b = [];
+            var normal = [];
             for (var v = 0; v < ringVertexCount; v++) {
                 var next = (v + 1) % ringVertexCount;
-                quad[0] = v;
-                quad[1] = next;
-                quad[2] = ringVertexCount + next;
-                quad[3] = ringVertexCount + v;
+
+                // 0----1
+                // 3----2
+                for (var k = 0; k < 4; k++) {
+                    var idx3 = ((k === 0 || k === 3) ? v : next) * 3;
+                    quadPos[k][0] = polygon.points[idx3];
+                    quadPos[k][1] = k > 1 ? regionHeight : 0;
+                    quadPos[k][2] = polygon.points[idx3 + 2];
+                    positionAttr.set(vertexOffset + k, quadPos[k]);
+                }
+                vec3.sub(a, quadPos[1], quadPos[0]);
+                vec3.sub(b, quadPos[3], quadPos[0]);
+                vec3.cross(normal, a, b);
+                vec3.normalize(normal, normal);
+
+                for (var k = 0; k < 4; k++) {
+                    normalAttr.set(vertexOffset + k, normal);
+                }
 
                 for (var k = 0; k < 6; k++) {
-                    faces[faceOffset * 3 + k] = quad[quadToTriangle[k]] + startVertexOffset;
+                    faces[faceOffset * 3 + k] = quadToTriangle[k] + vertexOffset;
                 }
+
+                vertexOffset += 4;
                 faceOffset += 2;
             }
         }
-        geometry.generateFaceNormals();
+        // geometry.generateVertexNormals();
         geometry.updateBoundingBox();
     }
 };
