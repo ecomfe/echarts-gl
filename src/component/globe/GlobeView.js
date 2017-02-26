@@ -2,6 +2,7 @@ var echarts = require('echarts/lib/echarts');
 
 var graphicGL = require('../../util/graphicGL');
 var OrbitControl = require('../../util/OrbitControl');
+var LightHelper = require('../common/LightHelper');
 
 var sunCalc = require('../../util/sunCalc');
 var retrieve = require('../../util/retrieve');
@@ -52,19 +53,9 @@ module.exports = echarts.extendComponentView({
             name: 'earth'
         });
 
-        /**
-         * @type {qtek.light.Directional}
-         */
-        this._mainLight = new graphicGL.DirectionalLight();
-
-        /**
-         * @type {qtek.light.Ambient}
-         */
-        this._ambientLight = new graphicGL.AmbientLight();
+        this._lightHelper = new LightHelper(this.groupGL);
 
         this.groupGL.add(this._earthMesh);
-        this.groupGL.add(this._ambientLight);
-        this.groupGL.add(this._mainLight);
 
         this._control = new OrbitControl({
             zr: api.getZr()
@@ -131,30 +122,12 @@ module.exports = echarts.extendComponentView({
         this._updateLayers(globeModel, api);
     },
 
-    afterRender: function (grid3DModel, ecModel, api, layerGL) {
+    afterRender: function (globeModel, ecModel, api, layerGL) {
         // Create ambient cubemap after render because we need to know the renderer.
         // TODO
         var renderer = layerGL.renderer;
-        var ambientCubemapModel = grid3DModel.getModel('light.ambientCubemap');
 
-        var textureUrl = ambientCubemapModel.get('texture');
-        if (textureUrl) {
-            this._cubemapLightsCache = this._cubemapLightsCache || {};
-            var lights = this._cubemapLightsCache[textureUrl];
-            if (!lights) {
-                lights = this._cubemapLightsCache[textureUrl]
-                    = graphicGL.createAmbientCubemap(ambientCubemapModel.option, renderer, api);
-            }
-            this.groupGL.add(lights.diffuse);
-            this.groupGL.add(lights.specular);
-
-            this._currentCubemapLights = lights;
-        }
-        else if (this._currentCubemapLights) {
-            this.groupGL.remove(this._currentCubemapLights.diffuse);
-            this.groupGL.remove(this._currentCubemapLights.specular);
-            this._currentCubemapLights = null;
-        }
+        this._lightHelper.updateAmbientCubemap(renderer, globeModel, api);
     },
 
 
@@ -350,24 +323,18 @@ module.exports = echarts.extendComponentView({
 
         geometry.generateVertexNormals();
         geometry.dirty();
+
+        geometry.updateBoundingBox();
     },
 
     _updateLight: function (globeModel, api) {
         var earthMesh = this._earthMesh;
 
-        var mainLight = this._mainLight;
-        var ambientLight = this._ambientLight;
-
-        var lightModel = globeModel.getModel('light');
-        var mainLightModel = lightModel.getModel('main');
-        var ambientLightModel = lightModel.getModel('ambient');
-        mainLight.intensity = mainLightModel.get('intensity');
-        ambientLight.intensity = ambientLightModel.get('intensity');
-        mainLight.color = graphicGL.parseColor(mainLightModel.get('color')).slice(0, 3);
-        ambientLight.color = graphicGL.parseColor(ambientLightModel.get('color')).slice(0, 3);
+        this._lightHelper.updateLight(globeModel);
+        var mainLight = this._lightHelper.mainLight;
 
         // Put sun in the right position
-        var time = mainLightModel.get('time') || new Date();
+        var time = globeModel.get('light.main.time') || new Date();
 
         // http://en.wikipedia.org/wiki/Azimuth
         var pos = sunCalc.getPosition(Date.parse(time), 0, 0);
@@ -378,8 +345,9 @@ module.exports = echarts.extendComponentView({
         mainLight.position.z = r0 * Math.sin(pos.azimuth);
         mainLight.lookAt(earthMesh.getWorldPosition());
 
+
         // Emission
-        earthMesh.material.set('emissionIntensity', lightModel.get('emission.intensity'));
+        earthMesh.material.set('emissionIntensity', globeModel.get('light.emission.intensity'));
     },
 
     dispose: function (ecModel, api) {

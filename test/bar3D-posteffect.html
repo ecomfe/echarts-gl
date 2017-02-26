@@ -67,14 +67,20 @@
                     boxWidth: 200,
                     boxDepth: 80,
                     postEffect: {
-                        enable: true
+                        enable: true,
+                        bloom: {
+                            enable: true
+                        }
+                        // depthOfField: {
+                        //     enable: true
+                        // }
                     },
                     temporalSuperSampling: {
                         enable: true
                     },
                     light: {
                         main: {
-                            intensity: 1
+                            intensity: 0
                         },
                         ambientCubemap: {
                             texture: 'asset/pisa.hdr',

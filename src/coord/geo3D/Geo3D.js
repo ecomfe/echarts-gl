@@ -1,4 +1,6 @@
 var echarts = require('echarts/lib/echarts');
+var glmatrix = require('qtek/lib/dep/glmatrix');
+var mat4 = glmatrix.mat4;
 
 function Geo3D(name, map, geoJson, specialAreas, nameMap) {
 
@@ -8,7 +10,12 @@ function Geo3D(name, map, geoJson, specialAreas, nameMap) {
 
     this.regions = [];
 
+    this._nameCoordMap = {};
+
     this.loadGeoJson(geoJson, specialAreas, nameMap);
+
+    this.transform = mat4.create();
+
 }
 
 Geo3D.prototype = {
@@ -17,7 +24,7 @@ Geo3D.prototype = {
 
     loadGeoJson: function (geoJson, specialAreas, nameMap) {
         try {
-            this.regions = geoJson ? echarts.parseGeoJson(geoJson) : [];
+            this.regions = geoJson ? echarts.parseGeoJSON(geoJson) : [];
         }
         catch (e) {
             throw 'Invalid geoJson format\n' + e;
@@ -48,12 +55,12 @@ Geo3D.prototype = {
 
         this._regionsMap = regionsMap;
 
-        this._rect = null;
+        this._geoRect = null;
     },
 
     getGeoBoundingRect: function () {
-        if (this._rect) {
-            return this._rect;
+        if (this._geoRect) {
+            return this._geoRect;
         }
         var rect;
 
@@ -64,7 +71,16 @@ Geo3D.prototype = {
             rect.union(regionRect);
         }
         // FIXME Always return new ?
-        return (this._rect = rect || new echarts.graphic.BoundingRect(0, 0, 0, 0));
+        return (this._geoRect = rect || new echarts.graphic.BoundingRect(0, 0, 0, 0));
+    },
+
+    /**
+     * Add geoCoord for indexing by name
+     * @param {string} name
+     * @param {Array.<number>} geoCoord
+     */
+    addGeoCoord: function (name, geoCoord) {
+        this._nameCoordMap[name] = geoCoord;
     },
 
     /**
@@ -82,6 +98,25 @@ Geo3D.prototype = {
                 return regions[i];
             }
         }
+    },
+
+    setSize: function (width, height, depth) {
+        this.size = [width, height, depth];
+
+        var rect = this.getGeoBoundingRect();
+
+        var scaleX = width / rect.width;
+        var scaleZ = -depth / rect.height;
+        var translateX = -width / 2 - rect.x * scaleX;
+        var translateZ = depth / 2 - rect.y * scaleZ;
+
+        var position = [translateX, 0, translateZ];
+        var scale = [scaleX, 1, scaleZ];
+
+        var m = this.transform;
+        mat4.identity(m);
+        mat4.translate(m, m, position);
+        mat4.scale(m, m, scale);
     },
 
     dataToPoint: function (data) {

@@ -3,7 +3,7 @@ module.exports = {
 
         viewControl: {
             // If rotate on on init
-            autoRotate: true,
+            autoRotate: false,
 
             // Start rotating after still for a given time
             // default is 3 seconds

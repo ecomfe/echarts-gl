@@ -69,7 +69,12 @@ function cartesian3DLayout(seriesModel, coordSys) {
         // TODO On different plane.
         var start = coordSys.dataToPoint([x, y, 0]);
         var end = coordSys.dataToPoint([x, y, z]);
-        var size = [barSize[0], vec3.dist(start, end), barSize[1]];
+        var height = vec3.dist(start, end);
+        if (Math.abs(height) === 0) {
+            // TODO
+            height = 0.1;
+        }
+        var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
     });
 

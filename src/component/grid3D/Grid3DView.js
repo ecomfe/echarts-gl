@@ -8,6 +8,7 @@ var PlanesGeometry = require('../../util/geometry/Planes');
 var retrieve = require('../../util/retrieve');
 var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
 var LabelsMesh = require('../../util/mesh/LabelsMesh');
+var LightHelper = require('../common/LightHelper');
 
 var dims = ['x', 'y', 'z'];
 
@@ -159,18 +160,7 @@ module.exports = echarts.extendComponentView({
             api.getZr().refresh();
         };
 
-        /**
-         * @type {qtek.light.Directional}
-         */
-        this._mainLight = new graphicGL.DirectionalLight();
-
-        /**
-         * @type {qtek.light.Ambient}
-         */
-        this._ambientLight = new graphicGL.AmbientLight();
-
-        this.groupGL.add(this._ambientLight);
-        this.groupGL.add(this._mainLight);
+        this._lightHelper = new LightHelper(this.groupGL);
     },
 
     render: function (grid3DModel, ecModel, api) {
@@ -205,7 +195,7 @@ module.exports = echarts.extendComponentView({
         control.off('update');
         control.on('update', this._onCameraChange.bind(this, grid3DModel, api), this);
 
-        this._updateLight(grid3DModel, api);
+        this._lightHelper.updateLight(grid3DModel);
 
         // Set post effect
         cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
@@ -216,26 +206,8 @@ module.exports = echarts.extendComponentView({
         // Create ambient cubemap after render because we need to know the renderer.
         // TODO
         var renderer = layerGL.renderer;
-        var ambientCubemapModel = grid3DModel.getModel('light.ambientCubemap');
 
-        var textureUrl = ambientCubemapModel.get('texture');
-        if (textureUrl) {
-            this._cubemapLightsCache = this._cubemapLightsCache || {};
-            var lights = this._cubemapLightsCache[textureUrl];
-            if (!lights) {
-                lights = this._cubemapLightsCache[textureUrl]
-                    = graphicGL.createAmbientCubemap(ambientCubemapModel.option, renderer, api);
-            }
-            this.groupGL.add(lights.diffuse);
-            this.groupGL.add(lights.specular);
-
-            this._currentCubemapLights = lights;
-        }
-        else if (this._currentCubemapLights) {
-            this.groupGL.remove(this._currentCubemapLights.diffuse);
-            this.groupGL.remove(this._currentCubemapLights.specular);
-            this._currentCubemapLights = null;
-        }
+        this._lightHelper.updateAmbientCubemap(renderer, grid3DModel, api);
     },
 
     _onCameraChange: function (grid3DModel, api) {
@@ -574,26 +546,6 @@ module.exports = echarts.extendComponentView({
                 }
             }
         });
-    },
-
-    _updateLight: function (globeModel, api) {
-
-        var mainLight = this._mainLight;
-        var ambientLight = this._ambientLight;
-
-        var lightModel = globeModel.getModel('light');
-        var mainLightModel = lightModel.getModel('main');
-        var ambientLightModel = lightModel.getModel('ambient');
-
-        mainLight.intensity = mainLightModel.get('intensity');
-        ambientLight.intensity = ambientLightModel.get('intensity');
-        mainLight.color = graphicGL.parseColor(mainLightModel.get('color')).slice(0, 3);
-        ambientLight.color = graphicGL.parseColor(ambientLightModel.get('color')).slice(0, 3);
-
-        var alpha = mainLightModel.get('alpha') || 0;
-        var beta = mainLightModel.get('beta') || 0;
-        mainLight.position.setArray(graphicGL.directionFromAlphaBeta(alpha, beta));
-        mainLight.lookAt(graphicGL.Vector3.ZERO);
     },
 
     dispose: function () {

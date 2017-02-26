@@ -1,6 +1,7 @@
 // Ear clipping polygon triangulation
 // @author pissang(https://github.com/pissang)
 
+// TODO holes
 var LinkedList = require('qtek/lib/core/LinkedList');
 
 function triangleArea(x0, y0, x1, y1, x2, y2) {
@@ -62,7 +63,7 @@ var TriangulationContext = function () {
     this._candidates = [];
 }
 
-TriangulationContext.prototype.triangulate = function (points) {
+TriangulationContext.prototype.triangulate = function (points, contour, holes) {
     this._nPoints = points.length / 2;
     if (this._nPoints < 3) {
         return;
@@ -144,19 +145,19 @@ TriangulationContext.prototype._prepare = function () {
         bb[1][1] += 0.1;
 
         var area = triangleArea(x0, y0, x1, y1, x2, y2);
-        if (Math.abs(area) < Number.EPSILON) {
-            // Ignore tiny triangles, remove the point i
-            this.points.splice(i * 2, 2);
-            n --;
-        }
-        else {
+        // if (Math.abs(area) < Number.EPSILON) {
+        //     // Ignore tiny triangles, remove the point i
+        //     this.points.splice(i * 2, 2);
+        //     n --;
+        // }
+        // else {
             this._pointTypes[i] = area < 0 ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
             if (area < 0) {
                 this._candidates.push(i);
             }
             j = i;
             i++;
-        }
+        // }
     }
 
     this._pointTypes.length = n;
@@ -266,9 +267,11 @@ TriangulationContext.prototype._clipEar = function (p1) {
     var e1 = this._edgeOut[p1];
 
     var offset = this._nTriangle * 3;
+    // FIXME e0 may same with e1
     this.triangles[offset] = e0.p0;
     this.triangles[offset + 1] = e0.p1;
     this.triangles[offset + 2] = e1.p1;
+
     this._nTriangle++;
 
     var e0i = this._edgeIn[e0.p0];

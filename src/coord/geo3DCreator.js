@@ -13,6 +13,28 @@ function resizeGeo3D(geo3DModel, api) {
     });
 
     this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
+
+    var geoRect = this.getGeoBoundingRect();
+    var aspect = geoRect.width / geoRect.height * 0.75;
+
+    var width = geo3DModel.get('boxWidth');
+    var depth = geo3DModel.get('boxDepth');
+    var height = geo3DModel.get('boxHeight');
+    if (height == null) {
+        height = 5;
+    }
+    if (isNaN(width) && isNaN(depth)) {
+        // Default to have 100 width
+        width = 100;
+    }
+    if (isNaN(depth)) {
+        depth = width / aspect;
+    }
+    else if (isNaN(width)) {
+        width = depth / aspect;
+    }
+
+    this.setSize(width, height, depth);
 }
 
 

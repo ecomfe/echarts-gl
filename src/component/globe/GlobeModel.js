@@ -119,7 +119,10 @@ var GlobeModel = echarts.extendComponentModel({
         // light
         // postEffect
         // temporalSuperSampling
-        // viewControl
+
+        viewControl: {
+            autoRotate: true
+        },
 
 
         // {
