@@ -5,7 +5,7 @@ module.exports = {
             // Main light
             main: {
                 shadow: false,
-                // low, medium, high, extra
+                // low, medium, high, ultra
                 shadowQuality: 'high',
 
                 color: '#fff',

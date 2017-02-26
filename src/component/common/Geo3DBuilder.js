@@ -170,12 +170,15 @@ Geo3DBuilder.prototype = {
     },
 
     _updateGeometry: function (geometry, geo3D, region, bevelSize, bevelSegments) {
-        if (!(bevelSize > 0)) {
-            bevelSegments = 0;
-        }
-        if (!(bevelSegments > 0)) {
-            bevelSize = 0;
-        }
+        // if (!(bevelSize > 0)) {
+        //     bevelSegments = 0;
+        // }
+        // if (!(bevelSegments > 0)) {
+        //     bevelSize = 0;
+        // }
+        bevelSegments = 0;
+        bevelSize = 0;
+
         var faces = this.faces;
         var positionAttr = geometry.attributes.position;
         var polygons = this._triangulationResults[region.name];
@@ -188,10 +191,10 @@ Geo3DBuilder.prototype = {
             sideFaceCount += polygons[i].indices.length / 3;
         }
 
-        var vertexCount = sideVertexCount * (bevelSegments * 4 + 4);
-        var faceCount = sideFaceCount * 2 + sideVertexCount * 2 * (bevelSegments * 2 + 1);
-        // var vertexCount = ringVertexCount;
-        // var faceCount = sideFaceCount;
+        // var vertexCount = sideVertexCount * (bevelSegments * 4 + 4);
+        // var faceCount = sideFaceCount * 2 + sideVertexCount * 2 * (bevelSegments * 2 + 1);
+        var vertexCount = sideVertexCount * 2;
+        var faceCount = sideFaceCount * 2 + sideVertexCount * 2;
 
         positionAttr.init(vertexCount);
         faces = geometry.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
@@ -246,20 +249,68 @@ Geo3DBuilder.prototype = {
             faceOffset += indices.length / 3;
         }
 
-        var quadToTriangle = [0, 3, 1, 1, 3, 2];
-        var quad = [];
-        function buildSide(polygon, y0, y1, insideOffset0, insideOffset1) {
-            var startVertexOffset = vertexOffset;
-            addVertices(polygon, y1, insideOffset1);
-            addVertices(polygon, y0, insideOffset0);
+        // var quadToTriangle = [0, 3, 1, 1, 3, 2];
+        // var quad = [];
+        // function buildSide(polygon, y0, y1, insideOffset0, insideOffset1) {
+        //     var startVertexOffset = vertexOffset;
+        //     addVertices(polygon, y1, insideOffset1);
+        //     addVertices(polygon, y0, insideOffset0);
 
-            var ringVertexCount = polygon.points.length / 3;
-            for (var i = 0; i < ringVertexCount; i++) {
-                var next = (i + 1) % ringVertexCount;
-                quad[0] = i;
+        //     var ringVertexCount = polygon.points.length / 3;
+        //     for (var i = 0; i < ringVertexCount; i++) {
+        //         var next = (i + 1) % ringVertexCount;
+        //         quad[0] = i;
+        //         quad[1] = next;
+        //         quad[2] = ringVertexCount + next;
+        //         quad[3] = ringVertexCount + i;
+
+        //         for (var k = 0; k < 6; k++) {
+        //             faces[faceOffset * 3 + k] = quad[quadToTriangle[k]] + startVertexOffset;
+        //         }
+        //         faceOffset += 2;
+        //     }
+        // }
+        for (var i = 0; i < polygons.length; i++) {
+            var startVertexOffset = vertexOffset;
+            // BOTTOM
+            buildTopBottom(polygons[i], 0, bevelSize);
+            // TOP
+            buildTopBottom(polygons[i], regionHeight, bevelSize);
+            // bevels
+            // TODO. In detailed polygon lines after bevel will cross
+            // for (var k = 0; k < bevelSegments; k++) {
+            //     var curr = k / bevelSegments * Math.PI / 2;
+            //     var next = (k + 1) / bevelSegments * Math.PI / 2;
+            //     var delta0 = Math.sin(curr) * bevelSize;
+            //     var delta1 = Math.sin(next) * bevelSize;
+            //     var insideOffset0 = Math.cos(curr) * bevelSize;
+            //     var insideOffset1 = Math.cos(next) * bevelSize;
+
+            //     buildSide(
+            //         polygons[i],
+            //         delta0, delta1,
+            //         insideOffset0, insideOffset1
+            //     );
+
+            //     buildSide(
+            //         polygons[i],
+            //         regionHeight - delta0, regionHeight - delta1,
+            //         insideOffset0, insideOffset1
+            //     );
+            // }
+            // Side
+            // buildSide(polygons[i], bevelSize, regionHeight - bevelSize, 0, 0);
+
+
+            var ringVertexCount = polygons[i].points.length / 3;
+            var quadToTriangle = [0, 3, 1, 1, 3, 2];
+            var quad = [];
+            for (var v = 0; v < ringVertexCount; v++) {
+                var next = (v + 1) % ringVertexCount;
+                quad[0] = v;
                 quad[1] = next;
                 quad[2] = ringVertexCount + next;
-                quad[3] = ringVertexCount + i;
+                quad[3] = ringVertexCount + v;
 
                 for (var k = 0; k < 6; k++) {
                     faces[faceOffset * 3 + k] = quad[quadToTriangle[k]] + startVertexOffset;
@@ -267,36 +318,7 @@ Geo3DBuilder.prototype = {
                 faceOffset += 2;
             }
         }
-        for (var i = 0; i < polygons.length; i++) {
-            // BOTTOM
-            buildTopBottom(polygons[i], 0, bevelSize);
-            // TOP
-            buildTopBottom(polygons[i], regionHeight, bevelSize);
-            // bevels
-            for (var k = 0; k < bevelSegments; k++) {
-                var curr = k / bevelSegments * Math.PI / 2;
-                var next = (k + 1) / bevelSegments * Math.PI / 2;
-                var delta0 = Math.sin(curr) * bevelSize;
-                var delta1 = Math.sin(next) * bevelSize;
-                var insideOffset0 = Math.cos(curr) * bevelSize;
-                var insideOffset1 = Math.cos(next) * bevelSize;
-
-                buildSide(
-                    polygons[i],
-                    delta0, delta1,
-                    insideOffset0, insideOffset1
-                );
-
-                buildSide(
-                    polygons[i],
-                    regionHeight - delta0, regionHeight - delta1,
-                    insideOffset0, insideOffset1
-                );
-            }
-            // Side
-            buildSide(polygons[i], bevelSize, regionHeight - bevelSize, 0, 0);
-        }
-        geometry.generateVertexNormals();
+        geometry.generateFaceNormals();
         geometry.updateBoundingBox();
     }
 };

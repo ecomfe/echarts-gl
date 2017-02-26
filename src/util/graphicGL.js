@@ -388,7 +388,7 @@ graphicGL.getShadowResolution = function (shadowQuality) {
         case 'high':
             shadowResolution = 2048;
             break;
-        case 'extra':
+        case 'ultra':
             shadowResolution = 4096;
             break;
     }
