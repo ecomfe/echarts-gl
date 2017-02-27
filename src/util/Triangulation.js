@@ -38,8 +38,45 @@ function isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi) {
         || triangleArea(xi, yi, x2, y2, x1, y1) <= 0);
 }
 
+function area(points) {
+    // Signed polygon area
+    var n = points.length / 2;
+    if (n < 3) {
+        return 0;
+    }
+    var area = 0;
+    for (var i = (n - 1) * 2, j = 0; j < n * 2;) {
+        var x0 = points[i];
+        var y0 = points[i + 1];
+        var x1 = points[j];
+        var y1 = points[j + 1];
+        i = j;
+        j += 2;
+        area += x0 * y1 - x1 * y0;
+    }
+
+    return area;
+}
+
+function reverse(points, stride) {
+    var n = points.length / stride;
+    for (var i = 0; i < Math.floor(n / 2); i++) {
+        for (var j = 0; j < stride; j++) {
+            var a = i * stride + j;
+            var b = (n - i - 1) * stride + j;
+            var tmp = points[a];
+            points[a] = points[b];
+            points[b] = tmp;
+        }
+    }
+
+    return points;
+}
+
 var VERTEX_TYPE_CONVEX = 1;
 var VERTEX_TYPE_REFLEX = 2;
+
+var VERTEX_COUNT_NEEDS_GRID = 50;
 
 function Edge(p0, p1) {
 
@@ -59,7 +96,7 @@ var TriangulationContext = function () {
 
     this.maxGridNumber = 50;
 
-    this.minGridNumber = 0;
+    this.minGridNumber = 4;
 
     this._gridNumber = 20;
 
@@ -89,8 +126,8 @@ var TriangulationContext = function () {
 
 /**
  * @param {Array.<number>} exterior. Exterior points
- *      Points must be clockwise order. (When y is from bottom to top)
- * @param {Array.<Array>} holes. holes must be counter clockwise order.
+ *      exterior should be clockwise order. (When y is from bottom to top)
+ * @param {Array.<Array>} holes. holes should be counter clockwise order.
  */
 TriangulationContext.prototype.triangulate = function (exterior, holes) {
     this._nPoints = exterior.length / 2;
@@ -99,12 +136,24 @@ TriangulationContext.prototype.triangulate = function (exterior, holes) {
     }
 
     // PENDING Dynamic grid number or fixed grid number ?
-    this._gridNumber = Math.ceil(Math.sqrt(this._nPoints));
+    this._gridNumber = Math.ceil(Math.sqrt(this._nPoints) / 2);
     this._gridNumber = Math.max(Math.min(this._gridNumber, this.maxGridNumber), this.minGridNumber);
 
     this.points = new Float32Array(exterior);
 
-    this.holes = holes || [];
+    this._needsGreed = this._nPoints > VERTEX_COUNT_NEEDS_GRID;
+
+    if (area(this.points) > 0) {
+        reverse(this.points, 2);
+    }
+
+    this.holes = (holes || []).map(function (hole) {
+        hole = new Float32Array(hole);
+        if (area(hole) < 0) {
+            reverse(hole, 2);
+        }
+        return hole;
+    });
 
     this._reset();
 
@@ -125,6 +174,7 @@ TriangulationContext.prototype._reset = function () {
     this._boundingBox[0][0] = this._boundingBox[0][1] = Infinity;
     this._boundingBox[1][0] = this._boundingBox[1][1] = -Infinity;
     // Initialize grid
+
     var nGrids = this._gridNumber * this._gridNumber;
     var len = this._grids.length;
     for (var i = 0; i < len; i++) {
@@ -137,8 +187,8 @@ TriangulationContext.prototype._reset = function () {
 
     // Initialize edges
     // In case the array have undefined values
+    var len = this._edgeIn.length;
     if (len < this._nPoints) {
-        len = this._edgeIn.length;
         for (var i = len; i < this._nPoints; i++) {
             this._edgeIn[i] = this._edgeOut[i] = null;
         }
@@ -165,17 +215,19 @@ TriangulationContext.prototype._prepare = function () {
         var x2 = points[k * 2];
         var y2 = points[k * 2 + 1];
 
-        if (x1 < bb[0][0]) { bb[0][0] = x1; }
-        if (y1 < bb[0][1]) { bb[0][1] = y1; }
-        if (x1 > bb[1][0]) { bb[1][0] = x1; }
-        if (y1 > bb[1][1]) { bb[1][1] = y1; }
+        if (this._needsGreed) {
+            if (x1 < bb[0][0]) { bb[0][0] = x1; }
+            if (y1 < bb[0][1]) { bb[0][1] = y1; }
+            if (x1 > bb[1][0]) { bb[1][0] = x1; }
+            if (y1 > bb[1][1]) { bb[1][1] = y1; }
 
-        // Make the bounding box a litte bigger
-        // Avoid the geometry hashing will touching the bound of the bounding box
-        bb[0][0] -= 0.1;
-        bb[0][1] -= 0.1;
-        bb[1][0] += 0.1;
-        bb[1][1] += 0.1;
+            // Make the bounding box a litte bigger
+            // Avoid the geometry hashing will touching the bound of the bounding box
+            bb[0][0] -= 0.1;
+            bb[0][1] -= 0.1;
+            bb[1][0] += 0.1;
+            bb[1][1] += 0.1;
+        }
 
         var area = triangleArea(x0, y0, x1, y1, x2, y2);
 
@@ -187,21 +239,24 @@ TriangulationContext.prototype._prepare = function () {
 
     this._cutHoles();
 
-    // nPoints may be changed after cutHoles.
+    // points may be changed after cutHoles.
     n = this._nPoints;
+    points = this.points;
 
     // Put the points in the grids
-    this._gridWidth = (bb[1][0] - bb[0][0]) / this._gridNumber;
-    this._gridHeight = (bb[1][1] - bb[0][1]) / this._gridNumber;
-    for (var i = 0; i < n; i++) {
-        if (this._pointsTypes[i] == VERTEX_TYPE_REFLEX) {
-            var x = this.points[i * 2];
-            var y = this.points[i * 2 + 1];
-            var key = this._getPointHash(x, y);
-            this._grids[key].push(i);
+    if (this._needsGreed) {
+        this._gridWidth = (bb[1][0] - bb[0][0]) / this._gridNumber;
+        this._gridHeight = (bb[1][1] - bb[0][1]) / this._gridNumber;
+        for (var i = 0; i < n; i++) {
+            var x = points[i * 2];
+            var y = points[i * 2 + 1];
+            if (this._pointsTypes[i] == VERTEX_TYPE_REFLEX) {
+                var key = this._getPointHash(x, y);
+                this._grids[key].push(i);
+            }
         }
-    }
 
+    }
     // Init candidates.
     for (var i= 0; i < n; i++) {
         if (this._pointsTypes[i] === VERTEX_TYPE_CONVEX) {
@@ -291,7 +346,7 @@ TriangulationContext.prototype._cutHoles = function () {
             }
             return;
         }
-        var edgeEndPointIndex = (edgeStartPointIndex + 1) % points.length / 2;
+        var edgeEndPointIndex = (edgeStartPointIndex + 1) % (points.length / 2);
         // Point of seam edge/
         var seamPointIndex = (points[edgeStartPointIndex * 2] > points[edgeEndPointIndex * 2]) ? edgeStartPointIndex : edgeEndPointIndex;
         // Use maximum x of edge
@@ -315,7 +370,7 @@ TriangulationContext.prototype._cutHoles = function () {
                     if (angleCos < minimumAngleCos) {
                         minimumAngleCos = angleCos;
                         // Replaced seam.
-                        seamPointIndex = idx;
+                        seamPointIndex = i;
                     }
                 }
             }
@@ -430,6 +485,7 @@ TriangulationContext.prototype._earClipping = function () {
 }
 
 TriangulationContext.prototype._isEar = function (p1) {
+    var points = this.points;
     // Find two adjecent edges
     var e0 = this._edgeIn[p1];
     var e1 = this._edgeOut[p1];
@@ -437,36 +493,50 @@ TriangulationContext.prototype._isEar = function (p1) {
     var p0 = e0.p0;
     var p2 = e1.p1;
 
-    var x0 = this.points[p0 * 2];
-    var y0 = this.points[p0 * 2 + 1];
-    var x1 = this.points[p1 * 2];
-    var y1 = this.points[p1 * 2 + 1];
-    var x2 = this.points[p2 * 2];
-    var y2 = this.points[p2 * 2 + 1];
+    p0 *= 2;
+    p1 *= 2;
+    p2 *= 2;
+    var x0 = points[p0];
+    var y0 = points[p0 + 1];
+    var x1 = points[p1];
+    var y1 = points[p1 + 1];
+    var x2 = points[p2];
+    var y2 = points[p2 + 1];
 
     // Clipped the tiny triangles directly
     // if (Math.abs(triangleArea(x0, y0, x1, y1, x2, y2)) < 1) {
     //     return true;
     // }
 
-    var range = this._getTriangleGrids(x0, y0, x1, y1, x2, y2);
+    if (this._needsGreed) {
+        var range = this._getTriangleGrids(x0, y0, x1, y1, x2, y2);
 
-    // Find all the points in the grids covered by the triangle
-    // And figure out if any of them is in the triangle
-    for (var j = range[0][1]; j <= range[1][1]; j++) {
-        for (var i = range[0][0]; i <= range[1][0]; i++) {
-            var gridIdx = j * this._gridNumber + i;
-            var gridPoints = this._grids[gridIdx];
+        // Find all the points in the grids covered by the triangle
+        // And figure out if any of them is in the triangle
+        for (var j = range[0][1]; j <= range[1][1]; j++) {
+            for (var i = range[0][0]; i <= range[1][0]; i++) {
+                var gridIdx = j * this._gridNumber + i;
+                var gridPoints = this._grids[gridIdx];
 
-            for (var k = 0; k < gridPoints.length; k++) {
-                var idx = gridPoints[k];
-                if (this._pointsTypes[idx] == VERTEX_TYPE_REFLEX) {
-                    var xi = this.points[idx * 2];
-                    var yi = this.points[idx * 2 + 1];
-                    if (isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi)) {
-                        return false;
+                for (var k = 0; k < gridPoints.length; k++) {
+                    var idx = gridPoints[k];
+                    if (this._pointsTypes[idx] == VERTEX_TYPE_REFLEX) {
+                        var xi = points[idx * 2];
+                        var yi = points[idx * 2 + 1];
+                        if (isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi)) {
+                            return false;
+                        }
                     }
                 }
+            }
+        }
+    }
+    else {
+        for (var i = 0; i < this._nPoints; i++) {
+            var xi = points[i * 2];
+            var yi = points[i * 2 + 1];
+            if (isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi)) {
+                return false;
             }
         }
     }
@@ -546,8 +616,6 @@ TriangulationContext.prototype._getTriangleGrids = (function () {
     return function (x0, y0, x1, y1, x2, y2) {
         var bb = this._boundingBox;
 
-        // Use `if` instead of `min` `max` methods when having three or more params
-        // http://jsperf.com/min-max-multiple-param
         minX = maxX = x0;
         minY = maxY = y0;
         if (x1 < minX) { minX = x1; }

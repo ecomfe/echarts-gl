@@ -3,41 +3,6 @@ var Triangulation = require('../../util/Triangulation');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 var vec3 = glmatrix.vec3;
 
-function area(points) {
-    // Signed polygon area
-    var n = points.length / 2;
-    if (n < 3) {
-        return 0;
-    }
-    var area = 0;
-    for (var i = (n - 1) * 2, j = 0; j < n * 2;) {
-        var x0 = points[i];
-        var y0 = points[i + 1];
-        var x1 = points[j];
-        var y1 = points[j + 1];
-        i = j;
-        j += 2;
-        area += x0 * y1 - x1 * y0;
-    }
-
-    return area;
-}
-
-function reverse(points, stride) {
-    var n = points.length / stride;
-    for (var i = 0; i < Math.floor(n / 2); i++) {
-        for (var j = 0; j < stride; j++) {
-            var a = i * stride + j;
-            var b = (n - i - 1) * stride + j;
-            var tmp = points[a];
-            points[a] = points[b];
-            points[b] = tmp;
-        }
-    }
-
-    return points;
-}
-
 function Geo3DBuilder() {
 
     this.rootNode = new graphicGL.Node();
@@ -121,6 +86,7 @@ Geo3DBuilder.prototype = {
     _triangulation: function (geo3D) {
         this._triangulationResults = {};
         var triangulator = this._triangulator;
+        console.profile('triangulate');
         geo3D.regions.forEach(function (region) {
             var polygons = [];
             for (var i = 0; i < region.geometries.length; i++) {
@@ -138,9 +104,6 @@ Geo3DBuilder.prototype = {
                     points[offset++] = p[0];
                     points[offset++] = p[1];
                 }
-                if (area(points) > 0) {
-                    reverse(points, 2);
-                }
 
                 for (var j = 0; j < interiors.length; j++) {
                     if (interiors[j].length.length < 3) {
@@ -152,13 +115,9 @@ Geo3DBuilder.prototype = {
                         holePoints.push(p[0]);
                         holePoints.push(p[1]);
                     }
-                    // hole needs opposite direction
-                    if (area(holePoints) < 0) {
-                        reverse(holePoints, 2);
-                    }
+
                     holes.push(holePoints);
                 }
-
                 triangulator.triangulate(points, holes);
                 points = triangulator.points;
 
@@ -187,6 +146,8 @@ Geo3DBuilder.prototype = {
             }
             this._triangulationResults[region.name] = polygons;
         }, this);
+
+        console.profileEnd('triangulate');
     },
 
     _updateGeometry: function (geometry, geo3D, region) {
