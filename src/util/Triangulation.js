@@ -213,6 +213,11 @@ TriangulationContext.prototype._prepare = function () {
     n = this._nPoints;
     points = this.points;
 
+    // Init candidates.
+    for (var i= 0; i < n; i++) {
+        this._candidates.insert(new Point(i));
+    }
+
     // Put the points in the grids
     if (this._needsGreed) {
         this._gridWidth = (bb[1][0] - bb[0][0]) / this._gridNumber;
@@ -225,11 +230,6 @@ TriangulationContext.prototype._prepare = function () {
                 this._grids[key].push(i);
             }
         }
-
-    }
-    // Init candidates.
-    for (var i= 0; i < n; i++) {
-        this._candidates.insert(new Point(i));
     }
 };
 
@@ -249,7 +249,7 @@ TriangulationContext.prototype._cutHoles = function () {
         var holeMaxXIndex = 0;
         // Find index of xMax in the hole.
         for (var k = 0; k < hole.length; k += 2) {
-            var x = this.points[k * 2];
+            var x = hole[k * 2];
             if (x > holeMaxX) {
                 holeMaxXIndex = k / 2;
                 holeMaxX = x;
