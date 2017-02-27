@@ -78,14 +78,10 @@ var VERTEX_TYPE_REFLEX = 2;
 
 var VERTEX_COUNT_NEEDS_GRID = 50;
 
-function Edge(p0, p1) {
-
-    this.p0 = p0;
-
-    this.p1 = p1;
-
+function Point(idx) {
+    this.idx = idx;
     // Dirty trick to speed up the delete operation in linked list
-    this._linkedListEntry = null;
+    this._entry = null;
 }
 
 var TriangulationContext = function () {
@@ -104,8 +100,6 @@ var TriangulationContext = function () {
 
     this._nPoints = 0;
 
-    this._nTriangle = 0;
-
     this._pointsTypes = [];
 
     this._grids = [];
@@ -113,15 +107,7 @@ var TriangulationContext = function () {
     this._gridWidth = 0;
     this._gridHeight = 0;
 
-    this._edgeList = new LinkedList();
-
-    // Map of point index and the edge out from the vertex
-    this._edgeOut = [];
-
-    // Map of point index and the edge in to the vertex
-    this._edgeIn = [];
-
-    this._candidates = [];
+    this._candidates = null;
 }
 
 /**
@@ -164,11 +150,7 @@ TriangulationContext.prototype.triangulate = function (exterior, holes) {
 
 TriangulationContext.prototype._reset = function () {
 
-    this._nTriangle = 0;
-
-    this._edgeList.clear();
-
-    this._candidates = [];
+    this._candidates = new LinkedList();
     this.triangles = [];
 
     this._boundingBox[0][0] = this._boundingBox[0][1] = Infinity;
@@ -184,21 +166,9 @@ TriangulationContext.prototype._reset = function () {
         this._grids[i] = [];
     }
     this._grids.length = nGrids;
-
-    // Initialize edges
-    // In case the array have undefined values
-    var len = this._edgeIn.length;
-    if (len < this._nPoints) {
-        for (var i = len; i < this._nPoints; i++) {
-            this._edgeIn[i] = this._edgeOut[i] = null;
-        }
-    }
-    else {
-        this._edgeIn.length = this._edgeOut.length = this._nPoints;
-    }
 }
 
-// Prepare points and edges
+// Prepare points
 TriangulationContext.prototype._prepare = function () {
     var bb = this._boundingBox;
     var n = this._nPoints;
@@ -259,15 +229,8 @@ TriangulationContext.prototype._prepare = function () {
     }
     // Init candidates.
     for (var i= 0; i < n; i++) {
-        if (this._pointsTypes[i] === VERTEX_TYPE_CONVEX) {
-            this._candidates.push(i);
-        }
+        this._candidates.insert(new Point(i));
     }
-    // Create edges
-    for (var i = 0; i < n - 1; i++) {
-        this._addEdge(i, i+1);
-    }
-    this._addEdge(i, 0);
 };
 
 // Finding Mutually Visible Vertices and cut the polygon to remove holes.
@@ -452,24 +415,16 @@ TriangulationContext.prototype._cutHoles = function () {
 
 TriangulationContext.prototype._earClipping = function () {
     var candidates = this._candidates;
-    var nPoints = this._nPoints;
-    while (candidates.length) {
+    while (candidates.length() > 2) {
         var isDesperate = true;
-        for (var i = 0; i < candidates.length;) {
-            var idx = candidates[i];
-            if (this._isEar(idx)) {
-                this._clipEar(idx);
-
-                var last = candidates[candidates.length - 1];
-                candidates[i] = last;
-                candidates.pop();
-
+        var entry = candidates.head;
+        while (entry) {
+            if (this._isEar(entry)) {
+                entry = this._clipEar(entry);
                 isDesperate = false;
-
-                nPoints--;
             }
             else {
-                i++;
+                entry = entry.next;
             }
         }
 
@@ -479,20 +434,23 @@ TriangulationContext.prototype._earClipping = function () {
             // After clip the random picked vertex, go on finding ears again
             // So it can be extremely slow in worst case
             // TODO
-            this._clipEar(candidates.pop());
-            nPoints--;
+            this._clipEar(candidates.head);
         }
     }
 }
 
-TriangulationContext.prototype._isEar = function (p1) {
+TriangulationContext.prototype._isEar = function (pointEntry) {
+    if (this._pointsTypes[pointEntry.value.idx] === VERTEX_TYPE_REFLEX) {
+        return;
+    }
+
     var points = this.points;
-    // Find two adjecent edges
-    var e0 = this._edgeIn[p1];
-    var e1 = this._edgeOut[p1];
-    // Find two adjecent vertices
-    var p0 = e0.p0;
-    var p2 = e1.p1;
+
+    var prevPointEntry = pointEntry.prev || this._candidates.tail;
+    var nextPointEntry = pointEntry.next || this._candidates.head;
+    var p0 = prevPointEntry.value.idx;
+    var p1 = pointEntry.value.idx;
+    var p2 = nextPointEntry.value.idx;
 
     p0 *= 2;
     p1 *= 2;
@@ -533,73 +491,66 @@ TriangulationContext.prototype._isEar = function (p1) {
         }
     }
     else {
-        for (var i = 0; i < this._nPoints; i++) {
-            var xi = points[i * 2];
-            var yi = points[i * 2 + 1];
-            if (isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi)) {
-                return false;
+        var entry = this._candidates.head;
+        while (entry) {
+            var idx = entry.value.idx;
+            var xi = points[idx * 2];
+            var yi = points[idx * 2 + 1];
+            if (this._pointsTypes[idx] == VERTEX_TYPE_REFLEX) {
+                if (isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi)) {
+                    return false;
+                }
             }
+            entry = entry.next;
         }
     }
 
     return true;
 }
 
-TriangulationContext.prototype._clipEar = function (p1) {
+TriangulationContext.prototype._clipEar = function (pointEntry) {
 
-    var e0 = this._edgeIn[p1];
-    var e1 = this._edgeOut[p1];
+    var candidates = this._candidates;
 
-    var offset = this._nTriangle * 3;
+    var prevPointEntry = pointEntry.prev || candidates.tail;
+    var nextPointEntry = pointEntry.next || candidates.head;
+
+    var p0 = prevPointEntry.value.idx;
+    var p1 = pointEntry.value.idx;
+    var p2 = nextPointEntry.value.idx;
+
+    var triangles = this.triangles;
     // FIXME e0 may same with e1
-    this.triangles[offset] = e0.p0;
-    this.triangles[offset + 1] = e0.p1;
-    this.triangles[offset + 2] = e1.p1;
+    triangles.push(p0);
+    triangles.push(p1);
+    triangles.push(p2);
 
-    this._nTriangle++;
+    // PENDING
+    // The index in the grids also needs to be removed
+    // But because it needs `splice` and `indexOf`
+    // may cost too much
+    candidates.remove(pointEntry);
 
-    var e0i = this._edgeIn[e0.p0];
-    var e1o = this._edgeOut[e1.p1];
+    if (candidates.length() === 3) {
+        triangles.push(p0);
+        triangles.push(p2);
+        triangles.push((nextPointEntry.next || candidates.head).value.idx);
+        return;
+    }
+
+    var nextNextPointEntry = nextPointEntry.next || candidates.head;
+    var prevPrevPointEntry = prevPointEntry.prev || candidates.tail;
+
+    var p0 = prevPrevPointEntry.value.idx;
+    var p1 = prevPointEntry.value.idx;
+    var p2 = nextPointEntry.value.idx;
+    var p3 = nextNextPointEntry.value.idx;
+    // Update p1, p2, vertex type.
     // New candidate after clipping (convex vertex)
-    if (this._pointsTypes[e0.p0] == VERTEX_TYPE_REFLEX) {
-        if (this.isTriangleConvex2(e0i.p0, e0.p0, e1.p1)) {
-            // PENDING
-            // The index in the grids also needs to be removed
-            // But because it needs `splice` and `indexOf`
-            // may cost too much
-            this._candidates.push(e0.p0);
-            this._pointsTypes[e0.p0] = VERTEX_TYPE_CONVEX;
-        }
-    }
-    if (this._pointsTypes[e1.p1] == VERTEX_TYPE_REFLEX) {
-        if (this.isTriangleConvex2(e0.p0, e1.p1, e1o.p1)) {
-            this._candidates.push(e1.p1);
-            this._pointsTypes[e1.p1] = VERTEX_TYPE_CONVEX;
-        }
-    }
+    this._pointsTypes[p1] = this.isTriangleConvex2(p0, p1, p2) ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
+    this._pointsTypes[p2] = this.isTriangleConvex2(p1, p2, p3) ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
 
-    this._removeEdge(e0);
-    this._removeEdge(e1);
-
-    this._addEdge(e0.p0, e1.p1);
-
-};
-
-TriangulationContext.prototype._addEdge = function (p0, p1) {
-
-    var edge = new Edge(p0, p1);
-    this._edgeOut[p0] = edge;
-    this._edgeIn[p1] = edge;
-    var entry = this._edgeList.insert(edge);
-    edge._linkedListEntry = entry;
-
-    return edge;
-};
-
-TriangulationContext.prototype._removeEdge = function (e) {
-    this._edgeList.remove(e._linkedListEntry);
-    this._edgeOut[e.p0] = null;
-    this._edgeIn[e.p1] = null;
+    return prevPointEntry;
 };
 
 // Get geometric hash of point
