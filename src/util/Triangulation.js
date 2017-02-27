@@ -459,10 +459,11 @@ TriangulationContext.prototype._earClipping = function () {
             var idx = candidates[i];
             if (this._isEar(idx)) {
                 this._clipEar(idx);
-                // TODO
-                // candidates[i] = candidates[candidates.length - 1];
-                // candidates.pop();
-                candidates.splice(i, 1);
+
+                var last = candidates[candidates.length - 1];
+                candidates[i] = last;
+                candidates.pop();
+
                 isDesperate = false;
 
                 nPoints--;

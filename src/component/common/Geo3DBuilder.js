@@ -86,7 +86,7 @@ Geo3DBuilder.prototype = {
     _triangulation: function (geo3D) {
         this._triangulationResults = {};
         var triangulator = this._triangulator;
-        console.profile('triangulate');
+
         geo3D.regions.forEach(function (region) {
             var polygons = [];
             for (var i = 0; i < region.geometries.length; i++) {
@@ -146,8 +146,6 @@ Geo3DBuilder.prototype = {
             }
             this._triangulationResults[region.name] = polygons;
         }, this);
-
-        console.profileEnd('triangulate');
     },
 
     _updateGeometry: function (geometry, geo3D, region) {
