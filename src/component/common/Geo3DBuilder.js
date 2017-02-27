@@ -127,20 +127,41 @@ Geo3DBuilder.prototype = {
             for (var i = 0; i < region.geometries.length; i++) {
                 // TODO interior hole
                 var exterior = region.geometries[i].exterior;
+                var interiors = region.geometries[i].interiors;
                 var points = [];
+                var holes = [];
                 if (exterior.length < 3) {
                     continue;
                 }
+                var offset = 0;
                 for (var j = 0; j < exterior.length; j++) {
                     var p = exterior[j];
-                    points[j * 2] = p[0];
-                    points[j * 2 + 1] = p[1];
+                    points[offset++] = p[0];
+                    points[offset++] = p[1];
                 }
                 if (area(points) > 0) {
                     reverse(points, 2);
                 }
 
-                triangulator.triangulate(points);
+                for (var j = 0; j < interiors.length; j++) {
+                    if (interiors[j].length.length < 3) {
+                        continue;
+                    }
+                    var holePoints = [];
+                    for (var k = 0; k < interiors[j].length; k++) {
+                        var p = interiors[j][k];
+                        holePoints.push(p[0]);
+                        holePoints.push(p[1]);
+                    }
+                    // hole needs opposite direction
+                    if (area(holePoints) < 0) {
+                        reverse(holePoints, 2);
+                    }
+                    holes.push(holePoints);
+                }
+
+                triangulator.triangulate(points, holes);
+                points = triangulator.points;
 
                 var points3 = new Float32Array(points.length / 2 * 3);
                 var pos = [];
@@ -162,7 +183,7 @@ Geo3DBuilder.prototype = {
                     points: points3,
                     min: min,
                     max: max,
-                    indices: new Uint32Array(triangulator.triangles)
+                    indices: triangulator.triangles
                 });
             }
             this._triangulationResults[region.name] = polygons;

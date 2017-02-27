@@ -1,8 +1,32 @@
-// Ear clipping polygon triangulation
+// Ear clipping polygon triangulation.
 // @author pissang(https://github.com/pissang)
 
-// TODO holes
+// https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
+
 var LinkedList = require('qtek/lib/core/LinkedList');
+
+// From x,y point cast a ray to right. and intersect with edge x0, y0, x1, y1;
+// Return x value of intersect point
+function intersectEdge(x0, y0, x1, y1, x, y) {
+    if ((y > y0 && y > y1) || (y < y0 && y < y1)) {
+        return -Infinity;
+    }
+    // Ignore horizontal line
+    if (y1 === y0) {
+        return -Infinity;
+    }
+    var dir = y1 < y0 ? 1 : -1;
+    var t = (y - y0) / (y1 - y0);
+
+    // Avoid winding error when intersection point is the connect point of two line of polygon
+    if (t === 1 || t === 0) {
+        dir = y1 < y0 ? 0.5 : -0.5;
+    }
+
+    var x_ = t * (x1 - x0) + x0;
+
+    return x_;
+};
 
 function triangleArea(x0, y0, x1, y1, x2, y2) {
     return (x1 - x0) * (y2 - y1) - (y1 - y0) * (x2 - x1);
@@ -45,7 +69,7 @@ var TriangulationContext = function () {
 
     this._nTriangle = 0;
 
-    this._pointTypes = [];
+    this._pointsTypes = [];
 
     this._grids = [];
 
@@ -63,8 +87,13 @@ var TriangulationContext = function () {
     this._candidates = [];
 }
 
-TriangulationContext.prototype.triangulate = function (points, contour, holes) {
-    this._nPoints = points.length / 2;
+/**
+ * @param {Array.<number>} exterior. Exterior points
+ *      Points must be clockwise order. (When y is from bottom to top)
+ * @param {Array.<Array>} holes. holes must be counter clockwise order.
+ */
+TriangulationContext.prototype.triangulate = function (exterior, holes) {
+    this._nPoints = exterior.length / 2;
     if (this._nPoints < 3) {
         return;
     }
@@ -73,15 +102,15 @@ TriangulationContext.prototype.triangulate = function (points, contour, holes) {
     this._gridNumber = Math.ceil(Math.sqrt(this._nPoints));
     this._gridNumber = Math.max(Math.min(this._gridNumber, this.maxGridNumber), this.minGridNumber);
 
-    this.points = points;
+    this.points = new Float32Array(exterior);
+
+    this.holes = holes || [];
 
     this._reset();
 
     this._prepare();
 
     this._earClipping();
-
-    this.triangles.length = this._nTriangle * 3;
 }
 
 TriangulationContext.prototype._reset = function () {
@@ -90,7 +119,8 @@ TriangulationContext.prototype._reset = function () {
 
     this._edgeList.clear();
 
-    this._candidates.length = 0;
+    this._candidates = [];
+    this.triangles = [];
 
     this._boundingBox[0][0] = this._boundingBox[0][1] = Infinity;
     this._boundingBox[1][0] = this._boundingBox[1][1] = -Infinity;
@@ -122,15 +152,18 @@ TriangulationContext.prototype._reset = function () {
 TriangulationContext.prototype._prepare = function () {
     var bb = this._boundingBox;
     var n = this._nPoints;
+    var points = this.points;
+
+    this._pointsTypes = new Uint8Array(n);
     // Update bounding box and determine point type is reflex or convex
     for (var i = 0, j = n - 1; i < n;) {
         var k = (i + 1) % n;
-        var x0 = this.points[j * 2];
-        var y0 = this.points[j * 2 + 1];
-        var x1 = this.points[i * 2];
-        var y1 = this.points[i * 2 + 1];
-        var x2 = this.points[k * 2];
-        var y2 = this.points[k * 2 + 1];
+        var x0 = points[j * 2];
+        var y0 = points[j * 2 + 1];
+        var x1 = points[i * 2];
+        var y1 = points[i * 2 + 1];
+        var x2 = points[k * 2];
+        var y2 = points[k * 2 + 1];
 
         if (x1 < bb[0][0]) { bb[0][0] = x1; }
         if (y1 < bb[0][1]) { bb[0][1] = y1; }
@@ -145,29 +178,23 @@ TriangulationContext.prototype._prepare = function () {
         bb[1][1] += 0.1;
 
         var area = triangleArea(x0, y0, x1, y1, x2, y2);
-        // if (Math.abs(area) < Number.EPSILON) {
-        //     // Ignore tiny triangles, remove the point i
-        //     this.points.splice(i * 2, 2);
-        //     n --;
-        // }
-        // else {
-            this._pointTypes[i] = area < 0 ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
-            if (area < 0) {
-                this._candidates.push(i);
-            }
-            j = i;
-            i++;
-        // }
+
+        this._pointsTypes[i] = area < 0 ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
+
+        j = i;
+        i++;
     }
 
-    this._pointTypes.length = n;
+    this._cutHoles();
 
-    this._gridWidth = (bb[1][0] - bb[0][0]) / this._gridNumber;
-    this._gridHeight = (bb[1][1] - bb[0][1]) / this._gridNumber;
+    // nPoints may be changed after cutHoles.
+    n = this._nPoints;
 
     // Put the points in the grids
+    this._gridWidth = (bb[1][0] - bb[0][0]) / this._gridNumber;
+    this._gridHeight = (bb[1][1] - bb[0][1]) / this._gridNumber;
     for (var i = 0; i < n; i++) {
-        if (this._pointTypes[i] == VERTEX_TYPE_REFLEX) {
+        if (this._pointsTypes[i] == VERTEX_TYPE_REFLEX) {
             var x = this.points[i * 2];
             var y = this.points[i * 2 + 1];
             var key = this._getPointHash(x, y);
@@ -175,17 +202,203 @@ TriangulationContext.prototype._prepare = function () {
         }
     }
 
+    // Init candidates.
+    for (var i= 0; i < n; i++) {
+        if (this._pointsTypes[i] === VERTEX_TYPE_CONVEX) {
+            this._candidates.push(i);
+        }
+    }
     // Create edges
-    for (var i = 0; i < n-1; i++) {
+    for (var i = 0; i < n - 1; i++) {
         this._addEdge(i, i+1);
     }
     this._addEdge(i, 0);
-}
+};
+
+// Finding Mutually Visible Vertices and cut the polygon to remove holes.
+TriangulationContext.prototype._cutHoles = function () {
+    var holes = this.holes;
+
+    if (!holes.length) {
+        return;
+    }
+    holes = holes.slice();
+    var xMaxOfHoles = [];
+    var xMaxIndicesOfHoles = [];
+    for (var i = 0; i < holes.length; i++) {
+        var hole = holes[i];
+        var holeMaxX = -Infinity;
+        var holeMaxXIndex = 0;
+        // Find index of xMax in the hole.
+        for (var k = 0; k < hole.length; k += 2) {
+            var x = this.points[k * 2];
+            if (x > holeMaxX) {
+                holeMaxXIndex = k / 2;
+                holeMaxX = x;
+            }
+        }
+        xMaxOfHoles.push(holeMaxX);
+        xMaxIndicesOfHoles.push(holeMaxXIndex);
+    }
+
+    var self = this;
+    function cutHole() {
+        var points = self.points;
+        var nPoints = self._nPoints;
+
+        var holeMaxX = -Infinity;
+        var holeMaxXIndex = 0;
+        var holeIndex = 0;
+        // Find hole which xMax is rightest
+        for (var i = 0; i < xMaxOfHoles.length; i++) {
+            if (xMaxOfHoles[i] > holeMaxX) {
+                holeMaxX = xMaxOfHoles[i];
+                holeMaxXIndex = xMaxIndicesOfHoles[i];
+                holeIndex = i;
+            }
+        }
+
+        var holePoints = holes[holeIndex];
+
+        xMaxOfHoles.splice(holeIndex, 1);
+        xMaxIndicesOfHoles.splice(holeIndex, 1);
+        holes.splice(holeIndex, 1);
+
+        var holePointX = holePoints[holeMaxXIndex * 2];
+        var holePointY = holePoints[holeMaxXIndex * 2 + 1];
+        var minRayX = Infinity;
+        var edgeStartPointIndex = -1;
+        // Find nearest intersected line
+        for (var i = 0, j = points.length - 2; i < points.length; i += 2) {
+            var x0 = points[j], y0 = points[j + 1];
+            var x1 = points[i], y1 = points[i + 1];
+
+            var rayX = intersectEdge(x0, y0, x1, y1, holePointX, holePointY);
+            if (rayX >= holePointX) {
+                // Intersected.
+                if (rayX < minRayX) {
+                    minRayX = rayX;
+                    edgeStartPointIndex = j / 2;
+                }
+            }
+
+            j = i;
+        }
+        // Didn't find
+        if (edgeStartPointIndex < 0) {
+            if (__DEV__) {
+                console.warn('Hole must be inside exterior.');
+            }
+            return;
+        }
+        var edgeEndPointIndex = (edgeStartPointIndex + 1) % points.length / 2;
+        // Point of seam edge/
+        var seamPointIndex = (points[edgeStartPointIndex * 2] > points[edgeEndPointIndex * 2]) ? edgeStartPointIndex : edgeEndPointIndex;
+        // Use maximum x of edge
+        var seamX = points[seamPointIndex * 2];
+        var seamY = points[seamPointIndex * 2 + 1];
+
+        var minimumAngleCos = Infinity;
+        // And figure out if any of reflex points is in the triangle,
+        // if has, use the reflex point with minimum angle with (1, 0)
+        for (var i = 0; i < nPoints; i++) {
+            if (self._pointsTypes[i] === VERTEX_TYPE_REFLEX) {
+                var xi = points[i * 2];
+                var yi = points[i * 2 + 1];
+                if (isPointInTriangle(holePointX, holePointY, minRayX, holePointY, seamX, seamY, xi, yi)) {
+                    // Use dot product with (1, 0) as angle
+                    var dx = xi - holePointX;
+                    var dy = yi - holePointY;
+                    var len = Math.sqrt(dx * dx + dy * dy);
+                    dx /= len; dy /= len;
+                    var angleCos = dx * dx;
+                    if (angleCos < minimumAngleCos) {
+                        minimumAngleCos = angleCos;
+                        // Replaced seam.
+                        seamPointIndex = idx;
+                    }
+                }
+            }
+        }
+
+        // TODO Use splice to add maybe slow
+        var newPointsCount = nPoints + holePoints.length / 2 + 2;
+        var newPoints = new Float32Array(newPointsCount * 2);
+        var newPointsTypes = new Uint8Array(newPointsCount);
+        seamX = points[seamPointIndex * 2];
+        seamY = points[seamPointIndex * 2 + 1];
+
+        var offPt = 0;
+        var offType = 0;
+
+        // x, y, prevX, prevY, nextX, nextY is used for point type.
+        var x, y;
+        var prevX, prevY, nextX, nextY;
+        function copyPoints(idx, source) {
+            prevX = x;
+            prevY = y;
+            x = newPoints[offPt++] = source[idx * 2];
+            y = newPoints[offPt++] = source[idx * 2 + 1];
+        }
+        function guessAndAddPointType() {
+            var type = triangleArea(prevX, prevY, x, y, nextX, nextY) < 0 ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
+            newPointsTypes[offType++] = type;
+        }
+
+        for (var i = 0; i < seamPointIndex; i++) {
+            copyPoints(i, points);
+            newPointsTypes[offType++] = self._pointsTypes[i];
+        }
+        copyPoints(seamPointIndex, points);
+        if (0 === seamPointIndex) { // In case first point is seam.
+            prevX = points[nPoints * 2 - 2];
+            prevY = points[nPoints * 2 - 1];
+        }
+        nextX = holePoints[holeMaxXIndex * 2];
+        nextY = holePoints[holeMaxXIndex * 2 + 1];
+
+        guessAndAddPointType();
+
+        // Add hole
+        for (var i = 0, holePointsCount = holePoints.length / 2; i < holePointsCount; i++) {
+            var idx = (i + holeMaxXIndex) % holePointsCount;
+            copyPoints(idx, holePoints);
+
+            var nextIdx = (idx + 1) % holePointsCount;
+            nextX = holePoints[nextIdx * 2]; nextY = holePoints[nextIdx * 2 + 1];
+            guessAndAddPointType();
+        }
+        // Add another seam.
+        copyPoints(holeMaxXIndex, holePoints);
+        nextX = seamX; nextY = seamY;
+        guessAndAddPointType();
+        copyPoints(seamPointIndex, points);
+        var nextIdx = (seamPointIndex + 1) % nPoints;
+        nextX = points[nextIdx * 2]; nextY = points[nextIdx * 2 + 1];
+        guessAndAddPointType();
+
+        // Add rest
+        for (var i = seamPointIndex + 1; i < nPoints; i++) {
+            copyPoints(i, points);
+            newPointsTypes[offType++] = self._pointsTypes[i];
+        }
+
+        // Update points and pointsTypes
+        self.points = newPoints;
+        self._pointsTypes = newPointsTypes;
+        self._nPoints = newPointsCount;
+    }
+
+    var count = holes.length;
+    while (count--) {
+        cutHole();
+    }
+};
 
 TriangulationContext.prototype._earClipping = function () {
     var candidates = this._candidates;
     var nPoints = this._nPoints;
-    while(candidates.length) {
+    while (candidates.length) {
         var isDesperate = true;
         for (var i = 0; i < candidates.length;) {
             var idx = candidates[i];
@@ -247,7 +460,7 @@ TriangulationContext.prototype._isEar = function (p1) {
 
             for (var k = 0; k < gridPoints.length; k++) {
                 var idx = gridPoints[k];
-                if (this._pointTypes[idx] == VERTEX_TYPE_REFLEX) {
+                if (this._pointsTypes[idx] == VERTEX_TYPE_REFLEX) {
                     var xi = this.points[idx * 2];
                     var yi = this.points[idx * 2 + 1];
                     if (isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi)) {
@@ -277,20 +490,20 @@ TriangulationContext.prototype._clipEar = function (p1) {
     var e0i = this._edgeIn[e0.p0];
     var e1o = this._edgeOut[e1.p1];
     // New candidate after clipping (convex vertex)
-    if (this._pointTypes[e0.p0] == VERTEX_TYPE_REFLEX) {
+    if (this._pointsTypes[e0.p0] == VERTEX_TYPE_REFLEX) {
         if (this.isTriangleConvex2(e0i.p0, e0.p0, e1.p1)) {
             // PENDING
             // The index in the grids also needs to be removed
             // But because it needs `splice` and `indexOf`
             // may cost too much
             this._candidates.push(e0.p0);
-            this._pointTypes[e0.p0] = VERTEX_TYPE_CONVEX;
+            this._pointsTypes[e0.p0] = VERTEX_TYPE_CONVEX;
         }
     }
-    if (this._pointTypes[e1.p1] == VERTEX_TYPE_REFLEX) {
+    if (this._pointsTypes[e1.p1] == VERTEX_TYPE_REFLEX) {
         if (this.isTriangleConvex2(e0.p0, e1.p1, e1o.p1)) {
             this._candidates.push(e1.p1);
-            this._pointTypes[e1.p1] = VERTEX_TYPE_CONVEX;
+            this._pointsTypes[e1.p1] = VERTEX_TYPE_CONVEX;
         }
     }
 
