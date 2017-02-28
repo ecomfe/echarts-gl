@@ -287,7 +287,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
 
                             var phi = n / bevelSegments * Math.PI / 2 + Math.PI / 2 * j;
                             var theta = m / bevelSegments * Math.PI / 2 + Math.PI / 2 * i;
-
+                            // var r = rx < ry ? (rz < rx ? rz : rx) : (rz < ry ? rz : ry);
                             normal[0] = rx * Math.cos(phi) * Math.sin(theta);
                             normal[1] = ry * Math.cos(theta);
                             normal[2] = rz * Math.sin(phi) * Math.sin(theta);
@@ -295,6 +295,12 @@ var BarsGeometry = StaticGeometry.extend(function () {
                             pos[1] = normal[1] + yOffsets[i] * bevelStartSize[1] / 2;
                             pos[2] = normal[2] + zOffsets[j] * bevelStartSize[2] / 2;
 
+                            // Normal is not right if rx, ry, rz not equal.
+                            if (!(Math.abs(rx - ry) < 1e-6 && Math.abs(ry - rz) < 1e-6)) {
+                                normal[0] /= rx * rx;
+                                normal[1] /= ry * ry;
+                                normal[2] /= rz * rz;
+                            }
                             vec3.normalize(normal, normal);
 
                             vec3.transformMat3(pos, pos, rotateMat);
