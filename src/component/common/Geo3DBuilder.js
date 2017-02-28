@@ -1,9 +1,12 @@
 var graphicGL = require('../../util/graphicGL');
 var Triangulation = require('../../util/Triangulation');
+var LinesGeo = require('../../util/geometry/Lines3D');
 var retrieve = require('../../util/retrieve');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 
 var vec3 = glmatrix.vec3;
+
+graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
 function Geo3DBuilder() {
 
@@ -26,13 +29,15 @@ function Geo3DBuilder() {
         // obj[shaderName].define('both', 'WIREFRAME_TRIANGLE');
         return obj;
     }, {});
+
+    this._linesShader = graphicGL.createShader('ecgl.meshLines3D');
 }
 
 Geo3DBuilder.prototype = {
 
     constructor: Geo3DBuilder,
 
-    update: function (componentModel) {
+    update: function (componentModel, ecModel, api) {
         var geo3D = componentModel.coordinateSystem;
 
         if (geo3D.map !== this._currentMap) {
@@ -44,11 +49,6 @@ Geo3DBuilder.prototype = {
             this._initMeshes(componentModel);
         }
 
-        // TODO, itemStyle, color, borderWidth, borderColor, height
-        for (var i = 0; i < geo3D.regions.length; i++) {
-            var region = geo3D.regions[i];
-            this._updatePolygonGeometry(this._meshesMap[region.name].geometry, componentModel, region);
-        }
         // Update materials
         var realisticMaterialModel = componentModel.getModel('realisticMaterial');
         var roughness = retrieve.firstNotNull(realisticMaterialModel.get('roughness'), 0.5);
@@ -56,18 +56,39 @@ Geo3DBuilder.prototype = {
 
         var shader = this._getShader(componentModel.get('shading'));
         geo3D.regions.forEach(function (region) {
-            var polygonMesh = this._meshesMap[region.name];
+            var polygonMesh = this._polygonMeshes[region.name];
+            var linesMesh = this._linesMeshes[region.name];
             if (polygonMesh.material.shader !== shader) {
                 polygonMesh.material.attachShader(shader, true);
             }
             var regionModel = componentModel.getRegionModel(region.name);
             var itemStyleModel = regionModel.getModel('itemStyle.normal');
             var color = graphicGL.parseColor(itemStyleModel.get('areaColor'));
-            color[3] *= retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
+            var borderColor = graphicGL.parseColor(itemStyleModel.get('borderColor'));
+            var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);;
+            color[3] *= opacity;
+            borderColor[3] *= opacity;
             polygonMesh.material.set({
                 roughness: roughness,
                 metalness: metalness,
                 color: color
+            });
+
+            var lineWidth = itemStyleModel.get('borderWidth');
+            var hasLine = lineWidth > 0;
+
+            var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), geo3D.size[1]);
+
+            this._updatePolygonGeometry(polygonMesh.geometry, region, regionHeight);
+
+            // Update lines.
+            if (hasLine) {
+                lineWidth *= api.getDevicePixelRatio();
+                this._updateLinesGeometry(linesMesh.geometry, region, regionHeight, lineWidth, geo3D.transform);
+            }
+            linesMesh.invisible = !hasLine;
+            linesMesh.material.set({
+                color: borderColor
             });
         }, this);
     },
@@ -77,6 +98,7 @@ Geo3DBuilder.prototype = {
 
         var geo3D = componentModel.coordinateSystem;
         var polygonMeshesMap = {};
+        var linesMeshesMap = {};
         var shader = this._getShader(componentModel.get('shading'));
 
         geo3D.regions.forEach(function (region) {
@@ -87,10 +109,24 @@ Geo3DBuilder.prototype = {
                 culling: false,
                 geometry: new graphicGL.Geometry()
             });
+
+            linesMeshesMap[region.name] = new graphicGL.Mesh({
+                material: new graphicGL.Material({
+                    shader: this._linesShader
+                }),
+                castShadow: false,
+                ignorePicking: true,
+                geometry: new LinesGeo({
+                    useNativeLine: false
+                })
+            });
+
             this.rootNode.add(polygonMeshesMap[region.name]);
+            this.rootNode.add(linesMeshesMap[region.name]);
         }, this);
 
-        this._meshesMap = polygonMeshesMap;
+        this._polygonMeshes = polygonMeshesMap;
+        this._linesMeshes = linesMeshesMap;
     },
 
     _getShader: function (shading) {
@@ -169,11 +205,7 @@ Geo3DBuilder.prototype = {
         }, this);
     },
 
-    _updatePolygonGeometry: function (geometry, componentModel, region) {
-        var geo3D = componentModel.coordinateSystem;
-        var regionModel = componentModel.getRegionModel(region.name);
-        var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), geo3D.size[1]);
-
+    _updatePolygonGeometry: function (geometry, region, regionHeight) {
         var faces = this.faces;
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
@@ -292,6 +324,55 @@ Geo3DBuilder.prototype = {
             }
         }
         geometry.updateBoundingBox();
+    },
+
+    _updateLinesGeometry: function (geometry, region, regionHeight, lineWidth, transform) {
+        var vertexCount = 0;
+        var faceCount = 0;
+        region.geometries.forEach(function (geo) {
+            var exterior = geo.exterior;
+            var interiors = geo.interiors;
+            vertexCount += geometry.getPolylineVertexCount(exterior);
+            faceCount += geometry.getPolylineFaceCount(exterior);
+            for (var i = 0; i < interiors.length; i++) {
+                vertexCount += geometry.getPolylineVertexCount(interiors[i]);
+                faceCount += geometry.getPolylineFaceCount(interiors[i]);
+            }
+        }, this);
+
+        geometry.resetOffset();
+        geometry.setVertexCount(vertexCount);
+        geometry.setFaceCount(vertexCount);
+
+        function convertToPoints3(polygon) {
+            var points = new Float32Array(polygon.length * 3);
+            var offset = 0;
+            var pos = [];
+            for (var i = 0; i < polygon.length; i++) {
+                pos[0] = polygon[i][0];
+                // Add a offset to avoid z-fighting
+                pos[1] = regionHeight + 0.1;
+                pos[2] = polygon[i][1];
+                vec3.transformMat4(pos, pos, transform);
+
+                points[offset++] = pos[0];
+                points[offset++] = pos[1];
+                points[offset++] = pos[2];
+            }
+            return points;
+        };
+
+        var whiteColor = [1, 1, 1, 1];
+        region.geometries.forEach(function (geo) {
+            var exterior = geo.exterior;
+            var interiors = geo.interiors;
+
+            geometry.addPolyline(convertToPoints3(exterior), whiteColor, lineWidth);
+
+            for (var i = 0; i < interiors.length; i++) {
+                geometry.addPolyline(convertToPoints3(interiors[i]), whiteColor, lineWidth);
+            }
+        });
     }
 };
 

@@ -50,7 +50,7 @@ module.exports = echarts.extendComponentView({
         }
         geo3D.viewGL.add(this.groupGL);
 
-        this._geo3DBuilder.update(geo3DModel);
+        this._geo3DBuilder.update(geo3DModel, ecModel, api);
 
         var control = this._control;
         control.setCamera(geo3D.viewGL.camera);

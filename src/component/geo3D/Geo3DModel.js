@@ -89,7 +89,9 @@ var Geo3DModel = echarts.extendComponentModel({
 
         itemStyle: {
             normal: {
-                areaColor: '#fff'
+                areaColor: '#fff',
+                borderWidth: 0,
+                borderColor: '#333'
             }
         }
     }

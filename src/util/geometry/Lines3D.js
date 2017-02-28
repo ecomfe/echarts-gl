@@ -153,11 +153,15 @@ var LinesGeometry = StaticGeometry.extend(function () {
     },
 
     getPolylineVertexCount: function (points) {
-        return !this.useNativeLine ? ((points.length - 1) * 2 + 2) : (points.length - 1) * 2;
+        var is2DArray = typeof points[0] !== 'number';
+        var pointsLen = is2DArray ? points.length : (points.length / 2);
+        return !this.useNativeLine ? ((pointsLen - 1) * 2 + 2) : (pointsLen - 1) * 2;
     },
 
     getPolylineFaceCount: function (points) {
-        return !this.useNativeLine ? (points.length - 1) * 2 : 0;
+        var is2DArray = typeof points[0] !== 'number';
+        var pointsLen = is2DArray ? points.length : (points.length / 2);
+        return !this.useNativeLine ? (pointsLen - 1) * 2 : 0;
     },
 
     /**

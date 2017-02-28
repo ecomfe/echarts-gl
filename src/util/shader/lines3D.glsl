@@ -105,8 +105,7 @@ void main()
 
 @export ecgl.meshLines3D.fragment
 
-uniform vec3 color : [1.0, 1.0, 1.0];
-uniform float alpha : 1.0;
+uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 varying vec4 v_Color;
 varying float v_Miter;
@@ -114,7 +113,7 @@ varying float v_Miter;
 void main()
 {
     // TODO Fadeout pixels v_Miter > 1
-    gl_FragColor = vec4(color, alpha) * v_Color;
+    gl_FragColor = color * v_Color;
 }
 
 @end
