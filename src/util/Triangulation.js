@@ -78,6 +78,10 @@ var VERTEX_TYPE_REFLEX = 2;
 
 var VERTEX_COUNT_NEEDS_GRID = 50;
 
+function Point(idx) {
+    this.idx = idx;
+}
+
 var TriangulationContext = function () {
 
     this.points = [];
@@ -209,7 +213,7 @@ TriangulationContext.prototype._prepare = function () {
 
     // Init candidates.
     for (var i= 0; i < n; i++) {
-        this._candidates.insert(i);
+        this._candidates.insert(new Point(i));
     }
 
     // Put the points in the grids
@@ -434,7 +438,7 @@ TriangulationContext.prototype._earClipping = function () {
 }
 
 TriangulationContext.prototype._isEar = function (pointEntry) {
-    if (this._pointsTypes[pointEntry.value] === VERTEX_TYPE_REFLEX) {
+    if (this._pointsTypes[pointEntry.value.idx] === VERTEX_TYPE_REFLEX) {
         return;
     }
 
@@ -442,9 +446,9 @@ TriangulationContext.prototype._isEar = function (pointEntry) {
 
     var prevPointEntry = pointEntry.prev || this._candidates.tail;
     var nextPointEntry = pointEntry.next || this._candidates.head;
-    var p0 = prevPointEntry.value;
-    var p1 = pointEntry.value;
-    var p2 = nextPointEntry.value;
+    var p0 = prevPointEntry.value.idx;
+    var p1 = pointEntry.value.idx;
+    var p2 = nextPointEntry.value.idx;
 
     p0 *= 2;
     p1 *= 2;
@@ -487,7 +491,7 @@ TriangulationContext.prototype._isEar = function (pointEntry) {
     else {
         var entry = this._candidates.head;
         while (entry) {
-            var idx = entry.value;
+            var idx = entry.value.idx;
             var xi = points[idx * 2];
             var yi = points[idx * 2 + 1];
             if (this._pointsTypes[idx] == VERTEX_TYPE_REFLEX) {
@@ -509,9 +513,9 @@ TriangulationContext.prototype._clipEar = function (pointEntry) {
     var prevPointEntry = pointEntry.prev || candidates.tail;
     var nextPointEntry = pointEntry.next || candidates.head;
 
-    var p0 = prevPointEntry.value;
-    var p1 = pointEntry.value;
-    var p2 = nextPointEntry.value;
+    var p0 = prevPointEntry.value.idx;
+    var p1 = pointEntry.value.idx;
+    var p2 = nextPointEntry.value.idx;
 
     var triangles = this.triangles;
     // FIXME e0 may same with e1
@@ -528,17 +532,17 @@ TriangulationContext.prototype._clipEar = function (pointEntry) {
     if (candidates.length() === 3) {
         triangles.push(p0);
         triangles.push(p2);
-        triangles.push((nextPointEntry.next || candidates.head).value);
+        triangles.push((nextPointEntry.next || candidates.head).value.idx);
         return;
     }
 
     var nextNextPointEntry = nextPointEntry.next || candidates.head;
     var prevPrevPointEntry = prevPointEntry.prev || candidates.tail;
 
-    var p0 = prevPrevPointEntry.value;
-    var p1 = prevPointEntry.value;
-    var p2 = nextPointEntry.value;
-    var p3 = nextNextPointEntry.value;
+    var p0 = prevPrevPointEntry.value.idx;
+    var p1 = prevPointEntry.value.idx;
+    var p2 = nextPointEntry.value.idx;
+    var p3 = nextNextPointEntry.value.idx;
     // Update p1, p2, vertex type.
     // New candidate after clipping (convex vertex)
     this._pointsTypes[p1] = this.isTriangleConvex2(p0, p1, p2) ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;

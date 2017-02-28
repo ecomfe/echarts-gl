@@ -17,6 +17,7 @@
   "main": "echarts-x",
   "homepage": "http://echarts.baidu.com/x",
   "devDependencies": {
+    "benchmark": "^2.1.3",
     "case-sensitive-paths-webpack-plugin": "^1.1.4",
     "text-loader": "0.0.1"
   }
