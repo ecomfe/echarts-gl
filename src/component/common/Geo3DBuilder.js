@@ -21,6 +21,7 @@ function Geo3DBuilder() {
     this._shadersMap = ['lambert', 'realistic', 'color'].reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
         obj[shaderName].define('fragment', 'DOUBLE_SIDE');
+        // obj[shaderName].define('both', 'WIREFRAME_TRIANGLE');
         return obj;
     }, {});
 }
@@ -270,6 +271,8 @@ Geo3DBuilder.prototype = {
         }
         // geometry.generateVertexNormals();
         geometry.updateBoundingBox();
+
+        // geometry.generateBarycentric();
     }
 };
 
