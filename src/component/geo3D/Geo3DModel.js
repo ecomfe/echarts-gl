@@ -53,7 +53,7 @@ var Geo3DModel = echarts.extendComponentModel({
 
         viewControl: {
             alpha: 40,
-            beta: 10,
+            beta: 0,
             distance: 100
         }
 

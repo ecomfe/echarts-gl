@@ -140,6 +140,8 @@ module.exports = echarts.extendComponentView({
                 ignorePicking: true
             });
             var axisLabelsMesh = new LabelsMesh();
+            axisLabelsMesh.material.depthMask = false;
+
             var node = new graphicGL.Node();
             node.add(linesMesh);
             node.add(axisLabelsMesh);

@@ -38,6 +38,7 @@ module.exports = echarts.extendComponentView({
 
         this._geo3DBuilder.update(geo3DModel);
 
+
         var control = this._control;
         control.setCamera(geo3D.viewGL.camera);
 
@@ -45,6 +46,10 @@ module.exports = echarts.extendComponentView({
         control.setFromViewControlModel(viewControlModel, 0);
 
         this._lightHelper.updateLight(geo3DModel);
+
+        // Set post effect
+        geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'));
+        geo3D.viewGL.setTemporalSuperSampling(geo3DModel.getModel('temporalSuperSampling'));
     },
 
     afterRender: function (geo3DModel, ecModel, api, layerGL) {

@@ -1,5 +1,6 @@
 var graphicGL = require('../../util/graphicGL');
 var Triangulation = require('../../util/Triangulation');
+var retrieve = require('../../util/retrieve');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 var vec3 = glmatrix.vec3;
 
@@ -43,12 +44,27 @@ Geo3DBuilder.prototype = {
 
         }
 
-
         for (var i = 0; i < geo3D.regions.length; i++) {
             var region = geo3D.regions[i];
             var mesh = this._meshesMap[region.name];
             this._updateGeometry(mesh.geometry, geo3D, region);
         }
+        // Update materials
+        var realisticMaterialModel = componentModel.getModel('realisticMaterial');
+        var roughness = retrieve.firstNotNull(realisticMaterialModel.get('roughness'), 0.5);
+        var metalness = realisticMaterialModel.get('metalness') || 0;
+
+        var shader = this._getShader(componentModel.get('shading'));
+        geo3D.regions.forEach(function (region) {
+            var mesh = this._meshesMap[region.name];
+            if (mesh.material.shader !== shader) {
+                mesh.material.attachShader(shader, true);
+            }
+            mesh.material.set({
+                roughness: roughness,
+                metalness: metalness
+            });
+        }, this);
     },
 
     _initMeshes: function (componentModel) {

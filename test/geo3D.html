@@ -10,7 +10,7 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
-        <script src="../node_modules/echarts/map/js/china.js"></script>
+        <script src="../node_modules/echarts/map/js/world.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
@@ -18,8 +18,15 @@
 
             chart.setOption({
                 geo3D: {
-                    map: 'china',
-                    // bevelSize: 0.1,
+                    map: 'world',
+                    shading: 'lambert',
+                    realisticMaterial: {
+                        roughness: 0.2,
+                        metalness: 0
+                    },
+                    postEffect: {
+                        enable: true
+                    },
                     light: {
                         main: {
                             intensity: 1,
@@ -30,7 +37,7 @@
                             intensity: 0
                         },
                         ambientCubemap: {
-                            texture: 'asset/pisa.hdr',
+                            texture: 'asset/canyon.hdr',
                             exposure: 2,
                             diffuseIntensity: 0.3
                         }
