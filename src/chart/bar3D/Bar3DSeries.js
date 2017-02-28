@@ -7,7 +7,8 @@ module.exports = echarts.extendSeriesModel({
     dependencies: ['globe'],
 
     getInitialData: function (option, ecModel) {
-        var data = new echarts.List(['x', 'y', 'z'], this);
+        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data);
+        var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;
     },

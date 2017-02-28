@@ -130,7 +130,11 @@ varying vec4 v_Color;
 
 void main()
 {
+#ifdef SRGB_DECODE
+    gl_FragColor = sRGBToLinear(color);
+#else
     gl_FragColor = color;
+#endif
 
 #ifdef VERTEX_COLOR
     // PENDING

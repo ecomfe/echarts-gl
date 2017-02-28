@@ -8,6 +8,8 @@ var vec3 = glmatrix.vec3;
 
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
+var shadings = ['lambert', 'realistic', 'color'];
+
 function Geo3DBuilder() {
 
     this.rootNode = new graphicGL.Node();
@@ -23,7 +25,7 @@ function Geo3DBuilder() {
     this._boxHeight;
     this._boxDepth;
 
-    this._shadersMap = ['lambert', 'realistic', 'color'].reduce(function (obj, shaderName) {
+    this._shadersMap = shadings.reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
         obj[shaderName].define('fragment', 'DOUBLE_SIDE');
         // obj[shaderName].define('both', 'WIREFRAME_TRIANGLE');
@@ -31,6 +33,22 @@ function Geo3DBuilder() {
     }, {});
 
     this._linesShader = graphicGL.createShader('ecgl.meshLines3D');
+
+    var groundMaterials = {};
+    shadings.forEach(function (shading) {
+        groundMaterials[shading] = new graphicGL.Material({
+            shader: graphicGL.createShader('ecgl.' + shading)
+        });
+    });
+    this._groundMaterials = groundMaterials;
+
+    this._groundMesh = new graphicGL.Mesh({
+        geometry: new graphicGL.PlaneGeometry(),
+        castShadow: false
+    });
+    this._groundMesh.rotation.rotateX(-Math.PI / 2);
+    this._groundMesh.scale.set(1000, 1000, 1);
+    this.rootNode.add(this._groundMesh);
 }
 
 Geo3DBuilder.prototype = {
@@ -55,6 +73,9 @@ Geo3DBuilder.prototype = {
         var metalness = realisticMaterialModel.get('metalness') || 0;
 
         var shader = this._getShader(componentModel.get('shading'));
+        var srgbDefineMethod = geo3D.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+        shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+
         geo3D.regions.forEach(function (region) {
             var polygonMesh = this._polygonMeshes[region.name];
             var linesMesh = this._linesMeshes[region.name];
@@ -64,6 +85,18 @@ Geo3DBuilder.prototype = {
             var regionModel = componentModel.getRegionModel(region.name);
             var itemStyleModel = regionModel.getModel('itemStyle.normal');
             var color = graphicGL.parseColor(itemStyleModel.get('areaColor'));
+
+            if (componentModel.getData) {
+                // series has data.
+                var data = componentModel.getData();
+                var idx = data.indexOfName(region.name);
+                // Use visual color if it is encoded by visualMap component
+                var visualColor = data.getItemVisual(idx, 'color', true);
+                if (visualColor != null) {
+                    color = graphicGL.parseColor(visualColor);
+                }
+            }
+
             var borderColor = graphicGL.parseColor(itemStyleModel.get('borderColor'));
             var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);;
             color[3] *= opacity;
@@ -91,6 +124,24 @@ Geo3DBuilder.prototype = {
                 color: borderColor
             });
         }, this);
+
+        this._updateGroundPlane(componentModel);
+        this._groundMesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+    },
+
+    _updateGroundPlane: function (componentModel) {
+        var groundModel = componentModel.getModel('groundPlane');
+        var shading = componentModel.get('shading');
+        var material = this._groundMaterials[shading];
+        if (!material) {
+            if (__DEV__) {
+                console.warn('Unkonw shading ' + shading);
+            }
+            material = this._groundMaterials.lambert;
+        }
+        this._groundMesh.material = material;
+        this._groundMesh.material.set('color', graphicGL.parseColor(groundModel.get('color')));
+        this._groundMesh.invisible = !componentModel.get('show');
     },
 
     _initMeshes: function (componentModel) {

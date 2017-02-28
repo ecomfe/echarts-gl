@@ -1,5 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 
+
 echarts.extendSeriesModel({
 
     type: 'series.scatter3D',
@@ -7,7 +8,8 @@ echarts.extendSeriesModel({
     dependencies: ['globe', 'grid3D', 'geo3D'],
 
     getInitialData: function (option, ecModel) {
-        var data = new echarts.List(['x', 'y', 'z'], this);
+        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data);
+        var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;
     },

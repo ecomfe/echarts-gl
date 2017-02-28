@@ -56,9 +56,8 @@ var geo3DCreator = {
             throw new Error('geo3D component depends on geo component')
         }
 
-        ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
-
-            var name = geo3DModel.get('map');
+        function createGeo3D(componentModel, idx) {
+            var name = componentModel.get('map');
             var mapData = echarts.getMap(name);
             if (__DEV__) {
                 if (!mapData) {
@@ -67,22 +66,30 @@ var geo3DCreator = {
             }
 
             // FIXME
-            geo3DModel.__viewGL = geo3DModel.__viewGL || new ViewGL();
+            componentModel.__viewGL = componentModel.__viewGL || new ViewGL();
 
 
             var geo3D = new Geo3D(
                 name + idx, name,
                 mapData && mapData.geoJson, mapData && mapData.specialAreas,
-                geo3DModel.get('nameMap')
+                componentModel.get('nameMap')
             );
-            geo3D.viewGL = geo3DModel.__viewGL;
+            geo3D.viewGL = componentModel.__viewGL;
 
-            geo3DModel.coordinateSystem = geo3D;
+            componentModel.coordinateSystem = geo3D;
             geo3DList.push(geo3D);
 
             // Inject resize
             geo3D.resize = resizeGeo3D;
-            geo3D.resize(geo3DModel, api);
+            geo3D.resize(componentModel, api);
+        }
+
+        ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
+            createGeo3D(geo3DModel, idx);
+        });
+
+        ecModel.eachSeriesByType('map3D', function (map3DModel, idx) {
+            createGeo3D(map3DModel, idx);
         });
 
         ecModel.eachSeries(function (seriesModel) {

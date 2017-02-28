@@ -28,13 +28,25 @@
                 var regions = populationData.map(function (item) {
                     return {
                         name: item.name,
+                        value: item.value,
                         height: (Math.log(item.value) - min) / (max - min) * 3
                     };
-                })
+                });
 
                 chart.setOption({
                     backgroundColor: '#cdcfd5',
-                    geo3D: {
+                    visualMap: {
+                        min: 0,
+                        max: 1000000,
+                        text:['High','Low'],
+                        realtime: true,
+                        calculable : true,
+                        inRange: {
+                            color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+                        }
+                    },
+                    series: [{
+                        type: 'map3D',
                         map: 'world',
                         shading: 'lambert',
                         realisticMaterial: {
@@ -76,9 +88,8 @@
 
                         boxHeight: 0.5,
 
-                        regions: regions
-                    },
-                    series: []
+                        data: regions
+                    }]
                 });
 
             });

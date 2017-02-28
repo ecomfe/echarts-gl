@@ -84,7 +84,7 @@ echarts.extendSeriesModel({
         if (option.parametric) {
             dims.push('u', 'v');
         }
-        // Check row and column
+        dims = echarts.helper.completeDimensions(dims, option.data);
 
         var list = new echarts.List(dims, this);
         list.initData(data);

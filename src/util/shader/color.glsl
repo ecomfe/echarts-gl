@@ -60,7 +60,11 @@ varying vec2 v_Texcoord;
 
 void main()
 {
+#ifdef SRGB_DECODE
+    gl_FragColor = sRGBToLinear(color);
+#else
     gl_FragColor = color;
+#endif
 
 #ifdef VERTEX_COLOR
     gl_FragColor *= v_Color;
