@@ -103,8 +103,7 @@ vec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)
 }
 #endif
 
-uniform vec3 color : [1.0, 1.0, 1.0];
-uniform float alpha : 1.0;
+uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 uniform mat4 viewInverse : VIEWINVERSE;
 
@@ -131,7 +130,7 @@ varying vec4 v_Color;
 
 void main()
 {
-    gl_FragColor = vec4(color, alpha);
+    gl_FragColor = color;
 
 #ifdef VERTEX_COLOR
     // PENDING

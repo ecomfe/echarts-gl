@@ -36,8 +36,7 @@ void main()
 #define LAYER_EMISSIVEMAP_COUNT 0
 
 uniform sampler2D diffuseMap;
-uniform vec3 color : [1.0, 1.0, 1.0];
-uniform float alpha : 1.0;
+uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 uniform float emissionIntensity: 1.0;
 
@@ -61,7 +60,7 @@ varying vec2 v_Texcoord;
 
 void main()
 {
-    gl_FragColor = vec4(color, alpha);
+    gl_FragColor = color;
 
 #ifdef VERTEX_COLOR
     gl_FragColor *= v_Color;

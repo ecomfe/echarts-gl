@@ -103,8 +103,7 @@ vec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)
 }
 #endif
 
-uniform vec3 color : [1.0, 1.0, 1.0];
-uniform float alpha : 1.0;
+uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 uniform float metalness : 0.0;
 uniform float roughness : 0.5;
@@ -147,7 +146,7 @@ float D_Phong(float g, float ndh) {
 }
 void main()
 {
-    vec4 albedoColor = vec4(color, alpha);
+    vec4 albedoColor = color;
 
     vec3 eyePos = viewInverse[3].xyz;
     vec3 V = normalize(eyePos - v_WorldPosition);

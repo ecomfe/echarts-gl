@@ -5,8 +5,6 @@ var graphicGL = require('../../util/graphicGL');
 var OrbitControl = require('../../util/OrbitControl');
 var LightHelper = require('../common/LightHelper');
 
-var retrieve = require('../../util/retrieve');
-
 module.exports = echarts.extendComponentView({
 
     type: 'geo3D',
@@ -26,6 +24,22 @@ module.exports = echarts.extendComponentView({
             zr: api.getZr()
         });
         this._control.init();
+
+        var materials = {};
+        ['lambert', 'color', 'realistic'].forEach(function (shading) {
+            materials[shading] = new graphicGL.Material({
+                shader: graphicGL.createShader('ecgl.' + shading)
+            });
+        });
+        this._groundMaterials = materials;
+
+        this._groundMesh = new graphicGL.Mesh({
+            geometry: new graphicGL.PlaneGeometry(),
+            castShadow: false
+        });
+        this._groundMesh.rotation.rotateX(-Math.PI / 2);
+        this._groundMesh.scale.set(1000, 1000, 1);
+        this.groupGL.add(this._groundMesh);
     },
 
     render: function (geo3DModel, ecModel, api) {
@@ -38,7 +52,6 @@ module.exports = echarts.extendComponentView({
 
         this._geo3DBuilder.update(geo3DModel);
 
-
         var control = this._control;
         control.setCamera(geo3D.viewGL.camera);
 
@@ -50,6 +63,23 @@ module.exports = echarts.extendComponentView({
         // Set post effect
         geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'));
         geo3D.viewGL.setTemporalSuperSampling(geo3DModel.getModel('temporalSuperSampling'));
+
+        this._updateGroudPlane(geo3DModel);
+    },
+
+    _updateGroudPlane: function (geo3DModel) {
+        var groundModel = geo3DModel.getModel('groundPlane');
+        var shading = geo3DModel.get('shading');
+        var material = this._groundMaterials[shading];
+        if (!material) {
+            if (__DEV__) {
+                console.warn('Unkonw shading ' + shading);
+            }
+            material = this._groundMaterials.lambert;
+        }
+        this._groundMesh.material = material;
+        this._groundMesh.material.set('color', graphicGL.parseColor(groundModel.get('color')));
+        this._groundMesh.invisible = !geo3DModel.get('show');
     },
 
     afterRender: function (geo3DModel, ecModel, api, layerGL) {

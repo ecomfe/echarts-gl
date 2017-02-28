@@ -12,6 +12,8 @@ var LightHelper = require('../common/LightHelper');
 
 var dims = ['x', 'y', 'z'];
 
+graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
+
 dims.forEach(function (dim) {
     echarts.extendComponentView({
         type: dim + 'Axis3D'

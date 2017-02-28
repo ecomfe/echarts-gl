@@ -11,6 +11,24 @@ var Geo3DModel = echarts.extendComponentModel({
 
     coordinateSystem: null,
 
+    optionUpdated: function () {
+        var option = this.option;
+        var self = this;
+
+        this._optionModelMap = (option.regions || []).reduce(function (obj, regionOpt) {
+            if (regionOpt.name) {
+                obj[regionOpt.name] = new echarts.Model(regionOpt, self);
+            }
+            return obj;
+        }, {});
+
+        // this.updateSelectedMap(option.regions);
+    },
+
+    getRegionModel: function (name) {
+        return this._optionModelMap[name] || new echarts.Model(null, this);
+    },
+
     defaultOption: {
 
         show: true,
@@ -32,8 +50,10 @@ var Geo3DModel = echarts.extendComponentModel({
         boxHeight: 3,
         boxDepth: 'auto',
 
-        bevelSize: 0,
-        bevelSmoothness: 1,
+        groundPlane: {
+            show: false,
+            color: '#aaa'
+        },
 
         // 'color', 'lambert', 'realistic'
         // TODO, 'toon'
@@ -55,12 +75,23 @@ var Geo3DModel = echarts.extendComponentModel({
             alpha: 40,
             beta: 0,
             distance: 100
-        }
+        },
+
+        // itemStyle: {},
+        // height,
+        // label: {}
+        regions: [],
 
         // light
         // postEffect
         // temporalSuperSampling
         // viewControl
+
+        itemStyle: {
+            normal: {
+                areaColor: '#fff'
+            }
+        }
     }
 });
 

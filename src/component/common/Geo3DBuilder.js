@@ -2,6 +2,7 @@ var graphicGL = require('../../util/graphicGL');
 var Triangulation = require('../../util/Triangulation');
 var retrieve = require('../../util/retrieve');
 var glmatrix = require('qtek/lib/dep/glmatrix');
+
 var vec3 = glmatrix.vec3;
 
 function Geo3DBuilder() {
@@ -41,13 +42,12 @@ Geo3DBuilder.prototype = {
 
             // Reset meshes
             this._initMeshes(componentModel);
-
         }
 
+        // TODO, itemStyle, color, borderWidth, borderColor, height
         for (var i = 0; i < geo3D.regions.length; i++) {
             var region = geo3D.regions[i];
-            var mesh = this._meshesMap[region.name];
-            this._updateGeometry(mesh.geometry, geo3D, region);
+            this._updatePolygonGeometry(this._meshesMap[region.name].geometry, componentModel, region);
         }
         // Update materials
         var realisticMaterialModel = componentModel.getModel('realisticMaterial');
@@ -56,13 +56,18 @@ Geo3DBuilder.prototype = {
 
         var shader = this._getShader(componentModel.get('shading'));
         geo3D.regions.forEach(function (region) {
-            var mesh = this._meshesMap[region.name];
-            if (mesh.material.shader !== shader) {
-                mesh.material.attachShader(shader, true);
+            var polygonMesh = this._meshesMap[region.name];
+            if (polygonMesh.material.shader !== shader) {
+                polygonMesh.material.attachShader(shader, true);
             }
-            mesh.material.set({
+            var regionModel = componentModel.getRegionModel(region.name);
+            var itemStyleModel = regionModel.getModel('itemStyle.normal');
+            var color = graphicGL.parseColor(itemStyleModel.get('areaColor'));
+            color[3] *= retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
+            polygonMesh.material.set({
                 roughness: roughness,
-                metalness: metalness
+                metalness: metalness,
+                color: color
             });
         }, this);
     },
@@ -71,21 +76,21 @@ Geo3DBuilder.prototype = {
         this.rootNode.removeAll();
 
         var geo3D = componentModel.coordinateSystem;
-        var meshesMap = {};
+        var polygonMeshesMap = {};
         var shader = this._getShader(componentModel.get('shading'));
 
         geo3D.regions.forEach(function (region) {
-            meshesMap[region.name] = new graphicGL.Mesh({
+            polygonMeshesMap[region.name] = new graphicGL.Mesh({
                 material: new graphicGL.Material({
                     shader: shader
                 }),
                 culling: false,
                 geometry: new graphicGL.Geometry()
             });
-            this.rootNode.add(meshesMap[region.name]);
+            this.rootNode.add(polygonMeshesMap[region.name]);
         }, this);
 
-        this._meshesMap = meshesMap;
+        this._meshesMap = polygonMeshesMap;
     },
 
     _getShader: function (shading) {
@@ -107,7 +112,6 @@ Geo3DBuilder.prototype = {
         geo3D.regions.forEach(function (region) {
             var polygons = [];
             for (var i = 0; i < region.geometries.length; i++) {
-                // TODO interior hole
                 var exterior = region.geometries[i].exterior;
                 var interiors = region.geometries[i].interiors;
                 var points = [];
@@ -165,7 +169,11 @@ Geo3DBuilder.prototype = {
         }, this);
     },
 
-    _updateGeometry: function (geometry, geo3D, region) {
+    _updatePolygonGeometry: function (geometry, componentModel, region) {
+        var geo3D = componentModel.coordinateSystem;
+        var regionModel = componentModel.getRegionModel(region.name);
+        var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), geo3D.size[1]);
+
         var faces = this.faces;
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
@@ -188,8 +196,6 @@ Geo3DBuilder.prototype = {
 
         var vertexOffset = 0;
         var faceOffset = 0;
-
-        var regionHeight = geo3D.size[1];
 
         function addVertices(polygon, y, insideOffset) {
             var nextPosition = [];
@@ -285,10 +291,7 @@ Geo3DBuilder.prototype = {
                 faceOffset += 2;
             }
         }
-        // geometry.generateVertexNormals();
         geometry.updateBoundingBox();
-
-        // geometry.generateBarycentric();
     }
 };
 
