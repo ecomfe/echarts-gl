@@ -1,7 +1,9 @@
 // Ear clipping polygon triangulation.
-// @author pissang(https://github.com/pissang)
 
 // https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
+
+// http://www.cosy.sbg.ac.at/~held/projects/triang/triang.html
+// Z Order Hash ?
 
 var LinkedList = require('qtek/lib/core/LinkedList');
 
@@ -123,17 +125,19 @@ TriangulationContext.prototype.triangulate = function (exterior, holes) {
     this._gridNumber = Math.ceil(Math.sqrt(this._nPoints) / 2);
     this._gridNumber = Math.max(Math.min(this._gridNumber, this.maxGridNumber), this.minGridNumber);
 
-    this.points = new Float32Array(exterior);
+    this.points = exterior;
 
     this._needsGreed = this._nPoints > VERTEX_COUNT_NEEDS_GRID;
 
     if (area(this.points) > 0) {
+        // Don't konw why, but use slice is more faster than new Float32Array(this.points).
+        this.points = this.points.slice();
         reverse(this.points, 2);
     }
 
     this.holes = (holes || []).map(function (hole) {
-        hole = new Float32Array(hole);
         if (area(hole) < 0) {
+            hole = hole.slice();
             reverse(hole, 2);
         }
         return hole;
@@ -156,11 +160,7 @@ TriangulationContext.prototype._reset = function () {
     // Initialize grid
 
     var nGrids = this._gridNumber * this._gridNumber;
-    var len = this._grids.length;
-    for (var i = 0; i < len; i++) {
-        this._grids[i].length = 0;
-    }
-    for (; i < nGrids; i++) {
+    for (var i = 0; i < nGrids; i++) {
         this._grids[i] = [];
     }
     this._grids.length = nGrids;
@@ -172,7 +172,7 @@ TriangulationContext.prototype._prepare = function () {
     var n = this._nPoints;
     var points = this.points;
 
-    this._pointsTypes = new Uint8Array(n);
+    this._pointsTypes = [];
     // Update bounding box and determine point type is reflex or convex
     for (var i = 0, j = n - 1; i < n;) {
         var k = (i + 1) % n;
