@@ -13,7 +13,7 @@ module.exports = echarts.extendComponentView({
 
     init: function (ecModel, api) {
 
-        this._geo3DBuilder = new Geo3DBuilder();
+        this._geo3DBuilder = new Geo3DBuilder(api);
         this.groupGL = new graphicGL.Node();
 
         this.groupGL.add(this._geo3DBuilder.rootNode);
@@ -48,6 +48,18 @@ module.exports = echarts.extendComponentView({
 
         // Must update after geo3D.viewGL.setPostEffect
         this._geo3DBuilder.update(geo3DModel, ecModel, api);
+
+        control.off('update');
+        control.on('update', function () {
+                api.dispatchAction({
+                    type: 'geo3DChangeView',
+                    alpha: control.getAlpha(),
+                    beta: control.getBeta(),
+                    distance: control.getDistance(),
+                    from: this.uid,
+                    geo3DId: geo3DModel.id
+                });
+            });
     },
 
     afterRender: function (geo3DModel, ecModel, api, layerGL) {

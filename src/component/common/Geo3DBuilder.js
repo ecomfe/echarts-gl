@@ -3,6 +3,8 @@ var Triangulation = require('../../util/Triangulation');
 var LinesGeo = require('../../util/geometry/Lines3D');
 var retrieve = require('../../util/retrieve');
 var glmatrix = require('qtek/lib/dep/glmatrix');
+var LabelsMesh = require('../../util/mesh/LabelsMesh');
+var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
 
 var vec3 = glmatrix.vec3;
 
@@ -10,7 +12,7 @@ graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
 var shadings = ['lambert', 'realistic', 'color'];
 
-function Geo3DBuilder() {
+function Geo3DBuilder(api) {
 
     this.rootNode = new graphicGL.Node();
 
@@ -48,6 +50,14 @@ function Geo3DBuilder() {
     });
     this._groundMesh.rotation.rotateX(-Math.PI / 2);
     this._groundMesh.scale.set(1000, 1000, 1);
+
+    this._labelsMesh = new LabelsMesh();
+    this._labelsMesh.material.depthMask = false;
+
+    this._labelTextureSurface = new ZRTextureAtlasSurface(512, 512, api.getDevicePixelRatio());
+    this._labelTextureSurface.onupdate = function () {
+        api.getZr().refresh();
+    };
 }
 
 Geo3DBuilder.prototype = {
@@ -126,6 +136,9 @@ Geo3DBuilder.prototype = {
 
         this._updateGroundPlane(componentModel);
         this._groundMesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+
+
+        this._updateLabels(componentModel, api);
     },
 
     _updateGroundPlane: function (componentModel) {
@@ -178,7 +191,9 @@ Geo3DBuilder.prototype = {
         this._polygonMeshes = polygonMeshesMap;
         this._linesMeshes = linesMeshesMap;
 
+
         this.rootNode.add(this._groundMesh);
+        this.rootNode.add(this._labelsMesh);
     },
 
     _getShader: function (shading) {
@@ -254,6 +269,17 @@ Geo3DBuilder.prototype = {
                 });
             }
             this._triangulationResults[region.name] = polygons;
+        }, this);
+    },
+
+    _updateLabels: function (componentModel, api) {
+        var geo3D = componentModel.coordinateSystem;
+        var labelsMesh = this._labelsMesh;
+        geo3D.regions.forEach(function (region) {
+            var name = region.name;
+            var center = region.center;
+
+            geo3D
         }, this);
     },
 

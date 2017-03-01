@@ -75,6 +75,24 @@ var Geo3DModel = echarts.extendComponentModel({
             distance: 100
         },
 
+        label: {
+            normal: {
+                // Distance in 3d space.
+                distance: 2,
+
+                backgroundColor: 'transparent',
+                borderColor: '#000',
+                borderWidth: 0,
+                // Padding in px
+                padding: 3,
+
+                textStyle: {
+                    color: '#000'
+                }
+            }
+        },
+        // labelLine
+
         // itemStyle: {},
         // height,
         // label: {}

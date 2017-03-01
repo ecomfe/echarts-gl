@@ -101,6 +101,8 @@ ViewGL.prototype.setViewport = function (x, y, width, height, dpr) {
     this.viewport.height = height;
     this.viewport.devicePixelRatio = dpr;
 
+    // Source and output of compositor use high dpr texture.
+    // But the intermediate texture of bloom, dof effects use fixed 1.0 dpr
     this._compositor.resize(width * dpr, height * dpr);
     this._temporalSS.resize(width * dpr, height * dpr);
 };

@@ -231,7 +231,7 @@ module.exports = echarts.extendComponentView({
 
         function makeAction() {
             return {
-                type: 'globeUpdateCamera',
+                type: 'globeChangeView',
                 alpha: control.getAlpha(),
                 beta: control.getBeta(),
                 distance: control.getDistance() - coordSys.radius,
