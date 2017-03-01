@@ -36,7 +36,7 @@ var Map3DModel = echarts.extendSeriesModel({
 
         show: true,
 
-        zlevel: 10,
+        zlevel: -10,
 
         // geoJson used by geo3D
         map: '',

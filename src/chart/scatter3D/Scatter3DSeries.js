@@ -16,7 +16,7 @@ echarts.extendSeriesModel({
 
     defaultOption: {
         coordinateSystem: 'cartesian3D',
-        zlevel: 10,
+        zlevel: -10,
 
         // Cartesian coordinate system
         xAxis3DIndex: 0,

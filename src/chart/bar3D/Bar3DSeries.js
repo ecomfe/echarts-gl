@@ -23,7 +23,7 @@ module.exports = echarts.extendSeriesModel({
         yAxis3DIndex: 0,
         zAxis3DIndex: 0,
 
-        zlevel: 10,
+        zlevel: -10,
 
         // bevelSize, 0 has no bevel
         bevelSize: 0,

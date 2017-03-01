@@ -11,7 +11,7 @@ var Grid3DModel = echarts.extendComponentModel({
 
     defaultOption: {
 
-        zlevel: 10,
+        zlevel: -10,
 
         // Layout used for viewport
         left: 0,

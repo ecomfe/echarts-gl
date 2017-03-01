@@ -68,7 +68,7 @@ var GlobeModel = echarts.extendComponentModel({
 
         show: true,
 
-        zlevel: 10,
+        zlevel: -10,
 
         flat: false,
 
