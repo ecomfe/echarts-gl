@@ -5,6 +5,18 @@ var CurveAnimatingPointsMesh = require('./CurveAnimatingPointsMesh');
 
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
+function getCoordSysSize(coordSys) {
+    if (coordSys.radius != null) {
+        return coordSys.radius;
+    }
+    if (coordSys.size != null) {
+        return Math.max(coordSys.size[0], coordSys.size[1], coordSys.size[2]);
+    }
+    else {
+        return 100;
+    }
+}
+
 module.exports = echarts.extendChartView({
 
     type: 'lines3D',
@@ -41,12 +53,12 @@ module.exports = echarts.extendChartView({
         var coordSys = seriesModel.coordinateSystem;
         var data = seriesModel.getData();
 
-        if (coordSys.type === 'globe') {
+        if (coordSys && coordSys.viewGL) {
             var viewGL = coordSys.viewGL;
             viewGL.add(this.groupGL);
 
             if (data.getLayout('lineType') === 'cubicBezier') {
-                this._generateBezierCurvesOnGlobe(seriesModel, ecModel, api);
+                this._generateBezierCurves(seriesModel, ecModel, api);
             }
         }
 
@@ -56,7 +68,7 @@ module.exports = echarts.extendChartView({
         if (seriesModel.get('effect.show')) {
             this.groupGL.add(curveAnimatingPointsMesh);
 
-            curveAnimatingPointsMesh.setScale(coordSys.radius);
+            curveAnimatingPointsMesh.setScale(getCoordSysSize(coordSys));
             curveAnimatingPointsMesh.setData(data, api);
 
             var period = seriesModel.get('effect.period') * 1000;
@@ -81,14 +93,15 @@ module.exports = echarts.extendChartView({
             ? graphicGL.additiveBlend : null;
     },
 
-    _generateBezierCurvesOnGlobe: function (seriesModel, ecModel, api) {
+    _generateBezierCurves: function (seriesModel, ecModel, api) {
         var data = seriesModel.getData();
         var coordSys = seriesModel.coordinateSystem;
         var geometry = this._linesMesh.geometry;
 
         geometry.expandLine = true;
 
-        geometry.segmentScale = coordSys.radius / 20;
+        var size = getCoordSysSize(coordSys);
+        geometry.segmentScale = size / 20;
 
         var lineWidthQueryPath = 'lineStyle.normal.width'.split('.');
         var dpr = api.getDevicePixelRatio();

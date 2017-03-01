@@ -99,7 +99,7 @@ var Geo3DModel = echarts.extendComponentModel({
 
         label: {
             normal: {
-                show: true,
+                show: false,
                 // Distance in 3d space.
                 distance: 2,
 

@@ -23,10 +23,10 @@ function layoutGlobe(seriesModel, coordSys) {
         }
 
         var pts = [];
-        if (isPolyline) {
+        // if (isPolyline) {
 
-        }
-        else {
+        // }
+        // else {
             var p0 = pts[0] = vec3.create();
             var p1 = pts[1] = vec3.create();
             var p2 = pts[2] = vec3.create();
@@ -66,7 +66,49 @@ function layoutGlobe(seriesModel, coordSys) {
 
             vec3.scaleAndAdd(p1, p0, p1, len);
             vec3.scaleAndAdd(p2, p3, p2, len);
+        // }
+
+        data.setItemLayout(idx, pts);
+    });
+}
+
+function layoutGeo3D(seriesModel, coordSys) {
+    var data = seriesModel.getData();
+    var isPolyline = seriesModel.get('polyline');
+
+    data.setLayout('lineType', isPolyline ? 'polyline' : 'cubicBezier');
+
+    var normal = [];
+
+    // TODO, different region may have different height.
+    // var regionHeight = coordSys.size[1];
+
+    data.each(function (idx) {
+        var itemModel = data.getItemModel(idx);
+        var coords = (itemModel.option instanceof Array) ?
+            itemModel.option : itemModel.getShallow('coords', true);
+
+        if (!(coords instanceof Array && coords.length > 0 && coords[0] instanceof Array)) {
+            throw new Error('Invalid coords ' + JSON.stringify(coords) + '. Lines must have 2d coords array in data item.');
         }
+
+        var pts = [];
+
+        var p0 = pts[0] = vec3.create();
+        var p1 = pts[1] = vec3.create();
+        var p2 = pts[2] = vec3.create();
+        var p3 = pts[3] = vec3.create();
+
+
+        coordSys.dataToPoint(coords[0], p0);
+        coordSys.dataToPoint(coords[1], p3);
+
+        var len = vec3.dist(p0, p3);
+        vec3.lerp(p1, p0, p3, 0.3);
+        vec3.lerp(p2, p0, p3, 0.3);
+        vec3.set(normal, 0, 1, 0);
+        vec3.scaleAndAdd(p1, p1, normal, Math.min(len * 0.1, 10));
+        vec3.scaleAndAdd(p2, p2, normal, Math.min(len * 0.1, 10));
 
         data.setItemLayout(idx, pts);
     });
@@ -77,6 +119,9 @@ echarts.registerLayout(function (ecModel, api) {
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys.type === 'globe') {
             layoutGlobe(seriesModel, coordSys);
+        }
+        else if (coordSys.type === 'geo3D') {
+            layoutGeo3D(seriesModel, coordSys);
         }
     });
 });

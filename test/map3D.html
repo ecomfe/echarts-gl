@@ -16,26 +16,20 @@
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
-            $.getJSON('data/world-population.json', function (populationData) {
+            $.getJSON('data/alcohol.json', function (data) {
 
-                var regions = populationData.map(function (item) {
+                var regionData = data.map(function (item) {
                     return {
-                        name: item.name,
-                        value: item.value,
-                        label: {
-                            normal: {
-                                show: item.value > 1e4
-                            }
-                        }
-                    };
-                });
+                        name: item[0],
+                        value: item[1]
+                    }
+                })
 
                 chart.setOption({
                     backgroundColor: '#cdcfd5',
                     visualMap: {
                         min: 0,
-                        max: 1000000,
-                        text:['High','Low'],
+                        max: 15,
                         realtime: true,
                         calculable : true,
                         inRange: {
@@ -95,7 +89,7 @@
 
                         boxHeight: 1,
 
-                        data: regions
+                        data: regionData
                     }]
                 });
 

@@ -2,6 +2,7 @@ var Geo3D = require('./geo3D/Geo3D');
 var echarts = require('echarts/lib/echarts');
 var layoutUtil = require('echarts/lib/util/layout');
 var ViewGL = require('../core/ViewGL');
+var retrieve = require('../util/retrieve');
 
 function resizeGeo3D(geo3DModel, api) {
     // Use left/top/width/height
@@ -94,14 +95,20 @@ var geo3DCreator = {
 
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'geo3D') {
-                var geo3DIndex = seriesModel.get('geo3DIndex');
-                var coordSys = geo3DList[geo3DIndex];
-
-                if (!coordSys) {
-                    console.warn('geo3D %s not exists', geo3DIndex);
+                var geo3DModel = seriesModel.getReferringComponents('geo3D')[0];
+                if (!geo3DModel) {
+                    geo3DModel = ecModel.getComponent('geo3D');
                 }
 
-                seriesModel.coordinateSystem = coordSys;
+                if (!geo3DModel) {
+                    throw new Error('geo "' + retrieve.firstNotNull(
+                        seriesModel.get('geo3DIndex'),
+                        seriesModel.get('geo3DId'),
+                        0
+                    ) + '" not found');
+                }
+
+                seriesModel.coordinateSystem = geo3DModel.coordinateSystem;
             }
         });
     }

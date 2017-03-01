@@ -10,6 +10,7 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/world.js"></script>
         <script src="../node_modules/echarts/theme/dark.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
@@ -44,6 +45,9 @@
                     }
                     return {
                         type: 'lines3D',
+
+                        coordinateSystem: 'geo3D',
+
                         name: airlineName,
 
                         effect: {
@@ -54,17 +58,11 @@
                         lineStyle: {
                             normal: {
                                 width: 2,
-                                color: 'rgb(50, 50, 150)',
-                                opacity: 0.6
+                                color: 'rgb(10, 0, 30)',
+                                opacity: 0.2
                             }
                         },
-                        blendMode: 'lighter',
 
-                        // data: [
-                        //     [
-                        //         [0, 0], [180, 0]
-                        //     ]
-                        // ]
                         data: routes.map(function (item) {
                             return [airports[item[1]].coord, airports[item[2]].coord];
                         })
@@ -74,30 +72,52 @@
                 });
 
                 chart.setOption({
-                    backgroundColor: '',
-                    legend: {
-                        left: 'left',
-                        data: Object.keys(routesGroupByAirline),
-                        orient: 'vertical'
-                    },
-                    globe: {
-                        baseTexture: 'asset/world.topo.bathy.200401.jpg',
-                        heightTexture: 'asset/elev_bump_4k.jpg',
-
+                    // legend: {
+                    //     left: 'left',
+                    //     data: Object.keys(routesGroupByAirline),
+                    //     orient: 'vertical',
+                    //     // selectedMode: 'single'
+                    // },
+                    backgroundColor: '#cdcfd5',
+                    geo3D: {
+                        map: 'world',
                         shading: 'lambert',
-
+                        realisticMaterial: {
+                            roughness: 0.2,
+                            metalness: 0
+                        },
+                        postEffect: {
+                            enable: true
+                        },
+                        groundPlane: {
+                            show: true
+                        },
                         light: {
-                            ambient: {
-                                intensity: 0.4
-                            },
                             main: {
-                                intensity: 0.4
+                                intensity: 1,
+                                shadow: true,
+                                shadowQuality: 'high',
+                                alpha: 30
+                            },
+                            ambient: {
+                                intensity: 0
+                            },
+                            ambientCubemap: {
+                                texture: 'asset/canyon.hdr',
+                                exposure: 2,
+                                diffuseIntensity: 0.3
+                            }
+                        },
+                        viewControl: {
+                            distance: 50
+                        },
+
+                        itemStyle: {
+                            normal: {
                             }
                         },
 
-                        viewControl: {
-                            autoRotate: false
-                        }
+                        boxHeight: 0.5
                     },
                     series: series
                 });

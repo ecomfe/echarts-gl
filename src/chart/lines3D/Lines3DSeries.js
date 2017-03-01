@@ -34,6 +34,8 @@ echarts.extendSeriesModel({
 
         globeIndex: 0,
 
+        geo3DIndex: 0,
+
         zlevel: -10,
 
         polyline: false,

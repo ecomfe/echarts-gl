@@ -1,5 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var glmatrix = require('qtek/lib/dep/glmatrix');
+var vec3 = glmatrix.vec3;
 var mat4 = glmatrix.mat4;
 
 function Geo3D(name, map, geoJson, specialAreas, nameMap) {
@@ -16,11 +17,16 @@ function Geo3D(name, map, geoJson, specialAreas, nameMap) {
 
     this.transform = mat4.create();
 
+    this.invTransform = mat4.create();
 }
 
 Geo3D.prototype = {
 
     constructor: Geo3D,
+
+    type: 'geo3D',
+
+    dimensions: ['lng', 'lat', 'alt'],
 
     loadGeoJson: function (geoJson, specialAreas, nameMap) {
         try {
@@ -117,12 +123,41 @@ Geo3D.prototype = {
         mat4.identity(m);
         mat4.translate(m, m, position);
         mat4.scale(m, m, scale);
+
+        mat4.invert(this.invTransform, m);
     },
 
-    dataToPoint: function (data) {
+    dataToPoint: function (data, out) {
+        out = out || [];
+        // lng
+        out[0] = data[0];
+        // lat
+        out[2] = data[1];
+
+        // alt
+        out[1] = data[2];
+
+        if (isNaN(out[1])) {
+            out[1] = this.size[1];
+        }
+
+        vec3.transformMat4(out, out, this.transform);
+
+        return out;
     },
 
-    pointToData: function (point) {
+    pointToData: function (point, out) {
+        out = out || [];
+        // lng
+        out[0] = point[0];
+        // lat
+        out[1] = point[1];
+        // alt
+        out[2] = point[2];
+
+        vec3.transformMat4(out, out, this.invTransform);
+
+        return out;
     }
 };
 

@@ -45,6 +45,9 @@ var globeCreator = {
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'globe') {
                 var globeModel = seriesModel.getReferringComponents('globe')[0];
+                if (!globeModel) {
+                    globeModel = ecModel.getComponent('globe');
+                }
 
                 if (!globeModel) {
                     throw new Error('globe "' + retrieve.firstNotNull(
