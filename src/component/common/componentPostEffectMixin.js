@@ -16,7 +16,8 @@ module.exports = {
                 enable: false,
                 radius: 1.5,
                 // low, medium, high, ultra
-                quality: 'medium'
+                quality: 'medium',
+                intensity: 1
             },
             FXAA: {
                 enable: false

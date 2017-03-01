@@ -164,6 +164,9 @@ EffectCompositor.prototype.setBloomIntensity = function (value) {
 EffectCompositor.prototype.setSSAORadius = function (value) {
     this._ssaoPass.setParameter('radius', value);
 };
+EffectCompositor.prototype.setSSAOIntensity = function (value) {
+    this._ssaoPass.setParameter('ssaoIntensity', value);
+};
 
 EffectCompositor.prototype.setSSAOQuality = function (value) {
     var kernelSize = 16;

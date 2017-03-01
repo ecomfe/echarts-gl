@@ -84,6 +84,8 @@ void main()
 uniform sampler2D ssaoTexture;
 uniform sampler2D sourceTexture;
 
+uniform float ssaoIntensity: 1.0;
+
 uniform vec2 textureSize;
 
 varying vec2 v_Texcoord;
@@ -112,7 +114,7 @@ void main ()
     }
 
     vec4 color = texture2D(sourceTexture, v_Texcoord);
-    color.rgb *= ao / weightAll;
+    color.rgb *= clamp(1.0 - (1.0 - ao / weightAll) * ssaoIntensity, 0.0, 1.0);
     gl_FragColor = color;
 }
 @end

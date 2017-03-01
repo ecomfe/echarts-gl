@@ -215,21 +215,23 @@ ViewGL.prototype.dispose = function (renderer) {
  * @param {module:echarts/Model} Post effect model
  */
 ViewGL.prototype.setPostEffect = function (postEffectModel) {
+    var compositor = this._compositor;
     this._enablePostEffect = postEffectModel.get('enable');
     var bloomModel = postEffectModel.getModel('bloom');
     var dofModel = postEffectModel.getModel('depthOfField');
     var ssaoModel = postEffectModel.getModel('SSAO');
     var fxaaModel = postEffectModel.getModel('FXAA');
-    fxaaModel.get('enable') ? this._compositor.enableFXAA() : this._compositor.disableFXAA();
-    bloomModel.get('enable') ? this._compositor.enableBloom() : this._compositor.disableBloom();
-    dofModel.get('enable') ? this._compositor.enableDOF() : this._compositor.disableDOF();
+    fxaaModel.get('enable') ? compositor.enableFXAA() : compositor.disableFXAA();
+    bloomModel.get('enable') ? compositor.enableBloom() : compositor.disableBloom();
+    dofModel.get('enable') ? compositor.enableDOF() : compositor.disableDOF();
 
     this._enableSSAO = ssaoModel.get('enable');
-    this._enableSSAO ? this._compositor.enableSSAO() : this._compositor.disableSSAO();
+    this._enableSSAO ? compositor.enableSSAO() : compositor.disableSSAO();
 
-    this._compositor.setBloomIntensity(bloomModel.get('intensity'));
-    this._compositor.setSSAORadius(ssaoModel.get('radius'));
-    this._compositor.setSSAOQuality(ssaoModel.get('quality'));
+    compositor.setBloomIntensity(bloomModel.get('intensity'));
+    compositor.setSSAORadius(ssaoModel.get('radius'));
+    compositor.setSSAOQuality(ssaoModel.get('quality'));
+    compositor.setSSAOIntensity(ssaoModel.get('intensity'));
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {

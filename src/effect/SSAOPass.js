@@ -53,7 +53,7 @@ function SSAOPass(opt) {
     this._ssaoPass = new Pass({
         fragment: Shader.source('ecgl.ssao.estimate')
     });
-    this._blurPass = new Pass({
+    this._blendPass = new Pass({
         fragment: Shader.source('ecgl.ssao.blur')
     });
     this._framebuffer = new FrameBuffer();
@@ -116,7 +116,7 @@ SSAOPass.prototype.getTargetTexture = function () {
 }
 
 SSAOPass.prototype.blend = function (renderer, sourceTexture) {
-    var blurPass = this._blurPass;
+    var blendPass = this._blendPass;
     var width = this._depthTexture.width;
     var height = this._depthTexture.height;
 
@@ -131,10 +131,10 @@ SSAOPass.prototype.blend = function (renderer, sourceTexture) {
     this._framebuffer.attach(targetTexture);
     this._framebuffer.bind(renderer);
 
-    blurPass.setUniform('textureSize', [width, height]);
-    blurPass.setUniform('ssaoTexture', this._ssaoTexture);
-    blurPass.setUniform('sourceTexture', sourceTexture);
-    blurPass.render(renderer);
+    blendPass.setUniform('textureSize', [width, height]);
+    blendPass.setUniform('ssaoTexture', this._ssaoTexture);
+    blendPass.setUniform('sourceTexture', sourceTexture);
+    blendPass.render(renderer);
 
     this._framebuffer.unbind(renderer);
 };
@@ -147,7 +147,10 @@ SSAOPass.prototype.setParameter = function (name, val) {
         this.setKernelSize(val);
     }
     else if (name === 'blurSize') {
-        this._blurPass.material.shader.define('fragment', 'BLUR_SIZE', val);
+        this._blendPass.material.shader.define('fragment', 'BLUR_SIZE', val);
+    }
+    else if (name === 'ssaoIntensity') {
+        this._blendPass.material.set('ssaoIntensity', val);
     }
     else {
         this._ssaoPass.setUniform(name, val);
@@ -157,7 +160,7 @@ SSAOPass.prototype.setParameter = function (name, val) {
 SSAOPass.prototype.setKernelSize = function (size) {
     this._ssaoPass.material.shader.define('fragment', 'KERNEL_SIZE', size);
     this._kernels = this._kernels || [];
-    for (var i = 0; i < 40; i++) {
+    for (var i = 0; i < 20; i++) {
         this._kernels[i] = generateKernel(size);
     }
 };
