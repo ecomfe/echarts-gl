@@ -29,6 +29,28 @@ var Geo3DModel = echarts.extendComponentModel({
         return this._regionModelMap[name] || new echarts.Model(null, this);
     },
 
+    /**
+     * Format label
+     * @param {string} name Region name
+     * @param {string} [status='normal'] 'normal' or 'emphasis'
+     * @return {string}
+     */
+    getFormattedLabel: function (name, status) {
+        var regionModel = this.getRegionModel(name);
+        var formatter = regionModel.get('label.' + status + '.formatter');
+        var params = {
+            name: name
+        };
+        if (typeof formatter === 'function') {
+            params.status = status;
+            return formatter(params);
+        }
+        else if (typeof formatter === 'string') {
+            var serName = params.seriesName;
+            return formatter.replace('{a}', serName != null ? serName : '');
+        }
+    },
+
     defaultOption: {
 
         show: true,
@@ -77,6 +99,7 @@ var Geo3DModel = echarts.extendComponentModel({
 
         label: {
             normal: {
+                show: true,
                 // Distance in 3d space.
                 distance: 2,
 
@@ -84,7 +107,7 @@ var Geo3DModel = echarts.extendComponentModel({
                 borderColor: '#000',
                 borderWidth: 0,
                 // Padding in px
-                padding: 3,
+                padding: [2, 3],
 
                 textStyle: {
                     color: '#000'

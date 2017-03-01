@@ -32,6 +32,17 @@ var Map3DModel = echarts.extendSeriesModel({
         return this._regionModelMap[name] || new echarts.Model(null, this);
     },
 
+    /**
+     * Format label
+     * @param {string} name Region name
+     * @param {string} [status='normal'] 'normal' or 'emphasis'
+     * @return {string}
+     */
+    getFormattedLabel: function (name, status) {
+        var idx = this.getData().indexOfName(name);
+        return Map3DModel.superCall(this, 'getFormattedLabel', idx, status);
+    },
+
     defaultOption: {
 
         show: true,
@@ -71,6 +82,25 @@ var Map3DModel = echarts.extendSeriesModel({
                 beta: 30
             }
         },
+
+        label: {
+            normal: {
+                show: false,
+                // Distance in 3d space.
+                distance: 0.3,
+
+                backgroundColor: 'transparent',
+                borderColor: '#000',
+                borderWidth: 0,
+                // Padding in px
+                padding: [2, 3],
+
+                textStyle: {
+                    color: '#000'
+                }
+            }
+        },
+        // labelLine
 
         viewControl: {
             alpha: 40,

@@ -68,7 +68,8 @@ var ZRTextureAtlasSurface = function (width, height, dpr) {
     this.onupdate = null;
 
     this._texture = new graphicGL.Texture2D({
-        image: canvas
+        image: canvas,
+        flipY: false
     });
 
     var self = this;
@@ -80,6 +81,7 @@ var ZRTextureAtlasSurface = function (width, height, dpr) {
     };
 
     // document.body.appendChild(canvas);
+    // canvas.style.cssText = 'position:absolute;left:0;top:0;z-index:1000'
 };
 
 ZRTextureAtlasSurface.prototype = {

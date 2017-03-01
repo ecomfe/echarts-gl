@@ -498,7 +498,6 @@ module.exports = echarts.extendComponentView({
             axisInfo.nameLabelElement = textEl;
         }
 
-        this._textureSurface.getTexture().flipY = false;
         axisInfo.labelsMesh.material.set('textureAtlas', this._textureSurface.getTexture());
 
         linesGeo.convertToTypedArray();

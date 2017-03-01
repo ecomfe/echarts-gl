@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Geo3D - ECHARTS-GL</title>
+        <title>Map3D - ECHARTS-GL</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
         <link rel="stylesheet" href="./common.css">
@@ -18,18 +18,15 @@
 
             $.getJSON('data/world-population.json', function (populationData) {
 
-                var max = -Infinity;
-                var min = Infinity;
-                populationData.forEach(function (item) {
-                    max = Math.max(Math.log(item.value), max);
-                    min = Math.min(Math.log(item.value), min);
-                });
-
                 var regions = populationData.map(function (item) {
                     return {
                         name: item.name,
                         value: item.value,
-                        height: (Math.log(item.value) - min) / (max - min) * 3
+                        label: {
+                            normal: {
+                                show: item.value > 1e4
+                            }
+                        }
                     };
                 });
 
@@ -86,7 +83,17 @@
                             }
                         },
 
-                        boxHeight: 0.5,
+                        label: {
+                            normal: {
+                                show: false,
+                                // backgroundColor: '#fff',
+                                textStyle: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+
+                        boxHeight: 1,
 
                         data: regions
                     }]

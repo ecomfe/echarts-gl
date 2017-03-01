@@ -1,3 +1,4 @@
+var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var Triangulation = require('../../util/Triangulation');
 var LinesGeo = require('../../util/geometry/Lines3D');
@@ -54,10 +55,12 @@ function Geo3DBuilder(api) {
     this._labelsMesh = new LabelsMesh();
     this._labelsMesh.material.depthMask = false;
 
-    this._labelTextureSurface = new ZRTextureAtlasSurface(512, 512, api.getDevicePixelRatio());
+    this._labelTextureSurface = new ZRTextureAtlasSurface(1024, 1024, api.getDevicePixelRatio());
     this._labelTextureSurface.onupdate = function () {
         api.getZr().refresh();
     };
+
+    this._labelsMesh.material.set('textureAtlas', this._labelTextureSurface.getTexture());
 }
 
 Geo3DBuilder.prototype = {
@@ -275,12 +278,75 @@ Geo3DBuilder.prototype = {
     _updateLabels: function (componentModel, api) {
         var geo3D = componentModel.coordinateSystem;
         var labelsMesh = this._labelsMesh;
+
+        this._labelTextureSurface.clear();
+
+        labelsMesh.geometry.convertToDynamicArray(true);
+
         geo3D.regions.forEach(function (region) {
             var name = region.name;
             var center = region.center;
+            var regionModel = componentModel.getRegionModel(name);
+            var labelModel = regionModel.getModel('label.normal');
 
-            geo3D
+            if (!labelModel.get('show')) {
+                return;
+            }
+
+            var textStyleModel = labelModel.getModel('textStyle');
+            var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), geo3D.size[1]);
+            var distance = labelModel.get('distance') || 0;
+
+            var pos = [center[0], regionHeight + distance, center[1]];
+            vec3.transformMat4(pos, pos, geo3D.transform);
+
+            var text = retrieve.firstNotNull(
+                componentModel.getFormattedLabel(name, 'normal'),
+                name
+            );
+            var font = textStyleModel.getFont();
+            var textEl = new echarts.graphic.Text({
+                style: {
+                    text: text,
+                    textFont: font
+                }
+            });
+            var rect = textEl.getBoundingRect();
+            var padding = labelModel.get('padding') || 0;
+            if (typeof padding === 'number') {
+                // Vertical, Horizontal
+                padding = [padding, padding];
+            }
+            var rectEl = new echarts.graphic.Rect({
+                style: {
+                    text: text,
+                    textFont: font,
+                    textPosition: 'inside',
+                    textFill: textStyleModel.get('color') || '#000',
+                    fill: labelModel.get('backgroundColor'),
+                    stroke: labelModel.get('borderColor'),
+                    lineWidth: labelModel.get('borderWidth') || 0,
+                    // Needs transform text.
+                    textTransform: true
+                },
+                shape: {
+                    x: 0, y: 0,
+                    width: padding[1] * 2 + rect.width,
+                    height: padding[0] * 2 + rect.height
+                }
+            });
+            var rect = rectEl.getBoundingRect();
+
+            var coords = this._labelTextureSurface.add(rectEl);
+
+            var dpr = api.getDevicePixelRatio();
+            labelsMesh.geometry.addSprite(
+                pos, [rect.width * dpr, rect.height * dpr], coords,
+                'center', 'bottom'
+            );
         }, this);
+
+        labelsMesh.geometry.convertToTypedArray();
     },
 
     _updatePolygonGeometry: function (geometry, region, regionHeight) {
