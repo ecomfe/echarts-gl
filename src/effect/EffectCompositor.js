@@ -161,6 +161,29 @@ EffectCompositor.prototype.setBloomIntensity = function (value) {
     this._compositeNode.setParameter('bloom', value);
 };
 
+EffectCompositor.prototype.setSSAORadius = function (value) {
+    this._ssaoPass.setParameter('radius', value);
+};
+
+EffectCompositor.prototype.setSSAOQuality = function (value) {
+    var kernelSize = 16;
+    switch (value) {
+        case 'low':
+            kernelSize = 8;
+            break;
+        case 'medium':
+            kernelSize = 16;
+            break;
+        case 'high':
+            kernelSize = 32;
+            break;
+        case 'ultra':
+            kernelSize = 64;
+            break;
+    }
+    this._ssaoPass.setParameter('kernelSize', kernelSize);
+};
+
 EffectCompositor.prototype.composite = function (renderer, framebuffer) {
     this._compositor.render(renderer, framebuffer);
 };

@@ -224,10 +224,12 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     bloomModel.get('enable') ? this._compositor.enableBloom() : this._compositor.disableBloom();
     dofModel.get('enable') ? this._compositor.enableDOF() : this._compositor.disableDOF();
 
-    this._compositor.setBloomIntensity(bloomModel.get('intensity'));
-
     this._enableSSAO = ssaoModel.get('enable');
     this._enableSSAO ? this._compositor.enableSSAO() : this._compositor.disableSSAO();
+
+    this._compositor.setBloomIntensity(bloomModel.get('intensity'));
+    this._compositor.setSSAORadius(ssaoModel.get('radius'));
+    this._compositor.setSSAOQuality(ssaoModel.get('quality'));
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {

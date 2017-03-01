@@ -13,7 +13,10 @@ module.exports = {
             // },
 
             SSAO: {
-                enable: false
+                enable: false,
+                radius: 1.5,
+                // low, medium, high, ultra
+                quality: 'medium'
             },
             FXAA: {
                 enable: false
