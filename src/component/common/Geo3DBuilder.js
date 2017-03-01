@@ -48,7 +48,6 @@ function Geo3DBuilder() {
     });
     this._groundMesh.rotation.rotateX(-Math.PI / 2);
     this._groundMesh.scale.set(1000, 1000, 1);
-    this.rootNode.add(this._groundMesh);
 }
 
 Geo3DBuilder.prototype = {
@@ -141,7 +140,7 @@ Geo3DBuilder.prototype = {
         }
         this._groundMesh.material = material;
         this._groundMesh.material.set('color', graphicGL.parseColor(groundModel.get('color')));
-        this._groundMesh.invisible = !componentModel.get('show');
+        this._groundMesh.invisible = !groundModel.get('show');
     },
 
     _initMeshes: function (componentModel) {
@@ -178,6 +177,8 @@ Geo3DBuilder.prototype = {
 
         this._polygonMeshes = polygonMeshesMap;
         this._linesMeshes = linesMeshesMap;
+
+        this.rootNode.add(this._groundMesh);
     },
 
     _getShader: function (shading) {
