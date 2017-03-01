@@ -169,6 +169,12 @@ ViewGL.prototype._doRender = function (renderer) {
         renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
         renderer.render(this.scene, this.camera);
         frameBuffer.unbind(renderer);
+        if (this._enableSSAO) {
+            this._compositor.updateSSAO(renderer, this.camera, this._temporalSS.getFrame());
+            frameBuffer.bind(renderer);
+            this._compositor.renderSSAO(renderer);
+            frameBuffer.unbind(renderer);
+        }
 
         if (this._enableTemporalSS && this._accumulatingId > 0) {
             this._compositor.composite(renderer, this._temporalSS.getSourceFrameBuffer());
@@ -214,12 +220,15 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     this._enablePostEffect = postEffectModel.get('enable');
     var bloomModel = postEffectModel.getModel('bloom');
     var dofModel = postEffectModel.getModel('depthOfField');
+    var ssaoModel = postEffectModel.getModel('SSAO');
     var fxaaModel = postEffectModel.getModel('FXAA');
     fxaaModel.get('enable') ? this._compositor.enableFXAA() : this._compositor.disableFXAA();
     bloomModel.get('enable') ? this._compositor.enableBloom() : this._compositor.disableBloom();
     dofModel.get('enable') ? this._compositor.enableDOF() : this._compositor.disableDOF();
 
     this._compositor.setBloomIntensity(bloomModel.get('intensity'));
+
+    this._enableSSAO = ssaoModel.get('enable');
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {

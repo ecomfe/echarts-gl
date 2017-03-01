@@ -67,6 +67,13 @@ TemporalSuperSampling.prototype = {
     },
 
     /**
+     * Return current frame
+     */
+    getFrame: function () {
+        return this._frame;
+    },
+
+    /**
      * Get source framebuffer for usage
      */
     getSourceFrameBuffer: function () {

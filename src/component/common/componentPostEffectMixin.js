@@ -11,6 +11,10 @@ module.exports = {
             // depthOfField: {
             //     enable: false
             // },
+
+            SSAO: {
+                enable: false
+            },
             FXAA: {
                 enable: false
             }

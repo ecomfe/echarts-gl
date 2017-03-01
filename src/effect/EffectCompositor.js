@@ -4,6 +4,7 @@ var Texture2D = require('qtek/lib/Texture2D');
 var Texture = require('qtek/lib/Texture');
 var FrameBuffer = require('qtek/lib/FrameBuffer');
 var FXLoader = require('qtek/lib/loader/FX');
+var SSAOPass = require('./SSAOPass');
 
 var effectJson = JSON.parse(require('text!./composite.json'));
 
@@ -43,22 +44,46 @@ function EffectCompositor() {
     this._cocNode = cocNode;
     this._compositeNode = this._compositor.getNodeByName('composite');
     this._fxaaNode = this._compositor.getNodeByName('FXAA');
+
+    this._ssaoPass = new SSAOPass({
+        depthTexture: this._depthTexture
+    });
 }
+
 
 EffectCompositor.prototype.resize = function (width, height, dpr) {
     dpr = dpr || 1;
     var width = width * dpr;
     var height = height * dpr;
-    if (this._sourceTexture.width !== width || this._sourceTexture.height !== height) {
-        this._sourceTexture.width = width;
-        this._sourceTexture.height = height;
-        this._sourceTexture.dirty();
-        this._depthTexture.width = width;
-        this._depthTexture.height = height;
-        this._depthTexture.dirty();
+    var sourceTexture = this._sourceTexture;
+    var depthTexture = this._depthTexture;
+    if (sourceTexture.width !== width || sourceTexture.height !== height) {
+        sourceTexture.width = width;
+        sourceTexture.height = height;
+        sourceTexture.dirty();
+        depthTexture.width = width;
+        depthTexture.height = height;
+        depthTexture.dirty();
     }
 };
 
+/**
+ * Render SSAO after render the scene, before compositing
+ */
+EffectCompositor.prototype.updateSSAO = function (renderer, camera, frame) {
+    this._ssaoPass.update(renderer, camera, frame);
+};
+
+/**
+ * Render SSAO after render the scene, before compositing
+ */
+EffectCompositor.prototype.renderSSAO = function (renderer, camera) {
+    this._ssaoPass.render(renderer, camera);
+};
+
+/**
+ * @return {qtek.FrameBuffer}
+ */
 EffectCompositor.prototype.getSourceFrameBuffer = function () {
     return this._framebuffer;
 };
