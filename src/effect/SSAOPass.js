@@ -51,13 +51,17 @@ function SSAOPass(opt) {
     opt = opt || {};
 
     this._ssaoPass = new Pass({
-        fragment: Shader.source('ecgl.ssao.fragment')
+        fragment: Shader.source('ecgl.ssao.estimate')
     });
     this._blurPass = new Pass({
-        fragment: Shader.source('ecgl.ssao.blur.fragment')
+        fragment: Shader.source('ecgl.ssao.blur')
     });
     this._framebuffer = new FrameBuffer();
     this._ssaoTexture = new Texture2D();
+
+    this._targetTexture = new Texture2D({
+        type: Texture.HALF_FLOAT
+    });
 
     this._depthTexture = opt.depthTexture;
 
@@ -105,25 +109,34 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
     ssaoPass.render(renderer);
     this._framebuffer.unbind(renderer);
-
 };
 
-SSAOPass.prototype.render = function (renderer) {
+SSAOPass.prototype.getTargetTexture = function () {
+    return this._targetTexture;
+}
+
+SSAOPass.prototype.blend = function (renderer, sourceTexture) {
     var blurPass = this._blurPass;
     var width = this._depthTexture.width;
     var height = this._depthTexture.height;
 
-    blurPass.material.blend = function (gl) {
-        gl.blendEquation(gl.FUNC_ADD);
-        gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
-    };
-    blurPass.clearDepth = false;
-    blurPass.blendWithPrevious = true;
-    blurPass.material.depthMask = false;
-    blurPass.material.depthTest = false;
+    var targetTexture = this._targetTexture;
+    if (sourceTexture.width !== targetTexture.width
+        || sourceTexture.height !== targetTexture.height
+    ) {
+        targetTexture.width = sourceTexture.width;
+        targetTexture.height = sourceTexture.height;
+        targetTexture.dirty();
+    }
+    this._framebuffer.attach(targetTexture);
+    this._framebuffer.bind(renderer);
+
     blurPass.setUniform('textureSize', [width, height]);
-    blurPass.setUniform('texture', this._ssaoTexture);
+    blurPass.setUniform('ssaoTexture', this._ssaoTexture);
+    blurPass.setUniform('sourceTexture', sourceTexture);
     blurPass.render(renderer);
+
+    this._framebuffer.unbind(renderer);
 };
 
 SSAOPass.prototype.setParameter = function (name, val) {

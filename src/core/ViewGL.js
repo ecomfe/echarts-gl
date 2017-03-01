@@ -171,9 +171,7 @@ ViewGL.prototype._doRender = function (renderer) {
         frameBuffer.unbind(renderer);
         if (this._enableSSAO) {
             this._compositor.updateSSAO(renderer, this.camera, this._temporalSS.getFrame());
-            frameBuffer.bind(renderer);
-            this._compositor.renderSSAO(renderer);
-            frameBuffer.unbind(renderer);
+            this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
         }
 
         if (this._enableTemporalSS && this._accumulatingId > 0) {
@@ -229,6 +227,7 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     this._compositor.setBloomIntensity(bloomModel.get('intensity'));
 
     this._enableSSAO = ssaoModel.get('enable');
+    this._enableSSAO ? this._compositor.enableSSAO() : this._compositor.disableSSAO();
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {

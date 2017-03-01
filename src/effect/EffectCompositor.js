@@ -41,6 +41,7 @@ function EffectCompositor() {
     var cocNode = this._compositor.getNodeByName('coc');
     cocNode.setParameter('depth', this._depthTexture);
 
+    this._sourceNode = sourceNode;
     this._cocNode = cocNode;
     this._compositeNode = this._compositor.getNodeByName('composite');
     this._fxaaNode = this._compositor.getNodeByName('FXAA');
@@ -77,8 +78,8 @@ EffectCompositor.prototype.updateSSAO = function (renderer, camera, frame) {
 /**
  * Render SSAO after render the scene, before compositing
  */
-EffectCompositor.prototype.renderSSAO = function (renderer, camera) {
-    this._ssaoPass.render(renderer, camera);
+EffectCompositor.prototype.blendSSAO = function (renderer, camera) {
+    this._ssaoPass.blend(renderer, camera);
 };
 
 /**
@@ -86,6 +87,27 @@ EffectCompositor.prototype.renderSSAO = function (renderer, camera) {
  */
 EffectCompositor.prototype.getSourceFrameBuffer = function () {
     return this._framebuffer;
+};
+
+/**
+ * @return {qtek.Texture2D}
+ */
+EffectCompositor.prototype.getSourceTexture = function () {
+    return this._sourceTexture;
+};
+
+/**
+ * Disable ssao effect
+ */
+EffectCompositor.prototype.disableSSAO = function () {
+    this._sourceNode.texture = this._sourceTexture;
+};
+
+/**
+ * Enable ssao effect
+ */
+EffectCompositor.prototype.enableSSAO = function () {
+    this._sourceNode.texture = this._ssaoPass.getTargetTexture();
 };
 
 /**

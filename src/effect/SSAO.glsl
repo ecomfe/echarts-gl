@@ -1,4 +1,4 @@
-@export ecgl.ssao.fragment
+@export ecgl.ssao.estimate
 
 uniform sampler2D depthTex;
 
@@ -50,7 +50,7 @@ vec3 ssaoEstimator(in vec3 originPos) {
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(originPos.z - sampleDepth));
         occlusion += rangeCheck * step(samplePos.z, sampleDepth - bias);
     }
-    occlusion = 1.0 - clamp((occlusion / float(KERNEL_SIZE) - 0.6) * 2.0, 0.0, 1.0);
+    occlusion = 1.0 - clamp((occlusion / float(KERNEL_SIZE) - 0.6) * 2.5, 0.0, 1.0);
     return vec3(pow(occlusion, power));
 }
 
@@ -79,9 +79,10 @@ void main()
 @end
 
 
-@export ecgl.ssao.blur.fragment
+@export ecgl.ssao.blur
 
-uniform sampler2D texture;
+uniform sampler2D ssaoTexture;
+uniform sampler2D sourceTexture;
 
 uniform vec2 textureSize;
 
@@ -92,24 +93,26 @@ void main ()
 
     vec2 texelSize = 1.0 / textureSize;
 
-    vec4 color = vec4(0.0);
+    float ao = float(0.0);
     vec2 hlim = vec2(float(-BLUR_SIZE) * 0.5 + 0.5);
-    vec4 centerColor = texture2D(texture, v_Texcoord);
+    float centerAo = texture2D(ssaoTexture, v_Texcoord).r;
     float weightAll = 0.0;
     float boxWeight = 1.0 / float(BLUR_SIZE) * float(BLUR_SIZE);
     for (int x = 0; x < BLUR_SIZE; x++) {
         for (int y = 0; y < BLUR_SIZE; y++) {
             vec2 coord = (vec2(float(x), float(y)) + hlim) * texelSize + v_Texcoord;
-            vec4 sample = texture2D(texture, coord);
+            float sampleAo = texture2D(ssaoTexture, coord).r;
             // http://stackoverflow.com/questions/6538310/anyone-know-where-i-can-find-a-glsl-implementation-of-a-bilateral-filter-blur
             // PENDING
-            float closeness = 1.0 - distance(sample, centerColor) / sqrt(3.0);
+            float closeness = 1.0 - distance(sampleAo, centerAo) / sqrt(3.0);
             float weight = boxWeight * closeness;
-            color += weight * sample;
+            ao += weight * sampleAo;
             weightAll += weight;
         }
     }
 
-    gl_FragColor = color / weightAll;
+    vec4 color = texture2D(sourceTexture, v_Texcoord);
+    color.rgb *= ao / weightAll;
+    gl_FragColor = color;
 }
 @end
