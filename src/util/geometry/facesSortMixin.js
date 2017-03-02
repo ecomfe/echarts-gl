@@ -25,7 +25,7 @@ module.exports = {
                 this._sortedFaceIndices = this._sortedFaceIndices || new Uint32Array(this.faceCount);
 
                 this._facesTmp = new faces.constructor(faces.length);
-                this._facesZListTmp = new faces.constructor(this.faceCount);
+                this._facesZListTmp = new Float32Array(this.faceCount);
             }
 
             var cursor = 0;

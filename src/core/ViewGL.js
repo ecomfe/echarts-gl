@@ -165,16 +165,19 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
     var scene = this.scene;
     var camera = this.camera;
 
+    scene.update();
+    camera.update();
+
     var v3 = new Vector3();
     var invWorldTransform = new Matrix4();
+    var cameraWorldPosition = camera.getWorldPosition();
     accumFrame = accumFrame || 0;
     // Sort transparent object.
     for (var i = 0; i < scene.transparentQueue.length; i++) {
         var renderable = scene.transparentQueue[i];
         var geometry = renderable.geometry;
         Matrix4.invert(invWorldTransform, renderable.worldTransform);
-        v3.transformMat4(camera.worldTransform);
-        v3.transformMat4(invWorldTransform);
+        Vector3.transformMat4(v3, cameraWorldPosition, invWorldTransform);
         if (geometry.needsSortFaces && geometry.needsSortFaces()) {
             geometry.doSortFaces(v3, accumFrame);
         }
@@ -188,7 +191,7 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
         var frameBuffer = this._compositor.getSourceFrameBuffer();
         frameBuffer.bind(renderer);
         renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
-        renderer.render(scene, camera);
+        renderer.render(scene, camera, true);
         frameBuffer.unbind(renderer);
         if (this._enableSSAO) {
             this._compositor.updateSSAO(renderer, camera, this._temporalSS.getFrame());
@@ -211,7 +214,7 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
             frameBuffer.bind(renderer);
             renderer.saveClear();
             renderer.clearBit = renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT;
-            renderer.render(scene, camera);
+            renderer.render(scene, camera, true);
             renderer.restoreClear();
             frameBuffer.unbind(renderer);
 
@@ -220,7 +223,7 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
         }
         else {
             renderer.setViewport(this.viewport);
-            renderer.render(scene, camera);
+            renderer.render(scene, camera, true);
         }
     }
 
