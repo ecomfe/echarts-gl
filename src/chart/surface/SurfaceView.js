@@ -3,6 +3,10 @@ var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
+function isPointsNaN(pt) {
+    return isNaN(pt[0]) || isNaN(pt[1]) || isNaN(pt[2]);
+}
+
 echarts.extendChartView({
 
     type: 'surface',
@@ -90,7 +94,7 @@ echarts.extendChartView({
     _updateGeometry: function (geometry, seriesModel, dataShape, showWireframe) {
 
         var data = seriesModel.getData();
-        var points = data.getLayout('points');
+        var pointsArr = data.getLayout('points');
 
         var invalidDataCount = 0;
         data.each(function (idx) {
@@ -116,7 +120,7 @@ echarts.extendChartView({
             barycentricAttr.init(vertexCount);
         }
         else {
-            positionAttr.value = new Float32Array(points);
+            positionAttr.value = new Float32Array(pointsArr);
         }
         colorAttr.init(geometry.vertexCount);
 
@@ -159,8 +163,8 @@ echarts.extendChartView({
                 out[2] = arr[idx3 + 2];
                 return out;
             };
-            var vertexNormals = new Float32Array(points.length);
-            var vertexColors = new Float32Array(points.length / 3 * 4);
+            var vertexNormals = new Float32Array(pointsArr.length);
+            var vertexColors = new Float32Array(pointsArr.length / 3 * 4);
 
             for (var i = 0; i < data.count(); i++) {
                 var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
@@ -176,7 +180,7 @@ echarts.extendChartView({
                     getQuadIndices(i, j, quadIndices);
 
                     for (var k = 0; k < 4; k++) {
-                        getFromArray(points, quadIndices[k], pos);
+                        getFromArray(pointsArr, quadIndices[k], pos);
                         positionAttr.set(vertexOffset + k, pos);
                         barycentricAttr.set(vertexOffset + k, quadBarycentric[k]);
                     }
@@ -190,7 +194,11 @@ echarts.extendChartView({
 
                             for (var m = 0; m < 3; m++) {
                                 var idx = quadIndices[quadToTriangle[k3] + m];
-                                getFromArray(points, idx, pts[m]);
+                                getFromArray(pointsArr, idx, pts[m]);
+                            }
+                            // Ignore normal if any point is NaN.
+                            if (isPointsNaN(pts[0]) || isPointsNaN(pts[1]) || isPointsNaN(pts[2])) {
+                                continue;
                             }
 
                             vec3.sub(v21, pts[0], pts[1]);
