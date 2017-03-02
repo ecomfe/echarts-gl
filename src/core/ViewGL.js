@@ -8,6 +8,7 @@ var ShadowMapPass = require('qtek/lib/prePass/ShadowMap');
 var PerspectiveCamera = require('qtek/lib/camera/Perspective');
 var OrthographicCamera = require('qtek/lib/camera/Orthographic');
 var Matrix4 = require('qtek/lib/math/Matrix4');
+var Vector3 = require('qtek/lib/math/Vector3');
 
 var EffectCompositor = require('../effect/EffectCompositor');
 var TemporalSuperSampling = require('../effect/TemporalSuperSampling');
@@ -164,16 +165,18 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
     var scene = this.scene;
     var camera = this.camera;
 
-    var worldViewMatrix = new Matrix4();
+    var v3 = new Vector3();
+    var invWorldTransform = new Matrix4();
     accumFrame = accumFrame || 0;
     // Sort transparent object.
     for (var i = 0; i < scene.transparentQueue.length; i++) {
         var renderable = scene.transparentQueue[i];
         var geometry = renderable.geometry;
-        Matrix4.copy(worldViewMatrix, renderable.worldTransform);
-        Matrix4.multiply(worldViewMatrix, camera.viewMatrix, worldViewMatrix);
+        Matrix4.invert(invWorldTransform, renderable.worldTransform);
+        v3.transformMat4(camera.worldTransform);
+        v3.transformMat4(invWorldTransform);
         if (geometry.needsSortFaces && geometry.needsSortFaces()) {
-            geometry.doSortFaces(worldViewMatrix, accumFrame);
+            geometry.doSortFaces(v3, accumFrame);
         }
     }
 

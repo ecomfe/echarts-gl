@@ -13,12 +13,12 @@ module.exports = {
         return this.faces;
     },
 
-    doSortFaces: function (worldViewMatrix, frame) {
+    doSortFaces: function (cameraPos, frame) {
         var faces = this.faces;
         // Do progressive quick sort.
         if (frame === 0) {
             var posAttr = this.attributes.position;
-            var mat = worldViewMatrix._array;
+            var cameraPos = cameraPos._array;
 
             if (!this._faceZList || this._faceZList.length !== this.faceCount) {
                 this._faceZList = this._faceZList || new Float32Array(this.faceCount);
@@ -39,9 +39,8 @@ module.exports = {
                 cp[1] = (p0[1] + p1[1] + p2[1]) / 3;
                 cp[2] = (p0[2] + p1[2] + p2[2]) / 3;
 
-                vec3.transformMat4(cp, cp, mat);
-                // Convert to positive
-                this._faceZList[cursor++] = -cp[2];
+                // Camera position is in object space
+                this._faceZList[cursor++] = vec3.sqrDist(cp, cameraPos);
             }
         }
 
