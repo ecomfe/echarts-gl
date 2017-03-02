@@ -23,13 +23,19 @@ module.exports = echarts.extendChartView({
             geometry: new BarsGeometry({
                 dynamic: true
             }),
-            ignorePicking: true
+            ignorePicking: true,
+
+            // Render after axes
+            renderOrder: 10
         });
         var barMeshTransparent = new graphicGL.Mesh({
             geometry: new BarsGeometry({
                 dynamic: true
             }),
-            ignorePicking: true
+            ignorePicking: true,
+
+            // Render after axes
+            renderOrder: 10
         });
 
         this.groupGL.add(barMesh);

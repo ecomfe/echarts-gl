@@ -1,5 +1,6 @@
 var timsort = require('zrender/lib/core/timsort');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var ProgressiveQuickSort = require('../ProgressiveQuickSort');
 
 var p0 = vec3.create();
 var p1 = vec3.create();
@@ -9,23 +10,23 @@ var cp = vec3.create();
 module.exports = {
 
     needsSortFaces: function () {
-        return this.faces && this.faceCount < 1e5;
+        return this.faces;
     },
 
     doSortFaces: function (worldViewMatrix, frame) {
+        var faces = this.faces;
         // Do progressive quick sort.
         if (frame === 0) {
             var posAttr = this.attributes.position;
             var mat = worldViewMatrix._array;
-            var faces = this.faces;
+
             if (!this._faceZList || this._faceZList.length !== this.faceCount) {
                 this._faceZList = this._faceZList || new Float32Array(this.faceCount);
                 this._sortedFaceIndices = this._sortedFaceIndices || new Uint32Array(this.faceCount);
 
                 this._facesTmp = new faces.constructor(faces.length);
+                this._facesZListTmp = new faces.constructor(this.faceCount);
             }
-            var faceZList = this._faceZList;
-            var targetFaces = this._facesTmp;
 
             var cursor = 0;
             for (var i = 0; i < faces.length;) {
@@ -39,31 +40,67 @@ module.exports = {
 
                 vec3.transformMat4(cp, cp, mat);
                 // Convert to positive
-                faceZList[cursor++] = -cp[2];
+                this._faceZList[cursor++] = -cp[2];
             }
-
-            var sortedFaceIndices = this._sortedFaceIndices;
-            for (var i = 0; i < sortedFaceIndices.length; i++) {
-                sortedFaceIndices[i] = i;
-            }
-            timsort(sortedFaceIndices, function (a, b) {
-                // Sort from far to near. which is descending order
-                return faceZList[b] - faceZList[a];
-            });
-
-            for (var i = 0; i < this.faceCount; i++) {
-                var fromIdx3 = sortedFaceIndices[i] * 3;
-                var toIdx3 = i * 3;
-                targetFaces[toIdx3++] = faces[fromIdx3++];
-                targetFaces[toIdx3++] = faces[fromIdx3++];
-                targetFaces[toIdx3] = faces[fromIdx3];
-            }
-            // Swap faces.
-            var tmp = this._facesTmp;
-            this._facesTmp = this.faces;
-            this.faces = tmp;
-
-            this.dirtyFaces();
         }
+
+
+        var sortedFaceIndices = this._sortedFaceIndices;
+        for (var i = 0; i < sortedFaceIndices.length; i++) {
+            sortedFaceIndices[i] = i;
+        }
+
+        if (this.faceCount < 5e4) {
+            // Use simple timsort for simple geometries.
+            if (frame === 0) {
+                this._simpleTimSort();
+            }
+        }
+        else {
+            for (var i = 0; i < 4; i++) {
+                this._progressiveQuickSort(frame * 4 + i);
+            }
+        }
+
+        var targetFaces = this._facesTmp;
+        var targetFacesZList = this._facesZListTmp;
+        var faceZList = this._faceZList;
+        for (var i = 0; i < this.faceCount; i++) {
+            var fromIdx3 = sortedFaceIndices[i] * 3;
+            var toIdx3 = i * 3;
+            targetFaces[toIdx3++] = faces[fromIdx3++];
+            targetFaces[toIdx3++] = faces[fromIdx3++];
+            targetFaces[toIdx3] = faces[fromIdx3];
+
+            targetFacesZList[i] = faceZList[sortedFaceIndices[i]];
+        }
+        // Swap faces.
+        var tmp = this._facesTmp;
+        this._facesTmp = this.faces;
+        this.faces = tmp;
+        var tmp = this._facesZListTmp;
+        this._facesZListTmp = this._faceZList;
+        this._faceZList = tmp;
+
+        this.dirtyFaces();
+    },
+
+    _simpleTimSort: function () {
+        var faceZList = this._faceZList;
+        timsort(this._sortedFaceIndices, function (a, b) {
+            // Sort from far to near. which is descending order
+            return faceZList[b] - faceZList[a];
+        });
+    },
+
+    _progressiveQuickSort: function (frame) {
+        var faceZList = this._faceZList;
+        var sortedFaceIndices = this._sortedFaceIndices;
+
+        this._quickSort = this._quickSort || new ProgressiveQuickSort();
+
+        this._quickSort.step(sortedFaceIndices, function (a, b) {
+            return faceZList[b] - faceZList[a];
+        }, frame);
     }
 };

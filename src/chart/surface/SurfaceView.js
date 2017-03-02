@@ -34,7 +34,10 @@ echarts.extendChartView({
                 dynamic: true
             }),
             material: materials.lambert,
-            culling: false
+            culling: false,
+
+            // Render after axes
+            renderOrder: 10
         });
         mesh.geometry.createAttribute('barycentric', 'float', 4, null),
 
@@ -180,8 +183,8 @@ echarts.extendChartView({
                 if (rgbaArr[3] < 0.99) {
                     isTransparent = true;
                 }
-                for (var k = 0; k < 4; k++) {
-                    vertexColors[i * 4 + k] = rgbaArr[k];
+                for (var k = 0; k < 3; k++) {
+                    vertexColors[i * 3 + k] = rgbaArr[k];
                 }
             }
             var farPoints = [1e7, 1e7, 1e7];
