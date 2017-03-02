@@ -1,7 +1,7 @@
 var sort = new (require('../../src/util/ProgressiveQuickSort'))();
 
 var arr = [];
-for (var i = 0; i < 100000; i++) {
+for (var i = 0; i < 1000000; i++) {
     arr[i] = Math.random();
 }
 
@@ -23,5 +23,6 @@ while (!sort.step(arr, compare, idx)) {
 for (var i = 1; i < arr.length; i++) {
     if (arr[i - 1] > arr[i]) {
         console.log(i, arr[i - 1], arr[i]);
+        break;
     }
 }

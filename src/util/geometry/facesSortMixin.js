@@ -1,4 +1,3 @@
-var timsort = require('zrender/lib/core/timsort');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 var ProgressiveQuickSort = require('../ProgressiveQuickSort');
 
@@ -50,10 +49,10 @@ module.exports = {
             sortedFaceIndices[i] = i;
         }
 
-        if (this.faceCount < 5e4) {
+        if (this.faceCount < 2e4) {
             // Use simple timsort for simple geometries.
             if (frame === 0) {
-                this._simpleTimSort();
+                this._simpleSort();
             }
         }
         else {
@@ -86,9 +85,9 @@ module.exports = {
         this.dirtyFaces();
     },
 
-    _simpleTimSort: function () {
+    _simpleSort: function () {
         var faceZList = this._faceZList;
-        timsort(this._sortedFaceIndices, function (a, b) {
+        this._sortedFaceIndices.sort(function (a, b) {
             // Sort from far to near. which is descending order
             return faceZList[b] - faceZList[a];
         });
