@@ -178,10 +178,10 @@ EffectCompositor.prototype.setSSAOQuality = function (value) {
             kernelSize = 16;
             break;
         case 'high':
-            kernelSize = 32;
+            kernelSize = 64;
             break;
         case 'ultra':
-            kernelSize = 64;
+            kernelSize = 128;
             break;
     }
     this._ssaoPass.setParameter('kernelSize', kernelSize);

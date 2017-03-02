@@ -14,7 +14,7 @@ module.exports = {
 
             SSAO: {
                 enable: false,
-                radius: 1.5,
+                radius: 1,
                 // low, medium, high, ultra
                 quality: 'medium',
                 intensity: 1
