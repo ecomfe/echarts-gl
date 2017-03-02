@@ -177,14 +177,16 @@ echarts.extendChartView({
             var vertexColors = new Float32Array(pointsArr.length / 3 * 4);
 
             for (var i = 0; i < data.count(); i++) {
-                var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
-                var opacity = data.getItemVisual(i, 'opacity');
-                rgbaArr[3] *= opacity;
-                if (rgbaArr[3] < 0.99) {
-                    isTransparent = true;
-                }
-                for (var k = 0; k < 3; k++) {
-                    vertexColors[i * 3 + k] = rgbaArr[k];
+                if (data.hasValue(i)) {
+                    var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
+                    var opacity = data.getItemVisual(i, 'opacity');
+                    rgbaArr[3] *= opacity;
+                    if (rgbaArr[3] < 0.99) {
+                        isTransparent = true;
+                    }
+                    for (var k = 0; k < 4; k++) {
+                        vertexColors[i * 4 + k] = rgbaArr[k];
+                    }
                 }
             }
             var farPoints = [1e7, 1e7, 1e7];
