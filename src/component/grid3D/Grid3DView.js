@@ -4,7 +4,7 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var OrbitControl = require('../../util/OrbitControl');
 var Lines3DGeometry = require('../../util/geometry/Lines3D');
-var PlanesGeometry = require('../../util/geometry/Planes');
+var QuadsGeometry = require('../../util/geometry/Quads');
 var retrieve = require('../../util/retrieve');
 var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
 var LabelsMesh = require('../../util/mesh/LabelsMesh');
@@ -81,14 +81,20 @@ module.exports = echarts.extendComponentView({
 
     init: function (ecModel, api) {
 
+        var quadsMaterial = new graphicGL.Material({
+            // transparent: true,
+            shader: graphicGL.createShader('ecgl.color'),
+            depthMask: false,
+            transparent: true
+        });
         var linesMaterial = new graphicGL.Material({
             // transparent: true,
-            shader: graphicGL.createShader('ecgl.meshLines3D')
+            shader: graphicGL.createShader('ecgl.meshLines3D'),
+            depthMask: false,
+            transparent: true
         });
-        var planeMaterial = new graphicGL.Material({
-            // transparent: true,
-            shader: graphicGL.createShader('ecgl.color')
-        });
+        quadsMaterial.shader.define('fragment', 'DOUBLE_SIDE');
+        quadsMaterial.shader.define('both', 'VERTEX_COLOR');
 
         this.groupGL = new graphicGL.Node();
 
@@ -97,6 +103,7 @@ module.exports = echarts.extendComponentView({
         });
         this._control.init();
 
+        // Save mesh and other infos for each face.
         this._faces = [
             // dim0, dim1, plane on the cube
             ['y', 'z', 'nx'],
@@ -114,24 +121,31 @@ module.exports = echarts.extendComponentView({
                     dynamic: true
                 }),
                 material: linesMaterial,
-                ignorePicking: true
+                ignorePicking: true,
+                renderOrder: 1
             });
-            var planesMesh = new graphicGL.Mesh({
-                geometry: new PlanesGeometry(),
-                material: planeMaterial
+            var quadsMesh = new graphicGL.Mesh({
+                geometry: new QuadsGeometry(),
+                material: quadsMaterial,
+                culling: false,
+                ignorePicking: true,
+                renderOrder: 0
             });
+            // Quads are behind lines.
+            node.add(quadsMesh);
+
             node.add(linesMesh);
-            node.add(planesMesh);
 
             return {
                 node: node,
                 linesMesh: linesMesh,
-                planesMesh: planesMesh,
+                quadsMesh: quadsMesh,
 
                 dims: dimInfo
             };
         }, this);
 
+        // Save mesh and other infos for each axis.
         this._axes = dims.map(function (dim) {
             var linesMesh = new graphicGL.Mesh({
                 geometry: new Lines3DGeometry({
@@ -139,7 +153,8 @@ module.exports = echarts.extendComponentView({
                     dynamic: true
                 }),
                 material: linesMaterial,
-                ignorePicking: true
+                ignorePicking: true,
+                renderOrder: 2
             });
             var axisLabelsMesh = new LabelsMesh();
             axisLabelsMesh.material.depthMask = false;
@@ -159,8 +174,9 @@ module.exports = echarts.extendComponentView({
             };
         }, this);
 
-        this._textureSurface = new ZRTextureAtlasSurface(512, 512, api.getDevicePixelRatio());
-        this._textureSurface.onupdate = function () {
+        // Texture surface for label.
+        this._labelTextureSurface = new ZRTextureAtlasSurface(512, 512, api.getDevicePixelRatio());
+        this._labelTextureSurface.onupdate = function () {
             api.getZr().refresh();
         };
 
@@ -184,7 +200,7 @@ module.exports = echarts.extendComponentView({
         var viewControlModel = grid3DModel.getModel('viewControl');
         control.setFromViewControlModel(viewControlModel, 0);
 
-        this._textureSurface.clear();
+        this._labelTextureSurface.clear();
 
         this._faces.forEach(function (faceInfo) {
             this._renderFace(faceInfo, grid3DModel, ecModel, api);
@@ -317,21 +333,11 @@ module.exports = echarts.extendComponentView({
             var verticalAlign;
             if (Math.abs(dy / dx) < 0.5) {
                 textAlign = 'center';
-                if (cy > center.y) {
-                    verticalAlign = 'bottom';
-                }
-                else {
-                    verticalAlign = 'top';
-                }
+                verticalAlign = cy > center.y ? 'bottom' : 'top';
             }
             else {
                 verticalAlign = 'middle';
-                if (cx > center.x) {
-                    textAlign = 'left';
-                }
-                else {
-                    textAlign = 'right';
-                }
+                textAlign = cx > center.x ? 'left' : 'right';
             }
 
             // axis labels
@@ -358,10 +364,14 @@ module.exports = echarts.extendComponentView({
             cartesian.getAxis(faceInfo.dims[1])
         ];
         var lineGeometry = faceInfo.linesMesh.geometry;
+        var quadsGeometry = faceInfo.quadsMesh.geometry;
 
         lineGeometry.convertToDynamicArray(true);
+        quadsGeometry.convertToDynamicArray(true);
         this._renderSplitLines(lineGeometry, axes, grid3DModel, api);
+        this._renderSplitAreas(quadsGeometry, axes, grid3DModel, api);
         lineGeometry.convertToTypedArray();
+        quadsGeometry.convertToTypedArray();
     },
 
     _renderAxisLine: function (axisInfo, axis, grid3DModel, api) {
@@ -461,7 +471,7 @@ module.exports = echarts.extendComponentView({
                         textAlign: 'left'
                     }
                 });
-                var coords = this._textureSurface.add(textEl);
+                var coords = this._labelTextureSurface.add(textEl);
                 var rect = textEl.getBoundingRect();
                 labelsGeo.addSprite(p, [rect.width * dpr, rect.height * dpr], coords);
 
@@ -490,7 +500,7 @@ module.exports = echarts.extendComponentView({
                     textAlign: 'left'
                 }
             });
-            var coords = this._textureSurface.add(textEl);
+            var coords = this._labelTextureSurface.add(textEl);
             var rect = textEl.getBoundingRect();
             labelsGeo.addSprite(p, [rect.width * dpr, rect.height * dpr], coords);
 
@@ -498,7 +508,7 @@ module.exports = echarts.extendComponentView({
             axisInfo.nameLabelElement = textEl;
         }
 
-        axisInfo.labelsMesh.material.set('textureAtlas', this._textureSurface.getTexture());
+        axisInfo.labelsMesh.material.set('textureAtlas', this._labelTextureSurface.getTexture());
 
         linesGeo.convertToTypedArray();
         labelsGeo.convertToTypedArray();
@@ -551,8 +561,62 @@ module.exports = echarts.extendComponentView({
         });
     },
 
-    _renderSplitAreas: function () {
+    _renderSplitAreas: function (geometry, axes, grid3DModel, api) {
+        var dpr = api.getDevicePixelRatio();
+        axes.forEach(function (axis, idx) {
+            var axisModel = axis.model;
+            var otherExtent = axes[1 - idx].getExtent();
 
+            if (axis.scale.isBlank()) {
+                return;
+            }
+
+            // Render splitAreas
+            if (axisModel.get('splitArea.show')) {
+                var splitAreaModel = axisModel.getModel('splitArea');
+                var areaStyleModel = splitAreaModel.getModel('areaStyle');
+                var colors = areaStyleModel.get('color');
+                var opacity = retrieve.firstNotNull(areaStyleModel.get('opacity'), 1.0);
+                // TODO Automatic interval
+                var intervalFunc = splitAreaModel.get('interval') || axisModel.get('axisLabel.interval');
+                colors = echarts.util.isArray(colors) ? colors : [colors];
+
+                var ticksCoords = axis.getTicksCoords();
+
+                var count = 0;
+                var prevP0 = [0, 0, 0];
+                var prevP1 = [0, 0, 0];
+                // 0 - x, 1 - y
+                for (var i = 0; i < ticksCoords.length; i++) {
+                    var tickCoord = ticksCoords[i];
+
+                    var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
+                    // 0 - x, 1 - y
+                    p0[idx] = p1[idx] = tickCoord;
+                    p0[1 - idx] = otherExtent[0];
+                    p1[1 - idx] = otherExtent[1];
+
+                    if (i === 0) {
+                        prevP0 = p0;
+                        prevP1 = p1;
+                        continue;
+                    }
+
+                    if (ifIgnoreOnTick(axis, i, intervalFunc)) {
+                        continue;
+                    }
+
+                    var color = graphicGL.parseColor(colors[count % colors.length]);
+                    color[3] *= opacity;
+                    geometry.addQuad([prevP0, p0, p1, prevP1], color);
+
+                    prevP0 = p0;
+                    prevP1 = p1;
+
+                    count++;
+                }
+            }
+        });
     },
 
     dispose: function () {
