@@ -72,8 +72,6 @@ echarts.extendChartView({
             this._surfaceMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
-        var geometry = this._surfaceMesh.geometry;
-
         var isParametric = seriesModel.get('parametric');
 
         var dataShape = this._getDataShape(data, isParametric);
@@ -81,7 +79,7 @@ echarts.extendChartView({
         var wireframeModel = seriesModel.getModel('wireframe');
         var wireframeLineWidth = wireframeModel.get('lineWidth');
         var showWireframe = wireframeModel.get('show') && wireframeLineWidth > 0;
-        this._updateGeometry(geometry, seriesModel, dataShape, showWireframe);
+        this._updateSurfaceMesh(this._surfaceMesh, seriesModel, dataShape, showWireframe);
 
         var material = this._surfaceMesh.material;
         if (showWireframe) {
@@ -94,8 +92,9 @@ echarts.extendChartView({
         }
     },
 
-    _updateGeometry: function (geometry, seriesModel, dataShape, showWireframe) {
+    _updateSurfaceMesh: function (surfaceMesh, seriesModel, dataShape, showWireframe) {
 
+        var geometry = surfaceMesh.geometry;
         var data = seriesModel.getData();
         var pointsArr = data.getLayout('points');
 
@@ -148,6 +147,9 @@ echarts.extendChartView({
             out[3] = (i + 1) * column + j + 1;
             out[2] = (i + 1) * column + j;
         };
+
+        var isTransparent = false;
+
         if (needsSplitQuad) {
             var quadIndices = [];
             var pos = [];
@@ -173,6 +175,11 @@ echarts.extendChartView({
 
             for (var i = 0; i < data.count(); i++) {
                 var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
+                var opacity = data.getItemVisual(i, 'opacity');
+                rgbaArr[3] *= opacity;
+                if (rgbaArr[3] < 0.99) {
+                    isTransparent = true;
+                }
                 for (var k = 0; k < 4; k++) {
                     vertexColors[i * 4 + k] = rgbaArr[k];
                 }
@@ -265,8 +272,12 @@ echarts.extendChartView({
         }
         else {
             for (var i = 0; i < data.count(); i++) {
-                // TODO Opacity
                 var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
+                var opacity = data.getItemVisual(i, 'opacity');
+                rgbaArr[3] *= opacity;
+                if (rgbaArr[3] < 0.99) {
+                    isTransparent = true;
+                }
                 colorAttr.set(i, rgbaArr);
             }
             var quadIndices = [];
@@ -289,6 +300,9 @@ echarts.extendChartView({
 
         geometry.updateBoundingBox();
         geometry.dirty();
+
+        surfaceMesh.material.transparent = isTransparent;
+        surfaceMesh.material.depthMask = !isTransparent;
     },
 
     _getDataShape: function (data, isParametric) {
