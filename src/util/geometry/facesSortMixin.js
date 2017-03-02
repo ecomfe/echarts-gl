@@ -9,7 +9,7 @@ var cp = vec3.create();
 module.exports = {
 
     needsSortFaces: function () {
-        return this.faces;
+        return this.faces && this.sortFace;
     },
 
     doSortFaces: function (cameraPos, frame) {

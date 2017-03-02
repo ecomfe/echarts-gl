@@ -30,7 +30,8 @@ module.exports = echarts.extendChartView({
         });
         var barMeshTransparent = new graphicGL.Mesh({
             geometry: new BarsGeometry({
-                dynamic: true
+                dynamic: true,
+                sortFace: true
             }),
             ignorePicking: true,
 

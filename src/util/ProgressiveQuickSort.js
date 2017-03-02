@@ -107,7 +107,8 @@ ProgressiveQuickSort.prototype.step = function (arr, compare, frame) {
         // console.time('sort');
         // Finally quick sort each parts in 10 frames.
         for (var i = 0; i < Math.floor(parts.length / 10); i++) {
-            var idx = this._currentSortPartIdx;
+            // Sort near parts first.
+            var idx = parts.length - 1 - this._currentSortPartIdx;
             quickSort(arr, compare, parts[idx].left, parts[idx].right);
             this._currentSortPartIdx++;
 

@@ -63,35 +63,47 @@
                 series: [{
                     type: 'surface',
                     parametric: true,
-                    shading: 'color',
+                    shading: 'lambert',
                     wireframe: {
                         show: false
                     },
                     areaStyle: {
                         normal: {
-                            opacity: 0.9
+                            opacity: 0.5
                         }
                     },
                     // shading: 'albedo',
                     parametricSurfaceEquation: {
                         u: {
-                            min: -PI,
-                            max: PI,
-                            step: PI / 200
+                            min: -13.2,
+                            max: 13.2,
+                            step: 0.2
                         },
                         v: {
-                            min: -15,
-                            max: 6,
-                            step: 0.1
+                            min: -37.4,
+                            max: 37.4,
+                            step: 0.2
                         },
                         x: function (u, v) {
-                            return pow(1.16, v) * cos(v) * (1 + cos(u));
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return -u + (2 * r * cosh(aa * u) * sinh(aa * u) / denom);
                         },
                         y: function (u, v) {
-                            return -pow(1.16, v) * sin(v) * (1 + cos(u));
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return 2 * w * cosh(aa * u) * (-(w * cos(v) * cos(w * v)) - (sin(v) * sin(w * v))) / denom;
                         },
                         z: function (u, v) {
-                            return -2 * pow(1.16, v) * (1 + sin(u));
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return  2 * w * cosh(aa * u) * (-(w * sin(v) * cos(w * v)) + (cos(v) * sin(w * v))) / denom
                         }
                     }
                 }]

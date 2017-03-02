@@ -31,7 +31,8 @@ echarts.extendChartView({
 
         var mesh = new graphicGL.Mesh({
             geometry: new graphicGL.Geometry({
-                dynamic: true
+                dynamic: true,
+                sortFace: true
             }),
             material: materials.lambert,
             culling: false,
