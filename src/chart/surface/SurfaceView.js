@@ -92,6 +92,14 @@ echarts.extendChartView({
         var data = seriesModel.getData();
         var points = data.getLayout('points');
 
+        var invalidDataCount = 0;
+        data.each(function (idx) {
+            if (!data.hasValue(idx)) {
+                invalidDataCount++;
+            }
+        });
+        var needsSplitQuad = invalidDataCount || showWireframe;
+
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
         var barycentricAttr = geometry.attributes.barycentric;
@@ -101,7 +109,8 @@ echarts.extendChartView({
         var shading = seriesModel.get('shading');
         var needsNormal = shading !== 'color';
 
-        if (showWireframe) {
+        if (needsSplitQuad) {
+            // TODO, If needs remove the invalid points, or set color transparent.
             var vertexCount = (row - 1) * (column - 1) * 4;
             positionAttr.init(vertexCount);
             barycentricAttr.init(vertexCount);
@@ -130,7 +139,7 @@ echarts.extendChartView({
             out[3] = (i + 1) * column + j + 1;
             out[2] = (i + 1) * column + j;
         };
-        if (showWireframe) {
+        if (needsSplitQuad) {
             var quadIndices = [];
             var pos = [];
             var faceOffset = 0;

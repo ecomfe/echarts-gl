@@ -60,6 +60,9 @@
                             step: 0.05
                         },
                         z: function (x, y) {
+                            if (Math.abs(x) < 0.1 && Math.abs(y) < 0.1) {
+                                return '-';
+                            }
                             return Math.sin(x * Math.PI) * Math.sin(y * Math.PI);
                         }
                     }

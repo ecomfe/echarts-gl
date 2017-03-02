@@ -51,15 +51,15 @@ module.exports = echarts.extendComponentView({
 
         control.off('update');
         control.on('update', function () {
-                api.dispatchAction({
-                    type: 'geo3DChangeView',
-                    alpha: control.getAlpha(),
-                    beta: control.getBeta(),
-                    distance: control.getDistance(),
-                    from: this.uid,
-                    geo3DId: geo3DModel.id
-                });
+            api.dispatchAction({
+                type: 'geo3DChangeView',
+                alpha: control.getAlpha(),
+                beta: control.getBeta(),
+                distance: control.getDistance(),
+                from: this.uid,
+                geo3DId: geo3DModel.id
             });
+        });
     },
 
     afterRender: function (geo3DModel, ecModel, api, layerGL) {

@@ -551,6 +551,10 @@ module.exports = echarts.extendComponentView({
         });
     },
 
+    _renderSplitAreas: function () {
+
+    },
+
     dispose: function () {
         this.groupGL.removeAll();
     }
