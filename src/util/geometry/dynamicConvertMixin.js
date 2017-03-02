@@ -12,11 +12,11 @@ module.exports = {
                 attributes[name].value = Array.prototype.slice.call(attributes[name].value);
             }
         }
-        if (clear || !this.faces) {
-            this.faces = [];
+        if (clear || !this.indices) {
+            this.indices = [];
         }
         else {
-            this.faces = Array.prototype.slice.call(this.faces);
+            this.indices = Array.prototype.slice.call(this.indices);
         }
     },
 
@@ -30,8 +30,8 @@ module.exports = {
                 attributes[name].value = null;
             }
         }
-        if (this.faces && this.faces.length > 0) {
-            this.faces = this.vertexCount > 0xffff ? new Uint32Array(this.faces) : new Uint16Array(this.faces);
+        if (this.indices && this.indices.length > 0) {
+            this.indices = this.vertexCount > 0xffff ? new Uint32Array(this.indices) : new Uint16Array(this.indices);
         }
     }
 };

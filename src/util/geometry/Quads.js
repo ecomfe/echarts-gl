@@ -54,8 +54,8 @@ var QuadsGeometry = StaticGeometry.extend(function () {
             attributes.normal.init(vertexCount);
             attributes.color.init(vertexCount);
         }
-        if (this.faceCount !== faceCount) {
-            this.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
+        if (this.triangleCount !== faceCount) {
+            this.indices = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
         }
     },
 
@@ -94,7 +94,7 @@ var QuadsGeometry = StaticGeometry.extend(function () {
             }
             var idx = this._faceOffset * 3;
             for (var i = 0; i < 6; i++) {
-                this.faces[idx + i] = indices[i] + this._vertexOffset;
+                this.indices[idx + i] = indices[i] + this._vertexOffset;
             }
             this._vertexOffset += 4;
             this._faceOffset += 2;

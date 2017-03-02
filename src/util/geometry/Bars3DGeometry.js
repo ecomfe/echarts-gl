@@ -7,7 +7,7 @@
 
 var echarts = require('echarts/lib/echarts');
 var dynamicConvertMixin = require('./dynamicConvertMixin');
-var facesSortMixin = require('./facesSortMixin');
+var trianglesSortMixin = require('./trianglesSortMixin');
 var StaticGeometry = require('qtek/lib/StaticGeometry');
 
 var glMatrix = require('qtek/lib/dep/glmatrix');
@@ -65,8 +65,8 @@ var BarsGeometry = StaticGeometry.extend(function () {
             this.attributes.color.init(vertexCount);
         }
 
-        if (this.faceCount !== faceCount) {
-            this.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
+        if (this.triangleCount !== faceCount) {
+            this.indices = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
         }
     },
 
@@ -195,7 +195,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
                 for (var i = 0; i < cubeFaces4.length; i++) {
                     var idx3 = this._faceOffset * 3;
                     for (var k = 0; k < 6; k++) {
-                        this.faces[idx3++] = vertexOffset + face4To3[k];
+                        this.indices[idx3++] = vertexOffset + face4To3[k];
                     }
                     vertexOffset += 4;
                     this._faceOffset += 2;
@@ -215,7 +215,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
                 for (var i = 0; i < cubeFaces3.length; i++) {
                     var idx3 = this._faceOffset * 3;
                     for (var k = 0; k < 3; k++) {
-                        this.faces[idx3 + k] = cubeFaces3[i][k] + this._vertexOffset;
+                        this.indices[idx3 + k] = cubeFaces3[i][k] + this._vertexOffset;
                     }
                     this._faceOffset++;
                 }
@@ -331,16 +331,16 @@ var BarsGeometry = StaticGeometry.extend(function () {
                     var i4 = (j + 1) * len + (i + 1) % len + this._vertexOffset;
                     var i3 = (j + 1) * len + i + this._vertexOffset;
 
-                    this.setFace(this._faceOffset++, [i4, i2, i1]);
-                    this.setFace(this._faceOffset++, [i4, i3, i2]);
+                    this.setTriangleIndices(this._faceOffset++, [i4, i2, i1]);
+                    this.setTriangleIndices(this._faceOffset++, [i4, i3, i2]);
                 }
             }
 
             // Close top and bottom
-            this.setFace(this._faceOffset++, [endIndices[0][0], endIndices[0][2], endIndices[0][1]]);
-            this.setFace(this._faceOffset++, [endIndices[0][0], endIndices[0][3], endIndices[0][2]]);
-            this.setFace(this._faceOffset++, [endIndices[1][0], endIndices[1][1], endIndices[1][2]]);
-            this.setFace(this._faceOffset++, [endIndices[1][0], endIndices[1][2], endIndices[1][3]]);
+            this.setTriangleIndices(this._faceOffset++, [endIndices[0][0], endIndices[0][2], endIndices[0][1]]);
+            this.setTriangleIndices(this._faceOffset++, [endIndices[0][0], endIndices[0][3], endIndices[0][2]]);
+            this.setTriangleIndices(this._faceOffset++, [endIndices[1][0], endIndices[1][1], endIndices[1][2]]);
+            this.setTriangleIndices(this._faceOffset++, [endIndices[1][0], endIndices[1][2], endIndices[1][3]]);
 
             this._vertexOffset = vertexOffset;
         };
@@ -348,6 +348,6 @@ var BarsGeometry = StaticGeometry.extend(function () {
 });
 
 echarts.util.defaults(BarsGeometry.prototype, dynamicConvertMixin);
-echarts.util.defaults(BarsGeometry.prototype, facesSortMixin);
+echarts.util.defaults(BarsGeometry.prototype, trianglesSortMixin);
 
 module.exports = BarsGeometry;

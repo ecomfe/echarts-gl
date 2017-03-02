@@ -37,8 +37,8 @@ var SpritesGeometry = StaticGeometry.extend(function () {
             this.attributes.offset.init(vertexCount);
             this.attributes.color.init(vertexCount);
         }
-        if (this.faceCount !== faceCount) {
-            this.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
+        if (this.triangleCount !== faceCount) {
+            this.indices = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
         }
     },
 
@@ -115,7 +115,7 @@ var SpritesGeometry = StaticGeometry.extend(function () {
         this.setSpriteAlign(vertexOffset / 4, size, align, verticalAlign);
 
         for (var i = 0; i < squareFaces.length; i++) {
-            this.faces[this._faceOffset * 3 + i] = squareFaces[i] + vertexOffset;
+            this.indices[this._faceOffset * 3 + i] = squareFaces[i] + vertexOffset;
         }
         this._faceOffset += 2;
 

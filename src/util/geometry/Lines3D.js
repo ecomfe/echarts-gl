@@ -66,13 +66,13 @@ var LinesGeometry = StaticGeometry.extend(function () {
             }
 
             if (nVertex > 0xffff) {
-                if (this.faces instanceof Uint16Array) {
-                    this.faces = new Uint32Array(this.faces);
+                if (this.indices instanceof Uint16Array) {
+                    this.indices = new Uint32Array(this.indices);
                 }
             }
             else {
-                if (this.faces instanceof Uint32Array) {
-                    this.faces = new Uint16Array(this.faces);
+                if (this.indices instanceof Uint32Array) {
+                    this.indices = new Uint16Array(this.indices);
                 }
             }
         }
@@ -82,12 +82,12 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @param {number} nFace
      */
     setFaceCount: function (nFace) {
-        if (this.faceCount !== nFace) {
+        if (this.triangleCount !== nFace) {
             if (nFace === 0) {
-                this.faces = null;
+                this.indices = null;
             }
             else {
-                this.faces = this.vertexCount > 0xffff ? new Uint32Array(nFace * 3) : new Uint16Array(nFace * 3);
+                this.indices = this.vertexCount > 0xffff ? new Uint32Array(nFace * 3) : new Uint16Array(nFace * 3);
             }
         }
     },
@@ -268,7 +268,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         var positionNextAttr = this.attributes.positionNext;
         var colorAttr = this.attributes.color;
         var offsetAttr = this.attributes.offset;
-        var faces = this.faces;
+        var indices = this.indices;
 
         if (lineWidth == null) {
             lineWidth = 1;
@@ -326,17 +326,17 @@ var LinesGeometry = StaticGeometry.extend(function () {
             if (!this.useNativeLine) {
                 if (k > 0) {
                     var idx3 = this._faceOffset * 3;
-                    var faces = this.faces;
+                    var indices = this.indices;
                     // 0-----2
                     // 1-----3
                     // 0->1->2, 1->3->2
-                    faces[idx3] = vertexOffset - 4;
-                    faces[idx3 + 1] = vertexOffset - 3;
-                    faces[idx3 + 2] = vertexOffset - 2;
+                    indices[idx3] = vertexOffset - 4;
+                    indices[idx3 + 1] = vertexOffset - 3;
+                    indices[idx3 + 2] = vertexOffset - 2;
 
-                    faces[idx3 + 3] = vertexOffset - 3;
-                    faces[idx3 + 4] = vertexOffset - 1;
-                    faces[idx3 + 5] = vertexOffset - 2;
+                    indices[idx3 + 3] = vertexOffset - 3;
+                    indices[idx3 + 4] = vertexOffset - 1;
+                    indices[idx3 + 5] = vertexOffset - 2;
 
                     this._faceOffset += 2;
                 }

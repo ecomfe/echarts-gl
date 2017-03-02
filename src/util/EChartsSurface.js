@@ -37,7 +37,7 @@ var EChartsSurface = function (chart) {
     events.forEach(function (eventName) {
         this[makeHandlerName(eventName)] = function (eveObj) {
             this._meshes.forEach(function (mesh) {
-                this.dispatchEvent(eventName, mesh, eveObj.face, eveObj.point);
+                this.dispatchEvent(eventName, mesh, eveObj.triangle, eveObj.point);
             }, this);
         };
     }, this);

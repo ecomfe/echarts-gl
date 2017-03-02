@@ -178,8 +178,8 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
         var geometry = renderable.geometry;
         Matrix4.invert(invWorldTransform, renderable.worldTransform);
         Vector3.transformMat4(v3, cameraWorldPosition, invWorldTransform);
-        if (geometry.needsSortFaces && geometry.needsSortFaces()) {
-            geometry.doSortFaces(v3, accumFrame);
+        if (geometry.needsSortTriangles && geometry.needsSortTriangles()) {
+            geometry.doSortTriangles(v3, accumFrame);
         }
     }
 

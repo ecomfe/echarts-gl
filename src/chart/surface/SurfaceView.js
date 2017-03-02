@@ -2,7 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
-var facesSortMixin = require('../../util/geometry/facesSortMixin');
+var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
 
 function isPointsNaN(pt) {
     return isNaN(pt[0]) || isNaN(pt[1]) || isNaN(pt[2]);
@@ -32,7 +32,7 @@ echarts.extendChartView({
         var mesh = new graphicGL.Mesh({
             geometry: new graphicGL.Geometry({
                 dynamic: true,
-                sortFace: true
+                sortTriangles: true
             }),
             material: materials.lambert,
             culling: false,
@@ -42,7 +42,7 @@ echarts.extendChartView({
         });
         mesh.geometry.createAttribute('barycentric', 'float', 4, null),
 
-        echarts.util.extend(mesh.geometry, facesSortMixin);
+        echarts.util.extend(mesh.geometry, trianglesSortMixin);
 
         this._surfaceMesh = mesh;
         this.groupGL.add(this._surfaceMesh);
@@ -144,7 +144,7 @@ echarts.extendChartView({
             [1, 1, 0, 0]
         ];
 
-        var faces = geometry.faces = new (geometry.vertexCount > 0xffff ? Uint32Array : Uint16Array)((row - 1) * (column - 1) * 6);
+        var indices = geometry.indices = new (geometry.vertexCount > 0xffff ? Uint32Array : Uint16Array)((row - 1) * (column - 1) * 6);
         var getQuadIndices = function (i, j, out) {
             out[1] = i * column + j;
             out[0] = i * column + j + 1;
@@ -221,7 +221,7 @@ echarts.extendChartView({
                         }
                     }
                     for (var k = 0; k < 6; k++) {
-                        faces[faceOffset++] = quadToTriangle[k] + vertexOffset;
+                        indices[faceOffset++] = quadToTriangle[k] + vertexOffset;
                     }
                     // Vertex normals
                     if (needsNormal && !invisibleQuad) {
@@ -298,7 +298,7 @@ echarts.extendChartView({
                     getQuadIndices(i, j, quadIndices);
 
                     for (var k = 0; k < 6; k++) {
-                        faces[cursor++] = quadIndices[quadToTriangle[k]];
+                        indices[cursor++] = quadIndices[quadToTriangle[k]];
                     }
                 }
             }

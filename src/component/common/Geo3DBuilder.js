@@ -350,7 +350,7 @@ Geo3DBuilder.prototype = {
     },
 
     _updatePolygonGeometry: function (geometry, region, regionHeight) {
-        var faces = this.faces;
+        var indices = this.indices;
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
         var polygons = this._triangulationResults[region.name];
@@ -368,7 +368,7 @@ Geo3DBuilder.prototype = {
 
         positionAttr.init(vertexCount);
         normalAttr.init(vertexCount);
-        faces = geometry.faces = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
+        indices = geometry.indices = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
 
         var vertexOffset = 0;
         var faceOffset = 0;
@@ -409,11 +409,10 @@ Geo3DBuilder.prototype = {
 
             addVertices(polygon, y, insideOffset);
 
-            var indices = polygon.indices;
-            for (var k = 0; k < indices.length; k++) {
-                faces[faceOffset * 3 + k] = indices[k] + startVertexOffset;
+            for (var k = 0; k < polygon.indices.length; k++) {
+                indices[faceOffset * 3 + k] = polygon.indices[k] + startVertexOffset;
             }
-            faceOffset += indices.length / 3;
+            faceOffset += polygon.indices.length / 3;
         }
 
         var normalTop = [0, 1, 0];
@@ -460,7 +459,7 @@ Geo3DBuilder.prototype = {
                 }
 
                 for (var k = 0; k < 6; k++) {
-                    faces[faceOffset * 3 + k] = quadToTriangle[k] + vertexOffset;
+                    indices[faceOffset * 3 + k] = quadToTriangle[k] + vertexOffset;
                 }
 
                 vertexOffset += 4;
