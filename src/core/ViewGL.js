@@ -7,6 +7,7 @@ var Scene = require('qtek/lib/Scene');
 var ShadowMapPass = require('qtek/lib/prePass/ShadowMap');
 var PerspectiveCamera = require('qtek/lib/camera/Perspective');
 var OrthographicCamera = require('qtek/lib/camera/Orthographic');
+var Matrix4 = require('qtek/lib/math/Matrix4');
 
 var EffectCompositor = require('../effect/EffectCompositor');
 var TemporalSuperSampling = require('../effect/TemporalSuperSampling');
@@ -119,7 +120,7 @@ ViewGL.prototype.containPoint = function (x, y) {
 ViewGL.prototype.render = function (renderer) {
     this._stopAccumulating(renderer);
 
-    this._doRender(renderer);
+    this._doRender(renderer, 0);
 
     if (this._enableTemporalSS) {
         this._startAccumulating(renderer);
@@ -146,7 +147,7 @@ ViewGL.prototype._startAccumulating = function (renderer) {
             return;
         }
         if (!self._temporalSS.isFinished()) {
-            self._doRender(renderer);
+            self._doRender(renderer, self._temporalSS.getFrame());
             requestAnimationFrame(function () {
                 accumulate(id);
             });
@@ -158,19 +159,36 @@ ViewGL.prototype._startAccumulating = function (renderer) {
     }, 50);
 };
 
-ViewGL.prototype._doRender = function (renderer) {
+ViewGL.prototype._doRender = function (renderer, accumFrame) {
 
-    this._shadowMapPass.render(renderer, this.scene, this.camera);
+    var scene = this.scene;
+    var camera = this.camera;
+
+    var worldViewMatrix = new Matrix4();
+    accumFrame = accumFrame || 0;
+    // Sort transparent object.
+    for (var i = 0; i < scene.transparentQueue.length; i++) {
+        var renderable = scene.transparentQueue[i];
+        var geometry = renderable.geometry;
+        Matrix4.copy(worldViewMatrix, renderable.worldTransform);
+        Matrix4.multiply(worldViewMatrix, camera.viewMatrix, worldViewMatrix);
+        if (geometry.needsSortFaces && geometry.needsSortFaces()) {
+            geometry.doSortFaces(worldViewMatrix, accumFrame);
+        }
+    }
+
+    this._shadowMapPass.render(renderer, scene, camera);
     // Shadowmap will set clearColor.
     renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+
     if (this._enablePostEffect) {
         var frameBuffer = this._compositor.getSourceFrameBuffer();
         frameBuffer.bind(renderer);
         renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
-        renderer.render(this.scene, this.camera);
+        renderer.render(scene, camera);
         frameBuffer.unbind(renderer);
         if (this._enableSSAO) {
-            this._compositor.updateSSAO(renderer, this.camera, this._temporalSS.getFrame());
+            this._compositor.updateSSAO(renderer, camera, this._temporalSS.getFrame());
             this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
         }
 
@@ -190,7 +208,7 @@ ViewGL.prototype._doRender = function (renderer) {
             frameBuffer.bind(renderer);
             renderer.saveClear();
             renderer.clearBit = renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT;
-            renderer.render(this.scene, this.camera);
+            renderer.render(scene, camera);
             renderer.restoreClear();
             frameBuffer.unbind(renderer);
 
@@ -199,7 +217,7 @@ ViewGL.prototype._doRender = function (renderer) {
         }
         else {
             renderer.setViewport(this.viewport);
-            renderer.render(this.scene, this.camera);
+            renderer.render(scene, camera);
         }
     }
 

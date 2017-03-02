@@ -2,6 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var facesSortMixin = require('../../util/geometry/facesSortMixin');
 
 function isPointsNaN(pt) {
     return isNaN(pt[0]) || isNaN(pt[1]) || isNaN(pt[2]);
@@ -36,6 +37,8 @@ echarts.extendChartView({
             culling: false
         });
         mesh.geometry.createAttribute('barycentric', 'float', 4, null),
+
+        echarts.util.extend(mesh.geometry, facesSortMixin);
 
         this._surfaceMesh = mesh;
         this.groupGL.add(this._surfaceMesh);

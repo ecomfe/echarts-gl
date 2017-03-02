@@ -132,10 +132,11 @@ module.exports = echarts.extendChartView({
             }
 
             echarts.color.parse(color, colorArr);
+            colorArr[3] *= opacity;
             vertexColors[colorOffset++] = colorArr[0] / 255;
             vertexColors[colorOffset++] = colorArr[1] / 255;
             vertexColors[colorOffset++] = colorArr[2] / 255;
-            vertexColors[colorOffset++] = colorArr[3] * opacity;
+            vertexColors[colorOffset++] = colorArr[3];
 
             if (colorArr[3] < 0.99) {
                 if (colorArr[3] > 0) {

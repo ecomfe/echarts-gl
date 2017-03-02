@@ -60,22 +60,7 @@
                 },
                 grid3D: {
                     boxWidth: 200,
-                    boxDepth: 80,
-                    viewControl: {
-                        // projection: 'orthographic'
-                    },
-                    light: {
-                        main: {
-                            shadow: true
-                        },
-                        ambient: {
-                            intensity: 0
-                        },
-                        ambientCubemap: {
-                            texture: 'asset/pisa.hdr',
-                            diffuseIntensity: 1
-                        }
-                    }
+                    boxDepth: 80
                 },
                 series: [{
                     type: 'bar3D',
@@ -83,8 +68,13 @@
                         return [item[1], item[0], item[2]];
                     }),
                     bevelSize: 0.8,
-                    bevelSmoothness: 3,
-                    shading: 'lambert'
+                    bevelSmoothness: 2,
+                    shading: 'color',
+                    itemStyle: {
+                        normal: {
+                            opacity: 0.8
+                        }
+                    }
                 }]
             });
 

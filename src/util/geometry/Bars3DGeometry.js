@@ -7,6 +7,7 @@
 
 var echarts = require('echarts/lib/echarts');
 var dynamicConvertMixin = require('./dynamicConvertMixin');
+var facesSortMixin = require('./facesSortMixin');
 var StaticGeometry = require('qtek/lib/StaticGeometry');
 
 var glMatrix = require('qtek/lib/dep/glmatrix');
@@ -347,5 +348,6 @@ var BarsGeometry = StaticGeometry.extend(function () {
 });
 
 echarts.util.defaults(BarsGeometry.prototype, dynamicConvertMixin);
+echarts.util.defaults(BarsGeometry.prototype, facesSortMixin);
 
 module.exports = BarsGeometry;
