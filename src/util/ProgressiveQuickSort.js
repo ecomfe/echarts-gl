@@ -1,65 +1,53 @@
 var timsort = require('zrender/lib/core/timsort');
-var LinkedList = require('qtek/lib/core/LinkedList');
 
 // TODO Test.
 function ProgressiveQuickSort() {
 
-    this._pivotList = new LinkedList();
+    // this._pivotList = new LinkedList();
+    this._parts = [];
 }
 
 function swap(arr, a, b) {
-    var temp = arr[a];
+    var tmp = arr[a];
     arr[a] = arr[b];
-    arr[b] = temp;
+    arr[b] = tmp;
 }
 
 ProgressiveQuickSort.prototype.step = function (arr, compare, frame) {
 
-    var pivotList = this._pivotList;
     var len = arr.length;
     if (frame === 0) {
-        pivotList.clear();
-        this._timsortFramePivotEntry = null;
-        this._timsortFrameLeft = 0;
+        this._parts = [];
+        this._sorted = false;
+
+        // Pick a start pivot;
+        var pivot = Math.floor(len / 2);
+        this._parts.push({
+            pivot: pivot,
+            left: 0,
+            right: len - 1
+        });
     }
 
-    if (pivotList.length() < 256) {
-        if (frame === 0) {
-            // Pick a start pivot;
-            var pivot = Math.floor(len / 2);
-            pivotList.insert(pivot);
-        }
-        else {
-            var entry = pivotList.head;
-            var left = 0;
+    if (this._sorted) {
+        return;
+    }
 
-            while (left < len - 1) {
-                var right = entry ? entry.value : (len - 1);
-
-                if (right - left > 10) {
-                    // Insert a pivot
-                    var pivot = Math.floor((right + left) / 2);
-                    if (entry) {
-                        pivotList.insertBeforeEntry(pivot, entry);
-                    }
-                    else {
-                        pivotList.insert(pivot);
-                    }
-                }
-
-                left = right + 1;
-                entry = entry && entry.next;
-            }
-        }
-
+    var parts = this._parts;
+    if (parts.length === 0) {
+        this._sorted = true;
+        // Already finished.
+        return true;
+    }
+    else if (parts.length < 1024) {
         // partition
-        var entry = pivotList.head;
-        var left = 0;
-        while (entry) {
-            var right = entry.next ? entry.next.value : (len - 1);
-            var pivot = entry.value;
+        for (var i = 0; i < parts.length; i++) {
+            var left = parts[i].left;
+            var right = parts[i].right;
+            var pivot = parts[i].pivot;
 
             var storeIndex = left;
+            var pivotValue = arr[pivot];
 
             // put the pivot on the right
             swap(arr, pivot, right);
@@ -69,7 +57,7 @@ ProgressiveQuickSort.prototype.step = function (arr, compare, frame) {
                 // if the value is less than the pivot's
                 // value put it to the left of the pivot
                 // point and move the pivot point along one
-                if (compare(v, pivot) < 0) {
+                if (compare(arr[v], pivotValue) < 0) {
                     swap(arr, v, storeIndex);
                     storeIndex++;
                 }
@@ -78,33 +66,39 @@ ProgressiveQuickSort.prototype.step = function (arr, compare, frame) {
             // finally put the pivot in the correct place
             swap(arr, right, storeIndex);
             // Modify the pivot index.
-            entry.value = storeIndex;
-
-            left = right + 1;
-
-            entry = entry.next;
+            parts[i].pivot = storeIndex;
         }
 
+        var subdividedParts = [];
+        for (var i = 0; i < parts.length; i++) {
+            // Subdivide left
+            var left = parts[i].left;
+            var right = parts[i].pivot - 1;
+            if (right > left) {
+                subdividedParts.push({
+                    pivot: Math.floor((right + left) / 2),
+                    left: left, right: right
+                });
+            }
+            // Subdivide right
+            var left = parts[i].pivot + 1;
+            var right = parts[i].right;
+            if (right > left) {
+                subdividedParts.push({
+                    pivot: Math.floor((right + left) / 2),
+                    left: left, right: right
+                });
+            }
+        }
+        parts = this._parts = subdividedParts;
     }
     else {
-        // Timsort each part.
-        for (var k = 0; k < 10; k++) {
-            var left = this._timsortFrameLeft;
-            var entry = left === 0 ? pivotList.head : this._timsortFramePivotEntry;
+        // Finally use timsort to sort the hole array.
+        // PENDING timsort is much faster for the semi sorted array ?
+        timsort(arr, compare);
 
-            if (left > len - 1) {
-                return true;
-            }
-
-            var right = entry ? (entry.value - 1) : (len - 1);
-
-            if (right > left) {
-                timsort(arr, compare, left, right);
-            }
-
-            this._timsortFrameLeft = (entry ? entry.value : (len - 1)) + 1;
-            this._timsortFramePivotEntry = entry && entry.next;
-        }
+        this._sorted = true;
+        return true;
     }
 
     return false;

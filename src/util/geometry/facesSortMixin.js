@@ -57,8 +57,8 @@ module.exports = {
             }
         }
         else {
-            for (var i = 0; i < 4; i++) {
-                this._progressiveQuickSort(frame * 4 + i);
+            for (var i = 0; i < 3; i++) {
+                this._progressiveQuickSort(frame * 3 + i);
             }
         }
 
@@ -74,6 +74,7 @@ module.exports = {
 
             targetFacesZList[i] = faceZList[sortedFaceIndices[i]];
         }
+
         // Swap faces.
         var tmp = this._facesTmp;
         this._facesTmp = this.faces;
