@@ -248,8 +248,6 @@ echarts.extendChartView({
                 }
             }
             if (needsNormal) {
-                // Split normal and colors, write to the attributes.
-                var rgbaArr = [];
                 for (var i = 0; i < vertexNormals.length / 3; i++) {
                     getFromArray(vertexNormals, i, normal);
                     vec3.normalize(normal, normal);
@@ -257,21 +255,26 @@ echarts.extendChartView({
                     vertexNormals[i * 3 + 1] = normal[1];
                     vertexNormals[i * 3 + 2] = normal[2];
                 }
-                for (var i = 0; i < row - 1; i++) {
-                    for (var j = 0; j < column - 1; j++) {
-                        var dataIndex = i * (column - 1) + j;
-                        var vertexOffset = dataIndex * 4;
-                        getQuadIndices(i, j, quadIndices);
-                        for (var k = 0; k < 4; k++) {
-                            getFromArray(vertexNormals, quadIndices[k], normal);
-                            for (var m = 0; m < 4; m++) {
-                                rgbaArr[m] = vertexColors[quadIndices[k] * 4 + m];
-                            }
-                            normalAttr.set(vertexOffset + k, normal);
-                            colorAttr.set(vertexOffset + k, rgbaArr);
+            }
+            // Split normal and colors, write to the attributes.
+            var rgbaArr = [];
+            for (var i = 0; i < row - 1; i++) {
+                for (var j = 0; j < column - 1; j++) {
+                    var dataIndex = i * (column - 1) + j;
+                    var vertexOffset = dataIndex * 4;
+                    getQuadIndices(i, j, quadIndices);
+                    for (var k = 0; k < 4; k++) {
+                        for (var m = 0; m < 4; m++) {
+                            rgbaArr[m] = vertexColors[quadIndices[k] * 4 + m];
                         }
-                        dataIndex++;
+                        colorAttr.set(vertexOffset + k, rgbaArr);
+
+                        if (needsNormal) {
+                            getFromArray(vertexNormals, quadIndices[k], normal);
+                            normalAttr.set(vertexOffset + k, normal);
+                        }
                     }
+                    dataIndex++;
                 }
             }
         }
