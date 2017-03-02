@@ -117,7 +117,9 @@ echarts.extendChartView({
             // TODO, If needs remove the invalid points, or set color transparent.
             var vertexCount = (row - 1) * (column - 1) * 4;
             positionAttr.init(vertexCount);
-            barycentricAttr.init(vertexCount);
+            if (showWireframe) {
+                barycentricAttr.init(vertexCount);
+            }
         }
         else {
             positionAttr.value = new Float32Array(pointsArr);
@@ -172,6 +174,7 @@ echarts.extendChartView({
                     vertexColors[i * 4 + k] = rgbaArr[k];
                 }
             }
+            var farPoints = [1e7, 1e7, 1e7];
             for (var i = 0; i < row - 1; i++) {
                 for (var j = 0; j < column - 1; j++) {
                     var dataIndex = i * (column - 1) + j;
@@ -179,26 +182,39 @@ echarts.extendChartView({
 
                     getQuadIndices(i, j, quadIndices);
 
+                    var invisibleQuad = false;
                     for (var k = 0; k < 4; k++) {
                         getFromArray(pointsArr, quadIndices[k], pos);
-                        positionAttr.set(vertexOffset + k, pos);
-                        barycentricAttr.set(vertexOffset + k, quadBarycentric[k]);
+                        if (isPointsNaN(pos)) {
+                            // Quad is invisible if any point is NaN
+                            invisibleQuad = true;
+                        }
+                    }
+
+                    for (var k = 0; k < 4; k++) {
+                        if (invisibleQuad) {
+                            // Move point far away
+                            positionAttr.set(vertexOffset + k, farPoints);
+                        }
+                        else {
+                            getFromArray(pointsArr, quadIndices[k], pos);
+                            positionAttr.set(vertexOffset + k, pos);
+                        }
+                        if (showWireframe) {
+                            barycentricAttr.set(vertexOffset + k, quadBarycentric[k]);
+                        }
                     }
                     for (var k = 0; k < 6; k++) {
                         faces[faceOffset++] = quadToTriangle[k] + vertexOffset;
                     }
                     // Vertex normals
-                    if (needsNormal) {
+                    if (needsNormal && !invisibleQuad) {
                         for (var k = 0; k < 2; k++) {
                             var k3 = k * 3;
 
                             for (var m = 0; m < 3; m++) {
                                 var idx = quadIndices[quadToTriangle[k3] + m];
                                 getFromArray(pointsArr, idx, pts[m]);
-                            }
-                            // Ignore normal if any point is NaN.
-                            if (isPointsNaN(pts[0]) || isPointsNaN(pts[1]) || isPointsNaN(pts[2])) {
-                                continue;
                             }
 
                             vec3.sub(v21, pts[0], pts[1]);
