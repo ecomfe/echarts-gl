@@ -23,7 +23,7 @@ module.exports = {
             var cameraPos = cameraPos._array;
 
             if (!this._zList || this._zList.length !== this.vertexCount) {
-                this._zList = this._zList || new Float32Array(this.vertexCount);
+                this._zList = new Float32Array(this.vertexCount);
             }
 
             for (var i = 0; i < this.vertexCount; i++) {
