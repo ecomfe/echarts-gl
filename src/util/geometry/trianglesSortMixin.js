@@ -4,12 +4,12 @@ var ProgressiveQuickSort = require('../ProgressiveQuickSort');
 var p0 = vec3.create();
 var p1 = vec3.create();
 var p2 = vec3.create();
-var cp = vec3.create();
+// var cp = vec3.create();
 
 module.exports = {
 
     needsSortTriangles: function () {
-        return this.sortTriangles;
+        return this.indices && this.sortTriangles;
     },
 
     doSortTriangles: function (cameraPos, frame) {
@@ -34,12 +34,18 @@ module.exports = {
                 posAttr.get(indices[i++], p2);
 
                 // FIXME If use center ?
-                cp[0] = (p0[0] + p1[0] + p2[0]) / 3;
-                cp[1] = (p0[1] + p1[1] + p2[1]) / 3;
-                cp[2] = (p0[2] + p1[2] + p2[2]) / 3;
-
+                // cp[0] = (p0[0] + p1[0] + p2[0]) / 3;
+                // cp[1] = (p0[1] + p1[1] + p2[1]) / 3;
+                // cp[2] = (p0[2] + p1[2] + p2[2]) / 3;
                 // Camera position is in object space
-                this._triangleZList[cursor++] = vec3.sqrDist(cp, cameraPos);
+
+                // Use max of three points, PENDING
+                var z0 = vec3.sqrDist(p0, cameraPos);
+                var z1 = vec3.sqrDist(p1, cameraPos);
+                var z2 = vec3.sqrDist(p2, cameraPos);
+                var zMax = Math.min(z0, z1);
+                zMax = Math.min(zMax, z2);
+                this._triangleZList[cursor++] = zMax;
             }
         }
 

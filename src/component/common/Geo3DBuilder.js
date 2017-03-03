@@ -6,6 +6,7 @@ var retrieve = require('../../util/retrieve');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 var LabelsMesh = require('../../util/mesh/LabelsMesh');
 var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
+var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
 
 var vec3 = glmatrix.vec3;
 
@@ -118,6 +119,9 @@ Geo3DBuilder.prototype = {
                 metalness: metalness,
                 color: color
             });
+            var isTransparent = color[3] < 0.99;
+            polygonMesh.material.transparent = isTransparent;
+            polygonMesh.material.depthMask = !isTransparent;
 
             var lineWidth = itemStyleModel.get('borderWidth');
             var hasLine = lineWidth > 0;
@@ -135,6 +139,10 @@ Geo3DBuilder.prototype = {
             linesMesh.material.set({
                 color: borderColor
             });
+
+
+            // Move regions to center so they can be sorted right when material is transparent.
+            this._moveRegionToCenter(polygonMesh, linesMesh, hasLine);
         }, this);
 
         this._updateGroundPlane(componentModel);
@@ -173,8 +181,11 @@ Geo3DBuilder.prototype = {
                     shader: shader
                 }),
                 culling: false,
-                geometry: new graphicGL.Geometry()
+                geometry: new graphicGL.Geometry({
+                    sortTriangles: true
+                })
             });
+            echarts.util.extend(polygonMeshesMap[region.name].geometry, trianglesSortMixin);
 
             linesMeshesMap[region.name] = new graphicGL.Mesh({
                 material: new graphicGL.Material({
@@ -193,7 +204,6 @@ Geo3DBuilder.prototype = {
 
         this._polygonMeshes = polygonMeshesMap;
         this._linesMeshes = linesMeshesMap;
-
 
         this.rootNode.add(this._groundMesh);
         this.rootNode.add(this._labelsMesh);
@@ -516,6 +526,41 @@ Geo3DBuilder.prototype = {
                 geometry.addPolyline(convertToPoints3(interiors[i]), whiteColor, lineWidth);
             }
         });
+
+        geometry.updateBoundingBox();
+    },
+
+    _moveRegionToCenter: function (polygonMesh, linesMesh, hasLine) {
+        var polygonGeo = polygonMesh.geometry;
+        var linesGeo = linesMesh.geometry;
+
+        var bbox = polygonMesh.geometry.boundingBox;
+        var cp = bbox.min.clone().add(bbox.max).scale(0.5);
+        var offset = cp._array;
+
+        bbox.min.sub(cp);
+        bbox.max.sub(cp);
+
+        var polygonPosArr = polygonGeo.attributes.position.value;
+        for (var i = 0; i < polygonPosArr.length;) {
+            polygonPosArr[i++] -= offset[0];
+            polygonPosArr[i++] -= offset[1];
+            polygonPosArr[i++] -= offset[2];
+        }
+        polygonMesh.position.copy(cp);
+
+        if (hasLine) {
+            linesGeo.boundingBox.min.sub(cp);
+            linesGeo.boundingBox.max.sub(cp);
+
+            var linesPosArr = linesGeo.attributes.position.value;
+            for (var i = 0; i < linesPosArr.length;) {
+                linesPosArr[i++] -= offset[0];
+                linesPosArr[i++] -= offset[1];
+                linesPosArr[i++] -= offset[2];
+            }
+            linesMesh.position.copy(cp);
+        }
     }
 };
 

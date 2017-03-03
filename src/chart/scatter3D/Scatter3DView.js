@@ -14,7 +14,9 @@ echarts.extendChartView({
         this.groupGL = new graphicGL.Node();
 
         var mesh = new PointsMesh({
-            is2D: false
+            is2D: false,
+            // Render after axes
+            renderOrder: 10
         });
         this._pointsMesh = mesh;
         this.groupGL.add(this._pointsMesh);
