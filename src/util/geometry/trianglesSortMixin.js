@@ -49,7 +49,7 @@ module.exports = {
             sortedTriangleIndices[i] = i;
         }
 
-        if (this.triangleCount < 2e4) {
+        if (this.triangleCount < 5e4) {
             // Use simple timsort for simple geometries.
             if (frame === 0) {
                 this._simpleSort();
@@ -87,10 +87,11 @@ module.exports = {
 
     _simpleSort: function () {
         var faceZList = this._triangleZList;
-        this._sortedTriangleIndices.sort(function (a, b) {
+        var sortedTriangleIndices = this._sortedTriangleIndices;
+        ProgressiveQuickSort.sort(sortedTriangleIndices, function (a, b) {
             // Sort from far to near. which is descending order
             return faceZList[b] - faceZList[a];
-        });
+        }, 0, sortedTriangleIndices.length - 1);
     },
 
     _progressiveQuickSort: function (frame) {

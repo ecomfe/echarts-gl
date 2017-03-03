@@ -123,6 +123,8 @@ ProgressiveQuickSort.prototype.step = function (arr, compare, frame) {
     }
 
     return false;
-}
+};
+
+ProgressiveQuickSort.sort = quickSort;
 
 module.exports = ProgressiveQuickSort;
