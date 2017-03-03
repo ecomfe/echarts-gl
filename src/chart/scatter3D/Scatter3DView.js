@@ -1,7 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 
-var PointsMesh = require('../common/PointsMesh');
+var PointsBuilder = require('../common/PointsBuilder');
 
 echarts.extendChartView({
 
@@ -13,13 +13,9 @@ echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
 
-        var mesh = new PointsMesh({
-            is2D: false,
-            // Render after axes
-            renderOrder: 10
-        });
-        this._pointsMesh = mesh;
-        this.groupGL.add(this._pointsMesh);
+        var pointsBuilder = new PointsBuilder(false);
+        this._pointsBuilder = pointsBuilder;
+        this.groupGL.add(this._pointsBuilder.rootNode);
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -28,11 +24,11 @@ echarts.extendChartView({
             coordSys.viewGL.add(this.groupGL);
         }
 
-        this._pointsMesh.updateData(seriesModel, ecModel, api);
+        this._pointsBuilder.update(seriesModel, ecModel, api);
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
-        this._pointsMesh.updateLayout(seriesModel, ecModel, api);
+        this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
     },
 
     dispose: function () {

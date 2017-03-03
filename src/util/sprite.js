@@ -16,6 +16,38 @@ function makeSprite(size, canvas, draw) {
     return canvas;
 }
 
+function makePath(symbol, symbolSize, style) {
+    if (!echarts.util.isArray(symbolSize)) {
+        symbolSize = [symbolSize, symbolSize];
+    }
+    var margin = spriteUtil.getMarginByStyle(style);
+    var width = symbolSize[0] + margin.left + margin.right;
+    var height = symbolSize[1] + margin.top + margin.bottom;
+    var path = echarts.helper.createSymbol(symbol, 0, 0, symbolSize[0], symbolSize[1]);
+
+    var size = Math.max(width, height);
+
+    path.position = [margin.left, margin.top];
+    if (width > height) {
+        path.position[1] += (size - height) / 2;
+    }
+    else {
+        path.position[0] += (size - width) / 2;
+    }
+
+    var rect = path.getBoundingRect();
+    path.position[0] -= rect.x;
+    path.position[1] -= rect.y;
+
+    path.setStyle(style);
+
+    path.update();
+
+    path.__size = size;
+
+    return path;
+}
+
 var spriteUtil = {
 
     getMarginByStyle: function (style) {
@@ -35,38 +67,33 @@ var spriteUtil = {
 
         return margin;
     },
+
+    // TODO Not consider shadowOffsetX, shadowOffsetY.
     /**
      * @param {string} symbol
      * @param {number | Array.<number>} symbolSize
      */
     createSymbolSprite: function (symbol, symbolSize, style, canvas) {
-        if (!echarts.util.isArray(symbolSize)) {
-            symbolSize = [symbolSize, symbolSize];
-        }
+        var path = makePath(symbol, symbolSize, style);
+
         var margin = spriteUtil.getMarginByStyle(style);
-        var width = symbolSize[0] + margin.left + margin.right;
-        var height = symbolSize[1] + margin.top + margin.bottom;
-        var path = echarts.helper.createSymbol(symbol, 0, 0, symbolSize[0], symbolSize[1]);
-
-        var size = Math.max(width, height);
-
-        path.position = [margin.left, margin.top];
-        if (width > height) {
-            path.position[1] += (size - height) / 2;
-        }
-        else {
-            path.position[0] += (size - width) / 2;
-        }
-
-        var rect = path.getBoundingRect();
-        path.position[0] -= rect.x;
-        path.position[1] -= rect.y;
-
-        path.setStyle(style);
-        path.update();
 
         return {
-            image: makeSprite(size, canvas, function (ctx) {
+            image: makeSprite(path.__size, canvas, function (ctx) {
+                path.brush(ctx);
+            }),
+            margin: margin
+        };
+    },
+
+    // Create a sprite for symbol common outline.
+    createSymbolOutlineSprite: function (symbol, symbolSize, style, canvas) {
+        var path = makePath(symbol, symbolSize, style);
+
+        var margin = spriteUtil.getMarginByStyle(style);
+
+        return {
+            image: makeSprite(path.__size, canvas, function (ctx) {
                 path.brush(ctx);
             }),
             margin: margin

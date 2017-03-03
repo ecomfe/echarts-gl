@@ -7,40 +7,54 @@ var verticesSortMixin = require('../../util/geometry/verticesSortMixin');
 graphicGL.Shader.import(require('text!../../util/shader/points.glsl'));
 
 
-module.exports = graphicGL.Mesh.extend(function () {
+function PointsBuilder(is2D) {
+    // For fill parts.
     var geometry = new graphicGL.Geometry({
         dynamic: true,
-        sortVertices: true
+        sortVertices: !is2D
     });
+    echarts.util.extend(geometry, verticesSortMixin);
+    geometry.createAttribute('color', 'float', 4, 'COLOR');
+    geometry.createAttribute('size', 'float', 1);
+
     var material = new graphicGL.Material({
         shader: graphicGL.createShader('ecgl.points'),
         transparent: true,
         depthMask: false
     });
-    geometry.createAttribute('color', 'float', 4, 'COLOR');
-    geometry.createAttribute('size', 'float', 1);
     material.shader.enableTexture('sprite');
-
     this._symbolTexture = new graphicGL.Texture2D({
         image: document.createElement('canvas')
     });
     material.set('sprite', this._symbolTexture);
 
-
-    echarts.util.extend(geometry, verticesSortMixin);
-
-    return {
+    this._mesh = new graphicGL.Mesh({
         geometry: geometry,
         material: material,
         mode: graphicGL.Mesh.POINTS,
-        // 2D or 3D
-        is2D: true
-    };
-}, {
+        // Render after axes
+        renderOrder: 10
+    });
 
-    updateData: function (seriesModel, ecModel, api) {
+    this._symbolOutlineTexture = new graphicGL.Texture2D({
+        image: document.createElement('canvas')
+    });
+
+    this.rootNode = new graphicGL.Node();
+    this.rootNode.add(this._mesh);
+
+    /**
+     * @type {boolean}
+     */
+    this.is2D = is2D;
+}
+
+PointsBuilder.prototype = {
+
+    constructor: PointsBuilder,
+
+    update: function (seriesModel, ecModel, api) {
         var data = seriesModel.getData();
-        var geometry = this.geometry;
 
         var hasItemColor = false;
         var hasItemOpacity = false;
@@ -53,10 +67,12 @@ module.exports = graphicGL.Mesh.extend(function () {
             }
         }
         var vertexColor = hasItemColor || hasItemOpacity;
-        this.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
+        this._mesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
 
-        this.material.blend = seriesModel.get('blendMode') === 'lighter'
+        var blendFunc = seriesModel.get('blendMode') === 'lighter'
             ? graphicGL.additiveBlend : null;
+
+        this._mesh.material.blend = blendFunc;
 
         var symbolInfo = this._getSymbolInfo(data);
         var dpr = api.getDevicePixelRatio();
@@ -77,24 +93,39 @@ module.exports = graphicGL.Mesh.extend(function () {
         var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
         itemStyle.fill = data.getVisual('color');
         var margin = spriteUtil.getMarginByStyle(itemStyle);
+        var outlineStyle;
         if (hasItemColor) {
+            // Use white fill and set color in attributes.
             itemStyle.fill = '#ffffff';
-            if (margin.right || margin.left || margin.bottom || margin.top) {
+
+            // Use a seperate mesh to draw the outline.
+            outlineStyle = echarts.util.clone(itemStyle);
+            outlineStyle.fill = 'transparent';
+
+            if (itemStyle.shadowColor && itemStyle.shadowBlur) {
                 if (__DEV__) {
-                    console.warn('shadowColor, borderColor will be ignored if data has different colors');
+                    console.warn('shadowColor will be ignored if data has different colors');
                 }
-                ['stroke', 'shadowColor'].forEach(function (key) {
-                    itemStyle[key] = '#ffffff';
-                });
+                itemStyle.shadowColor = '#ffffff';
             }
+            // Make stroke transparent.
+            itemStyle.stroke = 'transparent';
         }
-        spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, itemStyle, this._symbolTexture.image);
+        spriteUtil.createSymbolSprite(
+            symbolInfo.type, symbolSize, itemStyle, this._symbolTexture.image
+        );
+        if (outlineStyle) {
+            spriteUtil.createSymbolOutlineSprite(
+                symbolInfo.type, symbolSize, outlineStyle, this._symbolOutlineTexture.image
+            );
+        }
 
         // TODO
         // var diffX = (margin.right - margin.left) / 2;
         // var diffY = (margin.bottom - margin.top) / 2;
         var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
 
+        var geometry = this._mesh.geometry;
         var points = data.getLayout('points');
         var attributes = geometry.attributes;
         attributes.position.init(data.count());
@@ -130,8 +161,7 @@ module.exports = graphicGL.Mesh.extend(function () {
                 else {
                     var color = data.getItemVisual(i, 'color');
                     var opacity = data.getItemVisual(i, 'opacity');
-                    echarts.color.parse(color, rgbaArr);
-                    rgbaArr[0] /= 255; rgbaArr[1] /= 255; rgbaArr[2] /= 255;
+                    graphicGL.parseColor(color, rgbaArr);
                     rgbaArr[3] *= opacity;
                     attributes.color.set(i, rgbaArr);
                 }
@@ -148,7 +178,7 @@ module.exports = graphicGL.Mesh.extend(function () {
 
     updateLayout: function (seriesModel, ecModel, api) {
         var data = seriesModel.getData();
-        var positionArr = this.geometry.attributes.position.value;
+        var positionArr = this._mesh.geometry.attributes.position.value;
         var points = data.getLayout('points');
         if (this.is2D) {
             for (var i = 0; i < points.length / 2; i++) {
@@ -163,7 +193,8 @@ module.exports = graphicGL.Mesh.extend(function () {
                 positionArr[i] = points[i];
             }
         }
-        this.geometry.dirty();
+        this._mesh.geometry.dirty();
+
     },
 
     _getSymbolInfo: function (data) {
@@ -212,4 +243,6 @@ module.exports = graphicGL.Mesh.extend(function () {
             aspect: symbolAspect
         };
     }
-});
+};
+
+module.exports = PointsBuilder;

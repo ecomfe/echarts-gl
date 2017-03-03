@@ -2,7 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var ViewGL = require('../../core/ViewGL');
 
-var Points2DMesh = require('../common/PointsMesh');
+var PointsBuilder = require('../common/PointsBuilder');
 
 echarts.extendChartView({
 
@@ -17,22 +17,19 @@ echarts.extendChartView({
 
         this.viewGL.add(this.groupGL);
 
-        var mesh = new Points2DMesh({
-            is2D: true
-        });
-        this._pointsMesh = mesh;
+        this._pointsBuilder = new PointsBuilder(true);
     },
 
     render: function (seriesModel, ecModel, api) {
-        this.groupGL.add(this._pointsMesh);
+        this.groupGL.add(this._pointsBuilder.rootNode);
 
         this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
 
-        this._pointsMesh.updateData(seriesModel, ecModel, api);
+        this._pointsBuilder.update(seriesModel, ecModel, api);
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
-        this._pointsMesh.updateLayout(seriesModel, ecModel, api);
+        this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
     },
 
     _updateCamera: function (width, height, dpr) {
