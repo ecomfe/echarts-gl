@@ -88,6 +88,8 @@ module.exports = {
     _simpleSort: function () {
         var faceZList = this._triangleZList;
         var sortedTriangleIndices = this._sortedTriangleIndices;
+        // Simple quicksort is more effecient than v8 native quick sort when data all different.
+        // In this case triangles with same depth are rare. so use simple quicksort here.
         ProgressiveQuickSort.sort(sortedTriangleIndices, function (a, b) {
             // Sort from far to near. which is descending order
             return faceZList[b] - faceZList[a];
