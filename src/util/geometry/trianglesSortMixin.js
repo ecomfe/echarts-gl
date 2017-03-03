@@ -20,8 +20,8 @@ module.exports = {
             var cameraPos = cameraPos._array;
 
             if (!this._triangleZList || this._triangleZList.length !== this.triangleCount) {
-                this._triangleZList = this._triangleZList || new Float32Array(this.triangleCount);
-                this._sortedTriangleIndices = this._sortedTriangleIndices || new Uint32Array(this.triangleCount);
+                this._triangleZList = new Float32Array(this.triangleCount);
+                this._sortedTriangleIndices = new Uint32Array(this.triangleCount);
 
                 this._indicesTmp = new indices.constructor(indices.length);
                 this._triangleZListTmp = new Float32Array(this.triangleCount);
