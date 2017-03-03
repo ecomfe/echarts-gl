@@ -8,7 +8,7 @@ var echarts = require('echarts/lib/echarts');
 var StaticGeometry = require('qtek/lib/StaticGeometry');
 var dynamicConvertMixin = require('./dynamicConvertMixin');
 
-var squareFaces = [
+var squareTriangles = [
     0, 1, 2, 0, 2, 3
 ];
 
@@ -30,15 +30,15 @@ var SpritesGeometry = StaticGeometry.extend(function () {
         this._spriteCount = spriteCount;
 
         var vertexCount = spriteCount * 4;
-        var faceCount = spriteCount * 2;
+        var triangleCount = spriteCount * 2;
 
         if (this.vertexCount !== vertexCount) {
             this.attributes.position.init(vertexCount);
             this.attributes.offset.init(vertexCount);
             this.attributes.color.init(vertexCount);
         }
-        if (this.triangleCount !== faceCount) {
-            this.indices = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
+        if (this.triangleCount !== triangleCount) {
+            this.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
         }
     },
 
@@ -114,8 +114,8 @@ var SpritesGeometry = StaticGeometry.extend(function () {
 
         this.setSpriteAlign(vertexOffset / 4, size, align, verticalAlign);
 
-        for (var i = 0; i < squareFaces.length; i++) {
-            this.indices[this._faceOffset * 3 + i] = squareFaces[i] + vertexOffset;
+        for (var i = 0; i < squareTriangles.length; i++) {
+            this.indices[this._faceOffset * 3 + i] = squareTriangles[i] + vertexOffset;
         }
         this._faceOffset += 2;
 

@@ -290,7 +290,7 @@ echarts.extendChartView({
                 colorAttr.set(i, rgbaArr);
             }
             var quadIndices = [];
-            // Faces
+            // Triangles
             var cursor = 0;
             for (var i = 0; i < row - 1; i++) {
                 for (var j = 0; j < column - 1; j++) {

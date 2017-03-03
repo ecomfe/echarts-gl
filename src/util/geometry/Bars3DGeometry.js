@@ -51,8 +51,8 @@ var BarsGeometry = StaticGeometry.extend(function () {
         var hasBevel = bevelSegments > 0 && this.bevelSize > 0;
         var vertexCount = (hasBevel
             ? this.getBevelBarVertexCount(bevelSegments) : this.getBarVertexCount()) * barCount;
-        var faceCount = (hasBevel
-            ? this.getBevelBarFaceCount(bevelSegments) : this.getBarFaceCount()) * barCount;
+        var triangleCount = (hasBevel
+            ? this.getBevelBarTriangleCount(bevelSegments) : this.getBarTriangleCount()) * barCount;
 
         if (this.vertexCount !== vertexCount) {
             this.attributes.position.init(vertexCount);
@@ -65,8 +65,8 @@ var BarsGeometry = StaticGeometry.extend(function () {
             this.attributes.color.init(vertexCount);
         }
 
-        if (this.triangleCount !== faceCount) {
-            this.indices = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
+        if (this.triangleCount !== triangleCount) {
+            this.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
         }
     },
 
@@ -74,7 +74,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
         return this.enableNormal ? 24 : 8;
     },
 
-    getBarFaceCount: function () {
+    getBarTriangleCount: function () {
         return 12;
     },
 
@@ -82,7 +82,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
         return (bevelSegments + 1) * 4 * (bevelSegments + 1) * 2;
     },
 
-    getBevelBarFaceCount: function (bevelSegments) {
+    getBevelBarTriangleCount: function (bevelSegments) {
         var widthSegments = bevelSegments * 4 + 3;
         var heightSegments = bevelSegments * 2 + 1;
         return (widthSegments + 1) * heightSegments * 2 + 4;

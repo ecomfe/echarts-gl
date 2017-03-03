@@ -356,19 +356,19 @@ Geo3DBuilder.prototype = {
         var polygons = this._triangulationResults[region.name];
 
         var sideVertexCount = 0;
-        var sideFaceCount = 0;
+        var sideTriangleCount = 0;
 
         for (var i = 0; i < polygons.length; i++) {
             sideVertexCount += polygons[i].points.length / 3;
-            sideFaceCount += polygons[i].indices.length / 3;
+            sideTriangleCount += polygons[i].indices.length / 3;
         }
 
         var vertexCount = sideVertexCount * 2 + sideVertexCount * 4;
-        var faceCount = sideFaceCount * 2 + sideVertexCount * 2;
+        var triangleCount = sideTriangleCount * 2 + sideVertexCount * 2;
 
         positionAttr.init(vertexCount);
         normalAttr.init(vertexCount);
-        indices = geometry.indices = vertexCount > 0xffff ? new Uint32Array(faceCount * 3) : new Uint16Array(faceCount * 3);
+        indices = geometry.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
 
         var vertexOffset = 0;
         var faceOffset = 0;
@@ -471,21 +471,21 @@ Geo3DBuilder.prototype = {
 
     _updateLinesGeometry: function (geometry, region, regionHeight, lineWidth, transform) {
         var vertexCount = 0;
-        var faceCount = 0;
+        var triangleCount = 0;
         region.geometries.forEach(function (geo) {
             var exterior = geo.exterior;
             var interiors = geo.interiors;
             vertexCount += geometry.getPolylineVertexCount(exterior);
-            faceCount += geometry.getPolylineFaceCount(exterior);
+            triangleCount += geometry.getPolylineTriangleCount(exterior);
             for (var i = 0; i < interiors.length; i++) {
                 vertexCount += geometry.getPolylineVertexCount(interiors[i]);
-                faceCount += geometry.getPolylineFaceCount(interiors[i]);
+                triangleCount += geometry.getPolylineTriangleCount(interiors[i]);
             }
         }, this);
 
         geometry.resetOffset();
         geometry.setVertexCount(vertexCount);
-        geometry.setFaceCount(vertexCount);
+        geometry.setTriangleCount(vertexCount);
 
         function convertToPoints3(polygon) {
             var points = new Float32Array(polygon.length * 3);

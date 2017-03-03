@@ -79,15 +79,15 @@ var LinesGeometry = StaticGeometry.extend(function () {
     },
 
     /**
-     * @param {number} nFace
+     * @param {number} nTriangle
      */
-    setFaceCount: function (nFace) {
-        if (this.triangleCount !== nFace) {
-            if (nFace === 0) {
+    setTriangleCount: function (nTriangle) {
+        if (this.triangleCount !== nTriangle) {
+            if (nTriangle === 0) {
                 this.indices = null;
             }
             else {
-                this.indices = this.vertexCount > 0xffff ? new Uint32Array(nFace * 3) : new Uint16Array(nFace * 3);
+                this.indices = this.vertexCount > 0xffff ? new Uint32Array(nTriangle * 3) : new Uint16Array(nTriangle * 3);
             }
         }
     },
@@ -125,7 +125,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @param {Array.<number>} p3
      * @return number
      */
-    getCubicCurveFaceCount: function (p0, p1, p2, p3) {
+    getCubicCurveTriangleCount: function (p0, p1, p2, p3) {
         var step = this._getCubicCurveApproxStep(p0, p1, p2, p3);
         var segCount = Math.ceil(1 / step);
         if (!this.useNativeLine) {
@@ -148,8 +148,8 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * Get face count of line
      * @return {number}
      */
-    getLineFaceCount: function () {
-        return this.getPolylineFaceCount(2);
+    getLineTriangleCount: function () {
+        return this.getPolylineTriangleCount(2);
     },
 
     getPolylineVertexCount: function (points) {
@@ -158,7 +158,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         return !this.useNativeLine ? ((pointsLen - 1) * 2 + 2) : (pointsLen - 1) * 2;
     },
 
-    getPolylineFaceCount: function (points) {
+    getPolylineTriangleCount: function (points) {
         var is2DArray = typeof points[0] !== 'number';
         var pointsLen = is2DArray ? points.length : (points.length / 2);
         return !this.useNativeLine ? (pointsLen - 1) * 2 : 0;

@@ -121,11 +121,11 @@ module.exports = echarts.extendChartView({
         geometry.useNativeLine = canUseNativeLine;
 
         var nVertex = 0;
-        var nFace = 0;
+        var nTriangle = 0;
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
             nVertex += geometry.getCubicCurveVertexCount(pts[0], pts[1], pts[2], pts[3]);
-            nFace += geometry.getCubicCurveFaceCount(pts[0], pts[1], pts[2], pts[3]);
+            nTriangle += geometry.getCubicCurveTriangleCount(pts[0], pts[1], pts[2], pts[3]);
         });
 
         this._linesMesh.material = canUseNativeLine ? this._nativeLinesMaterial : this._projectedLinesMaterial;
@@ -133,7 +133,7 @@ module.exports = echarts.extendChartView({
         // this._linesMesh.mode = graphicGL.Mesh.POINTS;
 
         geometry.setVertexCount(nVertex);
-        geometry.setFaceCount(nFace);
+        geometry.setTriangleCount(nTriangle);
         geometry.resetOffset();
 
         var colorArr = [];
