@@ -1,6 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var spriteUtil = require('../../util/sprite');
+var verticesSortMixin = require('../../util/geometry/verticesSortMixin');
 
 
 graphicGL.Shader.import(require('text!../../util/shader/points.glsl'));
@@ -8,7 +9,8 @@ graphicGL.Shader.import(require('text!../../util/shader/points.glsl'));
 
 module.exports = graphicGL.Mesh.extend(function () {
     var geometry = new graphicGL.Geometry({
-        dynamic: true
+        dynamic: true,
+        sortVertices: true
     });
     var material = new graphicGL.Material({
         shader: graphicGL.createShader('ecgl.points'),
@@ -23,6 +25,10 @@ module.exports = graphicGL.Mesh.extend(function () {
         image: document.createElement('canvas')
     });
     material.set('sprite', this._symbolTexture);
+
+
+    echarts.util.extend(geometry, verticesSortMixin);
+
     return {
         geometry: geometry,
         material: material,

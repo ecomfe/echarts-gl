@@ -181,6 +181,9 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
         if (geometry.needsSortTriangles && geometry.needsSortTriangles()) {
             geometry.doSortTriangles(v3, accumFrame);
         }
+        if (geometry.needsSortVertices && geometry.needsSortVertices()) {
+            geometry.doSortVertices(v3, accumFrame);
+        }
     }
 
     this._shadowMapPass.render(renderer, scene, camera);

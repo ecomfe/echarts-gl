@@ -49,7 +49,7 @@ module.exports = {
             sortedTriangleIndices[i] = i;
         }
 
-        if (this.triangleCount < 5e4) {
+        if (this.triangleCount < 2e4) {
             // Use simple timsort for simple geometries.
             if (frame === 0) {
                 this._simpleSort();

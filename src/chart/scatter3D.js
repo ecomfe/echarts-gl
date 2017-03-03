@@ -34,9 +34,9 @@ echarts.registerLayout(function (ecModel, api) {
                 item[2] = z;
 
                 coordSys.dataToPoint(item, out);
-                points[idx * 2] = out[0];
-                points[idx * 2 + 1] = out[1];
-                points[idx * 2 + 2] = out[2];
+                points[idx * 3] = out[0];
+                points[idx * 3 + 1] = out[1];
+                points[idx * 3 + 2] = out[2];
             });
 
             data.setLayout('points', points);
