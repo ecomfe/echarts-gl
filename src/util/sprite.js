@@ -48,6 +48,56 @@ function makePath(symbol, symbolSize, style) {
     return path;
 }
 
+    // http://www.valvesoftware.com/publications/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
+function generateSDF(ctx, imgData, range) {
+
+    var width = imgData.width;
+    var height = imgData.height;
+
+    function sign(r) {
+        return r < 128 ? 1 : -1;
+    }
+    function searchMinDistance(x, y, r) {
+        var a = sign(r);
+        var minDistSqr = Infinity;
+        // Search for min distance
+        for (var y2 = Math.max(y - range, 0); y2 < Math.min(y + range, height); y2++) {
+            for (var x2 = Math.max(x - range, 0); x2 < Math.min(x + range, width); x2++) {
+                var i = y2 * width + x2;
+                var r2 = imgData.data[i * 4];
+                var b = sign(r2);
+                var dx = x2 - x;
+                var dy = y2 - y;
+                if (a !== b) {
+                    var distSqr = dx * dx + dy * dy;
+                    if (distSqr < minDistSqr) {
+                        minDistSqr = distSqr;
+                    }
+                }
+            }
+        }
+        return a * minDistSqr;
+    }
+
+    var sdfImageData = ctx.createImageData(width, height);
+    for (var y = 0; y < height; y++) {
+        for (var x = 0; x < width; x++) {
+            var i = (y * width + x) * 4;
+            var r = imgData.data[i];
+
+            var dist = searchMinDistance(x, y, r);
+
+            var normalized = dist / range / 1.41 * 0.5 + 0.5;
+            sdfImageData.data[i++] = (1.0 - normalized) * 255;
+            sdfImageData.data[i++] = (1.0 - normalized) * 255;
+            sdfImageData.data[i++] = (1.0 - normalized) * 255;
+            sdfImageData.data[i++] = 255;
+        }
+    }
+
+    return sdfImageData;
+}
+
 var spriteUtil = {
 
     getMarginByStyle: function (style) {
@@ -60,10 +110,10 @@ var spriteUtil = {
         var shadowOffsetY = style.shadowOffsetY || 0;
 
         var margin = {};
-        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize);
-        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize);
-        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize);
-        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize);
+        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize) + 10;
+        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize) + 10;
+        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize) + 10;
+        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize) + 10;
 
         return margin;
     },
@@ -86,18 +136,37 @@ var spriteUtil = {
         };
     },
 
-    // Create a sprite for symbol common outline.
-    createSymbolOutlineSprite: function (symbol, symbolSize, style, canvas) {
-        var path = makePath(symbol, symbolSize, style);
+    createSymbolSDF: function (symbol, symbolSize, range, style, canvas) {
+        var pathEl = makePath(symbol, symbolSize, style);
 
-        var margin = spriteUtil.getMarginByStyle(style);
+        pathEl.setStyle({
+            fill: '#fff',
+            stroke: 'transparent',
+            shadowColor: 'transparent'
+        });
+        return makeSprite(pathEl.__size, canvas, function (ctx) {
+            pathEl.brush(ctx);
+            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-        return {
-            image: makeSprite(path.__size, canvas, function (ctx) {
-                path.brush(ctx);
-            }),
-            margin: margin
-        };
+            ctx.putImageData(generateSDF(ctx, imgData, range), 0, 0);
+        });
+    },
+
+    createSymbolStrokeSDF: function (symbol, symbolSize, range, style, canvas) {
+        var pathEl = makePath(symbol, symbolSize, style);
+
+        pathEl.setStyle({
+            stroke: '#fff',
+            lineWidth: style.lineWidth,
+            fill: 'transparent',
+            shadowColor: 'transparent'
+        });
+        return makeSprite(pathEl.__size, canvas, function (ctx) {
+            pathEl.brush(ctx);
+            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            ctx.putImageData(generateSDF(ctx, imgData, range), 0, 0);
+        });
     },
 
     createSimpleSprite: function (size, canvas) {

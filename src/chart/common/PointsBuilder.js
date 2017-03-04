@@ -4,7 +4,7 @@ var spriteUtil = require('../../util/sprite');
 var verticesSortMixin = require('../../util/geometry/verticesSortMixin');
 
 
-graphicGL.Shader.import(require('text!../../util/shader/points.glsl'));
+graphicGL.Shader.import(require('text!./sdfSprite.glsl'));
 
 
 function PointsBuilder(is2D) {
@@ -15,18 +15,20 @@ function PointsBuilder(is2D) {
     });
     echarts.util.extend(geometry, verticesSortMixin);
     geometry.createAttribute('color', 'float', 4, 'COLOR');
+    geometry.createAttribute('strokeColor', 'float', 4);
     geometry.createAttribute('size', 'float', 1);
 
     var material = new graphicGL.Material({
-        shader: graphicGL.createShader('ecgl.points'),
+        shader: graphicGL.createShader('ecgl.sdfSprite'),
         transparent: true,
         depthMask: false
     });
     material.shader.enableTexture('sprite');
-    this._symbolTexture = new graphicGL.Texture2D({
+    this._sdfTexture = new graphicGL.Texture2D({
         image: document.createElement('canvas')
     });
-    material.set('sprite', this._symbolTexture);
+
+    material.set('sprite', this._sdfTexture);
 
     this._mesh = new graphicGL.Mesh({
         geometry: geometry,
@@ -34,10 +36,6 @@ function PointsBuilder(is2D) {
         mode: graphicGL.Mesh.POINTS,
         // Render after axes
         renderOrder: 10
-    });
-
-    this._symbolOutlineTexture = new graphicGL.Texture2D({
-        image: document.createElement('canvas')
     });
 
     this.rootNode = new graphicGL.Node();
@@ -89,41 +87,14 @@ PointsBuilder.prototype = {
         }
 
         // TODO image symbol
-        // TODO, shadowOffsetX, shadowOffsetY may not work well.
         var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
         itemStyle.fill = data.getVisual('color');
-        var margin = spriteUtil.getMarginByStyle(itemStyle);
-        var outlineStyle;
-        if (hasItemColor) {
-            // Use white fill and set color in attributes.
-            itemStyle.fill = '#ffffff';
 
-            // Use a seperate mesh to draw the outline.
-            outlineStyle = echarts.util.clone(itemStyle);
-            outlineStyle.fill = 'transparent';
+        var canvas = spriteUtil.createSymbolSDF(symbolInfo.type, symbolSize, 20, itemStyle, this._sdfTexture.image);
 
-            if (itemStyle.shadowColor && itemStyle.shadowBlur) {
-                if (__DEV__) {
-                    console.warn('shadowColor will be ignored if data has different colors');
-                }
-                itemStyle.shadowColor = '#ffffff';
-            }
-            // Make stroke transparent.
-            itemStyle.stroke = 'transparent';
-        }
-        spriteUtil.createSymbolSprite(
-            symbolInfo.type, symbolSize, itemStyle, this._symbolTexture.image
-        );
-        if (outlineStyle) {
-            spriteUtil.createSymbolOutlineSprite(
-                symbolInfo.type, symbolSize, outlineStyle, this._symbolOutlineTexture.image
-            );
-        }
-
-        // TODO
-        // var diffX = (margin.right - margin.left) / 2;
-        // var diffY = (margin.bottom - margin.top) / 2;
-        var diffSize = Math.max(margin.right + margin.left, margin.top + margin.bottom);
+        this._mesh.material.set('lineWidth', itemStyle.lineWidth / canvas.width * canvas.width * dpr);
+        this._mesh.material.set('color', vertexColor ? [1, 1, 1, 1] : graphicGL.parseColor(itemStyle.fill));
+        this._mesh.material.set('strokeColor', graphicGL.parseColor(itemStyle.stroke));
 
         var geometry = this._mesh.geometry;
         var points = data.getLayout('points');
@@ -138,6 +109,9 @@ PointsBuilder.prototype = {
 
         var rgbaArr = [];
         var is2D = this.is2D;
+
+        var pointSizeScale = canvas.width / symbolInfo.maxSize;
+
         for (var i = 0; i < data.count(); i++) {
             var i4 = i * 4;
             var i3 = i * 3;
@@ -168,9 +142,9 @@ PointsBuilder.prototype = {
             }
 
             var symbolSize = data.getItemVisual(i, 'symbolSize');
-
-            attributes.size.value[i] = ((symbolSize instanceof Array
-                ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize) + diffSize) * dpr;
+            symbolSize = (symbolSize instanceof Array
+                ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize);
+            attributes.size.value[i] = symbolSize * dpr * pointSizeScale;
         }
 
         geometry.dirty();
