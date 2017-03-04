@@ -74,8 +74,10 @@ PointsBuilder.prototype = {
 
         var symbolInfo = this._getSymbolInfo(data);
         var dpr = api.getDevicePixelRatio();
-        // TODO arc is not so accurate in chrome, scale it a bit ?.
-        symbolInfo.maxSize *= dpr;
+
+        // 50px is enough for sined distance function.
+        symbolInfo.maxSize = Math.min(symbolInfo.maxSize, 50);
+
         var symbolSize = [];
         if (symbolInfo.aspect > 1) {
             symbolSize[0] = symbolInfo.maxSize;
@@ -144,6 +146,8 @@ PointsBuilder.prototype = {
             var symbolSize = data.getItemVisual(i, 'symbolSize');
             symbolSize = (symbolSize instanceof Array
                 ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize);
+
+            // Scale point size because canvas has margin.
             attributes.size.value[i] = symbolSize * dpr * pointSizeScale;
         }
 
