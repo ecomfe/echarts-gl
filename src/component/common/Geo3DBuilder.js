@@ -12,8 +12,6 @@ var vec3 = glmatrix.vec3;
 
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
-var shadings = ['lambert', 'realistic', 'color'];
-
 function Geo3DBuilder(api) {
 
     this.rootNode = new graphicGL.Node();
@@ -29,7 +27,7 @@ function Geo3DBuilder(api) {
     this._boxHeight;
     this._boxDepth;
 
-    this._shadersMap = shadings.reduce(function (obj, shaderName) {
+    this._shadersMap = graphicGL.COMMON_SHADERS.reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
         obj[shaderName].define('fragment', 'DOUBLE_SIDE');
         // obj[shaderName].define('both', 'WIREFRAME_TRIANGLE');
@@ -39,7 +37,7 @@ function Geo3DBuilder(api) {
     this._linesShader = graphicGL.createShader('ecgl.meshLines3D');
 
     var groundMaterials = {};
-    shadings.forEach(function (shading) {
+    graphicGL.COMMON_SHADERS.forEach(function (shading) {
         groundMaterials[shading] = new graphicGL.Material({
             shader: graphicGL.createShader('ecgl.' + shading)
         });

@@ -75,8 +75,6 @@ var Geo3DModel = echarts.extendComponentModel({
             color: '#aaa'
         },
 
-        // 'color', 'lambert', 'realistic'
-        // TODO, 'toon'
         shading: 'lambert',
 
         realisticMaterial: {

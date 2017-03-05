@@ -30,7 +30,7 @@ module.exports = echarts.extendChartView({
         });
 
         var materials = {};
-        ['lambert', 'color', 'realistic'].forEach(function (shading) {
+        graphicGL.COMMON_SHADERS.forEach(function (shading) {
             materials[shading] = new graphicGL.Material({
                 shader: getShader(shading)
             });

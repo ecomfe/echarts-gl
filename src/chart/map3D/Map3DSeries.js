@@ -67,8 +67,6 @@ var Map3DModel = echarts.extendSeriesModel({
             color: '#aaa'
         },
 
-        // 'color', 'lambert', 'realistic'
-        // TODO, 'toon'
         shading: 'lambert',
 
         realisticMaterial: {

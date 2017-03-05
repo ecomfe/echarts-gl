@@ -88,17 +88,6 @@ var BarsGeometry = StaticGeometry.extend(function () {
         return (widthSegments + 1) * heightSegments * 2 + 4;
     },
 
-    setBarColor: function (barIndex, color) {
-        var barVertexCount = this.getBarVertexCount();
-        var start = barVertexCount * barIndex;
-        var end = barVertexCount * (barIndex + 1);
-
-        for (var i = start; i < end; i++) {
-            this.attributes.color.set(i, color);
-        }
-        this.dirtyAttribute('color');
-    },
-
     /**
      * Add a bar
      * @param {Array.<number>} start

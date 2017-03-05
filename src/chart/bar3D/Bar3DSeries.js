@@ -37,8 +37,6 @@ module.exports = echarts.extendSeriesModel({
         onGridPlane: 'xy',
 
         // Shading of globe
-        // 'color', 'lambert'
-        // TODO, 'realastic', 'toon'
         shading: 'color',
 
         realisticMaterial: {

@@ -97,8 +97,6 @@ var GlobeModel = echarts.extendComponentModel({
         globeRadius: 100,
 
         // Shading of globe
-        // 'color', 'lambert', 'realistic'
-        // TODO, 'toon'
         shading: 'color',
 
         realisticMaterial: {

@@ -126,6 +126,8 @@ graphicGL.createShader = function (prefix) {
     });
 };
 
+graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic'];
+
 graphicGL.Material = Material;
 
 graphicGL.Texture2D = Texture2D;

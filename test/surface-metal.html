@@ -15,21 +15,20 @@
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
+            var sin = Math.sin;
+            var cos = Math.cos;
+            var pow = Math.pow;
+            var sqrt = Math.sqrt;
+            var cosh = Math.cosh;
+            var sinh = Math.sinh;
+            var PI = Math.PI;
+
             var axisLine = {
                 lineStyle: {
                     color: '#fff'
                 }
             };
             chart.setOption({
-                visualMap: {
-                    show: false,
-                    dimension: 2,
-                    min: -5,
-                    max: 1,
-                    inRange: {
-                        color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
-                    }
-                },
                 xAxis3D: {
                     type: 'value',
                     axisLine: axisLine
@@ -44,23 +43,29 @@
                 },
                 grid3D: {
                     postEffect: {
-                        enable: true
+                        enable: true,
+                        SSAO: {
+                            enable: true,
+                            radius: 4,
+                            intensity: 2,
+                            quality: 'ultra'
+                        }
                     },
                     temporalSuperSampling: {
                         enable: true
                     },
                     light: {
                         main: {
-                            intensity: 1
+                            intensity: 0
                         },
                         ambient: {
                             intensity: 0
                         },
                         ambientCubemap: {
                             texture: 'asset/pisa.hdr',
-                            exposure: 2,
+                            exposure: 1,
                             diffuseIntensity: 1,
-                            specularIntensity: 3
+                            specularIntensity: 2
                         }
                     },
                     viewControl: {
@@ -71,29 +76,49 @@
                     type: 'surface',
                     parametric: true,
                     shading: 'realistic',
+                    wireframe: {
+                        show: false
+                    },
                     realisticMaterial: {
-                        roughness: 0.4,
+                        roughness: 0.3,
                         metalness: 1
+                    },
+                    areaStyle: {
+                        normal: {
+                            color: '#aaa'
+                        }
                     },
                     parametricSurfaceEquation: {
                         u: {
-                            min: -Math.PI,
-                            max: Math.PI,
-                            step: Math.PI / 40
+                            min: -13.2,
+                            max: 13.2,
+                            step: 0.4
                         },
                         v: {
-                            min: -15,
-                            max: 6,
-                            step: 0.21
+                            min: -37.4,
+                            max: 37.4,
+                            step: 0.4
                         },
                         x: function (u, v) {
-                            return Math.pow(1.16, v) * Math.cos(v) * (1 + Math.cos(u));
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return -u + (2 * r * cosh(aa * u) * sinh(aa * u) / denom);
                         },
                         y: function (u, v) {
-                            return -Math.pow(1.16, v) * Math.sin(v) * (1 + Math.cos(u));
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return 2 * w * cosh(aa * u) * (-(w * cos(v) * cos(w * v)) - (sin(v) * sin(w * v))) / denom;
                         },
                         z: function (u, v) {
-                            return -2 * Math.pow(1.16, v) * (1 + Math.sin(u));
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return  2 * w * cosh(aa * u) * (-(w * sin(v) * cos(w * v)) + (cos(v) * sin(w * v))) / denom
                         }
                     }
                 }]
