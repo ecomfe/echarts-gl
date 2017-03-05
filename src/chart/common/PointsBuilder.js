@@ -68,11 +68,6 @@ PointsBuilder.prototype = {
         var vertexColor = hasItemColor || hasItemOpacity;
         this._mesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
 
-        var blendFunc = seriesModel.get('blendMode') === 'lighter'
-            ? graphicGL.additiveBlend : null;
-
-        this._mesh.material.blend = blendFunc;
-
         var symbolInfo = this._getSymbolInfo(data);
         var dpr = api.getDevicePixelRatio();
 
@@ -95,10 +90,6 @@ PointsBuilder.prototype = {
 
         var canvas = spriteUtil.createSymbolSDF(symbolInfo.type, symbolSize, 20, itemStyle, this._sdfTexture.image);
 
-        this._mesh.material.set('lineWidth', itemStyle.lineWidth / canvas.width * canvas.width * dpr);
-        this._mesh.material.set('color', vertexColor ? [1, 1, 1, 1] : graphicGL.parseColor(itemStyle.fill));
-        this._mesh.material.set('strokeColor', graphicGL.parseColor(itemStyle.stroke));
-
         var geometry = this._mesh.geometry;
         var points = data.getLayout('points');
         var attributes = geometry.attributes;
@@ -115,6 +106,7 @@ PointsBuilder.prototype = {
 
         var pointSizeScale = canvas.width / symbolInfo.maxSize;
 
+        var hasTransparentPoint = false;
         for (var i = 0; i < data.count(); i++) {
             var i4 = i * 4;
             var i3 = i * 3;
@@ -134,6 +126,9 @@ PointsBuilder.prototype = {
                 if (!hasItemColor && hasItemOpacity) {
                     colorArr[i4++] = colorArr[i4++] = colorArr[i4++] = 1;
                     colorArr[i4] = data.getItemVisual(i, 'opacity');
+                    if (colorArr[i4] < 0.99) {
+                        hasTransparentPoint = true;
+                    }
                 }
                 else {
                     var color = data.getItemVisual(i, 'color');
@@ -141,6 +136,9 @@ PointsBuilder.prototype = {
                     graphicGL.parseColor(color, rgbaArr);
                     rgbaArr[3] *= opacity;
                     attributes.color.set(i, rgbaArr);
+                    if (rgbaArr[3] < 0.99) {
+                        hasTransparentPoint = true;
+                    }
                 }
             }
 
@@ -153,6 +151,35 @@ PointsBuilder.prototype = {
         }
 
         geometry.dirty();
+
+        // Update material.
+        var blendFunc = seriesModel.get('blendMode') === 'lighter'
+            ? graphicGL.additiveBlend : null;
+        var material = this._mesh.material;
+        material.blend = blendFunc;
+
+        material.set('lineWidth', itemStyle.lineWidth / canvas.width * canvas.width * dpr);
+
+        var fillColor = vertexColor ? [1, 1, 1, 1] : graphicGL.parseColor(itemStyle.fill);
+        var strokeColor = graphicGL.parseColor(itemStyle.stroke);
+        material.set('color', fillColor);
+        material.set('strokeColor', strokeColor);
+
+        if (hasTransparentPoint
+            // Stroke is transparent
+            || (itemStyle.lineWidth && strokeColor[3] < 0.99)
+            // Fill is transparent
+            || fillColor[3] < 0.99
+        ) {
+            material.transparent = true;
+            material.depthMask = false;
+            material.sortVertices = !is2D;
+        }
+        else {
+            material.transparent = false;
+            material.depthMask = true;
+            material.sortVertices = false;
+        }
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
