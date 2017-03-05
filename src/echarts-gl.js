@@ -159,6 +159,11 @@ EChartsGL.prototype.update = function (ecModel, api) {
             chartView.afterRender && chartView.afterRender(
                 seriesModel, ecModel, api, layerGL
             );
+
+            var silent = seriesModel.get('silent');
+            chartView.groupGL && chartView.groupGL.traverse(function (node) {
+                node.ignorePicking = silent;
+            });
         }
     });
 };
