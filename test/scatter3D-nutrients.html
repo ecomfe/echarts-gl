@@ -12,6 +12,7 @@
         <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
@@ -40,6 +41,12 @@
                 {name: 'id', index: 16}
             ];
 
+            var config = {
+                xAxis3D: 'protein',
+                yAxis3D: 'fiber',
+                zAxis3D: 'sodium'
+            };
+
             var fieldIndices = schema.reduce(function (obj, item) {
                 obj[item.name] = item.index;
                 return obj;
@@ -48,6 +55,11 @@
             var groupCategories = [];
             var groupColors = [];
             var data;
+            var fieldNames = schema.map(function (item) {
+                return item.name;
+            });
+            fieldNames = fieldNames.slice(2, fieldNames.length - 2);
+
             $.getJSON('./data/nutrients.json', function (data) {
 
                 var axisLine = {
@@ -65,42 +77,82 @@
                         }
                     },
                     xAxis3D: {
+                        name: config.xAxis3D,
                         type: 'value',
                         axisLine: axisLine
                     },
                     yAxis3D: {
+                        name: config.yAxis3D,
                         type: 'value',
                         axisLine: axisLine
                     },
                     zAxis3D: {
+                        name: config.zAxis3D,
                         type: 'value',
                         axisLine: axisLine
                     },
                     grid3D: {
                         viewControl: {
+                            autoRotate: true
                             // projection: 'orthographic'
                         }
                     },
                     series: [{
                         type: 'scatter3D',
                         data: data.map(function (item, idx) {
-                            return [item[2], item[3], item[4], item[5], idx];
+                            return [
+                                item[fieldIndices[config.xAxis3D]],
+                                item[fieldIndices[config.yAxis3D]],
+                                item[fieldIndices[config.zAxis3D]],
+                                item[1],
+                                idx
+                            ];
                         }),
                         symbolSize: 10,
+                        // symbol: 'triangle',
                         itemStyle: {
                             normal: {
                                 borderWidth: 2,
-                                borderColor: 'white'
+                                borderColor: 'rgba(255,255,255,0.8)'
                             }
                         }
                     }]
                 });
 
+                var gui = new dat.GUI();
+
+                ['xAxis3D', 'yAxis3D', 'zAxis3D'].forEach(function (axisName) {
+                    gui.add(config, axisName, fieldNames).onChange(function () {
+                        if (data) {
+                            chart.setOption({
+                                xAxis3D: {
+                                    name: config.xAxis3D
+                                },
+                                yAxis3D: {
+                                    name: config.yAxis3D
+                                },
+                                zAxis3D: {
+                                    name: config.zAxis3D
+                                },
+                                series: {
+                                    data: data.map(function (item, idx) {
+                                        return [
+                                            item[fieldIndices[config.xAxis3D]],
+                                            item[fieldIndices[config.yAxis3D]],
+                                            item[fieldIndices[config.zAxis3D]],
+                                            item[1],
+                                            idx
+                                        ];
+                                    })
+                                }
+                            });
+                        }
+                    });
+                });
             });
             window.addEventListener('resize', function () {
                 chart.resize();
             });
-
         </script>
     </body>
 </html>

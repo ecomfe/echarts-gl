@@ -25,7 +25,8 @@ function PointsBuilder(is2D) {
     });
     material.shader.enableTexture('sprite');
     this._sdfTexture = new graphicGL.Texture2D({
-        image: document.createElement('canvas')
+        image: document.createElement('canvas'),
+        flipY: false
     });
 
     material.set('sprite', this._sdfTexture);

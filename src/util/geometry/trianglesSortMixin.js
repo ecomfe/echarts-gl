@@ -58,7 +58,8 @@ module.exports = {
         if (this.triangleCount < 2e4) {
             // Use simple timsort for simple geometries.
             if (frame === 0) {
-                this._simpleSort();
+                // Use native sort temporary.
+                this._simpleSort(true);
             }
         }
         else {
@@ -91,15 +92,20 @@ module.exports = {
         this.dirtyIndices();
     },
 
-    _simpleSort: function () {
+    _simpleSort: function (useNativeQuickSort) {
         var faceZList = this._triangleZList;
         var sortedTriangleIndices = this._sortedTriangleIndices;
-        // Simple quicksort is more effecient than v8 native quick sort when data all different.
-        // In this case triangles with same depth are rare. so use simple quicksort here.
-        ProgressiveQuickSort.sort(sortedTriangleIndices, function (a, b) {
+
+        function compare(a, b) {
             // Sort from far to near. which is descending order
             return faceZList[b] - faceZList[a];
-        }, 0, sortedTriangleIndices.length - 1);
+        }
+        if (useNativeQuickSort) {
+            sortedTriangleIndices.sort(compare);
+        }
+        else {
+            ProgressiveQuickSort.sort(sortedTriangleIndices, compare, 0, sortedTriangleIndices.length - 1);
+        }
     },
 
     _progressiveQuickSort: function (frame) {

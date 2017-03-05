@@ -21,7 +21,7 @@ module.exports = {
         if (frame === 0) {
             var posAttr = this.attributes.position;
             var cameraPos = cameraPos._array;
-
+            var noneCount = 0;
             if (!this._zList || this._zList.length !== this.vertexCount) {
                 this._zList = new Float32Array(this.vertexCount);
             }
@@ -33,15 +33,18 @@ module.exports = {
                 if (isNaN(z)) {
                     // Put far away, NaN value may cause sort slow
                     z = 1e7;
+                    noneCount++;
                 }
                 this._zList[i] = z;
             }
+
+            this._noneCount = noneCount;
         }
 
         if (this.vertexCount < 2e4) {
             // Use simple timsort for simple geometries.
             if (frame === 0) {
-                this._simpleSort();
+                this._simpleSort(this._noneCount / this.vertexCount > 0.05);
             }
         }
         else {
@@ -53,13 +56,25 @@ module.exports = {
         this.dirtyIndices();
     },
 
-    _simpleSort: function () {
+    _simpleSort: function (useNativeQuickSort) {
         var zList = this._zList;
         var indices = this.indices;
-        ProgressiveQuickSort.sort(indices, function (a, b) {
+        function compare(a, b) {
             // Sort from far to near. which is descending order
             return zList[b] - zList[a];
-        }, 0, indices.length - 1);
+        }
+
+        // When too much value are equal, using native quick sort with three partition..
+        // or the simple quick sort will be nearly O(n*n)
+        // http://stackoverflow.com/questions/5126586/quicksort-complexity-when-all-the-elements-are-same
+
+        // Otherwise simple quicksort is more effecient than v8 native quick sort when data all different.
+        if (useNativeQuickSort) {
+            indices.sort(compare);
+        }
+        else {
+            ProgressiveQuickSort.sort(indices, compare, 0, indices.length - 1);
+        }
     },
 
     _progressiveQuickSort: function (frame) {
