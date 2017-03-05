@@ -46,13 +46,9 @@ var BarsGeometry = StaticGeometry.extend(function () {
     },
 
     setBarCount: function (barCount) {
-        var bevelSegments = this.bevelSegments;
         var enableNormal = this.enableNormal;
-        var hasBevel = bevelSegments > 0 && this.bevelSize > 0;
-        var vertexCount = (hasBevel
-            ? this.getBevelBarVertexCount(bevelSegments) : this.getBarVertexCount()) * barCount;
-        var triangleCount = (hasBevel
-            ? this.getBevelBarTriangleCount(bevelSegments) : this.getBarTriangleCount()) * barCount;
+        var vertexCount = this.getBarVertexCount() * barCount;
+        var triangleCount = this.getBarTriangleCount() * barCount;
 
         if (this.vertexCount !== vertexCount) {
             this.attributes.position.init(vertexCount);
@@ -71,21 +67,36 @@ var BarsGeometry = StaticGeometry.extend(function () {
     },
 
     getBarVertexCount: function () {
-        return this.enableNormal ? 24 : 8;
+        var bevelSegments = this.bevelSize > 0 ? this.bevelSegments : 0;
+        return bevelSegments > 0 ? this._getBevelBarVertexCount(bevelSegments)
+            : (this.enableNormal ? 24 : 8);
     },
 
     getBarTriangleCount: function () {
-        return 12;
+        var bevelSegments = this.bevelSize > 0 ? this.bevelSegments : 0;
+        return bevelSegments > 0 ? this._getBevelBarTriangleCount(bevelSegments)
+            : 12;
     },
 
-    getBevelBarVertexCount: function (bevelSegments) {
+    _getBevelBarVertexCount: function (bevelSegments) {
         return (bevelSegments + 1) * 4 * (bevelSegments + 1) * 2;
     },
 
-    getBevelBarTriangleCount: function (bevelSegments) {
+    _getBevelBarTriangleCount: function (bevelSegments) {
         var widthSegments = bevelSegments * 4 + 3;
         var heightSegments = bevelSegments * 2 + 1;
         return (widthSegments + 1) * heightSegments * 2 + 4;
+    },
+
+    setBarColor: function (barIndex, color) {
+        var barVertexCount = this.getBarVertexCount();
+        var start = barVertexCount * barIndex;
+        var end = barVertexCount * (barIndex + 1);
+
+        for (var i = start; i < end; i++) {
+            this.attributes.color.set(i, color);
+        }
+        this.dirtyAttribute('color');
     },
 
     /**

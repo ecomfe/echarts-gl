@@ -80,7 +80,7 @@ void main()
     // TODO, Will exceed sprite.
 
     if (lineWidth > 0.0) {
-        float sLineWidth = lineWidth / v_Size;
+        float sLineWidth = lineWidth / 2.0 / v_Size;
         float fadeSize = sLineWidth * 0.3;
         float outlineMaxValue0 = sLineWidth - fadeSize;
         float outlineMaxValue1 = sLineWidth + fadeSize;

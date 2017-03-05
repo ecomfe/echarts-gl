@@ -12,6 +12,7 @@
         <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
@@ -81,6 +82,23 @@
             window.addEventListener('resize', function () {
                 chart.resize();
             });
+
+            var config = {
+                opacity: 0.8
+            };
+            var gui = new dat.GUI();
+
+            gui.add(config, 'opacity', 0, 1).step(0.01).onChange(function () {
+                chart.setOption({
+                    series: {
+                        itemStyle: {
+                            normal: {
+                                opacity: config.opacity
+                            }
+                        }
+                    }
+                });
+            })
 
         </script>
     </body>

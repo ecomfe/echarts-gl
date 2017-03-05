@@ -15,10 +15,11 @@ echarts.extendChartView({
 
         var pointsBuilder = new PointsBuilder(false);
         this._pointsBuilder = pointsBuilder;
-        this.groupGL.add(this._pointsBuilder.rootNode);
     },
 
     render: function (seriesModel, ecModel, api) {
+        this.groupGL.add(this._pointsBuilder.rootNode);
+
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);

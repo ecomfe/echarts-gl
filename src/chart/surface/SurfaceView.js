@@ -45,10 +45,11 @@ echarts.extendChartView({
         echarts.util.extend(mesh.geometry, trianglesSortMixin);
 
         this._surfaceMesh = mesh;
-        this.groupGL.add(this._surfaceMesh);
     },
 
     render: function (seriesModel, ecModel, api) {
+        this.groupGL.add(this._surfaceMesh);
+
         var coordSys = seriesModel.coordinateSystem;
         var shading = seriesModel.get('shading');
         var data = seriesModel.getData();

@@ -16,8 +16,6 @@ module.exports = echarts.extendComponentView({
         this._geo3DBuilder = new Geo3DBuilder(api);
         this.groupGL = new graphicGL.Node();
 
-        this.groupGL.add(this._geo3DBuilder.rootNode);
-
         this._lightHelper = new LightHelper(this.groupGL);
 
         this._control = new OrbitControl({
@@ -27,6 +25,8 @@ module.exports = echarts.extendComponentView({
     },
 
     render: function (geo3DModel, ecModel, api) {
+        this.groupGL.add(this._geo3DBuilder.rootNode);
+
         var geo3D = geo3DModel.coordinateSystem;
 
         if (!geo3D || !geo3D.viewGL) {

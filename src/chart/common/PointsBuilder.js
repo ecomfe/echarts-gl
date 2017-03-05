@@ -174,12 +174,12 @@ PointsBuilder.prototype = {
         ) {
             material.transparent = true;
             material.depthMask = false;
-            material.sortVertices = !is2D;
+            geometry.sortVertices = !is2D;
         }
         else {
             material.transparent = false;
             material.depthMask = true;
-            material.sortVertices = false;
+            geometry.sortVertices = false;
         }
     },
 
