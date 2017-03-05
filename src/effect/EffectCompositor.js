@@ -169,21 +169,12 @@ EffectCompositor.prototype.setSSAOIntensity = function (value) {
 };
 
 EffectCompositor.prototype.setSSAOQuality = function (value) {
-    var kernelSize = 16;
-    switch (value) {
-        case 'low':
-            kernelSize = 8;
-            break;
-        case 'medium':
-            kernelSize = 16;
-            break;
-        case 'high':
-            kernelSize = 64;
-            break;
-        case 'ultra':
-            kernelSize = 128;
-            break;
-    }
+    var kernelSize = ({
+        low: 8,
+        medium: 16,
+        high: 64,
+        ultra: 128
+    })[value] || 16;
     this._ssaoPass.setParameter('kernelSize', kernelSize);
 };
 

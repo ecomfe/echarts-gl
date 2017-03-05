@@ -137,6 +137,7 @@ var spriteUtil = {
     },
 
     createSymbolSDF: function (symbol, symbolSize, range, style, canvas) {
+        // TODO Create a low resolution SDF from high resolution image.
         var pathEl = makePath(symbol, symbolSize, style);
 
         pathEl.setStyle({
@@ -152,22 +153,22 @@ var spriteUtil = {
         });
     },
 
-    createSymbolStrokeSDF: function (symbol, symbolSize, range, style, canvas) {
-        var pathEl = makePath(symbol, symbolSize, style);
+    // createSymbolStrokeSDF: function (symbol, symbolSize, range, style, canvas) {
+    //     var pathEl = makePath(symbol, symbolSize, style);
 
-        pathEl.setStyle({
-            stroke: '#fff',
-            lineWidth: style.lineWidth,
-            fill: 'transparent',
-            shadowColor: 'transparent'
-        });
-        return makeSprite(pathEl.__size, canvas, function (ctx) {
-            pathEl.brush(ctx);
-            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    //     pathEl.setStyle({
+    //         stroke: '#fff',
+    //         lineWidth: style.lineWidth,
+    //         fill: 'transparent',
+    //         shadowColor: 'transparent'
+    //     });
+    //     return makeSprite(pathEl.__size, canvas, function (ctx) {
+    //         pathEl.brush(ctx);
+    //         var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-            ctx.putImageData(generateSDF(ctx, imgData, range), 0, 0);
-        });
-    },
+    //         ctx.putImageData(generateSDF(ctx, imgData, range), 0, 0);
+    //     });
+    // },
 
     createSimpleSprite: function (size, canvas) {
         return makeSprite(size, canvas, function (ctx) {

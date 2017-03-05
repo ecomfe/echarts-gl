@@ -69,7 +69,6 @@ var geo3DCreator = {
             // FIXME
             componentModel.__viewGL = componentModel.__viewGL || new ViewGL();
 
-
             var geo3D = new Geo3D(
                 name + idx, name,
                 mapData && mapData.geoJson, mapData && mapData.specialAreas,

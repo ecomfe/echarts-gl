@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>ScatterGL - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/china.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            chart.setOption({
+                backgroundColor: '#fff',
+                xAxis: {
+                    type: 'value',
+                    min: -1,
+                    max: 1
+                },
+                yAxis: {
+                    type: 'value',
+                    min: -1,
+                    max: 1
+                },
+                series: [{
+                    type: 'scatterGL',
+                    data: [0, 0],
+                    symbolSize: 50,
+                    symbol: 'triangle',
+
+                    itemStyle: {
+                        normal: {
+                            borderWidth: 5,
+                            borderColor: '#000'
+                        }
+                    }
+                }]
+            });
+        </script>
+    </body>
+</html>

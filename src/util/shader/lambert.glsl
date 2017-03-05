@@ -160,7 +160,7 @@ void main()
         texel2 = sRGBToLinear(texel2);
         #endif
         // source-over blend
-        albedoTexel.rgb = texel2.rgb * texel2.a + albedoTexel.rgb * (1.0 - texel2.a);
+        albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb, texel2.a);
         albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;
     }}
 #endif

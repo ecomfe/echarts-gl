@@ -3,6 +3,7 @@ var graphicGL = require('../../util/graphicGL');
 var spriteUtil = require('../../util/sprite');
 var verticesSortMixin = require('../../util/geometry/verticesSortMixin');
 
+// TODO gl_PointSize has max value.
 
 graphicGL.Shader.import(require('text!./sdfSprite.glsl'));
 
@@ -72,7 +73,7 @@ PointsBuilder.prototype = {
         var dpr = api.getDevicePixelRatio();
 
         // 50px is enough for sined distance function.
-        symbolInfo.maxSize = Math.min(symbolInfo.maxSize, 50);
+        // symbolInfo.maxSize;
 
         var symbolSize = [];
         if (symbolInfo.aspect > 1) {

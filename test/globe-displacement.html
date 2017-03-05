@@ -12,26 +12,27 @@
         <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
             // http://visibleearth.nasa.gov/view_cat.php?categoryID=1484
             chart.setOption({
                 globe: {
-
-                    baseTexture: 'asset/world.topo.bathy.200401.jpg',
-                    heightTexture: 'asset/elev_bump_4k.jpg',
+                    displacementTexture: 'asset/elev_bump_4k.jpg',
 
                     displacementScale: 0.1,
 
-                    shading: 'realistic',
-                    realisticMaterial: {
-                        roughness: 0.8,
-                        metalness: 0
-                    },
+                    shading: 'lambert',
 
                     postEffect: {
-                        enable: true
+                        enable: true,
+                        SSAO: {
+                            enable: true,
+                            radius: 2,
+                            intensity: 1.5,
+                            quality: 'high'
+                        }
                     },
                     temporalSuperSampling: {
                         enable: true
@@ -41,18 +42,17 @@
                             intensity: 0
                         },
                         main: {
-                            intensity: 6,
+                            intensity: 1,
                             shadow: true
                         },
                         ambientCubemap: {
                             texture: 'asset/pisa.hdr',
-                            exposure: 2,
-                            diffuseIntensity: 0.1,
-                            specularIntensity: 1
+                            exposure: 1,
+                            diffuseIntensity: 0.5
                         }
                     },
                     viewControl: {
-                        // autoRotate: false
+                        autoRotate: false
                     }
                 },
                 series: []
@@ -62,6 +62,19 @@
                 chart.resize();
             });
 
+            var config = {
+                displacementScale: 0.1,
+                displacementQuality: 'medium'
+            };
+            function update() {
+                chart.setOption({
+                    globe: config
+                });
+            }
+            var gui = new dat.GUI();
+            gui.add(config, 'displacementScale', 0, 0.5).step(0.01).onChange(update);
+            gui.add(config, 'displacementQuality', ['low', 'medium', 'high', 'ultra'])
+                .onChange(update);
         </script>
     </body>
 </html>

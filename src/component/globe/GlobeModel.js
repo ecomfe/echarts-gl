@@ -91,6 +91,9 @@ var GlobeModel = echarts.extendComponentModel({
         // Scale of vertex displacement, available only if displacementTexture is set.
         displacementScale: 0,
 
+        // Detail of displacement. 'low', 'medium', 'high', 'ultra'
+        displacementQuality: 'medium',
+
         globeRadius: 100,
 
         // Shading of globe

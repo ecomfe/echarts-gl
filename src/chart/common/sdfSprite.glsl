@@ -78,11 +78,26 @@ void main()
     d = d - 0.5;
     // Scale by symbolSize to make lineWidth screen space.
     // TODO, Will exceed sprite.
-    float outlineMax = lineWidth / v_Size;
-    if (abs(d) < outlineMax) {
-        float a = _strokeColor.a * (1.0 - smoothstep(0.0, outlineMax, abs(d)));
-        gl_FragColor.rgb = gl_FragColor.rgb * (1.0 - a) + _strokeColor.rgb * a;
-        gl_FragColor.a = gl_FragColor.a * (1.0 - a) + a;
+
+    if (lineWidth > 0.0) {
+        float sLineWidth = lineWidth / v_Size;
+        float fadeSize = sLineWidth * 0.3;
+        float outlineMaxValue0 = sLineWidth - fadeSize;
+        float outlineMaxValue1 = sLineWidth + fadeSize;
+        float outlineMinValue0 = -sLineWidth - fadeSize;
+        float outlineMinValue1 = -sLineWidth + fadeSize;
+
+        if (d <= outlineMaxValue1 && d >= outlineMinValue0) {
+            float a = _strokeColor.a;
+            if (d <= outlineMinValue1) {
+                a = a * smoothstep(outlineMinValue0, outlineMinValue1, d);
+            }
+            else {
+                a = a * smoothstep(outlineMaxValue1, outlineMaxValue0, d);
+            }
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, _strokeColor.rgb, a);
+            gl_FragColor.a = gl_FragColor.a * (1.0 - a) + a;
+        }
     }
 #endif
 

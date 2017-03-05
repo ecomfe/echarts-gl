@@ -228,7 +228,6 @@ module.exports = echarts.extendComponentView({
 
         var camera = coordSys.viewGL.camera;
 
-
         function makeAction() {
             return {
                 type: 'globeChangeView',
@@ -255,16 +254,34 @@ module.exports = echarts.extendComponentView({
     _displaceVertices: function (globeModel, api) {
         var displacementTextureValue = globeModel.get('displacementTexture') || globeModel.get('heightTexture');
         var displacementScale = globeModel.get('displacementScale');
+        var displacementQuality = globeModel.get('displacementQuality');
 
         if (!displacementTextureValue || displacementTextureValue === 'none') {
             displacementScale = 0;
         }
-        if (displacementScale === this._displacementScale) {
+        if (displacementScale === this._displacementScale
+            && displacementQuality === this._displacementQuality
+        ) {
             return;
         }
+
         this._displacementScale = displacementScale;
+        this._displacementQuality = displacementQuality;
 
         var geometry = this._sphereGeometry;
+
+        var widthSegments = ({
+            low: 100,
+            medium: 200,
+            high: 400,
+            ultra: 800
+        })[displacementQuality] || 200;
+        var heightSegments = widthSegments / 2;
+        if (geometry.widthSegments !== widthSegments) {
+            geometry.widthSegments = widthSegments;
+            geometry.heightSegments = heightSegments;
+            geometry.build();
+        }
 
         var img;
         if (graphicGL.isImage(displacementTextureValue)) {
