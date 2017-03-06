@@ -268,6 +268,9 @@ LayerGL.prototype._startAccumulating = function () {
     for (var i = 0; i < this.views.length; i++) {
         needsAccumulate = this.views[i].needsAccumulate() || needsAccumulate;
     }
+    if (!needsAccumulate) {
+        return;
+    }
 
     function accumulate(id) {
         if (!self._accumulatingId || id !== self._accumulatingId) {
@@ -399,6 +402,7 @@ LayerGL.prototype.dispose = function () {
 LayerGL.prototype.onmousedown = function (e) {
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
+
     if (obj) {
         this._dispatchEvent('mousedown', e, obj);
     }
@@ -407,8 +411,20 @@ LayerGL.prototype.onmousedown = function (e) {
 LayerGL.prototype.onmousemove = function (e) {
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
+
+    var lastHovered = this._hovered;
+    this._hovered = obj;
+
+    if (lastHovered && obj !== lastHovered) {
+        this._dispatchEvent('mouseout', e, lastHovered);
+    }
+
     if (obj) {
         this._dispatchEvent('mousemove', e, obj);
+
+        if (obj !== lastHovered) {
+            this._dispatchEvent('mouseover', e, obj);
+        }
     }
 };
 

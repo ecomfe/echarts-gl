@@ -225,10 +225,18 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     compositor.setSSAORadius(ssaoModel.get('radius'));
     compositor.setSSAOQuality(ssaoModel.get('quality'));
     compositor.setSSAOIntensity(ssaoModel.get('intensity'));
+
+    // Update temporal configuration
+    if (this._enableTemporalSS === 'auto') {
+        this._enableTemporalSS = this._enablePostEffect;
+    }
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {
     this._enableTemporalSS = temporalSuperSamplingModel.get('enable');
+    if (this._enableTemporalSS === 'auto') {
+        this._enableTemporalSS = this._enablePostEffect;
+    }
 };
 
 ViewGL.prototype.isLinearSpace = function () {

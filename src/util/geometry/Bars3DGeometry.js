@@ -28,13 +28,18 @@ var BarsGeometry = StaticGeometry.extend(function () {
             color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
         },
 
+        dynamic: true,
+
         enableNormal: false,
 
         bevelSize: 1,
         bevelSegments: 0,
 
+        // Map from triangleIndex to dataIndex.
+        _dataIndices: null,
+
         _vertexOffset: 0,
-        _faceOffset: 0
+        _triangleOffset: 0
     };
 },
 /** @lends module:echarts-gl/chart/bars/BarsGeometry.prototype */
@@ -42,7 +47,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
 
     resetOffset: function () {
         this._vertexOffset = 0;
-        this._faceOffset = 0;
+        this._triangleOffset = 0;
     },
 
     setBarCount: function (barCount) {
@@ -63,6 +68,8 @@ var BarsGeometry = StaticGeometry.extend(function () {
 
         if (this.triangleCount !== triangleCount) {
             this.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
+
+            this._dataIndices = new Uint32Array(triangleCount);
         }
     },
 
@@ -88,6 +95,32 @@ var BarsGeometry = StaticGeometry.extend(function () {
         return (widthSegments + 1) * heightSegments * 2 + 4;
     },
 
+    setColor: function (idx, color) {
+        var vertexCount = this.getBarVertexCount();
+        var start = vertexCount * idx;
+        var end = vertexCount * (idx + 1);
+        for (var i = start; i < end; i++) {
+            this.attributes.color.set(i, color);
+        }
+        this.dirtyAttribute('color');
+    },
+
+    /**
+     * Get dataIndex of triangle.
+     * @param {number} triangleIndex
+     */
+    getDataIndexOfTriangle: function (triangleIndex) {
+        return this._dataIndices ? this._dataIndices[triangleIndex] : null;
+    },
+
+    /**
+     * Get bar index of triangle.
+     * @param {number} triangleIndex
+     */
+    getBarIndexOfTriangle: function (triangleIndex) {
+        var vertexCount = this.getBarVertexCount();
+        return Math.floor(triangleIndex / vertexCount);
+    },
     /**
      * Add a bar
      * @param {Array.<number>} start
@@ -142,88 +175,96 @@ var BarsGeometry = StaticGeometry.extend(function () {
                 cubeFaces3.push(face);
             }
         }
-        return function (start, dir, leftDir, size, color) {
+        return function (start, dir, leftDir, size, color, dataIndex) {
+
+            var startTriangle = this._triangleOffset;
 
             if (this.bevelSize > 0 && this.bevelSegments > 0) {
-                this.addBevelBar(start, dir, leftDir, size, this.bevelSize, this.bevelSegments, color);
-                return;
+                this._addBevelBar(start, dir, leftDir, size, this.bevelSize, this.bevelSegments, color);
             }
+            else {
+                vec3.copy(py, dir);
+                vec3.normalize(py, py);
+                // x * y => z
+                vec3.cross(pz, leftDir, py);
+                vec3.normalize(pz, pz);
+                // y * z => x
+                vec3.cross(px, py, pz);
+                vec3.normalize(pz, pz);
 
-            vec3.copy(py, dir);
-            vec3.normalize(py, py);
-            // x * y => z
-            vec3.cross(pz, leftDir, py);
-            vec3.normalize(pz, pz);
-            // y * z => x
-            vec3.cross(px, py, pz);
-            vec3.normalize(pz, pz);
+                vec3.negate(nx, px);
+                vec3.negate(ny, py);
+                vec3.negate(nz, pz);
 
-            vec3.negate(nx, px);
-            vec3.negate(ny, py);
-            vec3.negate(nz, pz);
+                v3ScaleAndAdd(pts[0], start, px, size[0] / 2);
+                v3ScaleAndAdd(pts[0], pts[0], pz, size[2] / 2);
+                v3ScaleAndAdd(pts[1], start, px, size[0] / 2);
+                v3ScaleAndAdd(pts[1], pts[1], nz, size[2] / 2);
+                v3ScaleAndAdd(pts[2], start, nx, size[0] / 2);
+                v3ScaleAndAdd(pts[2], pts[2], nz, size[2] / 2);
+                v3ScaleAndAdd(pts[3], start, nx, size[0] / 2);
+                v3ScaleAndAdd(pts[3], pts[3], pz, size[2] / 2);
 
-            v3ScaleAndAdd(pts[0], start, px, size[0] / 2);
-            v3ScaleAndAdd(pts[0], pts[0], pz, size[2] / 2);
-            v3ScaleAndAdd(pts[1], start, px, size[0] / 2);
-            v3ScaleAndAdd(pts[1], pts[1], nz, size[2] / 2);
-            v3ScaleAndAdd(pts[2], start, nx, size[0] / 2);
-            v3ScaleAndAdd(pts[2], pts[2], nz, size[2] / 2);
-            v3ScaleAndAdd(pts[3], start, nx, size[0] / 2);
-            v3ScaleAndAdd(pts[3], pts[3], pz, size[2] / 2);
+                v3ScaleAndAdd(end, start, py, size[1]);
 
-            v3ScaleAndAdd(end, start, py, size[1]);
+                v3ScaleAndAdd(pts[4], end, px, size[0] / 2);
+                v3ScaleAndAdd(pts[4], pts[4], pz, size[2] / 2);
+                v3ScaleAndAdd(pts[5], end, px, size[0] / 2);
+                v3ScaleAndAdd(pts[5], pts[5], nz, size[2] / 2);
+                v3ScaleAndAdd(pts[6], end, nx, size[0] / 2);
+                v3ScaleAndAdd(pts[6], pts[6], nz, size[2] / 2);
+                v3ScaleAndAdd(pts[7], end, nx, size[0] / 2);
+                v3ScaleAndAdd(pts[7], pts[7], pz, size[2] / 2);
 
-            v3ScaleAndAdd(pts[4], end, px, size[0] / 2);
-            v3ScaleAndAdd(pts[4], pts[4], pz, size[2] / 2);
-            v3ScaleAndAdd(pts[5], end, px, size[0] / 2);
-            v3ScaleAndAdd(pts[5], pts[5], nz, size[2] / 2);
-            v3ScaleAndAdd(pts[6], end, nx, size[0] / 2);
-            v3ScaleAndAdd(pts[6], pts[6], nz, size[2] / 2);
-            v3ScaleAndAdd(pts[7], end, nx, size[0] / 2);
-            v3ScaleAndAdd(pts[7], pts[7], pz, size[2] / 2);
+                var attributes = this.attributes;
+                if (this.enableNormal) {
+                    normals[0] = px;
+                    normals[1] = nx;
+                    normals[2] = py;
+                    normals[3] = ny;
+                    normals[4] = pz;
+                    normals[5] = nz;
 
-            var attributes = this.attributes;
-            if (this.enableNormal) {
-                normals[0] = px;
-                normals[1] = nx;
-                normals[2] = py;
-                normals[3] = ny;
-                normals[4] = pz;
-                normals[5] = nz;
-
-                var vertexOffset = this._vertexOffset;
-                for (var i = 0; i < cubeFaces4.length; i++) {
-                    var idx3 = this._faceOffset * 3;
-                    for (var k = 0; k < 6; k++) {
-                        this.indices[idx3++] = vertexOffset + face4To3[k];
+                    var vertexOffset = this._vertexOffset;
+                    for (var i = 0; i < cubeFaces4.length; i++) {
+                        var idx3 = this._triangleOffset * 3;
+                        for (var k = 0; k < 6; k++) {
+                            this.indices[idx3++] = vertexOffset + face4To3[k];
+                        }
+                        vertexOffset += 4;
+                        this._triangleOffset += 2;
                     }
-                    vertexOffset += 4;
-                    this._faceOffset += 2;
-                }
 
-                for (var i = 0; i < cubeFaces4.length; i++) {
-                    var normal = normals[i];
-                    for (var k = 0; k < 4; k++) {
-                        var idx = cubeFaces4[i][k];
-                        attributes.position.set(this._vertexOffset, pts[idx]);
-                        attributes.normal.set(this._vertexOffset, normal);
+                    for (var i = 0; i < cubeFaces4.length; i++) {
+                        var normal = normals[i];
+                        for (var k = 0; k < 4; k++) {
+                            var idx = cubeFaces4[i][k];
+                            attributes.position.set(this._vertexOffset, pts[idx]);
+                            attributes.normal.set(this._vertexOffset, normal);
+                            attributes.color.set(this._vertexOffset++, color);
+                        }
+                    }
+                }
+                else {
+                    for (var i = 0; i < cubeFaces3.length; i++) {
+                        var idx3 = this._triangleOffset * 3;
+                        for (var k = 0; k < 3; k++) {
+                            this.indices[idx3 + k] = cubeFaces3[i][k] + this._vertexOffset;
+                        }
+                        this._triangleOffset++;
+                    }
+
+                    for (var i = 0; i < pts.length; i++) {
+                        attributes.position.set(this._vertexOffset, pts[i]);
                         attributes.color.set(this._vertexOffset++, color);
                     }
                 }
             }
-            else {
-                for (var i = 0; i < cubeFaces3.length; i++) {
-                    var idx3 = this._faceOffset * 3;
-                    for (var k = 0; k < 3; k++) {
-                        this.indices[idx3 + k] = cubeFaces3[i][k] + this._vertexOffset;
-                    }
-                    this._faceOffset++;
-                }
 
-                for (var i = 0; i < pts.length; i++) {
-                    attributes.position.set(this._vertexOffset, pts[i]);
-                    attributes.color.set(this._vertexOffset++, color);
-                }
+            var endTriangle = this._triangleOffset;
+
+            for (var i = startTriangle; i < endTriangle; i++) {
+                this._dataIndices[i] = dataIndex;
             }
         };
     })(),
@@ -238,7 +279,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
      * @param {number} bevelSegments
      * @param {Array.<number>} color
      */
-    addBevelBar: (function () {
+    _addBevelBar: (function () {
         var px = vec3.create();
         var py = vec3.create();
         var pz = vec3.create();
@@ -331,16 +372,16 @@ var BarsGeometry = StaticGeometry.extend(function () {
                     var i4 = (j + 1) * len + (i + 1) % len + this._vertexOffset;
                     var i3 = (j + 1) * len + i + this._vertexOffset;
 
-                    this.setTriangleIndices(this._faceOffset++, [i4, i2, i1]);
-                    this.setTriangleIndices(this._faceOffset++, [i4, i3, i2]);
+                    this.setTriangleIndices(this._triangleOffset++, [i4, i2, i1]);
+                    this.setTriangleIndices(this._triangleOffset++, [i4, i3, i2]);
                 }
             }
 
             // Close top and bottom
-            this.setTriangleIndices(this._faceOffset++, [endIndices[0][0], endIndices[0][2], endIndices[0][1]]);
-            this.setTriangleIndices(this._faceOffset++, [endIndices[0][0], endIndices[0][3], endIndices[0][2]]);
-            this.setTriangleIndices(this._faceOffset++, [endIndices[1][0], endIndices[1][1], endIndices[1][2]]);
-            this.setTriangleIndices(this._faceOffset++, [endIndices[1][0], endIndices[1][2], endIndices[1][3]]);
+            this.setTriangleIndices(this._triangleOffset++, [endIndices[0][0], endIndices[0][2], endIndices[0][1]]);
+            this.setTriangleIndices(this._triangleOffset++, [endIndices[0][0], endIndices[0][3], endIndices[0][2]]);
+            this.setTriangleIndices(this._triangleOffset++, [endIndices[1][0], endIndices[1][1], endIndices[1][2]]);
+            this.setTriangleIndices(this._triangleOffset++, [endIndices[1][0], endIndices[1][2], endIndices[1][3]]);
 
             this._vertexOffset = vertexOffset;
         };

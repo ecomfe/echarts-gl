@@ -26,7 +26,8 @@ module.exports = {
 
         // Temporal super sampling when the picture is still.
         temporalSuperSampling: {
-            enable: true
+            // Only enabled when postEffect is enabled
+            enable: 'auto'
         }
     }
 };

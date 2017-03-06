@@ -188,7 +188,7 @@ module.exports = echarts.extendChartView({
         var emphasisOpacity = emphasisModel.get('opacity');
         if (emphasisColor == null) {
             var color = data.getItemVisual(dataIndex, 'color');
-            emphasisColor = echarts.color.lift(color, -0.1);
+            emphasisColor = echarts.color.lift(color, -0.3);
         }
         if (emphasisOpacity == null) {
             emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
