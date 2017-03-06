@@ -202,10 +202,10 @@ var OrbitControl = Base.extend(function () {
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
         if (this._distance !== targetDistance) {
-            // this.zoomTo({
-            //     distance: targetDistance
-            // });
-            this.setDistance(targetDistance);
+            this.zoomTo({
+                distance: targetDistance
+            });
+            // this.setDistance(targetDistance);
         }
         this.setAlpha(viewControlModel.get('alpha') || 0);
         this.setBeta(viewControlModel.get('beta') || 0);

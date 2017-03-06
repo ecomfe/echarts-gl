@@ -1,6 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 
-module.exports = echarts.extendSeriesModel({
+var Bar3DSeries = echarts.extendSeriesModel({
 
     type: 'series.bar3D',
 
@@ -11,6 +11,14 @@ module.exports = echarts.extendSeriesModel({
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;
+    },
+
+    getFormattedLabel: function (dataIndex, status, dataType, dimIndex) {
+        var text = Bar3DSeries.superCall(this, 'getFormattedLabel', dataIndex, status, dataType, dimIndex);
+        if (text == null) {
+            text = this.getData().get('z', dataIndex);
+        }
+        return text;
     },
 
     defaultOption: {
@@ -69,3 +77,5 @@ module.exports = echarts.extendSeriesModel({
         }
     }
 });
+
+module.exports = Bar3DSeries;

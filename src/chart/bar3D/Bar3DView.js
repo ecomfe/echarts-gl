@@ -2,8 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
-var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
-var LabelsMesh = require('../../util/mesh/LabelsMesh');
+var LabelsBuilder = require('../common/LabelsBuilder');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
 function getShader(shading) {
@@ -11,9 +10,6 @@ function getShader(shading) {
     shader.define('both', 'VERTEX_COLOR');
     return shader;
 }
-
-var LABEL_NORMAL_SHOW_BIT = 1;
-var LABEL_EMPHASIS_SHOW_BIT = 2;
 
 module.exports = echarts.extendChartView({
 
@@ -44,22 +40,26 @@ module.exports = echarts.extendChartView({
 
         this._api = api;
 
-
-        this._labelsMesh = new LabelsMesh({
-            renderOrder: 11
-        });
-
-        this._labelTextureSurface = new ZRTextureAtlasSurface(
-            1024, 1024, api.getDevicePixelRatio(), function () {
-                api.getZr().refresh();
+        this._labelsBuilder = new LabelsBuilder(1024, 1024, api);
+        var self = this;
+        this._labelsBuilder.getLabelPosition = function (dataIndex, position, distance) {
+            if (self._data) {
+                var layout = self._data.getItemLayout(dataIndex);
+                var start = layout[0];
+                var dir = layout[1];
+                var height = layout[2][1];
+                return vec3.scaleAndAdd([], start, dir, distance + height);
             }
-        );
-        this._labelsMesh.material.set('textureAtlas', this._labelTextureSurface.getTexture());
+            else {
+                return [0, 0];
+            }
+        };
+        this._labelsBuilder.getMesh().renderOrder = 11;
     },
 
     render: function (seriesModel, ecModel, api) {
         this.groupGL.add(this._barMesh);
-        this.groupGL.add(this._labelsMesh);
+        this.groupGL.add(this._labelsBuilder.getMesh());
 
         var coordSys = seriesModel.coordinateSystem;
         this._doRender(seriesModel, api);
@@ -72,24 +72,9 @@ module.exports = echarts.extendChartView({
 
         this._data = seriesModel.getData();
 
-        this._labelsVisibilitiesBits = new Uint8Array(this._data.count());
-        var normalLabelVisibilityQuery = ['label', 'normal', 'show'];
-        var emphasisLabelVisibilityQuery = ['label', 'emphasis', 'show'];
-        var data = this._data;
-        data.each(function (idx) {
-            var itemModel = data.getItemModel(idx);
-            var normalVisibility = itemModel.get(normalLabelVisibilityQuery);
-            var emphasisVisibility = itemModel.get(emphasisLabelVisibilityQuery);
-            if (emphasisVisibility == null) {
-                emphasisVisibility = normalVisibility;
-            }
-            var bit = (normalVisibility ? LABEL_NORMAL_SHOW_BIT : 0)
-                | (emphasisVisibility ? LABEL_EMPHASIS_SHOW_BIT : 0);
-            this._labelsVisibilitiesBits[idx] = bit;
-        }, false, this);
+        this._labelsBuilder.updateData(this._data);
 
-        this._updateLabels();
-
+        this._labelsBuilder.updateLabels();
     },
 
     _doRender: function (seriesModel, api) {
@@ -146,11 +131,11 @@ module.exports = echarts.extendChartView({
                 opacity = 1;
             }
 
-            echarts.color.parse(color, colorArr);
+            graphicGL.parseColor(color, colorArr);
             colorArr[3] *= opacity;
-            vertexColors[colorOffset++] = colorArr[0] / 255;
-            vertexColors[colorOffset++] = colorArr[1] / 255;
-            vertexColors[colorOffset++] = colorArr[2] / 255;
+            vertexColors[colorOffset++] = colorArr[0];
+            vertexColors[colorOffset++] = colorArr[1];
+            vertexColors[colorOffset++] = colorArr[2];
             vertexColors[colorOffset++] = colorArr[3];
 
             if (colorArr[3] > 0) {
@@ -203,12 +188,12 @@ module.exports = echarts.extendChartView({
         barMesh.on('mouseover', function (e) {
             var dataIndex = barMesh.geometry.getDataIndexOfVertex(e.triangle[0]);
             this._highlight(dataIndex);
-            this._updateLabels([dataIndex]);
+            this._labelsBuilder.updateLabels([dataIndex]);
         }, this);
         barMesh.on('mouseout', function (e) {
             var dataIndex = barMesh.geometry.getDataIndexOfVertex(e.triangle[0]);
             this._downplay(dataIndex);
-            this._updateLabels();
+            this._labelsBuilder.updateLabels();
         }, this);
     },
 
@@ -260,82 +245,6 @@ module.exports = echarts.extendChartView({
         this._barMesh.geometry.setColor(barIndex, colorArr);
 
         this._api.getZr().refresh();
-    },
-
-    _updateLabels: function (highlightDataIndices) {
-
-        highlightDataIndices = highlightDataIndices || [];
-
-        var hasHighlightData = highlightDataIndices.length > 0;
-        var highlightDataIndicesMap = {};
-        for (var i = 0; i < highlightDataIndices.length; i++) {
-            highlightDataIndicesMap[highlightDataIndices[i]] = true;
-        }
-
-        this._labelsMesh.geometry.convertToDynamicArray(true);
-        this._labelTextureSurface.clear();
-
-        var normalLabelQuery = ['label', 'normal'];
-        var emphasisLabelQuery = ['label', 'emphasis'];
-        var seriesModel = this._data.hostModel;
-        var data = this._data;
-        var labelPos = vec3.create();
-
-        var seriesLabelModel = seriesModel.getModel(normalLabelQuery);
-        var seriesLabelEmphasisModel = seriesModel.getModel(emphasisLabelQuery, seriesLabelModel);
-
-        data.each(function (dataIndex) {
-            var isEmphasis = false;
-            if (hasHighlightData && highlightDataIndicesMap[dataIndex]) {
-                isEmphasis = true;
-            }
-            var ifShow = this._labelsVisibilitiesBits[dataIndex]
-                & (isEmphasis ? LABEL_EMPHASIS_SHOW_BIT : LABEL_NORMAL_SHOW_BIT);
-            if (!ifShow) {
-                return;
-            }
-
-            var itemModel = data.getItemModel(dataIndex);
-            var labelModel = itemModel.getModel(
-                isEmphasis ? emphasisLabelQuery : normalLabelQuery,
-                isEmphasis ? seriesLabelEmphasisModel : seriesLabelModel
-            );
-            var distance = labelModel.get('distance');
-            var textStyleModel = labelModel.getModel('textStyle');
-
-            var dpr = this._api.getDevicePixelRatio();
-            var text = retrieve.firstNotNull(
-                seriesModel.getFormattedLabel(name, isEmphasis ? 'emphasis' : 'normal'),
-                data.get('z', dataIndex)
-            );
-            var textEl = new echarts.graphic.Text({
-                style: {
-                    text: text,
-                    font: textStyleModel.getFont(),
-                    fill: textStyleModel.get('color') || data.getItemVisual(dataIndex, 'color'),
-                    stroke: textStyleModel.get('borderColor'),
-                    lineWidth: textStyleModel.get('borderWidth') / dpr,
-                    textAlign: 'left',
-                    textVerticalAlign: 'top'
-                }
-            });
-            var rect = textEl.getBoundingRect();
-            var layout = data.getItemLayout(dataIndex);
-            var start = layout[0];
-            var dir = layout[1];
-            var height = layout[2][1];
-            vec3.scaleAndAdd(labelPos, start, dir, distance + height);
-
-            var coords = this._labelTextureSurface.add(textEl);
-
-            this._labelsMesh.geometry.addSprite(
-                 labelPos, [rect.width * dpr, rect.height * dpr], coords,
-                'center', 'bottom'
-            );
-        }, false, this);
-
-        this._labelsMesh.geometry.convertToTypedArray();
-        this._labelsMesh.geometry.dirty();
     },
 
     remove: function () {
