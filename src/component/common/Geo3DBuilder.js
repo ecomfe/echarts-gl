@@ -52,7 +52,6 @@ function Geo3DBuilder(api) {
     this._groundMesh.scale.set(1000, 1000, 1);
 
     this._labelsMesh = new LabelsMesh();
-    this._labelsMesh.material.depthMask = false;
 
     this._labelTextureSurface = new ZRTextureAtlasSurface(1024, 1024, api.getDevicePixelRatio());
     this._labelTextureSurface.onupdate = function () {

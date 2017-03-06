@@ -4,6 +4,7 @@
  * @module echarts-gl/util/ZRTextureAtlasSurface
  */
 
+// TODO Expand.
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('./graphicGL');
 /**

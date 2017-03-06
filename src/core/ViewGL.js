@@ -154,7 +154,8 @@ ViewGL.prototype.needsTemporalSS = function () {
 };
 
 ViewGL.prototype.isAccumulateFinished = function () {
-    return this._temporalSS.isFinished();
+    return this.needsTemporalSS() ? this._temporalSS.isFinished()
+        : (this._frame > 20);
 };
 
 ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
