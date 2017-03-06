@@ -195,6 +195,7 @@ module.exports = echarts.extendComponentView({
 
         var control = this._control;
         control.setCamera(cartesian.viewGL.camera);
+        control.setViewGL(cartesian.viewGL);
 
 
         var viewControlModel = grid3DModel.getModel('viewControl');

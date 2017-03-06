@@ -52,7 +52,7 @@ function ViewGL(cameraType) {
     this._accumulatingId = 0;
 
     this.scene.on('beforerender', function (renderer, scene, camera) {
-        if (this._enableTemporalSS) {
+        if (this._enableTemporalSS && this._accumulatingId > 0) {
             this._temporalSS.jitterProjection(renderer, camera);
         }
     }, this);
@@ -186,7 +186,7 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
         }
     }
 
-    this._shadowMapPass.render(renderer, scene, camera);
+    this._shadowMapPass.render(renderer, scene, camera, true);
     // Shadowmap will set clearColor.
     renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
 

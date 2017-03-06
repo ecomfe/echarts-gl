@@ -14,6 +14,9 @@ function resizeCartesian3D(grid3DModel, api) {
         height: api.getHeight()
     });
 
+    // Flip Y
+    viewport.y = api.getHeight() - viewport.y - viewport.height;
+
     this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 
     var boxWidth = grid3DModel.get('boxWidth');

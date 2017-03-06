@@ -22,6 +22,11 @@ var OrbitControl = Base.extend(function () {
         zr: null,
 
         /**
+         * @type {module:echarts-gl/core/ViewGL}
+         */
+        viewGL: null,
+
+        /**
          * @type {qtek.math.Vector3}
          */
         origin: new Vector3(),
@@ -80,18 +85,27 @@ var OrbitControl = Base.extend(function () {
 
         _animators: []
     };
+}, function () {
+    // Each OrbitControl has it's own handler
+    this._mouseDownHandler = this._mouseDownHandler.bind(this);
+    this._mouseWheelHandler = this._mouseWheelHandler.bind(this);
+    this._mouseMoveHandler = this._mouseMoveHandler.bind(this);
+    this._mouseUpHandler = this._mouseUpHandler.bind(this);
+    this._update = this._update.bind(this);
 }, {
     /**
      * Initialize.
      * Mouse event binding
      */
     init: function () {
-        this.zr.on('mousedown', this._mouseDownHandler, this);
-        this.zr.on('mousewheel', this._mouseWheelHandler, this);
+        var zr = this.zr;
+
+        zr.on('mousedown', this._mouseDownHandler);
+        zr.on('mousewheel', this._mouseWheelHandler);
 
         this._decomposeTransform();
 
-        this.zr.animation.on('frame', this._update, this);
+        zr.animation.on('frame', this._update);
     },
 
     /**
@@ -99,11 +113,13 @@ var OrbitControl = Base.extend(function () {
      * Mouse event unbinding
      */
     dispose: function () {
-        this.zr.off('mousedown', this._mouseDownHandler);
-        this.zr.off('mousemove', this._mouseMoveHandler);
-        this.zr.off('mouseup', this._mouseUpHandler);
-        this.zr.off('mousewheel', this._mouseWheelHandler);
+        var zr = this.zr;
+        zr.off('mousedown', this._mouseDownHandler);
+        zr.off('mousemove', this._mouseMoveHandler);
+        zr.off('mouseup', this._mouseUpHandler);
+        zr.off('mousewheel', this._mouseWheelHandler);
 
+        zr.animation.off('frame', this._update);
         this.stopAllAnimation();
     },
 
@@ -169,6 +185,10 @@ var OrbitControl = Base.extend(function () {
         this._needsUpdate = true;
     },
 
+    setViewGL: function (viewGL) {
+        this.viewGL = viewGL;
+    },
+
     getCamera: function () {
         return this._camera;
     },
@@ -182,9 +202,10 @@ var OrbitControl = Base.extend(function () {
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
         if (this._distance !== targetDistance) {
-            this.zoomTo({
-                distance: targetDistance
-            });
+            // this.zoomTo({
+            //     distance: targetDistance
+            // });
+            this.setDistance(targetDistance);
         }
         this.setAlpha(viewControlModel.get('alpha') || 0);
         this.setBeta(viewControlModel.get('beta') || 0);
@@ -430,8 +451,16 @@ var OrbitControl = Base.extend(function () {
         if (this._isAnimating()) {
             return;
         }
-        this.zr.on('mousemove', this._mouseMoveHandler, this);
-        this.zr.on('mouseup', this._mouseUpHandler, this);
+
+        var x = e.offsetX;
+        // Flip Y.
+        var y = this.zr.getHeight() - e.offsetY;
+        if (this.viewGL && !this.viewGL.containPoint(x, y)) {
+            return;
+        }
+
+        this.zr.on('mousemove', this._mouseMoveHandler);
+        this.zr.on('mouseup', this._mouseUpHandler);
 
         e = e.event;
 
@@ -446,8 +475,8 @@ var OrbitControl = Base.extend(function () {
             }
         }
 
-        this._mouseX = e.pageX;
-        this._mouseY = e.pageY;
+        this._mouseX = e.offsetX;
+        this._mouseY = e.offsetY;
     },
 
     _mouseMoveHandler: function (e) {
@@ -457,16 +486,16 @@ var OrbitControl = Base.extend(function () {
         e = e.event;
 
         if (this.mode === 'rotate') {
-            this._rotateVelocity.y = (e.pageX - this._mouseX) / 500;
-            this._rotateVelocity.x = (e.pageY - this._mouseY) / 500;
+            this._rotateVelocity.y = (e.offsetX - this._mouseX) / 500;
+            this._rotateVelocity.x = (e.offsetY - this._mouseY) / 500;
         }
         else if (this.mode === 'pan') {
-            this._panVelocity.x = e.pageX - this._mouseX;
-            this._panVelocity.y = -e.pageY + this._mouseY;
+            this._panVelocity.x = e.offsetX - this._mouseX;
+            this._panVelocity.y = -e.offsetY + this._mouseY;
         }
 
-        this._mouseX = e.pageX;
-        this._mouseY = e.pageY;
+        this._mouseX = e.offsetX;
+        this._mouseY = e.offsetY;
     },
 
     _mouseWheelHandler: function (e) {
@@ -494,8 +523,8 @@ var OrbitControl = Base.extend(function () {
     },
 
     _mouseUpHandler: function () {
-        this.zr.off('mousemove', this._mouseMoveHandler, this);
-        this.zr.off('mouseup', this._mouseUpHandler, this);
+        this.zr.off('mousemove', this._mouseMoveHandler);
+        this.zr.off('mouseup', this._mouseUpHandler);
     },
 
     _addAnimator: function (animator) {
