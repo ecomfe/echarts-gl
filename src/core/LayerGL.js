@@ -21,6 +21,7 @@ var Texture = require('qtek/lib/Texture');
 // PENDING
 var Eventful = require('zrender/lib/mixin/Eventful');
 var zrUtil = require('zrender/lib/core/util');
+var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
 
 /**
  * @constructor
@@ -82,6 +83,11 @@ var LayerGL = function (id, zr) {
     this._initHandlers();
 
     this._viewsToDispose = [];
+
+    /**
+     * Current accumulating id.
+     */
+    this._accumulatingId = 0;
 };
 
 /**
@@ -216,22 +222,75 @@ LayerGL.prototype.needsRefresh = function () {
  * Refresh the layer, will be invoked by zrender
  */
 LayerGL.prototype.refresh = function () {
-    this.clear();
 
-    this.renderer.saveViewport();
-    for (var i = 0; i < this.views.length; i++) {
-        this.views[i].render(this.renderer);
-    }
-    this.renderer.restoreViewport();
+    this._doRender(false);
 
     // Auto dispose unused resources on GPU, like program(shader), texture, geometry(buffers)
     this._trackAndClean();
+
+    this._startAccumulating();
 
     // Dispose trashed views
     for (var i = 0; i < this._viewsToDispose.length; i++) {
         this._viewsToDispose[i].dispose(this.renderer);
     }
     this._viewsToDispose.length = 0;
+};
+
+LayerGL.prototype._doRender = function (accumulating) {
+    this.clear();
+    this.renderer.saveViewport();
+    for (var i = 0; i < this.views.length; i++) {
+        this.views[i].render(this.renderer, accumulating);
+    }
+    this.renderer.restoreViewport();
+};
+
+/**
+ * Stop accumulating
+ */
+LayerGL.prototype._stopAccumulating = function () {
+    this._accumulatingId = 0;
+    clearTimeout(this._accumulatingTimeout);
+};
+
+var accumulatingId = 1;
+/**
+ * Start accumulating all the views.
+ * Accumulating is for antialising and have more sampling in SSAO
+ * @private
+ */
+LayerGL.prototype._startAccumulating = function () {
+    var self = this;
+    this._stopAccumulating();
+
+    var needsAccumulate = false;
+    for (var i = 0; i < this.views.length; i++) {
+        needsAccumulate = this.views[i].needsAccumulate() || needsAccumulate;
+    }
+
+    function accumulate(id) {
+        if (!self._accumulatingId || id !== self._accumulatingId) {
+            return;
+        }
+
+        var isFinished = true;
+        for (var i = 0; i < self.views.length; i++) {
+            isFinished = self.views[i].isAccumulateFinished() && needsAccumulate;
+        }
+
+        if (!isFinished) {
+            self._doRender(true);
+            requestAnimationFrame(function () {
+                accumulate(id);
+            });
+        }
+    }
+
+    this._accumulatingId = accumulatingId++;
+    this._accumulatingTimeout = setTimeout(function () {
+        accumulate(self._accumulatingId);
+    }, 50);
 };
 
 function getId(resource) {
@@ -332,6 +391,7 @@ LayerGL.prototype._trackAndClean = function () {
  * Dispose the layer
  */
 LayerGL.prototype.dispose = function () {
+    this._stopAccumulating();
     this.renderer.disposeScene(this.scene);
 };
 

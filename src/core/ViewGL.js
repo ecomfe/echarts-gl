@@ -13,9 +13,7 @@ var Vector3 = require('qtek/lib/math/Vector3');
 var EffectCompositor = require('../effect/EffectCompositor');
 var TemporalSuperSampling = require('../effect/TemporalSuperSampling');
 
-var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
 
-var accumulatingId = 1;
 /**
  * @constructor
  * @alias module:echarts-gl/core/ViewGL
@@ -46,13 +44,8 @@ function ViewGL(cameraType) {
 
     this._shadowMapPass = new ShadowMapPass();
 
-    /**
-     * Current accumulating id.
-     */
-    this._accumulatingId = 0;
-
     this.scene.on('beforerender', function (renderer, scene, camera) {
-        if (this._enableTemporalSS && this._accumulatingId > 0) {
+        if (this._enableTemporalSS) {
             this._temporalSS.jitterProjection(renderer, camera);
         }
     }, this);
@@ -118,49 +111,22 @@ ViewGL.prototype.containPoint = function (x, y) {
         && x <= viewport.x + viewport.width && y <= viewport.y + viewport.height;
 };
 
-ViewGL.prototype.render = function (renderer) {
-    this._stopAccumulating(renderer);
-
-    this._doRender(renderer, 0);
-
-    if (this._enableTemporalSS) {
-        this._startAccumulating(renderer);
+ViewGL.prototype.render = function (renderer, accumulating) {
+    if (!accumulating) {
+        this._temporalSS.resetFrame();
     }
+    this._doRender(renderer, accumulating, this._temporalSS.getFrame());
 };
 
-ViewGL.prototype._stopAccumulating = function () {
-    this._accumulatingId = 0;
-    this._temporalSS.resetFrame();
-    clearTimeout(this._accumulatingTimeout);
+ViewGL.prototype.needsAccumulate = function () {
+    return this._enableTemporalSS;
 };
 
-ViewGL.prototype._startAccumulating = function (renderer) {
-    var self = this;
-
-    clearTimeout(this._accumulatingTimeout);
-
-    this._temporalSS.resetFrame();
-
-    this._accumulatingId = accumulatingId++;
-
-    function accumulate(id) {
-        if (!self._accumulatingId || id !== self._accumulatingId) {
-            return;
-        }
-        if (!self._temporalSS.isFinished()) {
-            self._doRender(renderer, self._temporalSS.getFrame());
-            requestAnimationFrame(function () {
-                accumulate(id);
-            });
-        }
-    }
-
-    this._accumulatingTimeout = setTimeout(function () {
-        accumulate(self._accumulatingId);
-    }, 50);
+ViewGL.prototype.isAccumulateFinished = function () {
+    return this._temporalSS.isFinished();
 };
 
-ViewGL.prototype._doRender = function (renderer, accumFrame) {
+ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
 
     var scene = this.scene;
     var camera = this.camera;
@@ -201,7 +167,7 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
             this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
         }
 
-        if (this._enableTemporalSS && this._accumulatingId > 0) {
+        if (this._enableTemporalSS && accumulating) {
             this._compositor.composite(renderer, this._temporalSS.getSourceFrameBuffer());
             renderer.setViewport(this.viewport);
             this._temporalSS.render(renderer);
@@ -212,7 +178,7 @@ ViewGL.prototype._doRender = function (renderer, accumFrame) {
         }
     }
     else {
-        if (this._enableTemporalSS && this._accumulatingId > 0) {
+        if (this._enableTemporalSS && accumulating) {
             var frameBuffer = this._temporalSS.getSourceFrameBuffer();
             frameBuffer.bind(renderer);
             renderer.saveClear();
