@@ -103,7 +103,7 @@ module.exports = echarts.extendChartView({
         var size = getCoordSysSize(coordSys);
         geometry.segmentScale = size / 20;
 
-        var lineWidthQueryPath = 'lineStyle.normal.width'.split('.');
+        var lineWidthQueryPath = 'lineStyle.width'.split('.');
         var dpr = api.getDevicePixelRatio();
         var canUseNativeLine = true;
         var maxLineWidth = 0;
@@ -130,7 +130,6 @@ module.exports = echarts.extendChartView({
 
         this._linesMesh.material = canUseNativeLine ? this._nativeLinesMaterial : this._projectedLinesMaterial;
         this._linesMesh.mode = canUseNativeLine ? graphicGL.Mesh.LINES : graphicGL.Mesh.TRIANGLES;
-        // this._linesMesh.mode = graphicGL.Mesh.POINTS;
 
         geometry.setVertexCount(nVertex);
         geometry.setTriangleCount(nTriangle);
@@ -146,8 +145,7 @@ module.exports = echarts.extendChartView({
                 opacity = 1;
             }
 
-            colorArr = echarts.color.parse(color, colorArr);
-            colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
+            colorArr = graphicGL.parseColor(color, colorArr);
             colorArr[3] *= opacity;
 
             geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr, lineWidth);

@@ -89,7 +89,7 @@ module.exports = echarts.extendChartView({
         }
         else {
             if (__DEV__) {
-                console.warn('Unkonw shading ' + shading);
+                console.warn('Unkown shading ' + shading);
             }
             barMesh.material = this._materials.lambert;
         }
@@ -208,9 +208,10 @@ module.exports = echarts.extendChartView({
         }
 
         var itemModel = data.getItemModel(dataIndex);
-        var emphasisModel = itemModel.getModel('itemStyle.emphasis');
-        var emphasisColor = emphasisModel.get('color');
-        var emphasisOpacity = emphasisModel.get('opacity');
+        var emphasisModel = itemModel.getModel('emphasis');
+        var emphasisItemStyleModel = emphasisModel.getModel('itemStyle');
+        var emphasisColor = emphasisItemStyleModel.get('color');
+        var emphasisOpacity = emphasisItemStyleModel.get('opacity');
         if (emphasisColor == null) {
             var color = data.getItemVisual(dataIndex, 'color');
             emphasisColor = echarts.color.lift(color, -0.4);

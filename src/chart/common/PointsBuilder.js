@@ -86,7 +86,7 @@ PointsBuilder.prototype = {
         }
 
         // TODO image symbol
-        var itemStyle = seriesModel.getModel('itemStyle.normal').getItemStyle();
+        var itemStyle = seriesModel.getModel('itemStyle').getItemStyle();
         itemStyle.fill = data.getVisual('color');
 
         var canvas = spriteUtil.createSymbolSDF(symbolInfo.type, symbolSize, 20, itemStyle, this._sdfTexture.image);

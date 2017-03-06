@@ -6,7 +6,7 @@ echarts.extendSeriesModel({
 
     dependencies: ['globe', 'grid3D', 'geo3D'],
 
-    visualColorAccessPath: 'areaStyle.normal.color',
+    visualColorAccessPath: 'areaStyle.color',
 
     getInitialData: function (option, ecModel) {
         var data = option.data;
@@ -25,7 +25,6 @@ echarts.extendSeriesModel({
 
         if (!data) {
             data = [];
-
 
             if (!option.parametric) {
                 // From surface equation
@@ -169,9 +168,7 @@ echarts.extendSeriesModel({
         },
 
         areaStyle: {
-            normal: {
-                // Color
-            }
+            // Color
         }
     }
 });

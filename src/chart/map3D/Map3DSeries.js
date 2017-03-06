@@ -81,23 +81,6 @@ var Map3DModel = echarts.extendSeriesModel({
             }
         },
 
-        label: {
-            normal: {
-                show: false,
-                // Distance in 3d space.
-                distance: 0.3,
-
-                backgroundColor: 'transparent',
-                borderColor: '#000',
-                borderWidth: 0,
-                // Padding in px
-                padding: [2, 3],
-
-                textStyle: {
-                    color: '#000'
-                }
-            }
-        },
         // labelLine
 
         viewControl: {
@@ -116,12 +99,19 @@ var Map3DModel = echarts.extendSeriesModel({
         // temporalSuperSampling
         // viewControl
 
-        itemStyle: {
-            normal: {
-                areaColor: '#fff',
-                borderWidth: 0,
-                borderColor: '#333'
+        label: {
+            show: false,
+            // Distance in 3d space.
+            distance: 0.3,
+
+            textStyle: {
+                color: '#000'
             }
+        },
+        itemStyle: {
+            areaColor: '#fff',
+            borderWidth: 0,
+            borderColor: '#333'
         }
     }
 });

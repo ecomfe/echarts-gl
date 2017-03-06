@@ -86,7 +86,7 @@ module.exports = echarts.extendComponentView({
         }
         else {
             if (__DEV__) {
-                console.warn('Unkonw shading ' + shading);
+                console.warn('Unkown shading ' + shading);
             }
             earthMesh.material = this._materials.lambert;
         }

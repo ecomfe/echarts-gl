@@ -63,13 +63,11 @@
                             return json[0].marker.size[param.dataIndex] / json[0].marker.sizeref;
                         },
                         itemStyle: {
-                            normal: {
-                                opacity: 0.5,
-                                borderColor: '#000',
-                                borderWidth: 2,
-                                color: function (param) {
-                                    return json[0].marker.color[param.dataIndex];
-                                }
+                            opacity: 0.5,
+                            borderColor: '#000',
+                            borderWidth: 2,
+                            color: function (param) {
+                                return json[0].marker.color[param.dataIndex];
                             }
                         },
                         data: data

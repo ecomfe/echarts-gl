@@ -96,20 +96,12 @@ var Geo3DModel = echarts.extendComponentModel({
         },
 
         label: {
-            normal: {
-                show: false,
-                // Distance in 3d space.
-                distance: 2,
+            show: false,
+            // Distance in 3d space.
+            distance: 2,
 
-                backgroundColor: 'transparent',
-                borderColor: '#000',
-                borderWidth: 0,
-                // Padding in px
-                padding: [2, 3],
-
-                textStyle: {
-                    color: '#000'
-                }
+            textStyle: {
+                color: '#000'
             }
         },
         // labelLine
@@ -125,11 +117,9 @@ var Geo3DModel = echarts.extendComponentModel({
         // viewControl
 
         itemStyle: {
-            normal: {
-                areaColor: '#fff',
-                borderWidth: 0,
-                borderColor: '#333'
-            }
+            areaColor: '#fff',
+            borderWidth: 0,
+            borderColor: '#333'
         }
     }
 });

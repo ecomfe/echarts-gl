@@ -6,6 +6,8 @@ echarts.extendSeriesModel({
 
     dependencies: ['grid', 'polar', 'geo', 'singleAxis'],
 
+    visualColorAccessPath: 'itemStyle.color',
+
     getInitialData: function () {
         return echarts.helper.createList(this);
     },
@@ -25,17 +27,13 @@ echarts.extendSeriesModel({
         // geoIndex: 0,
 
         symbol: 'circle',
-        symbolSize: 10,          // 图形大小，半宽（半径）参数，当图形为方向或菱形则总宽度为symbolSize * 2
-        // symbolRotate: null,  // 图形旋转控制
+        symbolSize: 10,
 
         // Support source-over, lighter
         blendMode: 'source-over',
 
         itemStyle: {
-            normal: {
-                opacity: 0.8
-                // color: 各异
-            }
+            opacity: 0.8
         }
 
     }

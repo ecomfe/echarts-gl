@@ -32,8 +32,8 @@ LabelsBuilder.prototype.updateData = function (data) {
     if (!this._labelsVisibilitiesBits || this._labelsVisibilitiesBits.length !== data.count()) {
         this._labelsVisibilitiesBits = new Uint8Array(data.count());
     }
-    var normalLabelVisibilityQuery = ['label', 'normal', 'show'];
-    var emphasisLabelVisibilityQuery = ['label', 'emphasis', 'show'];
+    var normalLabelVisibilityQuery = ['label', 'show'];
+    var emphasisLabelVisibilityQuery = ['emphasis', 'label', 'show'];
 
     data.each(function (idx) {
         var itemModel = data.getItemModel(idx);
@@ -67,8 +67,8 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
     this._labelsMesh.geometry.convertToDynamicArray(true);
     this._labelTextureSurface.clear();
 
-    var normalLabelQuery = ['label', 'normal'];
-    var emphasisLabelQuery = ['label', 'emphasis'];
+    var normalLabelQuery = ['label'];
+    var emphasisLabelQuery = ['emphasis', 'label'];
     var seriesModel = this._data.hostModel;
     var data = this._data;
 

@@ -16,11 +16,11 @@ function makeSprite(size, canvas, draw) {
     return canvas;
 }
 
-function makePath(symbol, symbolSize, style) {
+function makePath(symbol, symbolSize, style, marginBias) {
     if (!echarts.util.isArray(symbolSize)) {
         symbolSize = [symbolSize, symbolSize];
     }
-    var margin = spriteUtil.getMarginByStyle(style);
+    var margin = spriteUtil.getMarginByStyle(style, marginBias);
     var width = symbolSize[0] + margin.left + margin.right;
     var height = symbolSize[1] + margin.top + margin.bottom;
     var path = echarts.helper.createSymbol(symbol, 0, 0, symbolSize[0], symbolSize[1]);
@@ -100,7 +100,9 @@ function generateSDF(ctx, imgData, range) {
 
 var spriteUtil = {
 
-    getMarginByStyle: function (style) {
+    getMarginByStyle: function (style, marginBias) {
+        marginBias = marginBias || 0;
+
         var lineWidth = 0;
         if (style.stroke && style.stroke !== 'none') {
             lineWidth = style.lineWidth == null ? 1 : style.lineWidth;
@@ -110,10 +112,10 @@ var spriteUtil = {
         var shadowOffsetY = style.shadowOffsetY || 0;
 
         var margin = {};
-        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize) + 10;
-        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize) + 10;
-        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize) + 10;
-        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize) + 10;
+        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize) + marginBias;
+        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize) + marginBias;
+        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize) + marginBias;
+        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize) + marginBias;
 
         return margin;
     },
@@ -124,6 +126,7 @@ var spriteUtil = {
      * @param {number | Array.<number>} symbolSize
      */
     createSymbolSprite: function (symbol, symbolSize, style, canvas) {
+        // TODO marginBias can be set.
         var path = makePath(symbol, symbolSize, style);
 
         var margin = spriteUtil.getMarginByStyle(style);
@@ -138,7 +141,7 @@ var spriteUtil = {
 
     createSymbolSDF: function (symbol, symbolSize, range, style, canvas) {
         // TODO Create a low resolution SDF from high resolution image.
-        var pathEl = makePath(symbol, symbolSize, style);
+        var pathEl = makePath(symbol, symbolSize, style, 10);
 
         pathEl.setStyle({
             fill: '#fff',

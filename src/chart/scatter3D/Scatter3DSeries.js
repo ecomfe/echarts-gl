@@ -7,6 +7,8 @@ echarts.extendSeriesModel({
 
     dependencies: ['globe', 'grid3D', 'geo3D'],
 
+    visualColorAccessPath: 'itemStyle.color',
+
     getInitialData: function (option, ecModel) {
         var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data);
         var data = new echarts.List(dimensions, this);
@@ -32,10 +34,7 @@ echarts.extendSeriesModel({
         blendMode: 'source-over',
 
         itemStyle: {
-            normal: {
-                opacity: 0.8
-                // color: 各异
-            }
+            opacity: 0.8
         }
     }
 });

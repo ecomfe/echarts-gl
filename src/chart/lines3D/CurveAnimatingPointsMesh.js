@@ -65,8 +65,7 @@ module.exports = graphicGL.Mesh.extend(function () {
             if (opacity == null) {
                 opacity = 1;
             }
-            colorArr = echarts.color.parse(color, colorArr);
-            colorArr[0] /= 255; colorArr[1] /= 255; colorArr[2] /= 255;
+            colorArr = graphicGL.parseColor(color, colorArr);
             colorArr[3] *= opacity;
 
             geometry.addPoint(pts[0], pts[1], pts[2], pts[3], size, colorArr);

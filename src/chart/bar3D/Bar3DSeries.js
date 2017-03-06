@@ -6,6 +6,8 @@ var Bar3DSeries = echarts.extendSeriesModel({
 
     dependencies: ['globe'],
 
+    visualColorAccessPath: 'itemStyle.color',
+
     getInitialData: function (option, ecModel) {
         var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data);
         var data = new echarts.List(dimensions, this);
@@ -58,17 +60,16 @@ var Bar3DSeries = echarts.extendSeriesModel({
         maxHeight: 100,
 
         itemStyle: {
-            normal: {
-                opacity: 1
-            }
+            opacity: 1
         },
 
         label: {
-            normal: {
-                show: false,
-                distance: 2
-            },
-            emphasis: {
+            show: false,
+            distance: 2
+        },
+
+        emphasis: {
+            label: {
                 show: true,
                 textStyle: {
                     fontSize: 20

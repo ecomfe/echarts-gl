@@ -71,16 +71,21 @@
                     bevelSize: 0.8,
                     bevelSmoothness: 2,
                     shading: 'color',
+
                     itemStyle: {
-                        normal: {
-                            opacity: 0.8
-                        },
-                        emphasis: {
-                            opacity: 1
-                        }
+                        opacity: 0.8
                     },
                     label: {
-                        emphasis: {
+                        textStyle: {
+                            color: '#fff'
+                        }
+                    },
+
+                    emphasis: {
+                        itemStyle: {
+                            opacity: 1
+                        },
+                        label: {
                             textStyle: {
                                 color: '#fff'
                             }
@@ -102,9 +107,7 @@
                 chart.setOption({
                     series: {
                         itemStyle: {
-                            normal: {
-                                opacity: config.opacity
-                            }
+                            opacity: config.opacity
                         }
                     }
                 });

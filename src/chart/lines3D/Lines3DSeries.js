@@ -6,7 +6,7 @@ echarts.extendSeriesModel({
 
     dependencies: ['globe'],
 
-    visualColorAccessPath: 'lineStyle.normal.color',
+    visualColorAccessPath: 'lineStyle.color',
 
     getInitialData: function (option, ecModel) {
         var lineData = new echarts.List(['value'], this);
@@ -51,11 +51,9 @@ echarts.extendSeriesModel({
         blendMode: 'source-over',
 
         lineStyle: {
-            normal: {
-                width: 1,
-                opacity: 0.5
-                // color
-            }
+            width: 1,
+            opacity: 0.5
+            // color
         }
     }
 });

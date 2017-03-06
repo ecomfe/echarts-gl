@@ -83,7 +83,7 @@ Geo3DBuilder.prototype = {
                 polygonMesh.material.attachShader(shader, true);
             }
             var regionModel = componentModel.getRegionModel(region.name);
-            var itemStyleModel = regionModel.getModel('itemStyle.normal');
+            var itemStyleModel = regionModel.getModel('itemStyle');
             var color = graphicGL.parseColor(itemStyleModel.get('areaColor'));
 
             if (componentModel.getData) {
@@ -141,7 +141,7 @@ Geo3DBuilder.prototype = {
         var material = this._groundMaterials[shading];
         if (!material) {
             if (__DEV__) {
-                console.warn('Unkonw shading ' + shading);
+                console.warn('Unkown shading ' + shading);
             }
             material = this._groundMaterials.lambert;
         }
@@ -195,7 +195,7 @@ Geo3DBuilder.prototype = {
         var shader = this._shadersMap[shading];
         if (!shader) {
             if (__DEV__) {
-                console.warn('Unkonw shading ' + shading);
+                console.warn('Unkown shading ' + shading);
             }
             // Default use lambert shader.
             shader = this._shadersMap.lambert;
