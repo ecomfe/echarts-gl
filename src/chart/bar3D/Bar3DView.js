@@ -163,11 +163,11 @@ module.exports = echarts.extendChartView({
         barMesh.off('mouseover');
         barMesh.off('mouseout');
         barMesh.on('mouseover', function (e) {
-            var dataIndex = barMesh.geometry.getDataIndexOfTriangle(e.triangleIndex);
+            var dataIndex = barMesh.geometry.getDataIndexOfVertex(e.triangle[0]);
             this._highlight(dataIndex);
         }, this);
         barMesh.on('mouseout', function (e) {
-            var dataIndex = barMesh.geometry.getDataIndexOfTriangle(e.triangleIndex);
+            var dataIndex = barMesh.geometry.getDataIndexOfVertex(e.triangle[0]);
             this._downplay(dataIndex);
         }, this);
     },
@@ -188,7 +188,7 @@ module.exports = echarts.extendChartView({
         var emphasisOpacity = emphasisModel.get('opacity');
         if (emphasisColor == null) {
             var color = data.getItemVisual(dataIndex, 'color');
-            emphasisColor = echarts.color.lift(color, -0.3);
+            emphasisColor = echarts.color.lift(color, -0.4);
         }
         if (emphasisOpacity == null) {
             emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');

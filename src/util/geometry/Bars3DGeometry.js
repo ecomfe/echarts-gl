@@ -35,7 +35,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
         bevelSize: 1,
         bevelSegments: 0,
 
-        // Map from triangleIndex to dataIndex.
+        // Map from vertexIndex to dataIndex.
         _dataIndices: null,
 
         _vertexOffset: 0,
@@ -106,21 +106,13 @@ var BarsGeometry = StaticGeometry.extend(function () {
     },
 
     /**
-     * Get dataIndex of triangle.
-     * @param {number} triangleIndex
+     * Get dataIndex of vertex.
+     * @param {number} vertexIndex
      */
-    getDataIndexOfTriangle: function (triangleIndex) {
-        return this._dataIndices ? this._dataIndices[triangleIndex] : null;
+    getDataIndexOfVertex: function (vertexIndex) {
+        return this._dataIndices ? this._dataIndices[vertexIndex] : null;
     },
 
-    /**
-     * Get bar index of triangle.
-     * @param {number} triangleIndex
-     */
-    getBarIndexOfTriangle: function (triangleIndex) {
-        var vertexCount = this.getBarVertexCount();
-        return Math.floor(triangleIndex / vertexCount);
-    },
     /**
      * Add a bar
      * @param {Array.<number>} start
@@ -177,7 +169,8 @@ var BarsGeometry = StaticGeometry.extend(function () {
         }
         return function (start, dir, leftDir, size, color, dataIndex) {
 
-            var startTriangle = this._triangleOffset;
+            // Use vertex, triangle maybe sorted.
+            var startVertex = this._vertexOffset;
 
             if (this.bevelSize > 0 && this.bevelSegments > 0) {
                 this._addBevelBar(start, dir, leftDir, size, this.bevelSize, this.bevelSegments, color);
@@ -261,9 +254,9 @@ var BarsGeometry = StaticGeometry.extend(function () {
                 }
             }
 
-            var endTriangle = this._triangleOffset;
+            var endVerex = this._vertexOffset;
 
-            for (var i = startTriangle; i < endTriangle; i++) {
+            for (var i = startVertex; i < endVerex; i++) {
                 this._dataIndices[i] = dataIndex;
             }
         };
