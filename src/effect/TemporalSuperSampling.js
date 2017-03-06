@@ -44,7 +44,7 @@ function TemporalSuperSampling () {
     this._outputPass.material.shader.define('fragment', 'OUTPUT_ALPHA');
     this._outputPass.material.blend = function (_gl) {
         // FIXME.
-        // Output is premultiplied alpha when BLEND is enabled. don't know why
+        // Output is premultiplied alpha when BLEND is enabled ?
         // http://stackoverflow.com/questions/2171085/opengl-blending-with-previous-contents-of-framebuffer
         _gl.blendEquationSeparate(_gl.FUNC_ADD, _gl.FUNC_ADD);
         _gl.blendFuncSeparate(_gl.ONE, _gl.ONE_MINUS_SRC_ALPHA, _gl.ONE, _gl.ONE_MINUS_SRC_ALPHA);

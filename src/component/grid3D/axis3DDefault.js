@@ -112,7 +112,7 @@ var valueAxis = echarts.util.merge({
     // 脱离0值比例，放大聚焦到最终_min，_max区间
     // scale: false,
     // 分割段数，默认为5
-    splitNumber: 4
+    splitNumber: 5
     // Minimum interval
     // minInterval: null
 }, defaultOption);

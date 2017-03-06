@@ -15,8 +15,17 @@ echarts.extendSeriesModel({
             return !(isNaN(dimOpts.min) || isNaN(dimOpts.max) || isNaN(dimOpts.step));
         }
 
+        function getPrecision(dimOpts) {
+            var getPrecision = echarts.number.getPrecisionSafe;
+            return Math.max(
+                getPrecision(dimOpts.min), getPrecision(dimOpts.max), getPrecision(dimOpts.step)
+            ) + 1;
+        }
+
+
         if (!data) {
             data = [];
+
 
             if (!option.parametric) {
                 // From surface equation
@@ -38,11 +47,14 @@ echarts.extendSeriesModel({
                     }
                     return;
                 }
-
-                for (var y = yOpts.min; y <= yOpts.max; y += yOpts.step) {
-                    for (var x = xOpts.min; x <= xOpts.max; x += xOpts.step) {
-                        var z = surfaceEquation.z(x, y);
-                        data.push([x, y, z]);
+                var xPrecision = getPrecision(xOpts);
+                var yPrecision = getPrecision(yOpts);
+                for (var y = yOpts.min; y < yOpts.max + yOpts.step * 0.999; y += yOpts.step) {
+                    for (var x = xOpts.min; x < xOpts.max + xOpts.step * 0.999; x += xOpts.step) {
+                        var x2 = echarts.number.round(Math.min(x, xOpts.max), xPrecision);
+                        var y2 = echarts.number.round(Math.min(y, yOpts.max), yPrecision);
+                        var z = surfaceEquation.z(x2, y2);
+                        data.push([x2, y2, z]);
                     }
                 }
             }
@@ -68,13 +80,17 @@ echarts.extendSeriesModel({
                     }
                 });
 
+                var uPrecision = getPrecision(uOpts);
+                var vPrecision = getPrecision(vOpts);
                 // TODO array intermediate storage is needless.
-                for (var v = vOpts.min; v <= vOpts.max; v += vOpts.step) {
-                    for (var u = uOpts.min; u <= uOpts.max; u += uOpts.step) {
-                        var x = parametricSurfaceEquation.x(u, v);
-                        var y = parametricSurfaceEquation.y(u, v);
-                        var z = parametricSurfaceEquation.z(u, v);
-                        data.push([x, y, z, u, v]);
+                for (var v = vOpts.min; v < vOpts.max + vOpts.step * 0.999; v += vOpts.step) {
+                    for (var u = uOpts.min; u < uOpts.max + uOpts.step * 0.999; u += uOpts.step) {
+                        var u2 = echarts.number.round(Math.min(u, uOpts.max), uPrecision);
+                        var v2 = echarts.number.round(Math.min(v, vOpts.max), vPrecision);
+                        var x = parametricSurfaceEquation.x(u2, v2);
+                        var y = parametricSurfaceEquation.y(u2, v2);
+                        var z = parametricSurfaceEquation.z(u2, v2);
+                        data.push([x, y, z, u2, v2]);
                     }
                 }
             }
