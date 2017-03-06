@@ -37,8 +37,11 @@ function TemporalSuperSampling () {
     });
 
     this._outputPass = new Pass({
-        fragment: Shader.source('qtek.compositor.output')
+        fragment: Shader.source('qtek.compositor.output'),
+        // TODO, alpha is premultiplied?
+        // blendWithPrevious: true
     });
+    this._outputPass.material.shader.define('fragment', 'OUTPUT_ALPHA');
 }
 
 TemporalSuperSampling.prototype = {
@@ -51,8 +54,10 @@ TemporalSuperSampling.prototype = {
      * @param {qtek.Camera} camera
      */
     jitterProjection: function (renderer, camera) {
-        var width = renderer.getWidth();
-        var height = renderer.getHeight();
+        var viewport = renderer.viewport;
+        var dpr = viewport.devicePixelRatio || renderer.getDevicePixelRatio();
+        var width = viewport.width * dpr;
+        var height = viewport.height * dpr;
 
         var offset = this._haltonSequence[this._frame];
         camera.projectionMatrix._array[8] += (offset[0] * 2.0 - 1.0) / width;
