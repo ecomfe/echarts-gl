@@ -13,8 +13,9 @@ var graphicGL = require('./graphicGL');
  * @param {number} width
  * @param {number} height
  * @param {number} dpr
+ * @param {Function} onupdate
  */
-var ZRTextureAtlasSurface = function (width, height, dpr) {
+var ZRTextureAtlasSurface = function (width, height, dpr, onupdate) {
 
     var canvas = document.createElement('canvas');
     canvas.width = width * dpr;
@@ -66,7 +67,7 @@ var ZRTextureAtlasSurface = function (width, height, dpr) {
      */
     this._coords = {};
 
-    this.onupdate = null;
+    this.onupdate = onupdate;
 
     this._texture = new graphicGL.Texture2D({
         image: canvas,
@@ -80,9 +81,6 @@ var ZRTextureAtlasSurface = function (width, height, dpr) {
         self._texture.dirty();
         self.onupdate && self.onupdate();
     };
-
-    // document.body.appendChild(canvas);
-    // canvas.style.cssText = 'position:absolute;left:0;top:0;z-index:1000'
 };
 
 ZRTextureAtlasSurface.prototype = {

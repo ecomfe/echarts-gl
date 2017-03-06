@@ -53,6 +53,19 @@ module.exports = echarts.extendSeriesModel({
             normal: {
                 opacity: 1
             }
+        },
+
+        label: {
+            normal: {
+                show: false,
+                distance: 2
+            },
+            emphasis: {
+                show: true,
+                textStyle: {
+                    fontSize: 20
+                }
+            }
         }
     }
 });

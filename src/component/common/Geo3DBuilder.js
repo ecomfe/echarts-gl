@@ -53,10 +53,11 @@ function Geo3DBuilder(api) {
 
     this._labelsMesh = new LabelsMesh();
 
-    this._labelTextureSurface = new ZRTextureAtlasSurface(1024, 1024, api.getDevicePixelRatio());
-    this._labelTextureSurface.onupdate = function () {
-        api.getZr().refresh();
-    };
+    this._labelTextureSurface = new ZRTextureAtlasSurface(
+        1024, 1024, api.getDevicePixelRatio(), function () {
+            api.getZr().refresh();
+        }
+    );
 
     this._labelsMesh.material.set('textureAtlas', this._labelTextureSurface.getTexture());
 }
@@ -354,6 +355,7 @@ Geo3DBuilder.prototype = {
         }, this);
 
         labelsMesh.geometry.convertToTypedArray();
+        labelsMesh.geometry.dirty();
     },
 
     _updatePolygonGeometry: function (geometry, region, regionHeight) {
