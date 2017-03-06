@@ -12,6 +12,10 @@ module.exports = {
         return this.indices && this.sortTriangles;
     },
 
+    needsSortTrianglesProgressively: function () {
+        return this.needsSortTriangles() && this.triangleCount >= 2e4;
+    },
+
     doSortTriangles: function (cameraPos, frame) {
         var indices = this.indices;
         // Do progressive quick sort.

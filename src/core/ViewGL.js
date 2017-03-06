@@ -45,7 +45,7 @@ function ViewGL(cameraType) {
     this._shadowMapPass = new ShadowMapPass();
 
     this.scene.on('beforerender', function (renderer, scene, camera) {
-        if (this._enableTemporalSS) {
+        if (this.needsTemporalSS()) {
             this._temporalSS.jitterProjection(renderer, camera);
         }
     }, this);
@@ -111,15 +111,46 @@ ViewGL.prototype.containPoint = function (x, y) {
         && x <= viewport.x + viewport.width && y <= viewport.y + viewport.height;
 };
 
+/**
+ * Prepare and update scene before render
+ */
+ViewGL.prototype.prepareRender = function () {
+    this.scene.update();
+    this.camera.update();
+
+    this._needsSortProgressively = false;
+    // If has any transparent mesh needs sort triangles progressively.
+    for (var i = 0; i < this.scene.transparentQueue.length; i++) {
+        var renderable = this.scene.transparentQueue[i];
+        var geometry = renderable.geometry;
+        if (geometry.needsSortVerticesProgressively && geometry.needsSortVerticesProgressively()) {
+            this._needsSortProgressively = true;
+        }
+        if (geometry.needsSortTrianglesProgressively && geometry.needsSortTrianglesProgressively()) {
+            this._needsSortProgressively = true;
+        }
+    }
+};
+
 ViewGL.prototype.render = function (renderer, accumulating) {
     if (!accumulating) {
+        this._frame = 0;
         this._temporalSS.resetFrame();
     }
-    this._doRender(renderer, accumulating, this._temporalSS.getFrame());
+    this._doRender(renderer, accumulating, this._frame);
+    this._frame++;
 };
 
 ViewGL.prototype.needsAccumulate = function () {
-    return this._enableTemporalSS;
+    return this.needsTemporalSS() || this._needsSortProgressively;
+};
+
+ViewGL.prototype.needsTemporalSS = function () {
+    var enableTemporalSS = this._enableTemporalSS;
+    if (enableTemporalSS == 'auto') {
+        enableTemporalSS = this._enablePostEffect;
+    }
+    return enableTemporalSS;
 };
 
 ViewGL.prototype.isAccumulateFinished = function () {
@@ -130,9 +161,6 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
 
     var scene = this.scene;
     var camera = this.camera;
-
-    scene.update();
-    camera.update();
 
     var v3 = new Vector3();
     var invWorldTransform = new Matrix4();
@@ -152,7 +180,10 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         }
     }
 
-    this._shadowMapPass.render(renderer, scene, camera, true);
+    if (!accumulating) {
+        // Not render shadowmap pass in accumulating frame.
+        this._shadowMapPass.render(renderer, scene, camera, true);
+    }
     // Shadowmap will set clearColor.
     renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
@@ -167,7 +198,7 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
             this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
         }
 
-        if (this._enableTemporalSS && accumulating) {
+        if (this.needsTemporalSS() && accumulating) {
             this._compositor.composite(renderer, this._temporalSS.getSourceFrameBuffer());
             renderer.setViewport(this.viewport);
             this._temporalSS.render(renderer);
@@ -178,7 +209,7 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         }
     }
     else {
-        if (this._enableTemporalSS && accumulating) {
+        if (this.needsTemporalSS() && accumulating) {
             var frameBuffer = this._temporalSS.getSourceFrameBuffer();
             frameBuffer.bind(renderer);
             renderer.saveClear();
@@ -227,16 +258,10 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     compositor.setSSAOIntensity(ssaoModel.get('intensity'));
 
     // Update temporal configuration
-    if (this._enableTemporalSS === 'auto') {
-        this._enableTemporalSS = this._enablePostEffect;
-    }
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {
     this._enableTemporalSS = temporalSuperSamplingModel.get('enable');
-    if (this._enableTemporalSS === 'auto') {
-        this._enableTemporalSS = this._enablePostEffect;
-    }
 };
 
 ViewGL.prototype.isLinearSpace = function () {

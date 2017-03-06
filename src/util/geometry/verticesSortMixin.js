@@ -7,6 +7,10 @@ module.exports = {
         return this.sortVertices;
     },
 
+    needsSortVerticesProgressively: function () {
+        return this.needsSortVertices() && this.vertexCount >= 2e4;
+    },
+
     doSortVertices: function (cameraPos, frame) {
         var indices = this.indices;
         var p = vec3.create();

@@ -223,6 +223,10 @@ LayerGL.prototype.needsRefresh = function () {
  */
 LayerGL.prototype.refresh = function () {
 
+    for (var i = 0; i < this.views.length; i++) {
+        this.views[i].prepareRender();
+    }
+
     this._doRender(false);
 
     // Auto dispose unused resources on GPU, like program(shader), texture, geometry(buffers)
