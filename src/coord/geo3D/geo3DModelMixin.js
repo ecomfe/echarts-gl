@@ -102,7 +102,8 @@ module.exports = {
 
         emphasis: {
             itemStyle: {
-                areaColor: '#958'
+                // areaColor: '#f94b59'
+                areaColor: '#639fc0'
             },
             label: {
                 show: true
