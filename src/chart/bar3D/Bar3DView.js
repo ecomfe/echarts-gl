@@ -2,7 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
-var LabelsBuilder = require('../common/LabelsBuilder');
+var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
 function getShader(shading) {
@@ -193,7 +193,9 @@ module.exports = echarts.extendChartView({
         barMesh.on('mouseout', function (e) {
             var dataIndex = barMesh.geometry.getDataIndexOfVertex(e.triangle[0]);
             this._downplay(dataIndex);
-            this._labelsBuilder.updateLabels();
+            if (!e.relatedTarget) {
+                this._labelsBuilder.updateLabels();
+            }
         }, this);
     },
 
@@ -208,8 +210,7 @@ module.exports = echarts.extendChartView({
         }
 
         var itemModel = data.getItemModel(dataIndex);
-        var emphasisModel = itemModel.getModel('emphasis');
-        var emphasisItemStyleModel = emphasisModel.getModel('itemStyle');
+        var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
         var emphasisColor = emphasisItemStyleModel.get('color');
         var emphasisOpacity = emphasisItemStyleModel.get('opacity');
         if (emphasisColor == null) {

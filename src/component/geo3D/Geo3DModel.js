@@ -2,6 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var componentViewControlMixin = require('../common/componentViewControlMixin');
 var componentPostEffectMixin = require('../common/componentPostEffectMixin');
 var componentLightMixin = require('../common/componentLightMixin');
+var geo3DModelMixin = require('../../coord/geo3D/geo3DModelMixin');
 
 var Geo3DModel = echarts.extendComponentModel({
 
@@ -13,16 +14,27 @@ var Geo3DModel = echarts.extendComponentModel({
 
     optionUpdated: function () {
         var option = this.option;
-        var self = this;
 
-        this._regionModelMap = (option.regions || []).reduce(function (obj, regionOpt) {
-            if (regionOpt.name) {
-                obj[regionOpt.name] = new echarts.Model(regionOpt, self);
-            }
-            return obj;
-        }, {});
+        option.regions = this.getFilledRegions(option.regions, option.map);
 
-        // this.updateSelectedMap(option.regions);
+        var dimensions = echarts.helper.completeDimensions(['value'], option.data);
+        var list = new echarts.List(dimensions, this);
+        list.initData(option.regions);
+
+        var regionModelMap = {};
+        list.each(function (idx) {
+            var name = list.getName(idx);
+            var itemModel = list.getItemModel(idx);
+            regionModelMap[name] = itemModel;
+        });
+
+        this._regionModelMap = regionModelMap;
+
+        this._data = list;
+    },
+
+    getData: function () {
+        return this._data;
     },
 
     getRegionModel: function (name) {
@@ -35,7 +47,8 @@ var Geo3DModel = echarts.extendComponentModel({
      * @param {string} [status='normal'] 'normal' or 'emphasis'
      * @return {string}
      */
-    getFormattedLabel: function (name, status) {
+    getFormattedLabel: function (dataIndex, status) {
+        var name = this._data.getName(dataIndex);
         var regionModel = this.getRegionModel(name);
         var formatter = regionModel.get('label.' + status + '.formatter');
         var params = {
@@ -49,80 +62,21 @@ var Geo3DModel = echarts.extendComponentModel({
             var serName = params.seriesName;
             return formatter.replace('{a}', serName != null ? serName : '');
         }
+        else {
+            return name;
+        }
     },
 
     defaultOption: {
 
-        show: true,
-
-        zlevel: -10,
-
-        // geoJson used by geo3D
-        map: '',
-
-        // Layout used for viewport
-        left: 0,
-        top: 0,
-        width: '100%',
-        height: '100%',
-
-        boxWidth: 100,
-        boxHeight: 3,
-        boxDepth: 'auto',
-
-        groundPlane: {
-            show: false,
-            color: '#aaa'
-        },
-
-        shading: 'lambert',
-
-        realisticMaterial: {
-            roughness: 0.5,
-            metalness: 0
-        },
-
-        light: {
-            main: {
-                alpha: 40,
-                beta: 30
-            }
-        },
-
-        viewControl: {
-            alpha: 40,
-            beta: 0,
-            distance: 100
-        },
-
-        label: {
-            show: false,
-            // Distance in 3d space.
-            distance: 2,
-
-            textStyle: {
-                color: '#000'
-            }
-        },
-        // labelLine
-
         // itemStyle: {},
         // height,
         // label: {}
-        regions: [],
-
-        // light
-        // postEffect
-        // temporalSuperSampling
-        // viewControl
-
-        itemStyle: {
-            areaColor: '#fff',
-            borderWidth: 0,
-            borderColor: '#333'
-        }
+        regions: []
     }
 });
+
+echarts.util.merge(Geo3DModel.prototype, geo3DModelMixin);
 
 echarts.util.merge(Geo3DModel.prototype, componentViewControlMixin);
 echarts.util.merge(Geo3DModel.prototype, componentPostEffectMixin);

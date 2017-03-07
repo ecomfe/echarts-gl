@@ -5,6 +5,7 @@ var LinesGeo = require('../../util/geometry/Lines3D');
 var retrieve = require('../../util/retrieve');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
+var LabelsBuilder = require('./LabelsBuilder');
 
 var vec3 = glmatrix.vec3;
 
@@ -44,11 +45,15 @@ function Geo3DBuilder(api) {
 
     this._groundMesh = new graphicGL.Mesh({
         geometry: new graphicGL.PlaneGeometry(),
-        castShadow: false
+        castShadow: false,
+        ignorePicking: true
     });
     this._groundMesh.rotation.rotateX(-Math.PI / 2);
     this._groundMesh.scale.set(1000, 1000, 1);
 
+    this._labelsBuilder = new LabelsBuilder(1024, 1024, api);
+
+    this._api = api;
 }
 
 Geo3DBuilder.prototype = {
@@ -65,6 +70,8 @@ Geo3DBuilder.prototype = {
 
             // Reset meshes
             this._initMeshes(componentModel);
+
+            this.rootNode.add(this._labelsBuilder.getMesh());
         }
 
         // Update materials
@@ -76,7 +83,10 @@ Geo3DBuilder.prototype = {
         var srgbDefineMethod = geo3D.viewGL.isLinearSpace() ? 'define' : 'unDefine';
         shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
 
+        var data = componentModel.getData();
         geo3D.regions.forEach(function (region) {
+            var dataIndex = data.indexOfName(region.name);
+
             var polygonMesh = this._polygonMeshes[region.name];
             var linesMesh = this._linesMeshes[region.name];
             if (polygonMesh.material.shader !== shader) {
@@ -84,21 +94,21 @@ Geo3DBuilder.prototype = {
             }
             var regionModel = componentModel.getRegionModel(region.name);
             var itemStyleModel = regionModel.getModel('itemStyle');
-            var color = graphicGL.parseColor(itemStyleModel.get('areaColor'));
+            var color = itemStyleModel.get('areaColor');
+            var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
 
-            if (componentModel.getData) {
-                // series has data.
-                var data = componentModel.getData();
-                var idx = data.indexOfName(region.name);
-                // Use visual color if it is encoded by visualMap component
-                var visualColor = data.getItemVisual(idx, 'color', true);
-                if (visualColor != null) {
-                    color = graphicGL.parseColor(visualColor);
-                }
+            // Use visual color if it is encoded by visualMap component
+            var visualColor = data.getItemVisual(dataIndex, 'color', true);
+            if (visualColor != null) {
+                color = visualColor;
             }
+            // Set color, opacity to visual for label usage.
+            data.setItemVisual(dataIndex, 'color', color);
+            data.setItemVisual(dataIndex, 'opacity', opacity);
 
+            color = graphicGL.parseColor(color);
             var borderColor = graphicGL.parseColor(itemStyleModel.get('borderColor'));
-            var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);;
+
             color[3] *= opacity;
             borderColor[3] *= opacity;
             polygonMesh.material.set({
@@ -129,10 +139,100 @@ Geo3DBuilder.prototype = {
 
             // Move regions to center so they can be sorted right when material is transparent.
             this._moveRegionToCenter(polygonMesh, linesMesh, hasLine);
+
+            // Bind events.
+            polygonMesh.dataIndex = dataIndex;
+            polygonMesh.on('mouseover', this._onmouseover, this);
+            polygonMesh.on('mouseout', this._onmouseout, this);
         }, this);
 
         this._updateGroundPlane(componentModel);
         this._groundMesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+
+        this._labelsBuilder.updateData(data);
+        this._labelsBuilder.getLabelPosition = function (dataIndex, positionDesc, distance) {
+            var itemModel = data.getItemModel(dataIndex);
+            var name = data.getName(dataIndex);
+            var region = geo3D.getRegion(name);
+            var center = region.center;
+
+            var height = itemModel.get('height') + distance;
+            return geo3D.dataToPoint([center[0], center[1], height]);
+        };
+
+        this._data = data;
+
+        this._labelsBuilder.updateLabels();
+    },
+
+    _onmouseover: function (e) {
+        if (e.target && e.target.dataIndex != null) {
+            this.highlight(e.target.dataIndex);
+
+            this._labelsBuilder.updateLabels([e.target.dataIndex]);
+        }
+    },
+
+    _onmouseout: function (e) {
+        if (e.target && e.target.dataIndex != null) {
+            this.downplay(e.target.dataIndex);
+
+            // TODO Merge with onmouseover
+            if (!e.relatedTarget) {
+                this._labelsBuilder.updateLabels();
+            }
+        }
+    },
+
+    highlight: function (dataIndex) {
+        var data = this._data;
+        if (!data) {
+            return;
+        }
+
+        var itemModel = data.getItemModel(dataIndex);
+        var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
+        var emphasisColor = emphasisItemStyleModel.get('areaColor');
+        var emphasisOpacity = emphasisItemStyleModel.get('opacity');
+        if (emphasisColor == null) {
+            var color = data.getItemVisual(dataIndex, 'color');
+            emphasisColor = echarts.color.lift(color, -0.4);
+        }
+        if (emphasisOpacity == null) {
+            emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
+        }
+        var colorArr = graphicGL.parseColor(emphasisColor);
+        colorArr[3] *= emphasisOpacity;
+
+        var polygonMesh = this._polygonMeshes[data.getName(dataIndex)];
+        if (polygonMesh) {
+            var material = polygonMesh.material;
+            material.set('color', colorArr);
+        }
+
+        this._api.getZr().refresh();
+    },
+
+    downplay: function (dataIndex) {
+
+        var data = this._data;
+        if (!data) {
+            return;
+        }
+
+        var color = data.getItemVisual(dataIndex, 'color');
+        var opacity = data.getItemVisual(dataIndex, 'opacity');
+
+        var colorArr = graphicGL.parseColor(color);
+        colorArr[3] *= opacity;
+
+        var polygonMesh = this._polygonMeshes[data.getName(dataIndex)];
+        if (polygonMesh) {
+            var material = polygonMesh.material;
+            material.set('color', colorArr);
+        }
+
+        this._api.getZr().refresh();
     },
 
     _updateGroundPlane: function (componentModel) {

@@ -3,6 +3,12 @@ var glmatrix = require('qtek/lib/dep/glmatrix');
 var vec3 = glmatrix.vec3;
 var mat4 = glmatrix.mat4;
 
+// Geo fix functions
+var geoFixFuncs = [
+    require('echarts/lib/coord/geo/fix/textCoord'),
+    require('echarts/lib/coord/geo/fix/geoCoord')
+];
+
 function Geo3D(name, map, geoJson, specialAreas, nameMap) {
 
     this.name = name;
@@ -62,6 +68,10 @@ Geo3D.prototype = {
         this._regionsMap = regionsMap;
 
         this._geoRect = null;
+
+        geoFixFuncs.forEach(function (fixFunc) {
+            fixFunc(this);
+        }, this);
     },
 
     getGeoBoundingRect: function () {

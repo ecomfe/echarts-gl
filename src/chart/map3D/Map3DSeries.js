@@ -2,6 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var componentViewControlMixin = require('../../component/common/componentViewControlMixin');
 var componentPostEffectMixin = require('../../component/common/componentPostEffectMixin');
 var componentLightMixin = require('../../component/common/componentLightMixin');
+var geo3DModelMixin = require('../../coord/geo3D/geo3DModelMixin');
 
 var Map3DModel = echarts.extendSeriesModel({
 
@@ -12,6 +13,8 @@ var Map3DModel = echarts.extendSeriesModel({
     coordinateSystem: null,
 
     getInitialData: function (option) {
+        option.data = this.getFilledRegions(option.data, option.map);
+
         var dimensions = echarts.helper.completeDimensions(['value'], option.data);
         var list = new echarts.List(dimensions, this);
         list.initData(option.data);
@@ -38,83 +41,24 @@ var Map3DModel = echarts.extendSeriesModel({
      * @param {string} [status='normal'] 'normal' or 'emphasis'
      * @return {string}
      */
-    getFormattedLabel: function (name, status) {
-        var idx = this.getData().indexOfName(name);
-        return Map3DModel.superCall(this, 'getFormattedLabel', idx, status);
+    getFormattedLabel: function (dataIndex, status) {
+        var text = Map3DModel.superCall(this, 'getFormattedLabel', dataIndex, status);
+        if (text == null) {
+            text = this.getData().getName(dataIndex);
+        }
+        return text;
     },
 
     defaultOption: {
 
-        show: true,
-
-        zlevel: -10,
-
-        // geoJson used by geo3D
-        map: '',
-
-        // Layout used for viewport
-        left: 0,
-        top: 0,
-        width: '100%',
-        height: '100%',
-
-        boxWidth: 100,
-        boxHeight: 3,
-        boxDepth: 'auto',
-
-        groundPlane: {
-            show: false,
-            color: '#aaa'
-        },
-
-        shading: 'lambert',
-
-        realisticMaterial: {
-            roughness: 0.5,
-            metalness: 0
-        },
-
-        light: {
-            main: {
-                alpha: 40,
-                beta: 30
-            }
-        },
-
-        // labelLine
-
-        viewControl: {
-            alpha: 40,
-            beta: 0,
-            distance: 100
-        },
-
         // itemStyle: {},
         // height,
         // label: {}
-        data: null,
-
-        // light
-        // postEffect
-        // temporalSuperSampling
-        // viewControl
-
-        label: {
-            show: false,
-            // Distance in 3d space.
-            distance: 0.3,
-
-            textStyle: {
-                color: '#000'
-            }
-        },
-        itemStyle: {
-            areaColor: '#fff',
-            borderWidth: 0,
-            borderColor: '#333'
-        }
+        data: null
     }
 });
+
+echarts.util.merge(Map3DModel.prototype, geo3DModelMixin);
 
 echarts.util.merge(Map3DModel.prototype, componentViewControlMixin);
 echarts.util.merge(Map3DModel.prototype, componentPostEffectMixin);

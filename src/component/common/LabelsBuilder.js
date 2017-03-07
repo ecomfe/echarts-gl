@@ -19,8 +19,8 @@ function LabelsBuilder(width, height, api) {
     this._labelsMesh.material.set('textureAtlas', this._labelTextureSurface.getTexture());
 }
 
-LabelsBuilder.prototype.getLabelPosition = function (dataIndex) {
-    return [0, 0, 0]
+LabelsBuilder.prototype.getLabelPosition = function (dataIndex, positionDesc, distance) {
+    return [0, 0, 0];
 };
 
 LabelsBuilder.prototype.getMesh = function () {
