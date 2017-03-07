@@ -183,19 +183,23 @@ module.exports = echarts.extendChartView({
         material.depthMask = !hasTransparent;
         barMesh.geometry.sortTriangles = hasTransparent;
 
-        barMesh.off('mouseover');
+        this._lastDataIndex = -1;
+        barMesh.off('mousemove');
         barMesh.off('mouseout');
-        barMesh.on('mouseover', function (e) {
+        barMesh.on('mousemove', function (e) {
             var dataIndex = barMesh.geometry.getDataIndexOfVertex(e.triangle[0]);
-            this._highlight(dataIndex);
-            this._labelsBuilder.updateLabels([dataIndex]);
+            if (dataIndex !== this._lastDataIndex) {
+                this._downplay(this._lastDataIndex);
+                this._highlight(dataIndex);
+                this._labelsBuilder.updateLabels([dataIndex]);
+            }
+
+            this._lastDataIndex = dataIndex;
         }, this);
         barMesh.on('mouseout', function (e) {
-            var dataIndex = barMesh.geometry.getDataIndexOfVertex(e.triangle[0]);
-            this._downplay(dataIndex);
-            if (!e.relatedTarget) {
-                this._labelsBuilder.updateLabels();
-            }
+            this._downplay(this._lastDataIndex);
+            this._labelsBuilder.updateLabels();
+            this._lastDataIndex = -1;
         }, this);
     },
 
