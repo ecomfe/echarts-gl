@@ -418,9 +418,9 @@ LayerGL.prototype.onmousemove = function (e) {
 
     var target = obj && obj.target;
     var lastHovered = this._hovered;
-    this._hovered = target;
+    this._hovered = obj;
 
-    if (lastHovered && target !== lastHovered) {
+    if (lastHovered && target !== lastHovered.target) {
         lastHovered.relatedTarget = target;
         this._dispatchEvent('mouseout', e, lastHovered);
     }
@@ -428,7 +428,7 @@ LayerGL.prototype.onmousemove = function (e) {
     if (obj) {
         this._dispatchEvent('mousemove', e, obj);
 
-        if (obj !== lastHovered) {
+        if (!lastHovered || (target !== lastHovered.target)) {
             this._dispatchEvent('mouseover', e, obj);
         }
     }
