@@ -56,6 +56,7 @@ function Geo3DBuilder(api) {
 
     // Give a large render order.
     this._labelsBuilder.getMesh().renderOrder = 100;
+    this._labelsBuilder.getMesh().material.depthTest = false;
 
     this._api = api;
 }

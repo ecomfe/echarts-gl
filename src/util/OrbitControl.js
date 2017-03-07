@@ -46,6 +46,16 @@ var OrbitControl = Base.extend(function () {
         maxDistance: 1.5,
 
         /**
+         * Minimum alpha rotation
+         */
+        minAlpha: -90,
+
+        /**
+         * Maximum alpha rotation
+         */
+        maxAlpha: 90,
+
+        /**
          * Start auto rotating after still for the given time
          */
         autoRotateAfterStill: 0,

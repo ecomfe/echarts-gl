@@ -20,7 +20,7 @@ uniform float radius : 1;
 
 uniform float power : 2;
 
-uniform float bias: 1e-3;
+uniform float bias: 1e-2;
 
 varying vec2 v_Texcoord;
 
