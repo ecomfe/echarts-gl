@@ -416,11 +416,12 @@ LayerGL.prototype.onmousemove = function (e) {
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
 
+    var target = obj && obj.target;
     var lastHovered = this._hovered;
-    this._hovered = obj;
+    this._hovered = target;
 
-    if (lastHovered && obj !== lastHovered) {
-        lastHovered.relatedTarget = obj;
+    if (lastHovered && target !== lastHovered) {
+        lastHovered.relatedTarget = target;
         this._dispatchEvent('mouseout', e, lastHovered);
     }
 

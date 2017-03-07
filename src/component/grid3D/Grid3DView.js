@@ -415,7 +415,10 @@ module.exports = echarts.extendComponentView({
             lineColor[3] *= retrieve.firstNotNull(lineStyleModel.get('opacity'), 1.0);
             var ticksCoords = axis.getTicksCoords();
             // TODO Automatic interval
-            var intervalFunc = axisTickModel.get('interval') || axisModel.get('axisLabel.interval');
+            var intervalFunc = axisTickModel.get('interval');
+            if (intervalFunc == null || intervalFunc === 'auto') {
+                intervalFunc = axisModel.get('axisLabel.interval');
+            }
             var tickLength = axisTickModel.get('length');
 
             for (var i = 0; i < ticksCoords.length; i++) {
@@ -534,7 +537,10 @@ module.exports = echarts.extendComponentView({
                 var opacity = retrieve.firstNotNull(lineStyleModel.get('opacity'), 1.0);
                 var lineWidth = retrieve.firstNotNull(lineStyleModel.get('width'), 1.0);
                 // TODO Automatic interval
-                var intervalFunc = splitLineModel.get('interval') || axisModel.get('axisLabel.interval');
+                var intervalFunc = splitLineModel.get('interval');
+                if (intervalFunc == null || intervalFunc === 'auto') {
+                    intervalFunc = axisModel.get('axisLabel.interval');
+                }
                 lineColors = echarts.util.isArray(lineColors) ? lineColors : [lineColors];
 
                 var ticksCoords = axis.getTicksCoords();
@@ -579,7 +585,11 @@ module.exports = echarts.extendComponentView({
                 var colors = areaStyleModel.get('color');
                 var opacity = retrieve.firstNotNull(areaStyleModel.get('opacity'), 1.0);
                 // TODO Automatic interval
-                var intervalFunc = splitAreaModel.get('interval') || axisModel.get('axisLabel.interval');
+                var intervalFunc = splitAreaModel.get('interval');
+                if (intervalFunc == null || intervalFunc === 'auto') {
+                    intervalFunc = axisModel.get('axisLabel.interval');
+                }
+
                 colors = echarts.util.isArray(colors) ? colors : [colors];
 
                 var ticksCoords = axis.getTicksCoords();
