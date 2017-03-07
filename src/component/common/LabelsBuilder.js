@@ -9,11 +9,14 @@ function LabelsBuilder(width, height, api) {
 
     this._labelsMesh = new LabelsMesh();
 
-    this._labelTextureSurface = new ZRTextureAtlasSurface(
-        1024, 1024, api.getDevicePixelRatio(), function () {
+    this._labelTextureSurface = new ZRTextureAtlasSurface({
+        width: 512,
+        height: 512,
+        devicePixelRatio: api.getDevicePixelRatio(),
+        onupdate: function () {
             api.getZr().refresh();
         }
-    );
+    });
     this._api = api;
 
     this._labelsMesh.material.set('textureAtlas', this._labelTextureSurface.getTexture());

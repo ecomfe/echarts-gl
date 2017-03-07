@@ -10,18 +10,23 @@ var graphicGL = require('./graphicGL');
 /**
  * constructor
  * @alias module:echarts-gl/util/ZRTextureAtlasSurface
- * @param {number} width
- * @param {number} height
- * @param {number} dpr
- * @param {Function} onupdate
+ * @param {number} opt.width
+ * @param {number} opt.height
+ * @param {number} opt.devicePixelRatio
+ * @param {Function} opt.onupdate
  */
-var ZRTextureAtlasSurface = function (width, height, dpr, onupdate) {
+var ZRTextureAtlasSurface = function (opt) {
+
+    opt = opt || {};
+    opt.width = opt.width || 512;
+    opt.height = opt.height || 512;
+    opt.devicePixelRatio = opt.devicePixelRatio || 1;
 
     var canvas = document.createElement('canvas');
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    canvas.width = opt.width * opt.devicePixelRatio;
+    canvas.height = opt.height * opt.devicePixelRatio;
 
-    this._dpr = dpr;
+    this._dpr = opt.devicePixelRatio;
     /**
      * zrender instance in the Chart
      * @type {zrender~ZRender}
@@ -45,14 +50,14 @@ var ZRTextureAtlasSurface = function (width, height, dpr, onupdate) {
      * @type {number}
      * @private
      */
-    this._width = width;
+    this._width = opt.width;
 
     /**
      * Atlas canvas height
      * @type {number}
      * @private
      */
-    this._height = height;
+    this._height = opt.height;
 
     /**
      * Current row height
@@ -67,7 +72,16 @@ var ZRTextureAtlasSurface = function (width, height, dpr, onupdate) {
      */
     this._coords = {};
 
-    this.onupdate = onupdate;
+    this.onupdate = opt.onupdate;
+
+    // Left sub atlas.
+    this.left;
+    // Right sub atlas.
+    this.right;
+    // Top sub atlas
+    this.top;
+    // Bottom sub atlas
+    this.bottom;
 
     this._texture = new graphicGL.Texture2D({
         image: canvas,
@@ -187,6 +201,10 @@ ZRTextureAtlasSurface.prototype = {
         }
         this._x += width;
 
+        if (this._x > this._width && this._y > this._height) {
+            this._expand();
+        }
+
         this._rowHeight = Math.max(this._rowHeight, height);
 
         // Shift the el
@@ -206,6 +224,9 @@ ZRTextureAtlasSurface.prototype = {
 
     refresh: function () {
         this._zr.refresh();
+    },
+
+    _expand: function () {
     },
 
     /**

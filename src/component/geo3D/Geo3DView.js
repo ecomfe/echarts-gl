@@ -16,7 +16,8 @@ module.exports = echarts.extendComponentView({
         this._geo3DBuilder = new Geo3DBuilder(api);
         this.groupGL = new graphicGL.Node();
 
-        this._lightHelper = new LightHelper(this.groupGL);
+        this._lightRoot = new graphicGL.Node();
+        this._lightHelper = new LightHelper(this._lightRoot);
 
         this._control = new OrbitControl({
             zr: api.getZr()
@@ -32,11 +33,17 @@ module.exports = echarts.extendComponentView({
         if (!geo3D || !geo3D.viewGL) {
             return;
         }
+
+        // Always have light.
+        this._lightHelper.updateLight(geo3DModel);
+        geo3D.viewGL.add(this._lightRoot);
+
         if (geo3DModel.get('show')) {
             geo3D.viewGL.add(this.groupGL);
         }
         else {
             geo3D.viewGL.remove(this.groupGL);
+            return;
         }
 
         var control = this._control;
@@ -45,8 +52,6 @@ module.exports = echarts.extendComponentView({
 
         var viewControlModel = geo3DModel.getModel('viewControl');
         control.setFromViewControlModel(viewControlModel, 0);
-
-        this._lightHelper.updateLight(geo3DModel);
 
         // Set post effect
         geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'));

@@ -53,7 +53,8 @@ module.exports = echarts.extendComponentView({
             name: 'earth'
         });
 
-        this._lightHelper = new LightHelper(this.groupGL);
+        this._lightRoot = new graphicGL.Node();
+        this._lightHelper = new LightHelper(this._lightRoot);
 
         this.groupGL.add(this._earthMesh);
 
@@ -69,6 +70,10 @@ module.exports = echarts.extendComponentView({
     render: function (globeModel, ecModel, api) {
         var coordSys = globeModel.coordinateSystem;
         var shading = globeModel.get('shading');
+
+        // Always have light.
+        this._updateLight(globeModel, api);
+        coordSys.viewGL.add(this._lightRoot);
 
         if (globeModel.get('show')) {
             // Add self to scene;
@@ -117,8 +122,6 @@ module.exports = echarts.extendComponentView({
         });
 
         earthMesh.material.shader[globeModel.get('postEffect.enable') ? 'define' : 'unDefine']('fragment', 'SRGB_DECODE');
-
-        this._updateLight(globeModel, api);
 
         this._displaceVertices(globeModel, api);
 
@@ -367,7 +370,6 @@ module.exports = echarts.extendComponentView({
         mainLight.position.x = Math.sin(pos.altitude);
         mainLight.position.z = r0 * Math.sin(pos.azimuth);
         mainLight.lookAt(earthMesh.getWorldPosition());
-
 
         // Emission
         earthMesh.material.set('emissionIntensity', globeModel.get('light.emission.intensity'));

@@ -175,12 +175,17 @@ module.exports = echarts.extendComponentView({
         }, this);
 
         // Texture surface for label.
-        this._labelTextureSurface = new ZRTextureAtlasSurface(512, 512, api.getDevicePixelRatio());
+        this._labelTextureSurface = new ZRTextureAtlasSurface({
+            width: 512,
+            height: 512,
+            devicePixelRatio: api.getDevicePixelRatio()
+        });
         this._labelTextureSurface.onupdate = function () {
             api.getZr().refresh();
         };
 
-        this._lightHelper = new LightHelper(this.groupGL);
+        this._lightRoot = new graphicGL.Node();
+        this._lightHelper = new LightHelper(this._lightRoot);
     },
 
     render: function (grid3DModel, ecModel, api) {
@@ -189,6 +194,10 @@ module.exports = echarts.extendComponentView({
         this._api = api;
 
         var cartesian = grid3DModel.coordinateSystem;
+
+        // Always have light.
+        this._lightHelper.updateLight(grid3DModel);
+        cartesian.viewGL.add(this._lightRoot);
 
         if (grid3DModel.get('show')) {
             cartesian.viewGL.add(this.groupGL);
@@ -221,8 +230,6 @@ module.exports = echarts.extendComponentView({
 
         control.off('update');
         control.on('update', this._onCameraChange.bind(this, grid3DModel, api), this);
-
-        this._lightHelper.updateLight(grid3DModel);
 
         // Set post effect
         cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
