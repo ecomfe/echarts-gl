@@ -6,32 +6,13 @@
 
 // TODO Expand.
 var echarts = require('echarts/lib/echarts');
-var graphicGL = require('./graphicGL');
-/**
- * constructor
- * @alias module:echarts-gl/util/ZRTextureAtlasSurface
- * @param {number} opt.width
- * @param {number} opt.height
- * @param {number} opt.devicePixelRatio
- * @param {Function} opt.onupdate
- */
-var ZRTextureAtlasSurface = function (opt) {
+var Texture2D = require('qtek/lib/Texture2D');
 
-    opt = opt || {};
-    opt.width = opt.width || 512;
-    opt.height = opt.height || 512;
-    opt.devicePixelRatio = opt.devicePixelRatio || 1;
+function ZRTextureAtlasSurfaceNode(zr, offsetX, offsetY, width, height, dpr) {
+    this._zr = zr;
+    this._offsetX = offsetX;
+    this._offsetY = offsetY;
 
-    var canvas = document.createElement('canvas');
-    canvas.width = opt.width * opt.devicePixelRatio;
-    canvas.height = opt.height * opt.devicePixelRatio;
-
-    this._dpr = opt.devicePixelRatio;
-    /**
-     * zrender instance in the Chart
-     * @type {zrender~ZRender}
-     */
-    this._zr = echarts.zrender.init(canvas);
     /**
      * Current cursor x
      * @type {number}
@@ -45,26 +26,171 @@ var ZRTextureAtlasSurface = function (opt) {
      */
     this._y = 0;
 
+    this._rowHeight = 0;
     /**
      * Atlas canvas width
      * @type {number}
      * @private
      */
-    this._width = opt.width;
+    this._width = width;
 
     /**
      * Atlas canvas height
      * @type {number}
      * @private
      */
-    this._height = opt.height;
+    this._height = height;
 
     /**
-     * Current row height
      * @type {number}
-     * @private
      */
-    this._rowHeight = 0;
+    this._offsetX = offsetX;
+    /**
+     * @type {number}
+     */
+    this._offsetY = offsetY;
+
+    this._dpr = dpr;
+}
+
+ZRTextureAtlasSurfaceNode.prototype = {
+
+    constructor: ZRTextureAtlasSurfaceNode,
+
+    clear: function () {
+        this._x = 0;
+        this._y = 0;
+        this._rowHeight = 0;
+    },
+
+    /**
+     * Add shape to atlas
+     * @param {module:zrender/graphic/Displayable} shape
+     * @param {number} width
+     * @param {number} height
+     * @return {Array}
+     */
+    add: function (el, width, height) {
+        // FIXME Text element not consider textAlign and textVerticalAlign.
+
+        // TODO, inner text, shadow
+        var rect = el.getBoundingRect();
+
+        // FIXME aspect ratio
+        if (width == null) {
+            width = rect.width;
+        }
+        if (height == null) {
+            height = rect.height;
+        }
+        width *= this._dpr;
+        height *= this._dpr;
+
+        this._fitElement(el, width, height);
+
+        // var aspect = el.scale[1] / el.scale[0];
+        // Adjust aspect ratio to make the text more clearly
+        // FIXME If height > width, width is useless ?
+        // width = height * aspect;
+        // el.position[0] *= aspect;
+        // el.scale[0] = el.scale[1];
+
+        var x = this._x;
+        var y = this._y;
+
+        var canvasWidth = this._width * this._dpr;
+        var canvasHeight = this._height * this._dpr;
+
+        if (x + width > canvasWidth) {
+            // Change a new row
+            x = this._x = 0;
+            y += this._rowHeight;
+            this._y = y;
+            // Reset row height
+            this._rowHeight = 0;
+        }
+
+        this._x += width;
+
+        this._rowHeight = Math.max(this._rowHeight, height);
+
+        if (y + height > canvasHeight) {
+            // There is no space anymore
+            return null;
+        }
+
+        // Shift the el
+        el.position[0] += this._offsetX + x;
+        el.position[1] += this._offsetY + y;
+
+        this._zr.add(el);
+
+        var coords = [
+            [x / canvasWidth, y / canvasHeight],
+            [(x + width) / canvasWidth, (y + height) / canvasHeight]
+        ];
+
+        return coords;
+    },
+
+
+    /**
+     * Fit element size by correct its position and scaling
+     * @param {module:zrender/graphic/Displayable} el
+     * @param {number} spriteWidth
+     * @param {number} spriteHeight
+     */
+    _fitElement: function (el, spriteWidth, spriteHeight) {
+        // TODO, inner text, shadow
+        var rect = el.getBoundingRect();
+
+        var scaleX = spriteWidth / rect.width;
+        var scaleY = spriteHeight / rect.height;
+        el.position = [-rect.x * scaleX, -rect.y * scaleY];
+        el.scale = [scaleX, scaleY];
+        el.update();
+    }
+}
+/**
+ * constructor
+ * @alias module:echarts-gl/util/ZRTextureAtlasSurface
+ * @param {number} opt.width
+ * @param {number} opt.height
+ * @param {number} opt.devicePixelRatio
+ * @param {Function} opt.onupdate
+ */
+function ZRTextureAtlasSurface (opt) {
+
+    opt = opt || {};
+    opt.width = opt.width || 512;
+    opt.height = opt.height || 512;
+    opt.devicePixelRatio = opt.devicePixelRatio || 1;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = opt.width * opt.devicePixelRatio;
+    canvas.height = opt.height * opt.devicePixelRatio;
+
+    this._canvas = canvas;
+
+    this._texture = new Texture2D({
+        image: canvas,
+        flipY: false
+    });
+
+    var self = this;
+    /**
+     * zrender instance in the Chart
+     * @type {zrender~ZRender}
+     */
+    this._zr = echarts.zrender.init(canvas);
+    var oldRefreshImmediately = this._zr.refreshImmediately;
+    this._zr.refreshImmediately = function () {
+        oldRefreshImmediately.call(this);
+        self._texture.dirty();
+        self.onupdate && self.onupdate();
+    };
+
+    this._dpr = opt.devicePixelRatio;
 
     /**
      * Texture coords map for each sprite image
@@ -75,27 +201,13 @@ var ZRTextureAtlasSurface = function (opt) {
     this.onupdate = opt.onupdate;
 
     // Left sub atlas.
-    this.left;
-    // Right sub atlas.
-    this.right;
-    // Top sub atlas
-    this.top;
-    // Bottom sub atlas
-    this.bottom;
+    this._textureAtlasNodes = [new ZRTextureAtlasSurfaceNode(
+        this._zr, 0, 0, opt.width, opt.height, this._dpr
+    )];
 
-    this._texture = new graphicGL.Texture2D({
-        image: canvas,
-        flipY: false
-    });
-
-    var self = this;
-    var oldRefreshImmediately = this._zr.refreshImmediately;
-    this._zr.refreshImmediately = function () {
-        oldRefreshImmediately.call(this);
-        self._texture.dirty();
-        self.onupdate && self.onupdate();
-    };
-};
+    this._nodeWidth = opt.width;
+    this._nodeHeight = opt.height;
+}
 
 ZRTextureAtlasSurface.prototype = {
 
@@ -103,9 +215,10 @@ ZRTextureAtlasSurface.prototype = {
      * Clear the texture atlas
      */
     clear: function () {
-        this._x = 0;
-        this._y = 0;
-        this._rowHeight = 0;
+
+        for (var i = 0; i < this._textureAtlasNodes.length; i++) {
+            this._textureAtlasNodes[i].clear();
+        }
 
         this._zr.clear();
         this._coords = {};
@@ -139,111 +252,60 @@ ZRTextureAtlasSurface.prototype = {
         return this._dpr;
     },
 
-    /**
-     * Resize the texture atlas. Images must be added again after resize
-     * @param  {number} width
-     * @param  {number} height
-     */
-    resize: function (width, height) {
-        this._zr.resize({
-            width: width,
-            height: height
-        });
+    getZr: function () {
+        return this._zr;
     },
 
-    /**
-     * Add shape to atlas
-     * @param {module:zrender/graphic/Displayable} shape
-     * @param {number} width
-     * @param {number} height
-     * @return {Array}
-     */
-    add: function (el, width, height) {
-        // TODO, inner text, shadow
-        var rect = el.getBoundingRect();
-        // FIXME aspect ratio
-        if (width == null) {
-            width = rect.width;
-        }
-        if (height == null) {
-            height = rect.height;
-        }
-        width *= this._dpr;
-        height *= this._dpr;
-
-        this._fitElement(el, width, height);
-
-        // var aspect = el.scale[1] / el.scale[0];
-        // Adjust aspect ratio to make the text more clearly
-        // FIXME If height > width, width is useless ?
-        // width = height * aspect;
-        // el.position[0] *= aspect;
-        // el.scale[0] = el.scale[1];
-
-        var x = this._x;
-        var y = this._y;
-
-        var canvasWidth = this._width * this._dpr;
-        var canvasHeight = this._height * this._dpr;
-
-        if (x + width > canvasWidth && y + this._rowHeight > canvasHeight) {
-            // There is no space anymore
-            return null;
-        }
-
-        if (x + width > canvasWidth) {
-            // Change a new row
-            x = this._x = 0;
-            y += this._rowHeight;
-            this._y = y;
-            // Reset row height
-            this._rowHeight = 0;
-        }
-        this._x += width;
-
-        if (this._x > this._width && this._y > this._height) {
-            this._expand();
-        }
-
-        this._rowHeight = Math.max(this._rowHeight, height);
-
-        // Shift the el
-        el.position[0] += x;
-        el.position[1] += y;
-        this._zr.add(el);
-
-        var coords = [
-            [x / canvasWidth, y / canvasHeight],
-            [(x + width) / canvasWidth, (y + height) / canvasHeight]
-        ];
-
-        this._coords[el.id] = coords;
-
-        return coords;
-    },
-
-    refresh: function () {
-        this._zr.refresh();
+    _getCurrentNode: function () {
+        return this._textureAtlasNodes[this._textureAtlasNodes.length - 1];
     },
 
     _expand: function () {
+        var maxSize = 4096 / this._dpr;
+        var textureAtlasNodes = this._textureAtlasNodes;
+        var nodeLen = textureAtlasNodes.length;
+        var offsetX = (nodeLen * this._nodeWidth) % maxSize;
+        var offsetY = Math.floor(nodeLen * this._nodeWidth / maxSize) * this._nodeHeight;
+        if (offsetY >= maxSize) {
+            // Failed if image is too large.
+            return;
+        }
+
+        var width = (offsetX + this._nodeWidth) * this._dpr;
+        var height = (offsetY + this._nodeHeight) * this._dpr;
+        try {
+            // Resize will error in node.
+            this._zr.resize({
+                width: width,
+                height: height
+            });
+        }
+        catch (e) {
+            this._canvas.width = width;
+            this._canvas.height = height;
+        }
+
+        var newNode = new ZRTextureAtlasSurfaceNode(
+            this._zr, offsetX, offsetY, this._nodeWidth, this._nodeHeight, this._dpr
+        );
+        this._textureAtlasNodes.push(newNode);
+
+        return newNode;
     },
 
-    /**
-     * Fit element size by correct its position and scaling
-     * @param {module:zrender/graphic/Displayable} el
-     * @param {number} spriteWidth
-     * @param {number} spriteHeight
-     */
-    _fitElement: function (el, spriteWidth, spriteHeight) {
-        // TODO, inner text, shadow
-        var rect = el.getBoundingRect();
+    add: function (el, width, height) {
+        var coords = this._getCurrentNode().add(el, width, height);
+        if (!coords) {
+            var newNode = this._expand();
+            if (!newNode) {
+                // To maximum
+                return;
+            }
+            coords = newNode.add(el, width, height);
+        }
+        this._coords[el.id] = coords;
 
-        var scaleX = spriteWidth / rect.width;
-        var scaleY = spriteHeight / rect.height;
-        el.position = [-rect.x * scaleX, -rect.y * scaleY];
-        el.scale = [scaleX, scaleY];
-        el.update();
+        return coords;
     },
 
     /**
