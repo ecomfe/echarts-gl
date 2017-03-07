@@ -32,7 +32,12 @@ module.exports = echarts.extendComponentView({
         if (!geo3D || !geo3D.viewGL) {
             return;
         }
-        geo3D.viewGL.add(this.groupGL);
+        if (geo3DModel.get('show')) {
+            geo3D.viewGL.add(this.groupGL);
+        }
+        else {
+            geo3D.viewGL.remove(this.groupGL);
+        }
 
         var control = this._control;
         control.setCamera(geo3D.viewGL.camera);

@@ -189,7 +189,13 @@ module.exports = echarts.extendComponentView({
         this._api = api;
 
         var cartesian = grid3DModel.coordinateSystem;
-        cartesian.viewGL.add(this.groupGL);
+
+        if (grid3DModel.get('show')) {
+            cartesian.viewGL.add(this.groupGL);
+        }
+        else {
+            cartesian.viewGL.remove(this.groupGL);
+        }
 
         // cartesian.viewGL.setCameraType(grid3DModel.get('viewControl.projection'));
 

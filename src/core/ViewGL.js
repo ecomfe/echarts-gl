@@ -130,13 +130,12 @@ ViewGL.prototype.prepareRender = function () {
             this._needsSortProgressively = true;
         }
     }
+
+    this._frame = 0;
+    this._temporalSS.resetFrame();
 };
 
 ViewGL.prototype.render = function (renderer, accumulating) {
-    if (!accumulating) {
-        this._frame = 0;
-        this._temporalSS.resetFrame();
-    }
     this._doRender(renderer, accumulating, this._frame);
     this._frame++;
 };

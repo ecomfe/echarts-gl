@@ -22,7 +22,6 @@ echarts.extendSeriesModel({
             ) + 1;
         }
 
-
         if (!data) {
             data = [];
 

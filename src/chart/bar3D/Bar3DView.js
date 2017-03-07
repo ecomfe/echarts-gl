@@ -54,7 +54,9 @@ module.exports = echarts.extendChartView({
                 return [0, 0];
             }
         };
-        this._labelsBuilder.getMesh().renderOrder = 11;
+
+        // Give a large render order.
+        this._labelsBuilder.getMesh().renderOrder = 100;
     },
 
     render: function (seriesModel, ecModel, api) {

@@ -53,6 +53,10 @@ function Geo3DBuilder(api) {
 
     this._labelsBuilder = new LabelsBuilder(1024, 1024, api);
 
+
+    // Give a large render order.
+    this._labelsBuilder.getMesh().renderOrder = 100;
+
     this._api = api;
 }
 

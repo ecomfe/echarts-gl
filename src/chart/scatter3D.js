@@ -28,16 +28,32 @@ echarts.registerLayout(function (ecModel, api) {
 
             var item = [];
             var out = [];
-            data.each(dims, function (x, y, z, idx) {
-                item[0] = x;
-                item[1] = y;
-                item[2] = z;
-                coordSys.dataToPoint(item, out);
-                points[idx * 3] = out[0];
-                points[idx * 3 + 1] = out[1];
-                points[idx * 3 + 2] = out[2];
-            });
 
+            var isGlobe = coordSys.type === 'globe';
+            var isGeo3D = coordSys.type === 'geo3D';
+            var distanceToGlobe = seriesModel.get('distanceToGlobe');
+            var distanceToGeo3D = seriesModel.get('distanceToGeo3D');
+            if (coordSys) {
+                data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+                    item[0] = x;
+                    item[1] = y;
+                    if (isGlobe) {
+                        // TODO Bump map
+                        item[2] = distanceToGlobe;
+                    }
+                    else if (isGeo3D) {
+                        // TODO Region height.
+                        item[2] = coordSys.size[1] + distanceToGeo3D;
+                    }
+                    else {
+                        item[2] = z;
+                    }
+                    coordSys.dataToPoint(item, out);
+                    points[idx * 3] = out[0];
+                    points[idx * 3 + 1] = out[1];
+                    points[idx * 3 + 2] = out[2];
+                });
+            }
             data.setLayout('points', points);
         }
     });

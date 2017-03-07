@@ -1,6 +1,5 @@
 var echarts = require('echarts/lib/echarts');
 
-
 echarts.extendSeriesModel({
 
     type: 'series.scatter3D',
@@ -29,6 +28,12 @@ echarts.extendSeriesModel({
 
         symbol: 'circle',
         symbolSize: 10,
+
+        // Distance to the globe, when coordinate system is globe
+        distanceToGlobe: 1.5,
+
+        // Distance to the geo3D, when coordinate system is geo3D
+        distanceToGeo3D: 0.5,
 
         // Support source-over, lighter
         blendMode: 'source-over',

@@ -70,8 +70,13 @@ module.exports = echarts.extendComponentView({
         var coordSys = globeModel.coordinateSystem;
         var shading = globeModel.get('shading');
 
-        // Add self to scene;
-        coordSys.viewGL.add(this.groupGL);
+        if (globeModel.get('show')) {
+            // Add self to scene;
+            coordSys.viewGL.add(this.groupGL);
+        }
+        else {
+            coordSys.viewGL.remove(this.groupGL);
+        }
 
         // Set post effect
         coordSys.viewGL.setPostEffect(globeModel.getModel('postEffect'));
@@ -100,16 +105,16 @@ module.exports = echarts.extendComponentView({
 
         earthMesh.scale.set(coordSys.radius, coordSys.radius, coordSys.radius);
 
-        earthMesh.setTextureImage('diffuseMap', globeModel.get('baseTexture'), api, {
-            flipY: false,
-            anisotropic: 8
-        });
+        // earthMesh.setTextureImage('diffuseMap', globeModel.get('baseTexture'), api, {
+        //     flipY: false,
+        //     anisotropic: 8
+        // });
 
-        // Update bump map
-        earthMesh.setTextureImage('bumpMap', globeModel.get('heightTexture'), api, {
-            flipY: false,
-            anisotropic: 8
-        });
+        // // Update bump map
+        // earthMesh.setTextureImage('bumpMap', globeModel.get('heightTexture'), api, {
+        //     flipY: false,
+        //     anisotropic: 8
+        // });
 
         earthMesh.material.shader[globeModel.get('postEffect.enable') ? 'define' : 'unDefine']('fragment', 'SRGB_DECODE');
 
@@ -119,7 +124,7 @@ module.exports = echarts.extendComponentView({
 
         this._updateViewControl(globeModel, api);
 
-        this._updateLayers(globeModel, api);
+        // this._updateLayers(globeModel, api);
     },
 
     afterRender: function (globeModel, ecModel, api, layerGL) {
