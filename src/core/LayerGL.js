@@ -191,6 +191,8 @@ LayerGL.prototype.resize = function (width, height) {
 LayerGL.prototype.clear = function () {
     var gl = this.renderer.gl;
     gl.clearColor(0, 0, 0, 0);
+    gl.depthMask(true);
+    gl.colorMask(true, true, true, true);
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 };
 
@@ -232,13 +234,13 @@ LayerGL.prototype.refresh = function () {
     // Auto dispose unused resources on GPU, like program(shader), texture, geometry(buffers)
     this._trackAndClean();
 
-    this._startAccumulating();
-
     // Dispose trashed views
     for (var i = 0; i < this._viewsToDispose.length; i++) {
         this._viewsToDispose[i].dispose(this.renderer);
     }
     this._viewsToDispose.length = 0;
+
+    this._startAccumulating();
 };
 
 LayerGL.prototype._doRender = function (accumulating) {
