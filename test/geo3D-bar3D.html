@@ -25,15 +25,24 @@
                 });
 
                 chart.setOption({
+                    backgroundColor: '#cdcfd5',
                     geo3D: {
                         map: 'world',
                         shading: 'lambert',
                         light: {
                             main: {
-                                intensity: 2,
+                                intensity: 1,
                                 shadow: true,
                                 shadowQuality: 'high',
                                 alpha: 30
+                            },
+                            ambient: {
+                                intensity: 0
+                            },
+                            ambientCubemap: {
+                                texture: 'asset/canyon.hdr',
+                                exposure: 2,
+                                diffuseIntensity: 0.3
                             }
                         },
                         viewControl: {
@@ -45,7 +54,7 @@
                         postEffect: {
                             enable: true,
                             bloom: {
-                                enable: false
+                                // enable: false
                             },
                             SSAO: {
                                 radius: 1,

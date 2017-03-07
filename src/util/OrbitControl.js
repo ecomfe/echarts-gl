@@ -9,6 +9,7 @@ var Base = require('qtek/lib/core/Base');
 var Vector2 = require('qtek/lib/math/Vector2');
 var Vector3 = require('qtek/lib/math/Vector3');
 var Quaternion = require('qtek/lib/math/Quaternion');
+var retrieve = require('./retrieve');
 
 /**
  * @alias module:echarts-x/util/OrbitControl
@@ -54,6 +55,15 @@ var OrbitControl = Base.extend(function () {
          * Maximum alpha rotation
          */
         maxAlpha: 90,
+
+        /**
+         * Minimum beta rotation
+         */
+        minBeta: -180,
+        /**
+         * Maximum beta rotation
+         */
+        maxBeta: 180,
 
         /**
          * Start auto rotating after still for the given time
@@ -175,6 +185,8 @@ var OrbitControl = Base.extend(function () {
      * @param {number} alpha
      */
     setAlpha: function (alpha) {
+        alpha = Math.max(Math.min(this.maxAlpha, alpha), this.minAlpha);
+
         this._theta = alpha / 180 * Math.PI;
         this._needsUpdate = true;
     },
@@ -184,6 +196,8 @@ var OrbitControl = Base.extend(function () {
      * @param {number} beta
      */
     setBeta: function (beta) {
+        beta = Math.max(Math.min(this.maxBeta, beta), this.minBeta);
+
         this._phi = -beta / 180 * Math.PI;
         this._needsUpdate = true;
     },
@@ -217,6 +231,12 @@ var OrbitControl = Base.extend(function () {
             });
             // this.setDistance(targetDistance);
         }
+
+        this.minAlpha = retrieve.firstNotNull(viewControlModel.get('minAlpha'), -90);
+        this.maxAlpha = retrieve.firstNotNull(viewControlModel.get('maxAlpha'), 90);
+        this.minBeta = retrieve.firstNotNull(viewControlModel.get('minBeta'), -180);
+        this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), 180);
+
         this.setAlpha(viewControlModel.get('alpha') || 0);
         this.setBeta(viewControlModel.get('beta') || 0);
     },
@@ -342,9 +362,10 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        this._updateDistance(deltaTime);
-        this._updateRotate(deltaTime);
-        this._updatePan(deltaTime);
+        // Fixed deltaTime
+        this._updateDistance(20);
+        this._updateRotate(20);
+        this._updatePan(20);
 
         this._camera.update();
 
@@ -358,11 +379,11 @@ var OrbitControl = Base.extend(function () {
 
     _updateRotate: function (deltaTime) {
         var velocity = this._rotateVelocity;
-        this._phi = (velocity.y * deltaTime / 20 + this._phi) % (Math.PI * 2);
-        this._theta = (velocity.x * deltaTime / 20 + this._theta) % (Math.PI * 2);
+        this._phi = velocity.y * deltaTime / 20 + this._phi;
+        this._theta = velocity.x * deltaTime / 20 + this._theta;
 
-        this._theta = Math.max(Math.min(this._theta, Math.PI / 2), -Math.PI / 2);
-
+        this.setAlpha(this.getAlpha());
+        this.setBeta(this.getBeta());
 
         this._vectorDamping(velocity, 0.9);
     },
@@ -485,8 +506,8 @@ var OrbitControl = Base.extend(function () {
             }
         }
 
-        this._mouseX = e.offsetX;
-        this._mouseY = e.offsetY;
+        this._mouseX = e.pageX;
+        this._mouseY = e.pageY;
     },
 
     _mouseMoveHandler: function (e) {
@@ -504,8 +525,8 @@ var OrbitControl = Base.extend(function () {
             this._panVelocity.y = -e.offsetY + this._mouseY;
         }
 
-        this._mouseX = e.offsetX;
-        this._mouseY = e.offsetY;
+        this._mouseX = e.pageX;
+        this._mouseY = e.pageY;
     },
 
     _mouseWheelHandler: function (e) {

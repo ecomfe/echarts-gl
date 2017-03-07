@@ -72,7 +72,11 @@ module.exports = {
         viewControl: {
             alpha: 40,
             beta: 0,
-            distance: 100
+            distance: 100,
+
+            minAlpha: 5,
+            minBeta: -80,
+            maxBeta: 80
         },
 
         label: {

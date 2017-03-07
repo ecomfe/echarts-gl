@@ -22,7 +22,12 @@ module.exports = {
             alpha: 0,
             // beta angle for left-right rotation
             // Positive to rotate to right.
-            beta: 0
+            beta: 0,
+
+            minAlpha: -90,
+            maxAlpha: 90,
+            minBeta: -180,
+            maxBeta: 180
         }
     },
 
