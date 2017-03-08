@@ -425,10 +425,14 @@ LayerGL.prototype.onmousemove = function (e) {
     if (lastHovered && target !== lastHovered.target) {
         lastHovered.relatedTarget = target;
         this._dispatchEvent('mouseout', e, lastHovered);
+
+        this.zr.setCursorStyle('default');
     }
 
     if (obj) {
         this._dispatchEvent('mousemove', e, obj);
+
+        this.zr.setCursorStyle('pointer');
 
         if (!lastHovered || (target !== lastHovered.target)) {
             this._dispatchEvent('mouseover', e, obj);

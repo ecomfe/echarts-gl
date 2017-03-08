@@ -73,7 +73,7 @@ var Bar3DSeries = echarts.extendSeriesModel({
                 show: true,
                 textStyle: {
                     fontSize: 20,
-                    borderWidth: 4,
+                    borderWidth: 1,
                     borderColor: '#fff'
                 }
             }

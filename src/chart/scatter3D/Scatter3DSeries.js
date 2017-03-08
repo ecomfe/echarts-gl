@@ -1,6 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 
-echarts.extendSeriesModel({
+var Scatter3DSeries = echarts.extendSeriesModel({
 
     type: 'series.scatter3D',
 
@@ -13,6 +13,16 @@ echarts.extendSeriesModel({
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;
+    },
+
+    getFormattedLabel: function (dataIndex, status, dataType, dimIndex) {
+        var text = Scatter3DSeries.superCall(this, 'getFormattedLabel', dataIndex, status, dataType, dimIndex);
+        if (text == null) {
+            var data = this.getData();
+            var lastDim = data.dimensions[data.dimensions.length - 1];
+            text = data.get(lastDim, dataIndex);
+        }
+        return text;
     },
 
     defaultOption: {
@@ -38,8 +48,28 @@ echarts.extendSeriesModel({
         // Support source-over, lighter
         blendMode: 'source-over',
 
+        label: {
+            show: false,
+            position: 'right',
+            // Screen space distance
+            distance: 5,
+
+            textStyle: {
+                fontSize: 14,
+                color: '#000',
+                borderColor: '#fff',
+                borderWidth: 1
+            }
+        },
+
         itemStyle: {
             opacity: 0.8
+        },
+
+        emphasis: {
+            label: {
+                show: true
+            }
         }
     }
 });

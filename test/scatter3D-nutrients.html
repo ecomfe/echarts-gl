@@ -93,7 +93,7 @@
                     },
                     grid3D: {
                         viewControl: {
-                            autoRotate: true
+                            // autoRotate: true
                             // projection: 'orthographic'
                         }
                     },
@@ -108,11 +108,16 @@
                                 idx
                             ];
                         }),
-                        symbolSize: 10,
+                        symbolSize: 12,
                         // symbol: 'triangle',
                         itemStyle: {
                             borderWidth: 1,
                             borderColor: 'rgba(255,255,255,0.8)'
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                color: '#fff'
+                            }
                         }
                     }]
                 });

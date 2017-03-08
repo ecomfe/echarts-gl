@@ -251,7 +251,7 @@ module.exports = echarts.extendComponentView({
         var control = this._control;
 
         api.dispatchAction({
-            type: 'grid3DChangeView',
+            type: 'grid3DChangeCamera',
             alpha: control.getAlpha(),
             beta: control.getBeta(),
             distance: control.getDistance(),

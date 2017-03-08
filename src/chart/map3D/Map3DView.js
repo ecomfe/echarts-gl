@@ -51,7 +51,7 @@ module.exports = echarts.extendChartView({
         control.off('update');
         control.on('update', function () {
                 api.dispatchAction({
-                    type: 'map3DChangeView',
+                    type: 'map3DChangeCamera',
                     alpha: control.getAlpha(),
                     beta: control.getBeta(),
                     distance: control.getDistance(),

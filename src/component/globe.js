@@ -6,9 +6,9 @@ require('./globe/GlobeView');
 require('../coord/globeCreator');
 
 echarts.registerAction({
-    type: 'globeChangeView',
-    event: 'globeviewchanged',
-    update: 'none'
+    type: 'globeChangeCamera',
+    event: 'globecamerachanged',
+    update: 'series:updateCamera'
 }, function (payload, ecModel) {
     ecModel.eachComponent({
         mainType: 'globe', query: payload

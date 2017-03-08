@@ -17,7 +17,7 @@ echarts.extendChartView({
 
         this.viewGL.add(this.groupGL);
 
-        this._pointsBuilder = new PointsBuilder(true);
+        this._pointsBuilder = new PointsBuilder(true, api);
     },
 
     render: function (seriesModel, ecModel, api) {

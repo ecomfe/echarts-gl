@@ -42,7 +42,7 @@ var SpritesGeometry = StaticGeometry.extend(function () {
         }
     },
 
-    setSpriteAlign: function (spriteOffset, size, align, verticalAlign) {
+    setSpriteAlign: function (spriteOffset, size, align, verticalAlign, screenOffset) {
         if (align == null) {
             align = 'left';
         }
@@ -80,6 +80,14 @@ var SpritesGeometry = StaticGeometry.extend(function () {
                 bottomOffset = 0;
                 break;
         }
+        if (screenOffset != null) {
+            var dx = screenOffset[0] || 0;
+            var dy = screenOffset[1] || 0;
+            leftOffset += dx;
+            rightOffset += dx;
+            topOffset += dy;
+            bottomOffset += dy;
+        }
         // 3----2
         // 0----1
         var vertexOffset = spriteOffset * 4;
@@ -92,12 +100,13 @@ var SpritesGeometry = StaticGeometry.extend(function () {
     /**
      * Add sprite
      * @param {Array.<number>} position
-     * @param {Array.<number>} size
+     * @param {Array.<number>} size [width, height]
      * @param {Array.<Array>} coords [leftBottom, rightTop]
      * @param {string} [align='left'] 'left' 'center' 'right'
      * @param {string} [verticalAlign='top'] 'top' 'middle' 'bottom'
+     * @param {Array.<number>} [screenOffset=[0, 0]]
      */
-    addSprite: function (position, size, coords, align, verticalAlign) {
+    addSprite: function (position, size, coords, align, verticalAlign, screenOffset) {
         var attributes = this.attributes;
         for (var i = 0; i < 4; i++) {
             attributes.position.set(this._vertexOffset + i, position);
@@ -112,7 +121,7 @@ var SpritesGeometry = StaticGeometry.extend(function () {
         texcoordAttr.set(vertexOffset + 2, [coords[1][0], coords[1][1]]);
         texcoordAttr.set(vertexOffset + 3, [coords[0][0], coords[1][1]]);
 
-        this.setSpriteAlign(vertexOffset / 4, size, align, verticalAlign);
+        this.setSpriteAlign(vertexOffset / 4, size, align, verticalAlign, screenOffset);
 
         for (var i = 0; i < squareTriangles.length; i++) {
             this.indices[this._faceOffset * 3 + i] = squareTriangles[i] + vertexOffset;

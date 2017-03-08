@@ -26,6 +26,10 @@ LabelsBuilder.prototype.getLabelPosition = function (dataIndex, positionDesc, di
     return [0, 0, 0];
 };
 
+LabelsBuilder.prototype.getLabelOffset = function (dataIndex, positionDesc, distance) {
+    return [0, 0]
+};
+
 LabelsBuilder.prototype.getMesh = function () {
     return this._labelsMesh;
 };
@@ -78,6 +82,19 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
     var seriesLabelModel = seriesModel.getModel(normalLabelQuery);
     var seriesLabelEmphasisModel = seriesModel.getModel(emphasisLabelQuery, seriesLabelModel);
 
+    var textAlignMap = {
+        left: 'right',
+        right: 'left',
+        top: 'center',
+        bottom: 'center'
+    };
+    var textVerticalAlignMap = {
+        left: 'middle',
+        right: 'middle',
+        top: 'bottom',
+        bottom: 'top'
+    };
+
     data.each(function (dataIndex) {
         var isEmphasis = false;
         if (hasHighlightData && highlightDataIndicesMap[dataIndex]) {
@@ -94,7 +111,7 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
             isEmphasis ? emphasisLabelQuery : normalLabelQuery,
             isEmphasis ? seriesLabelEmphasisModel : seriesLabelModel
         );
-        var distance = labelModel.get('distance');
+        var distance = labelModel.get('distance') || 0;
         var position = labelModel.get('position');
         var textStyleModel = labelModel.getModel('textStyle');
 
@@ -106,7 +123,7 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
                 font: textStyleModel.getFont(),
                 fill: textStyleModel.get('color') || data.getItemVisual(dataIndex, 'color') || '#000',
                 stroke: textStyleModel.get('borderColor'),
-                lineWidth: textStyleModel.get('borderWidth') / dpr,
+                lineWidth: textStyleModel.get('borderWidth') * 2,
                 textAlign: 'left',
                 textVerticalAlign: 'top'
             }
@@ -115,10 +132,14 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
 
         var coords = this._labelTextureSurface.add(textEl);
 
+        var textAlign = textAlignMap[position] || 'center';
+        var textVerticalAlign = textVerticalAlignMap[position] || 'bottom';
+
         this._labelsMesh.geometry.addSprite(
             this.getLabelPosition(dataIndex, position, distance),
             [rect.width * dpr, rect.height * dpr], coords,
-            'center', 'bottom'
+            textAlign, textVerticalAlign,
+            this.getLabelOffset(dataIndex, position, distance)
         );
     }, false, this);
 

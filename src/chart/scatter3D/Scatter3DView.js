@@ -13,7 +13,7 @@ echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
 
-        var pointsBuilder = new PointsBuilder(false);
+        var pointsBuilder = new PointsBuilder(false, api);
         this._pointsBuilder = pointsBuilder;
     },
 
@@ -23,13 +23,26 @@ echarts.extendChartView({
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
-        }
 
-        this._pointsBuilder.update(seriesModel, ecModel, api);
+            this._pointsBuilder.update(seriesModel, ecModel, api);
+            this._pointsBuilder.updateView(coordSys.viewGL.camera);
+
+            this._camera = coordSys.viewGL.camera;
+        }
+        else {
+            if (__DEV__) {
+                throw new Error('Invalid coordinate system');
+            }
+        }
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
         this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
+        this._pointsBuilder.updateView(this._camera);
+    },
+
+    updateCamera: function () {
+        this._pointsBuilder.updateView(this._camera);
     },
 
     dispose: function () {

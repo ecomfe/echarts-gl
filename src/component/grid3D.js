@@ -6,9 +6,9 @@ require('../coord/grid3DCreator');
 
 var echarts = require('echarts/lib/echarts');
 echarts.registerAction({
-    type: 'grid3DChangeView',
-    event: 'grid3dviewchanged',
-    update: 'none'
+    type: 'grid3DChangeCamera',
+    event: 'grid3dcamerachanged',
+    update: 'series:updateCamera'
 }, function (payload, ecModel) {
     ecModel.eachComponent({
         mainType: 'grid3D', query: payload

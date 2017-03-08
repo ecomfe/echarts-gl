@@ -81,7 +81,7 @@ void main()
 
     if (lineWidth > 0.0) {
         float sLineWidth = lineWidth / 2.0 / v_Size;
-        float fadeSize = sLineWidth * 0.3;
+        float fadeSize = sLineWidth * 0.5;
         float outlineMaxValue0 = sLineWidth - fadeSize;
         float outlineMaxValue1 = sLineWidth + fadeSize;
         float outlineMinValue0 = -sLineWidth - fadeSize;

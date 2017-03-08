@@ -10,9 +10,9 @@ echarts.registerVisual(echarts.util.curry(
 ));
 
 echarts.registerAction({
-    type: 'map3DChangeView',
-    event: 'map3dviewchanged',
-    update: 'none'
+    type: 'map3DChangeCamera',
+    event: 'map3dcamerachanged',
+    update: 'series:updateCamera'
 }, function (payload, ecModel) {
     ecModel.eachComponent({
         mainType: 'series', subType: 'map3D', query: payload

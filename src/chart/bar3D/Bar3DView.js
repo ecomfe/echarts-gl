@@ -40,7 +40,7 @@ module.exports = echarts.extendChartView({
 
         this._api = api;
 
-        this._labelsBuilder = new LabelsBuilder(1024, 1024, api);
+        this._labelsBuilder = new LabelsBuilder(256, 256, api);
         var self = this;
         this._labelsBuilder.getLabelPosition = function (dataIndex, position, distance) {
             if (self._data) {
@@ -185,23 +185,29 @@ module.exports = echarts.extendChartView({
         material.depthMask = !hasTransparent;
         barMesh.geometry.sortTriangles = hasTransparent;
 
-        this._lastDataIndex = -1;
+        this._initHandler();
+    },
+
+    _initHandler: function () {
+        var barMesh = this._barMesh;
+
+        var lastDataIndex = -1;
         barMesh.off('mousemove');
         barMesh.off('mouseout');
         barMesh.on('mousemove', function (e) {
             var dataIndex = barMesh.geometry.getDataIndexOfVertex(e.triangle[0]);
-            if (dataIndex !== this._lastDataIndex) {
-                this._downplay(this._lastDataIndex);
+            if (dataIndex !== lastDataIndex) {
+                this._downplay(lastDataIndex);
                 this._highlight(dataIndex);
                 this._labelsBuilder.updateLabels([dataIndex]);
             }
 
-            this._lastDataIndex = dataIndex;
+            lastDataIndex = dataIndex;
         }, this);
         barMesh.on('mouseout', function (e) {
-            this._downplay(this._lastDataIndex);
+            this._downplay(lastDataIndex);
             this._labelsBuilder.updateLabels();
-            this._lastDataIndex = -1;
+            lastDataIndex = -1;
         }, this);
     },
 

@@ -4,9 +4,9 @@ require('./geo3D/Geo3DView');
 require('../coord/geo3DCreator');
 
 echarts.registerAction({
-    type: 'geo3DChangeView',
-    event: 'geo3dviewchanged',
-    update: 'none'
+    type: 'geo3DChangeCamera',
+    event: 'geo3dcamerachanged',
+    update: 'series:updateCamera'
 }, function (payload, ecModel) {
     ecModel.eachComponent({
         mainType: 'geo3D', query: payload

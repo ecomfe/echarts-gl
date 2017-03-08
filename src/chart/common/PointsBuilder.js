@@ -2,10 +2,12 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var spriteUtil = require('../../util/sprite');
 var PointsMesh = require('./PointsMesh');
+var LabelsBuilder = require('../../component/common/LabelsBuilder');
+var Matrix4 = require('qtek/lib/math/Matrix4');
+
+
 // TODO gl_PointSize has max value.
-
-
-function PointsBuilder(is2D) {
+function PointsBuilder(is2D, api) {
 
     this._mesh = new PointsMesh({
         // Render after axes
@@ -19,6 +21,14 @@ function PointsBuilder(is2D) {
      * @type {boolean}
      */
     this.is2D = is2D;
+
+    this._labelsBuilder = new LabelsBuilder(256, 256, api);
+
+    // Give a large render order.
+    this._labelsBuilder.getMesh().renderOrder = 100;
+    this.rootNode.add(this._labelsBuilder.getMesh());
+
+    this._api = api;
 }
 
 PointsBuilder.prototype = {
@@ -27,19 +37,6 @@ PointsBuilder.prototype = {
 
     update: function (seriesModel, ecModel, api) {
         var data = seriesModel.getData();
-
-        var hasItemColor = false;
-        var hasItemOpacity = false;
-        for (var i = 0; i < data.count(); i++) {
-            if (!hasItemColor && data.getItemVisual(i, 'color', true) != null) {
-                hasItemColor = true;
-            }
-            if (!hasItemColor && data.getItemVisual(i, 'opacity', true) != null) {
-                hasItemOpacity = true;
-            }
-        }
-        var vertexColor = hasItemColor || hasItemOpacity;
-        this._mesh.material.shader[vertexColor ? 'define' : 'unDefine']('both', 'VERTEX_COLOR');
 
         var symbolInfo = this._getSymbolInfo(data);
         var dpr = api.getDevicePixelRatio();
@@ -71,20 +68,16 @@ PointsBuilder.prototype = {
         var attributes = geometry.attributes;
         attributes.position.init(data.count());
         attributes.size.init(data.count());
-        if (vertexColor) {
-            attributes.color.init(data.count());
-        }
+        attributes.color.init(data.count());
         var positionArr = attributes.position.value;
-        var colorArr = attributes.color.value;
 
         var rgbaArr = [];
         var is2D = this.is2D;
 
-        var pointSizeScale = canvas.width / symbolInfo.maxSize;
+        var pointSizeScale = canvas.width / symbolInfo.maxSize * dpr;
 
         var hasTransparentPoint = false;
         for (var i = 0; i < data.count(); i++) {
-            var i4 = i * 4;
             var i3 = i * 3;
             var i2 = i * 2;
             if (is2D) {
@@ -98,24 +91,13 @@ PointsBuilder.prototype = {
                 positionArr[i3 + 2] = points[i3 + 2];
             }
 
-            if (vertexColor) {
-                if (!hasItemColor && hasItemOpacity) {
-                    colorArr[i4++] = colorArr[i4++] = colorArr[i4++] = 1;
-                    colorArr[i4] = data.getItemVisual(i, 'opacity');
-                    if (colorArr[i4] < 0.99) {
-                        hasTransparentPoint = true;
-                    }
-                }
-                else {
-                    var color = data.getItemVisual(i, 'color');
-                    var opacity = data.getItemVisual(i, 'opacity');
-                    graphicGL.parseColor(color, rgbaArr);
-                    rgbaArr[3] *= opacity;
-                    attributes.color.set(i, rgbaArr);
-                    if (rgbaArr[3] < 0.99) {
-                        hasTransparentPoint = true;
-                    }
-                }
+            var color = data.getItemVisual(i, 'color');
+            var opacity = data.getItemVisual(i, 'opacity');
+            graphicGL.parseColor(color, rgbaArr);
+            rgbaArr[3] *= opacity;
+            attributes.color.set(i, rgbaArr);
+            if (rgbaArr[3] < 0.99) {
+                hasTransparentPoint = true;
             }
 
             var symbolSize = data.getItemVisual(i, 'symbolSize');
@@ -123,8 +105,10 @@ PointsBuilder.prototype = {
                 ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize);
 
             // Scale point size because canvas has margin.
-            attributes.size.value[i] = symbolSize * dpr * pointSizeScale;
+            attributes.size.value[i] = symbolSize * pointSizeScale;
         }
+
+        this._mesh.sizeScale = pointSizeScale;
 
         geometry.dirty();
 
@@ -136,16 +120,13 @@ PointsBuilder.prototype = {
 
         material.set('lineWidth', itemStyle.lineWidth / canvas.width * canvas.width * dpr);
 
-        var fillColor = vertexColor ? [1, 1, 1, 1] : graphicGL.parseColor(itemStyle.fill);
         var strokeColor = graphicGL.parseColor(itemStyle.stroke);
-        material.set('color', fillColor);
+        material.set('color', [1, 1, 1,1]);
         material.set('strokeColor', strokeColor);
 
         if (hasTransparentPoint
             // Stroke is transparent
             || (itemStyle.lineWidth && strokeColor[3] < 0.99)
-            // Fill is transparent
-            || fillColor[3] < 0.99
         ) {
             material.transparent = true;
             material.depthMask = false;
@@ -156,6 +137,68 @@ PointsBuilder.prototype = {
             material.depthMask = true;
             geometry.sortVertices = false;
         }
+
+        this._updateHandler(data);
+
+        // TODO scatterGL
+        if (!is2D) {
+            this._labelsBuilder.updateData(data);
+
+            this._labelsBuilder.getLabelPosition = function (dataIndex, positionDesc, distance) {
+                var idx3 = dataIndex * 3;
+                var pos = [points[idx3], points[idx3 + 1], points[idx3 + 2]];
+                return pos;
+            };
+
+            this._labelsBuilder.getLabelOffset = function (dataIndex, positionDesc, distance) {
+                var size = geometry.attributes.size.get(dataIndex) / pointSizeScale;
+                switch (positionDesc) {
+                    case 'bottom':
+                        return [0, size / 2 + distance];
+                    case 'left':
+                        return [-size / 2 - distance, 0];
+                    case 'right':
+                        return [size / 2 + distance, 0];
+                    // case 'top':
+                    default:
+                        return [0, -size / 2 - distance];
+                }
+            };
+            this._labelsBuilder.updateLabels();
+        }
+
+        this._api = api;
+    },
+
+    _updateHandler: function (data) {
+        var pointsMesh = this._mesh;
+
+        var lastDataIndex = -1;
+
+        pointsMesh.off('mousemove');
+        pointsMesh.off('mouseout');
+        pointsMesh.on('mousemove', function (e) {
+            this.highlight(data, e.vertexIndex);
+            if (e.vertexIndex !== lastDataIndex) {
+                this.downplay(data, lastDataIndex);
+                this.highlight(data, e.vertexIndex);
+                this._labelsBuilder.updateLabels([e.vertexIndex]);
+            }
+            lastDataIndex = e.vertexIndex;
+        }, this);
+        pointsMesh.on('mouseout', function (e) {
+            this.downplay(data, e.vertexIndex);
+            this._labelsBuilder.updateLabels();
+            lastDataIndex = -1;
+        }, this);
+    },
+
+    updateView: function (camera) {
+        var worldViewProjection = new Matrix4();
+        Matrix4.mul(worldViewProjection, camera.viewMatrix, this._mesh.worldTransform);
+        Matrix4.mul(worldViewProjection, camera.projectionMatrix, worldViewProjection);
+
+        this._mesh.updateScreenPosition(worldViewProjection, this.is2D, this._api);
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
@@ -176,7 +219,40 @@ PointsBuilder.prototype = {
             }
         }
         this._mesh.geometry.dirty();
+    },
 
+    highlight: function (data, dataIndex) {
+        var itemModel = data.getItemModel(dataIndex);
+        var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
+        var emphasisColor = emphasisItemStyleModel.get('color');
+        var emphasisOpacity = emphasisItemStyleModel.get('opacity');
+        if (emphasisColor == null) {
+            var color = data.getItemVisual(dataIndex, 'color');
+            emphasisColor = echarts.color.lift(color, -0.4);
+        }
+        if (emphasisOpacity == null) {
+            emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
+        }
+        var colorArr = graphicGL.parseColor(emphasisColor);
+        colorArr[3] *= emphasisOpacity;
+
+        this._mesh.geometry.attributes.color.set(dataIndex, colorArr);
+        this._mesh.geometry.dirtyAttribute('color');
+
+        this._api.getZr().refresh();
+    },
+
+    downplay: function (data, dataIndex) {
+        var color = data.getItemVisual(dataIndex, 'color');
+        var opacity = data.getItemVisual(dataIndex, 'opacity');
+
+        var colorArr = graphicGL.parseColor(color);
+        colorArr[3] *= opacity;
+
+        this._mesh.geometry.attributes.color.set(dataIndex, colorArr);
+        this._mesh.geometry.dirtyAttribute('color');
+
+        this._api.getZr().refresh();
     },
 
     _getSymbolInfo: function (data) {

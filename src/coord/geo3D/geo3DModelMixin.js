@@ -87,7 +87,7 @@ module.exports = {
             textStyle: {
                 fontSize: 20,
                 color: '#000',
-                borderWidth: 4,
+                borderWidth: 1,
                 borderColor: '#fff'
             }
         },

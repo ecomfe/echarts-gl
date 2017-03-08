@@ -64,7 +64,7 @@ module.exports = echarts.extendComponentView({
         control.off('update');
         control.on('update', function () {
             api.dispatchAction({
-                type: 'geo3DChangeView',
+                type: 'geo3DChangeCamera',
                 alpha: control.getAlpha(),
                 beta: control.getBeta(),
                 distance: control.getDistance(),
