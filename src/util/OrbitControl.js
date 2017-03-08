@@ -506,8 +506,8 @@ var OrbitControl = Base.extend(function () {
             }
         }
 
-        this._mouseX = e.pageX;
-        this._mouseY = e.pageY;
+        this._mouseX = e.offsetX;
+        this._mouseY = e.offsetY;
     },
 
     _mouseMoveHandler: function (e) {
@@ -525,8 +525,8 @@ var OrbitControl = Base.extend(function () {
             this._panVelocity.y = -e.offsetY + this._mouseY;
         }
 
-        this._mouseX = e.pageX;
-        this._mouseY = e.pageY;
+        this._mouseX = e.offsetX;
+        this._mouseY = e.offsetY;
     },
 
     _mouseWheelHandler: function (e) {
