@@ -363,9 +363,9 @@ var OrbitControl = Base.extend(function () {
         }
 
         // Fixed deltaTime
-        this._updateDistance(20);
-        this._updateRotate(20);
-        this._updatePan(20);
+        this._updateDistance(Math.min(deltaTime, 30));
+        this._updateRotate(Math.min(deltaTime, 30));
+        this._updatePan(Math.min(deltaTime, 30));
 
         this._camera.update();
 
