@@ -72,7 +72,6 @@ module.exports = echarts.extendComponentView({
         var shading = globeModel.get('shading');
 
         // Always have light.
-        this._updateLight(globeModel, api);
         coordSys.viewGL.add(this._lightRoot);
 
         if (globeModel.get('show')) {
@@ -122,6 +121,8 @@ module.exports = echarts.extendComponentView({
         });
 
         earthMesh.material.shader[globeModel.get('postEffect.enable') ? 'define' : 'unDefine']('fragment', 'SRGB_DECODE');
+
+        this._updateLight(globeModel, api);
 
         this._displaceVertices(globeModel, api);
 

@@ -1,41 +1,13 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var spriteUtil = require('../../util/sprite');
-var verticesSortMixin = require('../../util/geometry/verticesSortMixin');
-
+var PointsMesh = require('./PointsMesh');
 // TODO gl_PointSize has max value.
-
-graphicGL.Shader.import(require('text!./sdfSprite.glsl'));
 
 
 function PointsBuilder(is2D) {
-    // For fill parts.
-    var geometry = new graphicGL.Geometry({
-        dynamic: true,
-        sortVertices: !is2D
-    });
-    echarts.util.extend(geometry, verticesSortMixin);
-    geometry.createAttribute('color', 'float', 4, 'COLOR');
-    geometry.createAttribute('strokeColor', 'float', 4);
-    geometry.createAttribute('size', 'float', 1);
 
-    var material = new graphicGL.Material({
-        shader: graphicGL.createShader('ecgl.sdfSprite'),
-        transparent: true,
-        depthMask: false
-    });
-    material.shader.enableTexture('sprite');
-    this._sdfTexture = new graphicGL.Texture2D({
-        image: document.createElement('canvas'),
-        flipY: false
-    });
-
-    material.set('sprite', this._sdfTexture);
-
-    this._mesh = new graphicGL.Mesh({
-        geometry: geometry,
-        material: material,
-        mode: graphicGL.Mesh.POINTS,
+    this._mesh = new PointsMesh({
         // Render after axes
         renderOrder: 10
     });
@@ -89,7 +61,10 @@ PointsBuilder.prototype = {
         var itemStyle = seriesModel.getModel('itemStyle').getItemStyle();
         itemStyle.fill = data.getVisual('color');
 
-        var canvas = spriteUtil.createSymbolSDF(symbolInfo.type, symbolSize, 20, itemStyle, this._sdfTexture.image);
+        var canvas = spriteUtil.createSymbolSDF(
+            symbolInfo.type, symbolSize, 20, itemStyle,
+            this._mesh.material.get('sprite').image
+        );
 
         var geometry = this._mesh.geometry;
         var points = data.getLayout('points');

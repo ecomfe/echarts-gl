@@ -35,7 +35,6 @@ module.exports = echarts.extendComponentView({
         }
 
         // Always have light.
-        this._lightHelper.updateLight(geo3DModel);
         geo3D.viewGL.add(this._lightRoot);
 
         if (geo3DModel.get('show')) {
@@ -52,6 +51,8 @@ module.exports = echarts.extendComponentView({
 
         var viewControlModel = geo3DModel.getModel('viewControl');
         control.setFromViewControlModel(viewControlModel, 0);
+
+        this._lightHelper.updateLight(geo3DModel);
 
         // Set post effect
         geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'));

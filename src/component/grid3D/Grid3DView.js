@@ -196,7 +196,6 @@ module.exports = echarts.extendComponentView({
         var cartesian = grid3DModel.coordinateSystem;
 
         // Always have light.
-        this._lightHelper.updateLight(grid3DModel);
         cartesian.viewGL.add(this._lightRoot);
 
         if (grid3DModel.get('show')) {
@@ -230,6 +229,8 @@ module.exports = echarts.extendComponentView({
 
         control.off('update');
         control.on('update', this._onCameraChange.bind(this, grid3DModel, api), this);
+
+        this._lightHelper.updateLight(grid3DModel);
 
         // Set post effect
         cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
