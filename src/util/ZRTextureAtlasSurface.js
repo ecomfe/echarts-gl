@@ -328,7 +328,8 @@ ZRTextureAtlasSurface.prototype = {
      * @return {Array.<number>}
      */
     getCoordsScale: function () {
-        return [this._nodeWidth / this._canvas.width, this._nodeHeight / this._canvas.height];
+        var dpr = this._dpr;
+        return [this._nodeWidth / this._canvas.width * dpr, this._nodeHeight / this._canvas.height * dpr];
     },
 
     /**
