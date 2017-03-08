@@ -8,10 +8,8 @@
 var echarts = require('echarts/lib/echarts');
 var Texture2D = require('qtek/lib/Texture2D');
 
-function ZRTextureAtlasSurfaceNode(zr, offsetX, offsetY, width, height, dpr) {
+function ZRTextureAtlasSurfaceNode(zr, offsetX, offsetY, width, height, gap, dpr) {
     this._zr = zr;
-    this._offsetX = offsetX;
-    this._offsetY = offsetY;
 
     /**
      * Current cursor x
@@ -28,29 +26,33 @@ function ZRTextureAtlasSurfaceNode(zr, offsetX, offsetY, width, height, dpr) {
 
     this._rowHeight = 0;
     /**
-     * Atlas canvas width
+     * width without dpr.
      * @type {number}
      * @private
      */
-    this._width = width;
+    this.width = width;
 
     /**
-     * Atlas canvas height
+     * height without dpr.
      * @type {number}
      * @private
      */
-    this._height = height;
+    this.height = height;
 
     /**
+     * offsetX without dpr
      * @type {number}
      */
-    this._offsetX = offsetX;
+    this.offsetX = offsetX;
     /**
+     * offsetY without dpr
      * @type {number}
      */
-    this._offsetY = offsetY;
+    this.offsetY = offsetY;
 
-    this._dpr = dpr;
+    this.dpr = dpr;
+
+    this.gap = gap;
 }
 
 ZRTextureAtlasSurfaceNode.prototype = {
@@ -83,8 +85,8 @@ ZRTextureAtlasSurfaceNode.prototype = {
         if (height == null) {
             height = rect.height;
         }
-        width *= this._dpr;
-        height *= this._dpr;
+        width *= this.dpr;
+        height *= this.dpr;
 
         this._fitElement(el, width, height);
 
@@ -98,36 +100,41 @@ ZRTextureAtlasSurfaceNode.prototype = {
         var x = this._x;
         var y = this._y;
 
-        var canvasWidth = this._width * this._dpr;
-        var canvasHeight = this._height * this._dpr;
+        var canvasWidth = this.width * this.dpr;
+        var canvasHeight = this.height * this.dpr;
+        var gap = this.gap;
 
-        if (x + width > canvasWidth) {
+        if (x + width + gap > canvasWidth) {
             // Change a new row
             x = this._x = 0;
-            y += this._rowHeight;
+            y += this._rowHeight + gap;
             this._y = y;
             // Reset row height
             this._rowHeight = 0;
         }
 
-        this._x += width;
+        this._x += width + gap;
 
         this._rowHeight = Math.max(this._rowHeight, height);
 
-        if (y + height > canvasHeight) {
+        if (y + height + gap > canvasHeight) {
             // There is no space anymore
             return null;
         }
 
         // Shift the el
-        el.position[0] += this._offsetX + x;
-        el.position[1] += this._offsetY + y;
+        el.position[0] += this.offsetX * this.dpr + x;
+        el.position[1] += this.offsetY * this.dpr + y;
 
         this._zr.add(el);
 
+        var coordsOffset = [
+            this.offsetX / this.width,
+            this.offsetY / this.height
+        ];
         var coords = [
-            [x / canvasWidth, y / canvasHeight],
-            [(x + width) / canvasWidth, (y + height) / canvasHeight]
+            [x / canvasWidth + coordsOffset[0], y / canvasHeight + coordsOffset[1]],
+            [(x + width) / canvasWidth + coordsOffset[0], (y + height) / canvasHeight + coordsOffset[1]]
         ];
 
         return coords;
@@ -157,6 +164,7 @@ ZRTextureAtlasSurfaceNode.prototype = {
  * @param {number} opt.width
  * @param {number} opt.height
  * @param {number} opt.devicePixelRatio
+ * @param {number} opt.gap Gap for safe.
  * @param {Function} opt.onupdate
  */
 function ZRTextureAtlasSurface (opt) {
@@ -165,6 +173,7 @@ function ZRTextureAtlasSurface (opt) {
     opt.width = opt.width || 512;
     opt.height = opt.height || 512;
     opt.devicePixelRatio = opt.devicePixelRatio || 1;
+    opt.gap = opt.gap == null ? 2 : opt.gap;
 
     var canvas = document.createElement('canvas');
     canvas.width = opt.width * opt.devicePixelRatio;
@@ -200,9 +209,11 @@ function ZRTextureAtlasSurface (opt) {
 
     this.onupdate = opt.onupdate;
 
+    this._gap = opt.gap;
+
     // Left sub atlas.
     this._textureAtlasNodes = [new ZRTextureAtlasSurfaceNode(
-        this._zr, 0, 0, opt.width, opt.height, this._dpr
+        this._zr, 0, 0, opt.width, opt.height, this._gap, this._dpr
     )];
 
     this._nodeWidth = opt.width;
@@ -268,6 +279,9 @@ ZRTextureAtlasSurface.prototype = {
         var offsetY = Math.floor(nodeLen * this._nodeWidth / maxSize) * this._nodeHeight;
         if (offsetY >= maxSize) {
             // Failed if image is too large.
+            if (__DEV__) {
+                console.error('Too much labels. Some will be ignored.');
+            }
             return;
         }
 
@@ -286,7 +300,7 @@ ZRTextureAtlasSurface.prototype = {
         }
 
         var newNode = new ZRTextureAtlasSurfaceNode(
-            this._zr, offsetX, offsetY, this._nodeWidth, this._nodeHeight, this._dpr
+            this._zr, offsetX, offsetY, this._nodeWidth, this._nodeHeight, this._gap, this._dpr
         );
         this._textureAtlasNodes.push(newNode);
 
@@ -303,9 +317,18 @@ ZRTextureAtlasSurface.prototype = {
             }
             coords = newNode.add(el, width, height);
         }
+
         this._coords[el.id] = coords;
 
         return coords;
+    },
+
+    /**
+     * Get coord scale after texture atlas is expanded.
+     * @return {Array.<number>}
+     */
+    getCoordsScale: function () {
+        return [this._nodeWidth / this._canvas.width, this._nodeHeight / this._canvas.height];
     },
 
     /**

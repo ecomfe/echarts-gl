@@ -143,6 +143,14 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
         );
     }, false, this);
 
+    this._labelsMesh.material.set('uvScale', this._labelTextureSurface.getCoordsScale());
+
+    // var canvas = this._labelTextureSurface.getTexture().image;
+    // document.body.appendChild(canvas);
+    // canvas.style.cssText = 'position:absolute;z-index: 1000';
+
+    // Update image.
+    this._labelTextureSurface.getZr().refreshImmediately();
     this._labelsMesh.geometry.convertToTypedArray();
     this._labelsMesh.geometry.dirty();
 };

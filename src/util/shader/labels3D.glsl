@@ -39,6 +39,7 @@ void main()
 uniform vec3 color : [1.0, 1.0, 1.0];
 uniform float alpha : 1.0;
 uniform sampler2D textureAtlas;
+uniform vec2 uvScale: [1.0, 1.0];
 
 #ifdef VERTEX_COLOR
 varying vec4 v_Color;
@@ -49,7 +50,7 @@ varying vec2 v_Texcoord;
 
 void main()
 {
-    gl_FragColor = vec4(color, alpha) * texture2D(textureAtlas, v_Texcoord);
+    gl_FragColor = vec4(color, alpha) * texture2D(textureAtlas, v_Texcoord * uvScale);
 #ifdef VERTEX_COLOR
     gl_FragColor *= v_Color;
 #endif

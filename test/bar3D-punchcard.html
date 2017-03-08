@@ -80,7 +80,12 @@
                 series: [{
                     type: 'bar3D',
                     data: data.map(function (item) {
-                        return [item[1], item[0], item[2]];
+                        return {
+                            value: [item[1], item[0], item[2]],
+                            label: {
+                                show: item[2] != 0
+                            }
+                        }
                     }),
                     bevelSize: 0.8,
                     bevelSmoothness: 3,
@@ -88,7 +93,8 @@
 
                     label: {
                         textStyle: {
-                            color: '#900'
+                            borderWidth: 2
+                            // color: '#900'
                         }
                     },
 

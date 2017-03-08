@@ -65,17 +65,17 @@ var Bar3DSeries = echarts.extendSeriesModel({
 
         label: {
             show: false,
-            distance: 2
+            distance: 2,
+            textStyle: {
+                fontSize: 20,
+                borderWidth: 1,
+                borderColor: '#fff'
+            }
         },
 
         emphasis: {
             label: {
-                show: true,
-                textStyle: {
-                    fontSize: 20,
-                    borderWidth: 1,
-                    borderColor: '#fff'
-                }
+                show: true
             }
         }
     }

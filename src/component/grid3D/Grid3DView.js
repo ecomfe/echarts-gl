@@ -527,9 +527,11 @@ module.exports = echarts.extendComponentView({
         }
 
         axisInfo.labelsMesh.material.set('textureAtlas', this._labelTextureSurface.getTexture());
+        axisInfo.labelsMesh.material.set('uvScale', this._labelTextureSurface.getCoordsScale());
 
         linesGeo.convertToTypedArray();
         labelsGeo.convertToTypedArray();
+
     },
 
     _renderSplitLines: function (geometry, axes, grid3DModel, api) {
