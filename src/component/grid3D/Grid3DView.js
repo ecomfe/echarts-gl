@@ -42,18 +42,26 @@ var dimIndicesMap = {
 
 function updateFacePlane(node, plane, otherAxis, dir) {
     var coord = [0, 0, 0];
-    coord[dimIndicesMap[otherAxis.dim]] = dir < 0 ? otherAxis.getExtentMin() : otherAxis.getExtentMax();
+    var distance = dir < 0 ? otherAxis.getExtentMin() : otherAxis.getExtentMax();
+    coord[dimIndicesMap[otherAxis.dim]] = distance;
     node.position.setArray(coord);
-
     node.rotation.identity();
+
+    plane.distance = distance;
+    plane.normal.set(0, 0, 0);
     if (otherAxis.dim === 'x') {
         node.rotation.rotateY(dir * Math.PI / 2);
+        plane.normal.x = -dir;
     }
     else if (otherAxis.dim === 'z') {
         node.rotation.rotateX(-dir * Math.PI / 2);
+        plane.normal.y = -dir;
     }
-    else if (dir > 0) {
-        node.rotation.rotateY(Math.PI);
+    else {
+        if (dir > 0) {
+            node.rotation.rotateY(Math.PI);
+        }
+        plane.normal.z = -dir;
     }
 }
 
@@ -233,6 +241,8 @@ module.exports = echarts.extendComponentView({
         // Set post effect
         cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
         cartesian.viewGL.setTemporalSuperSampling(grid3DModel.getModel('temporalSuperSampling'));
+
+        this._initMouseHandler(grid3DModel);
     },
 
     afterRender: function (grid3DModel, ecModel, api, layerGL) {
@@ -241,6 +251,56 @@ module.exports = echarts.extendComponentView({
         var renderer = layerGL.renderer;
 
         this._lightHelper.updateAmbientCubemap(renderer, grid3DModel, api);
+    },
+
+    _initMouseHandler: function (grid3DModel) {
+        var cartesian = grid3DModel.coordinateSystem;
+        var viewGL = cartesian.viewGL;
+
+        viewGL.on('mousemove', this._onmousemove, this);
+    },
+
+    _onmousemove: function (e) {
+        // Ignore if mouse is on the element.
+        if (e.target) {
+            return;
+        }
+        var grid3DModel = this._model;
+        var cartesian = grid3DModel.coordinateSystem;
+        var viewGL = cartesian.viewGL;
+
+        var ray = viewGL.castRay(e.offsetX, e.offsetY, new graphicGL.Ray());
+
+        var nearestIntersectPoint;
+        for (var i = 0; i < this._faces.length; i++) {
+            var faceInfo = this._faces[i];
+            if (faceInfo.node.invisible) {
+                continue;
+            }
+
+            // Plane is not face the camera. flip it
+            if (faceInfo.plane.normal.dot(viewGL.camera.worldTransform.z) < 0) {
+                faceInfo.plane.normal.negate();
+            }
+
+            var point = ray.intersectPlane(faceInfo.plane);
+            var axis0 = cartesian.getAxis(faceInfo.dims[0]);
+            var axis1 = cartesian.getAxis(faceInfo.dims[1]);
+            var idx0 = dimIndicesMap[faceInfo.dims[0]];
+            var idx1 = dimIndicesMap[faceInfo.dims[1]];
+            if (axis0.contain(point._array[idx0]) && axis1.contain(point._array[idx1])) {
+                nearestIntersectPoint = point;
+            }
+            else {
+                // console.log(faceInfo.dims[4]);
+            }
+        }
+
+        if (nearestIntersectPoint) {
+            var data = cartesian.pointToData(nearestIntersectPoint._array, [], true);
+            this._updateAxisPointer(data[0], data[1], data[2]);
+        }
+        // this._updateAxisPointer(3, 5, 10);
     },
 
     _onCameraChange: function (grid3DModel, api) {
@@ -410,9 +470,10 @@ module.exports = echarts.extendComponentView({
         var axisPointerParentModel = this._model.getModel('axisPointer');
         var dpr = this._api.getDevicePixelRatio();
         linesGeo.convertToDynamicArray(true);
-        this._faces.forEach(function (faceInfo) {
+        for (var k = 0; k < this._faces.length; k++) {
+            var faceInfo = this._faces[k];
             if (faceInfo.node.invisible) {
-                return;
+                continue;
             }
 
             var dims = faceInfo.dims;
@@ -446,9 +507,10 @@ module.exports = echarts.extendComponentView({
 
                 linesGeo.addLine(p0, p1, color, lineWidth * dpr);
             }
-        });
+        }
         linesGeo.convertToTypedArray();
-        linesGeo.dirty();
+
+        this._api.getZr().refresh();
     },
 
     /**

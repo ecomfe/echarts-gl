@@ -78,7 +78,9 @@ var LayerGL = function (id, zr) {
      */
     this.views = [];
 
-    this._initHandlers();
+    this._picking = new RayPicking({
+        renderer: this.renderer
+    });
 
     this._viewsToDispose = [];
 
@@ -86,28 +88,6 @@ var LayerGL = function (id, zr) {
      * Current accumulating id.
      */
     this._accumulatingId = 0;
-};
-
-/**
- * Register event handling functions
- */
-LayerGL.prototype._initHandlers = function () {
-
-    // Mouse event handling
-    ['mousedown', 'mousemove', 'mouseup', 'click'].forEach(function (eventName) {
-        this.on(eventName, function (e) {
-            for (var i = 0; i < this.views.length; i++) {
-                if (this.views[i].containPoint(e.offsetX, e.offsetY)) {
-                    this.views[i].trigger(eventName, e);
-                }
-            }
-        });
-    }, this);
-
-
-    this._picking = new RayPicking({
-        renderer: this.renderer
-    });
 };
 
 /**
@@ -432,9 +412,9 @@ LayerGL.prototype.onmousemove = function (e) {
         this.zr.setCursorStyle('default');
     }
 
-    if (obj) {
-        this._dispatchEvent('mousemove', e, obj);
+    this._dispatchEvent('mousemove', e, obj);
 
+    if (obj) {
         this.zr.setCursorStyle('pointer');
 
         if (!lastHovered || (target !== lastHovered.target)) {
@@ -446,17 +426,15 @@ LayerGL.prototype.onmousemove = function (e) {
 LayerGL.prototype.onmouseup = function (e) {
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
-    if (obj) {
-        this._dispatchEvent('mouseup', e, obj);
-    }
+
+    this._dispatchEvent('mouseup', e, obj);
 };
 
 LayerGL.prototype.onclick = function (e) {
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
-    if (obj) {
-        this._dispatchEvent('click', e, obj);
-    }
+
+    this._dispatchEvent('click', e, obj);
 };
 
 LayerGL.prototype.pickObject = function (x, y) {
@@ -464,10 +442,9 @@ LayerGL.prototype.pickObject = function (x, y) {
     var output = [];
     var renderer = this.renderer;
     var oldViewport = renderer.viewport;
-    var height = this.zr.getHeight();
     for (var i = 0; i < this.views.length; i++) {
         var viewGL = this.views[i];
-        if (viewGL.containPoint(x, height - y)) {
+        if (viewGL.containPoint(x, y)) {
             this._picking.scene = viewGL.scene;
             this._picking.camera = viewGL.camera;
             // Only used for picking, renderer.setViewport will also invoke gl.viewport.
@@ -483,17 +460,34 @@ LayerGL.prototype.pickObject = function (x, y) {
     return output[0];
 };
 
-LayerGL.prototype._dispatchEvent = function (eveName, e, obj) {
-    var current = obj.target;
-    obj.cancelBubble = false;
-    obj.event = e;
-    obj.type = eveName;
+LayerGL.prototype._dispatchEvent = function (eveName, originalEvent, newEvent) {
+    if (!newEvent) {
+        newEvent = {};
+    }
+    var current = newEvent.target;
+
+    newEvent.cancelBubble = false;
+    newEvent.event = originalEvent;
+    newEvent.type = eveName;
+    newEvent.offsetX = originalEvent.offsetX;
+    newEvent.offsetY = originalEvent.offsetY;
+
     while (current) {
-        current.trigger(eveName, obj);
+        current.trigger(eveName, newEvent);
         current = current.getParent();
 
-        if (obj.cancelBubble) {
+        if (newEvent.cancelBubble) {
             break;
+        }
+    }
+
+    this._dispatchToView(eveName, newEvent);
+};
+
+LayerGL.prototype._dispatchToView = function (eventName, e) {
+    for (var i = 0; i < this.views.length; i++) {
+        if (this.views[i].containPoint(e.offsetX, e.offsetY)) {
+            this.views[i].trigger(eventName, e);
         }
     }
 };

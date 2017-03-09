@@ -41,12 +41,13 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
     };
 }, {
 
-    _pick: function (x, y, viewport, renderable, out) {
+    _pick: function (x, y, renderer, camera, renderable, out) {
         var positionNDC = this._positionNDC;
         if (!positionNDC) {
             return;
         }
 
+        var viewport = renderer.viewport;
         var ndcScaleX = 2 / viewport.width;
         var ndcScaleY = 2 / viewport.height;
         // From near to far. indices have been sorted.
@@ -64,9 +65,16 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
                 x > (cx - halfSize * ndcScaleX) && x < (cx + halfSize * ndcScaleX)
                 && y > (cy - halfSize * ndcScaleY) && y < (cy + halfSize * ndcScaleY)
             ) {
+                var point = new graphicGL.Vector3();
+                var pointWorld = new graphicGL.Vector3();
+                this.geometry.attributes.position.get(idx, point._array);
+                graphicGL.Vector3.transformMat4(pointWorld, point, this.worldTransform);
                 out.push({
                     vertexIndex: idx,
-                    target: renderable
+                    point: point,
+                    pointWorld: pointWorld,
+                    target: this,
+                    distance: pointWorld.distance(camera.getWorldPosition())
                 });
             }
         }

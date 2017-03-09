@@ -11,6 +11,7 @@ var PerspectiveCamera = require('qtek/lib/camera/Perspective');
 var OrthographicCamera = require('qtek/lib/camera/Orthographic');
 var Matrix4 = require('qtek/lib/math/Matrix4');
 var Vector3 = require('qtek/lib/math/Vector3');
+var Vector2 = require('qtek/lib/math/Vector2');
 
 var notifier = require('qtek/lib/core/mixin/notifier');
 
@@ -107,11 +108,37 @@ ViewGL.prototype.setViewport = function (x, y, width, height, dpr) {
 
 /**
  * If contain screen point x, y
+ * @param {number} x offsetX
+ * @param {number} y offsetY
+ * @return {boolean}
  */
 ViewGL.prototype.containPoint = function (x, y) {
     var viewport = this.viewport;
+    var height = this.layer.renderer.getHeight();
+    // Flip y;
+    y = height - y;
     return x >= viewport.x && y >= viewport.y
         && x <= viewport.x + viewport.width && y <= viewport.y + viewport.height;
+};
+
+/**
+ * Cast a ray
+ * @param {number} x offsetX
+ * @param {number} y offsetY
+ * @param {qtek.math.Ray} out
+ * @return {qtek.math.Ray}
+ */
+var ndc = new Vector2();
+ViewGL.prototype.castRay = function (x, y, out) {
+    var renderer = this.layer.renderer;
+
+    var oldViewport = renderer.viewport;
+    renderer.viewport = this.viewport;
+    renderer.screenToNDC(x, y, ndc);
+    this.camera.castRay(ndc, out);
+    renderer.viewport = oldViewport;
+
+    return out;
 };
 
 /**

@@ -16,6 +16,18 @@ Cartesian3D.prototype = {
 
     dimensions: ['x', 'y', 'z'],
 
+    containPoint: function (point) {
+        return this.getAxis('x').contain(point[0])
+            && this.getAxis('y').contain(point[2])
+            && this.getAxis('z').contain(point[1]);
+    },
+
+    containData: function (data) {
+        return this.getAxis('x').containData(data[0])
+            && this.getAxis('y').containData(data[1])
+            && this.getAxis('z').containData(data[2]);
+    },
+
     dataToPoint: function (data, out, clamp) {
         out = out || [];
         out[0] = this.getAxis('x').dataToCoord(data[0], clamp);
@@ -27,8 +39,8 @@ Cartesian3D.prototype = {
     pointToData: function (point, out, clamp) {
         out = out || [];
         out[0] = this.getAxis('x').coordToData(point[0], clamp);
-        out[2] = this.getAxis('y').coordToData(point[1], clamp);
-        out[1] = this.getAxis('z').coordToData(point[2], clamp);
+        out[1] = this.getAxis('y').coordToData(point[2], clamp);
+        out[2] = this.getAxis('z').coordToData(point[1], clamp);
         return out;
     }
 };

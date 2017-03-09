@@ -500,8 +500,7 @@ var OrbitControl = Base.extend(function () {
         }
 
         var x = e.offsetX;
-        // Flip Y.
-        var y = this.zr.getHeight() - e.offsetY;
+        var y = e.offsetY;
         if (this.viewGL && !this.viewGL.containPoint(x, y)) {
             return;
         }
@@ -553,6 +552,12 @@ var OrbitControl = Base.extend(function () {
         var delta = e.wheelDelta // Webkit
                 || -e.detail; // Firefox
         if (delta === 0) {
+            return;
+        }
+
+        var x = e.offsetX;
+        var y = e.offsetY;
+        if (this.viewGL && !this.viewGL.containPoint(x, y)) {
             return;
         }
 

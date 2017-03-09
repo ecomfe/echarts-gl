@@ -33,5 +33,7 @@ module.exports = {
         if (this.indices && this.indices.length > 0) {
             this.indices = this.vertexCount > 0xffff ? new Uint32Array(this.indices) : new Uint16Array(this.indices);
         }
+
+        this.dirty();
     }
 };
