@@ -174,11 +174,6 @@
 
             var currentIndex = 0;
 
-            var axisLine = {
-                lineStyle: {
-                    color: '#fff'
-                }
-            };
             chart.setOption({
                 title: [{
                     text: 'Parametric Surfaces Fun',
@@ -209,18 +204,20 @@
                     }
                 },
                 xAxis3D: {
-                    type: 'value',
-                    axisLine: axisLine
+                    type: 'value'
                 },
                 yAxis3D: {
-                    type: 'value',
-                    axisLine: axisLine
+                    type: 'value'
                 },
                 zAxis3D: {
-                    type: 'value',
-                    axisLine: axisLine
+                    type: 'value'
                 },
                 grid3D: {
+                    axisLine: {
+                        lineStyle: {
+                            color: '#fff'
+                        }
+                    },
                     postEffect: {
                         enable: true
                     },

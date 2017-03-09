@@ -138,6 +138,9 @@ var grid3DCreator = {
         function findAxesModels(seriesModel, ecModel) {
             return axesTypes.map(function (axisType) {
                 var axisModel = seriesModel.getReferringComponents(axisType)[0];
+                if (axisModel == null) {
+                    axisModel = ecModel.getComponent(axisType);
+                }
                 if (__DEV__) {
                     if (!axisModel) {
                         throw new Error(axisType + ' "' + retrieve.firstNotNull(
@@ -155,26 +158,29 @@ var grid3DCreator = {
             if (seriesModel.get('coordinateSystem') !== 'cartesian3D') {
                 return;
             }
-            var axesModels = findAxesModels(seriesModel, ecModel);
+            var firstGridModel = seriesModel.getReferringComponents('grid3D')[0];
 
-            var firstGridModel = axesModels[0].getCoordSysModel();
-            axesModels.forEach(function (axisModel) {
-                var grid3DModel = axisModel.getCoordSysModel();
-                if (__DEV__) {
-                    if (!grid3DModel) {
-                        throw new Error(
-                            'grid3D "' + retrieve.firstNotNull(
-                                axisModel.get('gridIndex'),
-                                axisModel.get('gridId'),
-                                0
-                            ) + '" not found'
-                        );
+            if (firstGridModel == null) {
+                var axesModels = findAxesModels(seriesModel, ecModel);
+                var firstGridModel = axesModels[0].getCoordSysModel();
+                axesModels.forEach(function (axisModel) {
+                    var grid3DModel = axisModel.getCoordSysModel();
+                    if (__DEV__) {
+                        if (!grid3DModel) {
+                            throw new Error(
+                                'grid3D "' + retrieve.firstNotNull(
+                                    axisModel.get('gridIndex'),
+                                    axisModel.get('gridId'),
+                                    0
+                                ) + '" not found'
+                            );
+                        }
+                        if (grid3DModel !== firstGridModel) {
+                            throw new Error('xAxis3D, yAxis3D, zAxis3D must use the same grid');
+                        }
                     }
-                    if (grid3DModel !== firstGridModel) {
-                        throw new Error('xAxis3D, yAxis3D, zAxis3D must use the same grid');
-                    }
-                }
-            });
+                });
+            }
 
             var coordSys = firstGridModel.coordinateSystem;
             seriesModel.coordinateSystem = coordSys;

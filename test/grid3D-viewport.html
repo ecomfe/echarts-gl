@@ -25,36 +25,30 @@
 
                 xAxis3D: [{
                     type: 'category',
-                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    axisLine: axisLine
+                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
                 }, {
                     type: 'value',
                     min: -1,
                     max: 1,
-                    axisLine: axisLine,
                     grid3DIndex: 1
                 }],
                 yAxis3D: [{
                     type: 'category',
-                    data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    axisLine: axisLine
+                    data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
                 }, {
                     type: 'value',
                     min: -1,
                     max: 1,
-                    axisLine: axisLine,
                     grid3DIndex: 1
                 }],
                 zAxis3D: [{
                     type: 'value',
                     // splitNumber: 10,
-                    axisLine: axisLine,
                     min: 0, max: 100
                 }, {
                     type: 'value',
                     min: -1,
                     max: 1,
-                    axisLine: axisLine,
                     grid3DIndex: 1
                 }],
                 grid3D: [{
@@ -63,7 +57,8 @@
                     height: 600,
                     temporalSuperSampling: {
                         enable: true
-                    }
+                    },
+                    axisLine: axisLine
                 }, {
                     top: 100,
                     left: 500,
@@ -71,9 +66,21 @@
                     height: 400,
                     temporalSuperSampling: {
                         enable: true
-                    }
+                    },
+                    axisLine: axisLine
                 }],
-                series: []
+                series: [{
+                    type: 'scatter3D',
+                    symbolSize: 20,
+                    data: [[2, 5, 50]]
+                }, {
+                    grid3DIndex: 1,
+                    type: 'scatter3D',
+                    symbolSize: 20,
+                    data: [
+                        [0, 0, 0]
+                    ]
+                }]
             });
 
             window.addEventListener('resize', function () {

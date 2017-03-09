@@ -7,77 +7,25 @@ var defaultOption = {
     // 反向坐标轴
     inverse: false,
 
-    // 坐标轴名字，默认为空
+    // 坐标轴名字
     name: '',
-    // 坐标轴名字位置，支持'start' | 'middle' | 'end'
+    // 坐标轴名字位置
     nameLocation: 'middle',
-    // 坐标轴名字旋转，degree。
-    nameRotate: null, // Adapt to axis rotate, when nameLocation is 'middle'.
 
-    // 坐标轴文字样式，默认取全局样式
     nameTextStyle: {
         fontSize: 16
     },
     // 文字与轴线距离
     nameGap: 20,
 
-    // 坐标轴线
-    axisLine: {
-        // 默认显示，属性show控制显示与否
-        show: true,
-        // 属性lineStyle控制线条样式
-        lineStyle: {
-            color: '#333',
-            width: 3,
-            type: 'solid'
-        }
-    },
+    axisPointer: {},
+
+    axisLine: {},
     // 坐标轴小标记
-    axisTick: {
-        // 属性show控制显示与否，默认显示
-        show: true,
-        // 控制小标记是否在grid里
-        inside: false,
-        // 属性length控制线长
-        length: 3,
-        // 属性lineStyle控制线条样式
-        lineStyle: {
-            width: 1
-        }
-    },
-    // 坐标轴文本标签，详见axis.axisLabel
-    axisLabel: {
-        show: true,
-        // 控制文本标签是否在grid里
-        inside: false,
-        rotate: 0,
-        margin: 8,
-        // formatter: null,
-        // 其余属性默认使用全局文本样式，详见TEXTSTYLE
-        textStyle: {
-            fontSize: 12
-        }
-    },
-    // 分隔线
-    splitLine: {
-        // 默认显示，属性show控制显示与否
-        show: true,
-        // 属性lineStyle（详见lineStyle）控制线条样式
-        lineStyle: {
-            color: ['#ccc'],
-            width: 1,
-            type: 'solid'
-        }
-    },
+    axisTick: {},
+    axisLabel: {},
     // 分隔区域
-    splitArea: {
-        // 默认不显示，属性show控制显示与否
-        show: false,
-        // 属性areaStyle（详见areaStyle）控制区域样式
-        areaStyle: {
-            color: ['rgba(250,250,250,0.3)','rgba(200,200,200,0.3)']
-        }
-    }
+    splitArea: {}
 };
 
 var categoryAxis = echarts.util.merge({
@@ -86,9 +34,6 @@ var categoryAxis = echarts.util.merge({
     // splitArea: {
         // show: false
     // },
-    splitLine: {
-        show: true
-    },
     // 坐标轴小标记
     axisTick: {
         // If tick is align with label when boundaryGap is true

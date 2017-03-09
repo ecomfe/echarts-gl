@@ -3,6 +3,8 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
+var echarts = require('echarts/lib/echarts');
+
 var Scene = require('qtek/lib/Scene');
 var ShadowMapPass = require('qtek/lib/prePass/ShadowMap');
 var PerspectiveCamera = require('qtek/lib/camera/Perspective');
@@ -10,9 +12,10 @@ var OrthographicCamera = require('qtek/lib/camera/Orthographic');
 var Matrix4 = require('qtek/lib/math/Matrix4');
 var Vector3 = require('qtek/lib/math/Vector3');
 
+var notifier = require('qtek/lib/core/mixin/notifier');
+
 var EffectCompositor = require('../effect/EffectCompositor');
 var TemporalSuperSampling = require('../effect/TemporalSuperSampling');
-
 
 /**
  * @constructor
@@ -278,5 +281,7 @@ ViewGL.prototype.remove = function (node3D) {
 ViewGL.prototype.removeAll = function (node3D) {
     this.scene.removeAll(node3D);
 };
+
+echarts.util.extend(ViewGL.prototype, notifier);
 
 module.exports = ViewGL;

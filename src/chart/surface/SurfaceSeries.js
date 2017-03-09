@@ -111,9 +111,7 @@ echarts.extendSeriesModel({
         zlevel: -10,
 
         // Cartesian coordinate system
-        xAxis3DIndex: 0,
-        yAxis3DIndex: 0,
-        zAxis3DIndex: 0,
+        grid3DIndex: 0,
 
         // Surface needs lambert shading to show the difference
         shading: 'lambert',

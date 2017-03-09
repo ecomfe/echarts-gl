@@ -30,9 +30,7 @@ var Scatter3DSeries = echarts.extendSeriesModel({
         zlevel: -10,
 
         // Cartesian coordinate system
-        xAxis3DIndex: 0,
-        yAxis3DIndex: 0,
-        zAxis3DIndex: 0,
+        grid3DIndex: 0,
 
         globeIndex: 0,
 

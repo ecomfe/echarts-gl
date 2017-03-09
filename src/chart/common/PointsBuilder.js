@@ -198,7 +198,7 @@ PointsBuilder.prototype = {
         Matrix4.mul(worldViewProjection, camera.viewMatrix, this._mesh.worldTransform);
         Matrix4.mul(worldViewProjection, camera.projectionMatrix, worldViewProjection);
 
-        this._mesh.updateScreenPosition(worldViewProjection, this.is2D, this._api);
+        this._mesh.updateNDCPosition(worldViewProjection, this.is2D, this._api);
     },
 
     updateLayout: function (seriesModel, ecModel, api) {

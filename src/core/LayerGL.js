@@ -14,13 +14,13 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
+var echarts = require('echarts/lib/echarts');
 var Renderer = require('qtek/lib/Renderer');
 var RayPicking = require('qtek/lib/picking/RayPicking');
 var Texture = require('qtek/lib/Texture');
 
-// PENDING
-var Eventful = require('zrender/lib/mixin/Eventful');
-var zrUtil = require('zrender/lib/core/util');
+// PENDING, qtek notifier is same with zrender Eventful
+var notifier = require('qtek/lib/core/mixin/notifier');
 var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
 
 /**
@@ -30,8 +30,6 @@ var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame
  * @param {module:zrender/ZRender} zr
  */
 var LayerGL = function (id, zr) {
-
-    Eventful.call(this);
 
     /**
      * Layer ID
@@ -96,10 +94,16 @@ var LayerGL = function (id, zr) {
 LayerGL.prototype._initHandlers = function () {
 
     // Mouse event handling
-    this.on('click', this._clickHandler, this);
-    this.on('mousedown', this._mouseDownHandler, this);
-    this.on('mouseup', this._mouseUpHandler, this);
-    this.on('mousemove', this._mouseMoveHandler, this);
+    ['mousedown', 'mousemove', 'mouseup', 'click'].forEach(function (eventName) {
+        this.on(eventName, function (e) {
+            for (var i = 0; i < this.views.length; i++) {
+                if (this.views[i].containPoint(e.offsetX, e.offsetY)) {
+                    this.views[i].trigger(eventName, e);
+                }
+            }
+        });
+    }, this);
+
 
     this._picking = new RayPicking({
         renderer: this.renderer
@@ -408,7 +412,6 @@ LayerGL.prototype.dispose = function () {
 LayerGL.prototype.onmousedown = function (e) {
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
-
     if (obj) {
         this._dispatchEvent('mousedown', e, obj);
     }
@@ -459,15 +462,21 @@ LayerGL.prototype.onclick = function (e) {
 LayerGL.prototype.pickObject = function (x, y) {
 
     var output = [];
+    var renderer = this.renderer;
+    var oldViewport = renderer.viewport;
+    var height = this.zr.getHeight();
     for (var i = 0; i < this.views.length; i++) {
         var viewGL = this.views[i];
-        if (viewGL.containPoint(x, y)) {
+        if (viewGL.containPoint(x, height - y)) {
             this._picking.scene = viewGL.scene;
             this._picking.camera = viewGL.camera;
-            // TODO viewport
+            // Only used for picking, renderer.setViewport will also invoke gl.viewport.
+            // Set directly, PENDING.
+            renderer.viewport = viewGL.viewport;
             this._picking.pickAll(x, y, output);
         }
     }
+    renderer.viewport = oldViewport;
     output.sort(function (a, b) {
         return a.distance - b.distance;
     });
@@ -489,6 +498,6 @@ LayerGL.prototype._dispatchEvent = function (eveName, e, obj) {
     }
 };
 
-zrUtil.inherits(LayerGL, Eventful);
+echarts.util.extend(LayerGL.prototype, notifier);
 
 module.exports = LayerGL;

@@ -28,35 +28,25 @@
                 xAxis3D: {
                     type: 'category',
                     data: hours,
+                    axisLabel: {
+                        interval: 1
+                    }
+                },
+                yAxis3D: {
+                    type: 'category',
+                    data: days
+                },
+                zAxis3D: {
+                    type: 'value'
+                },
+                grid3D: {
+                    boxWidth: 200,
+                    boxDepth: 80,
                     axisLine: {
                         lineStyle: {
                             color: '#fff'
                         }
                     },
-                    axisLabel: {
-                        interval: 2
-                    }
-                },
-                yAxis3D: {
-                    type: 'category',
-                    data: days,
-                    axisLine: {
-                        lineStyle: {
-                            color: '#fff'
-                        }
-                    }
-                },
-                zAxis3D: {
-                    type: 'value',
-                    axisLine: {
-                        lineStyle: {
-                            color: '#fff'
-                        }
-                    }
-                },
-                grid3D: {
-                    boxWidth: 200,
-                    boxDepth: 80,
                     postEffect: {
                         enable: true,
                         bloom: {

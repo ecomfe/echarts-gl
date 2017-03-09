@@ -77,6 +77,11 @@ var OrbitControl = Base.extend(function () {
         mode: 'rotate',
 
         /**
+         * @param {number}
+         */
+        damping: 0.8,
+
+        /**
          * @type {qtek.Camera}
          */
         _camera: null,
@@ -202,17 +207,26 @@ var OrbitControl = Base.extend(function () {
         this._needsUpdate = true;
     },
 
-    setCamera: function (target) {
-        this._camera = target;
+    /**
+     * @param {qtek.Camera} camera
+     */
+    setCamera: function (camera) {
+        this._camera = camera;
         this._decomposeTransform();
 
         this._needsUpdate = true;
     },
 
+    /**
+     * @param {module:echarts-gl/core/ViewGL} viewGL
+     */
     setViewGL: function (viewGL) {
         this.viewGL = viewGL;
     },
 
+    /**
+     * @return {qtek.Camera}
+     */
     getCamera: function () {
         return this._camera;
     },
@@ -220,6 +234,8 @@ var OrbitControl = Base.extend(function () {
     setFromViewControlModel: function (viewControlModel, baseDistance) {
         this.autoRotate = viewControlModel.get('autoRotate');
         this.autoRotateAfterStill = viewControlModel.get('autoRotateAfterStill');
+
+        this.damping = viewControlModel.get('damping');
 
         this.minDistance = viewControlModel.get('minDistance') + baseDistance;
         this.maxDistance = viewControlModel.get('maxDistance') + baseDistance;
@@ -385,12 +401,12 @@ var OrbitControl = Base.extend(function () {
         this.setAlpha(this.getAlpha());
         this.setBeta(this.getBeta());
 
-        this._vectorDamping(velocity, 0.9);
+        this._vectorDamping(velocity, this.damping);
     },
 
     _updateDistance: function (deltaTime) {
         this._setDistance(this._distance + this._zoomSpeed * deltaTime / 20);
-        this._zoomSpeed *= 0.8;
+        this._zoomSpeed *= this.damping;
     },
 
     _setDistance: function (distance) {
@@ -411,7 +427,7 @@ var OrbitControl = Base.extend(function () {
             .scaleAndAdd(xAxis, velocity.x * len / 400)
             .scaleAndAdd(yAxis, velocity.y * len / 400);
 
-        this._vectorDamping(velocity, 0.8);
+        this._vectorDamping(velocity, this.damping);
     },
 
     _updateTransform: function () {
@@ -544,7 +560,7 @@ var OrbitControl = Base.extend(function () {
             this._distance - this.minDistance,
             this.maxDistance - this._distance
         ));
-        this._zoomSpeed = (delta > 0 ? 1 : -1) * Math.max(distance / 40, 0.5);
+        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20, 0.5);
 
         this._rotating = false;
 

@@ -15,11 +15,6 @@
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
-            var axisLine = {
-                lineStyle: {
-                    color: '#fff'
-                }
-            };
             chart.setOption({
                 visualMap: {
                     show: false,
@@ -32,18 +27,20 @@
                     }
                 },
                 xAxis3D: {
-                    type: 'value',
-                    axisLine: axisLine
+                    type: 'value'
                 },
                 yAxis3D: {
-                    type: 'value',
-                    axisLine: axisLine
+                    type: 'value'
                 },
                 zAxis3D: {
-                    type: 'value',
-                    axisLine: axisLine
+                    type: 'value'
                 },
                 grid3D: {
+                    axisLine: {
+                        lineStyle: {
+                            color: '#fff'
+                        }
+                    },
                     viewControl: {
                         // projection: 'orthographic'
                     }

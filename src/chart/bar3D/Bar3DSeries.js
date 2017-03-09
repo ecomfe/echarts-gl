@@ -29,9 +29,7 @@ var Bar3DSeries = echarts.extendSeriesModel({
 
         globeIndex: 0,
 
-        xAxis3DIndex: 0,
-        yAxis3DIndex: 0,
-        zAxis3DIndex: 0,
+        grid3DIndex: 0,
 
         zlevel: -10,
 

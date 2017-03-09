@@ -25,6 +25,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
         segmentScale: 1,
 
+        dynamic: true,
         /**
          * Need to use mesh to expand lines if lineWidth > MAX_LINE_WIDTH
          */
@@ -257,6 +258,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @param {Array.<number>} color
      * @param {number} [lineWidth=1]
      */
+    // TODO Color Array.
     addPolyline: function (points, color, lineWidth) {
         if (!points.length) {
             return;

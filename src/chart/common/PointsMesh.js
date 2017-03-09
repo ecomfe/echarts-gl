@@ -41,25 +41,28 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
     };
 }, {
 
-    _pick: function (x, y, renderable, out) {
-        var positionScreen = this._positionScreen;
-        if (!positionScreen) {
+    _pick: function (x, y, viewport, renderable, out) {
+        var positionNDC = this._positionNDC;
+        if (!positionNDC) {
             return;
         }
 
+        var ndcScaleX = 2 / viewport.width;
+        var ndcScaleY = 2 / viewport.height;
         // From near to far. indices have been sorted.
         for (var i = this.geometry.vertexCount - 1; i >= 0; i--) {
             var idx = this.geometry.indices[i];
 
-            var cx = positionScreen[idx * 2];
-            var cy = positionScreen[idx * 2 + 1];
+            var cx = positionNDC[idx * 2];
+            var cy = positionNDC[idx * 2 + 1];
 
-            var size = this.geometry.attributes.size.get(idx) / this.sizeScale;
+            var size = this.geometry.attributes.size.get(idx)
+                / this.sizeScale;
             var halfSize = size / 2;
 
             if (
-                x > (cx - halfSize) && x < (cx + halfSize)
-                && y > (cy - halfSize) && y < (cy + halfSize)
+                x > (cx - halfSize * ndcScaleX) && x < (cx + halfSize * ndcScaleX)
+                && y > (cy - halfSize * ndcScaleY) && y < (cy + halfSize * ndcScaleY)
             ) {
                 out.push({
                     vertexIndex: idx,
@@ -69,17 +72,14 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
         }
     },
 
-    updateScreenPosition: function (worldViewProjection, is2D, api) {
-        var positionScreen = this._positionScreen;
+    updateNDCPosition: function (worldViewProjection, is2D, api) {
+        var positionNDC = this._positionNDC;
         var geometry = this.geometry;
-        if (!positionScreen || positionScreen.length / 2 !== geometry.vertexCount) {
-            positionScreen = this._positionScreen = new Float32Array(geometry.vertexCount * 2);
+        if (!positionNDC || positionNDC.length / 2 !== geometry.vertexCount) {
+            positionNDC = this._positionNDC = new Float32Array(geometry.vertexCount * 2);
         }
 
         if (!is2D) {
-            var width = api.getWidth();
-            var height = api.getHeight();
-
             var pos = vec4.create();
             for (var i = 0; i < geometry.vertexCount; i++) {
                 geometry.attributes.position.get(i, pos);
@@ -87,18 +87,19 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
                 vec4.transformMat4(pos, pos, worldViewProjection._array);
                 vec4.scale(pos, pos, 1 / pos[3]);
 
-                var x = pos[0] * 0.5 + 0.5;
-                // Flip Y
-                var y = -pos[1] * 0.5 + 0.5;
-                positionScreen[i * 2] = x * width;
-                positionScreen[i * 2 + 1] = y * height;
+                positionNDC[i * 2] = pos[0];
+                positionNDC[i * 2 + 1] = pos[1];
             }
         }
         else {
-            for (var i = 0; i < geometry.vertexCount; i++) {
-                positionScreen[i * 2] = geometry.attributes.position.value[i * 3];
-                positionScreen[i * 2 + 1] = geometry.attributes.position.value[i * 3 + 1];
-            }
+            // TODO
+            // var width = api.getWidth();
+            // var height = api.getHeight();
+
+            // for (var i = 0; i < geometry.vertexCount; i++) {
+            //     positionNDC[i * 2] = geometry.attributes.position.value[i * 3];
+            //     positionNDC[i * 2 + 1] = geometry.attributes.position.value[i * 3 + 1];
+            // }
         }
     }
 });

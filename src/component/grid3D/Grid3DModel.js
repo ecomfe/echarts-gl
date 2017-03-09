@@ -26,6 +26,69 @@ var Grid3DModel = echarts.extendComponentModel({
         boxHeight: 100,
         boxDepth: 100,
 
+        // Common axis options.
+        axisPointer: {
+            show: true,
+            lineStyle: {
+                color: '#555',
+                width: 1
+            },
+
+            label: {
+                show: true,
+
+                backgroundColor: '#ffbd67',
+                borderColor: '#000',
+                borderWidth: 0,
+
+                textStyle: {
+                    color: '#fff'
+                }
+            }
+        },
+
+        axisLine: {
+            show: true,
+            lineStyle: {
+                color: '#333',
+                width: 3,
+                type: 'solid'
+            }
+        },
+
+        axisTick: {
+            show: true,
+            inside: false,
+            length: 3,
+            lineStyle: {
+                width: 1
+            }
+        },
+        axisLabel: {
+            show: true,
+            inside: false,
+            rotate: 0,
+            margin: 8,
+            textStyle: {
+                fontSize: 12
+            }
+        },
+        splitLine: {
+            show: true,
+            lineStyle: {
+                color: ['#ccc'],
+                width: 1,
+                type: 'solid'
+            }
+        },
+        splitArea: {
+            show: false,
+            areaStyle: {
+                color: ['rgba(250,250,250,0.3)','rgba(200,200,200,0.3)']
+            }
+        },
+
+        // Light options
         light: {
             main: {
                 // Alpha angle for top-down rotation
@@ -41,6 +104,8 @@ var Grid3DModel = echarts.extendComponentModel({
         },
 
         viewControl: {
+            // Small damping for precise control.
+            damping: 0.1,
             // Alpha angle for top-down rotation
             // Positive to rotate to top.
             alpha: 30,

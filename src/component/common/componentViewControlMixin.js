@@ -5,6 +5,9 @@ module.exports = {
             // If rotate on on init
             autoRotate: false,
 
+            // Rotate, zoom damping.
+            damping: 0.8,
+
             // Start rotating after still for a given time
             // default is 3 seconds
             autoRotateAfterStill: 3,

@@ -62,11 +62,6 @@
 
             $.getJSON('./data/nutrients.json', function (data) {
 
-                var axisLine = {
-                    lineStyle: {
-                        color: '#fff'
-                    }
-                };
                 chart.setOption({
                     visualMap: {
                         show: false,
@@ -78,20 +73,22 @@
                     },
                     xAxis3D: {
                         name: config.xAxis3D,
-                        type: 'value',
-                        axisLine: axisLine
+                        type: 'value'
                     },
                     yAxis3D: {
                         name: config.yAxis3D,
-                        type: 'value',
-                        axisLine: axisLine
+                        type: 'value'
                     },
                     zAxis3D: {
                         name: config.zAxis3D,
-                        type: 'value',
-                        axisLine: axisLine
+                        type: 'value'
                     },
                     grid3D: {
+                        axisLine: {
+                            lineStyle: {
+                                color: '#fff'
+                            }
+                        },
                         viewControl: {
                             // autoRotate: true
                             // projection: 'orthographic'
