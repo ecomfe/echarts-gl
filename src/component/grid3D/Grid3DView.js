@@ -47,7 +47,8 @@ function updateFacePlane(node, plane, otherAxis, dir) {
     node.position.setArray(coord);
     node.rotation.identity();
 
-    plane.distance = distance;
+    // Negative distance because on the opposite of normal direction.
+    plane.distance = -Math.abs(distance);
     plane.normal.set(0, 0, 0);
     if (otherAxis.dim === 'x') {
         node.rotation.rotateY(dir * Math.PI / 2);
@@ -167,7 +168,7 @@ module.exports = echarts.extendComponentView({
             geometry: new Lines3DGeometry({ useNativeLine: false }),
             material: linesMaterial,
             // PENDING
-            ignorePicking: true, renderOrder: 1000
+            ignorePicking: true, renderOrder: 3
         });
         this.groupGL.add(this._axisPointerLineMesh);
 
@@ -291,16 +292,12 @@ module.exports = echarts.extendComponentView({
             if (axis0.contain(point._array[idx0]) && axis1.contain(point._array[idx1])) {
                 nearestIntersectPoint = point;
             }
-            else {
-                // console.log(faceInfo.dims[4]);
-            }
         }
 
         if (nearestIntersectPoint) {
             var data = cartesian.pointToData(nearestIntersectPoint._array, [], true);
             this._updateAxisPointer(data[0], data[1], data[2]);
         }
-        // this._updateAxisPointer(3, 5, 10);
     },
 
     _onCameraChange: function (grid3DModel, api) {
