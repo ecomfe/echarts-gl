@@ -122,6 +122,7 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
                 text: text,
                 font: textStyleModel.getFont(),
                 fill: textStyleModel.get('color') || data.getItemVisual(dataIndex, 'color') || '#000',
+                opacity: textStyleModel.get('opacity'),
                 stroke: textStyleModel.get('borderColor'),
                 lineWidth: textStyleModel.get('borderWidth') * 2,
                 textAlign: 'left',

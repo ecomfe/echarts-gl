@@ -498,12 +498,18 @@ module.exports = echarts.extendComponentView({
         var linesGeo = axisPointerLineMesh.geometry;
 
         var axisPointerParentModel = this._model.getModel('axisPointer');
+
         var dpr = this._api.getDevicePixelRatio();
         linesGeo.convertToDynamicArray(true);
 
 
+        function ifShowAxisPointer(axis) {
+            return retrieve.firstNotNull(
+                axis.model.get('axisPointer.show'),
+                axisPointerParentModel.get('show')
+            );
+        }
         function getAxisColorAndLineWidth(axis) {
-
             var axisPointerModel = axis.model.getModel('axisPointer', axisPointerParentModel);
             var lineStyleModel = axisPointerModel.getModel('lineStyle');
 
@@ -536,6 +542,10 @@ module.exports = echarts.extendComponentView({
                 var axis = cartesian.getAxis(dim);
                 var faceOtherAxis = cartesian.getAxis(faceOtherDim);
 
+                if (!ifShowAxisPointer(axis)) {
+                    continue;
+                }
+
                 var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
                 var dimIdx = dimIndicesMap[dim];
                 var faceOtherDimIdx = dimIndicesMap[faceOtherDim];
@@ -550,11 +560,13 @@ module.exports = echarts.extendComponentView({
             }
 
             // Project line.
-            var p0 = point.slice();
-            var p1 = point.slice();
-            p1[otherDimIdx] = otherCoord;
-            var colorAndLineWidth = getAxisColorAndLineWidth(cartesian.getAxis(dims[2]));
-            linesGeo.addLine(p0, p1, colorAndLineWidth.color, colorAndLineWidth.lineWidth * dpr);
+            if (ifShowAxisPointer(cartesian.getAxis(dims[2]))) {
+                var p0 = point.slice();
+                var p1 = point.slice();
+                p1[otherDimIdx] = otherCoord;
+                var colorAndLineWidth = getAxisColorAndLineWidth(cartesian.getAxis(dims[2]));
+                linesGeo.addLine(p0, p1, colorAndLineWidth.color, colorAndLineWidth.lineWidth * dpr);
+            }
         }
         linesGeo.convertToTypedArray();
 
