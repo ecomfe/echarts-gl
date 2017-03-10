@@ -30,7 +30,7 @@ var Grid3DModel = echarts.extendComponentModel({
         axisPointer: {
             show: true,
             lineStyle: {
-                color: '#555',
+                color: 'rgba(0, 0, 0, 0.8)',
                 width: 1
             },
 
@@ -45,6 +45,8 @@ var Grid3DModel = echarts.extendComponentModel({
                 // borderWidth: 0,
 
                 textStyle: {
+                    // borderColor: '#fff',
+                    // borderWidth: 3,
                     fontSize: 16
                     // Default with lineStyle.color
                     // color: '#000'
@@ -56,7 +58,7 @@ var Grid3DModel = echarts.extendComponentModel({
             show: true,
             lineStyle: {
                 color: '#333',
-                width: 3,
+                width: 2,
                 type: 'solid'
             }
         },
