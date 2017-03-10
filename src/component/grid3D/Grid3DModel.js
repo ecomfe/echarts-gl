@@ -39,13 +39,15 @@ var Grid3DModel = echarts.extendComponentModel({
                 // (dimValue: number, value: Array) => string
                 formatter: null,
 
-                margin: 10,
+                margin: 8,
                 // backgroundColor: '#ffbd67',
                 // borderColor: '#000',
                 // borderWidth: 0,
 
                 textStyle: {
-                    color: '#000'
+                    fontSize: 16
+                    // Default with lineStyle.color
+                    // color: '#000'
                 }
             }
         },

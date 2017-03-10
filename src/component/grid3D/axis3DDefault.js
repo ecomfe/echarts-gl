@@ -44,6 +44,11 @@ var categoryAxis = echarts.util.merge({
     // 坐标轴文本标签，详见axis.axisLabel
     axisLabel: {
         interval: 'auto'
+    },
+    axisPointer: {
+        label: {
+            show: false
+        }
     }
 }, defaultOption);
 
@@ -57,9 +62,14 @@ var valueAxis = echarts.util.merge({
     // 脱离0值比例，放大聚焦到最终_min，_max区间
     // scale: false,
     // 分割段数，默认为5
-    splitNumber: 5
+    splitNumber: 5,
     // Minimum interval
     // minInterval: null
+
+    axisPointer: {
+        label: {
+        }
+    }
 }, defaultOption);
 
 // FIXME

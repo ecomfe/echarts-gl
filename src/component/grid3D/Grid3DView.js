@@ -107,7 +107,9 @@ module.exports = echarts.extendComponentView({
             width: 128, height: 128,
             devicePixelRatio: dpr
         });
-        this._axisPointerLabelsMesh = new LabelsMesh();
+        this._axisPointerLabelsMesh = new LabelsMesh({
+            ignorePicking: true, renderOrder: 4
+        });
         this._axisPointerLabelsMesh.material.set('textureAtlas', this._axisPointerLabelsSurface.getTexture());
         this.groupGL.add(this._axisPointerLabelsMesh);
 
@@ -327,9 +329,18 @@ module.exports = echarts.extendComponentView({
         xAxisNode.rotation.identity();
         yAxisNode.rotation.identity();
         zAxisNode.rotation.identity();
-        faces[4].rootNode.invisible && xAxisNode.rotation.rotateX(Math.PI);
-        faces[0].rootNode.invisible && yAxisNode.rotation.rotateZ(Math.PI);
-        faces[4].rootNode.invisible && zAxisNode.rotation.rotateY(Math.PI);
+        if (faces[4].rootNode.invisible) {
+            this._axes[0].flipped = true;
+            xAxisNode.rotation.rotateX(Math.PI);
+        }
+        if (faces[0].rootNode.invisible) {
+            this._axes[1].flipped = true;
+            yAxisNode.rotation.rotateZ(Math.PI);
+        }
+        if (faces[4].rootNode.invisible) {
+            this._axes[2].flipped = true;
+            zAxisNode.rotation.rotateY(Math.PI);
+        }
 
         xAxisNode.position.set(0, xAxisYOffset, xAxisZOffset);
         yAxisNode.position.set(yAxisXOffset, yAxisYOffset, 0); // Actually z
@@ -505,11 +516,23 @@ module.exports = echarts.extendComponentView({
             var axisModel = axis.model;
             var axisPointerModel = axisModel.getModel('axisPointer', axisPointerParentModel);
             var labelModel = axisPointerModel.getModel('label');
-            var text = data[idx];
+            var lineColor = axisPointerModel.get('lineStyle.color');
+            if (!labelModel.get('show')) {
+                return;
+            }
+            var val = data[idx];
             var formatter = labelModel.get('formatter');
+            var text = axis.scale.getLabel(val);
             if (formatter != null) {
                 text = formatter(text, data);
             }
+            else {
+                if (axis.scale.type === 'interval' || axis.scale.type === 'log') {
+                    var precision = echarts.number.getPrecisionSafe(axis.scale.getTicks()[0]);
+                    text = val.toFixed(precision + 2);
+                }
+            }
+
             var textStyleModel = labelModel.getModel('textStyle');
             var labelColor = textStyleModel.get('color');
             var opacity = firstNotNull(textStyleModel.get('opacity'), 1.0);
@@ -517,7 +540,7 @@ module.exports = echarts.extendComponentView({
                 style: {
                     text: text,
                     textFont: textStyleModel.getFont(),
-                    fill: labelColor || '#000',
+                    fill: labelColor || lineColor,
                     opacity: opacity,
                     textAlign: 'left',
                     textVerticalAlign: 'top'
@@ -528,7 +551,7 @@ module.exports = echarts.extendComponentView({
             var dpr = this._api.getDevicePixelRatio();
             var pos = axisInfo.rootNode.position.toArray();
             var otherIdx = dimIndicesMap[otherDim[axisInfo.dim]];
-            pos[otherIdx] += labelModel.get('margin');
+            pos[otherIdx] += (axisInfo.flipped ? -1 : 1) * labelModel.get('margin');
             pos[dimIndicesMap[axisInfo.dim]] = axis.dataToCoord(data[idx]);
 
             axisPointerLabelsMesh.geometry.addSprite(
@@ -536,6 +559,7 @@ module.exports = echarts.extendComponentView({
                 axisInfo.textAlign, axisInfo.textVerticalAlign
             );
         }, this);
+        axisPointerLabelsSurface.getZr().refreshImmediately();
         axisPointerLabelsMesh.material.set('uvScale', axisPointerLabelsSurface.getCoordsScale());
         axisPointerLabelsMesh.geometry.convertToTypedArray();
     },
