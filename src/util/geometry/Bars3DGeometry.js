@@ -280,6 +280,11 @@ var BarsGeometry = StaticGeometry.extend(function () {
         var rotateMat = mat3.create();
 
         var bevelStartSize = [];
+
+        var xOffsets = [1, -1, -1, 1];
+        var zOffsets = [1, 1, -1, -1];
+        var yOffsets = [2, 0];
+
         return function (start, dir, leftDir, size, bevelSize, bevelSegments, color) {
             vec3.copy(py, dir);
             vec3.normalize(py, py);
@@ -305,10 +310,6 @@ var BarsGeometry = StaticGeometry.extend(function () {
             var normal = [];
             var vertexOffset = this._vertexOffset;
 
-            var xOffsets = [1, -1, -1, 1];
-            var zOffsets = [1, 1, -1, -1];
-            var yOffsets = [2, 0];
-
             var endIndices = [];
             for (var i = 0; i < 2; i++) {
                 endIndices[i] = endIndices[i] = [];
@@ -327,7 +328,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
                             normal[1] = ry * Math.cos(theta);
                             normal[2] = rz * Math.sin(phi) * Math.sin(theta);
                             pos[0] = normal[0] + xOffsets[j] * bevelStartSize[0] / 2;
-                            pos[1] = normal[1] + yOffsets[i] * bevelStartSize[1] / 2;
+                            pos[1] = (normal[1] + ry) + yOffsets[i] * bevelStartSize[1] / 2;
                             pos[2] = normal[2] + zOffsets[j] * bevelStartSize[2] / 2;
 
                             // Normal is not right if rx, ry, rz not equal.

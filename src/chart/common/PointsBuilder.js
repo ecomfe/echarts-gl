@@ -138,7 +138,7 @@ PointsBuilder.prototype = {
             geometry.sortVertices = false;
         }
 
-        this._updateHandler(data);
+        this._updateHandler(seriesModel, ecModel, api);
 
         // TODO scatterGL
         if (!is2D) {
@@ -170,26 +170,42 @@ PointsBuilder.prototype = {
         this._api = api;
     },
 
-    _updateHandler: function (data) {
+    _updateHandler: function (seriesModel, ecModel, api) {
+        var data = seriesModel.getData();
         var pointsMesh = this._mesh;
 
         var lastDataIndex = -1;
+        var isCartesian3D = seriesModel.coordinateSystem.type === 'cartesian3D';
 
         pointsMesh.off('mousemove');
         pointsMesh.off('mouseout');
         pointsMesh.on('mousemove', function (e) {
-            this.highlight(data, e.vertexIndex);
-            if (e.vertexIndex !== lastDataIndex) {
+            var dataIndex = e.vertexIndex;
+            this.highlight(data, dataIndex);
+            if (dataIndex !== lastDataIndex) {
                 this.downplay(data, lastDataIndex);
-                this.highlight(data, e.vertexIndex);
-                this._labelsBuilder.updateLabels([e.vertexIndex]);
+                this.highlight(data, dataIndex);
+                this._labelsBuilder.updateLabels([dataIndex]);
+
+                if (isCartesian3D) {
+                    api.dispatchAction({
+                        type: 'grid3DShowAxisPointer',
+                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex)]
+                    });
+                }
             }
-            lastDataIndex = e.vertexIndex;
+            lastDataIndex = dataIndex;
         }, this);
         pointsMesh.on('mouseout', function (e) {
             this.downplay(data, e.vertexIndex);
             this._labelsBuilder.updateLabels();
             lastDataIndex = -1;
+
+            if (isCartesian3D) {
+                api.dispatchAction({
+                    type: 'grid3DHideAxisPointer'
+                });
+            }
         }, this);
     },
 

@@ -16,6 +16,7 @@
             var chart = echarts.init(document.getElementById('main'));
 
             chart.setOption({
+                backgroundColor: '#fff',
                 visualMap: {
                     show: false,
                     dimension: 2,
@@ -35,11 +36,6 @@
                     type: 'value'
                 },
                 grid3D: {
-                    axisLine: {
-                        lineStyle: {
-                            color: '#fff'
-                        }
-                    },
                     viewControl: {
                         // projection: 'orthographic'
                     }

@@ -254,14 +254,33 @@ module.exports = echarts.extendComponentView({
         this._lightHelper.updateAmbientCubemap(renderer, grid3DModel, api);
     },
 
+    /**
+     * showAxisPointer will be triggered by action.
+     */
+    showAxisPointer: function (grid3dModel, ecModel, api, payload) {
+        this._doShowAxisPointer();
+        this._updateAxisPointer(payload.value);
+    },
+
+    /**
+     * hideAxisPointer will be triggered by action.
+     */
+    hideAxisPointer: function (grid3dModel, ecModel, api, payload) {
+        this._doHideAxisPointer();
+    },
+
     _initMouseHandler: function (grid3DModel) {
         var cartesian = grid3DModel.coordinateSystem;
         var viewGL = cartesian.viewGL;
 
-        viewGL.on('mousemove', this._onmousemove, this);
+        viewGL.on('mousemove', this._showAxisPointerOnMousePosition, this);
     },
 
-    _onmousemove: function (e) {
+    /**
+     * Try find and show axisPointer on the intersect point
+     * of mouse ray with grid plane.
+     */
+    _showAxisPointerOnMousePosition: function (e) {
         // Ignore if mouse is on the element.
         if (e.target) {
             return;
@@ -296,7 +315,12 @@ module.exports = echarts.extendComponentView({
 
         if (nearestIntersectPoint) {
             var data = cartesian.pointToData(nearestIntersectPoint._array, [], true);
-            this._updateAxisPointer(data[0], data[1], data[2]);
+            this._updateAxisPointer(data);
+
+            this._doShowAxisPointer();
+        }
+        else {
+            this._doHideAxisPointer();
         }
     },
 
@@ -454,12 +478,21 @@ module.exports = echarts.extendComponentView({
         }, this);
     },
 
+    _doShowAxisPointer: function () {
+        this._axisPointerLineMesh.invisible = false;
+        this._api.getZr().refresh();
+    },
+
+    _doHideAxisPointer: function () {
+        this._axisPointerLineMesh.invisible = true;
+        this._api.getZr().refresh();
+    },
     /**
      * @private updateAxisPointer.
      */
-    _updateAxisPointer: function (x, y, z) {
+    _updateAxisPointer: function (data) {
         var cartesian = this._model.coordinateSystem;
-        var point = cartesian.dataToPoint([x, y, z]);
+        var point = cartesian.dataToPoint(data);
 
         var axisPointerLineMesh = this._axisPointerLineMesh;
         var linesGeo = axisPointerLineMesh.geometry;
@@ -467,6 +500,23 @@ module.exports = echarts.extendComponentView({
         var axisPointerParentModel = this._model.getModel('axisPointer');
         var dpr = this._api.getDevicePixelRatio();
         linesGeo.convertToDynamicArray(true);
+
+
+        function getAxisColorAndLineWidth(axis) {
+
+            var axisPointerModel = axis.model.getModel('axisPointer', axisPointerParentModel);
+            var lineStyleModel = axisPointerModel.getModel('lineStyle');
+
+            var color = graphicGL.parseColor(lineStyleModel.get('color'));
+            var lineWidth = firstNotNull(lineStyleModel.get('width'), 1);
+            var opacity = firstNotNull(lineStyleModel.get('opacity'), 1);
+            color[3] *= opacity;
+
+            return {
+                color: color,
+                lineWidth: lineWidth
+            };
+        }
         for (var k = 0; k < this._faces.length; k++) {
             var faceInfo = this._faces[k];
             if (faceInfo.node.invisible) {
@@ -479,6 +529,7 @@ module.exports = echarts.extendComponentView({
                 : cartesian.getAxis(dims[2]).getExtentMax();
             var otherDimIdx = dimIndicesMap[dims[2]];
 
+            // Line on face.
             for (var i = 0; i < 2; i++) {
                 var dim = dims[i];
                 var faceOtherDim = dims[1 - i];
@@ -494,16 +545,16 @@ module.exports = echarts.extendComponentView({
                 p0[faceOtherDimIdx] = faceOtherAxis.getExtentMin();
                 p1[faceOtherDimIdx] = faceOtherAxis.getExtentMax();
 
-                var axisPointerModel = axis.model.getModel('axisPointer', axisPointerParentModel);
-                var lineStyleModel = axisPointerModel.getModel('lineStyle');
-
-                var color = graphicGL.parseColor(lineStyleModel.get('color'));
-                var lineWidth = firstNotNull(lineStyleModel.get('width'), 1);
-                var opacity = firstNotNull(lineStyleModel.get('opacity'), 1);
-                color[3] *= opacity;
-
-                linesGeo.addLine(p0, p1, color, lineWidth * dpr);
+                var colorAndLineWidth = getAxisColorAndLineWidth(axis);
+                linesGeo.addLine(p0, p1, colorAndLineWidth.color, colorAndLineWidth.lineWidth * dpr);
             }
+
+            // Project line.
+            var p0 = point.slice();
+            var p1 = point.slice();
+            p1[otherDimIdx] = otherCoord;
+            var colorAndLineWidth = getAxisColorAndLineWidth(cartesian.getAxis(dims[2]));
+            linesGeo.addLine(p0, p1, colorAndLineWidth.color, colorAndLineWidth.lineWidth * dpr);
         }
         linesGeo.convertToTypedArray();
 

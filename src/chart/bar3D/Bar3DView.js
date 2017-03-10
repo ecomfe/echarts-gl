@@ -185,11 +185,13 @@ module.exports = echarts.extendChartView({
         material.depthMask = !hasTransparent;
         barMesh.geometry.sortTriangles = hasTransparent;
 
-        this._initHandler();
+        this._initHandler(seriesModel, api);
     },
 
-    _initHandler: function () {
+    _initHandler: function (seriesModel, api) {
+        var data = seriesModel.getData();
         var barMesh = this._barMesh;
+        var isCartesian3D = seriesModel.coordinateSystem.type === 'cartesian3D';
 
         var lastDataIndex = -1;
         barMesh.off('mousemove');
@@ -200,6 +202,13 @@ module.exports = echarts.extendChartView({
                 this._downplay(lastDataIndex);
                 this._highlight(dataIndex);
                 this._labelsBuilder.updateLabels([dataIndex]);
+
+                if (isCartesian3D) {
+                    api.dispatchAction({
+                        type: 'grid3DShowAxisPointer',
+                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex)]
+                    });
+                }
             }
 
             lastDataIndex = dataIndex;
@@ -208,6 +217,12 @@ module.exports = echarts.extendChartView({
             this._downplay(lastDataIndex);
             this._labelsBuilder.updateLabels();
             lastDataIndex = -1;
+
+            if (isCartesian3D) {
+                api.dispatchAction({
+                    type: 'grid3DHideAxisPointer'
+                });
+            }
         }, this);
     },
 

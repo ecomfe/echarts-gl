@@ -16,3 +16,17 @@ echarts.registerAction({
         componentModel.setView(payload);
     });
 });
+
+echarts.registerAction({
+    type: 'grid3DShowAxisPointer',
+    event: 'grid3dshowaxispointer',
+    update: 'grid3D:showAxisPointer'
+}, function (payload, ecModel) {
+});
+
+echarts.registerAction({
+    type: 'grid3DHideAxisPointer',
+    event: 'grid3dhideaxispointer',
+    update: 'grid3D:hideAxisPointer'
+}, function (payload, ecModel) {
+});
