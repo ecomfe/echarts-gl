@@ -150,19 +150,9 @@ PointsBuilder.prototype = {
                 return pos;
             };
 
-            this._labelsBuilder.getLabelOffset = function (dataIndex, positionDesc, distance) {
+            this._labelsBuilder.getLabelDistance = function (dataIndex, positionDesc, distance) {
                 var size = geometry.attributes.size.get(dataIndex) / pointSizeScale;
-                switch (positionDesc) {
-                    case 'bottom':
-                        return [0, size / 2 + distance];
-                    case 'left':
-                        return [-size / 2 - distance, 0];
-                    case 'right':
-                        return [size / 2 + distance, 0];
-                    // case 'top':
-                    default:
-                        return [0, -size / 2 - distance];
-                }
+                return size / 2 + distance;
             };
             this._labelsBuilder.updateLabels();
         }

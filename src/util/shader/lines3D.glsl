@@ -44,6 +44,8 @@ uniform float near : NEAR;
 varying vec4 v_Color;
 varying float v_Miter;
 
+varying vec2 v_PosScreen;
+
 vec4 clipNear(vec4 p1, vec4 p2) {
     float n = (p1.w - near) / (p1.w - p2.w);
     // PENDING
@@ -68,6 +70,8 @@ void main()
     vec2 prevScreen = (prevProj.xy / abs(prevProj.w) + 1.0) * 0.5 * viewport.zw;
     vec2 currScreen = (currProj.xy / abs(currProj.w) + 1.0) * 0.5 * viewport.zw;
     vec2 nextScreen = (nextProj.xy / abs(nextProj.w) + 1.0) * 0.5 * viewport.zw;
+
+    v_PosScreen = currScreen;
 
     vec2 dir;
     float len = offset;
@@ -109,6 +113,8 @@ uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 varying vec4 v_Color;
 varying float v_Miter;
+
+varying vec2 v_PosScreen;
 
 void main()
 {

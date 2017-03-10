@@ -37,7 +37,12 @@ function Grid3DAxis(dim, linesMaterial) {
     this.labelElements = [];
 }
 
-Grid3DAxis.prototype.update = function (grid3DModel, labelIntervalFuncs, axisLabelSurface, api) {
+var otherDim = {
+    x: 'y', y: 'x', z: 'y'
+};
+Grid3DAxis.prototype.update = function (
+    grid3DModel, labelIntervalFuncs, axisLabelSurface, api
+) {
     var cartesian = grid3DModel.coordinateSystem;
     var axis = cartesian.getAxis(this.dim);
     var labelIntervalFunc = labelIntervalFuncs[this.dim];
@@ -71,9 +76,6 @@ Grid3DAxis.prototype.update = function (grid3DModel, labelIntervalFuncs, axisLab
         color[3] *= opacity;
         linesGeo.addLine(p0, p1, color, lineWidth * dpr);
     }
-    var otherDim = {
-        x: 'y', y: 'x', z: 'y'
-    };
     // Render axis ticksCoords
     if (axisTickModel.get('show')) {
         var lineStyleModel = axisTickModel.getModel('lineStyle');
@@ -112,7 +114,11 @@ Grid3DAxis.prototype.update = function (grid3DModel, labelIntervalFuncs, axisLab
     if (axisLabelModel.get('show')) {
         var textStyleModel = axisLabelModel.getModel('textStyle');
         var labelsCoords = axis.getLabelsCoords();
+        // TODO color callback.
         var labelColor = firstNotNull(textStyleModel.get('color'), axisLineColor);
+        var opacity = firstNotNull(textStyleModel.get('opacity'), 1.0);
+        var strokeColor = textStyleModel.get('borderColor');
+        var lineWidth = textStyleModel.get('borderWidth');
         // TODO Automatic interval
         var intervalFunc = labelIntervalFunc;
 
@@ -136,6 +142,8 @@ Grid3DAxis.prototype.update = function (grid3DModel, labelIntervalFuncs, axisLab
                 style: {
                     text: labels[i],
                     fill: labelColor,
+                    stroke: strokeColor,
+                    lineWidth: lineWidth,
                     font: textStyleModel.getFont(),
                     textVerticalAlign: 'top',
                     textAlign: 'left'
@@ -155,6 +163,9 @@ Grid3DAxis.prototype.update = function (grid3DModel, labelIntervalFuncs, axisLab
         var idx = dimIndicesMap[axis.dim];
         var otherIdx = dimIndicesMap[otherDim[axis.dim]];
         var labelColor = firstNotNull(nameTextStyleModel.get('color'), axisLineColor);
+        var opacity = firstNotNull(nameTextStyleModel.get('opacity'), 1.0);
+        var strokeColor = nameTextStyleModel.get('borderColor');
+        var lineWidth = nameTextStyleModel.get('borderWidth');
         // TODO start and end
         p[idx] = p[idx] = (extent[0] + extent[1]) / 2;
         p[otherIdx] = axisModel.get('nameGap');
@@ -163,9 +174,12 @@ Grid3DAxis.prototype.update = function (grid3DModel, labelIntervalFuncs, axisLab
             style: {
                 text: axisModel.get('name'),
                 fill: labelColor,
+                stroke: strokeColor,
+                lineWidth: lineWidth,
                 font: nameTextStyleModel.getFont(),
                 textVerticalAlign: 'top',
-                textAlign: 'left'
+                textAlign: 'left',
+                opacity: opacity
             }
         });
         var coords = axisLabelSurface.add(textEl);
@@ -183,5 +197,23 @@ Grid3DAxis.prototype.update = function (grid3DModel, labelIntervalFuncs, axisLab
     labelsGeo.convertToTypedArray();
 };
 
+Grid3DAxis.prototype.setSpriteAlign = function (textAlign, textVerticalAlign, api) {
+    var dpr = api.getDevicePixelRatio();
+    var labelGeo = this.labelsMesh.geometry;
+    for (var i = 0; i < this.labelElements.length; i++) {
+        var labelEl = this.labelElements[i];
+        var rect = labelEl.getBoundingRect();
+
+        labelGeo.setSpriteAlign(i, [rect.width * dpr, rect.height * dpr], textAlign, textVerticalAlign);
+    }
+    // name label
+    var nameLabelEl = this.nameLabelElement;
+    var rect = nameLabelEl.getBoundingRect();
+    labelGeo.setSpriteAlign(nameLabelEl.__idx, [rect.width * dpr, rect.height * dpr], textAlign, textVerticalAlign);
+    labelGeo.dirty();
+
+    this.textAlign = textAlign;
+    this.textVerticalAlign = textVerticalAlign;
+};
 
 module.exports = Grid3DAxis;

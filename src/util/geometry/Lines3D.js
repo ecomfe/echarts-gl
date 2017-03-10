@@ -238,7 +238,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
             t += step;
         }
 
-        this.addPolyline(points, color, lineWidth);
+        this.addPolyline(points, color, lineWidth, false);
     },
 
     /**
@@ -249,17 +249,18 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @param {number} [lineWidth=1]
      */
     addLine: function (p0, p1, color, lineWidth) {
-        this.addPolyline([p0, p1], color, lineWidth);
+        this.addPolyline([p0, p1], color, lineWidth, false);
     },
 
     /**
      * Add a straight line
      * @param {Array.<Array> | Array.<number>} points
-     * @param {Array.<number>} color
+     * @param {Array.<number> | Array.<Array>} color
      * @param {number} [lineWidth=1]
+     * @param {boolean} [notSharingColor=false]
      */
     // TODO Color Array.
-    addPolyline: function (points, color, lineWidth) {
+    addPolyline: function (points, color, lineWidth, notSharingColor) {
         if (!points.length) {
             return;
         }

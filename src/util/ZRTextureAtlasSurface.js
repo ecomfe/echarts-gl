@@ -140,7 +140,6 @@ ZRTextureAtlasSurfaceNode.prototype = {
         return coords;
     },
 
-
     /**
      * Fit element size by correct its position and scaling
      * @param {module:zrender/graphic/Displayable} el
@@ -308,6 +307,12 @@ ZRTextureAtlasSurface.prototype = {
     },
 
     add: function (el, width, height) {
+        if (this._coords[el.id]) {
+            if (__DEV__) {
+                console.warn('Element already been add');
+            }
+            return this._coords[el.id];
+        }
         var coords = this._getCurrentNode().add(el, width, height);
         if (!coords) {
             var newNode = this._expand();
@@ -337,7 +342,7 @@ ZRTextureAtlasSurface.prototype = {
      * @param  {string} id Image id
      * @return {Array}
      */
-    getImageCoords: function (id) {
+    getCoords: function (id) {
         return this._coords[id];
     }
 };

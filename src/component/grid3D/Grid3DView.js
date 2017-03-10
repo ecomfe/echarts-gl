@@ -10,6 +10,7 @@ var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
 var LightHelper = require('../common/LightHelper');
 var Grid3DFace = require('./Grid3DFace');
 var Grid3DAxis = require('./Grid3DAxis');
+var LabelsMesh = require('../../util/mesh/LabelsMesh');
 
 var dims = ['x', 'y', 'z'];
 
@@ -102,10 +103,13 @@ module.exports = echarts.extendComponentView({
         });
         this.groupGL.add(this._axisPointerLineMesh);
 
-        this._axisPointerLabelSurface = new ZRTextureAtlasSurface({
-            width: 64, height: 64,
+        this._axisPointerLabelsSurface = new ZRTextureAtlasSurface({
+            width: 128, height: 128,
             devicePixelRatio: dpr
         });
+        this._axisPointerLabelsMesh = new LabelsMesh();
+        this._axisPointerLabelsMesh.material.set('textureAtlas', this._axisPointerLabelsSurface.getTexture());
+        this.groupGL.add(this._axisPointerLabelsMesh);
 
         this._lightRoot = new graphicGL.Node();
         this._lightHelper = new LightHelper(this._lightRoot);
@@ -295,6 +299,7 @@ module.exports = echarts.extendComponentView({
     _updateAxisLinePosition: function () {
         // Put xAxis, yAxis on x, y visible plane.
         // Put zAxis on the left.
+        // TODO
         var cartesian = this._model.coordinateSystem;
         var xAxis = cartesian.getAxis('x');
         var yAxis = cartesian.getAxis('y');
@@ -380,19 +385,7 @@ module.exports = echarts.extendComponentView({
             }
 
             // axis labels
-            var dpr = this._api.getDevicePixelRatio();
-            for (var i = 0; i < axisInfo.labelElements.length; i++) {
-                var labelEl = axisInfo.labelElements[i];
-                var rect = labelEl.getBoundingRect();
-
-                labelGeo.setSpriteAlign(i, [rect.width * dpr, rect.height * dpr], textAlign, verticalAlign);
-            }
-            // name label
-            var nameLabelEl = axisInfo.nameLabelElement;
-            var rect = nameLabelEl.getBoundingRect();
-            labelGeo.setSpriteAlign(nameLabelEl.__idx, [rect.width * dpr, rect.height * dpr], textAlign, verticalAlign);
-
-            labelGeo.dirty();
+            axisInfo.setSpriteAlign(textAlign, verticalAlign, this._api);
         }, this);
     },
 
@@ -488,7 +481,63 @@ module.exports = echarts.extendComponentView({
         }
         linesGeo.convertToTypedArray();
 
+        this._updateAxisPointerLabelsMesh(data);
+
         this._api.getZr().refresh();
+    },
+
+    _updateAxisPointerLabelsMesh: function (data) {
+        var grid3dModel = this._model;
+        var axisPointerLabelsMesh = this._axisPointerLabelsMesh;
+        var axisPointerLabelsSurface = this._axisPointerLabelsSurface;
+        var cartesian = grid3dModel.coordinateSystem;
+
+        var axisPointerParentModel = grid3dModel.getModel('axisPointer');
+
+        axisPointerLabelsMesh.geometry.convertToDynamicArray(true);
+        axisPointerLabelsSurface.clear();
+
+        var otherDim = {
+            x: 'y', y: 'x', z: 'y'
+        };
+        this._axes.forEach(function (axisInfo, idx) {
+            var axis = cartesian.getAxis(axisInfo.dim);
+            var axisModel = axis.model;
+            var axisPointerModel = axisModel.getModel('axisPointer', axisPointerParentModel);
+            var labelModel = axisPointerModel.getModel('label');
+            var text = data[idx];
+            var formatter = labelModel.get('formatter');
+            if (formatter != null) {
+                text = formatter(text, data);
+            }
+            var textStyleModel = labelModel.getModel('textStyle');
+            var labelColor = textStyleModel.get('color');
+            var opacity = firstNotNull(textStyleModel.get('opacity'), 1.0);
+            var textEl = new echarts.graphic.Text({
+                style: {
+                    text: text,
+                    textFont: textStyleModel.getFont(),
+                    fill: labelColor || '#000',
+                    opacity: opacity,
+                    textAlign: 'left',
+                    textVerticalAlign: 'top'
+                }
+            });
+            var coords = axisPointerLabelsSurface.add(textEl);
+            var rect = textEl.getBoundingRect();
+            var dpr = this._api.getDevicePixelRatio();
+            var pos = axisInfo.rootNode.position.toArray();
+            var otherIdx = dimIndicesMap[otherDim[axisInfo.dim]];
+            pos[otherIdx] += labelModel.get('margin');
+            pos[dimIndicesMap[axisInfo.dim]] = axis.dataToCoord(data[idx]);
+
+            axisPointerLabelsMesh.geometry.addSprite(
+                pos, [rect.width * dpr, rect.height * dpr], coords,
+                axisInfo.textAlign, axisInfo.textVerticalAlign
+            );
+        }, this);
+        axisPointerLabelsMesh.material.set('uvScale', axisPointerLabelsSurface.getCoordsScale());
+        axisPointerLabelsMesh.geometry.convertToTypedArray();
     },
 
     dispose: function () {

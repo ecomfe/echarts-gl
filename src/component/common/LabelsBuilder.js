@@ -26,8 +26,8 @@ LabelsBuilder.prototype.getLabelPosition = function (dataIndex, positionDesc, di
     return [0, 0, 0];
 };
 
-LabelsBuilder.prototype.getLabelOffset = function (dataIndex, positionDesc, distance) {
-    return [0, 0]
+LabelsBuilder.prototype.getLabelDistance = function (dataIndex, positionDesc, distance) {
+    return 0;
 };
 
 LabelsBuilder.prototype.getMesh = function () {
@@ -140,7 +140,7 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
             this.getLabelPosition(dataIndex, position, distance),
             [rect.width * dpr, rect.height * dpr], coords,
             textAlign, textVerticalAlign,
-            this.getLabelOffset(dataIndex, position, distance)
+            this.getLabelDistance(dataIndex, position, distance) * dpr
         );
     }, false, this);
 
