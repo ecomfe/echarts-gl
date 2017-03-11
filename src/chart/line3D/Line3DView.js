@@ -2,6 +2,10 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var Lines3DGeometry = require('../../util/geometry/Lines3D');
+var Matrix4 = require('qtek/lib/math/Matrix4');
+var Vector3 = require('qtek/lib/math/Vector3');
+var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var lineContain = require('zrender/lib/contain/line');
 
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
@@ -27,6 +31,7 @@ module.exports = echarts.extendChartView({
         });
 
         this._line3DMesh = line3DMesh;
+        this._line3DMesh.geometry.pick = this._pick.bind(this);
 
         this._api = api;
     },
@@ -44,6 +49,14 @@ module.exports = echarts.extendChartView({
         this._doRender(seriesModel, api);
 
         this._data = seriesModel.getData();
+
+        this._camera = coordSys.viewGL.camera;
+
+        this.updateCamera();
+    },
+
+    updateCamera: function () {
+        this._updateNDCPosition();
     },
 
     _doRender: function (seriesModel, api) {
@@ -101,6 +114,8 @@ module.exports = echarts.extendChartView({
         material.transparent = hasTransparent;
         material.depthMask = !hasTransparent;
         lineMesh.geometry.sortTriangles = hasTransparent;
+
+        this._points = points;
 
         this._initHandler(seriesModel, api);
     },
@@ -178,6 +193,79 @@ module.exports = echarts.extendChartView({
 
         // var colorArr = graphicGL.parseColor(color);
         // colorArr[3] *= opacity;
+    },
+
+    _updateNDCPosition: function () {
+
+        var worldViewProjection = new Matrix4();
+        var camera = this._camera;
+        Matrix4.multiply(worldViewProjection, camera.projectionMatrix, camera.viewMatrix);
+
+        var positionNDC = this._positionNDC;
+        var points = this._points;
+        var nPoints = points.length / 3;
+        if (!positionNDC || positionNDC.length / 2 !== nPoints) {
+            positionNDC = this._positionNDC = new Float32Array(nPoints * 2);
+        }
+        var pos = [];
+        for (var i = 0; i < nPoints; i++) {
+            var i3 = i * 3;
+            var i2 = i * 2;
+            pos[0] = points[i3];
+            pos[1] = points[i3 + 1];
+            pos[2] = points[i3 + 2];
+            pos[3] = 1;
+
+            vec3.transformMat4(pos, pos, worldViewProjection._array);
+            positionNDC[i2] = pos[0] / pos[3];
+            positionNDC[i2 + 1] = pos[1] / pos[3];
+        }
+    },
+
+    _pick: function (x, y, renderer, camera, renderable, out) {
+        var positionNDC = this._positionNDC;
+        var seriesModel = this._data.hostModel;
+        var lineWidth = seriesModel.get('lineStyle.width');
+
+        var dataIndex = -1;
+        var width = renderer.viewport.width;
+        var height = renderer.viewport.height;
+
+        var halfWidth = width * 0.5;
+        var halfHeight = height * 0.5;
+        x = (x + 1) * halfWidth;
+        y = (y + 1) * halfHeight;
+
+        for (var i = 1; i < positionNDC.length / 2; i++) {
+            var x0 = (positionNDC[(i - 1) * 2] + 1) * halfWidth;
+            var y0 = (positionNDC[(i - 1) * 2 + 1] + 1) * halfHeight;
+            var x1 = (positionNDC[i * 2] + 1) * halfWidth;
+            var y1 = (positionNDC[i * 2 + 1] + 1) * halfHeight;
+
+            if (lineContain.containStroke(x0, y0, x1, y1, lineWidth, x, y)) {
+                var dist0 = (x0 - x) * (x0 - x) + (y0 - y) * (y0 - y);
+                var dist1 = (x1 - x) * (x1 - x) + (y1 - y) * (y1 - y);
+                // Nearest point.
+                dataIndex = dist0 < dist1 ? (i - 1) : i;
+            }
+        }
+
+        if (dataIndex >= 0) {
+            var i3 = dataIndex * 3;
+            var point = new Vector3(
+                this._points[i3],
+                this._points[i3 + 1],
+                this._points[i3 + 2]
+            );
+
+            out.push({
+                dataIndex: dataIndex,
+                point: point,
+                pointWorld: point.clone(),
+                target: this._line3DMesh,
+                distance: this._camera.getWorldPosition().dist(point)
+            });
+        }
     },
 
     remove: function () {
