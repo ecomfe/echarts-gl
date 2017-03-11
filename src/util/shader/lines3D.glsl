@@ -16,14 +16,13 @@ void main()
 
 @export ecgl.lines3D.fragment
 
-uniform vec3 color : [1.0, 1.0, 1.0];
-uniform float alpha : 1.0;
+uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 varying vec4 v_Color;
 
 void main()
 {
-    gl_FragColor = vec4(color, alpha) * v_Color;
+    gl_FragColor = color * v_Color;
 }
 @end
 

@@ -14,6 +14,7 @@ var dynamicConvertMixin = require('./dynamicConvertMixin');
 // var CURVE_RECURSION_LIMIT = 8;
 // var CURVE_COLLINEAR_EPSILON = 40;
 
+var sampleLinePoints = [[0, 0], [1, 1]];
 /**
  * @constructor
  * @alias module:echarts-gl/util/geometry/LinesGeometry
@@ -142,7 +143,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @return {number}
      */
     getLineVertexCount: function () {
-        return this.getPolylineVertexCount(2);
+        return this.getPolylineVertexCount(sampleLinePoints);
     },
 
     /**
@@ -150,18 +151,18 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @return {number}
      */
     getLineTriangleCount: function () {
-        return this.getPolylineTriangleCount(2);
+        return this.getPolylineTriangleCount(sampleLinePoints);
     },
 
     getPolylineVertexCount: function (points) {
         var is2DArray = typeof points[0] !== 'number';
-        var pointsLen = is2DArray ? points.length : (points.length / 2);
+        var pointsLen = is2DArray ? points.length : (points.length / 3);
         return !this.useNativeLine ? ((pointsLen - 1) * 2 + 2) : (pointsLen - 1) * 2;
     },
 
     getPolylineTriangleCount: function (points) {
         var is2DArray = typeof points[0] !== 'number';
-        var pointsLen = is2DArray ? points.length : (points.length / 2);
+        var pointsLen = is2DArray ? points.length : (points.length / 3);
         return !this.useNativeLine ? (pointsLen - 1) * 2 : 0;
     },
 
@@ -259,7 +260,6 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @param {number} [lineWidth=1]
      * @param {boolean} [notSharingColor=false]
      */
-    // TODO Color Array.
     addPolyline: function (points, color, lineWidth, notSharingColor) {
         if (!points.length) {
             return;
@@ -281,15 +281,35 @@ var LinesGeometry = StaticGeometry.extend(function () {
         var pointCount = is2DArray ? points.length : points.length / 3;
         var iterCount = !this.useNativeLine ? pointCount : (pointCount - 1);
         var point;
+        var pointColor;
         for (var k = 0; k < iterCount; k++) {
             if (is2DArray) {
                 point = points[k];
+                if (notSharingColor) {
+                    pointColor = color[k];
+                }
+                else {
+                    pointColor = color;
+                }
             }
             else {
+                var k3 = k * 3;
                 point = point || [];
-                point[0] = points[k * 3];
-                point[1] = points[k * 3 + 1];
-                point[2] = points[k * 3 + 2];
+                point[0] = points[k3];
+                point[1] = points[k3 + 1];
+                point[2] = points[k3 + 2];
+
+                if (notSharingColor) {
+                    var k4 = k * 4;
+                    pointColor = pointColor || [];
+                    pointColor[0] = color[k4];
+                    pointColor[1] = color[k4 + 1];
+                    pointColor[2] = color[k4 + 2];
+                    pointColor[3] = color[k4 + 3];
+                }
+                else {
+                    pointColor = color;
+                }
             }
             if (!this.useNativeLine) {
                 if (k < iterCount - 1) {
@@ -306,8 +326,8 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 positionAttr.set(vertexOffset, point);
                 positionAttr.set(vertexOffset + 1, point);
 
-                colorAttr.set(vertexOffset, color);
-                colorAttr.set(vertexOffset + 1, color);
+                colorAttr.set(vertexOffset, pointColor);
+                colorAttr.set(vertexOffset + 1, pointColor);
 
                 offsetAttr.set(vertexOffset, lineWidth / 2);
                 offsetAttr.set(vertexOffset + 1, -lineWidth / 2);
@@ -345,7 +365,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 }
             }
             else {
-                colorAttr.set(vertexOffset, color);
+                colorAttr.set(vertexOffset, pointColor);
                 positionAttr.set(vertexOffset, point);
                 vertexOffset++;
             }

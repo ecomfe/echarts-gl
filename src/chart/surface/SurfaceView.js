@@ -45,6 +45,10 @@ echarts.extendChartView({
         echarts.util.extend(mesh.geometry, trianglesSortMixin);
 
         this._surfaceMesh = mesh;
+
+        // TODO Cross mesh.
+        // this._pointerMesh = new graphicGL.Mesh({
+        // });
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -106,36 +110,38 @@ echarts.extendChartView({
         var coordSys = seriesModel.coordinateSystem;
         var isCartesian3D = coordSys.type === 'cartesian3D';
 
-        var lastDataIndex = -1;
-
-        function getNearestPoint(triangle, point) {
+        function getNearestPointIdx(triangle, point) {
             var nearestDist = Infinity;
-            var nearestPoint;
+            var nearestIdx = -1;
             var pos = [];
             for (var i = 0; i < triangle.length; i++) {
                 surfaceMesh.geometry.attributes.position.get(triangle[i], pos);
                 var dist = vec3.dist(point._array, pos);
                 if (dist < nearestDist) {
                     nearestDist = dist;
-                    nearestPoint = pos.slice();
+                    nearestIdx = triangle[i];
                 }
             }
-            return nearestPoint;
+            return nearestIdx;
         }
+
+        var lastDataIndex = -1;
 
         surfaceMesh.off('mousemove');
         surfaceMesh.off('mouseout');
         surfaceMesh.on('mousemove', function (e) {
             if (isCartesian3D) {
-                var point = getNearestPoint(e.triangle, e.point);
-                var value = coordSys.pointToData(point);
-                if (point) {
+                var idx = getNearestPointIdx(e.triangle, e.point);
+                if (idx >= 0) {
+                    var point = [];
+                    surfaceMesh.geometry.attributes.position.get(idx, point);
+                    var value = coordSys.pointToData(point);
                     api.dispatchAction({
                         type: 'grid3DShowAxisPointer',
                         value: value
                     });
+                    var dataIdx = data.indexOfNearest('z', value[2]);
                 }
-                var dataIdx = data.indexOfNearst('z', value[2]);
             }
         });
         surfaceMesh.on('mouseout', function (e) {

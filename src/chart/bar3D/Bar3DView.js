@@ -121,7 +121,6 @@ module.exports = echarts.extendChartView({
         var barCount = 0;
         var hasTransparent = false;
 
-        // Seperate opaque and transparent bars.
         data.each(function (idx) {
             if (!data.hasValue(idx)) {
                 return;
