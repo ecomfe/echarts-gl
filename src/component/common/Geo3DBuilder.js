@@ -79,16 +79,12 @@ Geo3DBuilder.prototype = {
             this.rootNode.add(this._labelsBuilder.getMesh());
         }
 
-        // Update materials
-        var realisticMaterialModel = componentModel.getModel('realisticMaterial');
-        var roughness = retrieve.firstNotNull(realisticMaterialModel.get('roughness'), 0.5);
-        var metalness = realisticMaterialModel.get('metalness') || 0;
-
         var shader = this._getShader(componentModel.get('shading'));
         var srgbDefineMethod = geo3D.viewGL.isLinearSpace() ? 'define' : 'unDefine';
         shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
 
         var data = componentModel.getData();
+
         geo3D.regions.forEach(function (region) {
             var dataIndex = data.indexOfName(region.name);
 
@@ -101,6 +97,18 @@ Geo3DBuilder.prototype = {
             var itemStyleModel = regionModel.getModel('itemStyle');
             var color = itemStyleModel.get('areaColor');
             var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
+
+            // Materials configurations.
+            var realisticMaterialModel = regionModel.getModel('realisticMaterial');
+            var roughness = retrieve.firstNotNull(realisticMaterialModel.get('roughness'), 0.5);
+            var metalness = realisticMaterialModel.get('metalness') || 0;
+
+            var baseTexture = regionModel.get('baseTexture');
+            polygonMesh.setTextureImage('diffuseMap', baseTexture, api, {
+                anisotropic: 8,
+                wrapS: graphicGL.Texture.REPEAT,
+                wrapT: graphicGL.Texture.REPEAT
+            });
 
             // Use visual color if it is encoded by visualMap component
             var visualColor = data.getItemVisual(dataIndex, 'color', true);
@@ -120,6 +128,8 @@ Geo3DBuilder.prototype = {
                 roughness: roughness,
                 metalness: metalness,
                 color: color
+                // TODO
+                // uvRepeat: [4, 4]
             });
             var isTransparent = color[3] < 0.99;
             polygonMesh.material.transparent = isTransparent;
@@ -312,6 +322,8 @@ Geo3DBuilder.prototype = {
         this._triangulationResults = {};
         var triangulator = this._triangulator;
 
+        var minAll = [Infinity, Infinity, Infinity];
+        var maxAll = [-Infinity, -Infinity, -Infinity];
         geo3D.regions.forEach(function (region) {
             var polygons = [];
             for (var i = 0; i < region.geometries.length; i++) {
@@ -361,21 +373,27 @@ Geo3DBuilder.prototype = {
                     points3[off3++] = pos[1];
                     points3[off3++] = pos[2];
                 }
+                vec3.min(minAll, minAll, min);
+                vec3.max(maxAll, maxAll, max);
                 polygons.push({
                     points: points3,
                     min: min,
                     max: max,
+                    minAll: minAll,
+                    maxAll: maxAll,
                     indices: triangulator.triangles
                 });
             }
             this._triangulationResults[region.name] = polygons;
         }, this);
+
     },
 
     _updatePolygonGeometry: function (geometry, region, regionHeight) {
         var indices = this.indices;
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
+        var texcoordAttr = geometry.attributes.texcoord0;
         var polygons = this._triangulationResults[region.name];
 
         var sideVertexCount = 0;
@@ -391,38 +409,33 @@ Geo3DBuilder.prototype = {
 
         positionAttr.init(vertexCount);
         normalAttr.init(vertexCount);
+        texcoordAttr.init(vertexCount);
         indices = geometry.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
 
         var vertexOffset = 0;
         var faceOffset = 0;
 
+        var min = polygons[0].minAll;
+        var max = polygons[0].maxAll;
+        var maxDimSize = Math.max(max[0] - min[0], max[2] - min[2]);
+
         function addVertices(polygon, y, insideOffset) {
-            var nextPosition = [];
-            var insidePosition = [];
-            var normal = [];
-            var a = [];
-            var b = [];
             var points = polygon.points;
 
             var pointsLen = points.length;
-            var prevPosition = [points[pointsLen - 3], y, points[pointsLen - 1]];
-            var currentPosition = [points[0], y, points[2]];
+            var currentPosition = [];
+            var uv = [];
 
-            for (var k = 3; k <= pointsLen; k += 3) {
-                nextPosition[0] = points[(k) % pointsLen];
-                nextPosition[1] = y;
-                nextPosition[2] = points[(k + 2) % pointsLen];
+            for (var k = 0; k < pointsLen; k += 3) {
+                currentPosition[0] = points[k];
+                currentPosition[1] = y;
+                currentPosition[2] = points[k + 2];
 
-                vec3.sub(a, prevPosition, currentPosition);
-                vec3.sub(b, nextPosition, currentPosition);
-                vec3.add(normal, a, b);
-                vec3.normalize(normal, normal);
-                vec3.scaleAndAdd(insidePosition, currentPosition, normal, insideOffset);
+                uv[0] = (points[k] - min[0]) / maxDimSize;
+                uv[1] = (points[k + 2] - min[2]) / maxDimSize;
 
-                positionAttr.set(vertexOffset++, insidePosition);
-
-                vec3.copy(prevPosition, currentPosition);
-                vec3.copy(currentPosition, nextPosition);
+                positionAttr.set(vertexOffset, currentPosition);
+                texcoordAttr.set(vertexOffset++, uv);
             }
         }
 
@@ -460,9 +473,9 @@ Geo3DBuilder.prototype = {
             var a = [];
             var b = [];
             var normal = [];
+            var uv = [];
             for (var v = 0; v < ringVertexCount; v++) {
                 var next = (v + 1) % ringVertexCount;
-
                 // 0----1
                 // 3----2
                 for (var k = 0; k < 4; k++) {
@@ -470,7 +483,16 @@ Geo3DBuilder.prototype = {
                     quadPos[k][0] = polygon.points[idx3];
                     quadPos[k][1] = k > 1 ? regionHeight : 0;
                     quadPos[k][2] = polygon.points[idx3 + 2];
+
                     positionAttr.set(vertexOffset + k, quadPos[k]);
+
+                    // Make sure side uv and top uv have no seam.
+                    // PENDING
+                    uv[0] = (quadPos[k][0] - min[0]) / maxDimSize;
+                    uv[1] = (quadPos[k][2] - min[2]) / maxDimSize;
+                    if (k > 1) {
+                        uv[0] -=  regionHeight / maxDimSize;
+                    }
                 }
                 vec3.sub(a, quadPos[1], quadPos[0]);
                 vec3.sub(b, quadPos[3], quadPos[0]);

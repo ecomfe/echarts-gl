@@ -57,6 +57,8 @@ module.exports = {
 
         shading: 'lambert',
 
+        baseTexture: null,
+
         realisticMaterial: {
             roughness: 0.5,
             metalness: 0

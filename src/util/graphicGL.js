@@ -1,5 +1,6 @@
 var Mesh = require('qtek/lib/Mesh');
 var Texture2D = require('qtek/lib/Texture2D');
+var Texture = require('qtek/lib/Texture');
 var Shader = require('qtek/lib/Shader');
 var Material = require('qtek/lib/Material');
 var Node3D = require('qtek/lib/Node');
@@ -129,6 +130,8 @@ graphicGL.createShader = function (prefix) {
 graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic'];
 
 graphicGL.Material = Material;
+
+graphicGL.Texture = Texture;
 
 graphicGL.Texture2D = Texture2D;
 

@@ -72,6 +72,8 @@ var Geo3DModel = echarts.extendComponentModel({
         // itemStyle: {},
         // height,
         // label: {}
+        // realisticMaterial
+        // baseTexture
         regions: []
     }
 });
