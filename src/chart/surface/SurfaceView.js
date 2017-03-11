@@ -95,6 +95,58 @@ echarts.extendChartView({
         else {
             material.shader.unDefine('WIREFRAME_QUAD');
         }
+
+        this._initHandler(seriesModel, api);
+    },
+
+    _initHandler: function (seriesModel, api) {
+        var data = seriesModel.getData();
+        var surfaceMesh = this._surfaceMesh;
+
+        var coordSys = seriesModel.coordinateSystem;
+        var isCartesian3D = coordSys.type === 'cartesian3D';
+
+        var lastDataIndex = -1;
+
+        function getNearestPoint(triangle, point) {
+            var nearestDist = Infinity;
+            var nearestPoint;
+            var pos = [];
+            for (var i = 0; i < triangle.length; i++) {
+                surfaceMesh.geometry.attributes.position.get(triangle[i], pos);
+                var dist = vec3.dist(point._array, pos);
+                if (dist < nearestDist) {
+                    nearestDist = dist;
+                    nearestPoint = pos.slice();
+                }
+            }
+            return nearestPoint;
+        }
+
+        surfaceMesh.off('mousemove');
+        surfaceMesh.off('mouseout');
+        surfaceMesh.on('mousemove', function (e) {
+            if (isCartesian3D) {
+                var point = getNearestPoint(e.triangle, e.point);
+                var value = coordSys.pointToData(point);
+                if (point) {
+                    api.dispatchAction({
+                        type: 'grid3DShowAxisPointer',
+                        value: value
+                    });
+                }
+                var dataIdx = data.indexOfNearst('z', value[2]);
+            }
+        });
+        surfaceMesh.on('mouseout', function (e) {
+            lastDataIndex = -1;
+
+            if (isCartesian3D) {
+                api.dispatchAction({
+                    type: 'grid3DHideAxisPointer'
+                });
+            }
+        });
     },
 
     _updateSurfaceMesh: function (surfaceMesh, seriesModel, dataShape, showWireframe) {
