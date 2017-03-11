@@ -51,6 +51,7 @@ var grid3DCreator = {
             grid3DModel.__viewGL = grid3DModel.__viewGL || new ViewGL();
 
             var cartesian3D = new Cartesian3D();
+            cartesian3D.model = grid3DModel;
             cartesian3D.viewGL = grid3DModel.__viewGL;
 
             grid3DModel.coordinateSystem = cartesian3D;

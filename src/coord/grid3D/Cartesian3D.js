@@ -16,6 +16,8 @@ Cartesian3D.prototype = {
 
     dimensions: ['x', 'y', 'z'],
 
+    model: null,
+
     containPoint: function (point) {
         return this.getAxis('x').contain(point[0])
             && this.getAxis('y').contain(point[2])

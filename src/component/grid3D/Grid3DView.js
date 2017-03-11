@@ -12,25 +12,13 @@ var Grid3DFace = require('./Grid3DFace');
 var Grid3DAxis = require('./Grid3DAxis');
 var LabelsMesh = require('../../util/mesh/LabelsMesh');
 
-var dims = ['x', 'y', 'z'];
-
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
-dims.forEach(function (dim) {
+['x', 'y', 'z'].forEach(function (dim) {
     echarts.extendComponentView({
         type: dim + 'Axis3D'
     });
 });
-
-var FACES = [
-    // planeDim0, planeDim1, offsetDim, dir on dim3 axis(gl), plane.
-    ['y', 'z', 'x', -1, 'left'],
-    ['y', 'z', 'x',  1, 'right'],
-    ['x', 'y', 'z', -1, 'bottom'],
-    ['x', 'y','z',  1, 'top'],
-    ['x', 'z', 'y', -1, 'far'],
-    ['x', 'z','y',  1, 'near']
-];
 
 var dimIndicesMap = {
     // Left to right
@@ -48,6 +36,18 @@ module.exports = echarts.extendComponentView({
     __ecgl__: true,
 
     init: function (ecModel, api) {
+
+        var FACES = [
+            // planeDim0, planeDim1, offsetDim, dir on dim3 axis(gl), plane.
+            ['y', 'z', 'x', -1, 'left'],
+            ['y', 'z', 'x',  1, 'right'],
+            ['x', 'y', 'z', -1, 'bottom'],
+            ['x', 'y','z',  1, 'top'],
+            ['x', 'z', 'y', -1, 'far'],
+            ['x', 'z','y',  1, 'near']
+        ];
+
+        var DIMS = ['x', 'y', 'z'];
 
         var quadsMaterial = new graphicGL.Material({
             // transparent: true,
@@ -79,7 +79,7 @@ module.exports = echarts.extendComponentView({
         }, this);
 
         // Save mesh and other infos for each axis.
-        this._axes = dims.map(function (dim) {
+        this._axes = DIMS.map(function (dim) {
             var axis = new Grid3DAxis(dim, linesMaterial);
             this.groupGL.add(axis.rootNode);
             return axis;

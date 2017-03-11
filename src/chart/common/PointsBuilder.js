@@ -166,6 +166,7 @@ PointsBuilder.prototype = {
 
         var lastDataIndex = -1;
         var isCartesian3D = seriesModel.coordinateSystem.type === 'cartesian3D';
+        var grid3DModel = seriesModel.coordinateSystem.model;
 
         pointsMesh.off('mousemove');
         pointsMesh.off('mouseout');
@@ -180,7 +181,8 @@ PointsBuilder.prototype = {
                 if (isCartesian3D) {
                     api.dispatchAction({
                         type: 'grid3DShowAxisPointer',
-                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex)]
+                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex)],
+                        grid3DIndex: grid3DModel.componentIndex
                     });
                 }
             }
@@ -193,7 +195,8 @@ PointsBuilder.prototype = {
 
             if (isCartesian3D) {
                 api.dispatchAction({
-                    type: 'grid3DHideAxisPointer'
+                    type: 'grid3DHideAxisPointer',
+                    grid3DIndex: grid3DModel.componentIndex
                 });
             }
         }, this);

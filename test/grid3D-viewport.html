@@ -15,14 +15,8 @@
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
-            var axisLine = {
-                lineStyle: {
-                    width: 10,
-                    color: 'rgba(255, 255, 255, 0.3)'
-                }
-            };
             chart.setOption({
-
+                backgroundColor: '#fff',
                 xAxis3D: [{
                     type: 'category',
                     data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -56,18 +50,16 @@
                     width: 800,
                     height: 600,
                     temporalSuperSampling: {
-                        enable: true
-                    },
-                    axisLine: axisLine
+                        // enable: true
+                    }
                 }, {
                     top: 100,
-                    left: 500,
+                    left: 700,
                     width: 500,
                     height: 400,
                     temporalSuperSampling: {
-                        enable: true
-                    },
-                    axisLine: axisLine
+                        // enable: true
+                    }
                 }],
                 series: [{
                     type: 'scatter3D',
