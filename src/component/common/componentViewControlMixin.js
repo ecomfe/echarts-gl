@@ -28,9 +28,7 @@ module.exports = {
             beta: 0,
 
             minAlpha: -90,
-            maxAlpha: 90,
-            minBeta: -180,
-            maxBeta: 180
+            maxAlpha: 90
         }
     },
 

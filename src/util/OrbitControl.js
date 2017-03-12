@@ -59,11 +59,11 @@ var OrbitControl = Base.extend(function () {
         /**
          * Minimum beta rotation
          */
-        minBeta: -180,
+        minBeta: -Infinity,
         /**
          * Maximum beta rotation
          */
-        maxBeta: 180,
+        maxBeta: Infinity,
 
         /**
          * Start auto rotating after still for the given time
@@ -250,8 +250,8 @@ var OrbitControl = Base.extend(function () {
 
         this.minAlpha = retrieve.firstNotNull(viewControlModel.get('minAlpha'), -90);
         this.maxAlpha = retrieve.firstNotNull(viewControlModel.get('maxAlpha'), 90);
-        this.minBeta = retrieve.firstNotNull(viewControlModel.get('minBeta'), -180);
-        this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), 180);
+        this.minBeta = retrieve.firstNotNull(viewControlModel.get('minBeta'), -Infinity);
+        this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), Infinity);
 
         this.setAlpha(viewControlModel.get('alpha') || 0);
         this.setBeta(viewControlModel.get('beta') || 0);
