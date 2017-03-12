@@ -75,33 +75,29 @@ Scene.prototype.removeFromScene = function (node) {
  * @param {module:echarts/ExtensionAPI} api
  * @param {Object} [textureOpts]
  */
-Mesh.prototype.setTextureImage = function (textureName, imgValue, api, textureOpts) {
+Material.prototype.setTextureImage = function (textureName, imgValue, api, textureOpts) {
     if (api == null) {
         api = textureOpts;
     }
 
-    var material = this.material;
-    if (!material || !material.shader) {
+    if (!this.shader) {
         return;
     }
 
     var zr = api.getZr();
-    var mesh = this;
-
+    var material = this;
+    var texture;
     // disableTexture first
     material.shader.disableTexture(textureName);
     if (!isValueNone(imgValue)) {
-        graphicGL.loadTexture(imgValue, api, textureOpts, function (texture) {
-            if (texture.surface) {
-                texture.surface.attachToMesh(mesh);
-            }
+        texture = graphicGL.loadTexture(imgValue, api, textureOpts, function (texture) {
             material.shader.enableTexture(textureName);
             material.set(textureName, texture);
             zr && zr.refresh();
         });
     }
 
-    return material.get(textureName);
+    return texture;
 };
 
 var graphicGL = {};
@@ -111,23 +107,6 @@ graphicGL.Node = Node3D;
 graphicGL.Mesh = Mesh;
 
 graphicGL.Shader = Shader;
-
-graphicGL.createShader = function (prefix) {
-    var vertexShaderStr = Shader.source(prefix + '.vertex');
-    var fragmentShaderStr = Shader.source(prefix + '.fragment');
-    if (!vertexShaderStr) {
-        console.error('Vertex shader of \'%s\' not exits', prefix);
-    }
-    if (!fragmentShaderStr) {
-        console.error('Fragment shader of \'%s\' not exits', prefix);
-    }
-    return new Shader({
-        vertex: vertexShaderStr,
-        fragment: fragmentShaderStr
-    });
-};
-
-graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic'];
 
 graphicGL.Material = Material;
 
@@ -398,6 +377,94 @@ graphicGL.getShadowResolution = function (shadowQuality) {
             break;
     }
     return shadowResolution;
+};
+
+/**
+ * Shading utilities
+ */
+graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic'];
+
+/**
+ * Create shader including vertex and fragment
+ * @param {string} prefix.
+ */
+graphicGL.createShader = function (prefix) {
+    var vertexShaderStr = Shader.source(prefix + '.vertex');
+    var fragmentShaderStr = Shader.source(prefix + '.fragment');
+    if (!vertexShaderStr) {
+        console.error('Vertex shader of \'%s\' not exits', prefix);
+    }
+    if (!fragmentShaderStr) {
+        console.error('Fragment shader of \'%s\' not exits', prefix);
+    }
+    return new Shader({
+        vertex: vertexShaderStr,
+        fragment: fragmentShaderStr
+    });
+};
+/**
+ * Set material from model.
+ * @param {qtek.Material} material
+ * @param {module:echarts/model/Model} model
+ * @param {module:echarts/ExtensionAPI} api
+ */
+graphicGL.setMaterialFromModel = function (shading, material, model, api) {
+    var materialModel = model.getModel(shading + 'Material');
+    var baseTexture = materialModel.get('baseTexture');
+    var uvRepeat = retrieve.firstNotNull(materialModel.get('textureTiling'), 1.0);
+    var uvOffset = retrieve.firstNotNull(materialModel.get('textureOffset'), 1.0);
+    if (typeof uvRepeat == 'number') {
+        uvRepeat = [uvRepeat, uvRepeat];
+    }
+    if (typeof uvOffset == 'number') {
+        uvOffset = [uvOffset, uvRepeat];
+    }
+    var textureOpt = {
+        anisotropic: 8,
+        wrapS: graphicGL.Texture.REPEAT,
+        wrapT: graphicGL.Texture.REPEAT
+    };
+    if (shading === 'realistic') {
+        var roughness = retrieve.firstNotNull(materialModel.get('roughness'), 0.5);
+        var metalness = materialModel.get('metalness') || 0;
+        var roughnessTexture = materialModel.get('roughnessTexture');
+        var metalnessTexture = materialModel.get('metalnessTexture');
+        if (metalness == null) {
+            if (metalnessTexture == null) {
+                metalness = 0.0;
+            }
+            else {
+                metalness = 0.5;
+            }
+        }
+        if (roughness == null) {
+            roughness = 0.5;
+        }
+
+        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.setTextureImage('roughnessMap', roughnessTexture, api, textureOpt);
+        material.setTextureImage('metalnessMap', metalnessTexture, api, textureOpt);
+        material.set({
+            roughness: roughness,
+            metalness: metalness,
+            uvRepeat: uvRepeat,
+            uvOffset: uvOffset
+        });
+    }
+    else if (shading === 'lambert') {
+        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.set({
+            uvRepeat: uvRepeat,
+            uvOffset: uvOffset
+        });
+    }
+    else if (shading === 'color') {
+        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.set({
+            uvRepeat: uvRepeat,
+            uvOffset: uvOffset
+        });
+    }
 };
 
 module.exports = graphicGL;

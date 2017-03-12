@@ -67,13 +67,10 @@ echarts.extendChartView({
             }
             this._surfaceMesh.material = this._materials.lambert;
         }
-        if (shading === 'realistic') {
-            var matModel = seriesModel.getModel('realisticMaterial');
-            this._surfaceMesh.material.set({
-                roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
-                metalness: matModel.get('metalness') || 0
-            });
-        }
+
+        graphicGL.setMaterialFromModel(
+            shading, this._surfaceMesh.material, seriesModel, api
+        );
 
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);

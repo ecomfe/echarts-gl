@@ -95,14 +95,9 @@ module.exports = echarts.extendChartView({
             }
             barMesh.material = this._materials.lambert;
         }
-        if (shading === 'realistic') {
-            var matModel = seriesModel.getModel('realisticMaterial');
-            var matOpt = {
-                roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
-                metalness: matModel.get('metalness') || 0
-            };
-            barMesh.material.set(matOpt);
-        }
+        graphicGL.setMaterialFromModel(
+            shading, barMesh.material, seriesModel, api
+        );
 
         barMesh.geometry.enableNormal = enableNormal;
 

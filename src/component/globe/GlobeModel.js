@@ -2,6 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var componentViewControlMixin = require('../common/componentViewControlMixin');
 var componentPostEffectMixin = require('../common/componentPostEffectMixin');
 var componentLightMixin = require('../common/componentLightMixin');
+var componentShadingMixin = require('../common/componentShadingMixin');
 
 
 function defaultId(option, idx) {
@@ -97,12 +98,7 @@ var GlobeModel = echarts.extendComponentModel({
         globeRadius: 100,
 
         // Shading of globe
-        shading: 'color',
-
-        realisticMaterial: {
-            roughness: 0.5,
-            metalness: 0
-        },
+        shading: 'lambert',
 
         // Extend light
         light: {
@@ -147,5 +143,6 @@ var GlobeModel = echarts.extendComponentModel({
 echarts.util.merge(GlobeModel.prototype, componentViewControlMixin);
 echarts.util.merge(GlobeModel.prototype, componentPostEffectMixin);
 echarts.util.merge(GlobeModel.prototype, componentLightMixin);
+echarts.util.merge(GlobeModel.prototype, componentShadingMixin);
 
 module.exports = GlobeModel;

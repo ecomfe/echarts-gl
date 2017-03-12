@@ -1,6 +1,7 @@
 var echarts = require('echarts/lib/echarts');
+var componentShadingMixin = require('../../component/common/componentShadingMixin');
 
-echarts.extendSeriesModel({
+var SurfaceSeries = echarts.extendSeriesModel({
 
     type: 'series.surface',
 
@@ -116,10 +117,6 @@ echarts.extendSeriesModel({
         // Surface needs lambert shading to show the difference
         shading: 'lambert',
 
-        realisticMaterial: {
-            roughness: 0.5,
-            metalness: 0
-        },
         // If parametric surface
         parametric: false,
 
@@ -169,3 +166,7 @@ echarts.extendSeriesModel({
         }
     }
 });
+
+echarts.util.merge(SurfaceSeries.prototype, componentShadingMixin);
+
+module.exports = SurfaceSeries;

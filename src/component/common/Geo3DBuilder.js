@@ -99,16 +99,7 @@ Geo3DBuilder.prototype = {
             var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
 
             // Materials configurations.
-            var realisticMaterialModel = regionModel.getModel('realisticMaterial');
-            var roughness = retrieve.firstNotNull(realisticMaterialModel.get('roughness'), 0.5);
-            var metalness = realisticMaterialModel.get('metalness') || 0;
-
-            var baseTexture = regionModel.get('baseTexture');
-            polygonMesh.setTextureImage('diffuseMap', baseTexture, api, {
-                anisotropic: 8,
-                wrapS: graphicGL.Texture.REPEAT,
-                wrapT: graphicGL.Texture.REPEAT
-            });
+            graphicGL.setMaterialFromModel(shader.__shading, polygonMesh.material, regionModel, api);
 
             // Use visual color if it is encoded by visualMap component
             var visualColor = data.getItemVisual(dataIndex, 'color', true);
@@ -125,11 +116,7 @@ Geo3DBuilder.prototype = {
             color[3] *= opacity;
             borderColor[3] *= opacity;
             polygonMesh.material.set({
-                roughness: roughness,
-                metalness: metalness,
                 color: color
-                // TODO
-                // uvRepeat: [4, 4]
             });
             var isTransparent = color[3] < 0.99;
             polygonMesh.material.transparent = isTransparent;
@@ -315,6 +302,7 @@ Geo3DBuilder.prototype = {
             // Default use lambert shader.
             shader = this._shadersMap.lambert;
         }
+        shader.__shading = shading;
         return shader;
     },
 
@@ -491,8 +479,9 @@ Geo3DBuilder.prototype = {
                     uv[0] = (quadPos[k][0] - min[0]) / maxDimSize;
                     uv[1] = (quadPos[k][2] - min[2]) / maxDimSize;
                     if (k > 1) {
-                        uv[0] -=  regionHeight / maxDimSize;
+                        uv[0] -= regionHeight / maxDimSize;
                     }
+                    texcoordAttr.set(vertexOffset + k, uv);
                 }
                 vec3.sub(a, quadPos[1], quadPos[0]);
                 vec3.sub(b, quadPos[3], quadPos[0]);

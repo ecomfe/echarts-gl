@@ -1,4 +1,5 @@
 var echarts = require('echarts/lib/echarts');
+var componentShadingMixin = require('../../component/common/componentShadingMixin');
 
 var Bar3DSeries = echarts.extendSeriesModel({
 
@@ -47,11 +48,6 @@ var Bar3DSeries = echarts.extendSeriesModel({
         // Shading of globe
         shading: 'color',
 
-        realisticMaterial: {
-            roughness: 0.5,
-            metalness: 0
-        },
-
         // If coordinateSystem is globe, value will be mapped
         // from minHeight to maxHeight
         minHeight: 0,
@@ -78,5 +74,7 @@ var Bar3DSeries = echarts.extendSeriesModel({
         }
     }
 });
+
+echarts.util.merge(Bar3DSeries.prototype, componentShadingMixin);
 
 module.exports = Bar3DSeries;

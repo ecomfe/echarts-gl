@@ -109,16 +109,22 @@ module.exports = echarts.extendComponentView({
 
         earthMesh.scale.set(coordSys.radius, coordSys.radius, coordSys.radius);
 
-        earthMesh.setTextureImage('diffuseMap', globeModel.get('baseTexture'), api, {
+        var diffuseTexture = earthMesh.material.setTextureImage('diffuseMap', globeModel.get('baseTexture'), api, {
             flipY: false,
             anisotropic: 8
         });
+        if (diffuseTexture && diffuseTexture.surface) {
+            diffuseTexture.surface.attachToMesh(earthMesh);
+        }
 
         // Update bump map
-        earthMesh.setTextureImage('bumpMap', globeModel.get('heightTexture'), api, {
+        var bumpTexture = earthMesh.material.setTextureImage('bumpMap', globeModel.get('heightTexture'), api, {
             flipY: false,
             anisotropic: 8
         });
+        if (bumpTexture && bumpTexture.surface) {
+            bumpTexture.surface.attachToMesh(earthMesh);
+        }
 
         earthMesh.material.shader[globeModel.get('postEffect.enable') ? 'define' : 'unDefine']('fragment', 'SRGB_DECODE');
 
