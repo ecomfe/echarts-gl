@@ -413,11 +413,11 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     var baseTexture = materialModel.get('baseTexture');
     var uvRepeat = retrieve.firstNotNull(materialModel.get('textureTiling'), 1.0);
     var uvOffset = retrieve.firstNotNull(materialModel.get('textureOffset'), 1.0);
-    if (typeof uvRepeat == 'number') {
+    if (typeof uvRepeat === 'number') {
         uvRepeat = [uvRepeat, uvRepeat];
     }
-    if (typeof uvOffset == 'number') {
-        uvOffset = [uvOffset, uvRepeat];
+    if (typeof uvOffset === 'number') {
+        uvOffset = [uvOffset, uvOffset];
     }
     var textureOpt = {
         anisotropic: 8,
