@@ -98,6 +98,7 @@ module.exports = echarts.extendComponentView({
         this._axisPointerLineMesh = new graphicGL.Mesh({
             geometry: new Lines3DGeometry({ useNativeLine: false }),
             material: linesMaterial,
+            castShadow: false,
             // PENDING
             ignorePicking: true, renderOrder: 3
         });
@@ -108,7 +109,8 @@ module.exports = echarts.extendComponentView({
             devicePixelRatio: dpr
         });
         this._axisPointerLabelsMesh = new LabelsMesh({
-            ignorePicking: true, renderOrder: 4
+            ignorePicking: true, renderOrder: 4,
+            castShadow: false
         });
         this._axisPointerLabelsMesh.material.set('textureAtlas', this._axisPointerLabelsSurface.getTexture());
         this.groupGL.add(this._axisPointerLabelsMesh);

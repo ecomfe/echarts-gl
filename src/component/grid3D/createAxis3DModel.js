@@ -36,7 +36,7 @@ module.exports = function (dim, BaseAxisModelClass, axisTypeDefaulter, extraDefa
 
     // TODO
     BaseAxisModelClass.superClass.registerSubTypeDefaulter(
-        dim + 'Axis',
+        dim + 'Axis3D',
         echarts.util.curry(axisTypeDefaulter, dim)
     );
 };

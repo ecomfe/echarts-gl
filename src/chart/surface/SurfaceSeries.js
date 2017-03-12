@@ -122,8 +122,11 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
         wireframe: {
             show: true,
-            lineWidth: 1,
-            lineColor: '#222'
+
+            lineStyle: {
+                color: '#222',
+                width: 1
+            }
         },
         /**
          * Generate surface data from z = f(x, y) equation

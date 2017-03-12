@@ -37,10 +37,11 @@
                     geo3D: {
                         map: 'world',
                         shading: 'lambert',
-                        realisticMaterial: {
-                            roughness: 0.2,
-                            metalness: 0
+                        lambertMaterial: {
+                            baseTexture: 'asset/woods.jpg',
+                            textureTiling: 20
                         },
+
                         postEffect: {
                             enable: true,
                             SSAO: {

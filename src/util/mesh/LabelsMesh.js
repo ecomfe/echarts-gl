@@ -17,6 +17,7 @@ module.exports = graphicGL.Mesh.extend(function () {
         geometry: geometry,
         material: material,
         culling: false,
+        castShadow: false,
         ignorePicking: true
     };
 });

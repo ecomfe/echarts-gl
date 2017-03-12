@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Surface - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            chart.setOption({
+                backgroundColor: '#fff',
+                xAxis3D: {},
+                yAxis3D: {},
+                zAxis3D: {},
+                grid3D: {
+                    light: {
+                        main: {
+                            intensity: 0.7,
+                            shadow: true
+                        }
+                    },
+                    viewControl: {
+                    }
+                },
+                series: [{
+                    type: 'surface',
+                    shading: 'lambert',
+                    lambertMaterial: {
+                        baseTexture: 'asset/woods.jpg',
+                        textureTiling: 4
+                    },
+                    wireframe: {
+                        lineStyle: {
+                            color: '#fff'
+                        },
+                        show: false
+                    },
+                    areaStyle: {
+                        color: '#fff'
+                    },
+                    surfaceEquation: {
+                        x: {
+                            step: 0.05
+                        },
+                        y: {
+                            step: 0.05
+                        },
+                        z: function (x, y) {
+                            if (Math.abs(x) < 0.1 && Math.abs(y) < 0.1) {
+                                return '-';
+                            }
+                            return Math.sin(x * Math.PI) * Math.sin(y * Math.PI);
+                        }
+                    }
+                }]
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

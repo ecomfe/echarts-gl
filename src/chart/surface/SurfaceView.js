@@ -83,7 +83,7 @@ echarts.extendChartView({
         var dataShape = this._getDataShape(data, isParametric);
 
         var wireframeModel = seriesModel.getModel('wireframe');
-        var wireframeLineWidth = wireframeModel.get('lineWidth');
+        var wireframeLineWidth = wireframeModel.get('lineStyle.width');
         var showWireframe = wireframeModel.get('show') && wireframeLineWidth > 0;
         this._updateSurfaceMesh(this._surfaceMesh, seriesModel, dataShape, showWireframe);
 
@@ -91,7 +91,7 @@ echarts.extendChartView({
         if (showWireframe) {
             material.shader.define('WIREFRAME_QUAD');
             material.set('wireframeLineWidth', wireframeLineWidth);
-            material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineColor')).slice(0, 3));
+            material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineStyle.color')).slice(0, 3));
         }
         else {
             material.shader.unDefine('WIREFRAME_QUAD');
@@ -168,6 +168,7 @@ echarts.extendChartView({
 
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
+        var texcoordAttr = geometry.attributes.texcoord0;
         var barycentricAttr = geometry.attributes.barycentric;
         var colorAttr = geometry.attributes.color;
         var row = dataShape.row;
@@ -187,6 +188,7 @@ echarts.extendChartView({
             positionAttr.value = new Float32Array(pointsArr);
         }
         colorAttr.init(geometry.vertexCount);
+        texcoordAttr.init(geometry.vertexCount);
 
         var quadToTriangle = [0, 3, 1, 1, 3, 2];
         // 3----2
@@ -217,6 +219,9 @@ echarts.extendChartView({
 
             if (needsNormal) {
                 normalAttr.init(geometry.vertexCount);
+            }
+            else {
+                normalAttr.value = null;
             }
 
             var pts = [[], [], []];
@@ -315,10 +320,12 @@ echarts.extendChartView({
             }
             // Split normal and colors, write to the attributes.
             var rgbaArr = [];
+            var uvArr = [];
             for (var i = 0; i < row - 1; i++) {
                 for (var j = 0; j < column - 1; j++) {
                     var dataIndex = i * (column - 1) + j;
                     var vertexOffset = dataIndex * 4;
+
                     getQuadIndices(i, j, quadIndices);
                     for (var k = 0; k < 4; k++) {
                         for (var m = 0; m < 4; m++) {
@@ -330,13 +337,21 @@ echarts.extendChartView({
                             getFromArray(vertexNormals, quadIndices[k], normal);
                             normalAttr.set(vertexOffset + k, normal);
                         }
+
+                        var idx = quadIndices[k];
+                        uvArr[0] = (idx % row) / (row - 1);
+                        uvArr[1] = Math.floor(idx / column) / (column - 1);
+                        texcoordAttr.set(vertexOffset + k, uvArr);
                     }
                     dataIndex++;
                 }
             }
         }
         else {
+            var uvArr = [];
             for (var i = 0; i < data.count(); i++) {
+                uvArr[0] = (i % row) / (row - 1);
+                uvArr[1] = Math.floor(i / column) / (column - 1);
                 var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
                 var opacity = data.getItemVisual(i, 'opacity');
                 rgbaArr[3] *= opacity;
@@ -344,6 +359,7 @@ echarts.extendChartView({
                     isTransparent = true;
                 }
                 colorAttr.set(i, rgbaArr);
+                texcoordAttr.set(i, uvArr);
             }
             var quadIndices = [];
             // Triangles
@@ -361,7 +377,11 @@ echarts.extendChartView({
             if (needsNormal) {
                 geometry.generateVertexNormals();
             }
+            else {
+                normalAttr.value = null;
+            }
         }
+
 
         geometry.updateBoundingBox();
         geometry.dirty();

@@ -479,6 +479,7 @@ Geo3DBuilder.prototype = {
                     uv[0] = (quadPos[k][0] - min[0]) / maxDimSize;
                     uv[1] = (quadPos[k][2] - min[2]) / maxDimSize;
                     if (k > 1) {
+                        // TODO left, right
                         uv[0] -= regionHeight / maxDimSize;
                     }
                     texcoordAttr.set(vertexOffset + k, uv);

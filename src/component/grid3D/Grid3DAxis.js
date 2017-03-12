@@ -19,6 +19,7 @@ function Grid3DAxis(dim, linesMaterial) {
     var linesMesh = new graphicGL.Mesh({
         geometry: new Lines3DGeometry({ useNativeLine: false }),
         material: linesMaterial,
+        castShadow: false,
         ignorePicking: true, renderOrder: 2
     });
     var axisLabelsMesh = new LabelsMesh();
