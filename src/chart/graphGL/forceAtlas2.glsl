@@ -96,6 +96,7 @@ void main() {
         w = pow(weight, edgeWeightInfluence);
     }
     // Add 0.5 offset.
+    // PENDING.
     vec2 offset = vec2(1.0 / windowSize.x, 1.0 / windowSize.y);
     vec2 scale = vec2((windowSize.x - 1.0) / windowSize.x, (windowSize.y - 1.0) / windowSize.y);
     vec2 pos = node0 * scale * 2.0 - 1.0;
@@ -165,13 +166,31 @@ void main() {
 }
 @end
 
+@export ecgl.forceAtlas2.calcGlobalSpeed
+
+uniform sampler2D globalSpeedPrevTex;
+uniform sampler2D weightedSumTex;
+uniform float jitterTolerence;
+
+void main() {
+    vec2 weightedSum = texture2D(weightedSumTex, vec2(0.5)).xy;
+    float prevGlobalSpeed = texture2D(globalSpeedPrevTex, vec2(0.5)).x;
+    float globalSpeed = jitterTolerence * jitterTolerence
+        // traction / swing
+        * weightedSum.y / weightedSum.x;
+    if (prevGlobalSpeed > 0.0) {
+        globalSpeed = min(globalSpeed / prevGlobalSpeed, 1.5) * prevGlobalSpeed;
+    }
+    gl_FragColor = vec4(globalSpeed, 0.0, 0.0, 1.0);
+}
+@end
 
 @export ecgl.forceAtlas2.updatePosition
 
 uniform sampler2D forceTex;
 uniform sampler2D forcePrevTex;
 uniform sampler2D positionTex;
-uniform float globalSpeed;
+uniform sampler2D globalSpeedTex;
 
 varying vec2 v_Texcoord;
 
@@ -180,6 +199,7 @@ void main() {
     vec2 forcePrev = texture2D(forcePrevTex, v_Texcoord).xy;
     vec4 node = texture2D(positionTex, v_Texcoord);
 
+    float globalSpeed = texture2D(globalSpeedTex, vec2(0.5)).r;
     float swing = length(force - forcePrev);
     float speed = 0.1 * globalSpeed / (0.1 + globalSpeed * sqrt(swing));
 

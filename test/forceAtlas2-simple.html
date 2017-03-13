@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Grid3D - ECHARTS-GL</title>
+        <title>Force Atlas2 - ECHARTS-GL</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
     </head>
@@ -20,36 +20,32 @@
 
             var renderer = new echarts.graphicGL.Renderer();
 
-            var nodes = [{
-                x: 400,
-                y: 200
-            }, {
-                x: 800,
-                y: 200
-            }, {
-                x: 800,
-                y: 400
-            }, {
-                x: 400,
-                y: 400
-            }];
-            var edges = [{
-                node1: 0,
-                node2: 1,
-                weight: 0.2
-            }, {
-                node1: 1,
-                node2: 2,
-                weight: 0.2
-            }, {
-                node1: 2,
-                node2: 3,
-                weight: 0.2
-            }, {
-                node1: 3,
-                node2: 0,
-                weight: 0.2
-            }];
+            function createNodes(count) {
+                var nodes = [];
+                for (var i = 0; i < count; i++) {
+                    nodes.push({
+                        x: Math.random() * window.innerWidth,
+                        y: Math.random() * window.innerHeight
+                    });
+                }
+                return nodes;
+            }
+
+            function createEdges(count) {
+                var edges = [];
+                if (count === 2) {
+                    return [[0, 1]];
+                }
+                for (var i = 0; i < count; i++) {
+                    edges.push({
+                        node1: i,
+                        node2: (i + 1) % count
+                    });
+                }
+                return edges;
+            }
+            var nodes = createNodes(30);
+            var edges = createEdges(30);
             forceAtlas.initData(nodes, edges);
 
             var canvas = document.createElement('canvas');
@@ -60,10 +56,12 @@
 
             function step() {
                 console.time('layout');
-                forceAtlas.step(renderer);
+                for (var i = 0; i < 50; i++) {
+                    forceAtlas.step(renderer);
+                }
                 console.timeEnd('layout');
                 // console.log(forceAtlas._globalSpeed);
-                // console.log(forceAtlas.getTextureData(renderer, 'forcePrev'));
+                // console.log(forceAtlas.getTextureData(renderer, 'globalSpeedPrev'));
 
                 drawDebug();
 

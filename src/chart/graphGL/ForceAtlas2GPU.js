@@ -56,11 +56,19 @@ function ForceAtlas2GPU(options) {
     this._weightedSumTex = new graphicGL.Texture2D(textureOpt);
     this._weightedSumTex.width = this._weightedSumTex.height = 1;
 
+    this._globalSpeedTex = new graphicGL.Texture2D(textureOpt);
+    this._globalSpeedPrevTex = new graphicGL.Texture2D(textureOpt);
+    this._globalSpeedTex.width = this._globalSpeedTex.height = 1;
+    this._globalSpeedPrevTex.width = this._globalSpeedPrevTex.height = 1;
+
     this._nodeRepulsionPass = new Pass({
         fragment: graphicGL.Shader.source('ecgl.forceAtlas2.updateNodeRepulsion')
     });
     this._positionPass = new Pass({
         fragment: graphicGL.Shader.source('ecgl.forceAtlas2.updatePosition')
+    });
+    this._globalSpeedPass = new Pass({
+        fragment: graphicGL.Shader.source('ecgl.forceAtlas2.calcGlobalSpeed')
     });
     this._copyPass = new Pass({
         fragment: graphicGL.Shader.source('qtek.compositor.output')
@@ -285,24 +293,18 @@ ForceAtlas2GPU.prototype.step = function (renderer) {
     renderer.renderQueue([weightedSumMesh], this._dummyCamera);
 
     // Calc global speed.
-    var weightedSumResult = new Float32Array(4);
-    renderer.gl.readPixels(0, 0, 1, 1, renderer.gl.RGBA, renderer.gl.FLOAT, weightedSumResult);
-    var swingWeightedSum = weightedSumResult[0];
-    var tractionWeightedSum = weightedSumResult[1];
-    var globalSpeed = this.jitterTolerence * this.jitterTolerence
-                    * tractionWeightedSum / swingWeightedSum;
-
-    // NB: During our tests we observed that an excessive rise of the global speed could have a negative impact.
-    // That’s why we limited the increase of global speed s(t)(G) to 50% of the previous step s(t−1)(G).
-    if (this._globalSpeed > 0) {
-        globalSpeed = Math.min(globalSpeed / this._globalSpeed, 1.5) * this._globalSpeed;
-    }
-    this._globalSpeed = globalSpeed;
+    this._framebuffer.attach(this._globalSpeedTex);
+    var globalSpeedPass = this._globalSpeedPass;
+    globalSpeedPass.setUniform('globalSpeedPrevTex', this._globalSpeedPrevTex);
+    globalSpeedPass.setUniform('weightedSumTex', this._weightedSumTex);
+    globalSpeedPass.setUniform('jitterTolerence', this.jitterTolerence);
+    renderer.gl.disable(renderer.gl.BLEND);
+    globalSpeedPass.render(renderer);
 
     // Update position.
     var positionPass = this._positionPass;
     this._framebuffer.attach(this._positionTex);
-    positionPass.setUniform('globalSpeed', globalSpeed);
+    positionPass.setUniform('globalSpeedTex', this._globalSpeedTex);
     positionPass.setUniform('positionTex', this._positionPrevTex);
     positionPass.setUniform('forceTex', this._forceTex);
     positionPass.setUniform('forcePrevTex', this._forcePrevTex);
@@ -364,6 +366,10 @@ ForceAtlas2GPU.prototype._swapTexture = function () {
     var tmp = this._forcePrevTex;
     this._forcePrevTex = this._forceTex;
     this._forceTex = tmp;
+
+    var tmp = this._globalSpeedPrevTex;
+    this._globalSpeedPrevTex = this._globalSpeedTex;
+    this._globalSpeedTex = tmp;
 };
 
 ForceAtlas2GPU.prototype._initFromSource = function (renderer) {
@@ -372,10 +378,13 @@ ForceAtlas2GPU.prototype._initFromSource = function (renderer) {
     this._copyPass.setUniform('texture', this._positionSourceTex);
     this._copyPass.render(renderer);
 
-    // this._framebuffer.attach(this._forcePrevTex);
-    // renderer.gl.clearColor(0, 0, 0, 0);
-    // renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
-    // this._framebuffer.unbind(renderer);
+    renderer.gl.clearColor(0, 0, 0, 0);
+    this._framebuffer.attach(this._forcePrevTex);
+    renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
+    this._framebuffer.attach(this._globalSpeedPrevTex);
+    renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
+
+    this._framebuffer.unbind(renderer);
 };
 
 ForceAtlas2GPU.prototype._resize = function (width, height) {
