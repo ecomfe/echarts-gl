@@ -74,6 +74,8 @@ uniform float edgeWeightInfluence;
 uniform bool preventOverlap;
 uniform bool linLogMode;
 
+uniform vec2 windowSize: WINDOW_SIZE;
+
 varying vec2 v_Force;
 
 void main() {
@@ -93,8 +95,11 @@ void main() {
     else {
         w = pow(weight, edgeWeightInfluence);
     }
-
-    gl_Position = vec4(node0 * 2.0 - 1.0, 0.0, 1.0);
+    // Add 0.5 offset.
+    vec2 offset = vec2(1.0 / windowSize.x, 1.0 / windowSize.y);
+    vec2 scale = vec2((windowSize.x - 1.0) / windowSize.x, (windowSize.y - 1.0) / windowSize.y);
+    vec2 pos = node0 * scale * 2.0 - 1.0;
+    gl_Position = vec4(pos + offset, 0.0, 1.0);
     gl_PointSize = 1.0;
 
     float factor;

@@ -74,7 +74,7 @@ function ForceAtlas2GPU(options) {
         geometry: new graphicGL.Geometry({
             attributes: {
                 node0: new graphicGL.Geometry.Attribute('node0', 'float', 2),
-                node1: new graphicGL.Geometry.Attribute('node0', 'float', 2),
+                node1: new graphicGL.Geometry.Attribute('node1', 'float', 2),
                 weight: new graphicGL.Geometry.Attribute('weight', 'float', 1)
             },
             dynamic: true,
@@ -164,11 +164,11 @@ ForceAtlas2GPU.prototype._updateSettings = function () {
     }
     // Update inDegree, outDegree
     for (var i = 0; i < edges.length; i++) {
-        var node0 = edges[i].node0;
         var node1 = edges[i].node1;
+        var node2 = edges[i].node2;
 
-        nodes[node0].degree = (nodes[node0].degree || 0) + 1;
         nodes[node1].degree = (nodes[node1].degree || 0) + 1;
+        nodes[node2].degree = (nodes[node2].degree || 0) + 1;
     }
 }
 /**
@@ -215,14 +215,18 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
     }
     for (var i = 0; i < edges.length; i++) {
         var attributes = edgeGeometry.attributes;
+        var weight = edges[i].weight;
+        if (weight == null) {
+            weight = 1;
+        }
         // Two way.
-        attributes.node0.set(i, getUvOfNode(edges[i].node0));
-        attributes.node1.set(i, getUvOfNode(edges[i].node1));
-        attributes.weight.set(i, edges[i].weight || 0);
+        attributes.node0.set(i, getUvOfNode(edges[i].node1));
+        attributes.node1.set(i, getUvOfNode(edges[i].node2));
+        attributes.weight.set(i, weight);
 
-        attributes.node0.set(i + edgeLen, getUvOfNode(edges[i].node1));
-        attributes.node1.set(i + edgeLen, getUvOfNode(edges[i].node0));
-        attributes.weight.set(i + edgeLen, edges[i].weight || 0);
+        attributes.node0.set(i + edgeLen, getUvOfNode(edges[i].node2));
+        attributes.node1.set(i + edgeLen, getUvOfNode(edges[i].node1));
+        attributes.weight.set(i + edgeLen, weight);
     }
 
     var weigtedSumGeo = this._weightedSumMesh.geometry;

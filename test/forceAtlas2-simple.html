@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Grid3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+    </head>
+    <body>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/dist/extension/dataTool.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var forceAtlas = new echarts.ForceAtlas2GPU({
+                gravityCenter: [window.innerWidth / 2, window.innerHeight / 2],
+                gravity: 0,
+                edgeWeightInfluence: 4
+            });
+
+            var renderer = new echarts.graphicGL.Renderer();
+
+            var nodes = [{
+                x: 400,
+                y: 200
+            }, {
+                x: 800,
+                y: 200
+            }, {
+                x: 800,
+                y: 400
+            }, {
+                x: 400,
+                y: 400
+            }];
+            var edges = [{
+                node1: 0,
+                node2: 1,
+                weight: 0.2
+            }, {
+                node1: 1,
+                node2: 2,
+                weight: 0.2
+            }, {
+                node1: 2,
+                node2: 3,
+                weight: 0.2
+            }, {
+                node1: 3,
+                node2: 0,
+                weight: 0.2
+            }];
+            forceAtlas.initData(nodes, edges);
+
+            var canvas = document.createElement('canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            var ctx = canvas.getContext('2d');
+            document.body.appendChild(canvas);
+
+            function step() {
+                console.time('layout');
+                forceAtlas.step(renderer);
+                console.timeEnd('layout');
+                // console.log(forceAtlas._globalSpeed);
+                // console.log(forceAtlas.getTextureData(renderer, 'forcePrev'));
+
+                drawDebug();
+
+                setTimeout(step, 20);
+            }
+            setTimeout(step, 10);
+
+            var nodePosition = new Float32Array(nodes.length * 2);
+            // Debug
+            function drawDebug() {
+                // console.log(forceAtlas.getTextureData(renderer, 'forcePrev'));
+                forceAtlas.getNodePosition(renderer, nodePosition);
+                console.time('render');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.beginPath();
+                for (var i = 0; i < nodes.length; i++) {
+                    var x = nodePosition[i * 2];
+                    var y = nodePosition[i * 2 + 1]
+                    ctx.rect(x - 5, y - 5, 10, 10);
+                }
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.beginPath();
+                ctx.lineWidth = 1;
+                for (var i = 0; i < edges.length; i++) {
+                    var edge = edges[i];
+                    var x0 = nodePosition[edge.node1 * 2];
+                    var y0 = nodePosition[edge.node1 * 2 + 1];
+                    var x1 = nodePosition[edge.node2 * 2];
+                    var y1 = nodePosition[edge.node2 * 2 + 1];
+
+                    ctx.moveTo(x0, y0);
+                    ctx.lineTo(x1, y1);
+                }
+                ctx.stroke();
+                console.timeEnd('render');
+            }
+        </script>
+    </body>
+</html>
