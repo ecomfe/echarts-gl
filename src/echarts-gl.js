@@ -179,6 +179,6 @@ echarts.registerPostUpdate(function (ecModel, api) {
     egl.update(ecModel, api);
 });
 
-var Shader = require('qtek/lib/Shader');
+echarts.graphicGL = require('./util/graphicGL');
 
 module.exports = EChartsGL;

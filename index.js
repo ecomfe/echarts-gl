@@ -12,3 +12,4 @@ require('./src/chart/surface');
 require('./src/chart/map3D');
 
 require('./src/chart/scatterGL');
+require('./src/chart/graphGL');

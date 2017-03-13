@@ -1,4 +1,5 @@
 var Mesh = require('qtek/lib/Mesh');
+var Renderer = require('qtek/lib/Renderer');
 var Texture2D = require('qtek/lib/Texture2D');
 var Texture = require('qtek/lib/Texture');
 var Shader = require('qtek/lib/Shader');
@@ -102,6 +103,8 @@ Material.prototype.setTextureImage = function (textureName, imgValue, api, textu
 
 var graphicGL = {};
 
+graphicGL.Renderer = Renderer;
+
 graphicGL.Node = Node3D;
 
 graphicGL.Mesh = Mesh;
@@ -128,6 +131,10 @@ graphicGL.AmbientLight = require('qtek/lib/light/Ambient');
 graphicGL.DirectionalLight = require('qtek/lib/light/Directional');
 graphicGL.PointLight = require('qtek/lib/light/Point');
 graphicGL.SpotLight = require('qtek/lib/light/Spot');
+
+// Cameras
+graphicGL.PerspectiveCamera = require('qtek/lib/camera/Perspective');
+graphicGL.OrthographicCamera = require('qtek/lib/camera/Orthographic');
 
 // Math
 graphicGL.Vector2 = require('qtek/lib/math/Vector2');
