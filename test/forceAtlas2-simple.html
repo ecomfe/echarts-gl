@@ -14,38 +14,49 @@
         <script>
             var forceAtlas = new echarts.ForceAtlas2GPU({
                 gravityCenter: [window.innerWidth / 2, window.innerHeight / 2],
-                gravity: 0,
+                gravity: 4,
                 edgeWeightInfluence: 4
             });
 
             var renderer = new echarts.graphicGL.Renderer();
 
-            function createNodes(count) {
+            function createNodes(widthCount, heightCount) {
                 var nodes = [];
-                for (var i = 0; i < count; i++) {
-                    nodes.push({
-                        x: Math.random() * window.innerWidth,
-                        y: Math.random() * window.innerHeight
-                    });
+                for (var i = 0; i < widthCount; i++) {
+                    for (var j = 0; j < heightCount; j++) {
+                        nodes.push({
+                            x: Math.random() * window.innerWidth,
+                            y: Math.random() * window.innerHeight
+                        });
+                    }
                 }
                 return nodes;
             }
 
-            function createEdges(count) {
+            function createEdges(widthCount, heightCount) {
                 var edges = [];
-                if (count === 2) {
-                    return [[0, 1]];
-                }
-                for (var i = 0; i < count; i++) {
-                    edges.push({
-                        node1: i,
-                        node2: (i + 1) % count
-                    });
+                for (var i = 0; i < widthCount; i++) {
+                    for (var j = 0; j < heightCount; j++) {
+                        if (i < widthCount - 1) {
+                            edges.push({
+                                node1: i + j * widthCount,
+                                node2: i + 1 + j * widthCount,
+                                weight: 2
+                            });
+                        }
+                        if (j < heightCount - 1) {
+                            edges.push({
+                                node1: i + j * widthCount,
+                                node2: i + (j + 1) * widthCount,
+                                weight: 2
+                            });
+                        }
+                    }
                 }
                 return edges;
             }
-            var nodes = createNodes(30);
-            var edges = createEdges(30);
+            var nodes = createNodes(30, 30);
+            var edges = createEdges(30, 30);
             forceAtlas.initData(nodes, edges);
 
             var canvas = document.createElement('canvas');
@@ -56,7 +67,7 @@
 
             function step() {
                 console.time('layout');
-                for (var i = 0; i < 50; i++) {
+                for (var i = 0; i < 20; i++) {
                     forceAtlas.step(renderer);
                 }
                 console.timeEnd('layout');
