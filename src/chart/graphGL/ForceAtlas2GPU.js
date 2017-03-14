@@ -6,8 +6,6 @@ var FrameBuffer = require('qtek/lib/FrameBuffer');
 graphicGL.Shader.import(require('text!./forceAtlas2.glsl'));
 
 var defaultConfigs = {
-    autoSettings: true,
-
     repulsionByDegree: true,
     linLogMode: false,
 
@@ -28,16 +26,6 @@ var defaultConfigs = {
 };
 
 function ForceAtlas2GPU(options) {
-
-    for (var name in defaultConfigs) {
-        this[name] = defaultConfigs[name];
-    }
-
-    if (options) {
-        for (var name in options) {
-            this[name] = options[name];
-        }
-    }
 
     var textureOpt = {
         type: graphicGL.Texture.FLOAT,
@@ -81,12 +69,12 @@ function ForceAtlas2GPU(options) {
     this._edgeForceMesh = new graphicGL.Mesh({
         geometry: new graphicGL.Geometry({
             attributes: {
-                node0: new graphicGL.Geometry.Attribute('node0', 'float', 2),
                 node1: new graphicGL.Geometry.Attribute('node1', 'float', 2),
+                node2: new graphicGL.Geometry.Attribute('node2', 'float', 2),
                 weight: new graphicGL.Geometry.Attribute('weight', 'float', 1)
             },
             dynamic: true,
-            mainAttribute: 'node0'
+            mainAttribute: 'node1'
         }),
         material: new graphicGL.Material({
             transparent: true,
@@ -128,32 +116,48 @@ function ForceAtlas2GPU(options) {
     this._globalSpeed = 0;
 }
 
-ForceAtlas2GPU.prototype._updateSettings = function () {
+ForceAtlas2GPU.prototype.updateOption = function (options) {
+
+    // Default config
+    for (var name in defaultConfigs) {
+        this[name] = defaultConfigs[name];
+    }
+
+    // Config according to data scale
+    var nNodes = this._nodes.length;
+    if (nNodes > 50000) {
+        this.jitterTolerence = 10;
+    }
+    else if (nNodes > 5000) {
+        this.jitterTolerence = 1;
+    }
+    else {
+        this.jitterTolerence = 0.1;
+    }
+
+    if (nNodes > 100) {
+        this.scaling = 2.0;
+    }
+    else {
+        this.scaling = 10.0;
+    }
+
+    // this.edgeWeightInfluence = 1;
+    // this.gravity = 1;
+    // this.strongGravityMode = false;
+    if (options) {
+        for (var name in defaultConfigs) {
+            if (options[name] != null) {
+                this[name] = options[name];
+            }
+        }
+    }
+
+};
+
+ForceAtlas2GPU.prototype._updateSettings = function (options) {
     var nodes = this._nodes;
     var edges = this._edges;
-    if (this.autoSettings) {
-        var nNodes = nodes.length;
-        if (nNodes > 50000) {
-            this.jitterTolerence = 10;
-        }
-        else if (nNodes > 5000) {
-            this.jitterTolerence = 1;
-        }
-        else {
-            this.jitterTolerence = 0.1;
-        }
-
-        if (nNodes > 100) {
-            this.scaling = 2.0;
-        }
-        else {
-            this.scaling = 10.0;
-        }
-
-        // this.edgeWeightInfluence = 1;
-        // this.gravity = 1;
-        // this.strongGravityMode = false;
-    }
 
     if (!this.gravityCenter) {
         var min = [Infinity, Infinity];
@@ -178,9 +182,10 @@ ForceAtlas2GPU.prototype._updateSettings = function () {
         nodes[node1].degree = (nodes[node1].degree || 0) + 1;
         nodes[node2].degree = (nodes[node2].degree || 0) + 1;
     }
-}
+};
 /**
- * @param {Array.<Object>} [{ x, y, max}]
+ * @param {Array.<Object>} [{ x, y, mass }] nodes
+ * @param {Array.<Object>} [{ node1, node2, weight }] edges
  */
 ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
 
@@ -192,6 +197,9 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
     var textureWidth = Math.ceil(Math.sqrt(nodes.length));
     var textureHeight = textureWidth;
     var positionBuffer = new Float32Array(textureWidth * textureHeight * 4);
+
+    this._resize(textureWidth, textureHeight);
+
     var offset = 0;
     for (var i = 0; i < nodes.length; i++) {
         var node = nodes[i];
@@ -210,17 +218,12 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
 
     var edgeGeometry = this._edgeForceMesh.geometry;
     var edgeLen = edges.length;
-    edgeGeometry.attributes.node0.init(edgeLen * 2);
     edgeGeometry.attributes.node1.init(edgeLen * 2);
+    edgeGeometry.attributes.node2.init(edgeLen * 2);
     edgeGeometry.attributes.weight.init(edgeLen * 2);
 
     var uv = [];
 
-    function getUvOfNode(nodeIndex) {
-        uv[0] = (nodeIndex % textureWidth) / (textureWidth - 1);
-        uv[1] = Math.floor(nodeIndex / textureWidth) / (textureHeight - 1);
-        return uv;
-    }
     for (var i = 0; i < edges.length; i++) {
         var attributes = edgeGeometry.attributes;
         var weight = edges[i].weight;
@@ -228,25 +231,23 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
             weight = 1;
         }
         // Two way.
-        attributes.node0.set(i, getUvOfNode(edges[i].node1));
-        attributes.node1.set(i, getUvOfNode(edges[i].node2));
+        attributes.node1.set(i, this.getNodeUV(edges[i].node1, uv));
+        attributes.node2.set(i, this.getNodeUV(edges[i].node2, uv));
         attributes.weight.set(i, weight);
 
-        attributes.node0.set(i + edgeLen, getUvOfNode(edges[i].node2));
-        attributes.node1.set(i + edgeLen, getUvOfNode(edges[i].node1));
+        attributes.node1.set(i + edgeLen, this.getNodeUV(edges[i].node2, uv));
+        attributes.node2.set(i + edgeLen, this.getNodeUV(edges[i].node1, uv));
         attributes.weight.set(i + edgeLen, weight);
     }
 
     var weigtedSumGeo = this._weightedSumMesh.geometry;
     weigtedSumGeo.attributes.node.init(nodes.length);
     for (var i = 0; i < nodes.length; i++) {
-        weigtedSumGeo.attributes.node.set(i, getUvOfNode(i));
+        weigtedSumGeo.attributes.node.set(i, this.getNodeUV(i, uv));
     }
 
     edgeGeometry.dirty();
     weigtedSumGeo.dirty();
-
-    this._resize(textureWidth, textureHeight);
 
     this._nodeRepulsionPass.material.shader.define('fragment', 'NODE_COUNT', nodes.length);
     this._nodeRepulsionPass.material.setUniform('textureSize', [textureWidth, textureHeight]);
@@ -320,6 +321,15 @@ ForceAtlas2GPU.prototype.getNodePositionTexture = function () {
     return this._positionPrevTex;
 };
 
+ForceAtlas2GPU.prototype.getNodeUV = function (nodeIndex, uv) {
+    uv = uv || [];
+    var textureWidth = this._positionTex.width;
+    var textureHeight = this._positionTex.height;
+    uv[0] = (nodeIndex % textureWidth) / (textureWidth - 1);
+    uv[1] = Math.floor(nodeIndex / textureWidth) / (textureHeight - 1);
+    return uv;
+};
+
 ForceAtlas2GPU.prototype.getNodePosition = function (renderer, out) {
     var positionArr = this._positionArr;
     var width = this._positionTex.width;
@@ -358,6 +368,12 @@ ForceAtlas2GPU.prototype.getTextureData = function (renderer, textureName) {
     return arr;
 };
 
+ForceAtlas2GPU.prototype.isFinished = function (renderer) {
+    var globalSpeedData = this.getTextureData(renderer, 'globalSpeed');
+    // PENDING
+    return this._inited && globalSpeedData[0] < 10;
+};
+
 ForceAtlas2GPU.prototype._swapTexture = function () {
     var tmp = this._positionPrevTex;
     this._positionPrevTex = this._positionTex;
@@ -393,6 +409,30 @@ ForceAtlas2GPU.prototype._resize = function (width, height) {
         this[texName].height = height;
         this[texName].dirty();
     }, this);
+};
+
+ForceAtlas2GPU.prototype.dispose = function (renderer) {
+    var gl = renderer.gl;
+    this._framebuffer.dispose(gl);
+
+    this._copyPass.dispose(gl);
+    this._nodeRepulsionPass.dispose(gl);
+    this._positionPass.disable(gl);
+    this._globalSpeedPass.dispose(gl);
+
+    this._edgeForceMesh.material.shader.dispose(gl);
+    this._edgeForceMesh.geometry.dispose(gl);
+    this._weightedSumMesh.material.shader.dispose(gl);
+    this._weightedSumMesh.geometry.dispose(gl);
+
+    this._positionSourceTex.dispose(gl);
+    this._positionTex.dispose(gl);
+    this._positionPrevTex.dispose(gl);
+    this._forceTex.dispose(gl);
+    this._forcePrevTex.dispose(gl);
+    this._weightedSumTex.dispose(gl);
+    this._globalSpeedTex.disable(gl);
+    this._globalSpeedPrevTex.disable(gl);
 };
 
 echarts.ForceAtlas2GPU = ForceAtlas2GPU;

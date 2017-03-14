@@ -7,7 +7,7 @@
  */
 
 var StaticGeometry = require('qtek/lib/StaticGeometry');
-var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var vec2 = require('qtek/lib/dep/glmatrix').vec2;
 var echarts = require('echarts/lib/echarts');
 var dynamicConvertMixin = require('./dynamicConvertMixin');
 
@@ -24,7 +24,7 @@ var sampleLinePoints = [[0, 0], [1, 1]];
 var LinesGeometry = StaticGeometry.extend(function () {
     return {
 
-        segmentScale: 1,
+        segmentScale: 4,
 
         dynamic: true,
         /**
@@ -33,10 +33,8 @@ var LinesGeometry = StaticGeometry.extend(function () {
         useNativeLine: true,
 
         attributes: {
-            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
-            positionPrev: new StaticGeometry.Attribute('positionPrev', 'float', 3),
-            positionNext: new StaticGeometry.Attribute('positionNext', 'float', 3),
-            offset: new StaticGeometry.Attribute('offset', 'float', 1),
+            position: new StaticGeometry.Attribute('position', 'float', 2, 'POSITION'),
+            offset: new StaticGeometry.Attribute('offset', 'float', 2),
             color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
         }
     };
@@ -62,8 +60,6 @@ var LinesGeometry = StaticGeometry.extend(function () {
             attributes.color.init(nVertex);
 
             if (!this.useNativeLine) {
-                attributes.positionPrev.init(nVertex);
-                attributes.positionNext.init(nVertex);
                 attributes.offset.init(nVertex);
             }
 
@@ -95,7 +91,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
     },
 
     _getCubicCurveApproxStep: function (p0, p1, p2, p3) {
-        var len = vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2);
+        var len = vec2.dist(p0, p1) + vec2.dist(p2, p1) + vec2.dist(p3, p2);
         var step = 1 / (len + 1) * this.segmentScale;
         return step;
     },
@@ -156,13 +152,13 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
     getPolylineVertexCount: function (points) {
         var is2DArray = typeof points[0] !== 'number';
-        var pointsLen = is2DArray ? points.length : (points.length / 3);
+        var pointsLen = is2DArray ? points.length : (points.length / 2);
         return !this.useNativeLine ? ((pointsLen - 1) * 2 + 2) : (pointsLen - 1) * 2;
     },
 
     getPolylineTriangleCount: function (points) {
         var is2DArray = typeof points[0] !== 'number';
-        var pointsLen = is2DArray ? points.length : (points.length / 3);
+        var pointsLen = is2DArray ? points.length : (points.length / 2);
         return !this.useNativeLine ? (pointsLen - 1) * 2 : 0;
     },
 
@@ -181,10 +177,10 @@ var LinesGeometry = StaticGeometry.extend(function () {
         }
         // incremental interpolation
         // http://antigrain.com/research/bezier_interpolation/index.html#PAGE_BEZIER_INTERPOLATION
-        var x0 = p0[0], y0 = p0[1], z0 = p0[2];
-        var x1 = p1[0], y1 = p1[1], z1 = p1[2];
-        var x2 = p2[0], y2 = p2[1], z2 = p2[2];
-        var x3 = p3[0], y3 = p3[1], z3 = p3[2];
+        var x0 = p0[0], y0 = p0[1];
+        var x1 = p1[0], y1 = p1[1];
+        var x2 = p2[0], y2 = p2[1];
+        var x3 = p3[0], y3 = p3[1];
 
         var step = this._getCubicCurveApproxStep(p0, p1, p2, p3);
 
@@ -198,27 +194,21 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
         var tmp1x = x0 - x1 * 2.0 + x2;
         var tmp1y = y0 - y1 * 2.0 + y2;
-        var tmp1z = z0 - z1 * 2.0 + z2;
 
         var tmp2x = (x1 - x2) * 3.0 - x0 + x3;
         var tmp2y = (y1 - y2) * 3.0 - y0 + y3;
-        var tmp2z = (z1 - z2) * 3.0 - z0 + z3;
 
         var fx = x0;
         var fy = y0;
-        var fz = z0;
 
         var dfx = (x1 - x0) * pre1 + tmp1x * pre2 + tmp2x * step3;
         var dfy = (y1 - y0) * pre1 + tmp1y * pre2 + tmp2y * step3;
-        var dfz = (z1 - z0) * pre1 + tmp1z * pre2 + tmp2z * step3;
 
         var ddfx = tmp1x * pre4 + tmp2x * pre5;
         var ddfy = tmp1y * pre4 + tmp2y * pre5;
-        var ddfz = tmp1z * pre4 + tmp2z * pre5;
 
         var dddfx = tmp2x * pre5;
         var dddfy = tmp2y * pre5;
-        var dddfz = tmp2z * pre5;
 
         var t = 0;
 
@@ -231,11 +221,10 @@ var LinesGeometry = StaticGeometry.extend(function () {
         for (var k = 0; k < segCount + 1; k++) {
             points[offset++] = fx;
             points[offset++] = fy;
-            points[offset++] = fz;
 
-            fx += dfx; fy += dfy; fz += dfz;
-            dfx += ddfx; dfy += ddfy; dfz += ddfz;
-            ddfx += dddfx; ddfy += dddfy; ddfz += dddfz;
+            fx += dfx; fy += dfy;
+            dfx += ddfx; dfy += ddfy;
+            ddfx += dddfx; ddfy += dddfy;
             t += step;
         }
 
@@ -267,8 +256,6 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
         var is2DArray = typeof points[0] !== 'number';
         var positionAttr = this.attributes.position;
-        var positionPrevAttr = this.attributes.positionPrev;
-        var positionNextAttr = this.attributes.positionNext;
         var colorAttr = this.attributes.color;
         var offsetAttr = this.attributes.offset;
         var indices = this.indices;
@@ -278,10 +265,14 @@ var LinesGeometry = StaticGeometry.extend(function () {
         }
 
         var vertexOffset = this._vertexOffset;
-        var pointCount = is2DArray ? points.length : points.length / 3;
+        var pointCount = is2DArray ? points.length : points.length / 2;
         var iterCount = !this.useNativeLine ? pointCount : (pointCount - 1);
-        var point;
+        var point = [], nextPoint = [], prevPoint = [];
         var pointColor;
+        var dirA = vec2.create();
+        var dirB = vec2.create();
+        var offset = vec2.create();
+        var tangent = vec2.create();
         for (var k = 0; k < iterCount; k++) {
             if (is2DArray) {
                 point = points[k];
@@ -293,11 +284,10 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 }
             }
             else {
-                var k3 = k * 3;
+                var k2 = k * 2;
                 point = point || [];
-                point[0] = points[k3];
-                point[1] = points[k3 + 1];
-                point[2] = points[k3 + 2];
+                point[0] = points[k2];
+                point[1] = points[k2 + 1];
 
                 if (notSharingColor) {
                     var k4 = k * 4;
@@ -313,15 +303,45 @@ var LinesGeometry = StaticGeometry.extend(function () {
             }
             if (!this.useNativeLine) {
                 if (k < iterCount - 1) {
-                    // Set to next two points
-                    positionPrevAttr.set(vertexOffset + 2, point);
-                    positionPrevAttr.set(vertexOffset + 3, point);
+                    if (is2DArray) {
+                        vec2.copy(nextPoint, points[k + 1]);
+                    }
+                    else {
+                        var k2 = (k + 1) * 2;
+                        nextPoint = nextPoint || [];
+                        nextPoint[0] = points[k2];
+                        nextPoint[1] = points[k2 + 1];
+                    }
+                    // TODO In case dir is (0, 0)
+                    // TODO miterLimit
+                    if (k > 0) {
+                        vec2.sub(dirA, point, prevPoint);
+                        vec2.sub(dirB, nextPoint, point);
+                        vec2.normalize(dirA, dirA);
+                        vec2.normalize(dirB, dirB);
+                        vec2.add(tangent, dirA, dirB);
+                        vec2.normalize(tangent, tangent);
+                        var miter = lineWidth / 2 * Math.min(1 / vec2.dot(dirA, tangent), 2);
+                        offset[0] = -tangent[1] * miter;
+                        offset[1] = tangent[0] * miter;
+                    }
+                    else {
+                        vec2.sub(dirA, nextPoint, point);
+                        offset[0] = -dirA[1] * lineWidth / 2;
+                        offset[1] = dirA[0] * lineWidth / 2;
+                    }
+
                 }
-                if (k > 0) {
-                    // Set to previous two points
-                    positionNextAttr.set(vertexOffset - 2, point);
-                    positionNextAttr.set(vertexOffset - 1, point);
+                else {
+                    vec2.sub(dirA, point, prevPoint);
+                    offset[0] = -dirA[1] * lineWidth / 2;
+                    offset[1] = dirA[0] * lineWidth / 2;
                 }
+                offsetAttr.set(vertexOffset, offset);
+                vec2.negate(offset, offset);
+                offsetAttr.set(vertexOffset + 1, offset);
+
+                vec2.copy(prevPoint, point);
 
                 positionAttr.set(vertexOffset, point);
                 positionAttr.set(vertexOffset + 1, point);
@@ -369,14 +389,6 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 positionAttr.set(vertexOffset, point);
                 vertexOffset++;
             }
-        }
-        if (!this.useNativeLine) {
-            var start = this._vertexOffset;
-            var end = this._vertexOffset + points.length * 2;
-            positionPrevAttr.copy(start, start + 2);
-            positionPrevAttr.copy(start + 1, start + 3);
-            positionNextAttr.copy(end - 1, end - 3);
-            positionNextAttr.copy(end - 2, end - 4);
         }
 
         this._vertexOffset = vertexOffset;

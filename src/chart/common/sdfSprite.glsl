@@ -17,11 +17,21 @@ attribute float size;
 attribute float delay;
 #endif
 
+#ifdef POSITIONTEXTURE_ENABLED
+uniform sampler2D positionTexture;
+#endif
+
 varying float v_Size;
 
 void main()
 {
+
+#ifdef POSITIONTEXTURE_ENABLED
+    // Only 2d position texture supported
+    gl_Position = worldViewProjection * vec4(texture2D(positionTexture, position.xy).xy, -10.0, 1.0);
+#else
     gl_Position = worldViewProjection * vec4(position, 1.0);
+#endif
 
 #ifdef ANIMATING
     gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);

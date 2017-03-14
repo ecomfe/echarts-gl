@@ -65,8 +65,8 @@ void main() {
 
 @export ecgl.forceAtlas2.updateEdgeAttraction.vertex
 
-attribute vec2 node0;
 attribute vec2 node1;
+attribute vec2 node2;
 attribute float weight;
 
 uniform sampler2D positionTex;
@@ -80,8 +80,8 @@ varying vec2 v_Force;
 
 void main() {
 
-    vec4 n0 = texture2D(positionTex, node0);
-    vec4 n1 = texture2D(positionTex, node1);
+    vec4 n0 = texture2D(positionTex, node1);
+    vec4 n1 = texture2D(positionTex, node2);
 
     vec2 dir = n1.xy - n0.xy;
     float d = length(dir);
@@ -99,7 +99,7 @@ void main() {
     // PENDING.
     vec2 offset = vec2(1.0 / windowSize.x, 1.0 / windowSize.y);
     vec2 scale = vec2((windowSize.x - 1.0) / windowSize.x, (windowSize.y - 1.0) / windowSize.y);
-    vec2 pos = node0 * scale * 2.0 - 1.0;
+    vec2 pos = node1 * scale * 2.0 - 1.0;
     gl_Position = vec4(pos + offset, 0.0, 1.0);
     gl_PointSize = 1.0;
 
@@ -213,5 +213,32 @@ void main() {
     else {
         gl_FragColor = node;
     }
+}
+@end
+
+// For edge draw
+@export ecgl.forceAtlas2.edges.vertex
+uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
+
+attribute vec2 node;
+attribute vec4 a_Color : COLOR;
+varying vec4 v_Color;
+
+uniform sampler2D positionTex;
+
+void main()
+{
+    gl_Position = worldViewProjection * vec4(
+        texture2D(positionTex, node).xy, -10.0, 1.0
+    );
+    v_Color = a_Color;
+}
+@end
+
+@export ecgl.forceAtlas2.edges.fragment
+uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
+varying vec4 v_Color;
+void main() {
+    gl_FragColor = color * v_Color;
 }
 @end

@@ -313,7 +313,7 @@ ForceAtlas2.prototype.initNodes = function(positionArr, massArr, sizeArr) {
     if (haveSize) {
         this._sizeArr = sizeArr;
     }
-}
+};
 
 ForceAtlas2.prototype.initEdges = function(edgeArr, edgeWeightArr) {
     var nEdges = edgeArr.length / 2;

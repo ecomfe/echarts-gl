@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Force Atlas2 - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/dist/extension/dataTool.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            function createNodes(widthCount, heightCount) {
+                var nodes = [];
+                for (var i = 0; i < widthCount; i++) {
+                    for (var j = 0; j < heightCount; j++) {
+                        nodes.push({
+                            x: Math.random() * window.innerWidth,
+                            y: Math.random() * window.innerHeight,
+                            value: 1
+                        });
+                    }
+                }
+                return nodes;
+            }
+
+            function createEdges(widthCount, heightCount) {
+                var edges = [];
+                for (var i = 0; i < widthCount; i++) {
+                    for (var j = 0; j < heightCount; j++) {
+                        if (i < widthCount - 1) {
+                            edges.push({
+                                source: i + j * widthCount,
+                                target: i + 1 + j * widthCount,
+                                value: 1
+                            });
+                        }
+                        if (j < heightCount - 1) {
+                            edges.push({
+                                source: i + j * widthCount,
+                                target: i + (j + 1) * widthCount,
+                                value: 1
+                            });
+                        }
+                    }
+                }
+                return edges;
+            }
+
+            var nodes = createNodes(30, 30);
+            var edges = createEdges(30, 30);
+
+            chart.setOption({
+                series: [{
+                    type: 'graphGL',
+                    nodes: nodes,
+                    edges: edges,
+                    forceAtlas2: {
+                        edgeWeightInfluence: 1
+                    }
+                }]
+            });
+        </script>
+    </body>
+</html>

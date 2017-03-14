@@ -165,8 +165,13 @@ PointsBuilder.prototype = {
         var pointsMesh = this._mesh;
 
         var lastDataIndex = -1;
-        var isCartesian3D = seriesModel.coordinateSystem.type === 'cartesian3D';
-        var grid3DModel = seriesModel.coordinateSystem.model;
+        var isCartesian3D = seriesModel.coordinateSystem
+            && seriesModel.coordinateSystem.type === 'cartesian3D';
+
+        var grid3DModel;
+        if (isCartesian3D) {
+            grid3DModel = seriesModel.coordinateSystem.model;
+        }
 
         pointsMesh.off('mousemove');
         pointsMesh.off('mouseout');
@@ -262,6 +267,17 @@ PointsBuilder.prototype = {
         this._mesh.geometry.dirtyAttribute('color');
 
         this._api.getZr().refresh();
+    },
+
+    setPositionTexture: function (texture) {
+        this._mesh.material.set('positionTexture', texture);
+        this._mesh.material.shader[
+            texture ? 'enableTexture' : 'disableTexture'
+        ]('positionTexture');
+    },
+
+    getPointsMesh: function () {
+        return this._mesh;
     },
 
     _getSymbolInfo: function (data) {
