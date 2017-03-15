@@ -6,6 +6,7 @@ var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var Matrix4 = require('qtek/lib/math/Matrix4');
 
 
+var SDF_RANGE = 20;
 // TODO gl_PointSize has max value.
 function PointsBuilder(is2D, api) {
 
@@ -29,6 +30,8 @@ function PointsBuilder(is2D, api) {
     this.rootNode.add(this._labelsBuilder.getMesh());
 
     this._api = api;
+
+    this._spriteImageCanvas = document.createElement('canvas');
 }
 
 PointsBuilder.prototype = {
@@ -41,8 +44,7 @@ PointsBuilder.prototype = {
         var symbolInfo = this._getSymbolInfo(data);
         var dpr = api.getDevicePixelRatio();
 
-        // 50px is enough for sined distance function.
-        // symbolInfo.maxSize;
+        symbolInfo.maxSize *= 2;
 
         var symbolSize = [];
         if (symbolInfo.aspect > 1) {
@@ -58,8 +60,15 @@ PointsBuilder.prototype = {
         var itemStyle = seriesModel.getModel('itemStyle').getItemStyle();
         itemStyle.fill = data.getVisual('color');
 
-        var canvas = spriteUtil.createSymbolSDF(
-            symbolInfo.type, symbolSize, 20, itemStyle,
+        spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, {
+            fill: '#fff',
+            lineWidth: itemStyle.lineWidth,
+            stroke: 'transparent',
+            shadowColor: 'transparent'
+        }, this._spriteImageCanvas);
+
+        spriteUtil.createSDFFromCanvas(
+            this._spriteImageCanvas, symbolInfo.maxSize, SDF_RANGE,
             this._mesh.material.get('sprite').image
         );
 
@@ -74,7 +83,7 @@ PointsBuilder.prototype = {
         var rgbaArr = [];
         var is2D = this.is2D;
 
-        var pointSizeScale = canvas.width / symbolInfo.maxSize * dpr;
+        var pointSizeScale = this._spriteImageCanvas.width / symbolInfo.maxSize * dpr;
 
         var hasTransparentPoint = false;
         for (var i = 0; i < data.count(); i++) {
@@ -118,24 +127,36 @@ PointsBuilder.prototype = {
         var material = this._mesh.material;
         material.blend = blendFunc;
 
-        material.set('lineWidth', itemStyle.lineWidth / canvas.width * canvas.width * dpr);
+        // material.set('lineWidth', itemStyle.lineWidth / canvas.width * canvas.width * dpr);
+        material.set('lineWidth', itemStyle.lineWidth * dpr
+            * this._spriteImageCanvas.width / SDF_RANGE
+        );
 
         var strokeColor = graphicGL.parseColor(itemStyle.stroke);
-        material.set('color', [1, 1, 1,1]);
+        material.set('color', [1, 1, 1, 1]);
         material.set('strokeColor', strokeColor);
 
-        if (hasTransparentPoint
-            // Stroke is transparent
-            || (itemStyle.lineWidth && strokeColor[3] < 0.99)
-        ) {
+        if (this.is2D) {
             material.transparent = true;
             material.depthMask = false;
-            geometry.sortVertices = !is2D;
+            material.depthTest = false;
+            geometry.sortVertices = false;
         }
         else {
-            material.transparent = false;
-            material.depthMask = true;
-            geometry.sortVertices = false;
+            material.depthTest = true;
+            if (hasTransparentPoint
+                // Stroke is transparent
+                || (itemStyle.lineWidth && strokeColor[3] < 0.99)
+            ) {
+                material.transparent = true;
+                material.depthMask = false;
+                geometry.sortVertices = true;
+            }
+            else {
+                material.transparent = false;
+                material.depthMask = true;
+                geometry.sortVertices = false;
+            }
         }
 
         this._updateHandler(seriesModel, ecModel, api);

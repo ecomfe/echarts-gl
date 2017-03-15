@@ -6,6 +6,7 @@ var Lines2DGeometry = require('../../util/geometry/Lines2D');
 var retrieve = require('../../util/retrieve');
 var ForceAtlas2GPU = require('./ForceAtlas2GPU');
 var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
+var vec2 = require('qtek/lib/dep/glmatrix').vec2;
 
 var PointsBuilder = require('../common/PointsBuilder');
 
@@ -28,9 +29,12 @@ echarts.extendChartView({
 
         this._pointsBuilder = new PointsBuilder(true, api);
 
-        this._forceLinesMesh = new graphicGL.Mesh({
+        this._forceEdgesMesh = new graphicGL.Mesh({
             material: new graphicGL.Material({
-                shader: graphicGL.createShader('ecgl.forceAtlas2.edges')
+                shader: graphicGL.createShader('ecgl.forceAtlas2.edges'),
+                transparent: true,
+                depthMask: false,
+                depthTest: false
             }),
             geometry: new graphicGL.Geometry({
                 attributes: {
@@ -50,19 +54,19 @@ echarts.extendChartView({
     render: function (seriesModel, ecModel, api) {
         this.groupGL.add(this._pointsBuilder.rootNode);
 
-        this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
-
         this._initLayout(seriesModel, ecModel, api);
 
         this._pointsBuilder.update(seriesModel, ecModel, api);
 
         if (!(this._forceLayoutInstance instanceof ForceAtlas2GPU)) {
-            this.groupGL.remove(this._forceLinesMesh);
+            this.groupGL.remove(this._forceEdgesMesh);
         }
+
+        this._updateCamera(seriesModel, api);
     },
 
-    _iniForcetLinesGeometry: function (nodesIndicesMap, seriesModel) {
-        var geometry = this._forceLinesMesh.geometry;
+    _updateForceEdgesGeometry: function (nodesIndicesMap, seriesModel) {
+        var geometry = this._forceEdgesMesh.geometry;
 
         var edgeData = seriesModel.getEdgeData();
         var offset = 0;
@@ -85,6 +89,17 @@ echarts.extendChartView({
             offset += 2;
         });
         geometry.dirty();
+    },
+
+    _updateForceNodesGeometry: function (nodeData) {
+        var pointsMesh = this._pointsBuilder.getPointsMesh();
+        var pos = [];
+        for (var i = 0; i < nodeData.count(); i++) {
+            pointsMesh.geometry.attributes.position.get(i, pos);
+            this._forceLayoutInstance.getNodeUV(i, pos);
+            pointsMesh.geometry.attributes.position.set(i, pos);
+        }
+        pointsMesh.geometry.dirty();
     },
 
     _initLayout: function (seriesModel, ecModel, api) {
@@ -155,9 +170,7 @@ echarts.extendChartView({
                     mass = 1;
                 }
                 nodes.push({
-                    x: x,
-                    y: y,
-                    mass: mass
+                    x: x, y: y, mass: mass
                 });
             });
             nodeData.setLayout('points', layoutPoints);
@@ -187,11 +200,13 @@ echarts.extendChartView({
                 if (layoutId !== self._layoutId) {
                     return;
                 }
-                layoutInstance.step(viewGL.layer.renderer);
+                for (var i = 0; i < layoutModel.getShallow('steps'); i++) {
+                    layoutInstance.step(viewGL.layer.renderer);
+                }
                 // Position texture will been swapped. set every time.
                 var positionTex = layoutInstance.getNodePositionTexture();
                 self._pointsBuilder.setPositionTexture(positionTex);
-                self._forceLinesMesh.material.set('positionTex', positionTex);
+                self._forceEdgesMesh.material.set('positionTex', positionTex);
                 api.getZr().refresh();
 
                 requestAnimationFrame(function () {
@@ -201,17 +216,10 @@ echarts.extendChartView({
 
             requestAnimationFrame(function () {
                 doLayout(layoutId);
-                // Init lines geometry after first layout;
-                self.groupGL.add(self._forceLinesMesh);
-                self._iniForcetLinesGeometry(nodesIndicesMap, seriesModel);
-                var pointsMesh = self._pointsBuilder.getPointsMesh();
-                var pos = [];
-                for (var i = 0; i < nodeData.count(); i++) {
-                    pointsMesh.geometry.attributes.position.get(i, pos);
-                    layoutInstance.getNodeUV(i, pos);
-                    pointsMesh.geometry.attributes.position.set(i, pos);
-                }
-                pointsMesh.geometry.dirty();
+                // Update lines geometry after first layout;
+                self.groupGL.add(self._forceEdgesMesh);
+                self._updateForceEdgesGeometry(nodesIndicesMap, seriesModel);
+                self._updateForceNodesGeometry(nodeData);
             });
         }
         else {
@@ -240,10 +248,30 @@ echarts.extendChartView({
     //     this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
     // },
 
-    _updateCamera: function (width, height, dpr) {
-        this.viewGL.setViewport(0, 0, width, height, dpr);
+    _updateCamera: function (seriesModel, api) {
+        this.viewGL.setViewport(0, 0, api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
         var camera = this.viewGL.camera;
-        camera.left = camera.top = 0;
+        var nodeData = seriesModel.getData();
+        var points = nodeData.getLayout('points');
+        var min = vec2.create(Infinity, Infinity);
+        var max = vec2.create(-Infinity, -Infinity);
+        var pt = [];
+        for (var i = 0; i < points.length;) {
+            pt[0] = points[i++];
+            pt[1] = points[i++];
+            vec2.min(min, min, pt);
+            vec2.max(max, max, pt);
+        }
+        // Scale a bit
+        var width = max[0] - min[0];
+        var height = max[1] - min[1];
+        width *= 1.4;
+        height *= 1.4;
+        min[0] -= width * 0.2;
+        min[1] -= height * 0.2;
+
+        camera.left = min[0];
+        camera.top = min[1];
         camera.bottom = height;
         camera.right = width;
         camera.near = 0;

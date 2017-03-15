@@ -5,6 +5,8 @@ var GraphSeries = echarts.extendSeriesModel({
 
     type: 'series.graphGL',
 
+    visualColorAccessPath: 'itemStyle.color',
+
     init: function (option) {
         GraphSeries.superApply(this, 'init', arguments);
 
@@ -157,6 +159,8 @@ var GraphSeries = echarts.extendSeriesModel({
         forceAtlas2: {
             initLayout: null,
 
+            steps: 1,
+
             repulsionByDegree: true,
             linLogMode: false,
             strongGravityMode: false,
@@ -166,9 +170,9 @@ var GraphSeries = echarts.extendSeriesModel({
             edgeWeightInfluence: 1.0,
 
             // Edge weight range.
-            edgeWeight: [1, 10],
+            edgeWeight: [1, 4],
             // Node weight range.
-            nodeWeight: [1, 10],
+            nodeWeight: [1, 4],
 
             jitterTolerence: 0.1,
             preventOverlap: false,

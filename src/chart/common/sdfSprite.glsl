@@ -53,8 +53,7 @@ void main()
 
 uniform vec4 color: [1, 1, 1, 1];
 uniform vec4 strokeColor: [1, 1, 1, 1];
-uniform float softEdgeMin: 0.48;
-uniform float softEdgeMax: 0.52;
+uniform float smoothing: 0.1;
 
 uniform float lineWidth: 0.0;
 
@@ -82,20 +81,17 @@ void main()
 #ifdef SPRITE_ENABLED
     float d = texture2D(sprite, gl_PointCoord).r;
     // Antialias
-    gl_FragColor.a *= smoothstep(softEdgeMin, softEdgeMax, d);
-    // Map to [-1, 1]
-    d = d - 0.5;
-    // Scale by symbolSize to make lineWidth screen space.
-    // TODO, Will exceed sprite.
+    gl_FragColor.a *= smoothstep(0.5 - smoothing, 0.5 + smoothing, d);
 
     if (lineWidth > 0.0) {
         float sLineWidth = lineWidth / 2.0 / v_Size;
-        float fadeSize = sLineWidth * 0.5;
-        float outlineMaxValue0 = sLineWidth - fadeSize;
-        float outlineMaxValue1 = sLineWidth + fadeSize;
-        float outlineMinValue0 = -sLineWidth - fadeSize;
-        float outlineMinValue1 = -sLineWidth + fadeSize;
 
+        float outlineMaxValue0 = 0.5 + sLineWidth;
+        float outlineMaxValue1 = 0.5 + sLineWidth + smoothing;
+        float outlineMinValue0 = 0.5 - sLineWidth - smoothing;
+        float outlineMinValue1 = 0.5 - sLineWidth;
+
+        // FIXME Aliasing
         if (d <= outlineMaxValue1 && d >= outlineMinValue0) {
             float a = _strokeColor.a;
             if (d <= outlineMinValue1) {
@@ -109,7 +105,6 @@ void main()
         }
     }
 #endif
-
 
     if (gl_FragColor.a == 0.0) {
         discard;

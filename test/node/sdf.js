@@ -3,10 +3,11 @@ var fs = require('fs');
 
 var Canvas = require('canvas');
 
-var canvas = new Canvas(50, 50);
-spriteUtil.createSymbolSDF('circle', 50, 20, {
-    // stroke: '#fff',
-    // lineWidth: 2
+var canvas = new Canvas(100, 100);
+var sdfCanvas = new Canvas(22, 22);
+spriteUtil.createSymbolSprite('circle', 100, {
+    fill: '#fff'
 }, canvas);
+spriteUtil.createSDFFromCanvas(canvas, 10, 10, sdfCanvas);
 
-fs.writeFile('sdf.png', canvas.toBuffer());
+fs.writeFile('sdf.png', sdfCanvas.toBuffer());

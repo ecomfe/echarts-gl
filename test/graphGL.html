@@ -53,16 +53,24 @@
                 return edges;
             }
 
-            var nodes = createNodes(30, 30);
-            var edges = createEdges(30, 30);
+            var nodes = createNodes(100, 100);
+            var edges = createEdges(100, 100);
 
             chart.setOption({
                 series: [{
                     type: 'graphGL',
                     nodes: nodes,
                     edges: edges,
+                    itemStyle: {
+                        color: 'rgba(255,255,255,0.8)'
+                    },
+                    lineStyle: {
+                        color: 'rgba(255,255,255,0.2)'
+                    },
                     forceAtlas2: {
-                        edgeWeightInfluence: 1
+                        steps: 5,
+                        jitterTolerence: 10,
+                        edgeWeightInfluence: 2
                     }
                 }]
             });
