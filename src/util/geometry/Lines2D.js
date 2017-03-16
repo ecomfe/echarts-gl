@@ -34,7 +34,8 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
         attributes: {
             position: new StaticGeometry.Attribute('position', 'float', 2, 'POSITION'),
-            offset: new StaticGeometry.Attribute('offset', 'float', 2),
+            normal: new StaticGeometry.Attribute('normal', 'float', 2),
+            offset: new StaticGeometry.Attribute('offset', 'float', 1),
             color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
         }
     };
@@ -61,6 +62,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
             if (!this.useNativeLine) {
                 attributes.offset.init(nVertex);
+                attributes.normal.init(nVertex);
             }
 
             if (nVertex > 0xffff) {
@@ -258,6 +260,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         var positionAttr = this.attributes.position;
         var colorAttr = this.attributes.color;
         var offsetAttr = this.attributes.offset;
+        var normalAttr = this.attributes.normal;
         var indices = this.indices;
 
         if (lineWidth == null) {
@@ -271,7 +274,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         var pointColor;
         var dirA = vec2.create();
         var dirB = vec2.create();
-        var offset = vec2.create();
+        var normal = vec2.create();
         var tangent = vec2.create();
         for (var k = 0; k < iterCount; k++) {
             if (is2DArray) {
@@ -302,6 +305,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 }
             }
             if (!this.useNativeLine) {
+                var offset;
                 if (k < iterCount - 1) {
                     if (is2DArray) {
                         vec2.copy(nextPoint, points[k + 1]);
@@ -322,24 +326,35 @@ var LinesGeometry = StaticGeometry.extend(function () {
                         vec2.add(tangent, dirA, dirB);
                         vec2.normalize(tangent, tangent);
                         var miter = lineWidth / 2 * Math.min(1 / vec2.dot(dirA, tangent), 2);
-                        offset[0] = -tangent[1] * miter;
-                        offset[1] = tangent[0] * miter;
+                        normal[0] = -tangent[1];
+                        normal[1] = tangent[0];
+
+                        offset = miter;
                     }
                     else {
                         vec2.sub(dirA, nextPoint, point);
-                        offset[0] = -dirA[1] * lineWidth / 2;
-                        offset[1] = dirA[0] * lineWidth / 2;
+                        vec2.normalize(dirA, dirA);
+
+                        normal[0] = -dirA[1];
+                        normal[1] = dirA[0];
+
+                        offset = lineWidth / 2;
                     }
 
                 }
                 else {
                     vec2.sub(dirA, point, prevPoint);
-                    offset[0] = -dirA[1] * lineWidth / 2;
-                    offset[1] = dirA[0] * lineWidth / 2;
+                    vec2.normalize(dirA, dirA);
+
+                    normal[0] = -dirA[1];
+                    normal[1] = dirA[0];
+
+                    offset = lineWidth / 2;
                 }
+                normalAttr.set(vertexOffset, normal);
+                normalAttr.set(vertexOffset + 1, normal);
                 offsetAttr.set(vertexOffset, offset);
-                vec2.negate(offset, offset);
-                offsetAttr.set(vertexOffset + 1, offset);
+                offsetAttr.set(vertexOffset + 1, -offset);
 
                 vec2.copy(prevPoint, point);
 
@@ -348,9 +363,6 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
                 colorAttr.set(vertexOffset, pointColor);
                 colorAttr.set(vertexOffset + 1, pointColor);
-
-                offsetAttr.set(vertexOffset, lineWidth / 2);
-                offsetAttr.set(vertexOffset + 1, -lineWidth / 2);
 
                 vertexOffset += 2;
             }

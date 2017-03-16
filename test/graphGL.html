@@ -69,7 +69,8 @@
                         color: 'rgba(255,255,255,0.8)'
                     },
                     lineStyle: {
-                        color: 'rgba(255,255,255,0.2)'
+                        color: 'rgba(255,255,255,0.8)',
+                        width: 3
                     },
                     forceAtlas2: {
                         steps: 5,
@@ -90,6 +91,8 @@
                     type: 'graphGLStopLayout'
                 });
             });
+
+            $(window).resize(chart.resize);
         </script>
     </body>
 </html>

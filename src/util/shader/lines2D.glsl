@@ -36,17 +36,29 @@ void main()
 
 // https://mattdesl.svbtle.com/drawing-lines-is-hard
 attribute vec2 position: POSITION;
-attribute vec2 offset;
+attribute vec2 normal;
+attribute float offset;
 attribute vec4 a_Color : COLOR;
 
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
+uniform vec4 viewport : VIEWPORT;
 
 varying vec4 v_Color;
 varying float v_Miter;
 
 void main()
 {
-    gl_Position = worldViewProjection * vec4(position + offset, 10.0, 1.0);
+    vec4 p2 = worldViewProjection * vec4(position + normal, -10.0, 1.0);
+    gl_Position = worldViewProjection * vec4(position, -10.0, 1.0);
+
+    p2.xy /= p2.w;
+    gl_Position.xy /= gl_Position.w;
+
+    // Get normal on projection space.
+    vec2 N = normalize(p2.xy - gl_Position.xy);
+    gl_Position.xy += N * offset / viewport.zw * 2.0;
+
+    gl_Position.xy *= gl_Position.w;
 
     v_Color = a_Color;
 }

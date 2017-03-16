@@ -31,6 +31,7 @@ echarts.extendChartView({
 
         this._pointsBuilder = new PointsBuilder(true, api);
 
+        // Mesh used during force directed layout.
         this._forceEdgesMesh = new graphicGL.Mesh({
             material: new graphicGL.Material({
                 shader: graphicGL.createShader('ecgl.forceAtlas2.edges'),
@@ -48,6 +49,21 @@ echarts.extendChartView({
             }),
             renderOrder: -1,
             mode: graphicGL.Mesh.LINES
+        });
+
+        // Mesh used after force directed layout.
+        this._edgesMesh = new graphicGL.Mesh({
+            material: new graphicGL.Material({
+                shader: graphicGL.createShader('ecgl.meshLines2D'),
+                transparent: true,
+                depthMask: false,
+                depthTest: false
+            }),
+            geometry: new Lines2DGeometry({
+                useNativeLine: false,
+                dynamic: true
+            }),
+            culling: false
         });
 
         this._layoutId = 0;
@@ -79,7 +95,7 @@ echarts.extendChartView({
         this._updateCamera(seriesModel, api);
     },
 
-    _updateForceEdgesGeometry: function (nodesIndicesMap, seriesModel) {
+    _updateForceEdgesGeometry: function (edges, seriesModel) {
         var geometry = this._forceEdgesMesh.geometry;
 
         var edgeData = seriesModel.getEdgeData();
@@ -88,9 +104,10 @@ echarts.extendChartView({
         var vertexCount = edgeData.count() * 2;
         geometry.attributes.node.init(vertexCount);
         geometry.attributes.color.init(vertexCount);
-        seriesModel.getGraph().eachEdge(function (edge) {
-            geometry.attributes.node.set(offset, layoutInstance.getNodeUV(nodesIndicesMap[edge.node1.id]));
-            geometry.attributes.node.set(offset + 1, layoutInstance.getNodeUV(nodesIndicesMap[edge.node2.id]));
+        edgeData.each(function (idx) {
+            var edge = edges[idx];
+            geometry.attributes.node.set(offset, layoutInstance.getNodeUV(edge.node1));
+            geometry.attributes.node.set(offset + 1, layoutInstance.getNodeUV(edge.node2));
 
             var color = edgeData.getItemVisual(edge.dataIndex, 'color');
             var colorArr = graphicGL.parseColor(color);
@@ -102,6 +119,43 @@ echarts.extendChartView({
 
             offset += 2;
         });
+        geometry.dirty();
+    },
+
+    _updateEdgesGeometry: function (edges) {
+
+        var geometry = this._edgesMesh.geometry;
+        var edgeData = this._model.getEdgeData();
+        var points = this._model.getData().getLayout('points');
+
+        geometry.resetOffset();
+        geometry.setVertexCount(edges.length * geometry.getLineVertexCount());
+        geometry.setTriangleCount(edges.length * geometry.getLineTriangleCount());
+
+        var p0 = [];
+        var p1 = [];
+
+        var lineWidthQuery = ['lineStyle', 'width'];
+        for (var i = 0; i < edges.length; i++) {
+            var edge = edges[i];
+            var idx1 = edge.node1 * 2;
+            var idx2 = edge.node2 * 2;
+            p0[0] = points[idx1];
+            p0[1] = points[idx1 + 1];
+            p1[0] = points[idx2];
+            p1[1] = points[idx2 + 1];
+
+            var color = edgeData.getItemVisual(i, 'color');
+            var colorArr = graphicGL.parseColor(color);
+            colorArr[3] *= retrieve.firstNotNull(
+                edgeData.getItemVisual(i, 'opacity'), 1
+            );
+            var itemModel = edgeData.getItemModel(i);
+            var lineWidth = retrieve.firstNotNull(itemModel.get(lineWidthQuery), 1) * this._api.getDevicePixelRatio();
+
+            geometry.addLine(p0, p1, colorArr, lineWidth);
+        }
+
         geometry.dirty();
     },
 
@@ -208,8 +262,7 @@ echarts.extendChartView({
             layoutInstance.updateOption(layoutModel.option);
 
             // Update lines geometry after first layout;
-            this.groupGL.add(this._forceEdgesMesh);
-            this._updateForceEdgesGeometry(nodesIndicesMap, seriesModel);
+            this._updateForceEdgesGeometry(layoutInstance.getEdges(), seriesModel);
             this._updatePositionTexture();
 
             api.dispatchAction({
@@ -231,6 +284,8 @@ echarts.extendChartView({
                 layoutPoints[offset * 2 + 1] = y;
             });
             nodeData.setLayout('points', layoutPoints);
+
+            // TODO
         }
     },
 
@@ -239,6 +294,13 @@ echarts.extendChartView({
         var api = this._api;
         var layoutInstance = this._forceLayoutInstance;
         var layoutModel = this._model.getModel('forceAtlas2');
+
+        this.groupGL.remove(this._edgesMesh);
+        this.groupGL.add(this._forceEdgesMesh);
+
+        if (!this._forceLayoutInstance) {
+            return;
+        }
 
         var self = this;
         var layoutId = this._layoutId = globalLayoutId++;
@@ -280,6 +342,17 @@ echarts.extendChartView({
 
     stopLayout: function () {
         this._layoutId = 0;
+        this.groupGL.remove(this._forceEdgesMesh);
+        this.groupGL.add(this._edgesMesh);
+
+        if (!this._forceLayoutInstance) {
+            return;
+        }
+        var points = this._forceLayoutInstance.getNodePosition(this.viewGL.layer.renderer);
+
+        this._model.getData().setLayout('points', points);
+
+        this._updateEdgesGeometry(this._forceLayoutInstance.getEdges());
     },
 
     _updateCamera: function (seriesModel, api) {
