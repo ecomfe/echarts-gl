@@ -205,10 +205,15 @@ echarts.extendChartView({
 
             var self = this;
             var layoutId = this._layoutId = globalLayoutId++;
+            var stopThreshold = layoutModel.getShallow('stopThreshold');
             var doLayout = function (layoutId) {
                 if (layoutId !== self._layoutId) {
                     return;
                 }
+                if (layoutInstance.isFinished(viewGL.layer.renderer, stopThreshold)) {
+                    return;
+                }
+
                 for (var i = 0; i < layoutModel.getShallow('steps'); i++) {
                     layoutInstance.step(viewGL.layer.renderer);
                 }

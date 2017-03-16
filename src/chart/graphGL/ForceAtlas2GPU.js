@@ -253,6 +253,8 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
     this._nodeRepulsionPass.material.setUniform('textureSize', [textureWidth, textureHeight]);
 
     this._inited = false;
+
+    this._frame = 0;
 };
 
 ForceAtlas2GPU.prototype.step = function (renderer) {
@@ -260,6 +262,8 @@ ForceAtlas2GPU.prototype.step = function (renderer) {
         this._initFromSource(renderer);
         this._inited = true;
     }
+
+    this._frame++;
 
     this._framebuffer.attach(this._forceTex);
     this._framebuffer.bind(renderer);
@@ -368,10 +372,11 @@ ForceAtlas2GPU.prototype.getTextureData = function (renderer, textureName) {
     return arr;
 };
 
-ForceAtlas2GPU.prototype.isFinished = function (renderer) {
+ForceAtlas2GPU.prototype.isFinished = function (renderer, threshold) {
     var globalSpeedData = this.getTextureData(renderer, 'globalSpeed');
+    // console.log(globalSpeedData[0]);
     // PENDING
-    return this._inited && globalSpeedData[0] < 10;
+    return this._inited && globalSpeedData[0] < threshold && this._frame > 10;
 };
 
 ForceAtlas2GPU.prototype._swapTexture = function () {

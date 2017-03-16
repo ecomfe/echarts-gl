@@ -161,6 +161,9 @@ var GraphSeries = echarts.extendSeriesModel({
 
             steps: 1,
 
+            // Stop threshold, 0 never stop.
+            stopThreshold: 2,
+
             repulsionByDegree: true,
             linLogMode: false,
             strongGravityMode: false,
