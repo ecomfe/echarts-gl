@@ -257,6 +257,13 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
     this._frame = 0;
 };
 
+ForceAtlas2GPU.prototype.getNodes = function () {
+    return this._nodes;
+};
+ForceAtlas2GPU.prototype.getEdges = function () {
+    return this._edges;
+};
+
 ForceAtlas2GPU.prototype.step = function (renderer) {
     if (!this._inited) {
         this._initFromSource(renderer);
@@ -321,8 +328,10 @@ ForceAtlas2GPU.prototype.step = function (renderer) {
 };
 
 ForceAtlas2GPU.prototype.getNodePositionTexture = function () {
-    // Texture already been swapped.
-    return this._positionPrevTex;
+    return this._inited
+        // Texture already been swapped.
+        ? this._positionPrevTex
+        : this._positionSourceTex;
 };
 
 ForceAtlas2GPU.prototype.getNodeUV = function (nodeIndex, uv) {

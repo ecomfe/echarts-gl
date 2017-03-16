@@ -9,6 +9,10 @@
     </head>
     <body>
         <div id="main"></div>
+        <div id="toolbar">
+            <button id="stop-layout">Stop layout</button>
+            <button id="start-layout">Start alyout</button>
+        </div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../node_modules/echarts/dist/extension/dataTool.js"></script>
         <script src="../dist/echarts-gl.js"></script>
@@ -53,8 +57,8 @@
                 return edges;
             }
 
-            var nodes = createNodes(20, 20);
-            var edges = createEdges(20, 20);
+            var nodes = createNodes(50, 50);
+            var edges = createEdges(50, 50);
 
             chart.setOption({
                 series: [{
@@ -73,6 +77,18 @@
                         edgeWeightInfluence: 2
                     }
                 }]
+            });
+
+            $('#start-layout').click(function () {
+                chart.dispatchAction({
+                    type: 'graphGLStartLayout'
+                });
+            });
+
+            $('#stop-layout').click(function () {
+                chart.dispatchAction({
+                    type: 'graphGLStopLayout'
+                });
             });
         </script>
     </body>

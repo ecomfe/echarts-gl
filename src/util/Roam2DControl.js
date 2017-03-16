@@ -79,7 +79,6 @@ var Roam2DControl = Base.extend(function () {
 
         var scale = this._zoom;
 
-        // Map screen coordinate to view space
         target.position.x = this._dx;
         target.position.y = this._dy;
 

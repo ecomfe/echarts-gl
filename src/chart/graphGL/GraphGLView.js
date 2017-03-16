@@ -63,9 +63,14 @@ echarts.extendChartView({
     render: function (seriesModel, ecModel, api) {
         this.groupGL.add(this._pointsBuilder.rootNode);
 
+        this._model = seriesModel;
+        this._api = api;
+
         this._initLayout(seriesModel, ecModel, api);
 
         this._pointsBuilder.update(seriesModel, ecModel, api);
+
+        this._updateForceNodesGeometry(seriesModel.getData());
 
         if (!(this._forceLayoutInstance instanceof ForceAtlas2GPU)) {
             this.groupGL.remove(this._forceEdgesMesh);
@@ -114,7 +119,6 @@ echarts.extendChartView({
     _initLayout: function (seriesModel, ecModel, api) {
         var layout = seriesModel.get('layout');
         var graph = seriesModel.getGraph();
-        var viewGL = this.viewGL;
 
         var boxLayoutOption = seriesModel.getBoxLayoutParams();
         var viewport = layoutUtil.getLayoutRect(boxLayoutOption, {
@@ -129,7 +133,7 @@ echarts.extendChartView({
             layout = 'forceAtlas2';
         }
         // Stop previous layout
-        this._stopLayout();
+        this.stopLayout();
 
         var nodeData = seriesModel.getData();
         var edgeData = seriesModel.getData();
@@ -203,37 +207,13 @@ echarts.extendChartView({
             layoutInstance.initData(nodes, edges);
             layoutInstance.updateOption(layoutModel.option);
 
-            var self = this;
-            var layoutId = this._layoutId = globalLayoutId++;
-            var stopThreshold = layoutModel.getShallow('stopThreshold');
-            var doLayout = function (layoutId) {
-                if (layoutId !== self._layoutId) {
-                    return;
-                }
-                if (layoutInstance.isFinished(viewGL.layer.renderer, stopThreshold)) {
-                    return;
-                }
+            // Update lines geometry after first layout;
+            this.groupGL.add(this._forceEdgesMesh);
+            this._updateForceEdgesGeometry(nodesIndicesMap, seriesModel);
+            this._updatePositionTexture();
 
-                for (var i = 0; i < layoutModel.getShallow('steps'); i++) {
-                    layoutInstance.step(viewGL.layer.renderer);
-                }
-                // Position texture will been swapped. set every time.
-                var positionTex = layoutInstance.getNodePositionTexture();
-                self._pointsBuilder.setPositionTexture(positionTex);
-                self._forceEdgesMesh.material.set('positionTex', positionTex);
-                api.getZr().refresh();
-
-                requestAnimationFrame(function () {
-                    doLayout(layoutId);
-                });
-            };
-
-            requestAnimationFrame(function () {
-                doLayout(layoutId);
-                // Update lines geometry after first layout;
-                self.groupGL.add(self._forceEdgesMesh);
-                self._updateForceEdgesGeometry(nodesIndicesMap, seriesModel);
-                self._updateForceNodesGeometry(nodeData);
+            api.dispatchAction({
+                type: 'graphGLStartLayout'
             });
         }
         else {
@@ -254,13 +234,53 @@ echarts.extendChartView({
         }
     },
 
-    _stopLayout: function () {
-        this._layoutId = 0;
+    startLayout: function () {
+        var viewGL = this.viewGL;
+        var api = this._api;
+        var layoutInstance = this._forceLayoutInstance;
+        var layoutModel = this._model.getModel('forceAtlas2');
+
+        var self = this;
+        var layoutId = this._layoutId = globalLayoutId++;
+        var stopThreshold = layoutModel.getShallow('stopThreshold');
+        var steps = layoutModel.getShallow('steps');
+        var doLayout = function (layoutId) {
+            if (layoutId !== self._layoutId) {
+                return;
+            }
+            if (layoutInstance.isFinished(viewGL.layer.renderer, stopThreshold)) {
+                api.dispatchAction({
+                    type: 'graphGLStopLayout'
+                });
+                return;
+            }
+
+            for (var i = 0; i < steps; i++) {
+                layoutInstance.step(viewGL.layer.renderer);
+            }
+            self._updatePositionTexture();
+            // Position texture will been swapped. set every time.
+            api.getZr().refresh();
+
+            requestAnimationFrame(function () {
+                doLayout(layoutId);
+            });
+        };
+
+        requestAnimationFrame(function () {
+            doLayout(layoutId);
+        });
     },
 
-    // updateLayout: function (seriesModel, ecModel, api) {
-    //     this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
-    // },
+    _updatePositionTexture: function () {
+        var positionTex = this._forceLayoutInstance.getNodePositionTexture();
+        this._pointsBuilder.setPositionTexture(positionTex);
+        this._forceEdgesMesh.material.set('positionTex', positionTex);
+    },
+
+    stopLayout: function () {
+        this._layoutId = 0;
+    },
 
     _updateCamera: function (seriesModel, api) {
         this.viewGL.setViewport(0, 0, api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
@@ -299,7 +319,7 @@ echarts.extendChartView({
         }
         this.groupGL.removeAll();
 
-        this._stopLayout();
+        this.stopLayout();
     },
 
     remove: function () {

@@ -81,3 +81,15 @@ echarts.registerVisual(function (ecModel) {
         });
     });
 });
+
+echarts.registerAction({
+    type: 'graphGLStartLayout',
+    event: 'graphgllayoutstarted',
+    update: 'series.graphGL:startLayout'
+}, function () {});
+
+echarts.registerAction({
+    type: 'graphGLStopLayout',
+    event: 'graphgllayoutstopped',
+    update: 'series.graphGL:stopLayout'
+}, function () {});
