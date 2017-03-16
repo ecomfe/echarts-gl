@@ -8,6 +8,8 @@ var ForceAtlas2GPU = require('./ForceAtlas2GPU');
 var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
 var vec2 = require('qtek/lib/dep/glmatrix').vec2;
 
+var Roam2DControl = require('../../util/Roam2DControl');
+
 var PointsBuilder = require('../common/PointsBuilder');
 
 graphicGL.Shader.import(require('text!../../util/shader/lines2D.glsl'));
@@ -49,6 +51,13 @@ echarts.extendChartView({
         });
 
         this._layoutId = 0;
+
+        this._control = new Roam2DControl({
+            zr: api.getZr(),
+            viewGL: this.viewGL
+        });
+        this._control.setTarget(this.groupGL);
+        this._control.init();
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -151,7 +160,7 @@ echarts.extendChartView({
                 var value = nodeData.get('value', dataIndex);
                 var x;
                 var y;
-                if (nodeData.hasItemoption) {
+                if (nodeData.hasItemOption) {
                     var itemModel = nodeData.getItemModel(dataIndex);
                     x = itemModel.get('x');
                     y = itemModel.get('y');
@@ -228,7 +237,7 @@ echarts.extendChartView({
                 var dataIndex = node.dataIndex;
                 var x;
                 var y;
-                if (nodeData.hasItemoption) {
+                if (nodeData.hasItemOption) {
                     var itemModel = nodeData.getItemModel(dataIndex);
                     x = itemModel.get('x');
                     y = itemModel.get('y');
@@ -272,8 +281,8 @@ echarts.extendChartView({
 
         camera.left = min[0];
         camera.top = min[1];
-        camera.bottom = height;
-        camera.right = width;
+        camera.bottom = height + min[1];
+        camera.right = width + min[0];
         camera.near = 0;
         camera.far = 100;
     },
@@ -290,5 +299,6 @@ echarts.extendChartView({
 
     remove: function () {
         this.groupGL.removeAll();
+        this._control.dispose();
     }
 });

@@ -572,5 +572,6 @@ module.exports = echarts.extendComponentView({
 
     dispose: function () {
         this.groupGL.removeAll();
+        this._control.dispose();
     }
 });

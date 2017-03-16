@@ -68,5 +68,6 @@ module.exports = echarts.extendChartView({
 
     dispose: function () {
         this.groupGL.removeAll();
+        this._control.dispose();
     }
 });

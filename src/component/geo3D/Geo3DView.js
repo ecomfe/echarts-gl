@@ -77,5 +77,9 @@ module.exports = echarts.extendComponentView({
     afterRender: function (geo3DModel, ecModel, api, layerGL) {
         var renderer = layerGL.renderer;
         this._lightHelper.updateAmbientCubemap(renderer, geo3DModel, api);
+    },
+
+    dispose: function () {
+        this._control.dispose();
     }
 });

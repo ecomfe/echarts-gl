@@ -508,8 +508,6 @@ var OrbitControl = Base.extend(function () {
         this.zr.on('mousemove', this._mouseMoveHandler);
         this.zr.on('mouseup', this._mouseUpHandler);
 
-        e = e.event;
-
         if (this.mode === 'rotate') {
             // Reset rotate velocity
             this._rotateVelocity.set(0, 0);
@@ -529,7 +527,6 @@ var OrbitControl = Base.extend(function () {
         if (this._isAnimating()) {
             return;
         }
-        e = e.event;
 
         if (this.mode === 'rotate') {
             this._rotateVelocity.y = (e.offsetX - this._mouseX) / 500;
