@@ -83,6 +83,18 @@ echarts.registerVisual(function (ecModel) {
 });
 
 echarts.registerAction({
+    type: 'graphGLRoam',
+    event: 'graphglroam',
+    update: 'series.graphGL:roam'
+}, function (payload, ecModel) {
+    ecModel.eachComponent({
+        mainType: 'series', query: payload
+    }, function (componentModel) {
+        componentModel.setView(payload);
+    });
+});
+
+echarts.registerAction({
     type: 'graphGLStartLayout',
     event: 'graphgllayoutstarted',
     update: 'series.graphGL:startLayout'

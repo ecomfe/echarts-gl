@@ -52,19 +52,25 @@ var Roam2DControl = Base.extend(function () {
     },
 
     setZoom: function (zoom) {
-
+        this._zoom = Math.max(Math.min(
+            zoom, this.maxZoom
+        ), this.minZoom);
+        this._needsUpdate = true;
     },
 
     setOffset: function (offset) {
+        this._dx = offset[0];
+        this._dy = offset[1];
 
+        this._needsUpdate = true;
     },
 
     getZoom: function () {
-
+        return this._zoom;
     },
 
     getOffset: function () {
-
+        return [this._dx, this._dy];
     },
 
     _update: function () {
@@ -87,6 +93,8 @@ var Roam2DControl = Base.extend(function () {
         this.zr.refresh();
 
         this._needsUpdate = false;
+
+        this.trigger('update');
     },
 
     _mouseDownHandler: function (e) {

@@ -132,12 +132,13 @@ var GraphSeries = echarts.extendSeriesModel({
         });
     },
 
-    setZoom: function (zoom) {
-        this.option.zoom = zoom;
-    },
-
-    setCenter: function (center) {
-        this.option.center = center;
+    setView: function (payload) {
+        if (payload.zoom != null) {
+            this.option.zoom = payload.zoom;
+        }
+        if (payload.offset != null) {
+            this.option.offset = payload.offset;
+        }
     },
 
     isAnimationEnabled: function () {

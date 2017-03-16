@@ -93,6 +93,19 @@ echarts.extendChartView({
         }
 
         this._updateCamera(seriesModel, api);
+
+        this._control.off('update');
+        this._control.on('update', function () {
+                api.dispatchAction({
+                    type: 'graphGLRoam',
+                    seriesId: seriesModel.id,
+                    zoom: this._control.getZoom(),
+                    offset: this._control.getOffset()
+                });
+            }, this);
+
+        this._control.setZoom(retrieve.firstNotNull(seriesModel.get('zoom'), 1));
+        this._control.setOffset(seriesModel.get('offset') || [0, 0]);
     },
 
     _updateForceEdgesGeometry: function (edges, seriesModel) {
