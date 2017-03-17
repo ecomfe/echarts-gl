@@ -519,7 +519,7 @@ module.exports = echarts.extendComponentView({
             var axisPointerModel = axisModel.getModel('axisPointer', axisPointerParentModel);
             var labelModel = axisPointerModel.getModel('label');
             var lineColor = axisPointerModel.get('lineStyle.color');
-            if (!labelModel.get('show')) {
+            if (!labelModel.get('show') || !axisPointerModel.get('show')) {
                 return;
             }
             var val = data[idx];
