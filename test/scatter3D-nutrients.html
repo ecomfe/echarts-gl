@@ -44,7 +44,9 @@
             var config = {
                 xAxis3D: 'protein',
                 yAxis3D: 'fiber',
-                zAxis3D: 'sodium'
+                zAxis3D: 'sodium',
+                color: 'fiber',
+                symbolSize: 'vitaminc'
             };
 
             var fieldIndices = schema.reduce(function (obj, item) {
@@ -60,17 +62,42 @@
             });
             fieldNames = fieldNames.slice(2, fieldNames.length - 2);
 
+            function getMaxOnExtent(data) {
+                var colorMax = -Infinity;
+                var symbolSizeMax = -Infinity;
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    var colorVal = item[fieldIndices[config.color]];
+                    var symbolSizeVal = item[fieldIndices[config.symbolSize]];
+                    colorMax = Math.max(colorVal, colorMax);
+                    symbolSizeMax = Math.max(symbolSizeVal, symbolSizeMax);
+                }
+                return {
+                    color: colorMax,
+                    symbolSize: symbolSizeMax
+                };
+            }
+
             $.getJSON('./data/nutrients.json', function (data) {
 
+
+                var max = getMaxOnExtent(data);
                 chart.setOption({
-                    visualMap: {
+                    visualMap: [{
                         show: false,
-                        dimension: 0,
-                        max: 100,
+                        dimension: 3,
+                        max: max.color,
                         inRange: {
-                            colorLightness: [0.3, 0.9]
+                            color: ['#00fea8', '#00ff0d', '#f5f811', '#f09a09', '#fe0300']
                         }
-                    },
+                    }, {
+                        show: false,
+                        dimension: 4,
+                        max: max.symbolSize,
+                        inRange: {
+                            symbolSize: [5, 20]
+                        }
+                    }],
                     xAxis3D: {
                         name: config.xAxis3D,
                         type: 'value'
@@ -106,7 +133,8 @@
                                 item[fieldIndices[config.xAxis3D]],
                                 item[fieldIndices[config.yAxis3D]],
                                 item[fieldIndices[config.zAxis3D]],
-                                item[1],
+                                item[fieldIndices[config.color]],
+                                item[fieldIndices[config.symbolSize]],
                                 idx
                             ];
                         }),
@@ -126,10 +154,16 @@
 
                 var gui = new dat.GUI();
 
-                ['xAxis3D', 'yAxis3D', 'zAxis3D'].forEach(function (axisName) {
-                    gui.add(config, axisName, fieldNames).onChange(function () {
+                ['xAxis3D', 'yAxis3D', 'zAxis3D', 'color', 'symbolSize'].forEach(function (fieldName) {
+                    gui.add(config, fieldName, fieldNames).onChange(function () {
+                        var max = getMaxOnExtent(data);
                         if (data) {
                             chart.setOption({
+                                visualMap: [{
+                                    max: max.color
+                                }, {
+                                    max: max.symbolSize
+                                }],
                                 xAxis3D: {
                                     name: config.xAxis3D
                                 },
@@ -145,7 +179,8 @@
                                             item[fieldIndices[config.xAxis3D]],
                                             item[fieldIndices[config.yAxis3D]],
                                             item[fieldIndices[config.zAxis3D]],
-                                            item[1],
+                                            item[fieldIndices[config.color]],
+                                            item[fieldIndices[config.symbolSize]],
                                             idx
                                         ];
                                     })

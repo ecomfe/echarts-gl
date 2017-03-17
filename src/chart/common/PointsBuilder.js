@@ -58,7 +58,10 @@ PointsBuilder.prototype = {
 
         // TODO image symbol
         var itemStyle = seriesModel.getModel('itemStyle').getItemStyle();
-        itemStyle.fill = data.getVisual('color');
+
+        // In case invalid data.
+        symbolSize[0] = symbolSize[0] || 1;
+        symbolSize[1] = symbolSize[1] || 1;
 
         spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, {
             fill: '#fff',
