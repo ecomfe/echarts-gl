@@ -68,7 +68,7 @@ PointsBuilder.prototype = {
         }, this._spriteImageCanvas);
 
         spriteUtil.createSDFFromCanvas(
-            this._spriteImageCanvas, symbolInfo.maxSize, SDF_RANGE,
+            this._spriteImageCanvas, 32, SDF_RANGE,
             this._mesh.material.get('sprite').image
         );
 

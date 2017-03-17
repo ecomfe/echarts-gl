@@ -209,9 +209,11 @@ Grid3DAxis.prototype.setSpriteAlign = function (textAlign, textVerticalAlign, ap
     }
     // name label
     var nameLabelEl = this.nameLabelElement;
-    var rect = nameLabelEl.getBoundingRect();
-    labelGeo.setSpriteAlign(nameLabelEl.__idx, [rect.width * dpr, rect.height * dpr], textAlign, textVerticalAlign);
-    labelGeo.dirty();
+    if (nameLabelEl) {
+        var rect = nameLabelEl.getBoundingRect();
+        labelGeo.setSpriteAlign(nameLabelEl.__idx, [rect.width * dpr, rect.height * dpr], textAlign, textVerticalAlign);
+        labelGeo.dirty();
+    }
 
     this.textAlign = textAlign;
     this.textVerticalAlign = textVerticalAlign;
