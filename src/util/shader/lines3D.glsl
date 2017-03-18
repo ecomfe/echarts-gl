@@ -91,7 +91,7 @@ void main()
         vec2 tanget = normalize(dirA + dirB);
 
         // TODO, simple miterLimit
-        v_Miter = min(1.0 / dot(tanget, dirA), 5.0);
+        v_Miter = 1.0 / max(dot(tanget, dirA), 0.5);
         len *= v_Miter;
         dir = tanget;
     }

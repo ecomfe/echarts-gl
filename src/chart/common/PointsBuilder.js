@@ -67,7 +67,8 @@ PointsBuilder.prototype = {
             fill: '#fff',
             lineWidth: itemStyle.lineWidth,
             stroke: 'transparent',
-            shadowColor: 'transparent'
+            shadowColor: 'transparent',
+            marginBias: 10
         }, this._spriteImageCanvas);
 
         spriteUtil.createSDFFromCanvas(

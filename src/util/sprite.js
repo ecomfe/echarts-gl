@@ -108,8 +108,8 @@ function generateSDF(ctx, sourceImageData, range) {
 
 var spriteUtil = {
 
-    getMarginByStyle: function (style, marginBias) {
-        marginBias = marginBias || 0;
+    getMarginByStyle: function (style) {
+        var marginBias = style.marginBias || 0;
 
         var lineWidth = 0;
         if (style.stroke && style.stroke !== 'none') {
@@ -132,12 +132,15 @@ var spriteUtil = {
     /**
      * @param {string} symbol
      * @param {number | Array.<number>} symbolSize
+     * @param {Object} style
+     * @param {number} marginBias
      */
     createSymbolSprite: function (symbol, symbolSize, style, canvas) {
-        // TODO marginBias can be set.
-        var path = makePath(symbol, symbolSize, style, 10);
 
-        var margin = spriteUtil.getMarginByStyle(style, 10);
+        // TODO marginBias can be set.
+        var path = makePath(symbol, symbolSize, style);
+
+        var margin = spriteUtil.getMarginByStyle(style);
 
         return {
             image: makeSprite(path.__size, canvas, function (ctx) {
