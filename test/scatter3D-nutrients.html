@@ -84,16 +84,18 @@
                 var max = getMaxOnExtent(data);
                 chart.setOption({
                     visualMap: [{
-                        show: false,
+                        top: 10,
+                        calculable: true,
                         dimension: 3,
-                        max: max.color,
+                        max: max.color / 2,
                         inRange: {
                             color: ['#00fea8', '#00ff0d', '#f5f811', '#f09a09', '#fe0300']
                         }
                     }, {
-                        show: false,
+                        bottom: 10,
+                        calculable: true,
                         dimension: 4,
-                        max: max.symbolSize,
+                        max: max.symbolSize / 2,
                         inRange: {
                             symbolSize: [5, 20]
                         }
@@ -160,9 +162,9 @@
                         if (data) {
                             chart.setOption({
                                 visualMap: [{
-                                    max: max.color
+                                    max: max.color / 2
                                 }, {
-                                    max: max.symbolSize
+                                    max: max.symbolSize / 2
                                 }],
                                 xAxis3D: {
                                     name: config.xAxis3D

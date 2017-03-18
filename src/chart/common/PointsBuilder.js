@@ -116,6 +116,10 @@ PointsBuilder.prototype = {
             symbolSize = (symbolSize instanceof Array
                 ? Math.max(symbolSize[0], symbolSize[1]) : symbolSize);
 
+            // NaN pointSize may have strange result.
+            if (isNaN(symbolSize)) {
+                symbolSize = 0;
+            }
             // Scale point size because canvas has margin.
             attributes.size.value[i] = symbolSize * pointSizeScale;
         }
@@ -315,6 +319,10 @@ PointsBuilder.prototype = {
             var symbolSize = data.getItemVisual(idx, 'symbolSize');
             var currentSymbolType = data.getItemVisual(idx, 'symbol');
             var currentSymbolAspect;
+            // Ignore NaN value.
+            if (isNaN(symbolSize)) {
+                return;
+            }
             if (!(symbolSize instanceof Array)) {
                 currentSymbolAspect = 1;
                 maxSymbolSize = Math.max(symbolSize, maxSymbolSize);
