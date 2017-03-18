@@ -372,7 +372,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         }
         if (!this.useNativeLine) {
             var start = this._vertexOffset;
-            var end = this._vertexOffset + points.length * 2;
+            var end = this._vertexOffset + pointCount * 2;
             positionPrevAttr.copy(start, start + 2);
             positionPrevAttr.copy(start + 1, start + 3);
             positionNextAttr.copy(end - 1, end - 3);

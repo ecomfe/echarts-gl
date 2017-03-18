@@ -90,7 +90,8 @@ void main()
 
         vec2 tanget = normalize(dirA + dirB);
 
-        v_Miter = 1.0 / max(dot(tanget, dirA), 0.5);
+        // TODO, simple miterLimit
+        v_Miter = min(1.0 / dot(tanget, dirA), 5.0);
         len *= v_Miter;
         dir = tanget;
     }
@@ -117,7 +118,6 @@ varying vec2 v_PosScreen;
 
 void main()
 {
-    // TODO Fadeout pixels v_Miter > 1
     gl_FragColor = color * v_Color;
 }
 

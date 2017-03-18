@@ -86,7 +86,7 @@ PointsBuilder.prototype = {
         var rgbaArr = [];
         var is2D = this.is2D;
 
-        var pointSizeExtend = (this._spriteImageCanvas.width - symbolInfo.maxSize) * dpr;
+        var pointSizeScale = this._spriteImageCanvas.width / symbolInfo.maxSize * dpr;
 
         var hasTransparentPoint = false;
         for (var i = 0; i < data.count(); i++) {
@@ -121,10 +121,10 @@ PointsBuilder.prototype = {
                 symbolSize = 0;
             }
             // Scale point size because canvas has margin.
-            attributes.size.value[i] = symbolSize + pointSizeExtend;
+            attributes.size.value[i] = symbolSize * pointSizeScale;
         }
 
-        this._mesh.sizeExtend = pointSizeExtend;
+        this._mesh.sizeScale = pointSizeScale;
 
         geometry.dirty();
 
@@ -176,7 +176,7 @@ PointsBuilder.prototype = {
             };
 
             this._labelsBuilder.getLabelDistance = function (dataIndex, positionDesc, distance) {
-                var size = geometry.attributes.size.get(dataIndex) - pointSizeExtend;
+                var size = geometry.attributes.size.get(dataIndex) / pointSizeScale;
                 return size / 2 + distance;
             };
             this._labelsBuilder.updateLabels();

@@ -135,9 +135,9 @@ var spriteUtil = {
      */
     createSymbolSprite: function (symbol, symbolSize, style, canvas) {
         // TODO marginBias can be set.
-        var path = makePath(symbol, symbolSize, style, 5);
+        var path = makePath(symbol, symbolSize, style, 10);
 
-        var margin = spriteUtil.getMarginByStyle(style, 5);
+        var margin = spriteUtil.getMarginByStyle(style, 10);
 
         return {
             image: makeSprite(path.__size, canvas, function (ctx) {

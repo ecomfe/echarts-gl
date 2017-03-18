@@ -38,7 +38,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
         material: material,
         mode: graphicGL.Mesh.POINTS,
 
-        sizeExtend: 0
+        sizeScale: 1
     };
 }, {
 
@@ -58,7 +58,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
             var cx = positionNDC[idx * 2];
             var cy = positionNDC[idx * 2 + 1];
 
-            var size = this.geometry.attributes.size.get(idx) - this.sizeExtend;
+            var size = this.geometry.attributes.size.get(idx) / this.sizeScale;
             var halfSize = size / 2;
 
             if (
