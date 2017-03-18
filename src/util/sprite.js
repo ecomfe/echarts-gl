@@ -86,7 +86,7 @@ function generateSDF(ctx, sourceImageData, range) {
                 }
             }
         }
-        return a * minDistSqr;
+        return a * Math.sqrt(minDistSqr);
     }
 
     var sdfImageData = ctx.createImageData(width, height);
@@ -94,8 +94,8 @@ function generateSDF(ctx, sourceImageData, range) {
         for (var x = 0; x < width; x++) {
             var dist = searchMinDistance(x, y);
 
-            var i = (y * width + x) * 4;
             var normalized = dist / range * 0.5 + 0.5;
+            var i = (y * width + x) * 4;
             sdfImageData.data[i++] = (1.0 - normalized) * 255;
             sdfImageData.data[i++] = (1.0 - normalized) * 255;
             sdfImageData.data[i++] = (1.0 - normalized) * 255;
@@ -135,9 +135,9 @@ var spriteUtil = {
      */
     createSymbolSprite: function (symbol, symbolSize, style, canvas) {
         // TODO marginBias can be set.
-        var path = makePath(symbol, symbolSize, style, 2);
+        var path = makePath(symbol, symbolSize, style, 5);
 
-        var margin = spriteUtil.getMarginByStyle(style, 2);
+        var margin = spriteUtil.getMarginByStyle(style, 5);
 
         return {
             image: makeSprite(path.__size, canvas, function (ctx) {

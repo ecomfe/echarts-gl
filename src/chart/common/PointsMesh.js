@@ -27,6 +27,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
         image: document.createElement('canvas'),
         flipY: false
     });
+
     material.set('sprite', sdfTexture);
 
     // Custom pick methods.
@@ -37,7 +38,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
         material: material,
         mode: graphicGL.Mesh.POINTS,
 
-        sizeScale: 1
+        sizeExtend: 0
     };
 }, {
 
@@ -57,8 +58,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
             var cx = positionNDC[idx * 2];
             var cy = positionNDC[idx * 2 + 1];
 
-            var size = this.geometry.attributes.size.get(idx)
-                / this.sizeScale;
+            var size = this.geometry.attributes.size.get(idx) - this.sizeExtend;
             var halfSize = size / 2;
 
             if (

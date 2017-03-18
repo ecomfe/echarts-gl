@@ -28,10 +28,10 @@
                 visualMap: {
                     show: false,
                     dimension: 2,
-                    min: -5,
-                    max: 0,
+                    min: -4,
+                    max: 4,
                     inRange: {
-                        color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+                        color: ['#1710c0', '#0b9df0', '#00fea8', '#00ff0d', '#f5f811', '#f09a09', '#fe0300']
                     }
                 },
                 xAxis3D: {
@@ -44,6 +44,9 @@
                     type: 'value'
                 },
                 grid3D: {
+                    axisPointer: {
+                        show: false
+                    },
                     axisLine: {
                         lineStyle: {
                             color: '#fff'

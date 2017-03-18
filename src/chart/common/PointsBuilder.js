@@ -6,7 +6,7 @@ var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var Matrix4 = require('qtek/lib/math/Matrix4');
 
 
-var SDF_RANGE = 20;
+var SDF_RANGE = 10;
 // TODO gl_PointSize has max value.
 function PointsBuilder(is2D, api) {
 
@@ -86,7 +86,7 @@ PointsBuilder.prototype = {
         var rgbaArr = [];
         var is2D = this.is2D;
 
-        var pointSizeScale = this._spriteImageCanvas.width / symbolInfo.maxSize * dpr;
+        var pointSizeExtend = (this._spriteImageCanvas.width - symbolInfo.maxSize) * dpr;
 
         var hasTransparentPoint = false;
         for (var i = 0; i < data.count(); i++) {
@@ -121,10 +121,10 @@ PointsBuilder.prototype = {
                 symbolSize = 0;
             }
             // Scale point size because canvas has margin.
-            attributes.size.value[i] = symbolSize * pointSizeScale;
+            attributes.size.value[i] = symbolSize + pointSizeExtend;
         }
 
-        this._mesh.sizeScale = pointSizeScale;
+        this._mesh.sizeExtend = pointSizeExtend;
 
         geometry.dirty();
 
@@ -134,10 +134,7 @@ PointsBuilder.prototype = {
         var material = this._mesh.material;
         material.blend = blendFunc;
 
-        // material.set('lineWidth', itemStyle.lineWidth / canvas.width * canvas.width * dpr);
-        material.set('lineWidth', itemStyle.lineWidth * dpr
-            * this._spriteImageCanvas.width / SDF_RANGE
-        );
+        material.set('lineWidth', itemStyle.lineWidth / SDF_RANGE);
 
         var strokeColor = graphicGL.parseColor(itemStyle.stroke);
         material.set('color', [1, 1, 1, 1]);
@@ -179,7 +176,7 @@ PointsBuilder.prototype = {
             };
 
             this._labelsBuilder.getLabelDistance = function (dataIndex, positionDesc, distance) {
-                var size = geometry.attributes.size.get(dataIndex) / pointSizeScale;
+                var size = geometry.attributes.size.get(dataIndex) - pointSizeExtend;
                 return size / 2 + distance;
             };
             this._labelsBuilder.updateLabels();

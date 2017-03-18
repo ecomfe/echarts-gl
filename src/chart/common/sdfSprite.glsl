@@ -84,7 +84,8 @@ void main()
     gl_FragColor.a *= smoothstep(0.5 - smoothing, 0.5 + smoothing, d);
 
     if (lineWidth > 0.0) {
-        float sLineWidth = lineWidth / 2.0 / v_Size;
+        // TODO SCREEN SPACE OUTLINE
+        float sLineWidth = lineWidth / 2.0;
 
         float outlineMaxValue0 = 0.5 + sLineWidth;
         float outlineMaxValue1 = 0.5 + sLineWidth + smoothing;
@@ -100,7 +101,7 @@ void main()
             else {
                 a = a * smoothstep(outlineMaxValue1, outlineMaxValue0, d);
             }
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, _strokeColor.rgb, a);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb * gl_FragColor.a, _strokeColor.rgb, a);
             gl_FragColor.a = gl_FragColor.a * (1.0 - a) + a;
         }
     }
