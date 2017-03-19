@@ -228,6 +228,11 @@ var LinesGeometry = StaticGeometry.extend(function () {
             dfx += ddfx; dfy += ddfy;
             ddfx += dddfx; ddfy += dddfy;
             t += step;
+
+            if (t > 1) {
+                fx = dfx > 0 ? Math.min(fx, x3) : Math.max(fx, x3);
+                fy = dfy > 0 ? Math.min(fy, y3) : Math.max(fy, y3);
+            }
         }
 
         this.addPolyline(points, color, lineWidth, false);
@@ -269,7 +274,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
         var vertexOffset = this._vertexOffset;
         var pointCount = is2DArray ? points.length : points.length / 2;
-        var iterCount = !this.useNativeLine ? pointCount : (pointCount - 1);
+        var iterCount = pointCount;
         var point = [], nextPoint = [], prevPoint = [];
         var pointColor;
         var dirA = vec2.create();
@@ -367,15 +372,11 @@ var LinesGeometry = StaticGeometry.extend(function () {
                 vertexOffset += 2;
             }
             else {
-                if (k > 0) {
+                if (k > 1) {
                     positionAttr.copy(vertexOffset, vertexOffset - 1);
                     colorAttr.copy(vertexOffset, vertexOffset - 1);
+                    vertexOffset++;
                 }
-                else {
-                    colorAttr.set(vertexOffset, color);
-                    positionAttr.set(vertexOffset, point);
-                }
-                vertexOffset++;
             }
 
             if (!this.useNativeLine) {

@@ -10,7 +10,7 @@ function getCoordSysSize(coordSys) {
         return coordSys.radius;
     }
     if (coordSys.size != null) {
-        return Math.max(coordSys.size[0], coordSys.size[1], coordSys.size[2]);
+        return Math.max(coordSys.size[0], coordSys.size[1], coordSys.size[2]) / 2;
     }
     else {
         return 100;
@@ -37,9 +37,7 @@ module.exports = echarts.extendChartView({
         });
         // TODO Windows chrome not support lineWidth > 1
         this._linesMesh = new graphicGL.Mesh({
-            geometry: new LinesGeometry({
-                dynamic: true
-            }),
+            geometry: new LinesGeometry(),
             ignorePicking: true
         });
 
