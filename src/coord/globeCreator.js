@@ -38,6 +38,7 @@ var globeCreator = {
             globe.viewGL = globeModel.__viewGL;
 
             globeModel.coordinateSystem = globe;
+            globe.model = globeModel;
             globeList.push(globe);
 
             // Inject resize

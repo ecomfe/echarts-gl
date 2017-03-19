@@ -239,6 +239,7 @@ Geo3DBuilder.prototype = {
 
     _updateGroundPlane: function (componentModel) {
         var groundModel = componentModel.getModel('groundPlane');
+
         var shading = componentModel.get('shading');
         var material = this._groundMaterials[shading];
         if (!material) {

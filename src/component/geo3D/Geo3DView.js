@@ -42,7 +42,6 @@ module.exports = echarts.extendComponentView({
         }
         else {
             geo3D.viewGL.remove(this.groupGL);
-            return;
         }
 
         var control = this._control;

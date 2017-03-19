@@ -60,6 +60,9 @@ module.exports = echarts.extendChartView({
             if (data.getLayout('lineType') === 'cubicBezier') {
                 this._generateBezierCurves(seriesModel, ecModel, api);
             }
+
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            this._linesMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
         var curveAnimatingPointsMesh = this._curveAnimatingPointsMesh;

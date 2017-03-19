@@ -15,80 +15,32 @@
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
-            var chart = echarts.init(document.getElementById('main'), 'dark');
+            var chart = echarts.init(document.getElementById('main'));
 
             $.getJSON('data/flights.json', function (data) {
-                // Airport: [name, city, country, longitude, latitude]
-                var airports = data.airports.map(function (item) {
-                    return {
-                        coord: [item[3], item[4]]
-                    }
-                });
-
-                // Route: [airlineIndex, sourceAirportIndex, destinationAirportIndex]
-                var routesGroupByAirline = {};
-                data.routes.forEach(function (route) {
-                    var airline = data.airlines[route[0]];
-                    var airlineName = airline[0];
-                    if (!routesGroupByAirline[airlineName]) {
-                        routesGroupByAirline[airlineName] = [];
-                    }
-                    routesGroupByAirline[airlineName].push(route);
-                });
-
-                var series = data.airlines.map(function (airline) {
-                    var airlineName = airline[0];
-                    var routes = routesGroupByAirline[airlineName];
-
-                    if (!routes) {
-                        return null;
-                    }
-                    return {
-                        type: 'lines3D',
-
-                        coordinateSystem: 'geo3D',
-
-                        name: airlineName,
-
-                        effect: {
-                            show: true,
-                            symbolSize: 4
-                        },
-
-                        lineStyle: {
-                            width: 2,
-                            color: 'rgb(10, 0, 30)',
-                            opacity: 0.2
-                        },
-
-                        data: routes.map(function (item) {
-                            return [airports[item[1]].coord, airports[item[2]].coord];
-                        })
-                    };
-                }).filter(function (series) {
-                    return !!series;
+                function getAirportCoord(idx) {
+                    return [data.airports[idx][3], data.airports[idx][4]];
+                }
+                var routes = data.routes.map(function (airline) {
+                    return [
+                        getAirportCoord(airline[1]),
+                        getAirportCoord(airline[2])
+                    ];
                 });
 
                 chart.setOption({
-                    // legend: {
-                    //     left: 'left',
-                    //     data: Object.keys(routesGroupByAirline),
-                    //     orient: 'vertical',
-                    //     // selectedMode: 'single'
-                    // },
-                    backgroundColor: '#cdcfd5',
                     geo3D: {
                         map: 'world',
-                        shading: 'lambert',
+                        shading: 'realistic',
                         realisticMaterial: {
-                            roughness: 0.2,
+                            roughness: 0.8,
                             metalness: 0
                         },
                         postEffect: {
                             enable: true
                         },
                         groundPlane: {
-                            show: true
+                            show: false
                         },
                         light: {
                             main: {
@@ -102,8 +54,9 @@
                             },
                             ambientCubemap: {
                                 texture: 'asset/canyon.hdr',
-                                exposure: 2,
-                                diffuseIntensity: 0.3
+                                exposure: 1,
+                                diffuseIntensity: 0.5,
+                                specularIntensity: 1
                             }
                         },
                         viewControl: {
@@ -111,11 +64,30 @@
                         },
 
                         itemStyle: {
+                            areaColor: '#000'
                         },
 
                         boxHeight: 0.5
                     },
-                    series: series
+                    series: [{
+                        type: 'lines3D',
+
+                        coordinateSystem: 'geo3D',
+
+                        effect: {
+                            // show: true,
+                            symbolSize: 4
+                        },
+
+                        blendMode: 'lighter',
+
+                        lineStyle: {
+                            width: 1,
+                            opacity: 0.1
+                        },
+
+                        data: routes
+                    }]
                 });
 
                 window.onresize = chart.resize;

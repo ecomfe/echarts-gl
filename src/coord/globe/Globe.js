@@ -17,6 +17,8 @@ Globe.prototype = {
 
     type: 'globe',
 
+    containPoint: function () {},
+
     dataToPoint: function (data, out) {
         var lng = data[0];
         var lat = data[1];

@@ -20,9 +20,15 @@ uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 varying vec4 v_Color;
 
+@import qtek.util.srgb
+
 void main()
 {
+#ifdef SRGB_DECODE
+    gl_FragColor = sRGBToLinear(color * v_Color);
+#else
     gl_FragColor = color * v_Color;
+#endif
 }
 @end
 
@@ -116,9 +122,15 @@ varying float v_Miter;
 
 varying vec2 v_PosScreen;
 
+@import qtek.util.srgb
+
 void main()
 {
+#ifdef SRGB_DECODE
+    gl_FragColor = sRGBToLinear(color * v_Color);
+#else
     gl_FragColor = color * v_Color;
+#endif
 }
 
 @end
