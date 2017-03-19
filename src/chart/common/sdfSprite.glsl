@@ -4,13 +4,12 @@ uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 uniform float elapsedTime : 0;
 
 attribute vec3 position : POSITION;
+
 #ifdef VERTEX_COLOR
 attribute vec4 a_FillColor: COLOR;
-// attribute vec4 a_StrokeColor;
-
 varying vec4 v_Color;
-// varying vec4 v_StrokeColor;
 #endif
+
 attribute float size;
 
 #ifdef ANIMATING

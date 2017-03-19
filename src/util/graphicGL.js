@@ -335,11 +335,16 @@ graphicGL.additiveBlend = function (gl) {
 };
 
 /**
- * @param {string} colorStr
+ * @param {string|Array.<number>} colorStr
  * @param {Array.<number>} [rgba]
  * @return {Array.<number>} rgba
  */
 graphicGL.parseColor = function (colorStr, rgba) {
+    if (colorStr instanceof Array) {
+        // Color has been parsed.
+        return colorStr;
+    }
+
     rgba = echarts.color.parse(colorStr || '#000', rgba) || [0, 0, 0, 0];
     rgba[0] /= 255;
     rgba[1] /= 255;

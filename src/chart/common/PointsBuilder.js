@@ -5,7 +5,6 @@ var PointsMesh = require('./PointsMesh');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var Matrix4 = require('qtek/lib/math/Matrix4');
 
-
 var SDF_RANGE = 10;
 // TODO gl_PointSize has max value.
 function PointsBuilder(is2D, api) {
@@ -149,19 +148,12 @@ PointsBuilder.prototype = {
         }
         else {
             material.depthTest = true;
-            if (hasTransparentPoint
+            var transparent = hasTransparentPoint
                 // Stroke is transparent
-                || (itemStyle.lineWidth && strokeColor[3] < 0.99)
-            ) {
-                material.transparent = true;
-                material.depthMask = false;
-                geometry.sortVertices = true;
-            }
-            else {
-                material.transparent = false;
-                material.depthMask = true;
-                geometry.sortVertices = false;
-            }
+                || (itemStyle.lineWidth && strokeColor[3] < 0.99);
+            material.transparent = transparent;
+            material.depthMask = !transparent;
+            geometry.sortVertices = transparent;
         }
 
         this._updateHandler(seriesModel, ecModel, api);
