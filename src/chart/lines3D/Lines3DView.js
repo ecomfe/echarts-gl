@@ -10,7 +10,7 @@ function getCoordSysSize(coordSys) {
         return coordSys.radius;
     }
     if (coordSys.size != null) {
-        return Math.max(coordSys.size[0], coordSys.size[1], coordSys.size[2]) / 2;
+        return Math.max(coordSys.size[0], coordSys.size[1], coordSys.size[2]);
     }
     else {
         return 100;
@@ -28,12 +28,14 @@ module.exports = echarts.extendChartView({
 
         this._nativeLinesMaterial = new graphicGL.Material({
             shader: graphicGL.createShader('ecgl.lines3D'),
-            transparent: true
+            transparent: true,
+            depthMask: false
         });
 
         this._projectedLinesMaterial = new graphicGL.Material({
             shader: graphicGL.createShader('ecgl.meshLines3D'),
-            transparent: true
+            transparent: true,
+            depthMask: false
         });
         // TODO Windows chrome not support lineWidth > 1
         this._linesMesh = new graphicGL.Mesh({
