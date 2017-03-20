@@ -43,6 +43,7 @@ var Roam2DControl = Base.extend(function () {
 
         zr.on('mousedown', this._mouseDownHandler);
         zr.on('mousewheel', this._mouseWheelHandler);
+        zr.on('globalout', this._mouseUpHandler);
 
         zr.animation.on('frame', this._update);
     },
@@ -187,6 +188,7 @@ var Roam2DControl = Base.extend(function () {
         zr.off('mousemove', this._mouseMoveHandler);
         zr.off('mouseup', this._mouseUpHandler);
         zr.off('mousewheel', this._mouseWheelHandler);
+        zr.off('globalout', this._mouseUpHandler);
 
         zr.animation.off('frame', this._update);
     }

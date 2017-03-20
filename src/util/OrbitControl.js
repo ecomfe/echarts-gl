@@ -126,6 +126,7 @@ var OrbitControl = Base.extend(function () {
         var zr = this.zr;
 
         zr.on('mousedown', this._mouseDownHandler);
+        zr.on('globalout', this._mouseUpHandler);
         zr.on('mousewheel', this._mouseWheelHandler);
 
         this._decomposeTransform();
@@ -143,6 +144,7 @@ var OrbitControl = Base.extend(function () {
         zr.off('mousemove', this._mouseMoveHandler);
         zr.off('mouseup', this._mouseUpHandler);
         zr.off('mousewheel', this._mouseWheelHandler);
+        zr.off('globalout', this._mouseUpHandler);
 
         zr.animation.off('frame', this._update);
         this.stopAllAnimation();

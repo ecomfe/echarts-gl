@@ -63,6 +63,9 @@ var LayerGL = function (id, zr) {
         return;
     }
 
+    this.onglobalout = this.onglobalout.bind(this);
+    zr.on('globalout', this.onglobalout);
+
     /**
      * Canvas dom for webgl rendering
      * @type {HTMLCanvasElement}
@@ -386,6 +389,8 @@ LayerGL.prototype._trackAndClean = function () {
 LayerGL.prototype.dispose = function () {
     this._stopAccumulating();
     this.renderer.disposeScene(this.scene);
+
+    this.zr.off('globalout', this.onglobalout);
 };
 
 // Event handlers
@@ -435,6 +440,15 @@ LayerGL.prototype.onclick = function (e) {
     var obj = this.pickObject(e.offsetX, e.offsetY);
 
     this._dispatchEvent('click', e, obj);
+};
+
+LayerGL.prototype.onglobalout = function (e) {
+    var lastHovered = this._hovered;
+    if (lastHovered) {
+        this._dispatchEvent('mouseout', e, {
+            target: lastHovered.target
+        });
+    }
 };
 
 LayerGL.prototype.pickObject = function (x, y) {

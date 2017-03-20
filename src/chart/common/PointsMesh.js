@@ -53,7 +53,13 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
         var ndcScaleY = 2 / viewport.height;
         // From near to far. indices have been sorted.
         for (var i = this.geometry.vertexCount - 1; i >= 0; i--) {
-            var idx = this.geometry.indices[i];
+            var idx;
+            if (!this.geometry.indices) {
+                idx = i;
+            }
+            else {
+                idx = this.geometry.indices[i];
+            }
 
             var cx = positionNDC[idx * 2];
             var cy = positionNDC[idx * 2 + 1];

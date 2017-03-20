@@ -147,13 +147,19 @@ PointsBuilder.prototype = {
             geometry.sortVertices = false;
         }
         else {
+            // material.depthTest = true;
+            // var transparent = hasTransparentPoint
+            //     // Stroke is transparent
+            //     || (itemStyle.lineWidth && strokeColor[3] < 0.99);
+            // material.transparent = transparent;
+            // material.depthMask = !transparent;
+            // geometry.sortVertices = transparent;
+
+            // Because of symbol texture, we always needs it be transparent.
             material.depthTest = true;
-            var transparent = hasTransparentPoint
-                // Stroke is transparent
-                || (itemStyle.lineWidth && strokeColor[3] < 0.99);
-            material.transparent = transparent;
-            material.depthMask = !transparent;
-            geometry.sortVertices = transparent;
+            material.transparent = true;
+            material.depthMask = false;
+            geometry.sortVertices = true;
         }
 
         this._updateHandler(seriesModel, ecModel, api);
