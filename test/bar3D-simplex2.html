@@ -17,6 +17,8 @@
             var chart = echarts.init(document.getElementById('main'));
 
             var noise = new SimplexNoise(Math.random);
+            var xData = [];
+            var yData = [];
             function generateData(theta, min, max) {
                 var data = [];
                 for (var i = 0; i <= 50; i++) {
@@ -55,6 +57,16 @@
                     min: 0
                 },
                 grid3D: {
+                    show: false,
+                    postEffect: {
+                        enable: true,
+                        SSAO: {
+                            enable: true,
+                            radius: 2,
+                            intensity: 1.5,
+                            quality: 'high'
+                        }
+                    },
                     axisLine: {
                         lineStyle: { color: '#fff' }
                     },
@@ -67,8 +79,15 @@
                     light: {
                         main: {
                             shadow: true,
-                            quality: 'ultra',
-                            intensity: 1.5
+                            intensity: 5
+                        },
+                        ambient: {
+                            intensity: 0
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/canyon.hdr',
+                            exposure: 2,
+                            diffuseIntensity: 1
                         }
                     }
                 },
@@ -76,11 +95,7 @@
                     type: 'bar3D',
                     data: data,
                     shading: 'lambert',
-                    label: {
-                        formatter: function (param) {
-                            return param.value[2].toFixed(1);
-                        }
-                    }
+                    silent: true
                 }]
             });
 

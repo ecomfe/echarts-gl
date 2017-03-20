@@ -204,7 +204,12 @@ module.exports = echarts.extendComponentView({
         var cartesian = grid3DModel.coordinateSystem;
         var viewGL = cartesian.viewGL;
 
-        viewGL.on('mousemove', this._updateAxisPointerOnMousePosition, this);
+        if (grid3DModel.get('show')) {
+            viewGL.on('mousemove', this._updateAxisPointerOnMousePosition, this);
+        }
+        else {
+            viewGL.off('mousemove', this._updateAxisPointerOnMousePosition);
+        }
     },
 
     /**
@@ -403,11 +408,19 @@ module.exports = echarts.extendComponentView({
     },
 
     _doShowAxisPointer: function () {
+        if (!this._axisPointerLineMesh.invisible) {
+            return;
+        }
+
         this._axisPointerLineMesh.invisible = false;
         this._api.getZr().refresh();
     },
 
     _doHideAxisPointer: function () {
+        if (this._axisPointerLineMesh.invisible) {
+            return;
+        }
+
         this._axisPointerLineMesh.invisible = true;
         this._api.getZr().refresh();
     },
