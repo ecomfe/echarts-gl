@@ -134,7 +134,7 @@ module.exports = echarts.extendComponentView({
 
         this._updateViewControl(globeModel, api);
 
-        // this._updateLayers(globeModel, api);
+        this._updateLayers(globeModel, api);
     },
 
     afterRender: function (globeModel, ecModel, api, layerGL) {
@@ -179,7 +179,9 @@ module.exports = echarts.extendComponentView({
                 var overlayMesh = this._layerMeshes[id];
                 if (!overlayMesh) {
                     overlayMesh = this._layerMeshes[id] = new graphicGL.Mesh({
-                        geometry: this._overlayGeometry
+                        geometry: this._overlayGeometry,
+                        castShadow: false,
+                        ignorePicking: true
                     });
                 }
                 var shading = layerModel.get('shading');

@@ -1,4 +1,5 @@
 var echarts = require('echarts/lib/echarts');
+var formatUtil = require('../../util/format');
 
 var Scatter3DSeries = echarts.extendSeriesModel({
 
@@ -16,7 +17,7 @@ var Scatter3DSeries = echarts.extendSeriesModel({
     },
 
     getFormattedLabel: function (dataIndex, status, dataType, dimIndex) {
-        var text = Scatter3DSeries.superCall(this, 'getFormattedLabel', dataIndex, status, dataType, dimIndex);
+        var text = formatUtil.getFormattedLabel(this, dataIndex, status, dataType, dimIndex);
         if (text == null) {
             var data = this.getData();
             var lastDim = data.dimensions[data.dimensions.length - 1];

@@ -307,8 +307,10 @@ graphicGL.createAmbientCubemap = function (opt, renderer, api) {
         exposure: exposure
     }, function () {
         ambientCubemap.cubemap.flipY = false;
-        ambientCubemap.prefilter(renderer);
-        ambientSH.coefficients = shUtil.projectEnvironmentMap(renderer, ambientCubemap.cubemap);
+        ambientCubemap.prefilter(renderer, 32);
+        ambientSH.coefficients = shUtil.projectEnvironmentMap(renderer, ambientCubemap.cubemap, {
+            lod: 1
+        });
     });
 
     return {

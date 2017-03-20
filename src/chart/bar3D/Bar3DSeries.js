@@ -1,5 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var componentShadingMixin = require('../../component/common/componentShadingMixin');
+var formatUtil = require('../../util/format');
 
 var Bar3DSeries = echarts.extendSeriesModel({
 
@@ -17,7 +18,7 @@ var Bar3DSeries = echarts.extendSeriesModel({
     },
 
     getFormattedLabel: function (dataIndex, status, dataType, dimIndex) {
-        var text = Bar3DSeries.superCall(this, 'getFormattedLabel', dataIndex, status, dataType, dimIndex);
+        var text = formatUtil.getFormattedLabel(this, dataIndex, status, dataType, dimIndex);
         if (text == null) {
             text = this.getData().get('z', dataIndex);
         }

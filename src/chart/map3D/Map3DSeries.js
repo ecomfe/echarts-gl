@@ -4,6 +4,7 @@ var componentPostEffectMixin = require('../../component/common/componentPostEffe
 var componentLightMixin = require('../../component/common/componentLightMixin');
 var componentShadingMixin = require('../../component/common/componentShadingMixin');
 var geo3DModelMixin = require('../../coord/geo3D/geo3DModelMixin');
+var formatUtil = require('../../util/format');
 
 var Map3DModel = echarts.extendSeriesModel({
 
@@ -43,7 +44,7 @@ var Map3DModel = echarts.extendSeriesModel({
      * @return {string}
      */
     getFormattedLabel: function (dataIndex, status) {
-        var text = Map3DModel.superCall(this, 'getFormattedLabel', dataIndex, status);
+        var text = formatUtil.getFormattedLabel(this, dataIndex, status);
         if (text == null) {
             text = this.getData().getName(dataIndex);
         }
