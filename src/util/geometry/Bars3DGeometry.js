@@ -69,7 +69,7 @@ var BarsGeometry = StaticGeometry.extend(function () {
         if (this.triangleCount !== triangleCount) {
             this.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
 
-            this._dataIndices = new Uint32Array(triangleCount);
+            this._dataIndices = new Uint32Array(vertexCount);
         }
     },
 
