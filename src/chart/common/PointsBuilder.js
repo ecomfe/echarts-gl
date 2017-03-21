@@ -5,7 +5,7 @@ var PointsMesh = require('./PointsMesh');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var Matrix4 = require('qtek/lib/math/Matrix4');
 
-var SDF_RANGE = 10;
+var SDF_RANGE = 20;
 // TODO gl_PointSize has max value.
 function PointsBuilder(is2D, api) {
 
@@ -43,7 +43,7 @@ PointsBuilder.prototype = {
         var symbolInfo = this._getSymbolInfo(data);
         var dpr = api.getDevicePixelRatio();
 
-        symbolInfo.maxSize *= 2;
+        symbolInfo.maxSize = Math.min(symbolInfo.maxSize * 2, 200);
 
         var symbolSize = [];
         if (symbolInfo.aspect > 1) {
@@ -305,7 +305,7 @@ PointsBuilder.prototype = {
     },
 
     _getSymbolInfo: function (data) {
-        var symbolAspect = 1;
+        var symbolAspect;
         var differentSymbolAspect = false;
         var symbolType = data.getItemVisual(0, 'symbol') || 'circle';
         var differentSymbolType = false;
@@ -315,11 +315,12 @@ PointsBuilder.prototype = {
             var symbolSize = data.getItemVisual(idx, 'symbolSize');
             var currentSymbolType = data.getItemVisual(idx, 'symbol');
             var currentSymbolAspect;
-            // Ignore NaN value.
-            if (isNaN(symbolSize)) {
-                return;
-            }
             if (!(symbolSize instanceof Array)) {
+                // Ignore NaN value.
+                if (isNaN(symbolSize)) {
+                    return;
+                }
+
                 currentSymbolAspect = 1;
                 maxSymbolSize = Math.max(symbolSize, maxSymbolSize);
             }
@@ -328,7 +329,7 @@ PointsBuilder.prototype = {
                 maxSymbolSize = Math.max(Math.max(symbolSize[0], symbolSize[1]), maxSymbolSize);
             }
             if (__DEV__) {
-                if (Math.abs(currentSymbolAspect - symbolAspect) > 0.05) {
+                if (symbolAspect != null && Math.abs(currentSymbolAspect - symbolAspect) > 0.05) {
                     differentSymbolAspect = true;
                 }
                 if (currentSymbolType !== symbolType) {

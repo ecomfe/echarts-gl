@@ -52,7 +52,7 @@ void main()
 
 uniform vec4 color: [1, 1, 1, 1];
 uniform vec4 strokeColor: [1, 1, 1, 1];
-uniform float smoothing: 0.1;
+uniform float smoothing: 0.07;
 
 uniform float lineWidth: 0.0;
 
