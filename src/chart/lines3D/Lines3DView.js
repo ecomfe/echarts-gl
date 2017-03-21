@@ -77,7 +77,7 @@ module.exports = echarts.extendChartView({
             var period = seriesModel.get('effect.period') * 1000;
             var delay = curveAnimatingPointsMesh.__percent ? -(period * curveAnimatingPointsMesh.__percent) : 0;
             curveAnimatingPointsMesh.__percent = 0;
-            curveAnimatingPointsMesh.animate('', { loop: true })
+            this._curveEffectsAnimator = curveAnimatingPointsMesh.animate('', { loop: true })
                 .when(period, {
                     __percent: 1
                 })
@@ -89,11 +89,31 @@ module.exports = echarts.extendChartView({
         }
         else {
             this.groupGL.remove(curveAnimatingPointsMesh);
+            this._curveEffectsAnimator = null;
         }
 
         this._linesMesh.material.blend = this._curveAnimatingPointsMesh.material.blend
             = seriesModel.get('blendMode') === 'lighter'
             ? graphicGL.additiveBlend : null;
+    },
+
+    puaseEffect: function () {
+        if (this._curveEffectsAnimator) {
+            this._curveEffectsAnimator.pause();
+        }
+    },
+
+    resumeEffect: function () {
+        if (this._curveEffectsAnimator) {
+            this._curveEffectsAnimator.resume();
+        }
+    },
+
+    toggleEffect: function () {
+        var animator = this._curveEffectsAnimator;
+        if (animator) {
+            animator.isPaused() ? animator.resume() : animator.pause();
+        }
     },
 
     _generateBezierCurves: function (seriesModel, ecModel, api) {

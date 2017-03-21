@@ -76,7 +76,7 @@
 
                         effect: {
                             show: true,
-                            symbolSize: 2
+                            symbolSize: 3
                         },
 
                         blendMode: 'lighter',
@@ -91,6 +91,13 @@
                 });
 
                 window.onresize = chart.resize;
+
+                window.addEventListener('keydown', function () {
+                    chart.dispatchAction({
+                        type: 'lines3DToggleEffect',
+                        seriesIndex: 0
+                    });
+                });
             });
         </script>
     </body>
