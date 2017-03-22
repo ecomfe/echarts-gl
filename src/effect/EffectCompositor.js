@@ -19,6 +19,7 @@ Shader['import'](require('qtek/lib/shader/source/compositor/dof.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/lensflare.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/blend.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
+Shader['import'](require('text!./DOF.glsl'));
 
 function EffectCompositor() {
     this._sourceTexture = new Texture2D({
@@ -49,6 +50,10 @@ function EffectCompositor() {
     this._ssaoPass = new SSAOPass({
         depthTexture: this._depthTexture
     });
+
+    this._dofBlurNodes = ['dof_far_blur', 'dof_near_blur', 'dof_coc_blur'].map(function (name) {
+        return this._compositor.getNodeByName(name);
+    }, this);
 }
 
 
@@ -178,7 +183,10 @@ EffectCompositor.prototype.setSSAOQuality = function (value) {
     this._ssaoPass.setParameter('kernelSize', kernelSize);
 };
 
-EffectCompositor.prototype.composite = function (renderer, framebuffer) {
+EffectCompositor.prototype.composite = function (renderer, framebuffer, frame) {
+    for (var i = 0; i < this._dofBlurNodes.length; i++) {
+        this._dofBlurNodes[i].setParameter('percent', frame / 30.0);
+    }
     this._compositor.render(renderer, framebuffer);
 };
 
@@ -187,6 +195,17 @@ EffectCompositor.prototype.dispose = function (gl) {
     this._depthTexture.dispose(gl);
     this._framebuffer.dispose(gl);
     this._compositor.dispose(gl);
+};
+
+EffectCompositor.prototype.pickDepth = function (x, y, renderer) {
+    this._framebuffer.bind(renderer);
+    var pixels = new Uint32Array(1);
+    renderer.gl.readPixels(
+        x, y, 1, 1, renderer.gl.DEPTH_COMPONENT, renderer.gl.UNSIGNED_INT, pixels
+    );
+    this._framebuffer.unbind(renderer);
+
+    return pixels[0];
 };
 
 module.exports = EffectCompositor;

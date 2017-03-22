@@ -231,7 +231,7 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         this._shadowMapPass.render(renderer, scene, camera, true);
     }
 
-    this._updateShadowPCFKernel(accumulating ? accumFrame : 0);
+    this._updateShadowPCFKernel(accumFrame);
 
     // Shadowmap will set clearColor.
     renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
@@ -243,18 +243,18 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         renderer.render(scene, camera, true);
         frameBuffer.unbind(renderer);
         if (this._enableSSAO) {
-            this._compositor.updateSSAO(renderer, camera, this._temporalSS.getFrame());
+            this._compositor.updateSSAO(renderer, camera, accumFrame);
             this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
         }
 
         if (this.needsTemporalSS() && accumulating) {
-            this._compositor.composite(renderer, this._temporalSS.getSourceFrameBuffer());
+            this._compositor.composite(renderer, this._temporalSS.getSourceFrameBuffer(), accumFrame);
             renderer.setViewport(this.viewport);
             this._temporalSS.render(renderer);
         }
         else {
             renderer.setViewport(this.viewport);
-            this._compositor.composite(renderer);
+            this._compositor.composite(renderer, null, accumFrame);
         }
     }
     else {
@@ -320,8 +320,16 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     // Update temporal configuration
 };
 
-ViewGL.prototype.setDOFFocus = function () {
+ViewGL.prototype.setDOFFocusOnPoint = function (x, y) {
+    if (this._enablePostEffect) {
+        var renderer = this.renderer;
+        var depth = this._compositor.pickDepth(x, y, renderer);
+        var oldViewport = renderer.viewport;
+        // renderer.viewport =
+        var ndc = renderer.screenToNDC(x, y);
 
+
+    }
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {
