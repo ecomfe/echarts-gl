@@ -51,6 +51,8 @@ varying float v_Miter;
 
 varying vec2 v_PosScreen;
 
+@import ecgl.wireframe.common.vertexHeader
+
 vec4 clipNear(vec4 p1, vec4 p2) {
     float n = (p1.w - near) / (p1.w - p2.w);
     // PENDING
@@ -109,6 +111,8 @@ void main()
     gl_Position = currProj;
 
     v_Color = a_Color;
+
+    @import ecgl.wireframe.common.vertexMain
 }
 @end
 
@@ -122,6 +126,8 @@ varying float v_Miter;
 
 varying vec2 v_PosScreen;
 
+@import ecgl.wireframe.common.fragmentHeader
+
 @import qtek.util.srgb
 
 void main()
@@ -131,6 +137,8 @@ void main()
 #else
     gl_FragColor = color * v_Color;
 #endif
+
+    @import ecgl.wireframe.common.fragmentMain
 }
 
 @end

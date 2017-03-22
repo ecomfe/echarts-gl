@@ -115,6 +115,18 @@ module.exports = echarts.extendChartView({
         material.depthMask = !hasTransparent;
         lineMesh.geometry.sortTriangles = hasTransparent;
 
+        var debugWireframeModel = seriesModel.getModel('debugWireframe');
+        if (debugWireframeModel.get('show')) {
+            lineMesh.geometry.createAttribute('barycentric', 'float', 3);
+            lineMesh.geometry.generateBarycentric();
+            lineMesh.material.shader.define('both', 'WIREFRAME_TRIANGLE');
+            lineMesh.material.set(
+                'wireframeLineColor', graphicGL.parseColor(
+                    debugWireframeModel.get('color')
+                )
+            );
+        }
+
         this._points = points;
 
         this._initHandler(seriesModel, api);
