@@ -187,6 +187,16 @@ EffectCompositor.prototype.setDOFFocalDistance = function (focalDist) {
     this._cocNode.setParameter('focalDist', focalDist);
 };
 
+EffectCompositor.prototype.setDOFFocalRange = function (focalRange) {
+    this._cocNode.setParameter('focalRange', focalRange);
+};
+
+EffectCompositor.prototype.setDOFBlurSize = function (blurSize) {
+    for (var i = 0; i < this._dofBlurNodes.length; i++) {
+        this._dofBlurNodes[i].setParameter('blurSize', blurSize);
+    }
+};
+
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
     for (var i = 0; i < this._dofBlurNodes.length; i++) {
         this._dofBlurNodes[i].setParameter('percent', frame / 30.0);

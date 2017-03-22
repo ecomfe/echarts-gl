@@ -647,6 +647,9 @@
             },
             "parameters": {
                 "bloomIntensity": 0.03
+            },
+            "defines": {
+                "PREMULTIPLY_ALPHA": null
             }
         },
         {

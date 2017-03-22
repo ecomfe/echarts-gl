@@ -317,7 +317,9 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     compositor.setSSAOQuality(ssaoModel.get('quality'));
     compositor.setSSAOIntensity(ssaoModel.get('intensity'));
 
-    // Update temporal configuration
+    compositor.setDOFFocalDistance(dofModel.get('focalDistance'));
+    compositor.setDOFFocalRange(dofModel.get('focalRange'));
+    compositor.setDOFBlurSize(dofModel.get('blurRadius'));
 };
 
 ViewGL.prototype.setDOFFocusOnPoint = function (depth) {

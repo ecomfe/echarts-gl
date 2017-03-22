@@ -49,18 +49,24 @@
                             distance: 50
                         },
                         groundPlane: {
-                            show: true
+                            show: true,
+                            color: '#999'
                         },
                         postEffect: {
                             enable: true,
                             bloom: {
-                                // enable: false
+                                enable: false
                             },
                             SSAO: {
                                 radius: 1,
                                 intensity: 1.5,
-                                quality: 'high',
-                                enable: true
+                                enable: true,
+                                quality: 'high'
+                            },
+                            depthOfField: {
+                                enable: true,
+                                focalRange: 10,
+                                blurRadius: 10
                             }
                         },
                         temporalSuperSampling: {

@@ -9,7 +9,10 @@ module.exports = {
                 intensity: 0.1
             },
             depthOfField: {
-                enable: false
+                enable: false,
+                focalRange: 20,
+                focalDistance: 50,
+                blurRadius: 10
             },
 
             SSAO: {

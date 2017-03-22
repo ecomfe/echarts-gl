@@ -59,8 +59,6 @@ void main()
 
 
     float weightSum = 0.0;
-    float alphaWeightSum = 0.0;
-    float kernelWeight = 1.0 / float(POISSON_KERNEL_SIZE);
 
     for (int i = 0; i < POISSON_KERNEL_SIZE; i++) {
         vec2 ofs = fTaps_Poisson[i];
@@ -70,7 +68,6 @@ void main()
         vec2 uv = v_Texcoord + ofs * offset;
         vec4 texel = texture2D(texture, uv);
 
-        // PENDING, scattering
         float w = 1.0;
 #ifdef BLUR_COC
         float fCoc = decodeFloat(texel) * 2.0 - 1.0;
@@ -78,16 +75,13 @@ void main()
         cocSum += clamp(fCoc, -1.0, 0.0) * w;
 #else
         texel = decodeHDR(texel);
-        float fCoc = decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0;
     #if !defined(BLUR_NEARFIELD)
+        float fCoc = decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0;
         // TODO DOF premult to avoid bleeding, can be tweaked (currently x^3)
         // tradeoff between bleeding dof and out of focus object that shrinks too much
         w *= fCoc * fCoc;
     #endif
-        color.rgb += texel.rgb * w;
-        color.a += texel.a * w * kernelWeight;
-
-        alphaWeightSum += w * kernelWeight;
+        color += texel * w;
 #endif
 
         weightSum += w;
@@ -96,8 +90,8 @@ void main()
 #ifdef BLUR_COC
     gl_FragColor = encodeFloat(clamp(cocSum / weightSum, -1.0, 0.0) * 0.5 + 0.5);
 #else
-    color.rgb /= weightSum;
-    color.a /= alphaWeightSum;
+    color /= weightSum;
+    // TODO Windows will not be totally transparent if color.rgb is not 0 and color.a is 0.
     gl_FragColor = encodeHDR(color);
 #endif
 }
