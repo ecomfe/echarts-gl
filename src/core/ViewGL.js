@@ -248,13 +248,13 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         }
 
         if (this.needsTemporalSS() && accumulating) {
-            this._compositor.composite(renderer, this._temporalSS.getSourceFrameBuffer(), accumFrame);
+            this._compositor.composite(renderer, camera, this._temporalSS.getSourceFrameBuffer(), accumFrame);
             renderer.setViewport(this.viewport);
             this._temporalSS.render(renderer);
         }
         else {
             renderer.setViewport(this.viewport);
-            this._compositor.composite(renderer, null, accumFrame);
+            this._compositor.composite(renderer, camera, null, accumFrame);
         }
     }
     else {
@@ -320,15 +320,15 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     // Update temporal configuration
 };
 
-ViewGL.prototype.setDOFFocusOnPoint = function (x, y) {
+ViewGL.prototype.setDOFFocusOnPoint = function (depth) {
     if (this._enablePostEffect) {
-        var renderer = this.renderer;
-        var depth = this._compositor.pickDepth(x, y, renderer);
-        var oldViewport = renderer.viewport;
-        // renderer.viewport =
-        var ndc = renderer.screenToNDC(x, y);
 
+        if (depth > this.camera.far || depth < this.camera.near) {
+            return;
+        }
 
+        this._compositor.setDOFFocalDistance(depth);
+        return true;
     }
 };
 

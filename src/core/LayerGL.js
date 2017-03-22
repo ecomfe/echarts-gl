@@ -401,6 +401,9 @@ LayerGL.prototype.onmousedown = function (e) {
     if (obj) {
         this._dispatchEvent('mousedown', e, obj);
     }
+
+    this._downX = e.offsetX;
+    this._downY = e.offsetY;
 };
 
 LayerGL.prototype.onmousemove = function (e) {
@@ -434,13 +437,54 @@ LayerGL.prototype.onmouseup = function (e) {
     var obj = this.pickObject(e.offsetX, e.offsetY);
 
     this._dispatchEvent('mouseup', e, obj);
+
+    this._upX = e.offsetX;
+    this._upY = e.offsetY;
 };
 
 LayerGL.prototype.onclick = function (e) {
+    // Ignore click event if mouse moved
+    var dx = this._upX - this._downX;
+    var dy = this._upY - this._downY;
+    if (Math.sqrt(dx * dx + dy * dy) > 20) {
+        return;
+    }
+
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
 
     this._dispatchEvent('click', e, obj);
+
+    // Try set depth of field onclick
+    var result = this._clickToSetFocusPoint(e);
+    if (result) {
+        console.log(result.distance);
+        var success = result.view.setDOFFocusOnPoint(result.distance);
+        if (success) {
+            this.zr.refresh();
+        }
+    }
+};
+
+LayerGL.prototype._clickToSetFocusPoint = function (e) {
+    var renderer = this.renderer;
+    var oldViewport = renderer.viewport;
+    for (var i = this.views.length - 1; i >= 0; i--) {
+        var viewGL = this.views[i];
+        if (viewGL.containPoint(e.offsetX, e.offsetY)) {
+            this._picking.scene = viewGL.scene;
+            this._picking.camera = viewGL.camera;
+            // Only used for picking, renderer.setViewport will also invoke gl.viewport.
+            // Set directly, PENDING.
+            renderer.viewport = viewGL.viewport;
+            var result = this._picking.pick(e.offsetX, e.offsetY, true);
+            if (result) {
+                result.view = viewGL;
+                return result;
+            }
+        }
+    }
+    renderer.viewport = oldViewport;
 };
 
 LayerGL.prototype.onglobalout = function (e) {

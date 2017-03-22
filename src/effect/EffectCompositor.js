@@ -183,10 +183,16 @@ EffectCompositor.prototype.setSSAOQuality = function (value) {
     this._ssaoPass.setParameter('kernelSize', kernelSize);
 };
 
-EffectCompositor.prototype.composite = function (renderer, framebuffer, frame) {
+EffectCompositor.prototype.setDOFFocalDistance = function (focalDist) {
+    this._cocNode.setParameter('focalDist', focalDist);
+};
+
+EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
     for (var i = 0; i < this._dofBlurNodes.length; i++) {
         this._dofBlurNodes[i].setParameter('percent', frame / 30.0);
     }
+    this._cocNode.setParameter('zNear', camera.near);
+    this._cocNode.setParameter('zFar', camera.far);
     this._compositor.render(renderer, framebuffer);
 };
 
@@ -195,17 +201,6 @@ EffectCompositor.prototype.dispose = function (gl) {
     this._depthTexture.dispose(gl);
     this._framebuffer.dispose(gl);
     this._compositor.dispose(gl);
-};
-
-EffectCompositor.prototype.pickDepth = function (x, y, renderer) {
-    this._framebuffer.bind(renderer);
-    var pixels = new Uint32Array(1);
-    renderer.gl.readPixels(
-        x, y, 1, 1, renderer.gl.DEPTH_COMPONENT, renderer.gl.UNSIGNED_INT, pixels
-    );
-    this._framebuffer.unbind(renderer);
-
-    return pixels[0];
 };
 
 module.exports = EffectCompositor;
