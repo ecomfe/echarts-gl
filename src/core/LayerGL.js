@@ -458,7 +458,6 @@ LayerGL.prototype.onclick = function (e) {
     // Try set depth of field onclick
     var result = this._clickToSetFocusPoint(e);
     if (result) {
-        console.log(result.distance);
         var success = result.view.setDOFFocusOnPoint(result.distance);
         if (success) {
             this.zr.refresh();
