@@ -8,9 +8,9 @@ module.exports = {
                 enable: true,
                 intensity: 0.1
             },
-            // depthOfField: {
-            //     enable: false
-            // },
+            depthOfField: {
+                enable: false
+            },
 
             SSAO: {
                 enable: false,

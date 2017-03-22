@@ -17,6 +17,7 @@ var notifier = require('qtek/lib/core/mixin/notifier');
 
 var EffectCompositor = require('../effect/EffectCompositor');
 var TemporalSuperSampling = require('../effect/TemporalSuperSampling');
+var halton = require('../effect/halton');
 
 /**
  * @constructor
@@ -48,11 +49,26 @@ function ViewGL(cameraType) {
 
     this._shadowMapPass = new ShadowMapPass();
 
+    var pcfKernels = [];
+    var off = 0;
+    for (var i = 0; i < 30; i++) {
+        var pcfKernel = [];
+        for (var k = 0; k < 6; k++) {
+            pcfKernel.push(halton(off, 2) * 4.0 - 2.0);
+            pcfKernel.push(halton(off, 3) * 4.0 - 2.0);
+            off++;
+        }
+        pcfKernels.push(pcfKernel);
+    }
+    this._pcfKernels = pcfKernels;
+
     this.scene.on('beforerender', function (renderer, scene, camera) {
         if (this.needsTemporalSS()) {
             this._temporalSS.jitterProjection(renderer, camera);
         }
     }, this);
+
+
 }
 
 /**
@@ -214,6 +230,9 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         // Not render shadowmap pass in accumulating frame.
         this._shadowMapPass.render(renderer, scene, camera, true);
     }
+
+    this._updateShadowPCFKernel(accumulating ? accumFrame : 0);
+
     // Shadowmap will set clearColor.
     renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
@@ -258,7 +277,18 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
     }
 
     // this._shadowMapPass.renderDebug(renderer);
-}
+};
+
+ViewGL.prototype._updateShadowPCFKernel = function (frame) {
+    var pcfKernel = this._pcfKernels[frame % this._pcfKernels.length];
+    var opaqueQueue = this.scene.opaqueQueue;
+    for (var i = 0; i < opaqueQueue.length; i++) {
+        if (opaqueQueue[i].receiveShadow) {
+            opaqueQueue[i].material.set('pcfKernel', pcfKernel);
+            opaqueQueue[i].material.shader.define('fragment', 'PCF_KERNEL_SIZE', pcfKernel.length / 2);
+        }
+    }
+};
 
 ViewGL.prototype.dispose = function (renderer) {
     this._compositor.dispose(renderer.gl);
@@ -288,6 +318,10 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     compositor.setSSAOIntensity(ssaoModel.get('intensity'));
 
     // Update temporal configuration
+};
+
+ViewGL.prototype.setDOFFocus = function () {
+
 };
 
 ViewGL.prototype.setTemporalSuperSampling = function (temporalSuperSamplingModel) {

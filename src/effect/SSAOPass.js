@@ -160,7 +160,7 @@ SSAOPass.prototype.setParameter = function (name, val) {
 SSAOPass.prototype.setKernelSize = function (size) {
     this._ssaoPass.material.shader.define('fragment', 'KERNEL_SIZE', size);
     this._kernels = this._kernels || [];
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 30; i++) {
         this._kernels[i] = generateKernel(size);
     }
 };

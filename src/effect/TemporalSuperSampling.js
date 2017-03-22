@@ -8,7 +8,7 @@ var Shader = require('qtek/lib/Shader');
 function TemporalSuperSampling () {
     var haltonSequence = [];
 
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < 30; i++) {
         haltonSequence.push([
             halton(i, 2), halton(i, 3)
         ]);
