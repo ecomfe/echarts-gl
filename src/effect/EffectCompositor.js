@@ -190,6 +190,9 @@ EffectCompositor.prototype.setDOFFocalDistance = function (focalDist) {
 EffectCompositor.prototype.setDOFFocalRange = function (focalRange) {
     this._cocNode.setParameter('focalRange', focalRange);
 };
+EffectCompositor.prototype.setDOFFStop = function (fstop) {
+    this._cocNode.setParameter('fstop', fstop);
+};
 
 EffectCompositor.prototype.setDOFBlurSize = function (blurSize) {
     for (var i = 0; i < this._dofBlurNodes.length; i++) {

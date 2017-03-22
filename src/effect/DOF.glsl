@@ -79,7 +79,7 @@ void main()
         float fCoc = decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0;
         // TODO DOF premult to avoid bleeding, can be tweaked (currently x^3)
         // tradeoff between bleeding dof and out of focus object that shrinks too much
-        w *= fCoc * fCoc;
+        w *= abs(fCoc);
     #endif
         color += texel * w;
 #endif

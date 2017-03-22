@@ -320,6 +320,7 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     compositor.setDOFFocalDistance(dofModel.get('focalDistance'));
     compositor.setDOFFocalRange(dofModel.get('focalRange'));
     compositor.setDOFBlurSize(dofModel.get('blurRadius'));
+    compositor.setDOFFStop(dofModel.get('fstop'));
 };
 
 ViewGL.prototype.setDOFFocusOnPoint = function (depth) {
