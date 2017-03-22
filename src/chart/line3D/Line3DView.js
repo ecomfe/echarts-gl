@@ -115,7 +115,7 @@ module.exports = echarts.extendChartView({
         material.depthMask = !hasTransparent;
         lineMesh.geometry.sortTriangles = hasTransparent;
 
-        var debugWireframeModel = seriesModel.getModel('debugWireframe');
+        var debugWireframeModel = seriesModel.getModel('debug.wireframe');
         if (debugWireframeModel.get('show')) {
             lineMesh.geometry.createAttribute('barycentric', 'float', 3);
             lineMesh.geometry.generateBarycentric();

@@ -47,6 +47,8 @@ echarts.extendSeriesModel({
             symbolSize: 4
         },
 
+        silent: true,
+
         // Support source-over, lighter
         blendMode: 'source-over',
 

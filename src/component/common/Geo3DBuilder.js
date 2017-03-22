@@ -46,7 +46,7 @@ function Geo3DBuilder(api) {
     this._groundMesh = new graphicGL.Mesh({
         geometry: new graphicGL.PlaneGeometry(),
         castShadow: false,
-        ignorePicking: true
+        $ignorePicking: true
     });
     this._groundMesh.rotation.rotateX(-Math.PI / 2);
     this._groundMesh.scale.set(1000, 1000, 1);

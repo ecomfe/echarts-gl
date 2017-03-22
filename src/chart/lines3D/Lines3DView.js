@@ -37,10 +37,8 @@ module.exports = echarts.extendChartView({
             transparent: true,
             depthMask: false
         });
-        // TODO Windows chrome not support lineWidth > 1
         this._linesMesh = new graphicGL.Mesh({
-            geometry: new LinesGeometry(),
-            ignorePicking: true
+            geometry: new LinesGeometry()
         });
 
         this._curveAnimatingPointsMesh = new CurveAnimatingPointsMesh();
