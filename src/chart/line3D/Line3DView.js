@@ -21,7 +21,8 @@ module.exports = echarts.extendChartView({
 
         var line3DMesh = new graphicGL.Mesh({
             geometry: new Lines3DGeometry({
-                useNativeLine: false
+                useNativeLine: false,
+                sortTriangles: true
             }),
             material: new graphicGL.Material({
                 shader: graphicGL.createShader('ecgl.meshLines3D')
@@ -113,7 +114,6 @@ module.exports = echarts.extendChartView({
         var material = lineMesh.material;
         material.transparent = hasTransparent;
         material.depthMask = !hasTransparent;
-        lineMesh.geometry.sortTriangles = hasTransparent;
 
         var debugWireframeModel = seriesModel.getModel('debug.wireframe');
         if (debugWireframeModel.get('show')) {
@@ -122,9 +122,17 @@ module.exports = echarts.extendChartView({
             lineMesh.material.shader.define('both', 'WIREFRAME_TRIANGLE');
             lineMesh.material.set(
                 'wireframeLineColor', graphicGL.parseColor(
-                    debugWireframeModel.get('color')
+                    debugWireframeModel.get('lineStyle.color')
                 )
             );
+            lineMesh.material.material.set(
+                'wireframeLineWidth', retrieve.firstNotNull(
+                    debugWireframeModel.get('lineStyle.width'), 1
+                )
+            );
+        }
+        else {
+            lineMesh.material.shader.unDefine('both', 'WIREFRAME_TRIANGLE');
         }
 
         this._points = points;

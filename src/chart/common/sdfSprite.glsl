@@ -65,6 +65,8 @@ varying float v_Size;
 
 uniform sampler2D sprite;
 
+@import qtek.util.srgb
+
 void main()
 {
     gl_FragColor = color;
@@ -104,6 +106,10 @@ void main()
             gl_FragColor.a = gl_FragColor.a * (1.0 - a) + a;
         }
     }
+#endif
+
+#ifdef SRGB_DECODE
+    gl_FragColor = sRGBToLinear(gl_FragColor);
 #endif
 
     if (gl_FragColor.a == 0.0) {

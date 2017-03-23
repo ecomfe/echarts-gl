@@ -22,10 +22,6 @@ function Geo3DBuilder(api) {
 
     this._triangulator = new Triangulation();
 
-    this._boxWidth;
-    this._boxHeight;
-    this._boxDepth;
-
     this._shadersMap = graphicGL.COMMON_SHADERS.reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
         obj[shaderName].define('fragment', 'DOUBLE_SIDE');
@@ -67,9 +63,12 @@ Geo3DBuilder.prototype = {
 
     update: function (componentModel, ecModel, api) {
         var geo3D = componentModel.coordinateSystem;
-
-        if (geo3D.map !== this._currentMap) {
-
+        var enableInstancing = componentModel.get('instancing');
+        if (
+            geo3D.map !== this._currentMap
+            || (enableInstancing && !this._polygonMesh)
+            || (!enableInstancing && !this._polygonMeshesMap)
+        ) {
             this._triangulation(geo3D);
             this._currentMap = geo3D.map;
 
@@ -85,68 +84,11 @@ Geo3DBuilder.prototype = {
 
         var data = componentModel.getData();
 
-        geo3D.regions.forEach(function (region) {
-            var dataIndex = data.indexOfName(region.name);
 
-            var polygonMesh = this._polygonMeshes[region.name];
-            var linesMesh = this._linesMeshes[region.name];
-            if (polygonMesh.material.shader !== shader) {
-                polygonMesh.material.attachShader(shader, true);
-            }
-            var regionModel = componentModel.getRegionModel(region.name);
-            var itemStyleModel = regionModel.getModel('itemStyle');
-            var color = itemStyleModel.get('areaColor');
-            var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
-
-            // Materials configurations.
-            graphicGL.setMaterialFromModel(shader.__shading, polygonMesh.material, regionModel, api);
-
-            // Use visual color if it is encoded by visualMap component
-            var visualColor = data.getItemVisual(dataIndex, 'color', true);
-            if (visualColor != null) {
-                color = visualColor;
-            }
-            // Set color, opacity to visual for label usage.
-            data.setItemVisual(dataIndex, 'color', color);
-            data.setItemVisual(dataIndex, 'opacity', opacity);
-
-            color = graphicGL.parseColor(color);
-            var borderColor = graphicGL.parseColor(itemStyleModel.get('borderColor'));
-
-            color[3] *= opacity;
-            borderColor[3] *= opacity;
-            polygonMesh.material.set({
-                color: color
-            });
-            var isTransparent = color[3] < 0.99;
-            polygonMesh.material.transparent = isTransparent;
-            polygonMesh.material.depthMask = !isTransparent;
-
-            var lineWidth = itemStyleModel.get('borderWidth');
-            var hasLine = lineWidth > 0;
-
-            var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), geo3D.size[1]);
-
-            this._updatePolygonGeometry(polygonMesh.geometry, region, regionHeight);
-
-            // Update lines.
-            if (hasLine) {
-                lineWidth *= api.getDevicePixelRatio();
-                this._updateLinesGeometry(linesMesh.geometry, region, regionHeight, lineWidth, geo3D.transform);
-            }
-            linesMesh.invisible = !hasLine;
-            linesMesh.material.set({
-                color: borderColor
-            });
-
-            // Move regions to center so they can be sorted right when material is transparent.
-            this._moveRegionToCenter(polygonMesh, linesMesh, hasLine);
-
-            // Bind events.
-            polygonMesh.dataIndex = dataIndex;
-            polygonMesh.on('mouseover', this._onmouseover, this);
-            polygonMesh.on('mouseout', this._onmouseout, this);
-        }, this);
+        if (enableInstancing) {
+            this._updateInstancingMesh(componentModel, shader, api);
+        }
+        this._updateRegionMesh(componentModel, shader, api, enableInstancing);
 
         this._updateGroundPlane(componentModel);
         this._groundMesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
@@ -165,6 +107,162 @@ Geo3DBuilder.prototype = {
         this._data = data;
 
         this._labelsBuilder.updateLabels();
+
+        this._updateDebugWireframe(componentModel);
+    },
+
+    _updateInstancingMesh: function (componentModel, shader, api) {
+        var geo3D = componentModel.coordinateSystem;
+
+        var vertexCount = 0;
+        var triangleCount = 0;
+        // TODO Lines
+        geo3D.regions.forEach(function (region) {
+            var info = this._getRegionPolygonGeoInfo(region);
+            vertexCount += info.vertexCount;
+            triangleCount += info.triangleCount;
+        }, this);
+
+        var polygonMesh = this._polygonMesh;
+        var polygonGeo = polygonMesh.geometry;
+        ['position', 'normal', 'texcoord0', 'color'].forEach(function (attrName) {
+            polygonGeo.attributes[attrName].init(vertexCount);
+        });
+
+        polygonGeo.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
+
+        if (polygonMesh.material.shader !== shader) {
+            polygonMesh.material.attachShader(shader, true);
+        }
+    },
+
+    _updateRegionMesh: function (componentModel, shader, api, instancing) {
+
+        var data = componentModel.getData();
+        var geo3D = componentModel.coordinateSystem;
+
+        var vertexOffset = 0;
+        var triangleOffset = 0;
+
+        if (instancing) {
+            // Materials configurations.
+            graphicGL.setMaterialFromModel(shader.__shading, this._polygonMesh.material, componentModel, api);
+        }
+        var hasTranparentRegion = false;
+
+        geo3D.regions.forEach(function (region) {
+            var dataIndex = data.indexOfName(region.name);
+
+            var polygonMesh = instancing ? this._polygonMesh : this._polygonMeshesMap[region.name];
+            var linesMesh = instancing ? this._linesMesh : this._linesMeshesMap[region.name];
+            if (polygonMesh.material.shader !== shader) {
+                polygonMesh.material.attachShader(shader, true);
+            }
+            // Get bunch of visual properties.
+            var regionModel = componentModel.getRegionModel(region.name);
+            var itemStyleModel = regionModel.getModel('itemStyle');
+            var color = itemStyleModel.get('areaColor');
+            var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
+
+            // Use visual color if it is encoded by visualMap component
+            var visualColor = data.getItemVisual(dataIndex, 'color', true);
+            if (visualColor != null && data.hasValue(dataIndex)) {
+                color = visualColor;
+            }
+            // Set color, opacity to visual for label usage.
+            data.setItemVisual(dataIndex, 'color', color);
+            data.setItemVisual(dataIndex, 'opacity', opacity);
+
+            color = graphicGL.parseColor(color);
+            var borderColor = graphicGL.parseColor(itemStyleModel.get('borderColor'));
+
+            color[3] *= opacity;
+            borderColor[3] *= opacity;
+
+            var isTransparent = color[3] < 0.99;
+            if (!instancing) {
+                // Materials configurations.
+                graphicGL.setMaterialFromModel(shader.__shading, polygonMesh.material, regionModel, api);
+                polygonMesh.material.set({ color: color });
+                polygonMesh.material.transparent = isTransparent;
+                polygonMesh.material.depthMask = !isTransparent;
+            }
+            hasTranparentRegion = hasTranparentRegion || isTransparent;
+
+            var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), geo3D.size[1]);
+
+            if (instancing) {
+                var newOffsets = this._updatePolygonGeometry(
+                    polygonMesh.geometry, region, regionHeight, vertexOffset, triangleOffset, color
+                );
+                vertexOffset = newOffsets.vertexOffset;
+                triangleOffset = newOffsets.triangleOffset;
+            }
+            else {
+                this._updatePolygonGeometry(polygonMesh.geometry, region, regionHeight);
+            }
+
+            // Update lines.
+            // TODO INSTANCING LINES
+            var lineWidth = itemStyleModel.get('borderWidth');
+            var hasLine = lineWidth > 0;
+            if (!instancing) {
+                if (hasLine) {
+                    lineWidth *= api.getDevicePixelRatio();
+                    this._updateLinesGeometry(
+                        linesMesh.geometry, region, regionHeight, lineWidth, geo3D.transform
+                    );
+                }
+                linesMesh.invisible = !hasLine;
+                linesMesh.material.set({
+                    color: borderColor
+                });
+            }
+
+            // Move regions to center so they can be sorted right when material is transparent.
+            if (!instancing) {
+                this._moveRegionToCenter(polygonMesh, linesMesh, hasLine);
+                // Bind events.
+                polygonMesh.dataIndex = dataIndex;
+                polygonMesh.on('mouseover', this._onmouseover, this);
+                polygonMesh.on('mouseout', this._onmouseout, this);
+            }
+
+        }, this);
+
+        if (instancing && hasTranparentRegion) {
+            this._polygonMesh.material.transparent = hasTranparentRegion;
+            this._polygonMesh.material.depthMask = !hasTranparentRegion;
+        }
+    },
+
+    _updateDebugWireframe: function (componentModel) {
+        var debugWireframeModel = componentModel.getModel('debug.wireframe');
+
+        // TODO Unshow
+        if (debugWireframeModel.get('show')) {
+            var color = graphicGL.parseColor(
+                debugWireframeModel.get('lineStyle.color')
+            );
+            var width = retrieve.firstNotNull(
+                debugWireframeModel.get('lineStyle.width'), 1
+            );
+
+            var setWireframe = function (mesh) {
+                mesh.geometry.generateBarycentric();
+                mesh.material.shader.define('both', 'WIREFRAME_TRIANGLE');
+                mesh.material.set('wireframeLineColor', color);
+                mesh.material.set('wireframeLineWidth', width);
+            }
+            if (this._polygonMeshesMap) {
+                componentModel.coordinateSystem.regions.forEach(function (region) {
+                    setWireframe(this._polygonMeshesMap[region.name]);
+                }, this);
+            }
+            else {
+                setWireframe(this._polygonMesh);
+            }
+        }
     },
 
     _onmouseover: function (e) {
@@ -184,57 +282,6 @@ Geo3DBuilder.prototype = {
                 this._labelsBuilder.updateLabels();
             }
         }
-    },
-
-    highlight: function (dataIndex) {
-        var data = this._data;
-        if (!data) {
-            return;
-        }
-
-        var itemModel = data.getItemModel(dataIndex);
-        var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
-        var emphasisColor = emphasisItemStyleModel.get('areaColor');
-        var emphasisOpacity = emphasisItemStyleModel.get('opacity');
-        if (emphasisColor == null) {
-            var color = data.getItemVisual(dataIndex, 'color');
-            emphasisColor = echarts.color.lift(color, -0.4);
-        }
-        if (emphasisOpacity == null) {
-            emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
-        }
-        var colorArr = graphicGL.parseColor(emphasisColor);
-        colorArr[3] *= emphasisOpacity;
-
-        var polygonMesh = this._polygonMeshes[data.getName(dataIndex)];
-        if (polygonMesh) {
-            var material = polygonMesh.material;
-            material.set('color', colorArr);
-        }
-
-        this._api.getZr().refresh();
-    },
-
-    downplay: function (dataIndex) {
-
-        var data = this._data;
-        if (!data) {
-            return;
-        }
-
-        var color = data.getItemVisual(dataIndex, 'color');
-        var opacity = data.getItemVisual(dataIndex, 'opacity');
-
-        var colorArr = graphicGL.parseColor(color);
-        colorArr[3] *= opacity;
-
-        var polygonMesh = this._polygonMeshes[data.getName(dataIndex)];
-        if (polygonMesh) {
-            var material = polygonMesh.material;
-            material.set('color', colorArr);
-        }
-
-        this._api.getZr().refresh();
     },
 
     _updateGroundPlane: function (componentModel) {
@@ -257,12 +304,10 @@ Geo3DBuilder.prototype = {
         this.rootNode.removeAll();
 
         var geo3D = componentModel.coordinateSystem;
-        var polygonMeshesMap = {};
-        var linesMeshesMap = {};
         var shader = this._getShader(componentModel.get('shading'));
 
-        geo3D.regions.forEach(function (region) {
-            polygonMeshesMap[region.name] = new graphicGL.Mesh({
+        function createPolygonMesh() {
+             var mesh = new graphicGL.Mesh({
                 material: new graphicGL.Material({
                     shader: shader
                 }),
@@ -271,9 +316,12 @@ Geo3DBuilder.prototype = {
                     sortTriangles: true
                 })
             });
-            echarts.util.extend(polygonMeshesMap[region.name].geometry, trianglesSortMixin);
+            echarts.util.extend(mesh.geometry, trianglesSortMixin);
+            return mesh;
+        }
 
-            linesMeshesMap[region.name] = new graphicGL.Mesh({
+        function createLinesMesh() {
+            return new graphicGL.Mesh({
                 material: new graphicGL.Material({
                     shader: this._linesShader
                 }),
@@ -283,13 +331,35 @@ Geo3DBuilder.prototype = {
                     useNativeLine: false
                 })
             });
+        }
 
-            this.rootNode.add(polygonMeshesMap[region.name]);
-            this.rootNode.add(linesMeshesMap[region.name]);
-        }, this);
+        if (!componentModel.get('instancing')) {
+            var polygonMeshesMap = {};
+            var linesMeshesMap = {};
+            geo3D.regions.forEach(function (region) {
+                polygonMeshesMap[region.name] = createPolygonMesh();
+                linesMeshesMap[region.name] = createLinesMesh();
 
-        this._polygonMeshes = polygonMeshesMap;
-        this._linesMeshes = linesMeshesMap;
+                this.rootNode.add(polygonMeshesMap[region.name]);
+                this.rootNode.add(linesMeshesMap[region.name]);
+            }, this);
+            this._polygonMeshesMap = polygonMeshesMap;
+            this._linesMeshesMap = linesMeshesMap;
+        }
+        else {
+            var polygonMesh = createPolygonMesh();
+            var linesMesh = createLinesMesh();
+            this.rootNode.add(polygonMesh);
+            this.rootNode.add(linesMesh);
+
+            polygonMesh.material.shader.define('both', 'VERTEX_COLOR');
+
+            this._polygonMesh = polygonMesh;
+            this._linesMesh = linesMesh;
+
+            this._polygonMeshesMap = null;
+            this._linesMeshesMap = null;
+        }
 
         this.rootNode.add(this._groundMesh);
     },
@@ -366,8 +436,6 @@ Geo3DBuilder.prototype = {
                 vec3.max(maxAll, maxAll, max);
                 polygons.push({
                     points: points3,
-                    min: min,
-                    max: max,
                     minAll: minAll,
                     maxAll: maxAll,
                     indices: triangulator.triangles
@@ -378,11 +446,11 @@ Geo3DBuilder.prototype = {
 
     },
 
-    _updatePolygonGeometry: function (geometry, region, regionHeight) {
-        var indices = this.indices;
-        var positionAttr = geometry.attributes.position;
-        var normalAttr = geometry.attributes.normal;
-        var texcoordAttr = geometry.attributes.texcoord0;
+    /**
+     * Get region vertex and triangle count
+     */
+    _getRegionPolygonGeoInfo: function (region) {
+
         var polygons = this._triangulationResults[region.name];
 
         var sideVertexCount = 0;
@@ -396,13 +464,36 @@ Geo3DBuilder.prototype = {
         var vertexCount = sideVertexCount * 2 + sideVertexCount * 4;
         var triangleCount = sideTriangleCount * 2 + sideVertexCount * 2;
 
-        positionAttr.init(vertexCount);
-        normalAttr.init(vertexCount);
-        texcoordAttr.init(vertexCount);
-        indices = geometry.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
+        return {
+            vertexCount: vertexCount,
+            triangleCount: triangleCount
+        };
+    },
 
-        var vertexOffset = 0;
-        var faceOffset = 0;
+    _updatePolygonGeometry: function (
+        geometry, region, regionHeight, vertexOffset, triangleOffset, color
+    ) {
+        var positionAttr = geometry.attributes.position;
+        var normalAttr = geometry.attributes.normal;
+        var texcoordAttr = geometry.attributes.texcoord0;
+        var colorAttr = geometry.attributes.color;
+        var polygons = this._triangulationResults[region.name];
+
+        var hasColor = colorAttr.value && color;
+
+        var indices = geometry.indices;
+        if (vertexOffset == null) {
+
+            var geoInfo = this._getRegionPolygonGeoInfo(region);
+            vertexOffset = triangleOffset = 0;
+
+            positionAttr.init(geoInfo.vertexCount);
+            normalAttr.init(geoInfo.vertexCount);
+            texcoordAttr.init(geoInfo.vertexCount);
+            indices = geometry.indices = geoInfo.vertexCount > 0xffff
+                ? new Uint32Array(geoInfo.triangleCount * 3)
+                : new Uint16Array(geoInfo.triangleCount * 3);
+        }
 
         var min = polygons[0].minAll;
         var max = polygons[0].maxAll;
@@ -424,6 +515,9 @@ Geo3DBuilder.prototype = {
                 uv[1] = (points[k + 2] - min[2]) / maxDimSize;
 
                 positionAttr.set(vertexOffset, currentPosition);
+                if (hasColor) {
+                    colorAttr.set(vertexOffset, color);
+                }
                 texcoordAttr.set(vertexOffset++, uv);
             }
         }
@@ -435,9 +529,9 @@ Geo3DBuilder.prototype = {
             addVertices(polygon, y, insideOffset);
 
             for (var k = 0; k < polygon.indices.length; k++) {
-                indices[faceOffset * 3 + k] = polygon.indices[k] + startVertexOffset;
+                indices[triangleOffset * 3 + k] = polygon.indices[k] + startVertexOffset;
             }
-            faceOffset += polygon.indices.length / 3;
+            triangleOffset += polygon.indices.length / 3;
         }
 
         var normalTop = [0, 1, 0];
@@ -492,20 +586,29 @@ Geo3DBuilder.prototype = {
 
                 for (var k = 0; k < 4; k++) {
                     normalAttr.set(vertexOffset + k, normal);
+                    if (hasColor) {
+                        colorAttr.set(vertexOffset + k, color);
+                    }
                 }
 
                 for (var k = 0; k < 6; k++) {
-                    indices[faceOffset * 3 + k] = quadToTriangle[k] + vertexOffset;
+                    indices[triangleOffset * 3 + k] = quadToTriangle[k] + vertexOffset;
                 }
 
                 vertexOffset += 4;
-                faceOffset += 2;
+                triangleOffset += 2;
             }
         }
+
         geometry.updateBoundingBox();
+
+        return {
+            vertexOffset: vertexOffset,
+            triangleOffset: triangleOffset
+        };
     },
 
-    _updateLinesGeometry: function (geometry, region, regionHeight, lineWidth, transform) {
+    _getRegionLinesGeoInfo: function (region, geometry) {
         var vertexCount = 0;
         var triangleCount = 0;
         region.geometries.forEach(function (geo) {
@@ -519,9 +622,17 @@ Geo3DBuilder.prototype = {
             }
         }, this);
 
+    },
+
+    _updateLinesGeometry: function (
+        geometry, region, regionHeight, lineWidth, transform
+    ) {
+
+        var geoInfo = this._getRegionLinesGeoInfo(region, geometry);
+
         geometry.resetOffset();
-        geometry.setVertexCount(vertexCount);
-        geometry.setTriangleCount(vertexCount);
+        geometry.setVertexCount(geoInfo.vertexCount);
+        geometry.setTriangleCount(geoInfo.triangleCount);
 
         function convertToPoints3(polygon) {
             var points = new Float32Array(polygon.length * 3);
@@ -587,6 +698,57 @@ Geo3DBuilder.prototype = {
             }
             linesMesh.position.copy(cp);
         }
+    },
+
+    highlight: function (dataIndex) {
+        var data = this._data;
+        if (!data) {
+            return;
+        }
+
+        var itemModel = data.getItemModel(dataIndex);
+        var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
+        var emphasisColor = emphasisItemStyleModel.get('areaColor');
+        var emphasisOpacity = emphasisItemStyleModel.get('opacity');
+        if (emphasisColor == null) {
+            var color = data.getItemVisual(dataIndex, 'color');
+            emphasisColor = echarts.color.lift(color, -0.4);
+        }
+        if (emphasisOpacity == null) {
+            emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
+        }
+        var colorArr = graphicGL.parseColor(emphasisColor);
+        colorArr[3] *= emphasisOpacity;
+
+        var polygonMesh = this._polygonMeshesMap[data.getName(dataIndex)];
+        if (polygonMesh) {
+            var material = polygonMesh.material;
+            material.set('color', colorArr);
+        }
+
+        this._api.getZr().refresh();
+    },
+
+    downplay: function (dataIndex) {
+
+        var data = this._data;
+        if (!data) {
+            return;
+        }
+
+        var color = data.getItemVisual(dataIndex, 'color');
+        var opacity = data.getItemVisual(dataIndex, 'opacity');
+
+        var colorArr = graphicGL.parseColor(color);
+        colorArr[3] *= opacity;
+
+        var polygonMesh = this._polygonMeshesMap[data.getName(dataIndex)];
+        if (polygonMesh) {
+            var material = polygonMesh.material;
+            material.set('color', colorArr);
+        }
+
+        this._api.getZr().refresh();
     }
 };
 

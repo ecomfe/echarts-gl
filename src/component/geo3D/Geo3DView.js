@@ -60,6 +60,14 @@ module.exports = echarts.extendComponentView({
         // Must update after geo3D.viewGL.setPostEffect
         this._geo3DBuilder.update(geo3DModel, ecModel, api);
 
+        var silent = geo3DModel.get('silent');
+        this.groupGL && this.groupGL.traverse(function (mesh) {
+            if (mesh.isRenderable && mesh.isRenderable()) {
+                mesh.ignorePicking = mesh.$ignorePicking != null
+                    ? mesh.$ignorePicking : silent;
+            }
+        });
+
         control.off('update');
         control.on('update', function () {
             api.dispatchAction({

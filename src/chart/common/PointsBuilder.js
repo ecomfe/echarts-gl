@@ -147,19 +147,17 @@ PointsBuilder.prototype = {
             geometry.sortVertices = false;
         }
         else {
-            // material.depthTest = true;
-            // var transparent = hasTransparentPoint
-            //     // Stroke is transparent
-            //     || (itemStyle.lineWidth && strokeColor[3] < 0.99);
-            // material.transparent = transparent;
-            // material.depthMask = !transparent;
-            // geometry.sortVertices = transparent;
-
             // Because of symbol texture, we always needs it be transparent.
             material.depthTest = true;
             material.transparent = true;
             material.depthMask = false;
             geometry.sortVertices = true;
+        }
+
+        var coordSys = seriesModel.coordinateSystem;
+        if (coordSys && coordSys.viewGL) {
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            this._mesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
         this._updateHandler(seriesModel, ecModel, api);
