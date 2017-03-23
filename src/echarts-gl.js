@@ -70,6 +70,11 @@ EChartsGL.prototype.update = function (ecModel, api) {
     var self = this;
     var zr = api.getZr();
 
+    if (!zr.getWidth() || !zr.getHeight()) {
+        console.warn('Dom has no width or height');
+        return;
+    }
+
     function getLayerGL(model) {
         var zlevel = model.get('zlevel');
         var layers = self._layers;

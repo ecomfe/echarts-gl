@@ -125,7 +125,7 @@ module.exports = echarts.extendChartView({
                     debugWireframeModel.get('lineStyle.color')
                 )
             );
-            lineMesh.material.material.set(
+            lineMesh.material.set(
                 'wireframeLineWidth', retrieve.firstNotNull(
                     debugWireframeModel.get('lineStyle.width'), 1
                 )
