@@ -198,6 +198,10 @@ ViewGL.prototype.needsTemporalSS = function () {
     return enableTemporalSS;
 };
 
+ViewGL.prototype.hasDOF = function () {
+    return this._enableDOF;
+};
+
 ViewGL.prototype.isAccumulateFinished = function () {
     return this.needsTemporalSS() ? this._temporalSS.isFinished()
         : (this._frame > 20);
@@ -309,6 +313,7 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     bloomModel.get('enable') ? compositor.enableBloom() : compositor.disableBloom();
     dofModel.get('enable') ? compositor.enableDOF() : compositor.disableDOF();
 
+    this._enableDOF = dofModel.get('enable');
     this._enableSSAO = ssaoModel.get('enable');
     this._enableSSAO ? compositor.enableSSAO() : compositor.disableSSAO();
 

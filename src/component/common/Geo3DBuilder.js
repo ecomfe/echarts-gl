@@ -230,9 +230,10 @@ Geo3DBuilder.prototype = {
 
         }, this);
 
-        if (instancing && hasTranparentRegion) {
+        if (instancing) {
             this._polygonMesh.material.transparent = hasTranparentRegion;
             this._polygonMesh.material.depthMask = !hasTranparentRegion;
+            this._polygonMesh.geometry.updateBoundingBox();
         }
     },
 
@@ -482,7 +483,8 @@ Geo3DBuilder.prototype = {
         var hasColor = colorAttr.value && color;
 
         var indices = geometry.indices;
-        if (vertexOffset == null) {
+        var instancing = vertexOffset != null;
+        if (!instancing) {
 
             var geoInfo = this._getRegionPolygonGeoInfo(region);
             vertexOffset = triangleOffset = 0;
@@ -600,7 +602,9 @@ Geo3DBuilder.prototype = {
             }
         }
 
-        geometry.updateBoundingBox();
+        if (!instancing) {
+            geometry.updateBoundingBox();
+        }
 
         return {
             vertexOffset: vertexOffset,

@@ -470,7 +470,7 @@ LayerGL.prototype._clickToSetFocusPoint = function (e) {
     var oldViewport = renderer.viewport;
     for (var i = this.views.length - 1; i >= 0; i--) {
         var viewGL = this.views[i];
-        if (viewGL.containPoint(e.offsetX, e.offsetY)) {
+        if (viewGL.hasDOF() && viewGL.containPoint(e.offsetX, e.offsetY)) {
             this._picking.scene = viewGL.scene;
             this._picking.camera = viewGL.camera;
             // Only used for picking, renderer.setViewport will also invoke gl.viewport.
