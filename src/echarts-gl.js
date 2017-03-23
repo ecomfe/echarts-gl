@@ -163,7 +163,8 @@ EChartsGL.prototype.update = function (ecModel, api) {
             var silent = seriesModel.get('silent');
             chartView.groupGL && chartView.groupGL.traverse(function (mesh) {
                 if (mesh.isRenderable && mesh.isRenderable()) {
-                    mesh.ignorePicking = silent;
+                    mesh.ignorePicking = mesh.$ignorePicking != null
+                        ? mesh.$ignorePicking : silent;
                 }
             });
         }
