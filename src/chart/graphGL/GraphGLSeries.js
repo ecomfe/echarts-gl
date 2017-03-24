@@ -148,7 +148,7 @@ var GraphSeries = echarts.extendSeriesModel({
     },
 
     defaultOption: {
-        zlevel: 0,
+        zlevel: 10,
         z: 2,
 
         legendHoverLink: true,
