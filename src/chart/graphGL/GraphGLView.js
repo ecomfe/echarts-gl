@@ -5,6 +5,7 @@ var ViewGL = require('../../core/ViewGL');
 var Lines2DGeometry = require('../../util/geometry/Lines2D');
 var retrieve = require('../../util/retrieve');
 var ForceAtlas2GPU = require('./ForceAtlas2GPU');
+var ForceAtlas2 = require('./ForceAtlas2');
 var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
 var vec2 = require('qtek/lib/dep/glmatrix').vec2;
 
@@ -269,7 +270,18 @@ echarts.extendChartView({
                 });
             });
             if (!layoutInstance) {
-                layoutInstance = this._forceLayoutInstance = new ForceAtlas2GPU();
+                var isGPU = layoutModel.get('GPU');
+                if (this._forceLayoutInstance) {
+                    if ((isGPU && !(this._forceLayoutInstance instanceof ForceAtlas2GPU))
+                        || (!isGPU && !(this._forceLayoutInstance instanceof ForceAtlas2))
+                    ) {
+                        // Mark to dispose
+                        this._forceLayoutInstanceToDispose = this._forceLayoutInstance;
+                    }
+                }
+                layoutInstance = this._forceLayoutInstance = isGPU
+                    ? new ForceAtlas2GPU()
+                    : new ForceAtlas2();
             }
             layoutInstance.initData(nodes, edges);
             layoutInstance.updateOption(layoutModel.option);
@@ -330,19 +342,22 @@ echarts.extendChartView({
                 return;
             }
 
-            for (var i = 0; i < steps; i++) {
-                layoutInstance.step(viewGL.layer.renderer);
-            }
-            self._updatePositionTexture();
-            // Position texture will been swapped. set every time.
-            api.getZr().refresh();
+            layoutInstance.update(viewGL.layer.renderer, steps, function () {
+                self._updatePositionTexture();
+                // Position texture will been swapped. set every time.
+                api.getZr().refresh();
 
-            requestAnimationFrame(function () {
-                doLayout(layoutId);
+                requestAnimationFrame(function () {
+                    doLayout(layoutId);
+                });
             });
         };
 
         requestAnimationFrame(function () {
+            if (self._forceLayoutInstanceToDispose) {
+                self._forceLayoutInstanceToDispose.dispose(viewGL.layer.renderer);
+                self._forceLayoutInstanceToDispose = null;
+            }
             doLayout(layoutId);
         });
     },

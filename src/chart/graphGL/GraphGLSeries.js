@@ -160,16 +160,20 @@ var GraphSeries = echarts.extendSeriesModel({
         forceAtlas2: {
             initLayout: null,
 
+            GPU: true,
+
             steps: 1,
 
+            // barnesHutOptimize
+
             // Stop threshold, 0 never stop.
-            stopThreshold: 2,
+            stopThreshold: 1,
 
             repulsionByDegree: true,
             linLogMode: false,
             strongGravityMode: false,
             gravity: 1.0,
-            scaling: 1.0,
+            // scaling: 1.0,
 
             edgeWeightInfluence: 1.0,
 
@@ -178,7 +182,7 @@ var GraphSeries = echarts.extendSeriesModel({
             // Node weight range.
             nodeWeight: [1, 4],
 
-            jitterTolerence: 0.1,
+            // jitterTolerence: 0.1,
             preventOverlap: false,
             gravityCenter: null
         },

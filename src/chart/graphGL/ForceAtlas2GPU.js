@@ -155,7 +155,7 @@ ForceAtlas2GPU.prototype.updateOption = function (options) {
 
 };
 
-ForceAtlas2GPU.prototype._updateSettings = function (options) {
+ForceAtlas2GPU.prototype._updateGravityCenter = function (options) {
     var nodes = this._nodes;
     var edges = this._edges;
 
@@ -192,7 +192,7 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
     this._nodes = nodes;
     this._edges = edges;
 
-    this._updateSettings();
+    this._updateGravityCenter();
 
     var textureWidth = Math.ceil(Math.sqrt(nodes.length));
     var textureHeight = textureWidth;
@@ -325,6 +325,19 @@ ForceAtlas2GPU.prototype.step = function (renderer) {
     this._framebuffer.unbind(renderer);
 
     this._swapTexture();
+};
+
+ForceAtlas2GPU.prototype.update = function (renderer, steps, cb) {
+    if (steps == null) {
+        steps = 1;
+    }
+    steps = Math.max(steps, 1);
+
+    for (var i = 0; i < steps; i++) {
+        this.step(renderer);
+    }
+
+    cb && cb();
 };
 
 ForceAtlas2GPU.prototype.getNodePositionTexture = function () {
