@@ -248,7 +248,12 @@ echarts.extendChartView({
                 nodesIndicesMap[node.id] = offset++;
                 var mass = echarts.number.linearMap(value, nodeDataExtent, nodeWeightRange);
                 if (isNaN(mass)) {
-                    mass = 1;
+                    if (!isNaN(nodeWeightRange[0])) {
+                        mass = nodeWeightRange[0];
+                    }
+                    else {
+                        mass = 1;
+                    }
                 }
                 nodes.push({
                     x: x, y: y, mass: mass
@@ -261,7 +266,12 @@ echarts.extendChartView({
                 var value = nodeData.get('value', dataIndex);
                 var weight = echarts.number.linearMap(value, edgeDataExtent, edgeWeightRange);
                 if (isNaN(weight)) {
-                    weight = 1;
+                    if (!isNaN(edgeWeightRange[0])) {
+                        weight = edgeWeightRange[0];
+                    }
+                    else {
+                        weight = 1;
+                    }
                 }
                 edges.push({
                     node1: nodesIndicesMap[edge.node1.id],

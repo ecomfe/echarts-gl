@@ -287,6 +287,8 @@ function forceAtlas2Worker() {
 
         this.bbox = new Float32Array(4);
 
+        this.gravityCenter = null;
+
         this._massArr = null;
 
         this._swingingArr = null;
@@ -380,18 +382,6 @@ function forceAtlas2Worker() {
                 this.rootRegion.addNode(this.nodes[i]);
             }
             this.rootRegion.afterUpdate();
-        }
-        else {
-            // Update center of mass of whole graph
-            var mass = 0;
-            var centerOfMass = this.rootRegion.centerOfMass;
-            vec2.set(centerOfMass, 0, 0);
-            for (var i = 0; i < nNodes; i++) {
-                var node = this.nodes[i];
-                mass += node.mass;
-                vec2.scaleAndAdd(centerOfMass, centerOfMass, node.position, node.mass);
-            }
-            vec2.scale(centerOfMass, centerOfMass, 1 / mass);
         }
 
         // Reset forces
@@ -579,9 +569,7 @@ function forceAtlas2Worker() {
     forceAtlas2Proto.applyNodeGravity = (function() {
         var v = vec2.create();
         return function(node) {
-            // PENDING Move to centerOfMass or [0, 0] ?
-            // vec2.sub(v, this.rootRegion.centerOfMass, node.position);
-            vec2.negate(v, node.position);
+            vec2.sub(v, this.gravityCenter, node.position);
             var d = vec2.len(v);
             vec2.scaleAndAdd(node.force, node.force, v, this.gravity * node.mass / (d + 1));
         }
@@ -590,7 +578,7 @@ function forceAtlas2Worker() {
     forceAtlas2Proto.applyNodeStrongGravity = (function() {
         var v = vec2.create();
         return function(node) {
-            vec2.negate(v, node.position);
+            vec2.sub(v, this.gravityCenter, node.position);
             vec2.scaleAndAdd(node.force, node.force, v, this.gravity * node.mass);
         }
     })();

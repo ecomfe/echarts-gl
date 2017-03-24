@@ -153,6 +153,13 @@ ForceAtlas2GPU.prototype.updateOption = function (options) {
         }
     }
 
+    if (this.repulsionByDegree) {
+        var positionBuffer = this._positionSourceTex.pixels;
+
+        for (var i = 0; i < this._nodes.length; i++) {
+            positionBuffer[i * 4 + 2] = (this._nodes[i].degree || 0) + 1;
+        }
+    }
 };
 
 ForceAtlas2GPU.prototype._updateGravityCenter = function (options) {
@@ -205,13 +212,7 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
         var node = nodes[i];
         positionBuffer[offset++] = node.x || 0;
         positionBuffer[offset++] = node.y || 0;
-
-        if (this.repulsionByDegree) {
-            positionBuffer[offset++] = (node.degree || 0) + 1;
-        }
-        else {
-            positionBuffer[offset++] = node.mass || 1;
-        }
+        positionBuffer[offset++] = node.mass || 1;
         positionBuffer[offset++] = node.size || 1;
     }
     this._positionSourceTex.pixels = positionBuffer;

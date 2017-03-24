@@ -47,7 +47,9 @@ var ForceAtlas2 = function (options) {
 
     this._positionTex = new Texture2D({
         type: Texture.FLOAT,
-        flipY: false
+        flipY: false,
+        minFilter: Texture.NEAREST,
+        magFilter: Texture.NEAREST
     });
 };
 
