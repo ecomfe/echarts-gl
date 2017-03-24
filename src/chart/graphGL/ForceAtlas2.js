@@ -46,7 +46,8 @@ var ForceAtlas2 = function (options) {
     this._disposed = false;
 
     this._positionTex = new Texture2D({
-        type: Texture.FLOAT
+        type: Texture.FLOAT,
+        flipY: false
     });
 };
 
@@ -98,11 +99,11 @@ ForceAtlas2.prototype.initData = function (nodes, edges) {
 
     var textureWidth = Math.ceil(Math.sqrt(nodes.length));
     var textureHeight = textureWidth;
-    var positionBuffer = new Float32Array(textureWidth * textureHeight * 4);
+    var pixels = new Float32Array(textureWidth * textureHeight * 4);
     var positionTex = this._positionTex;
     positionTex.width = textureWidth;
     positionTex.height = textureHeight;
-    positionTex.pixels = positionBuffer;
+    positionTex.pixels = pixels;
 
     this._worker.postMessage({
         cmd: 'init',
@@ -264,8 +265,8 @@ ForceAtlas2.prototype._updateTexture = function (positionArr) {
     for (var i = 0; i < positionArr.length;){
         pixels[offset++] = positionArr[i++];
         pixels[offset++] = positionArr[i++];
-
-        offset += 2;
+        pixels[offset++] = 1;
+        pixels[offset++] = 1;
     }
     this._positionTex.dirty();
 };
