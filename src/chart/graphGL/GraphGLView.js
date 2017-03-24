@@ -386,6 +386,11 @@ echarts.extendChartView({
         if (!this._forceLayoutInstance) {
             return;
         }
+
+        if (!this.viewGL.layer) {
+            return;
+        }
+
         var points = this._forceLayoutInstance.getNodePosition(this.viewGL.layer.renderer);
 
         this._model.getData().setLayout('points', points);
