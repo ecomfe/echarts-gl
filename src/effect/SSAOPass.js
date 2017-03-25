@@ -5,6 +5,7 @@ var Texture = require('qtek/lib/Texture');
 var Pass = require('qtek/lib/compositor/Pass');
 var Shader = require('qtek/lib/Shader');
 var FrameBuffer = require('qtek/lib/FrameBuffer');
+var halton = require('./halton');
 
 Shader.import(require('text!./SSAO.glsl'));
 
@@ -12,6 +13,7 @@ function generateNoiseData(size) {
     var data = new Uint8Array(size * size * 4);
     var n = 0;
     var v3 = new Vector3();
+
     for (var i = 0; i < size; i++) {
         for (var j = 0; j < size; j++) {
             v3.set(Math.random() * 2 - 1, Math.random() * 2 - 1, 0).normalize();
@@ -34,15 +36,19 @@ function generateNoiseTexture(size) {
     });
 }
 
-function generateKernel(size) {
+function generateKernel(size, offset) {
     var kernel = new Float32Array(size * 3);
-    var v3 = new Vector3();
+    offset = offset || 0;
     for (var i = 0; i < size; i++) {
-        v3.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1)
-            .normalize().scale(Math.random());
-        kernel[i * 3] = v3.x;
-        kernel[i * 3 + 1] = v3.y;
-        kernel[i * 3 + 2] = v3.z;
+        var phi = halton(i + offset, 2) * 2 * Math.PI;
+        var theta = halton(i + offset, 3) * Math.PI;
+        var r = Math.random();
+        var x = Math.cos(phi) * Math.sin(theta) * r;
+        var y = Math.cos(theta) * r;
+        var z = Math.sin(phi) * Math.sin(theta) * r;
+        kernel[i * 3] = x;
+        kernel[i * 3 + 1] = y;
+        kernel[i * 3 + 2] = z;
     }
     return kernel;
 }
@@ -161,7 +167,7 @@ SSAOPass.prototype.setKernelSize = function (size) {
     this._ssaoPass.material.shader.define('fragment', 'KERNEL_SIZE', size);
     this._kernels = this._kernels || [];
     for (var i = 0; i < 30; i++) {
-        this._kernels[i] = generateKernel(size);
+        this._kernels[i] = generateKernel(size, i * size);
     }
 };
 
