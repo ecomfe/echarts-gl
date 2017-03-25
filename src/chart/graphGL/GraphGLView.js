@@ -352,7 +352,9 @@ echarts.extendChartView({
                 return;
             }
 
+            // console.time('layout');
             layoutInstance.update(viewGL.layer.renderer, steps, function () {
+            // console.timeEnd('layout');
                 self._updatePositionTexture();
                 // Position texture will been swapped. set every time.
                 api.getZr().refresh();
@@ -396,6 +398,8 @@ echarts.extendChartView({
         this._model.getData().setLayout('points', points);
 
         this._updateEdgesGeometry(this._forceLayoutInstance.getEdges());
+
+        this._api.getZr().refresh();
     },
 
     _updateCamera: function (seriesModel, api) {
