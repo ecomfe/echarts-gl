@@ -231,6 +231,7 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
     }
 
     if (!accumulating) {
+        this._shadowMapPass.kernelPCF = this._pcfKernels[0];
         // Not render shadowmap pass in accumulating frame.
         this._shadowMapPass.render(renderer, scene, camera, true);
     }
