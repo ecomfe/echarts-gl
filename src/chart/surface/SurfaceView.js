@@ -193,13 +193,13 @@ echarts.extendChartView({
         var quadToTriangle = [0, 3, 1, 1, 3, 2];
         // 3----2
         // 0----1
-        // Make sure pixels on 1---3 edge will not have all channel 0.
+        // Make sure pixels on 1---3 edge will not have channel 0.
         // And pixels on four edges have at least one channel 0.
         var quadBarycentric = [
             [1, 1, 0, 0],
-            [0, 0, 1, 1],
+            [0, 1, 0, 1],
             [1, 0, 0, 1],
-            [1, 1, 0, 0]
+            [1, 0, 1, 0]
         ];
 
         var indices = geometry.indices = new (geometry.vertexCount > 0xffff ? Uint32Array : Uint16Array)((row - 1) * (column - 1) * 6);
