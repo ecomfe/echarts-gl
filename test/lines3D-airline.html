@@ -47,14 +47,14 @@
                         name: airlineName,
 
                         effect: {
-                            show: true,
+                            show: false,
                             symbolSize: 4
                         },
 
                         lineStyle: {
                             width: 2,
                             color: 'rgb(50, 50, 150)',
-                            opacity: 0.6
+                            opacity: 0.04
                         },
                         blendMode: 'lighter',
 
@@ -74,6 +74,7 @@
                 chart.setOption({
                     backgroundColor: '',
                     legend: {
+                        show: false,
                         left: 'left',
                         data: Object.keys(routesGroupByAirline),
                         orient: 'vertical'
@@ -101,6 +102,7 @@
                 });
 
                 window.onresize = chart.resize;
+
             });
         </script>
     </body>
