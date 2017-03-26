@@ -36,7 +36,7 @@
 var echartsGl = {
     version: '1.0.0',
     dependencies: {
-        echarts: '3.4.0',
+        echarts: '3.5.0',
         qtek: '0.3.0'
     }
 };

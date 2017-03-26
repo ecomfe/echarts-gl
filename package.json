@@ -9,8 +9,8 @@
     }
   ],
   "dependencies": {
-    "zrender": "3.3.0",
-    "echarts": "3.4.0",
+    "zrender": "3.4.0",
+    "echarts": "3.5.0",
     "qtek": "0.3.0"
   },
   "repository": "git://github.com/ecomfe/echarts-x",
