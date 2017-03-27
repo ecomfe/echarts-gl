@@ -160,6 +160,20 @@ SceneHelper.prototype = {
             }
             this._skybox = null;
         }
+
+        var coordSys = componentModel.coordinateSystem;
+        if (this._skybox) {
+            if (coordSys && coordSys.viewGL
+                && environmentUrl !== 'auto'
+                && !(environmentUrl.match && environmentUrl.match(/.hdr$/))
+            ) {
+                var srgbDefineMethod = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+                this._skybox.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+            }
+            else {
+                this._skybox.material.shader.unDefine('fragment', 'SRGB_DECODE');
+            }
+        }
     }
 };
 
