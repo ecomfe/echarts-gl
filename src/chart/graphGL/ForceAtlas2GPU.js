@@ -395,6 +395,13 @@ ForceAtlas2GPU.prototype.getTextureData = function (renderer, textureName) {
     return arr;
 };
 
+ForceAtlas2GPU.prototype.getTextureSize = function () {
+    return {
+        width: this._positionTex.width,
+        height: this._positionTex.height
+    };
+};
+
 ForceAtlas2GPU.prototype.isFinished = function (renderer, threshold) {
     var globalSpeedData = this.getTextureData(renderer, 'globalSpeed');
     // console.log(globalSpeedData[0]);

@@ -21,6 +21,8 @@ var Grid3DModel = echarts.extendComponentModel({
         width: '100%',
         height: '100%',
 
+        environment: 'auto',
+
         // Dimension of grid3D
         boxWidth: 100,
         boxHeight: 100,

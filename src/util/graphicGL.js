@@ -162,7 +162,7 @@ var blankImage = textureUtil.createBlank('rgba(255,255,255,0)');
  * @param {Object} [textureOpts]
  * @param {Function} cb
  */
-// TODO Promise
+// TODO Promise, test
 graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
     if (typeof textureOpts === 'function') {
         cb = textureOpts;
@@ -290,7 +290,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
  * Create ambientCubemap and ambientSH light. respectively to have specular and diffuse light
  * @return {Object} { specular, diffuse }
  */
-graphicGL.createAmbientCubemap = function (opt, renderer, api) {
+graphicGL.createAmbientCubemap = function (opt, renderer, api, cb) {
     opt = opt || {};
     var textureUrl = opt.texture;
     var exposure = retrieve.firstNotNull(opt.exposure, 1.0);
@@ -311,6 +311,8 @@ graphicGL.createAmbientCubemap = function (opt, renderer, api) {
         ambientSH.coefficients = shUtil.projectEnvironmentMap(renderer, ambientCubemap.cubemap, {
             lod: 1
         });
+
+        cb && cb();
     });
 
     return {

@@ -42,22 +42,20 @@
                 grid3D: {
                     boxWidth: 200,
                     boxDepth: 80,
-                    axisLine: {
-                        lineStyle: {
-                            color: '#fff'
-                        }
+                    axisPointer: {
+                        show: false
                     },
                     postEffect: {
                         enable: true,
                         bloom: {
                             enable: true
-                        }
+                        },
                         // SSAO: {
                         //     enable: true
                         // }
-                        // depthOfField: {
-                        //     enable: true
-                        // }
+                        depthOfField: {
+                            enable: true
+                        }
                     },
                     light: {
                         main: {
@@ -68,8 +66,11 @@
                             texture: 'asset/canyon.hdr',
                             exposure: 1,
                             diffuseIntensity: 1,
-                            specularIntensity: 1
+                            specularIntensity: 2
                         }
+                    },
+                    temporalSuperSampling: {
+                        enable: true
                     },
                     viewControl: {
                         // projection: 'orthographic'
@@ -84,7 +85,7 @@
                     bevelSmoothness: 3,
                     shading: 'realistic',
                     realisticMaterial: {
-                        roughness: 0.2,
+                        roughness: 0.4,
                         metalness: 0
                     },
 

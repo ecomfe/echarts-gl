@@ -38,12 +38,8 @@ vec3 ssaoEstimator(in vec3 originPos) {
         texCoord.xy /= texCoord.w;
 
         vec4 depthTexel = texture2D(depthTex, texCoord.xy * 0.5 + 0.5);
-#ifdef DEPTH_ENCODED
-        depthTexel.rgb /= depthTexel.a;
-        float sampleDepth = decodeFloat(depthTexel) * 2.0 - 1.0;
-#else
+
         float sampleDepth = depthTexel.r * 2.0 - 1.0;
-#endif
 
         sampleDepth = projection[3][2] / (sampleDepth * projection[2][3] - projection[2][2]);
 
@@ -58,6 +54,11 @@ void main()
 {
 
     vec4 depthTexel = texture2D(depthTex, v_Texcoord);
+    if (depthTexel.r > 0.99999) {
+        // Ignore skybox and transparent objects like axis lines.
+        discard;
+    }
+
 #ifdef DEPTH_ENCODED
     depthTexel.rgb /= depthTexel.a;
     float z = decodeFloat(depthTexel) * 2.0 - 1.0;

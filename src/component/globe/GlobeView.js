@@ -2,7 +2,7 @@ var echarts = require('echarts/lib/echarts');
 
 var graphicGL = require('../../util/graphicGL');
 var OrbitControl = require('../../util/OrbitControl');
-var LightHelper = require('../common/LightHelper');
+var SceneHelper = require('../common/SceneHelper');
 
 var sunCalc = require('../../util/sunCalc');
 var retrieve = require('../../util/retrieve');
@@ -54,7 +54,8 @@ module.exports = echarts.extendComponentView({
         });
 
         this._lightRoot = new graphicGL.Node();
-        this._lightHelper = new LightHelper(this._lightRoot);
+        this._sceneHelper = new SceneHelper();
+        this._sceneHelper.initLight(this._lightRoot);
 
         this.groupGL.add(this._earthMesh);
 
@@ -81,6 +82,8 @@ module.exports = echarts.extendComponentView({
         else {
             coordSys.viewGL.remove(this.groupGL);
         }
+
+        this._sceneHelper.setScene(coordSys.viewGL.scene);
 
         // Set post effect
         coordSys.viewGL.setPostEffect(globeModel.getModel('postEffect'));
@@ -142,7 +145,9 @@ module.exports = echarts.extendComponentView({
         // TODO
         var renderer = layerGL.renderer;
 
-        this._lightHelper.updateAmbientCubemap(renderer, globeModel, api);
+        this._sceneHelper.updateAmbientCubemap(renderer, globeModel, api);
+
+        this._sceneHelper.updateSkybox(renderer, globeModel, api);
     },
 
 
@@ -365,8 +370,8 @@ module.exports = echarts.extendComponentView({
     _updateLight: function (globeModel, api) {
         var earthMesh = this._earthMesh;
 
-        this._lightHelper.updateLight(globeModel);
-        var mainLight = this._lightHelper.mainLight;
+        this._sceneHelper.updateLight(globeModel);
+        var mainLight = this._sceneHelper.mainLight;
 
         // Put sun in the right position
         var time = globeModel.get('light.main.time') || new Date();

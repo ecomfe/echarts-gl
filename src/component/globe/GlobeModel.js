@@ -79,7 +79,7 @@ var GlobeModel = echarts.extendComponentModel({
         width: '100%',
         height: '100%',
 
-        environmentTexture: '',
+        environment: 'auto',
 
         // Base albedo texture
         baseTexture: '',

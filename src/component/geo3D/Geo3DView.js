@@ -3,7 +3,7 @@ var echarts = require('echarts/lib/echarts');
 
 var graphicGL = require('../../util/graphicGL');
 var OrbitControl = require('../../util/OrbitControl');
-var LightHelper = require('../common/LightHelper');
+var SceneHelper = require('../common/SceneHelper');
 
 module.exports = echarts.extendComponentView({
 
@@ -17,7 +17,8 @@ module.exports = echarts.extendComponentView({
         this.groupGL = new graphicGL.Node();
 
         this._lightRoot = new graphicGL.Node();
-        this._lightHelper = new LightHelper(this._lightRoot);
+        this._sceneHelper = new SceneHelper(this._lightRoot);
+        this._sceneHelper.initLight(this._lightRoot);
 
         this._control = new OrbitControl({
             zr: api.getZr()
@@ -51,7 +52,8 @@ module.exports = echarts.extendComponentView({
         var viewControlModel = geo3DModel.getModel('viewControl');
         control.setFromViewControlModel(viewControlModel, 0);
 
-        this._lightHelper.updateLight(geo3DModel);
+        this._sceneHelper.setScene(geo3D.viewGL.scene);
+        this._sceneHelper.updateLight(geo3DModel);
 
         // Set post effect
         geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'));
@@ -83,7 +85,9 @@ module.exports = echarts.extendComponentView({
 
     afterRender: function (geo3DModel, ecModel, api, layerGL) {
         var renderer = layerGL.renderer;
-        this._lightHelper.updateAmbientCubemap(renderer, geo3DModel, api);
+        this._sceneHelper.updateAmbientCubemap(renderer, geo3DModel, api);
+
+        this._sceneHelper.updateSkybox(renderer, geo3DModel, api);
     },
 
     dispose: function () {

@@ -52,12 +52,13 @@
                 }
                 return edges;
             }
-            var nodes = createNodes(120, 120);
-            var edges = createEdges(120, 120);
+            var nodes = createNodes(100, 100);
+            var edges = createEdges(100, 100);
             forceAtlas.initData(nodes, edges);
             forceAtlas.updateOption({
                 gravityCenter: [window.innerWidth / 2, window.innerHeight / 2],
                 gravity: 4,
+                scaling: 0.4,
                 edgeWeightInfluence: 2
             });
 
@@ -67,18 +68,36 @@
             var ctx = canvas.getContext('2d');
             document.body.appendChild(canvas);
 
+            var debugCanvas = document.createElement('canvas');
+            var debugCtx = debugCanvas.getContext('2d');
+            debugCanvas.style.cssText = 'position:absolute;left:0;top:0;';
+            document.body.appendChild(debugCanvas);
+
             function step() {
                 console.time('layout');
-                for (var i = 0; i < 5; i++) {
+                for (var i = 0; i < 1; i++) {
                     forceAtlas.step(renderer);
                 }
                 console.timeEnd('layout');
-                // console.log(forceAtlas._globalSpeed);
-                // console.log(forceAtlas.getTextureData(renderer, 'globalSpeedPrev'));
+
+                var data = forceAtlas.getTextureData(renderer, 'position');
+                var textureSize = forceAtlas.getTextureSize();
+                debugCanvas.width = textureSize.width;
+                debugCanvas.height = textureSize.height;
+                var imageData = debugCtx.createImageData(textureSize.width, textureSize.height);
+                for (var i = 0; i < data.length / 4; i++) {
+                    var i4 = i * 4;
+                    imageData.data[i4] = data[i4];
+                    imageData.data[i4 + 1] = data[i4 + 1];
+                    imageData.data[i4 + 2] = 0;
+                    imageData.data[i4 + 3] = 255;
+                }
+
+                debugCtx.putImageData(imageData, 0, 0);
 
                 drawDebug();
 
-                setTimeout(step, 20);
+                setTimeout(step, 1000);
             }
             setTimeout(step, 10);
 

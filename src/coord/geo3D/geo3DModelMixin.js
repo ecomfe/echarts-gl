@@ -50,6 +50,8 @@ module.exports = {
         boxHeight: 3,
         boxDepth: 'auto',
 
+        environment: 'auto',
+
         groundPlane: {
             show: false,
             color: '#aaa'

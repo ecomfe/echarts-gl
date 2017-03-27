@@ -7,7 +7,7 @@ var Lines3DGeometry = require('../../util/geometry/Lines3D');
 var retrieve = require('../../util/retrieve');
 var firstNotNull = retrieve.firstNotNull;
 var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
-var LightHelper = require('../common/LightHelper');
+var SceneHelper = require('../common/SceneHelper');
 var Grid3DFace = require('./Grid3DFace');
 var Grid3DAxis = require('./Grid3DAxis');
 var LabelsMesh = require('../../util/mesh/LabelsMesh');
@@ -116,7 +116,8 @@ module.exports = echarts.extendComponentView({
         this.groupGL.add(this._axisPointerLabelsMesh);
 
         this._lightRoot = new graphicGL.Node();
-        this._lightHelper = new LightHelper(this._lightRoot);
+        this._sceneHelper = new SceneHelper();
+        this._sceneHelper.initLight(this._lightRoot);
     },
 
     render: function (grid3DModel, ecModel, api) {
@@ -168,7 +169,8 @@ module.exports = echarts.extendComponentView({
         control.off('update');
         control.on('update', this._onCameraChange.bind(this, grid3DModel, api), this);
 
-        this._lightHelper.updateLight(grid3DModel);
+        this._sceneHelper.setScene(cartesian.viewGL.scene);
+        this._sceneHelper.updateLight(grid3DModel);
 
         // Set post effect
         cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
@@ -182,7 +184,9 @@ module.exports = echarts.extendComponentView({
         // TODO
         var renderer = layerGL.renderer;
 
-        this._lightHelper.updateAmbientCubemap(renderer, grid3DModel, api);
+        this._sceneHelper.updateAmbientCubemap(renderer, grid3DModel, api);
+
+        this._sceneHelper.updateSkybox(renderer, grid3DModel, api);
     },
 
     /**
