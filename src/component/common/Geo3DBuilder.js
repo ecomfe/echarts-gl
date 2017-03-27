@@ -321,10 +321,10 @@ Geo3DBuilder.prototype = {
             return mesh;
         }
 
-        function createLinesMesh() {
+        function createLinesMesh(shader) {
             return new graphicGL.Mesh({
                 material: new graphicGL.Material({
-                    shader: this._linesShader
+                    shader: shader
                 }),
                 castShadow: false,
                 ignorePicking: true,
@@ -339,7 +339,7 @@ Geo3DBuilder.prototype = {
             var linesMeshesMap = {};
             geo3D.regions.forEach(function (region) {
                 polygonMeshesMap[region.name] = createPolygonMesh();
-                linesMeshesMap[region.name] = createLinesMesh();
+                linesMeshesMap[region.name] = createLinesMesh(this._linesShader);
 
                 this.rootNode.add(polygonMeshesMap[region.name]);
                 this.rootNode.add(linesMeshesMap[region.name]);
@@ -349,7 +349,7 @@ Geo3DBuilder.prototype = {
         }
         else {
             var polygonMesh = createPolygonMesh();
-            var linesMesh = createLinesMesh();
+            var linesMesh = createLinesMesh(this._linesShader);
             this.rootNode.add(polygonMesh);
             this.rootNode.add(linesMesh);
 
@@ -625,6 +625,11 @@ Geo3DBuilder.prototype = {
                 triangleCount += geometry.getPolylineTriangleCount(interiors[i]);
             }
         }, this);
+
+        return {
+            vertexCount: vertexCount,
+            triangleCount: triangleCount
+        };
 
     },
 
