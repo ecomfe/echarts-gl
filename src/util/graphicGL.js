@@ -155,7 +155,7 @@ graphicGL.Frustum = require('qtek/lib/math/Frustum');
 
 // Texture utilities
 
-var blankImage = textureUtil.createBlank('rgba(255,255,255,0)');
+var blankImage = textureUtil.createBlank('rgba(255,255,255,0)').image;
 /**
  * @param {string|HTMLImageElement|HTMLCanvasElement} imgValue
  * @param {module:echarts/ExtensionAPI} api
@@ -237,12 +237,14 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
             }
         }
         else {
-            if (imgValue.match(/.hdr$/)) {
+            // Maybe base64
+            if (imgValue.match(/.hdr$|^data:application\/octet-stream/)) {
                 textureObj = {
                     callbacks: [cb]
                 };
                 var texture = textureUtil.loadTexture(imgValue, {
-                    exposure: textureOpts.exposure
+                    exposure: textureOpts.exposure,
+                    fileType: 'hdr'
                 }, function () {
                     texture.dirty();
                     textureObj.callbacks.forEach(function (cb) {
