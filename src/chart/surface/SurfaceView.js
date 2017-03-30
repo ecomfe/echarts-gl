@@ -74,7 +74,7 @@ echarts.extendChartView({
 
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
-            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
             this._surfaceMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
@@ -94,7 +94,7 @@ echarts.extendChartView({
             material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineStyle.color')).slice(0, 3));
         }
         else {
-            material.shader.unDefine('WIREFRAME_QUAD');
+            material.shader.undefine('WIREFRAME_QUAD');
         }
 
         this._initHandler(seriesModel, api);

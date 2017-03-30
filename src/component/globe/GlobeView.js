@@ -129,7 +129,7 @@ module.exports = echarts.extendComponentView({
             bumpTexture.surface.attachToMesh(earthMesh);
         }
 
-        earthMesh.material.shader[globeModel.get('postEffect.enable') ? 'define' : 'unDefine']('fragment', 'SRGB_DECODE');
+        earthMesh.material.shader[globeModel.get('postEffect.enable') ? 'define' : 'undefine']('fragment', 'SRGB_DECODE');
 
         this._updateLight(globeModel, api);
 
@@ -241,6 +241,22 @@ module.exports = echarts.extendComponentView({
 
         earthMaterial.set('layerDiffuseMap', layerDiffuseTextures);
         earthMaterial.set('layerEmissiveMap', layerEmissiveTextures);
+
+        var debugWireframeModel = globeModel.getModel('debug.wireframe');
+        if (debugWireframeModel.get('show')) {
+            earthMaterial.shader.define('both', 'WIREFRAME_TRIANGLE');
+            var color = graphicGL.parseColor(
+                debugWireframeModel.get('lineStyle.color')
+            );
+            var width = retrieve.firstNotNull(
+                debugWireframeModel.get('lineStyle.width'), 1
+            );
+            earthMaterial.set('wireframeLineWidth', width);
+            earthMaterial.set('wireframeLineColor', color);
+        }
+        else {
+            earthMaterial.shader.undefine('both', 'WIREFRAME_TRIANGLE');
+        }
     },
 
     _updateViewControl: function (globeModel, api) {
@@ -278,18 +294,22 @@ module.exports = echarts.extendComponentView({
         var displacementTextureValue = globeModel.get('displacementTexture') || globeModel.get('heightTexture');
         var displacementScale = globeModel.get('displacementScale');
         var displacementQuality = globeModel.get('displacementQuality');
+        var showDebugWireframe = globeModel.get('debug.wireframe.show');
 
         if (!displacementTextureValue || displacementTextureValue === 'none') {
             displacementScale = 0;
         }
+
         if (displacementScale === this._displacementScale
             && displacementQuality === this._displacementQuality
+            && showDebugWireframe === this._showDebugWireframe
         ) {
             return;
         }
 
         this._displacementScale = displacementScale;
         this._displacementQuality = displacementQuality;
+        this._showDebugWireframe = showDebugWireframe;
 
         var geometry = this._sphereGeometry;
 
@@ -300,22 +320,29 @@ module.exports = echarts.extendComponentView({
             ultra: 800
         })[displacementQuality] || 200;
         var heightSegments = widthSegments / 2;
-        if (geometry.widthSegments !== widthSegments) {
+        if (geometry.widthSegments !== widthSegments || showDebugWireframe) {
             geometry.widthSegments = widthSegments;
             geometry.heightSegments = heightSegments;
             geometry.build();
         }
 
         var img;
+
         if (graphicGL.isImage(displacementTextureValue)) {
             img = displacementTextureValue;
             this._doDisplaceVertices(geometry, img, displacementScale);
+            if (showDebugWireframe) {
+                geometry.generateBarycentric();
+            }
         }
         else {
             img = new Image();
             var self = this;
             img.onload = function () {
                 self._doDisplaceVertices(geometry, img, displacementScale);
+                if (showDebugWireframe) {
+                    geometry.generateBarycentric();
+                }
             };
             img.src = displacementTextureValue;
         }

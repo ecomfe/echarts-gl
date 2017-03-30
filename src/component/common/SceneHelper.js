@@ -171,11 +171,11 @@ SceneHelper.prototype = {
                 && environmentUrl !== 'auto'
                 && !(environmentUrl.match && environmentUrl.match(/.hdr$/))
             ) {
-                var srgbDefineMethod = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+                var srgbDefineMethod = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
                 this._skybox.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
             }
             else {
-                this._skybox.material.shader.unDefine('fragment', 'SRGB_DECODE');
+                this._skybox.material.shader.undefine('fragment', 'SRGB_DECODE');
             }
         }
     }

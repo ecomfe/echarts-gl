@@ -44,7 +44,7 @@ module.exports = echarts.extendChartView({
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
             // TODO
-            // var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            // var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
             // this._line3DMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
         this._doRender(seriesModel, api);
@@ -132,7 +132,7 @@ module.exports = echarts.extendChartView({
             );
         }
         else {
-            lineMesh.material.shader.unDefine('both', 'WIREFRAME_TRIANGLE');
+            lineMesh.material.shader.undefine('both', 'WIREFRAME_TRIANGLE');
         }
 
         this._points = points;

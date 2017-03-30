@@ -156,7 +156,7 @@ PointsBuilder.prototype = {
 
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
-            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
             this._mesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 

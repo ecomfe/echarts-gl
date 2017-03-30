@@ -23,7 +23,11 @@
 
                     displacementScale: 0.1,
 
-                    shading: 'lambert',
+                    shading: 'realistic',
+                    realisticMaterial: {
+                        roughness: 0.8,
+                        metalness: 0
+                    },
 
                     postEffect: {
                         enable: true,
@@ -48,11 +52,19 @@
                         ambientCubemap: {
                             texture: 'asset/pisa.hdr',
                             exposure: 1,
-                            diffuseIntensity: 0.5
+                            diffuseIntensity: 0.2
                         }
                     },
                     viewControl: {
                         autoRotate: false
+                    },
+                    debug: {
+                        wireframe: {
+                            show: true,
+                            lineStyle: {
+                                width: 0.5
+                            }
+                        }
                     }
                 },
                 series: []

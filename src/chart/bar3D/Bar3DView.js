@@ -68,7 +68,7 @@ module.exports = echarts.extendChartView({
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
 
-            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
             this._barMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 

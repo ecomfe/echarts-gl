@@ -79,7 +79,7 @@ Geo3DBuilder.prototype = {
         }
 
         var shader = this._getShader(componentModel.get('shading'));
-        var srgbDefineMethod = geo3D.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+        var srgbDefineMethod = geo3D.viewGL.isLinearSpace() ? 'define' : 'undefine';
         shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
 
         var data = componentModel.getData();

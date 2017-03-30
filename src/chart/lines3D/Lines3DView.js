@@ -59,7 +59,7 @@ module.exports = echarts.extendChartView({
                 this._generateBezierCurves(seriesModel, ecModel, api);
             }
 
-            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'unDefine';
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
             this._linesMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
