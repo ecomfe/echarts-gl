@@ -131,7 +131,8 @@ SceneHelper.prototype = {
             ) {
                 var skydome = getSkydome();
                 var texture = new graphicGL.Texture2D({
-                    anisotropic: 8
+                    anisotropic: 8,
+                    flipY: false
                 });
                 skydome.setEnvironmentMap(texture);
                 var canvas = texture.image = document.createElement('canvas');
@@ -148,7 +149,10 @@ SceneHelper.prototype = {
             else {
                 // Panorama
                 var skydome = getSkydome();
-                var texture = graphicGL.loadTexture(environmentUrl, api);
+                var texture = graphicGL.loadTexture(environmentUrl, api, {
+                    anisotropic: 8,
+                    flipY: false
+                });
                 skydome.setEnvironmentMap(texture);
 
                 skydome.attachScene(this._scene);

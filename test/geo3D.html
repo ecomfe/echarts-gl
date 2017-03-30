@@ -37,6 +37,16 @@
                     geo3D: {
                         map: 'world',
                         shading: 'lambert',
+
+                        environment: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                offset: 0, color: '#00aaff' // 天空颜色
+                            }, {
+                                offset: 0.6, color: '#998866' // 地面颜色
+                            }, {
+                                offset: 1, color: '#998866' // 地面颜色
+                            }]
+                        ),
+
                         lambertMaterial: {
                             baseTexture: 'asset/woods.jpg',
                             textureTiling: 20

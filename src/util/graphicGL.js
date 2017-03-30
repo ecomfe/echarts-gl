@@ -168,6 +168,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
         cb = textureOpts;
         textureOpts = {};
     }
+    textureOpts = textureOpts || {};
 
     var keys = Object.keys(textureOpts).sort();
     var prefix = '';

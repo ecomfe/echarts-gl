@@ -71,8 +71,6 @@ var GlobeModel = echarts.extendComponentModel({
 
         zlevel: -10,
 
-        flat: false,
-
         // Layout used for viewport
         left: 0,
         top: 0,
