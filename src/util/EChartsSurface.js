@@ -36,6 +36,9 @@ var EChartsSurface = function (chart) {
 
     events.forEach(function (eventName) {
         this[makeHandlerName(eventName)] = function (eveObj) {
+            if (!eveObj.triangle) {
+                return;
+            }
             this._meshes.forEach(function (mesh) {
                 this.dispatchEvent(eventName, mesh, eveObj.triangle, eveObj.point);
             }, this);
