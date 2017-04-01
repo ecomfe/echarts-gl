@@ -9,7 +9,10 @@ module.exports = {
                 shadowQuality: 'high',
 
                 color: '#fff',
-                intensity: 1
+                intensity: 1,
+
+                alpha: 0,
+                beta: 0
             },
             ambient: {
                 color: '#fff',

@@ -163,7 +163,7 @@ EffectCompositor.prototype.disableDOF = function () {
 };
 
 EffectCompositor.prototype.setBloomIntensity = function (value) {
-    this._compositeNode.setParameter('bloom', value);
+    this._compositeNode.setParameter('bloomIntensity', value);
 };
 
 EffectCompositor.prototype.setSSAORadius = function (value) {
