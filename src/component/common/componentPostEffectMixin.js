@@ -13,7 +13,7 @@ module.exports = {
                 focalRange: 20,
                 focalDistance: 50,
                 blurRadius: 10,
-                fstop: 0.5
+                fstop: 2.8
             },
 
             SSAO: {

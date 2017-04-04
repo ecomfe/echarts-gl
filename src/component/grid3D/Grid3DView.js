@@ -208,7 +208,8 @@ module.exports = echarts.extendComponentView({
         var cartesian = grid3DModel.coordinateSystem;
         var viewGL = cartesian.viewGL;
 
-        if (grid3DModel.get('show')) {
+        // TODO xAxis3D.axisPointer.show ?
+        if (grid3DModel.get('show') && grid3DModel.get('axisPointer.show')) {
             viewGL.on('mousemove', this._updateAxisPointerOnMousePosition, this);
         }
         else {

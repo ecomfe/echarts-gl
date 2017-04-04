@@ -12,12 +12,10 @@ module.exports = {
             // default is 3 seconds
             autoRotateAfterStill: 3,
 
-            // Distance to the surface of globe.
             distance: 150,
 
-            // Min distance to the surface of globe
             minDistance: 40,
-            // Max distance to the surface of globe
+
             maxDistance: 400,
 
             // Alpha angle for top-down rotation
@@ -29,6 +27,9 @@ module.exports = {
 
             minAlpha: -90,
             maxAlpha: 90
+
+            // minBeta: -Infinity
+            // maxBeta: -Infinity
         }
     },
 
