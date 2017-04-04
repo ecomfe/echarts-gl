@@ -23,11 +23,20 @@
                 var regions = buildingsGeoJSON.features.map(function (feature) {
                     return {
                         name: feature.properties.name,
+                        value: Math.random(),
                         height: Math.max(Math.sqrt(feature.properties.height), 0.1)
                     };
                 });
 
                 chart.setOption({
+                    visualMap: {
+                        show: false,
+                        min: 0.4,
+                        max: 1,
+                        inRange: {
+                            colorLightness: [0.2, 1]
+                        }
+                    },
                     series: [{
                         type: 'map3D',
                         map: 'buildings',
@@ -52,7 +61,7 @@
                                 enable: true,
                                 focalRange: 5,
                                 fstop: 1,
-                                blurRadius: 4
+                                blurRadius: 6
                             }
                         },
                         groundPlane: {
@@ -60,7 +69,7 @@
                         },
                         light: {
                             main: {
-                                intensity: 4,
+                                intensity: 6,
                                 shadow: true,
                                 shadowQuality: 'high',
                                 alpha: 30
@@ -72,7 +81,7 @@
                                 texture: 'asset/canyon.hdr',
                                 exposure: 2,
                                 diffuseIntensity: 1,
-                                specularIntensity: 0.2
+                                specularIntensity: 1
                             }
                         },
                         viewControl: {
