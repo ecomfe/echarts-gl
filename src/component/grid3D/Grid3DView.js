@@ -151,11 +151,16 @@ module.exports = echarts.extendComponentView({
         var labelIntervalFuncs = ['x', 'y', 'z'].reduce(function (obj, axisDim) {
             var axis = cartesian.getAxis(axisDim);
             var axisModel = axis.model;
-            // TODO Automatic LABEL INTERVAL
             obj[axisDim] = firstNotNull(
                 axisModel.get('axisLabel.interval'),
                 grid3DModel.get('axisLabel.interval')
             );
+            if (axis.scale.type === 'ordinal') {
+                // TODO consider label length
+                if (obj[axisDim] == null || obj[axisDim] == 'auto') {
+                    obj[axisDim] = Math.floor(axis.scale.getTicks().length / 8);
+                }
+            }
             return obj;
         }, {});
         this._faces.forEach(function (face) {
