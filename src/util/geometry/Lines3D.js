@@ -49,7 +49,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
      */
     resetOffset: function () {
         this._vertexOffset = 0;
-        this._faceOffset = 0;
+        this._triangleOffset = 0;
     },
 
     /**
@@ -350,7 +350,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
             if (!this.useNativeLine) {
                 if (k > 0) {
-                    var idx3 = this._faceOffset * 3;
+                    var idx3 = this._triangleOffset * 3;
                     var indices = this.indices;
                     // 0-----2
                     // 1-----3
@@ -363,7 +363,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
                     indices[idx3 + 4] = vertexOffset - 1;
                     indices[idx3 + 5] = vertexOffset - 2;
 
-                    this._faceOffset += 2;
+                    this._triangleOffset += 2;
                 }
             }
             else {

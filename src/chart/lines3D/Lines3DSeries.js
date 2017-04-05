@@ -41,10 +41,11 @@ echarts.extendSeriesModel({
         polyline: false,
 
         effect: {
-            symbol: 'circle',
             show: false,
             period: 4,
-            symbolSize: 4
+            // Trail width
+            width: 4,
+            trailLength: 0.1
         },
 
         silent: true,

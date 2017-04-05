@@ -353,7 +353,7 @@ ForceAtlas2GPU.prototype.getNodeUV = function (nodeIndex, uv) {
     var textureWidth = this._positionTex.width;
     var textureHeight = this._positionTex.height;
     uv[0] = (nodeIndex % textureWidth) / (textureWidth - 1);
-    uv[1] = Math.floor(nodeIndex / textureWidth) / (textureHeight - 1);
+    uv[1] = Math.floor(nodeIndex / textureWidth) / (textureHeight - 1) || 0;
     return uv;
 };
 

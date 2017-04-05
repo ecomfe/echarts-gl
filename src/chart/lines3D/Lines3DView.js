@@ -1,7 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var LinesGeometry = require('../../util/geometry/Lines3D');
-var CurveAnimatingPointsMesh = require('./CurveAnimatingPointsMesh');
+var TrailMesh = require('./TrailMesh');
 
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
@@ -41,7 +41,7 @@ module.exports = echarts.extendChartView({
             geometry: new LinesGeometry()
         });
 
-        this._curveAnimatingPointsMesh = new CurveAnimatingPointsMesh();
+        this._trailMesh = new TrailMesh();
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -63,34 +63,37 @@ module.exports = echarts.extendChartView({
             this._linesMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
-        var curveAnimatingPointsMesh = this._curveAnimatingPointsMesh;
-        curveAnimatingPointsMesh.stopAnimation();
+        var trailMesh = this._trailMesh;
+        trailMesh.stopAnimation();
 
         if (seriesModel.get('effect.show')) {
-            this.groupGL.add(curveAnimatingPointsMesh);
+            var trailLength = seriesModel.get('effect.trailLength');
+            var percentScale = trailLength + 1.0;
 
-            curveAnimatingPointsMesh.setScale(getCoordSysSize(coordSys));
-            curveAnimatingPointsMesh.setData(data, api);
+            this.groupGL.add(trailMesh);
+
+            trailMesh.setScale(getCoordSysSize(coordSys));
+            trailMesh.setData(data, api);
 
             var period = seriesModel.get('effect.period') * 1000;
-            var delay = curveAnimatingPointsMesh.__percent ? -(period * curveAnimatingPointsMesh.__percent) : 0;
-            curveAnimatingPointsMesh.__percent = 0;
-            this._curveEffectsAnimator = curveAnimatingPointsMesh.animate('', { loop: true })
-                .when(period, {
-                    __percent: 1
+            var delay = trailMesh.__percent ? -(period * trailMesh.__percent / percentScale) : 0;
+            trailMesh.__percent = 0;
+            this._curveEffectsAnimator = trailMesh.animate('', { loop: true })
+                .when(period * percentScale, {
+                    __percent: percentScale
                 })
                 .delay(delay)
                 .during(function () {
-                    curveAnimatingPointsMesh.setAnimationPercent(curveAnimatingPointsMesh.__percent);
+                    trailMesh.setAnimationPercent(trailMesh.__percent);
                 })
                 .start();
         }
         else {
-            this.groupGL.remove(curveAnimatingPointsMesh);
+            this.groupGL.remove(trailMesh);
             this._curveEffectsAnimator = null;
         }
 
-        this._linesMesh.material.blend = this._curveAnimatingPointsMesh.material.blend
+        this._linesMesh.material.blend = this._trailMesh.material.blend
             = seriesModel.get('blendMode') === 'lighter'
             ? graphicGL.additiveBlend : null;
     },
