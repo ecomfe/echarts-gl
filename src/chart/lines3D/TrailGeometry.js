@@ -102,7 +102,7 @@ var CurveTrailGeometry = StaticGeometry.derive(function () {
      * @param {number} size
      * @param {Array.<number>} color
      */
-    addTrail: function (p0, p1, p2, p3, uv, size, color) {
+    addCurveTrail: function (p0, p1, p2, p3, uv, size, color) {
         var attributes = this.attributes;
         var start = Math.random();
         var t = 0;
@@ -110,13 +110,17 @@ var CurveTrailGeometry = StaticGeometry.derive(function () {
         var nextT;
         var count = this.getCurveVertexCount(p0, p1, p2, p3) / 2;
         var offset = this._vertexOffset;
+        var alpha = color[3];
         for (var i = 0; i < count; i++) {
             nextT = t - (i + 1) / count * this.trailLength;
+            // PENDING
+            var fadeOutFactor = 1 - Math.pow(i / count, 2);
+            color[3] = Math.max(alpha * fadeOutFactor, 0.0);
 
             for (var k = 0; k < 2; k++) {
                 attributes.currT.set(offset, t);
                 attributes.prevT.set(offset, prevT);
-                attributes.offset.set(offset, (k * 2 - 1) * size / 2 * (1.0 - i / count));
+                attributes.offset.set(offset, (k * 2 - 1) * size / 2 * fadeOutFactor);
                 attributes.color.set(offset, color);
                 attributes.uv.set(offset, uv);
                 attributes.start.set(offset, start);

@@ -90,7 +90,7 @@ module.exports = graphicGL.Mesh.extend(function () {
                 pixels[(idx * 4 + k) * 4 + 2] = pts[k][2];
             }
 
-            geometry.addTrail(
+            geometry.addCurveTrail(
                 pts[0], pts[1], pts[2], pts[3], [u, v], size, colorArr
             );
         });
