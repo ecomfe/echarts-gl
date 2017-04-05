@@ -1,6 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 var vec3 = glmatrix.vec3;
+var vec2 = glmatrix.vec2;
 
 function layoutGlobe(seriesModel, coordSys) {
     var data = seriesModel.getData();
@@ -10,13 +11,21 @@ function layoutGlobe(seriesModel, coordSys) {
     var tangent = vec3.create();
     var bitangent = vec3.create();
     var halfVector = vec3.create();
+    var distanceToGlobe = seriesModel.get('distanceToGlobe') || 0;
+    var radius = coordSys.radius + distanceToGlobe;
 
     data.setLayout('lineType', isPolyline ? 'polyline' : 'cubicBezier');
 
+    var coord0 = [];
+    var coord1 = [];
     data.each(function (idx) {
         var itemModel = data.getItemModel(idx);
         var coords = (itemModel.option instanceof Array) ?
             itemModel.option : itemModel.getShallow('coords', true);
+
+        vec2.copy(coord0, coords[0]);
+        vec2.copy(coord1, coords[1]);
+        coord0[2] = coord1[2] = distanceToGlobe;
 
         if (!(coords instanceof Array && coords.length > 0 && coords[0] instanceof Array)) {
             throw new Error('Invalid coords ' + JSON.stringify(coords) + '. Lines must have 2d coords array in data item.');
@@ -27,12 +36,13 @@ function layoutGlobe(seriesModel, coordSys) {
 
         // }
         // else {
+
             var p0 = pts[0] = vec3.create();
             var p1 = pts[1] = vec3.create();
             var p2 = pts[2] = vec3.create();
             var p3 = pts[3] = vec3.create();
-            coordSys.dataToPoint(coords[0], p0);
-            coordSys.dataToPoint(coords[1], p3);
+            coordSys.dataToPoint(coord0, p0);
+            coordSys.dataToPoint(coord1, p3);
             // Get p1
             vec3.normalize(normal, p0);
             // TODO p0-p3 is parallel with normal
@@ -62,7 +72,7 @@ function layoutGlobe(seriesModel, coordSys) {
             var projDist = vec3.dot(p0, halfVector);
             // Angle of halfVector and p1
             var cosTheta = vec3.dot(halfVector, p1);
-            var len = (coordSys.radius - projDist) / cosTheta * 2;
+            var len = (radius - projDist) / cosTheta * 2;
 
             vec3.scaleAndAdd(p1, p0, p1, len);
             vec3.scaleAndAdd(p2, p3, p2, len);
@@ -98,7 +108,6 @@ function layoutGeo3D(seriesModel, coordSys) {
         var p1 = pts[1] = vec3.create();
         var p2 = pts[2] = vec3.create();
         var p3 = pts[3] = vec3.create();
-
 
         coordSys.dataToPoint(coords[0], p0);
         coordSys.dataToPoint(coords[1], p3);

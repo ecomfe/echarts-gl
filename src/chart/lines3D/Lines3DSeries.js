@@ -48,6 +48,9 @@ echarts.extendSeriesModel({
             trailLength: 0.2
         },
 
+        // Distance to the globe, when coordinate system is globe
+        distanceToGlobe: 0,
+
         silent: true,
 
         // Support source-over, lighter

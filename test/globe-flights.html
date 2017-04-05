@@ -10,10 +10,39 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/world.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
+
+            var canvas = document.createElement('canvas');
+            var mapChart = echarts.init(canvas, null, {
+                width: 4096,
+                height: 2048
+            });
+
+            mapChart.setOption({
+                series : [
+                    {
+                        type: 'map',
+                        map: 'world',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        boundingCoords: [[-180, 90], [180, -90]],
+                        silent: true,
+                        itemStyle: {
+                            normal: {
+                                borderWidth: 1,
+                                borderColor: 'rgb(100, 5, 10)',
+                                areaColor: 'transparent'
+                            }
+                        }
+                    }
+                ]
+            });
 
             // https://www.behance.net/gallery/50293671/T-GLOBE
 
@@ -69,6 +98,8 @@
                         },
                         blendMode: 'lighter',
 
+                        distanceToGlobe: 4,
+
                         data: routes.map(function (item) {
                             return [airports[item[1]].coord, airports[item[2]].coord];
                         })
@@ -81,7 +112,7 @@
                     coordinateSystem: 'globe',
                     blendMode: 'lighter',
                     symbolSize: 2,
-                    distanceToGlobe: 0,
+                    distanceToGlobe: 4,
                     itemStyle: {
                         color: 'rgb(50, 50, 150)',
                         opacity: 0.1
@@ -105,13 +136,13 @@
 
                         heightTexture: 'asset/bathymetry_bw_composite_4k.jpg',
 
-                        displacementScale: -0.03,
+                        displacementScale: 0.05,
 
                         baseColor: '#000',
 
                         shading: 'realistic',
                         realisticMaterial: {
-                            roughness: 0.3,
+                            roughness: 0.2,
                             metalness: 0
                         },
 
@@ -134,11 +165,20 @@
                                 exposure: 1,
                                 diffuseIntensity: 0.5,
                                 specularIntensity: 2
+                            },
+                            emission: {
+                                intensity: 10
                             }
                         },
                         viewControl: {
                             autoRotate: false
-                        }
+                        },
+
+                        // layers: [{
+                        //     type: 'blend',
+                        //     blendTo: 'emission',
+                        //     texture: mapChart
+                        // }]
                     },
                     series: series
                 });
