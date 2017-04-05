@@ -114,7 +114,8 @@ var Grid3DModel = echarts.extendComponentModel({
 
         viewControl: {
             // Small damping for precise control.
-            damping: 0.1,
+            // damping: 0.1,
+
             // Alpha angle for top-down rotation
             // Positive to rotate to top.
             alpha: 5,

@@ -116,6 +116,7 @@ var OrbitControl = Base.extend(function () {
     this._mouseWheelHandler = this._mouseWheelHandler.bind(this);
     this._mouseMoveHandler = this._mouseMoveHandler.bind(this);
     this._mouseUpHandler = this._mouseUpHandler.bind(this);
+    this._pinchHandler = this._pinchHandler.bind(this);
     this._update = this._update.bind(this);
 }, {
     /**
@@ -128,6 +129,7 @@ var OrbitControl = Base.extend(function () {
         zr.on('mousedown', this._mouseDownHandler);
         zr.on('globalout', this._mouseUpHandler);
         zr.on('mousewheel', this._mouseWheelHandler);
+        zr.on('pinch', this._pinchHandler);
 
         this._decomposeTransform();
 
@@ -144,6 +146,7 @@ var OrbitControl = Base.extend(function () {
         zr.off('mousemove', this._mouseMoveHandler);
         zr.off('mouseup', this._mouseUpHandler);
         zr.off('mousewheel', this._mouseWheelHandler);
+        zr.off('pinch', this._pinchHandler);
         zr.off('globalout', this._mouseUpHandler);
 
         zr.animation.off('frame', this._update);
@@ -541,15 +544,28 @@ var OrbitControl = Base.extend(function () {
 
         this._mouseX = e.offsetX;
         this._mouseY = e.offsetY;
+
+        e.event.preventDefault();
     },
 
     _mouseWheelHandler: function (e) {
         if (this._isAnimating()) {
             return;
         }
-        e = e.event;
-        var delta = e.wheelDelta // Webkit
-                || -e.detail; // Firefox
+        var delta = e.event.wheelDelta // Webkit
+                || -e.event.detail; // Firefox
+        this._zoomHandler(e, delta);
+    },
+
+    _pinchHandler: function (e) {
+        if (this._isAnimating()) {
+            return;
+        }
+        e.event.preventDefault();
+        this._zoomHandler(e, e.pinchScale > 1 ? 1 : -1);
+    },
+
+    _zoomHandler: function (e, delta) {
         if (delta === 0) {
             return;
         }
