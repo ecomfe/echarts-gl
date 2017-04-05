@@ -140,7 +140,8 @@ module.exports = echarts.extendChartView({
             data.setItemVisual(idx, 'lineWidth', lineWidth);
             maxLineWidth = Math.max(lineWidth, maxLineWidth);
         });
-        var canUseNativeLine = maxLineWidth * dpr <= 1;
+        var canUseNativeLine = false;
+        // var canUseNativeLine = maxLineWidth * dpr <= 1;
         // Must set useNativeLine before calling any other methods
         geometry.useNativeLine = canUseNativeLine;
 

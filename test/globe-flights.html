@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Airline - ECHARTS-GL</title>
+        <title>Globe - ECHARTS-GL</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
         <link rel="stylesheet" href="./common.css">
@@ -10,19 +10,22 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
-        <script src="../node_modules/echarts/theme/dark.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
-            var chart = echarts.init(document.getElementById('main'), 'dark');
+            var chart = echarts.init(document.getElementById('main'));
 
-            $.getJSON('data/flights.json', function (data) {
-                // Airport: [name, city, country, longitude, latitude]
+            // https://www.behance.net/gallery/50293671/T-GLOBE
+
+            $.getJSON('./data/flights.json', function (data) {
                 var airports = data.airports.map(function (item) {
                     return {
                         coord: [item[3], item[4]]
                     }
                 });
+                function getAirportCoord(idx) {
+                    return [data.airports[idx][3], data.airports[idx][4]];
+                }
 
                 // Route: [airlineIndex, sourceAirportIndex, destinationAirportIndex]
                 var routesGroupByAirline = {};
@@ -33,6 +36,12 @@
                         routesGroupByAirline[airlineName] = [];
                     }
                     routesGroupByAirline[airlineName].push(route);
+                });
+
+                var pointsData = [];
+                data.routes.forEach(function (airline) {
+                    pointsData.push(getAirportCoord(airline[1]));
+                    pointsData.push(getAirportCoord(airline[2]));
                 });
 
                 var series = data.airlines.map(function (airline) {
@@ -47,22 +56,19 @@
                         name: airlineName,
 
                         effect: {
-                            show: false,
-                            width: 4
+                            show: true,
+                            width: 2,
+                            trailLength: 0.4
                         },
 
                         lineStyle: {
-                            width: 2,
+                            width: 0.01,
                             color: 'rgb(50, 50, 150)',
-                            opacity: 0.04
+                            // color: 'rgb(118, 233, 241)',
+                            opacity: 0.1
                         },
                         blendMode: 'lighter',
 
-                        // data: [
-                        //     [
-                        //         [0, 0], [180, 0]
-                        //     ]
-                        // ]
                         data: routes.map(function (item) {
                             return [airports[item[1]].coord, airports[item[2]].coord];
                         })
@@ -70,40 +76,78 @@
                 }).filter(function (series) {
                     return !!series;
                 });
+                series.push({
+                    type: 'scatter3D',
+                    coordinateSystem: 'globe',
+                    blendMode: 'lighter',
+                    symbolSize: 2,
+                    distanceToGlobe: 0,
+                    itemStyle: {
+                        color: 'rgb(50, 50, 150)',
+                        opacity: 0.1
+                    },
+                    data: pointsData
+                });
 
                 chart.setOption({
-                    backgroundColor: '',
                     legend: {
-                        show: false,
+                        selectedMode: 'single',
                         left: 'left',
                         data: Object.keys(routesGroupByAirline),
-                        orient: 'vertical'
+                        orient: 'vertical',
+                        textStyle: {
+                            color: '#fff'
+                        }
                     },
                     globe: {
-                        baseTexture: 'asset/world.topo.bathy.200401.jpg',
-                        heightTexture: 'asset/elev_bump_4k.jpg',
 
-                        shading: 'lambert',
+                        environment: 'asset/starfield.jpg',
 
-                        light: {
-                            ambient: {
-                                intensity: 0.4
-                            },
-                            main: {
-                                intensity: 0.4
-                            }
+                        heightTexture: 'asset/bathymetry_bw_composite_4k.jpg',
+
+                        displacementScale: -0.03,
+
+                        baseColor: '#000',
+
+                        shading: 'realistic',
+                        realisticMaterial: {
+                            roughness: 0.3,
+                            metalness: 0
                         },
 
+                        postEffect: {
+                            enable: true
+                        },
+                        temporalSuperSampling: {
+                            enable: true
+                        },
+                        light: {
+                            ambient: {
+                                intensity: 0
+                            },
+                            main: {
+                                intensity: 0.1,
+                                shadow: false
+                            },
+                            ambientCubemap: {
+                                texture: 'asset/lake.hdr',
+                                exposure: 1,
+                                diffuseIntensity: 0.5,
+                                specularIntensity: 2
+                            }
+                        },
                         viewControl: {
                             autoRotate: false
                         }
                     },
                     series: series
                 });
-
-                window.onresize = chart.resize;
-
             });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
         </script>
     </body>
 </html>

@@ -84,7 +84,8 @@ var CurveTrailGeometry = StaticGeometry.derive(function () {
      */
     getCurveVertexCount: function (p0, p1, p2, p3) {
         var len = (vec3.dist(p0, p1) + vec3.dist(p2, p1) + vec3.dist(p3, p2)) * this.trailLength;
-        var count = Math.max(Math.min(Math.round((len + 1) / this.scale * 40), 40), 5);
+        // TODO Remove magic number.
+        var count = Math.max(Math.min(Math.round((len + 1) / this.scale * 500), 50), 5);
         return count * 2;
     },
 
@@ -112,7 +113,7 @@ var CurveTrailGeometry = StaticGeometry.derive(function () {
         var offset = this._vertexOffset;
         var alpha = color[3];
         for (var i = 0; i < count; i++) {
-            nextT = t - (i + 1) / count * this.trailLength;
+            nextT = t - 1 / count * this.trailLength;
             // PENDING
             var fadeOutFactor = 1 - Math.pow(i / count, 2);
             color[3] = Math.max(alpha * fadeOutFactor, 0.0);

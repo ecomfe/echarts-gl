@@ -110,6 +110,10 @@ module.exports = echarts.extendComponentView({
             });
         }
 
+        earthMesh.material.set('color', graphicGL.parseColor(
+            globeModel.get('baseColor')
+        ));
+
         earthMesh.scale.set(coordSys.radius, coordSys.radius, coordSys.radius);
 
         var diffuseTexture = earthMesh.material.setTextureImage('diffuseMap', globeModel.get('baseTexture'), api, {
