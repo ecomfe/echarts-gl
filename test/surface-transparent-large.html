@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Parametric Surfaces Fun - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            // http://xahlee.info/surface/breather_p/breather_p.html
+            var chart = echarts.init(document.getElementById('main'));
+
+            var sin = Math.sin;
+            var cos = Math.cos;
+            var pow = Math.pow;
+            var sqrt = Math.sqrt;
+            var cosh = Math.cosh;
+            var sinh = Math.sinh;
+            var PI = Math.PI;
+
+            chart.setOption({
+                visualMap: {
+                    show: false,
+                    dimension: 2,
+                    min: -4,
+                    max: 4,
+                    inRange: {
+                        color: ['#1710c0', '#0b9df0', '#00fea8', '#00ff0d', '#f5f811', '#f09a09', '#fe0300']
+                    }
+                },
+                xAxis3D: {
+                    type: 'value'
+                },
+                yAxis3D: {
+                    type: 'value'
+                },
+                zAxis3D: {
+                    type: 'value'
+                },
+                grid3D: {
+                    axisPointer: {
+                        show: false
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#fff'
+                        }
+                    },
+                    temporalSuperSampling: {
+                        enable: true
+                    },
+                    viewControl: {
+                        // autoRotate: true
+                        // projection: 'orthographic'
+                    }
+                },
+                series: [{
+                    type: 'surface',
+                    parametric: true,
+                    shading: 'lambert',
+                    silent: true,
+                    wireframe: {
+                        show: false
+                    },
+                    areaStyle: {
+                        opacity: 0.5
+                    },
+                    // shading: 'albedo',
+                    parametricSurfaceEquation: {
+                        u: {
+                            min: -13.2,
+                            max: 13.2,
+                            step: 0.1
+                        },
+                        v: {
+                            min: -37.4,
+                            max: 37.4,
+                            step: 0.1
+                        },
+                        x: function (u, v) {
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return -u + (2 * r * cosh(aa * u) * sinh(aa * u) / denom);
+                        },
+                        y: function (u, v) {
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return 2 * w * cosh(aa * u) * (-(w * cos(v) * cos(w * v)) - (sin(v) * sin(w * v))) / denom;
+                        },
+                        z: function (u, v) {
+                            var aa = 0.4;
+                            var r = 1 - aa * aa;
+                            var w = sqrt(r);
+                            var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                            return  2 * w * cosh(aa * u) * (-(w * sin(v) * cos(w * v)) + (cos(v) * sin(w * v))) / denom
+                        }
+                    }
+                }]
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

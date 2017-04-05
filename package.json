@@ -1,16 +1,24 @@
 {
-    "name": "echarts-x",
-    "description": "Extension pack of ECharts providing 3d plots and globe visualization",
-    "version": "0.2",
-    "maintainers": [
-        { "name": "Yi Shen", "email": "shenyi.914@gmail.com" }
-    ],
-    "dependencies": {
-        "zrender": "2.0.8",
-        "echarts": "2.2.1",
-        "qtek": "0.2.1"
-    },
-    "repository": "git://github.com/ecomfe/echarts-x",
-    "main": "echarts-x",
-    "homepage": "http://echarts.baidu.com/x"
+  "name": "echarts-x",
+  "description": "Extension pack of ECharts providing 3d plots and globe visualization",
+  "version": "1.0.0",
+  "maintainers": [
+    {
+      "name": "Yi Shen",
+      "email": "shenyi.914@gmail.com"
+    }
+  ],
+  "dependencies": {
+    "zrender": "3.4.0",
+    "echarts": "3.5.0",
+    "qtek": "0.3.0"
+  },
+  "repository": "git://github.com/ecomfe/echarts-x",
+  "main": "echarts-x",
+  "homepage": "http://echarts.baidu.com/x",
+  "devDependencies": {
+    "benchmark": "^2.1.3",
+    "case-sensitive-paths-webpack-plugin": "^1.1.4",
+    "text-loader": "0.0.1"
+  }
 }

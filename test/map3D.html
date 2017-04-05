@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Map3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/world.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            $.getJSON('data/alcohol.json', function (data) {
+
+                var regionData = data.map(function (item) {
+                    return {
+                        name: item[0],
+                        value: item[1]
+                    }
+                })
+
+                chart.setOption({
+                    backgroundColor: '#cdcfd5',
+                    visualMap: {
+                        min: 0,
+                        max: 15,
+                        realtime: true,
+                        calculable : true,
+                        inRange: {
+                            color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+                        }
+                    },
+                    series: [{
+                        type: 'map3D',
+                        map: 'world',
+                        shading: 'lambert',
+                        realisticMaterial: {
+                            roughness: 0.2,
+                            metalness: 0
+                        },
+                        postEffect: {
+                            enable: true,
+                            SSAO: {
+                                enable: true,
+                                quality: 'high',
+                                radius: 3,
+                                intensity: 2
+                            }
+                        },
+                        groundPlane: {
+                            show: true
+                        },
+                        light: {
+                            main: {
+                                intensity: 2,
+                                shadow: true,
+                                shadowQuality: 'high',
+                                alpha: 30
+                            },
+                            ambient: {
+                                intensity: 0
+                            },
+                            ambientCubemap: {
+                                texture: 'asset/canyon.hdr',
+                                exposure: 2,
+                                diffuseIntensity: 1
+                            }
+                        },
+                        viewControl: {
+                            distance: 50
+                        },
+
+                        itemStyle: {
+                            // borderColor: '#222',
+                            // borderWidth: 1
+                        },
+
+                        label: {
+                            // backgroundColor: '#fff',
+                            textStyle: {
+                                color: 'white'
+                            }
+                        },
+
+                        boxHeight: 1,
+
+                        data: regionData
+                    }]
+                });
+
+            });
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

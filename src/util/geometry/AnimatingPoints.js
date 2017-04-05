@@ -1,21 +1,21 @@
 /**
  * Geometry collecting animating cloud points data
- * 
+ *
  * @module echarts-x/util/geometry/AnimatingPoints
  * @author Yi Shen(http://github.com/pissang)
  */
 
 define(function (require) {
-    
-    var DynamicGeometry = require('qtek/DynamicGeometry');
+
+    var StaticGeometry = require('qtek/StaticGeometry');
     var Geometry = require('qtek/Geometry');
 
     /**
      * @constructor
-     * @alias module:echarts-x/util/geometry/AnimatingPoints
-     * @extends qtek.DynamicGeometry
+     * @alias module:echarts-gl/util/geometry/AnimatingPoints
+     * @extends qtek.StaticGeometry
      */
-    var AnimatingPointsGeometry = DynamicGeometry.derive(function () {
+    var AnimatingPointsGeometry = StaticGeometry.extend(function () {
         return {
             attributes: {
                 position: new Geometry.Attribute('position', 'float', 3, 'POSITION', true),

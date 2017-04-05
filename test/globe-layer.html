@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Globe Layers - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <div id="toolbar">
+            <button id="add-cloud">Add Cloud</button>
+            <button id="add-echarts-map">Add ECharts Map</button>
+            <button id="switch-shading">Switch Shading</button>
+        </div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            // http://visibleearth.nasa.gov/view_cat.php?categoryID=1484
+            chart.setOption({
+                globe: {
+                    baseTexture: 'asset/world.topo.bathy.200401.jpg',
+                    heightTexture: 'asset/elev_bump_4k.jpg',
+
+                    displacementScale: 0.1,
+
+                    shading: 'lambert',
+
+                    light: {
+                        ambient: {
+                            intensity: 0.1
+                        },
+                        main: {
+                            intensity: 2
+                        }
+                    },
+                    viewControl: {
+                        autoRotate: false
+                    },
+
+                    layers: []
+                },
+                series: []
+            });
+
+            var shading = 'lambert';
+            var cloudAdded = false;
+            $('#add-cloud').click(function () {
+                cloudAdded = true;
+                chart.setOption({
+                    globe: {
+                        layers: [{
+                            name: 'cloud',
+                            texture: 'asset/clouds.png',
+                            shading: shading,
+                            distance: 10
+                        }]
+                    }
+                });
+            });
+            $('#switch-shading').click(function () {
+                if (!cloudAdded) {
+                    return;
+                }
+                shading = shading === 'lambert' ? 'color' : 'lambert';
+                chart.setOption({
+                    globe: {
+                        layers: [{
+                            name: 'cloud',
+                            shading: shading
+                        }]
+                    }
+                });
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

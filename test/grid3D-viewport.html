@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Grid3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            chart.setOption({
+                backgroundColor: '#fff',
+                xAxis3D: [{
+                    type: 'category',
+                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                }, {
+                    type: 'value',
+                    min: -1,
+                    max: 1,
+                    grid3DIndex: 1
+                }],
+                yAxis3D: [{
+                    type: 'category',
+                    data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                }, {
+                    type: 'value',
+                    min: -1,
+                    max: 1,
+                    grid3DIndex: 1
+                }],
+                zAxis3D: [{
+                    type: 'value',
+                    // splitNumber: 10,
+                    min: 0, max: 100
+                }, {
+                    type: 'value',
+                    min: -1,
+                    max: 1,
+                    grid3DIndex: 1
+                }],
+                grid3D: [{
+                    top: -50,
+                    width: 800,
+                    height: 600,
+                    temporalSuperSampling: {
+                        enable: true
+                    }
+                }, {
+                    top: 100,
+                    left: 700,
+                    width: 500,
+                    height: 400,
+                    temporalSuperSampling: {
+                        enable: true
+                    }
+                }],
+                series: [{
+                    type: 'scatter3D',
+                    symbolSize: 20,
+                    data: [[2, 5, 50]]
+                }, {
+                    grid3DIndex: 1,
+                    type: 'scatter3D',
+                    symbolSize: 20,
+                    data: [
+                        [0, 0, 0]
+                    ]
+                }]
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

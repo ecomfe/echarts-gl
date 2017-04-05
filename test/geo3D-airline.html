@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Airline - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/world.js"></script>
+        <script src="../node_modules/echarts/theme/dark.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            $.getJSON('data/flights.json', function (data) {
+                function getAirportCoord(idx) {
+                    return [data.airports[idx][3], data.airports[idx][4]];
+                }
+                var routes = data.routes.map(function (airline) {
+                    return [
+                        getAirportCoord(airline[1]),
+                        getAirportCoord(airline[2])
+                    ];
+                });
+
+                chart.setOption({
+                    geo3D: {
+                        map: 'world',
+                        shading: 'realistic',
+
+                        environment: '#111',
+
+                        realisticMaterial: {
+                            roughness: 0.8,
+                            metalness: 0
+                        },
+                        postEffect: {
+                            enable: true
+                        },
+                        groundPlane: {
+                            show: false
+                        },
+                        light: {
+                            main: {
+                                intensity: 1,
+                                shadow: true,
+                                shadowQuality: 'high',
+                                alpha: 30
+                            },
+                            ambient: {
+                                intensity: 0
+                            },
+                            ambientCubemap: {
+                                texture: 'asset/canyon.hdr',
+                                exposure: 1,
+                                diffuseIntensity: 0.5,
+                                specularIntensity: 1
+                            }
+                        },
+                        viewControl: {
+                            distance: 50
+                        },
+
+                        itemStyle: {
+                            areaColor: '#000'
+                        },
+
+                        boxHeight: 0.5
+                    },
+                    series: [{
+                        type: 'lines3D',
+
+                        coordinateSystem: 'geo3D',
+
+                        effect: {
+                            show: true,
+                            symbolSize: 3
+                        },
+
+                        blendMode: 'lighter',
+
+                        lineStyle: {
+                            width: 1,
+                            opacity: 0.1
+                        },
+
+                        data: routes
+                    }]
+                });
+
+                window.onresize = chart.resize;
+
+                window.addEventListener('keydown', function () {
+                    chart.dispatchAction({
+                        type: 'lines3DToggleEffect',
+                        seriesIndex: 0
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
