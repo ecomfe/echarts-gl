@@ -166,7 +166,7 @@ Grid3DAxis.prototype.update = function (
                         : textColor,
                     stroke: strokeColor,
                     lineWidth: lineWidth,
-                    font: textStyleModel.getFont(),
+                    font: itemTextStyleModel.getFont(),
                     textVerticalAlign: 'top',
                     textAlign: 'left'
                 }
