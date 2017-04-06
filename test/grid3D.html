@@ -19,7 +19,13 @@
                 backgroundColor: '#fff',
                 xAxis3D: {
                     type: 'category',
-                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    data: ['Mon', 'Tue', {
+                        value: 'Wed',
+                        textStyle: {
+                            fontSize: 18,
+                            color: '#008'
+                        }
+                    }, 'Thu', 'Fri', 'Sat', 'Sun'],
                     axisLine: {
                         lineStyle: {
                             width: 5,

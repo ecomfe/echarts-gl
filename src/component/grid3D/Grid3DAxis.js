@@ -113,19 +113,17 @@ Grid3DAxis.prototype.update = function (
     this.labelElements = [];
     var dpr = api.getDevicePixelRatio();
     if (axisLabelModel.get('show')) {
-        var textStyleModel = axisLabelModel.getModel('textStyle');
         var labelsCoords = axis.getLabelsCoords();
+        var categoryData = axisModel.get('data');
         // TODO color callback.
-        var labelColor = firstNotNull(textStyleModel.get('color'), axisLineColor);
-        var opacity = firstNotNull(textStyleModel.get('opacity'), 1.0);
-        var strokeColor = textStyleModel.get('borderColor');
-        var lineWidth = textStyleModel.get('borderWidth');
+        var textStyleModel = axisLabelModel.getModel('textStyle');
         // TODO Automatic interval
         var intervalFunc = labelIntervalFunc;
 
         var labelMargin = axisLabelModel.get('margin');
 
         var labels = axisModel.getFormattedLabels();
+        var ticks = axis.scale.getTicks();
         for (var i = 0; i < labelsCoords.length; i++) {
             if (ifIgnoreOnTick(axis, i, intervalFunc)) {
                 continue;
@@ -139,10 +137,33 @@ Grid3DAxis.prototype.update = function (
             p[idx] = p[idx] = tickCoord;
             p[otherIdx] = labelMargin;
 
+            var itemTextStyleModel = textStyleModel;
+            if (categoryData && categoryData[ticks[i]] && categoryData[ticks[i]].textStyle) {
+                itemTextStyleModel = new echarts.Model(
+                    categoryData[ticks[i]].textStyle, textStyleModel, axisModel.ecModel
+                );
+            }
+            var textColor = firstNotNull(itemTextStyleModel.get('color'), axisLineColor);
+            var opacity = firstNotNull(itemTextStyleModel.get('opacity'), 1.0);
+            var strokeColor = itemTextStyleModel.get('borderColor');
+            var lineWidth = itemTextStyleModel.get('borderWidth');
+
             var textEl = new echarts.graphic.Text({
                 style: {
                     text: labels[i],
-                    fill: labelColor,
+                    fill: typeof textColor === 'function'
+                        ? textColor(
+                            // (1) In category axis with data zoom, tick is not the original
+                            // index of axis.data. So tick should not be exposed to user
+                            // in category axis.
+                            // (2) Compatible with previous version, which always returns labelStr.
+                            // But in interval scale labelStr is like '223,445', which maked
+                            // user repalce ','. So we modify it to return original val but remain
+                            // it as 'string' to avoid error in replacing.
+                            axis.type === 'category' ? labels[i] : axis.type === 'value' ? ticks[i] + '' : ticks[i],
+                            i
+                        )
+                        : textColor,
                     stroke: strokeColor,
                     lineWidth: lineWidth,
                     font: textStyleModel.getFont(),
