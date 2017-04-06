@@ -38,8 +38,6 @@ void main()
 uniform sampler2D diffuseMap;
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
-uniform float emissionIntensity: 1.0;
-
 #ifdef VERTEX_COLOR
 varying vec4 v_Color;
 #endif
@@ -49,6 +47,7 @@ uniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];
 #endif
 
 #if (LAYER_EMISSIVEMAP_COUNT > 0)
+uniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];
 uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
 #endif
 
@@ -95,7 +94,7 @@ void main()
     for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
         // PENDING BLEND?
         vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);
-        gl_FragColor.rgb += texel2.rgb * texel2.a * emissionIntensity;
+        gl_FragColor.rgb += texel2.rgb * texel2.a * layerEmissionIntensity[_idx_];
     }}
 #endif
 

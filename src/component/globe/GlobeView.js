@@ -162,6 +162,7 @@ module.exports = echarts.extendComponentView({
         var lastDistance = coordSys.radius;
         var layerDiffuseTextures = [];
         var layerEmissiveTextures = [];
+        var layerEmissionIntensity = [];
         echarts.util.each(layers, function (layerOption) {
             var layerModel = new echarts.Model(layerOption);
             var layerType = layerModel.get('type');
@@ -178,6 +179,9 @@ module.exports = echarts.extendComponentView({
                 var blendTo = layerModel.get('blendTo');
                 if (blendTo === 'emission') {
                     layerEmissiveTextures.push(texture);
+                    layerEmissionIntensity.push(
+                        retrieve.firstNotNull(layerModel.get('intensity'), 1.0)
+                    );
                 }
                 else { // Default is albedo
                     layerDiffuseTextures.push(texture);
@@ -245,6 +249,7 @@ module.exports = echarts.extendComponentView({
 
         earthMaterial.set('layerDiffuseMap', layerDiffuseTextures);
         earthMaterial.set('layerEmissiveMap', layerEmissiveTextures);
+        earthMaterial.set('layerEmissionIntensity', layerEmissionIntensity);
 
         var debugWireframeModel = globeModel.getModel('debug.wireframe');
         if (debugWireframeModel.get('show')) {

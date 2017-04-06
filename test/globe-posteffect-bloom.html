@@ -51,7 +51,7 @@
 
                     displacementScale: 0.1,
 
-                    shading: 'lambert',
+                    shading: 'realistic',
 
                     postEffect: {
                         enable: true
@@ -66,9 +66,6 @@
                         },
                         main: {
                             intensity: 5
-                        },
-                        emission: {
-                            intensity: 30
                         }
                     },
 
@@ -79,7 +76,8 @@
                     layers: [{
                         type: 'blend',
                         blendTo: 'emission',
-                        texture: mapChart
+                        texture: mapChart,
+                        intensity: 10
                     }]
                 },
                 series: []
