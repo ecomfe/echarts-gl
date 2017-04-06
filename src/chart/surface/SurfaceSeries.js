@@ -7,7 +7,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
     dependencies: ['globe', 'grid3D', 'geo3D'],
 
-    visualColorAccessPath: 'areaStyle.color',
+    visualColorAccessPath: 'itemStyle.color',
 
     getInitialData: function (option, ecModel) {
         var data = option.data;
@@ -164,7 +164,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
             z: null
         },
 
-        areaStyle: {
+        itemStyle: {
             // Color
         }
     }
