@@ -3,6 +3,7 @@ var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
+var TooltipHelper = require('../common/TooltipHelper');
 
 function isPointsNaN(pt) {
     return isNaN(pt[0]) || isNaN(pt[1]) || isNaN(pt[2]);
@@ -98,6 +99,8 @@ echarts.extendChartView({
         }
 
         this._initHandler(seriesModel, api);
+
+        this._tooltip = new TooltipHelper(api);
     },
 
     _initHandler: function (seriesModel, api) {
@@ -105,7 +108,6 @@ echarts.extendChartView({
         var surfaceMesh = this._surfaceMesh;
 
         var coordSys = seriesModel.coordinateSystem;
-        var isCartesian3D = coordSys.type === 'cartesian3D';
 
         function getNearestPointIdx(triangle, point) {
             var nearestDist = Infinity;
@@ -127,29 +129,31 @@ echarts.extendChartView({
         surfaceMesh.off('mousemove');
         surfaceMesh.off('mouseout');
         surfaceMesh.on('mousemove', function (e) {
-            if (isCartesian3D) {
-                var idx = getNearestPointIdx(e.triangle, e.point);
-                if (idx >= 0) {
-                    var point = [];
-                    surfaceMesh.geometry.attributes.position.get(idx, point);
-                    var value = coordSys.pointToData(point);
-                    api.dispatchAction({
-                        type: 'grid3DShowAxisPointer',
-                        value: value
-                    });
-                    var dataIdx = data.indexOfNearest('z', value[2]);
-                }
+            var idx = getNearestPointIdx(e.triangle, e.point);
+            if (idx >= 0) {
+                var point = [];
+                surfaceMesh.geometry.attributes.position.get(idx, point);
+                var value = coordSys.pointToData(point);
+                api.dispatchAction({
+                    type: 'grid3DShowAxisPointer',
+                    value: value
+                });
+                var dataIndex = data.indexOfNearest('z', value[2]);
+                this._tooltip.updateTooltip(seriesModel, dataIndex, e.offsetX, e.offsetY);
             }
-        });
+            else {
+                this._tooltip.hideTooltip();
+            }
+        }, this);
         surfaceMesh.on('mouseout', function (e) {
             lastDataIndex = -1;
 
-            if (isCartesian3D) {
-                api.dispatchAction({
-                    type: 'grid3DHideAxisPointer'
-                });
-            }
-        });
+            api.dispatchAction({
+                type: 'grid3DHideAxisPointer'
+            });
+
+            this._tooltip.hideTooltip();
+        }, this);
     },
 
     _updateSurfaceMesh: function (surfaceMesh, seriesModel, dataShape, showWireframe) {

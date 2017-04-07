@@ -6,6 +6,7 @@ var Matrix4 = require('qtek/lib/math/Matrix4');
 var Vector3 = require('qtek/lib/math/Vector3');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 var lineContain = require('zrender/lib/contain/line');
+var TooltipHelper = require('../common/TooltipHelper');
 
 graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
 
@@ -35,6 +36,8 @@ module.exports = echarts.extendChartView({
         this._line3DMesh.geometry.pick = this._pick.bind(this);
 
         this._api = api;
+
+        this._tooltip = new TooltipHelper(api);
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -161,6 +164,8 @@ module.exports = echarts.extendChartView({
                 });
             }
 
+            this._tooltip.updateTooltip(seriesModel, dataIndex, e.offsetX, e.offsetY);
+
             lastDataIndex = dataIndex;
         }, this);
         lineMesh.on('mouseout', function (e) {
@@ -169,6 +174,7 @@ module.exports = echarts.extendChartView({
             api.dispatchAction({
                 type: 'grid3DHideAxisPointer'
             });
+            this._tooltip.hideTooltip();
         }, this);
     },
 

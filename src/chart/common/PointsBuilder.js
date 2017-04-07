@@ -4,6 +4,7 @@ var spriteUtil = require('../../util/sprite');
 var PointsMesh = require('./PointsMesh');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var Matrix4 = require('qtek/lib/math/Matrix4');
+var TooltipHelper = require('./TooltipHelper');
 
 var SDF_RANGE = 20;
 // TODO gl_PointSize has max value.
@@ -31,6 +32,8 @@ function PointsBuilder(is2D, api) {
     this._api = api;
 
     this._spriteImageCanvas = document.createElement('canvas');
+
+    this._tooltip = new TooltipHelper(api);
 }
 
 PointsBuilder.prototype = {
@@ -213,6 +216,9 @@ PointsBuilder.prototype = {
                     });
                 }
             }
+
+            this._tooltip.updateTooltip(seriesModel, dataIndex, e.offsetX, e.offsetY);
+
             lastDataIndex = dataIndex;
         }, this);
         pointsMesh.on('mouseout', function (e) {
@@ -226,6 +232,7 @@ PointsBuilder.prototype = {
                     grid3DIndex: grid3DModel.componentIndex
                 });
             }
+            this._tooltip.hideTooltip();
         }, this);
     },
 
