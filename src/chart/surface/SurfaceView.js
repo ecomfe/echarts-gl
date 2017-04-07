@@ -138,7 +138,19 @@ echarts.extendChartView({
                     type: 'grid3DShowAxisPointer',
                     value: value
                 });
-                var dataIndex = data.indexOfNearest('z', value[2]);
+                var minDist = Infinity;
+                var dataIndex = -1;
+                var item = [];
+                for (var i = 0; i < data.count(); i++) {
+                    item[0] = data.get('x', i);
+                    item[1] = data.get('y', i);
+                    item[2] = data.get('z', i);
+                    var dist = vec3.squaredDistance(item, value);
+                    if (dist < minDist) {
+                        dataIndex = i;
+                        minDist = dist;
+                    }
+                }
                 this._tooltip.updateTooltip(seriesModel, dataIndex, e.offsetX, e.offsetY);
             }
             else {

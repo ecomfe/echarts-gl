@@ -7,6 +7,10 @@ var Matrix4 = require('qtek/lib/math/Matrix4');
 var TooltipHelper = require('./TooltipHelper');
 
 var SDF_RANGE = 20;
+
+function isSymbolSizeSame(a, b) {
+    return a && b && a[0] === b[0] && a[1] === b[1];
+}
 // TODO gl_PointSize has max value.
 function PointsBuilder(is2D, api) {
 
@@ -65,18 +69,26 @@ PointsBuilder.prototype = {
         symbolSize[0] = symbolSize[0] || 1;
         symbolSize[1] = symbolSize[1] || 1;
 
-        spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, {
-            fill: '#fff',
-            lineWidth: itemStyle.lineWidth,
-            stroke: 'transparent',
-            shadowColor: 'transparent',
-            marginBias: 10
-        }, this._spriteImageCanvas);
+        if (this._symbolType !== symbolInfo.type || !isSymbolSizeSame(this._symbolSize, symbolSize)
+        || this._lineWidth !== itemStyle.lineWidth
+        ) {
+            spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, {
+                fill: '#fff',
+                lineWidth: itemStyle.lineWidth,
+                stroke: 'transparent',
+                shadowColor: 'transparent',
+                marginBias: 10
+            }, this._spriteImageCanvas);
 
-        spriteUtil.createSDFFromCanvas(
-            this._spriteImageCanvas, 32, SDF_RANGE,
-            this._mesh.material.get('sprite').image
-        );
+            spriteUtil.createSDFFromCanvas(
+                this._spriteImageCanvas, 32, SDF_RANGE,
+                this._mesh.material.get('sprite').image
+            );
+
+            this._symbolType = symbolInfo.type;
+            this._symbolSize = symbolSize;
+            this._lineWidth = itemStyle.lineWidth;
+        }
 
         var geometry = this._mesh.geometry;
         var points = data.getLayout('points');
