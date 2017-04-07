@@ -37,6 +37,7 @@
             console.log(valMin, valMax);
 
             chart.setOption({
+                tooltip: {},
                 visualMap: {
                     show: false,
                     min: 2,
@@ -73,7 +74,6 @@
                 },
                 series: [{
                     type: 'scatter3D',
-                    silent: true,
                     data: data
                 }]
             });
