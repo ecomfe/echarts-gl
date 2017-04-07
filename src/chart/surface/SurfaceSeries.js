@@ -28,21 +28,21 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
             if (!option.parametric) {
                 // From surface equation
-                var surfaceEquation = option.surfaceEquation || {};
-                var xOpts = surfaceEquation.x || {};
-                var yOpts = surfaceEquation.y || {};
+                var equation = option.equation || {};
+                var xOpts = equation.x || {};
+                var yOpts = equation.y || {};
 
                 ['x', 'y'].forEach(function (dim) {
-                    if (!validateDimension(surfaceEquation[dim])) {
+                    if (!validateDimension(equation[dim])) {
                         if (__DEV__) {
-                            console.error('Invalid surfaceEquation.%s', dim);
+                            console.error('Invalid equation.%s', dim);
                         }
                         return;
                     }
                 });
-                if (typeof surfaceEquation.z !== 'function') {
+                if (typeof equation.z !== 'function') {
                     if (__DEV__) {
-                        console.error('surfaceEquation.z needs to be function');
+                        console.error('equation.z needs to be function');
                     }
                     return;
                 }
@@ -52,28 +52,28 @@ var SurfaceSeries = echarts.extendSeriesModel({
                     for (var x = xOpts.min; x < xOpts.max + xOpts.step * 0.999; x += xOpts.step) {
                         var x2 = echarts.number.round(Math.min(x, xOpts.max), xPrecision);
                         var y2 = echarts.number.round(Math.min(y, yOpts.max), yPrecision);
-                        var z = surfaceEquation.z(x2, y2);
+                        var z = equation.z(x2, y2);
                         data.push([x2, y2, z]);
                     }
                 }
             }
             else {
-                var parametricSurfaceEquation = option.parametricSurfaceEquation || {};
-                var uOpts = parametricSurfaceEquation.u || {};
-                var vOpts = parametricSurfaceEquation.v || {};
+                var parametricEquation = option.parametricEquation || {};
+                var uOpts = parametricEquation.u || {};
+                var vOpts = parametricEquation.v || {};
 
                 ['u', 'v'].forEach(function (dim) {
-                    if (!validateDimension(parametricSurfaceEquation[dim])) {
+                    if (!validateDimension(parametricEquation[dim])) {
                         if (__DEV__) {
-                            console.error('Invalid parametricSurfaceEquation.%s', dim);
+                            console.error('Invalid parametricEquation.%s', dim);
                         }
                         return;
                     }
                 });
                 ['x', 'y', 'z'].forEach(function (dim) {
-                    if (typeof parametricSurfaceEquation[dim] !== 'function') {
+                    if (typeof parametricEquation[dim] !== 'function') {
                         if (__DEV__) {
-                            console.error('parametricSurfaceEquation.%s needs to be function', dim);
+                            console.error('parametricEquation.%s needs to be function', dim);
                         }
                         return;
                     }
@@ -86,9 +86,9 @@ var SurfaceSeries = echarts.extendSeriesModel({
                     for (var u = uOpts.min; u < uOpts.max + uOpts.step * 0.999; u += uOpts.step) {
                         var u2 = echarts.number.round(Math.min(u, uOpts.max), uPrecision);
                         var v2 = echarts.number.round(Math.min(v, vOpts.max), vPrecision);
-                        var x = parametricSurfaceEquation.x(u2, v2);
-                        var y = parametricSurfaceEquation.y(u2, v2);
-                        var z = parametricSurfaceEquation.z(u2, v2);
+                        var x = parametricEquation.x(u2, v2);
+                        var y = parametricEquation.y(u2, v2);
+                        var z = parametricEquation.z(u2, v2);
                         data.push([x, y, z, u2, v2]);
                     }
                 }
@@ -131,7 +131,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
         /**
          * Generate surface data from z = f(x, y) equation
          */
-        surfaceEquation: {
+        equation: {
             // [min, max, step]
             x: {
                 min: -1,
@@ -146,7 +146,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
             z: null
         },
 
-        parametricSurfaceEquation: {
+        parametricEquation: {
             // [min, max, step]
             u: {
                 min: -1,

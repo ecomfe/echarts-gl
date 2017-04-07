@@ -28,7 +28,7 @@
             var sinh = Math.sinh;
             var PI = Math.PI;
 
-            var parametricSurfaceEquations = [
+            var parametricEquations = [
                 {
                     name: 'Mollusc Shell',
                     u: {
@@ -192,7 +192,7 @@
                         color: '#fff'
                     },
                     bottom: 10,
-                    text: parametricSurfaceEquations[0].name
+                    text: parametricEquations[0].name
                 }],
                 visualMap: {
                     show: false,
@@ -252,7 +252,7 @@
                     },
                     silent: true,
                     // shading: 'albedo',
-                    parametricSurfaceEquation: parametricSurfaceEquations[0]
+                    parametricEquation: parametricEquations[0]
                 }]
             });
 
@@ -260,10 +260,10 @@
                 chart.setOption({
                     title: {
                         id: 'surface-name',
-                        text: parametricSurfaceEquations[currentIndex].name
+                        text: parametricEquations[currentIndex].name
                     },
                     series: {
-                        parametricSurfaceEquation: parametricSurfaceEquations[currentIndex]
+                        parametricEquation: parametricEquations[currentIndex]
                     }
                 })
             }
@@ -271,13 +271,13 @@
             document.getElementById('prev').addEventListener('click', function () {
                 currentIndex -= 1;
                 if (currentIndex < 0) {
-                    currentIndex = parametricSurfaceEquations.length - 1;
+                    currentIndex = parametricEquations.length - 1;
                 }
                 update();
             });
 
             document.getElementById('next').addEventListener('click', function () {
-                currentIndex = (currentIndex + 1) % parametricSurfaceEquations.length;
+                currentIndex = (currentIndex + 1) % parametricEquations.length;
                 update();
             });
 
