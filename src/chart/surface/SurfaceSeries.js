@@ -1,5 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var componentShadingMixin = require('../../component/common/componentShadingMixin');
+var formatTooltip = require('../common/formatTooltip');
 
 var SurfaceSeries = echarts.extendSeriesModel({
 
@@ -8,6 +9,10 @@ var SurfaceSeries = echarts.extendSeriesModel({
     dependencies: ['globe', 'grid3D', 'geo3D'],
 
     visualColorAccessPath: 'itemStyle.color',
+
+    formatTooltip: function (dataIndex) {
+        return formatTooltip(this, dataIndex);
+    },
 
     getInitialData: function (option, ecModel) {
         var data = option.data;

@@ -1,6 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var componentShadingMixin = require('../../component/common/componentShadingMixin');
 var formatUtil = require('../../util/format');
+var formatTooltip = require('../common/formatTooltip');
 
 var Bar3DSeries = echarts.extendSeriesModel({
 
@@ -23,6 +24,10 @@ var Bar3DSeries = echarts.extendSeriesModel({
             text = this.getData().get('z', dataIndex);
         }
         return text;
+    },
+
+    formatTooltip: function (dataIndex) {
+        return formatTooltip(this, dataIndex);
     },
 
     defaultOption: {

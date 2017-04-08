@@ -137,6 +137,13 @@
                     },
                     series: [{
                         type: 'scatter3D',
+                        dimensions: [
+                            config.xAxis3D,
+                            config.yAxis3D,
+                            config.yAxis3D,
+                            config.color,
+                            config.symbolSiz
+                        ],
                         data: data.map(function (item, idx) {
                             return [
                                 item[fieldIndices[config.xAxis3D]],
@@ -183,6 +190,13 @@
                                     name: config.zAxis3D
                                 },
                                 series: {
+                                    dimensions: [
+                                        config.xAxis3D,
+                                        config.yAxis3D,
+                                        config.yAxis3D,
+                                        config.color,
+                                        config.symbolSiz
+                                    ],
                                     data: data.map(function (item, idx) {
                                         return [
                                             item[fieldIndices[config.xAxis3D]],

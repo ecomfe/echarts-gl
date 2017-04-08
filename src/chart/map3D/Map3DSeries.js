@@ -5,6 +5,7 @@ var componentLightMixin = require('../../component/common/componentLightMixin');
 var componentShadingMixin = require('../../component/common/componentShadingMixin');
 var geo3DModelMixin = require('../../coord/geo3D/geo3DModelMixin');
 var formatUtil = require('../../util/format');
+var formatTooltip = require('../common/formatTooltip');
 
 var Map3DModel = echarts.extendSeriesModel({
 
@@ -31,6 +32,10 @@ var Map3DModel = echarts.extendSeriesModel({
         this._regionModelMap = regionModelMap;
 
         return list;
+    },
+
+    formatTooltip: function (dataIndex) {
+        return formatTooltip(this, dataIndex);
     },
 
     getRegionModel: function (name) {

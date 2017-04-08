@@ -1,4 +1,5 @@
 var echarts = require('echarts/lib/echarts');
+var formatTooltip = require('../common/formatTooltip');
 
 var Line3DSeries = echarts.extendSeriesModel({
 
@@ -13,6 +14,10 @@ var Line3DSeries = echarts.extendSeriesModel({
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;
+    },
+
+    formatTooltip: function (dataIndex) {
+        return formatTooltip(this, dataIndex);
     },
 
     defaultOption: {
