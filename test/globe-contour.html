@@ -24,10 +24,9 @@ canvas.width = 4096;
 canvas.height = 2048;
 context = canvas.getContext("2d");
 
-context.lineWidth = 1;
-context.strokeStyle = "#c03a10";
-context.shadowColor = "#c03a10";
-context.shadowBlur = 2;
+context.lineWidth = 0.5;
+context.strokeStyle = "#c0101a";
+context.shadowColor = "#c0101a";
 
 
 image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
@@ -38,7 +37,7 @@ image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
       projection = d3.geoIdentity().scale(canvas.width / n),
       path = d3.geoPath(projection, context);
 
-//   StackBlur.R(image, 1);
+  StackBlur.R(image, 2);
 
   for (var j = 0, k = 0; j < m; ++j) {
     for (var i = 0; i < n; ++i, ++k) {
@@ -162,7 +161,7 @@ function init(option) {
     });
 
     var config = {
-        color: '#c03a10',
+        color: '#c0101a',
         intensity: 7
     }
     var gui = new dat.GUI();
