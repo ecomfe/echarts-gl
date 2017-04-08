@@ -36,8 +36,8 @@
 var echartsGl = {
     version: '1.0.0',
     dependencies: {
-        echarts: '3.5.0',
-        qtek: '0.3.0'
+        echarts: '3.5.2',
+        qtek: '0.3.1'
     }
 };
 var echarts = require('echarts/lib/echarts');

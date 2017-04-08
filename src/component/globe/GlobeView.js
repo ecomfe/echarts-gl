@@ -420,9 +420,6 @@ module.exports = echarts.extendComponentView({
         mainLight.position.x = Math.sin(pos.altitude);
         mainLight.position.z = r0 * Math.sin(pos.azimuth);
         mainLight.lookAt(earthMesh.getWorldPosition());
-
-        // Emission
-        earthMesh.material.set('emissionIntensity', globeModel.get('light.emission.intensity'));
     },
 
     dispose: function (ecModel, api) {

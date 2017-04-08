@@ -1,0 +1,159 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Globe - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="https://unpkg.com/d3-contour@1"></script>
+        <script src="https://unpkg.com/d3-geo@1"></script>
+        <script src="https://unpkg.com/d3-timer@1"></script>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/world.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script src="lib/stackBlur.js"></script>
+        <script>
+var canvas = document.createElement('canvas');
+canvas.width = 4096;
+canvas.height = 2048;
+context = canvas.getContext("2d");
+
+context.lineWidth = 1;
+context.strokeStyle = "rgb(100, 0, 10)";
+
+image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
+  var m = image.height,
+      n = image.width,
+      values = new Array(n * m),
+      contours = d3.contours().size([n, m]),
+      projection = d3.geoIdentity().scale(canvas.width / n),
+      path = d3.geoPath(projection, context);
+
+//   StackBlur.R(image, 1);
+
+  for (var j = 0, k = 0; j < m; ++j) {
+    for (var i = 0; i < n; ++i, ++k) {
+      values[k] = image.data[(k << 2)] / 255;
+    }
+  }
+
+  var option = {
+    image: canvas
+  }
+
+  d3.timer(function(t) {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.beginPath();
+    path(contours.thresholds([(t % 5000) / 5000])(values)[0]);
+    context.stroke();
+
+    option.onupdate();
+  });
+
+  init(option);
+});
+
+function image(url) {
+  return new Promise(function(resolve) {
+    var image = new Image;
+    image.src = url;
+    image.onload = function() {
+      var canvas = document.createElement("canvas");
+      canvas.width = image.width / 4;
+      canvas.height = image.height / 4;
+      var context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(context.getImageData(0, 0, canvas.width, canvas.height));
+    };
+  });
+}
+
+
+function init(option) {
+    var chart = echarts.init(document.getElementById('main'));
+
+    var contourChart = echarts.init(document.createElement('canvas'), null, {
+        width: 4096,
+        height: 2048
+    });
+
+    var img = new echarts.graphic.Image({
+        style: {
+            image: option.image
+        }
+    });
+    contourChart.getZr().add(img);
+
+    option.onupdate = function () {
+        img.dirty();
+    }
+
+    // https://www.behance.net/gallery/50293671/T-GLOBEhttps://bl.ocks.org/mbostock/818053c76d79d4841790c332656bf9da
+
+    chart.setOption({
+        globe: {
+
+            environment: 'asset/starfield.jpg',
+
+            heightTexture: 'asset/bathymetry_bw_composite_4k.jpg',
+
+            displacementScale: 0.05,
+            displacementQuality: 'high',
+
+            baseColor: '#000',
+
+            shading: 'realistic',
+            realisticMaterial: {
+                roughness: 0.2,
+                metalness: 0
+            },
+
+            postEffect: {
+                enable: true,
+                depthOfField: {
+                    enable: true
+                }
+            },
+            temporalSuperSampling: {
+                enable: true
+            },
+            light: {
+                ambient: {
+                    intensity: 0
+                },
+                main: {
+                    intensity: 0.1,
+                    shadow: false
+                },
+                ambientCubemap: {
+                    texture: 'asset/lake.hdr',
+                    exposure: 1,
+                    diffuseIntensity: 0.5,
+                    specularIntensity: 2
+                }
+            },
+            viewControl: {
+                autoRotate: false
+            },
+
+            layers: [{
+                type: 'blend',
+                blendTo: 'emission',
+                texture: contourChart,
+                intensity: 1
+            }]
+        }
+    });
+
+    window.addEventListener('resize', function () {
+        chart.resize();
+    });
+}
+        </script>
+    </body>
+</html>
