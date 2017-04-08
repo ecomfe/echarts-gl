@@ -104,7 +104,9 @@ var SurfaceSeries = echarts.extendSeriesModel({
         if (option.parametric) {
             dims.push('u', 'v');
         }
-        dims = echarts.helper.completeDimensions(dims, option.data);
+        dims = echarts.helper.completeDimensions(dims, option.data, {
+            defaultNames: ['x', 'y', 'z', 'value']
+        });
 
         var list = new echarts.List(dims, this);
         list.initData(data);

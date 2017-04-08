@@ -11,7 +11,9 @@ var Scatter3DSeries = echarts.extendSeriesModel({
     visualColorAccessPath: 'itemStyle.color',
 
     getInitialData: function (option, ecModel) {
-        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data);
+        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data, {
+            defaultNames: ['x', 'y', 'z', 'value']
+        });
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;
