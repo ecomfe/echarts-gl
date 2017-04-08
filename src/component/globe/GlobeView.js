@@ -161,6 +161,8 @@ module.exports = echarts.extendComponentView({
 
         var lastDistance = coordSys.radius;
         var layerDiffuseTextures = [];
+        var layerDiffuseIntensity = [];
+
         var layerEmissiveTextures = [];
         var layerEmissionIntensity = [];
         echarts.util.each(layers, function (layerOption) {
@@ -177,14 +179,14 @@ module.exports = echarts.extendComponentView({
 
             if (layerType === 'blend') {
                 var blendTo = layerModel.get('blendTo');
+                var intensity = retrieve.firstNotNull(layerModel.get('intensity'), 1.0);
                 if (blendTo === 'emission') {
                     layerEmissiveTextures.push(texture);
-                    layerEmissionIntensity.push(
-                        retrieve.firstNotNull(layerModel.get('intensity'), 1.0)
-                    );
+                    layerEmissionIntensity.push(intensity);
                 }
                 else { // Default is albedo
                     layerDiffuseTextures.push(texture);
+                    layerDiffuseIntensity.push(intensity);
                 }
             }
             else { // Default use overlay
@@ -248,6 +250,7 @@ module.exports = echarts.extendComponentView({
         earthMaterial.shader.define('fragment', 'LAYER_EMISSIVEMAP_COUNT', layerEmissiveTextures.length);
 
         earthMaterial.set('layerDiffuseMap', layerDiffuseTextures);
+        earthMaterial.set('layerDiffuseIntensity', layerDiffuseIntensity);
         earthMaterial.set('layerEmissiveMap', layerEmissiveTextures);
         earthMaterial.set('layerEmissionIntensity', layerEmissionIntensity);
 

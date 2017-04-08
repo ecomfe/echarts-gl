@@ -37,7 +37,7 @@ image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
       projection = d3.geoIdentity().scale(canvas.width / n),
       path = d3.geoPath(projection, context);
 
-  StackBlur.R(image, 2);
+//   StackBlur.R(image, 2);
 
   for (var j = 0, k = 0; j < m; ++j) {
     for (var i = 0; i < n; ++i, ++k) {
@@ -108,7 +108,7 @@ function init(option) {
             displacementScale: 0.05,
             displacementQuality: 'high',
 
-            baseColor: '#000',
+            baseColor: '#111',
 
             shading: 'realistic',
             realisticMaterial: {
@@ -149,9 +149,9 @@ function init(option) {
 
             layers: [{
                 type: 'blend',
-                blendTo: 'emission',
+                blendTo: 'albedo',
                 texture: contourChart,
-                intensity: 7
+                intensity: 100
             }]
         }
     });
@@ -162,13 +162,13 @@ function init(option) {
 
     var config = {
         color: '#c0101a',
-        intensity: 7
+        intensity: 100
     }
     var gui = new dat.GUI();
     gui.addColor(config, 'color').onChange(function () {
         context.strokeStyle = context.shadowColor = config.color
     });
-    gui.add(config, 'intensity', 0, 10, 0.1).onChange(function () {
+    gui.add(config, 'intensity', 0, 200, 0.1).onChange(function () {
         chart.setOption({
             globe: {
                 layers: [{

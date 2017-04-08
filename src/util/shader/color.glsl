@@ -43,6 +43,7 @@ varying vec4 v_Color;
 #endif
 
 #if (LAYER_DIFFUSEMAP_COUNT > 0)
+uniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];
 uniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];
 #endif
 
@@ -79,12 +80,13 @@ void main()
 
 #if (LAYER_DIFFUSEMAP_COUNT > 0)
     for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{
+        float intensity = layerDiffuseIntensity[_idx_];
         vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);
         #ifdef SRGB_DECODE
         texel2 = sRGBToLinear(texel2);
         #endif
         // source-over blend
-        albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb, texel2.a);
+        albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);
         albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;
     }}
 #endif
