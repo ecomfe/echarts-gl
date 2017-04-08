@@ -233,7 +233,8 @@ void main()
 #if (LAYER_EMISSIVEMAP_COUNT > 0)
     for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
         vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];
-        gl_FragColor.rgb += texel2.rgb;
+        float intensity = layerEmissionIntensity[_idx_];
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, texel2.rgb * intensity, texel2.a);
     }}
 #endif
 

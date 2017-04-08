@@ -17,6 +17,7 @@
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script src="lib/stackBlur.js"></script>
+        <script src="lib/dat.gui.js"></script>
         <script>
 var canvas = document.createElement('canvas');
 canvas.width = 4096;
@@ -24,7 +25,10 @@ canvas.height = 2048;
 context = canvas.getContext("2d");
 
 context.lineWidth = 1;
-context.strokeStyle = "rgb(100, 0, 10)";
+context.strokeStyle = "#c03a10";
+context.shadowColor = "#c03a10";
+context.shadowBlur = 2;
+
 
 image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
   var m = image.height,
@@ -49,7 +53,7 @@ image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
   d3.timer(function(t) {
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.beginPath();
-    path(contours.thresholds([(t % 5000) / 5000])(values)[0]);
+    path(contours.thresholds([(t % 10000) / 10000])(values)[0]);
     context.stroke();
 
     option.onupdate();
@@ -115,8 +119,11 @@ function init(option) {
 
             postEffect: {
                 enable: true,
-                depthOfField: {
-                    enable: true
+                // depthOfField: {
+                //     enable: true
+                // },
+                bloom: {
+                    intensity: 0.05
                 }
             },
             temporalSuperSampling: {
@@ -145,13 +152,31 @@ function init(option) {
                 type: 'blend',
                 blendTo: 'emission',
                 texture: contourChart,
-                intensity: 1
+                intensity: 7
             }]
         }
     });
 
     window.addEventListener('resize', function () {
         chart.resize();
+    });
+
+    var config = {
+        color: '#c03a10',
+        intensity: 7
+    }
+    var gui = new dat.GUI();
+    gui.addColor(config, 'color').onChange(function () {
+        context.strokeStyle = context.shadowColor = config.color
+    });
+    gui.add(config, 'intensity', 0, 10, 0.1).onChange(function () {
+        chart.setOption({
+            globe: {
+                layers: [{
+                    intensity: config.intensity
+                }]
+            }
+        })
     });
 }
         </script>

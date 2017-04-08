@@ -21,7 +21,7 @@ var GlobeModel = echarts.extendComponentModel({
 
         echarts.util.each(this.option.layers, function (layerOption, idx) {
             echarts.util.merge(layerOption, this.defaultLayerOption);
-            defaultId(layerOption);
+            defaultId(layerOption, idx);
         }, this);
     },
 

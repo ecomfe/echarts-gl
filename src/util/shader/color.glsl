@@ -94,7 +94,8 @@ void main()
     for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
         // PENDING BLEND?
         vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);
-        gl_FragColor.rgb += texel2.rgb * texel2.a * layerEmissionIntensity[_idx_];
+        float intensity = layerEmissionIntensity[_idx_];
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, texel2.rgb * intensity, texel2.a);
     }}
 #endif
 
