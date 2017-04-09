@@ -31,6 +31,7 @@ module.exports = graphicGL.Mesh.extend(function () {
         }),
         material: material,
         culling: false,
+        $ignorePicking: true,
 
         _pointsTexture: pointsTexture
     };
@@ -70,15 +71,20 @@ module.exports = graphicGL.Mesh.extend(function () {
         }
         var pixels = pointsTexture.pixels;
 
+        var effectColor = effectModel.get('color');
+        var effectOpacity = effectModel.get('opacity');
+        var hasEffectColor = effectColor != null;
+        var hasEffectOpacity = effectOpacity != null;
+
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
-            var opacity = data.getItemVisual(idx, 'opacity');
+            var opacity = hasEffectOpacity ? effectOpacity : data.getItemVisual(idx, 'opacity');
             var color = data.getItemVisual(idx, 'color');
 
             if (opacity == null) {
                 opacity = 1;
             }
-            colorArr = graphicGL.parseColor(color, colorArr);
+            colorArr = graphicGL.parseColor(hasEffectColor ? effectColor : color, colorArr);
             colorArr[3] *= opacity;
 
             var u = idx * 4 % textureWidth / (textureWidth - 1);

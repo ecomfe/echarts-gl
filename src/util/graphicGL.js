@@ -349,6 +349,12 @@ graphicGL.additiveBlend = function (gl) {
 graphicGL.parseColor = function (colorStr, rgba) {
     if (colorStr instanceof Array) {
         // Color has been parsed.
+        if (rgba) {
+            rgba[0] = colorStr[0];
+            rgba[1] = colorStr[1];
+            rgba[2] = colorStr[2];
+            rgba[3] = colorStr[3];
+        }
         return colorStr;
     }
 
