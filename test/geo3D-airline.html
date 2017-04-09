@@ -40,14 +40,19 @@
                             metalness: 0
                         },
                         postEffect: {
-                            enable: true
+                            enable: true,
+                            depthOfField: {
+                                enable: true,
+                                fstop: 10
+                            }
                         },
                         groundPlane: {
-                            show: false
+                            show: true,
+                            color: '#000'
                         },
                         light: {
                             main: {
-                                intensity: 1,
+                                intensity: 0,
                                 shadow: true,
                                 shadowQuality: 'high',
                                 alpha: 30
@@ -59,7 +64,7 @@
                                 texture: 'asset/canyon.hdr',
                                 exposure: 1,
                                 diffuseIntensity: 0.5,
-                                specularIntensity: 1
+                                specularIntensity: 0
                             }
                         },
                         viewControl: {
@@ -67,7 +72,7 @@
                         },
 
                         itemStyle: {
-                            areaColor: '#000'
+                            areaColor: '#111'
                         },
 
                         boxHeight: 0.5
@@ -79,14 +84,15 @@
 
                         effect: {
                             show: true,
-                            width: 2,
-                            trailLength: 0.1
+                            trailWidth: 1,
+                            trailLength: 0.4
                         },
 
                         blendMode: 'lighter',
 
                         lineStyle: {
                             width: 0,
+                            color: 'rgb(50, 50, 150)',
                             opacity: 0.1
                         },
 

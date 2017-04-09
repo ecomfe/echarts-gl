@@ -42,7 +42,7 @@ module.exports = graphicGL.Mesh.extend(function () {
         var geometry = this.geometry;
 
         var effectModel = seriesModel.getModel('effect');
-        var size = effectModel.get('width') * api.getDevicePixelRatio();
+        var size = effectModel.get('trailWidth') * api.getDevicePixelRatio();
         var trailLength = effectModel.get('trailLength');
 
         geometry.trailLength = trailLength;
@@ -71,8 +71,8 @@ module.exports = graphicGL.Mesh.extend(function () {
         }
         var pixels = pointsTexture.pixels;
 
-        var effectColor = effectModel.get('color');
-        var effectOpacity = effectModel.get('opacity');
+        var effectColor = effectModel.get('trailColor');
+        var effectOpacity = effectModel.get('trailOpacity');
         var hasEffectColor = effectColor != null;
         var hasEffectOpacity = effectOpacity != null;
 

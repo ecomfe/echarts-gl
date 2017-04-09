@@ -44,7 +44,7 @@ echarts.extendSeriesModel({
             show: false,
             period: 4,
             // Trail width
-            width: 4,
+            trailWidth: 4,
             trailLength: 0.2
         },
 

@@ -86,12 +86,14 @@
 
                         effect: {
                             show: true,
-                            width: 2,
-                            trailLength: 0.4
+                            trailWidth: 2,
+                            trailLength: 0.2,
+                            trailOpacity: 0.4,
+                            trailColor: 'rgb(30, 30, 60)'
                         },
 
                         lineStyle: {
-                            width: 0.01,
+                            width: 1,
                             color: 'rgb(50, 50, 150)',
                             // color: 'rgb(118, 233, 241)',
                             opacity: 0.1
@@ -115,7 +117,7 @@
                     distanceToGlobe: 4,
                     itemStyle: {
                         color: 'rgb(50, 50, 150)',
-                        opacity: 0.1
+                        opacity: 0.2
                     },
                     data: pointsData
                 });
@@ -137,6 +139,7 @@
                         heightTexture: 'asset/bathymetry_bw_composite_4k.jpg',
 
                         displacementScale: 0.05,
+                        displacementQuality: 'high',
 
                         baseColor: '#000',
 
@@ -179,6 +182,14 @@
                         // }]
                     },
                     series: series
+                });
+                window.addEventListener('keydown', function () {
+                    series.forEach(function (series, idx) {
+                        chart.dispatchAction({
+                            type: 'lines3DToggleEffect',
+                            seriesIndex: idx
+                        });
+                    })
                 });
             });
 
