@@ -19,25 +19,35 @@
         <script src="lib/stackBlur.js"></script>
         <script src="lib/dat.gui.js"></script>
         <script>
+
+var config = {
+    color: '#c0101a',
+    levels: 50,
+    intensity: 100,
+    threshold: 0.01
+}
+
 var canvas = document.createElement('canvas');
 canvas.width = 4096;
 canvas.height = 2048;
 context = canvas.getContext("2d");
 
 context.lineWidth = 0.5;
-context.strokeStyle = "#c0101a";
-context.shadowColor = "#c0101a";
+context.strokeStyle = config.color;
+context.fillStyle = config.color;
+context.shadowColor = config.color;
 
+var gui = new dat.GUI();
 
 image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
   var m = image.height,
       n = image.width,
       values = new Array(n * m),
-      contours = d3.contours().size([n, m]),
+      contours = d3.contours().size([n, m]).smooth(true),
       projection = d3.geoIdentity().scale(canvas.width / n),
       path = d3.geoPath(projection, context);
 
-//   StackBlur.R(image, 2);
+  StackBlur.R(image, 5);
 
   for (var j = 0, k = 0; j < m; ++j) {
     for (var i = 0; i < n; ++i, ++k) {
@@ -49,16 +59,50 @@ image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
     image: canvas
   }
 
-  d3.timer(function(t) {
+  var results = [];
+  function update(threshold, levels) {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.beginPath();
-    path(contours.thresholds([(t % 10000) / 10000])(values)[0]);
-    context.stroke();
+    var thresholds = [];
+    for (var i = 0; i < levels; i++) {
+        thresholds.push((threshold + 1 / levels * i) % 1);
+    }
+    results = contours.thresholds(thresholds)(values);
+    redraw();
+  }
 
+  function redraw() {
+    results.forEach(function (d, idx) {
+        context.beginPath();
+        path(d);
+        context.globalAlpha = 1;
+        context.stroke();
+        if (idx > config.levels / 5 * 3) {
+            context.globalAlpha = 0.01;
+            context.fill();
+        }
+    });
     option.onupdate();
+  }
+//   d3.timer(function(t) {
+    // var threshold = (t % 10000) / 10000;
+//   });
+
+  initCharts(option);
+
+  update(config.threshold, config.levels);
+
+  gui.add(config, 'levels', 0, 100).step(1).onFinishChange(function () {
+    update(config.threshold, config.levels);
   });
 
-  init(option);
+  gui.add(config, 'threshold', 0, 1.00).onFinishChange(function () {
+    update(config.threshold, config.levels);
+  });
+
+    gui.addColor(config, 'color').onChange(function () {
+        context.strokeStyle = context.fillStyle = context.shadowColor = config.color;
+        redraw();
+    });
 });
 
 function image(url) {
@@ -77,7 +121,7 @@ function image(url) {
 }
 
 
-function init(option) {
+function initCharts(option) {
     var chart = echarts.init(document.getElementById('main'));
 
     var contourChart = echarts.init(document.createElement('canvas'), null, {
@@ -87,7 +131,11 @@ function init(option) {
 
     var img = new echarts.graphic.Image({
         style: {
-            image: option.image
+            image: option.image,
+            x: -1,
+            y: -1,
+            width: option.image.width + 2,
+            height: option.image.height + 2
         }
     });
     contourChart.getZr().add(img);
@@ -118,9 +166,9 @@ function init(option) {
 
             postEffect: {
                 enable: true,
-                // depthOfField: {
-                //     enable: true
-                // },
+                depthOfField: {
+                    enable: true
+                },
                 bloom: {
                     intensity: 0.05
                 }
@@ -151,7 +199,7 @@ function init(option) {
                 type: 'blend',
                 blendTo: 'albedo',
                 texture: contourChart,
-                intensity: 100
+                intensity: config.intensity
             }]
         }
     });
@@ -160,23 +208,15 @@ function init(option) {
         chart.resize();
     });
 
-    var config = {
-        color: '#c0101a',
-        intensity: 100
-    }
-    var gui = new dat.GUI();
-    gui.addColor(config, 'color').onChange(function () {
-        context.strokeStyle = context.shadowColor = config.color
-    });
-    gui.add(config, 'intensity', 0, 200, 0.1).onChange(function () {
-        chart.setOption({
-            globe: {
-                layers: [{
-                    intensity: config.intensity
-                }]
-            }
-        })
-    });
+    // gui.add(config, 'intensity', 0, 200).onChange(function () {
+    //     chart.setOption({
+    //         globe: {
+    //             layers: [{
+    //                 intensity: config.intensity
+    //             }]
+    //         }
+    //     })
+    // });
 }
         </script>
     </body>
