@@ -2,6 +2,7 @@
 /doc
 /test
 /index.html
+.vscode
 
 npm-debug.log
 
