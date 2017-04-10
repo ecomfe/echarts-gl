@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Airline - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/theme/dark.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'), 'dark');
+
+            $.getJSON('data/flights.json', function (data) {
+                // Airport: [name, city, country, longitude, latitude]
+                var airports = data.airports.map(function (item) {
+                    return {
+                        coord: [item[3], item[4]]
+                    }
+                });
+
+                // Route: [airlineIndex, sourceAirportIndex, destinationAirportIndex]
+                var routesGroupByAirline = {};
+                data.routes.forEach(function (route) {
+                    var airline = data.airlines[route[0]];
+                    var airlineName = airline[0];
+                    if (!routesGroupByAirline[airlineName]) {
+                        routesGroupByAirline[airlineName] = [];
+                    }
+                    routesGroupByAirline[airlineName].push(route);
+                });
+
+                var series = data.airlines.map(function (airline) {
+                    var airlineName = airline[0];
+                    var routes = routesGroupByAirline[airlineName];
+
+                    if (!routes) {
+                        return null;
+                    }
+                    return {
+                        type: 'lines3D',
+                        name: airlineName,
+
+                        effect: {
+                            show: false,
+                            trailWidth: 4
+                        },
+
+                        lineStyle: {
+                            width: 2,
+                            color: 'rgb(50, 50, 150)',
+                            opacity: 0.04
+                        },
+                        blendMode: 'lighter',
+
+                        // data: [
+                        //     [
+                        //         [0, 0], [180, 0]
+                        //     ]
+                        // ]
+                        data: routes.map(function (item) {
+                            return [airports[item[1]].coord, airports[item[2]].coord];
+                        })
+                    };
+                }).filter(function (series) {
+                    return !!series;
+                });
+
+                chart.setOption({
+                    backgroundColor: '',
+                    legend: {
+                        show: false,
+                        left: 'left',
+                        data: Object.keys(routesGroupByAirline),
+                        orient: 'vertical'
+                    },
+                    globe: {
+                        baseTexture: 'asset/world.topo.bathy.200401.jpg',
+                        heightTexture: 'asset/elev_bump_4k.jpg',
+
+                        shading: 'lambert',
+
+                        light: {
+                            ambient: {
+                                intensity: 0.4
+                            },
+                            main: {
+                                intensity: 0.4
+                            }
+                        },
+
+                        viewControl: {
+                            autoRotate: false
+                        }
+                    },
+                    series: series
+                });
+
+                window.onresize = chart.resize;
+
+            });
+        </script>
+    </body>
+</html>

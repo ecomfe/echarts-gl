@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Parametric Surfaces Fun - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <div id="toolbar">
+            <button id="prev">Prev</button>
+            <button id="next">Next</button>
+        </div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            // http://xahlee.info/surface/breather_p/breather_p.html
+            var chart = echarts.init(document.getElementById('main'));
+
+            var sin = Math.sin;
+            var cos = Math.cos;
+            var pow = Math.pow;
+            var sqrt = Math.sqrt;
+            var cosh = Math.cosh;
+            var sinh = Math.sinh;
+            var PI = Math.PI;
+
+            var parametricEquations = [
+                {
+                    name: 'Mollusc Shell',
+                    u: {
+                        min: -PI,
+                        max: PI,
+                        step: PI / 40
+                    },
+                    v: {
+                        min: -15,
+                        max: 6,
+                        step: 0.21
+                    },
+                    x: function (u, v) {
+                        return pow(1.16, v) * cos(v) * (1 + cos(u));
+                    },
+                    y: function (u, v) {
+                        return -pow(1.16, v) * sin(v) * (1 + cos(u));
+                    },
+                    z: function (u, v) {
+                        return -2 * pow(1.16, v) * (1 + sin(u));
+                    }
+                },
+                {
+                    name: 'Breather',
+                    link: 'http://xahlee.info/surface/breather_p/breather_p.html',
+                    u: {
+                        min: -13.2,
+                        max: 13.2,
+                        step: 0.5
+                    },
+                    v: {
+                        min: -37.4,
+                        max: 37.4,
+                        step: 0.5
+                    },
+                    x: function (u, v) {
+                        var aa = 0.4;
+                        var r = 1 - aa * aa;
+                        var w = sqrt(r);
+                        var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                        return -u + (2 * r * cosh(aa * u) * sinh(aa * u) / denom);
+                    },
+                    y: function (u, v) {
+                        var aa = 0.4;
+                        var r = 1 - aa * aa;
+                        var w = sqrt(r);
+                        var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                        return 2 * w * cosh(aa * u) * (-(w * cos(v) * cos(w * v)) - (sin(v) * sin(w * v))) / denom;
+                    },
+                    z: function (u, v) {
+                        var aa = 0.4;
+                        var r = 1 - aa * aa;
+                        var w = sqrt(r);
+                        var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                        return  2 * w * cosh(aa * u) * (-(w * sin(v) * cos(w * v)) + (cos(v) * sin(w * v))) / denom
+                    }
+                },
+
+                {
+                    name: 'Klein Bottle',
+                    u: {
+                        min: 0,
+                        max: PI * 2,
+                        step: PI / 20
+                    },
+                    v: {
+                        min: 0,
+                        max: 2 * PI,
+                        step: PI / 20
+                    },
+                    x: function (u, v) {
+                        var r = 3;
+                        return (r + cos(v / 2) * sin(u) - sin(v / 2) * sin(2 * u)) * cos(v)
+                    },
+                    y: function (u, v) {
+                        var r = 3;
+                        return (r + cos(v / 2) * sin(u) - sin(v / 2) * sin(2 * u)) * sin(v)
+                    },
+                    z: function (u, v) {
+                        var r = 3;
+                        return sin(v / 2) * sin(u) + cos(v / 2) * sin(2 * u)
+                    }
+                },
+
+                {
+                    name: 'Bump Sphere',
+                    u: {
+                        min: -Math.PI,
+                        max: Math.PI,
+                        step: Math.PI / 40
+                    },
+                    v: {
+                        min: 0,
+                        max: Math.PI,
+                        step: Math.PI / 40
+                    },
+                    x: function (u, v) {
+                        var x = Math.sin(v) * Math.sin(u);
+                        var y = Math.sin(v) * Math.cos(u);
+                        var z = Math.cos(v);
+                        delta = sin(20 * x) + sin(20 * y) + sin(20 * z);
+                        return x * (1 + delta * 0.03);
+                    },
+                    y: function (u, v) {
+                        var x = Math.sin(v) * Math.sin(u);
+                        var y = Math.sin(v) * Math.cos(u);
+                        var z = Math.cos(v);
+                        delta = sin(20 * x) + sin(20 * y) + sin(20 * z);
+                        return y * (1 + delta * 0.03);
+                    },
+                    z: function (u, v) {
+                        var x = Math.sin(v) * Math.sin(u);
+                        var y = Math.sin(v) * Math.cos(u);
+                        var z = Math.cos(v);
+                        delta = sin(20 * x) + sin(20 * y) + sin(20 * z);
+                        return z * (1 + delta * 0.03);
+                    }
+                },
+
+                {
+                    name: 'Moebius Strip',
+                    u: {
+                        min: 0,
+                        max: PI * 2,
+                        step: PI / 10
+                    },
+                    v: {
+                        min: -1,
+                        max: 1,
+                        step: 0.2
+                    },
+                    x: function (u, v) {
+                        return (1 + v / 2 * cos(u / 2)) * cos(u);
+                    },
+                    y: function (u, v) {
+                        return (1 + v / 2 * cos(u / 2)) * sin(u);
+                    },
+                    z: function (u, v) {
+                        return v / 2 * sin(u / 2);
+                    }
+                }
+            ];
+
+            var currentIndex = 0;
+
+            chart.setOption({
+                tooltip: {},
+                title: [{
+                    text: 'Parametric Surfaces Fun',
+                    subtext: 'From Virtual Math Museum',
+                    sublink: 'http://virtualmathmuseum.org/Surface/gallery_o.html',
+                    left: 'center',
+                    textStyle: {
+                        color: '#fff'
+                    },
+                    subtextStyle: {
+                        color: '#fff'
+                    }
+                }, {
+                    id: 'surface-name',
+                    textStyle: {
+                        color: '#fff'
+                    },
+                    bottom: 10,
+                    text: parametricEquations[0].name
+                }],
+                visualMap: {
+                    show: false,
+                    dimension: 2,
+                    min: -5,
+                    max: 0,
+                    inRange: {
+                        color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+                    }
+                },
+                xAxis3D: {
+                    type: 'value'
+                },
+                yAxis3D: {
+                    type: 'value'
+                },
+                zAxis3D: {
+                    type: 'value'
+                },
+                grid3D: {
+                    axisLine: {
+                        lineStyle: {
+                            color: '#fff'
+                        }
+                    },
+                    postEffect: {
+                        enable: true
+                    },
+                    temporalSuperSampling: {
+                        enable: true
+                    },
+                    light: {
+                        main: {
+                            intensity: 1
+                        },
+                        ambient: {
+                            intensity: 0
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/pisa.hdr',
+                            exposure: 2,
+                            diffuseIntensity: 1,
+                            specularIntensity: 5
+                        }
+                    },
+                    viewControl: {
+                        // projection: 'orthographic'
+                    }
+                },
+                series: [{
+                    type: 'surface',
+                    parametric: true,
+                    shading: 'realistic',
+                    realisticMaterial: {
+                        roughness: 0.4,
+                        metalness: 1
+                    },
+                    // shading: 'albedo',
+                    parametricEquation: parametricEquations[0]
+                }]
+            });
+
+            function update() {
+                chart.setOption({
+                    title: {
+                        id: 'surface-name',
+                        text: parametricEquations[currentIndex].name
+                    },
+                    series: {
+                        parametricEquation: parametricEquations[currentIndex]
+                    }
+                })
+            }
+
+            document.getElementById('prev').addEventListener('click', function () {
+                currentIndex -= 1;
+                if (currentIndex < 0) {
+                    currentIndex = parametricEquations.length - 1;
+                }
+                update();
+            });
+
+            document.getElementById('next').addEventListener('click', function () {
+                currentIndex = (currentIndex + 1) % parametricEquations.length;
+                update();
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>
