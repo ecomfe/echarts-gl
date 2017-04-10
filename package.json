@@ -1,5 +1,5 @@
 {
-  "name": "echarts-x",
+  "name": "echarts-gl",
   "description": "Extension pack of ECharts providing 3d plots and globe visualization",
   "version": "1.0.0-alpha",
   "maintainers": [
