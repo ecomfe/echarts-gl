@@ -110,10 +110,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// PENDING Use a single canvas as layer or use image element?
 	var echartsGl = {
-	    version: '1.0.0',
+	    version: '1.0.0-alpha',
 	    dependencies: {
-	        echarts: '3.5.2',
-	        qtek: '0.3.1'
+	        echarts: '3.5.0',
+	        qtek: '0.3.2'
 	    }
 	};
 	var echarts = __webpack_require__(2);
@@ -276,7 +276,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	
-	    module.exports = '0.3.1';
+	    module.exports = '0.3.2';
 
 
 /***/ },
@@ -43075,6 +43075,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    defaultOption: {
 	        zlevel: 10,
+	        z: 2,
+
+	        legendHoverLink: true,
 
 	        // Only support forceAtlas2
 	        layout: 'forceAtlas2',
