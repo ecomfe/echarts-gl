@@ -1,7 +1,7 @@
 {
   "name": "echarts-x",
   "description": "Extension pack of ECharts providing 3d plots and globe visualization",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha",
   "maintainers": [
     {
       "name": "Yi Shen",
@@ -11,7 +11,7 @@
   "dependencies": {
     "zrender": "3.4.0",
     "echarts": "3.5.2",
-    "qtek": "0.3.1"
+    "qtek": "0.3.2"
   },
   "repository": "git://github.com/ecomfe/echarts-x",
   "main": "echarts-x",

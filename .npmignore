@@ -1,5 +1,6 @@
 /build
 /doc
+/test
 /index.html
 
 npm-debug.log
