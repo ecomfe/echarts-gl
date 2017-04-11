@@ -62,7 +62,7 @@ uniform sampler2D diffuseMap;
 #endif
 
 #if (LAYER_DIFFUSEMAP_COUNT > 0)
-uniform float layerEmissionIntensity[LAYER_DIFFUSEMAP_COUNT];
+uniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];
 uniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];
 #endif
 
@@ -236,7 +236,7 @@ void main()
     for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
         vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];
         float intensity = layerEmissionIntensity[_idx_];
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, texel2.rgb * intensity, texel2.a);
+        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;
     }}
 #endif
 

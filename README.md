@@ -5,7 +5,6 @@
 </a>
 
 
-
 ECharts-GL is an extension pack of [echarts](http://echarts.baidu.com), which providing 3D plots, globe visualization and WebGL acceleration.
 
 

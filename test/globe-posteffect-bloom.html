@@ -33,11 +33,14 @@
                         right: 0,
                         bottom: 0,
                         boundingCoords: [[-180, 90], [180, -90]],
+                        silent: true,
                         // silent: true,
                         itemStyle: {
-                            borderWidth: 1,
-                            borderColor: 'rgba(140, 10, 20, 1)',
-                            areaColor: 'transparent'
+                            normal: {
+                                borderWidth: 1,
+                                borderColor: 'rgba(140, 10, 20, 1)',
+                                areaColor: 'transparent'
+                            }
                         }
                     }
                 ]
@@ -77,7 +80,7 @@
                         type: 'blend',
                         blendTo: 'emission',
                         texture: mapChart,
-                        intensity: 10
+                        intensity: 4
                     }]
                 },
                 series: []

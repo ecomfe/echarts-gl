@@ -22,8 +22,8 @@
 
 var config = {
     color: '#c0101a',
-    levels: 50,
-    intensity: 100,
+    levels: 1,
+    intensity: 8,
     threshold: 0.01
 }
 
@@ -83,21 +83,22 @@ image("asset/bathymetry_bw_composite_4k.jpg").then(function(image) {
     });
     option.onupdate();
   }
-//   d3.timer(function(t) {
-    // var threshold = (t % 10000) / 10000;
-//   });
+  d3.timer(function(t) {
+    var threshold = (t % 10000) / 10000;
+    update(threshold, 1);
+  });
 
   initCharts(option);
 
   update(config.threshold, config.levels);
 
-  gui.add(config, 'levels', 0, 100).step(1).onFinishChange(function () {
-    update(config.threshold, config.levels);
-  });
+//   gui.add(config, 'levels', 0, 100).step(1).onFinishChange(function () {
+//     update(config.threshold, config.levels);
+//   });
 
-  gui.add(config, 'threshold', 0, 1.00).onFinishChange(function () {
-    update(config.threshold, config.levels);
-  });
+//   gui.add(config, 'threshold', 0, 1.00).onFinishChange(function () {
+//     update(config.threshold, config.levels);
+//   });
 
     gui.addColor(config, 'color').onChange(function () {
         context.strokeStyle = context.fillStyle = context.shadowColor = config.color;
@@ -197,7 +198,7 @@ function initCharts(option) {
 
             layers: [{
                 type: 'blend',
-                blendTo: 'albedo',
+                blendTo: 'emission',
                 texture: contourChart,
                 intensity: config.intensity
             }]
@@ -208,15 +209,15 @@ function initCharts(option) {
         chart.resize();
     });
 
-    // gui.add(config, 'intensity', 0, 200).onChange(function () {
-    //     chart.setOption({
-    //         globe: {
-    //             layers: [{
-    //                 intensity: config.intensity
-    //             }]
-    //         }
-    //     })
-    // });
+    gui.add(config, 'intensity', 0, 10).onChange(function () {
+        chart.setOption({
+            globe: {
+                layers: [{
+                    intensity: config.intensity
+                }]
+            }
+        })
+    });
 }
         </script>
     </body>

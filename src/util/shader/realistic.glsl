@@ -290,7 +290,7 @@ void main()
         // PENDING sRGB ?
         vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];
         float intensity = layerEmissionIntensity[_idx_];
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, texel2.rgb * intensity, texel2.a);
+        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;
     }}
 #endif
 
