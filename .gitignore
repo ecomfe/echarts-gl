@@ -167,6 +167,8 @@ node_modules
 # Assets files
 *.psd
 
+.vscode
+
 doc/static
 doc/example/data/raw
 todo
