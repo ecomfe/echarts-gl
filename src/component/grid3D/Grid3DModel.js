@@ -118,7 +118,7 @@ var Grid3DModel = echarts.extendComponentModel({
 
             // Alpha angle for top-down rotation
             // Positive to rotate to top.
-            alpha: 5,
+            alpha: 20,
             // beta angle for left-right rotation
             // Positive to rotate to right.
             beta: 40,
