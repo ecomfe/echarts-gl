@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>GraphGL - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <div id="toolbar">
+            <button id="stop-layout">Stop layout</button>
+            <button id="start-layout">Start alyout</button>
+        </div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/dist/extension/dataTool.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            function createNodes(widthCount, heightCount) {
+                var nodes = [];
+                for (var i = 0; i < widthCount; i++) {
+                    for (var j = 0; j < heightCount; j++) {
+                        nodes.push({
+                            x: Math.random() * window.innerWidth,
+                            y: Math.random() * window.innerHeight,
+                            value: 1
+                        });
+                    }
+                }
+                return nodes;
+            }
+
+            function createEdges(widthCount, heightCount) {
+                var edges = [];
+                for (var i = 0; i < widthCount; i++) {
+                    for (var j = 0; j < heightCount; j++) {
+                        if (i < widthCount - 1) {
+                            edges.push({
+                                source: i + j * widthCount,
+                                target: i + 1 + j * widthCount,
+                                value: 1
+                            });
+                        }
+                        if (j < heightCount - 1) {
+                            edges.push({
+                                source: i + j * widthCount,
+                                target: i + (j + 1) * widthCount,
+                                value: 1
+                            });
+                        }
+                    }
+                }
+                return edges;
+            }
+
+            var nodes = createNodes(50, 50);
+            var edges = createEdges(50, 50);
+
+            chart.setOption({
+                series: [{
+                    type: 'graphGL',
+                    nodes: nodes,
+                    edges: edges,
+                    itemStyle: {
+                        color: 'rgba(255,255,255,0.8)'
+                    },
+                    lineStyle: {
+                        color: 'rgba(255,255,255,0.8)',
+                        width: 3
+                    },
+                    forceAtlas2: {
+                        steps: 5,
+                        jitterTolerence: 10,
+                        edgeWeightInfluence: 2
+                    }
+                }]
+            });
+
+            $('#start-layout').click(function () {
+                chart.dispatchAction({
+                    type: 'graphGLStartLayout'
+                });
+            });
+
+            $('#stop-layout').click(function () {
+                chart.dispatchAction({
+                    type: 'graphGLStopLayout'
+                });
+            });
+
+            $(window).resize(chart.resize);
+        </script>
+    </body>
+</html>
