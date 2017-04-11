@@ -25666,7 +25666,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            // Alpha angle for top-down rotation
 	            // Positive to rotate to top.
-	            alpha: 5,
+	            alpha: 20,
 	            // beta angle for left-right rotation
 	            // Positive to rotate to right.
 	            beta: 40,
@@ -26685,10 +26685,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var targetDistance = viewControlModel.get('distance') + baseDistance;
 	        if (this._distance !== targetDistance) {
-	            this.zoomTo({
-	                distance: targetDistance
-	            });
-	            // this.setDistance(targetDistance);
+	            // this.zoomTo({
+	            //     distance: targetDistance
+	            // });
+	            this.setDistance(targetDistance);
 	        }
 
 	        this.minAlpha = retrieve.firstNotNull(viewControlModel.get('minAlpha'), -90);
@@ -26972,8 +26972,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        if (this.mode === 'rotate') {
-	            this._rotateVelocity.y = (e.offsetX - this._mouseX) / 500;
-	            this._rotateVelocity.x = (e.offsetY - this._mouseY) / 500;
+	            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 3;
+	            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 3;
 	        }
 	        else if (this.mode === 'pan') {
 	            this._panVelocity.x = e.offsetX - this._mouseX;
@@ -34315,6 +34315,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var x = Math.cos(phi) * Math.sin(theta) * r;
 	        var y = Math.cos(theta) * r;
 	        var z = Math.sin(phi) * Math.sin(theta) * r;
+
 	        kernel[i * 3] = x;
 	        kernel[i * 3 + 1] = y;
 	        kernel[i * 3 + 2] = z;
