@@ -4,9 +4,10 @@
     <img style="vertical-align: top;" src="./asset/logo.png?raw=true" alt="logo" height="50px">
 </a>
 
+
+
 ECharts-GL is an extension pack of [echarts](http://echarts.baidu.com), which providing 3D plots, globe visualization and WebGL acceleration.
 
-It is built on top of Canvas library [zrender](https://github.com/ecomfe/zrender) and WebGL library [qtek](https://github.com/pissang/qtek)。
 
 ## Docs
 
@@ -35,6 +36,13 @@ For example, load it by script tag.
 <script src="dist/echarts-gl.min.js"></script>
 ```
 
+## Dependencies
+
+Built on top of
+
++ Canvas library [zrender](https://github.com/ecomfe/zrender)
+
++ WebGL library [qtek](https://github.com/pissang/qtek)。
 
 ## License
 
