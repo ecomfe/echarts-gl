@@ -1,7 +1,7 @@
 # ECHARTS-GL
 
 <a href="http://echarts.baidu.com">
-    <img style="vertical-align: top;" src="./asset/logo.svg?raw=true" alt="logo" height="50px">
+    <img style="vertical-align: top;" src="./asset/logo.png?raw=true" alt="logo" height="50px">
 </a>
 
 ECharts-GL is an extension pack of [echarts](http://echarts.baidu.com), which providing 3D plots, globe visualization and WebGL acceleration.
