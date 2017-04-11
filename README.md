@@ -17,9 +17,8 @@ ECharts-GL is an extension pack of [echarts](http://echarts.baidu.com), which pr
 
 Use npm and webpack
 
-```
+```bash
 npm install echarts
-
 npm install echarts-gl
 ```
 
@@ -28,7 +27,7 @@ require('echarts');
 require('echarts-gl');
 ```
 
-You can also use the released bundle, Which is [Universal Module Definition](https://github.com/umdjs/umd), supports AMD, CommonJS and vanilla environments.
+You can also use the released bundle. Which is [Universal Module Definition](https://github.com/umdjs/umd), supports AMD, CommonJS and vanilla environments.
 
 For example, load it by script tag.
 ```html
@@ -39,6 +38,8 @@ For example, load it by script tag.
 ## Dependencies
 
 Built on top of
+
++ [ECharts](https://github.com/ecomfe/echarts)
 
 + Canvas library [zrender](https://github.com/ecomfe/zrender)
 
