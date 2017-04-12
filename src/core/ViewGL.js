@@ -204,7 +204,7 @@ ViewGL.prototype.hasDOF = function () {
 
 ViewGL.prototype.isAccumulateFinished = function () {
     return this.needsTemporalSS() ? this._temporalSS.isFinished()
-        : (this._frame > 20);
+        : (this._frame > 30);
 };
 
 ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
@@ -248,18 +248,18 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         renderer.render(scene, camera, true);
         frameBuffer.unbind(renderer);
         if (this._enableSSAO) {
-            this._compositor.updateSSAO(renderer, camera, accumFrame);
+            this._compositor.updateSSAO(renderer, camera, this._temporalSS.getFrame());
             this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
         }
 
         if (this.needsTemporalSS() && accumulating) {
-            this._compositor.composite(renderer, camera, this._temporalSS.getSourceFrameBuffer(), accumFrame);
+            this._compositor.composite(renderer, camera, this._temporalSS.getSourceFrameBuffer(), this._temporalSS.getFrame());
             renderer.setViewport(this.viewport);
             this._temporalSS.render(renderer);
         }
         else {
             renderer.setViewport(this.viewport);
-            this._compositor.composite(renderer, camera, null, accumFrame);
+            this._compositor.composite(renderer, camera, null, 0);
         }
     }
     else {
@@ -323,6 +323,7 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     compositor.setSSAOQuality(ssaoModel.get('quality'));
     compositor.setSSAOIntensity(ssaoModel.get('intensity'));
 
+    compositor.setDOFBlurQuality(dofModel.get('quality'));
     compositor.setDOFFocalDistance(dofModel.get('focalDistance'));
     compositor.setDOFFocalRange(dofModel.get('focalRange'));
     compositor.setDOFBlurSize(dofModel.get('blurRadius'));

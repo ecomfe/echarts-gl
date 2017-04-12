@@ -5,6 +5,7 @@ var Texture = require('qtek/lib/Texture');
 var FrameBuffer = require('qtek/lib/FrameBuffer');
 var FXLoader = require('qtek/lib/loader/FX');
 var SSAOPass = require('./SSAOPass');
+var poissonKernel = require('./poissonKernel');
 
 var effectJson = JSON.parse(require('text!./composite.json'));
 
@@ -54,6 +55,9 @@ function EffectCompositor() {
     this._dofBlurNodes = ['dof_far_blur', 'dof_near_blur', 'dof_coc_blur'].map(function (name) {
         return this._compositor.getNodeByName(name);
     }, this);
+
+    this._dofBlurKernel = 0;
+    this._dofBlurKernelSize = new Float32Array(0);
 }
 
 
@@ -200,10 +204,36 @@ EffectCompositor.prototype.setDOFBlurSize = function (blurSize) {
     }
 };
 
+EffectCompositor.prototype.setDOFBlurQuality = function (quality) {
+    var kernelSize = ({
+        low: 4, medium: 8, high: 16, ultra: 32
+    })[quality] || 8;
+
+    this._dofBlurKernelSize = kernelSize;
+
+    for (var i = 0; i < this._dofBlurNodes.length; i++) {
+        this._dofBlurNodes[i].shaderDefine('POISSON_KERNEL_SIZE', kernelSize);
+    }
+
+    this._dofBlurKernel = new Float32Array(kernelSize * 2);
+};
+
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
+
+    var blurKernel = this._dofBlurKernel;
+    var blurKernelSize = this._dofBlurKernelSize;
+    var frameAll = Math.floor(poissonKernel.length / 2 / blurKernelSize);
+    var kernelOffset = frame % frameAll;
+
+    for (var i = 0; i < blurKernelSize * 2; i++) {
+        blurKernel[i] = poissonKernel[i + kernelOffset * blurKernelSize * 2];
+    }
+
     for (var i = 0; i < this._dofBlurNodes.length; i++) {
         this._dofBlurNodes[i].setParameter('percent', frame / 30.0);
+        this._dofBlurNodes[i].setParameter('poissonKernel', blurKernel);
     }
+
     this._cocNode.setParameter('zNear', camera.near);
     this._cocNode.setParameter('zFar', camera.far);
     this._compositor.render(renderer, framebuffer);

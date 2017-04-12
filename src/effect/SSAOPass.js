@@ -46,6 +46,7 @@ function generateKernel(size, offset) {
         var x = Math.cos(phi) * Math.sin(theta) * r;
         var y = Math.cos(theta) * r;
         var z = Math.sin(phi) * Math.sin(theta) * r;
+
         kernel[i * 3] = x;
         kernel[i * 3 + 1] = y;
         kernel[i * 3 + 2] = z;

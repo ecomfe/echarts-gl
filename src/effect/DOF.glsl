@@ -9,6 +9,8 @@ varying vec2 v_Texcoord;
 uniform float blurSize : 10.0;
 uniform vec2 textureSize : [512.0, 512.0];
 
+uniform vec2 poissonKernel[POISSON_KERNEL_SIZE];
+
 uniform float percent;
 
 float nrand(const in vec2 n) {
@@ -21,25 +23,6 @@ float nrand(const in vec2 n) {
 
 void main()
 {
-    vec2 fTaps_Poisson[POISSON_KERNEL_SIZE];
-    // https://github.com/bartwronski/PoissonSamplingGenerator
-    fTaps_Poisson[0] = vec2(-0.399691779231, 0.728591545584);
-    fTaps_Poisson[1] = vec2(-0.48622557676, -0.84016533712);
-    fTaps_Poisson[2] = vec2(0.770309468987, -0.24906070432);
-    fTaps_Poisson[3] = vec2(0.556596796154, 0.820359876432);
-    fTaps_Poisson[4] = vec2(-0.933902004071, 0.0600539051593);
-    fTaps_Poisson[5] = vec2(0.330144964342, 0.207477293384);
-    fTaps_Poisson[6] = vec2(0.289013230975, -0.686749271417);
-    fTaps_Poisson[7] = vec2(-0.0832470893559, -0.187351643125);
-    fTaps_Poisson[8] = vec2(-0.296314525615, 0.254474834305);
-    fTaps_Poisson[9] = vec2(-0.850977666059, 0.484642744689);
-    fTaps_Poisson[10] = vec2(0.829287915319, 0.2345063545);
-    fTaps_Poisson[11] = vec2(-0.773042143899, -0.543741521254);
-    fTaps_Poisson[12] = vec2(0.0561133030864, 0.928419742597);
-    fTaps_Poisson[13] = vec2(-0.205799249508, -0.562072714492);
-    fTaps_Poisson[14] = vec2(-0.526991665882, -0.193690188118);
-    fTaps_Poisson[15] = vec2(-0.051789270667, -0.935374050821);
-
     vec2 offset = blurSize / textureSize;
 
     float rnd = 6.28318 * nrand(v_Texcoord + 0.07 * percent );
@@ -61,7 +44,7 @@ void main()
     float weightSum = 0.0;
 
     for (int i = 0; i < POISSON_KERNEL_SIZE; i++) {
-        vec2 ofs = fTaps_Poisson[i];
+        vec2 ofs = poissonKernel[i];
 
         ofs = vec2(dot(ofs, basis.xy), dot(ofs, basis.zw));
 
