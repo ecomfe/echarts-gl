@@ -561,7 +561,6 @@ var OrbitControl = Base.extend(function () {
         if (this._isAnimating()) {
             return;
         }
-        e.event.preventDefault();
         this._zoomHandler(e, e.pinchScale > 1 ? 1 : -1);
     },
 
@@ -587,6 +586,8 @@ var OrbitControl = Base.extend(function () {
         if (this.autoRotate && this.mode === 'rotate') {
             this._startCountingStill();
         }
+
+        e.event.preventDefault();
     },
 
     _mouseUpHandler: function () {
