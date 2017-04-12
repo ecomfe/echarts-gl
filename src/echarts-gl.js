@@ -185,6 +185,8 @@ echarts.registerPostUpdate(function (ecModel, api) {
     egl.update(ecModel, api);
 });
 
+echarts.registerPreprocessor(require('./preprocessor/backwardCompat'));
+
 echarts.graphicGL = require('./util/graphicGL');
 
 module.exports = EChartsGL;
