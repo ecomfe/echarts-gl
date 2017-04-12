@@ -261,6 +261,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    egl.update(ecModel, api);
 	});
 
+	echarts.registerPreprocessor(__webpack_require__(227));
+
 	echarts.graphicGL = __webpack_require__(31);
 
 	module.exports = EChartsGL;
@@ -25765,7 +25767,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                focalRange: 20,
 	                focalDistance: 50,
 	                blurRadius: 10,
-	                fstop: 2.8
+	                fstop: 2.8,
+	                quality: 'medium'
 	            },
 
 	            SSAO: {
@@ -26999,7 +27002,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (this._isAnimating()) {
 	            return;
 	        }
-	        e.event.preventDefault();
 	        this._zoomHandler(e, e.pinchScale > 1 ? 1 : -1);
 	    },
 
@@ -27025,6 +27027,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (this.autoRotate && this.mode === 'rotate') {
 	            this._startCountingStill();
 	        }
+
+	        e.event.preventDefault();
 	    },
 
 	    _mouseUpHandler: function () {
@@ -31464,7 +31468,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	ViewGL.prototype.isAccumulateFinished = function () {
 	    return this.needsTemporalSS() ? this._temporalSS.isFinished()
-	        : (this._frame > 20);
+	        : (this._frame > 30);
 	};
 
 	ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
@@ -31508,18 +31512,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        renderer.render(scene, camera, true);
 	        frameBuffer.unbind(renderer);
 	        if (this._enableSSAO) {
-	            this._compositor.updateSSAO(renderer, camera, accumFrame);
+	            this._compositor.updateSSAO(renderer, camera, this._temporalSS.getFrame());
 	            this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
 	        }
 
 	        if (this.needsTemporalSS() && accumulating) {
-	            this._compositor.composite(renderer, camera, this._temporalSS.getSourceFrameBuffer(), accumFrame);
+	            this._compositor.composite(renderer, camera, this._temporalSS.getSourceFrameBuffer(), this._temporalSS.getFrame());
 	            renderer.setViewport(this.viewport);
 	            this._temporalSS.render(renderer);
 	        }
 	        else {
 	            renderer.setViewport(this.viewport);
-	            this._compositor.composite(renderer, camera, null, accumFrame);
+	            this._compositor.composite(renderer, camera, null, 0);
 	        }
 	    }
 	    else {
@@ -31583,6 +31587,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    compositor.setSSAOQuality(ssaoModel.get('quality'));
 	    compositor.setSSAOIntensity(ssaoModel.get('intensity'));
 
+	    compositor.setDOFBlurQuality(dofModel.get('quality'));
 	    compositor.setDOFFocalDistance(dofModel.get('focalDistance'));
 	    compositor.setDOFFocalRange(dofModel.get('focalRange'));
 	    compositor.setDOFBlurSize(dofModel.get('blurRadius'));
@@ -32633,6 +32638,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var FrameBuffer = __webpack_require__(48);
 	var FXLoader = __webpack_require__(130);
 	var SSAOPass = __webpack_require__(134);
+	var poissonKernel = __webpack_require__(226);
 
 	var effectJson = JSON.parse(__webpack_require__(137));
 
@@ -32682,6 +32688,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this._dofBlurNodes = ['dof_far_blur', 'dof_near_blur', 'dof_coc_blur'].map(function (name) {
 	        return this._compositor.getNodeByName(name);
 	    }, this);
+
+	    this._dofBlurKernel = 0;
+	    this._dofBlurKernelSize = new Float32Array(0);
 	}
 
 
@@ -32828,10 +32837,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	};
 
+	EffectCompositor.prototype.setDOFBlurQuality = function (quality) {
+	    var kernelSize = ({
+	        low: 4, medium: 8, high: 16, ultra: 32
+	    })[quality] || 8;
+
+	    this._dofBlurKernelSize = kernelSize;
+
+	    for (var i = 0; i < this._dofBlurNodes.length; i++) {
+	        this._dofBlurNodes[i].shaderDefine('POISSON_KERNEL_SIZE', kernelSize);
+	    }
+
+	    this._dofBlurKernel = new Float32Array(kernelSize * 2);
+	};
+
 	EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
+
+	    var blurKernel = this._dofBlurKernel;
+	    var blurKernelSize = this._dofBlurKernelSize;
+	    var frameAll = Math.floor(poissonKernel.length / 2 / blurKernelSize);
+	    var kernelOffset = frame % frameAll;
+
+	    for (var i = 0; i < blurKernelSize * 2; i++) {
+	        blurKernel[i] = poissonKernel[i + kernelOffset * blurKernelSize * 2];
+	    }
+
 	    for (var i = 0; i < this._dofBlurNodes.length; i++) {
 	        this._dofBlurNodes[i].setParameter('percent', frame / 30.0);
+	        this._dofBlurNodes[i].setParameter('poissonKernel', blurKernel);
 	    }
+
 	    this._cocNode.setParameter('zNear', camera.near);
 	    this._cocNode.setParameter('zFar', camera.far);
 	    this._compositor.render(renderer, framebuffer);
@@ -34585,7 +34620,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 149 */
 /***/ function(module, exports) {
 
-	module.exports = "@export ecgl.dof.diskBlur\n\n#define POISSON_KERNEL_SIZE 16;\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 10.0;\nuniform vec2 textureSize : [512.0, 512.0];\n\nuniform float percent;\n\nfloat nrand(const in vec2 n) {\n    return fract(sin(dot(n.xy ,vec2(12.9898,78.233))) * 43758.5453);\n}\n\n@import qtek.util.rgbm\n@import qtek.util.float\n\n\nvoid main()\n{\n    vec2 fTaps_Poisson[POISSON_KERNEL_SIZE];\n    // https://github.com/bartwronski/PoissonSamplingGenerator\n    fTaps_Poisson[0] = vec2(-0.399691779231, 0.728591545584);\n    fTaps_Poisson[1] = vec2(-0.48622557676, -0.84016533712);\n    fTaps_Poisson[2] = vec2(0.770309468987, -0.24906070432);\n    fTaps_Poisson[3] = vec2(0.556596796154, 0.820359876432);\n    fTaps_Poisson[4] = vec2(-0.933902004071, 0.0600539051593);\n    fTaps_Poisson[5] = vec2(0.330144964342, 0.207477293384);\n    fTaps_Poisson[6] = vec2(0.289013230975, -0.686749271417);\n    fTaps_Poisson[7] = vec2(-0.0832470893559, -0.187351643125);\n    fTaps_Poisson[8] = vec2(-0.296314525615, 0.254474834305);\n    fTaps_Poisson[9] = vec2(-0.850977666059, 0.484642744689);\n    fTaps_Poisson[10] = vec2(0.829287915319, 0.2345063545);\n    fTaps_Poisson[11] = vec2(-0.773042143899, -0.543741521254);\n    fTaps_Poisson[12] = vec2(0.0561133030864, 0.928419742597);\n    fTaps_Poisson[13] = vec2(-0.205799249508, -0.562072714492);\n    fTaps_Poisson[14] = vec2(-0.526991665882, -0.193690188118);\n    fTaps_Poisson[15] = vec2(-0.051789270667, -0.935374050821);\n\n    vec2 offset = blurSize / textureSize;\n\n    float rnd = 6.28318 * nrand(v_Texcoord + 0.07 * percent );\n    float cosa = cos(rnd);\n    float sina = sin(rnd);\n    vec4 basis = vec4(cosa, -sina, sina, cosa);\n\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n#ifdef BLUR_COC\n    float cocSum = 0.0;\n#else\n    vec4 color = vec4(0.0);\n#endif\n\n\n    float weightSum = 0.0;\n\n    for (int i = 0; i < POISSON_KERNEL_SIZE; i++) {\n        vec2 ofs = fTaps_Poisson[i];\n\n        ofs = vec2(dot(ofs, basis.xy), dot(ofs, basis.zw));\n\n        vec2 uv = v_Texcoord + ofs * offset;\n        vec4 texel = texture2D(texture, uv);\n\n        float w = 1.0;\n#ifdef BLUR_COC\n        float fCoc = decodeFloat(texel) * 2.0 - 1.0;\n        // Blur coc in nearfield\n        cocSum += clamp(fCoc, -1.0, 0.0) * w;\n#else\n        texel = decodeHDR(texel);\n    #if !defined(BLUR_NEARFIELD)\n        float fCoc = decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0;\n        // TODO DOF premult to avoid bleeding, can be tweaked (currently x^3)\n        // tradeoff between bleeding dof and out of focus object that shrinks too much\n        w *= abs(fCoc);\n    #endif\n        color += texel * w;\n#endif\n\n        weightSum += w;\n    }\n\n#ifdef BLUR_COC\n    gl_FragColor = encodeFloat(clamp(cocSum / weightSum, -1.0, 0.0) * 0.5 + 0.5);\n#else\n    color /= weightSum;\n    // TODO Windows will not be totally transparent if color.rgb is not 0 and color.a is 0.\n    gl_FragColor = encodeHDR(color);\n#endif\n}\n\n@end"
+	module.exports = "@export ecgl.dof.diskBlur\n\n#define POISSON_KERNEL_SIZE 16;\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 10.0;\nuniform vec2 textureSize : [512.0, 512.0];\n\nuniform vec2 poissonKernel[POISSON_KERNEL_SIZE];\n\nuniform float percent;\n\nfloat nrand(const in vec2 n) {\n    return fract(sin(dot(n.xy ,vec2(12.9898,78.233))) * 43758.5453);\n}\n\n@import qtek.util.rgbm\n@import qtek.util.float\n\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n\n    float rnd = 6.28318 * nrand(v_Texcoord + 0.07 * percent );\n    float cosa = cos(rnd);\n    float sina = sin(rnd);\n    vec4 basis = vec4(cosa, -sina, sina, cosa);\n\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n#ifdef BLUR_COC\n    float cocSum = 0.0;\n#else\n    vec4 color = vec4(0.0);\n#endif\n\n\n    float weightSum = 0.0;\n\n    for (int i = 0; i < POISSON_KERNEL_SIZE; i++) {\n        vec2 ofs = poissonKernel[i];\n\n        ofs = vec2(dot(ofs, basis.xy), dot(ofs, basis.zw));\n\n        vec2 uv = v_Texcoord + ofs * offset;\n        vec4 texel = texture2D(texture, uv);\n\n        float w = 1.0;\n#ifdef BLUR_COC\n        float fCoc = decodeFloat(texel) * 2.0 - 1.0;\n        // Blur coc in nearfield\n        cocSum += clamp(fCoc, -1.0, 0.0) * w;\n#else\n        texel = decodeHDR(texel);\n    #if !defined(BLUR_NEARFIELD)\n        float fCoc = decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0;\n        // TODO DOF premult to avoid bleeding, can be tweaked (currently x^3)\n        // tradeoff between bleeding dof and out of focus object that shrinks too much\n        w *= abs(fCoc);\n    #endif\n        color += texel * w;\n#endif\n\n        weightSum += w;\n    }\n\n#ifdef BLUR_COC\n    gl_FragColor = encodeFloat(clamp(cocSum / weightSum, -1.0, 0.0) * 0.5 + 0.5);\n#else\n    color /= weightSum;\n    // TODO Windows will not be totally transparent if color.rgb is not 0 and color.a is 0.\n    gl_FragColor = encodeHDR(color);\n#endif\n}\n\n@end"
 
 /***/ },
 /* 150 */
@@ -46403,6 +46438,84 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.lines2D.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec2 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\n#ifdef POSITIONTEXTURE_ENABLED\nuniform sampler2D positionTexture;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, -10.0, 1.0);\n\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines2D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = color * v_Color;\n}\n@end\n\n\n@export ecgl.meshLines2D.vertex\n\n// https://mattdesl.svbtle.com/drawing-lines-is-hard\nattribute vec2 position: POSITION;\nattribute vec2 normal;\nattribute float offset;\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvoid main()\n{\n    vec4 p2 = worldViewProjection * vec4(position + normal, -10.0, 1.0);\n    gl_Position = worldViewProjection * vec4(position, -10.0, 1.0);\n\n    p2.xy /= p2.w;\n    gl_Position.xy /= gl_Position.w;\n\n    // Get normal on projection space.\n    vec2 N = normalize(p2.xy - gl_Position.xy);\n    gl_Position.xy += N * offset / viewport.zw * 2.0;\n\n    gl_Position.xy *= gl_Position.w;\n\n    v_Color = a_Color;\n}\n@end\n\n\n@export ecgl.meshLines2D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvoid main()\n{\n    // TODO Fadeout pixels v_Miter > 1\n    gl_FragColor = color * v_Color;\n}\n\n@end"
+
+/***/ },
+/* 225 */,
+/* 226 */
+/***/ function(module, exports) {
+
+	// Based on https://bl.ocks.org/mbostock/19168c663618b707158
+
+	module.exports = [
+	0.0, 0.0,
+	-0.321585265978, -0.154972575841,
+	0.458126042375, 0.188473391593,
+	0.842080129861, 0.527766490688,
+	0.147304551086, -0.659453822776,
+	-0.331943915203, -0.940619700594,
+	0.0479226680259, 0.54812163202,
+	0.701581552186, -0.709825561388,
+	-0.295436780218, 0.940589268233,
+	-0.901489676764, 0.237713156085,
+	0.973570876096, -0.109899459384,
+	-0.866792314779, -0.451805525005,
+	0.330975007087, 0.800048655954,
+	-0.344275183665, 0.381779221166,
+	-0.386139432542, -0.437418421534,
+	-0.576478634965, -0.0148463392551,
+	0.385798197415, -0.262426961053,
+	-0.666302061145, 0.682427250835,
+	-0.628010632582, -0.732836215494,
+	0.10163141741, -0.987658134403,
+	0.711995289051, -0.320024291314,
+	0.0296005138058, 0.950296523438,
+	0.0130612307608, -0.351024443122,
+	-0.879596633704, -0.10478487883,
+	0.435712737232, 0.504254490347,
+	0.779203817497, 0.206477676721,
+	0.388264289969, -0.896736162545,
+	-0.153106280781, -0.629203242522,
+	-0.245517550697, 0.657969239148,
+	0.126830499058, 0.26862328493,
+	-0.634888119007, -0.302301223431,
+	0.617074219636, 0.779817204925
+	];
+
+/***/ },
+/* 227 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var echarts = __webpack_require__(2);
+
+	function convertNormalEmphasis(option, optType) {
+	    if (option && option[optType] && (option[optType].normal || option[optType].emphasis)) {
+	        var normalOpt = option[optType].normal;
+	        var emphasisOpt = option[optType].emphasis;
+
+	        if (normalOpt) {
+	            option[optType] = normalOpt;
+	        }
+	        if (emphasisOpt) {
+	            option.emphasis = option.emphasis || {};
+	            option.emphasis[optType] = emphasisOpt;
+	        }
+	    }
+	}
+
+	function convertNormalEmphasisForEach(option) {
+	    convertNormalEmphasis(option, 'itemStyle');
+	    convertNormalEmphasis(option, 'lineStyle');
+	    convertNormalEmphasis(option, 'areaStyle');
+	    convertNormalEmphasis(option, 'label');
+	}
+
+	module.exports = function (option) {
+	    echarts.util.each(option.series, function (series) {
+	        convertNormalEmphasisForEach(series);
+	    });
+
+	    convertNormalEmphasis(option.geo3D);
+	};
 
 /***/ }
 /******/ ])
