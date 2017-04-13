@@ -13,7 +13,7 @@ var Roam2DControl = require('../../util/Roam2DControl');
 
 var PointsBuilder = require('../common/PointsBuilder');
 
-graphicGL.Shader.import(require('text!../../util/shader/lines2D.glsl'));
+graphicGL.Shader.import(require('../../util/shader/lines2D.glsl.js'));
 
 var globalLayoutId = 1;
 

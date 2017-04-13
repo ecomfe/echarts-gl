@@ -8,7 +8,7 @@ var SSAOPass = require('./SSAOPass');
 var poissonKernel = require('./poissonKernel');
 var graphicGL = require('../util/graphicGL');
 
-var effectJson = JSON.parse(require('text!./composite.json'));
+var effectJson = require('./composite.js');
 
 Shader['import'](require('qtek/lib/shader/source/compositor/blur.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/lut.essl'));
@@ -21,7 +21,7 @@ Shader['import'](require('qtek/lib/shader/source/compositor/dof.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/lensflare.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/blend.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
-Shader['import'](require('text!./DOF.glsl'));
+Shader['import'](require('./DOF.glsl.js'));
 
 function EffectCompositor() {
     this._sourceTexture = new Texture2D({

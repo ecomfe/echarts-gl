@@ -12,7 +12,7 @@ var Grid3DFace = require('./Grid3DFace');
 var Grid3DAxis = require('./Grid3DAxis');
 var LabelsMesh = require('../../util/mesh/LabelsMesh');
 
-graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
+graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
 
 ['x', 'y', 'z'].forEach(function (dim) {
     echarts.extendComponentView({

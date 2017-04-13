@@ -21,10 +21,10 @@ echarts.util.extend(Node3D.prototype, animatableMixin);
 
 // Some common shaders
 Shader.import(require('qtek/lib/shader/source/util.essl'));
-Shader.import(require('text!./shader/common.glsl'));
-Shader.import(require('text!./shader/color.glsl'));
-Shader.import(require('text!./shader/lambert.glsl'));
-Shader.import(require('text!./shader/realistic.glsl'));
+Shader.import(require('./shader/common.glsl.js'));
+Shader.import(require('./shader/color.glsl.js'));
+Shader.import(require('./shader/lambert.glsl.js'));
+Shader.import(require('./shader/realistic.glsl.js'));
 
 function isValueNone(value) {
     return !value || value === 'none';
@@ -316,6 +316,8 @@ graphicGL.createAmbientCubemap = function (opt, renderer, api, cb) {
         });
 
         cb && cb();
+
+        // TODO Refresh ?
     });
 
     return {

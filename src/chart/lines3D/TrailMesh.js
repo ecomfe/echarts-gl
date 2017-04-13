@@ -4,7 +4,7 @@ var spriteUtil = require('../../util/sprite');
 
 var TrailGeometry = require('./TrailGeometry');
 
-graphicGL.Shader.import(require('text!./shader/trail.glsl'));
+graphicGL.Shader.import(require('./shader/trail.glsl.js'));
 
 module.exports = graphicGL.Mesh.extend(function () {
 

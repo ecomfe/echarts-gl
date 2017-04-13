@@ -3,7 +3,7 @@ var graphicGL = require('../../util/graphicGL');
 var Pass = require('qtek/lib/compositor/Pass');
 var FrameBuffer = require('qtek/lib/FrameBuffer');
 
-graphicGL.Shader.import(require('text!./forceAtlas2.glsl'));
+graphicGL.Shader.import(require('./forceAtlas2.glsl.js'));
 
 var defaultConfigs = {
     repulsionByDegree: true,

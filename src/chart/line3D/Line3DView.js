@@ -8,7 +8,7 @@ var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 var lineContain = require('zrender/lib/contain/line');
 var TooltipHelper = require('../common/TooltipHelper');
 
-graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
+graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
 
 module.exports = echarts.extendChartView({
 

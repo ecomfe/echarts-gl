@@ -4,7 +4,7 @@ var echarts = require('echarts/lib/echarts');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 var vec4 = glmatrix.vec4;
 
-graphicGL.Shader.import(require('text!./sdfSprite.glsl'));
+graphicGL.Shader.import(require('./sdfSprite.glsl.js'));
 
 var PointsMesh = graphicGL.Mesh.extend(function () {
     var geometry = new graphicGL.Geometry({

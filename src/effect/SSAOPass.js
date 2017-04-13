@@ -7,7 +7,7 @@ var Shader = require('qtek/lib/Shader');
 var FrameBuffer = require('qtek/lib/FrameBuffer');
 var halton = require('./halton');
 
-Shader.import(require('text!./SSAO.glsl'));
+Shader.import(require('./SSAO.glsl.js'));
 
 function generateNoiseData(size) {
     var data = new Uint8Array(size * size * 4);

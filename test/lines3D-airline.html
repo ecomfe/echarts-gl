@@ -46,6 +46,7 @@
                         type: 'lines3D',
                         name: airlineName,
 
+
                         effect: {
                             show: false,
                             trailWidth: 4
@@ -54,15 +55,10 @@
                         lineStyle: {
                             width: 2,
                             color: 'rgb(50, 50, 150)',
-                            opacity: 0.04
+                            opacity: 0.1
                         },
                         blendMode: 'lighter',
 
-                        // data: [
-                        //     [
-                        //         [0, 0], [180, 0]
-                        //     ]
-                        // ]
                         data: routes.map(function (item) {
                             return [airports[item[1]].coord, airports[item[2]].coord];
                         })

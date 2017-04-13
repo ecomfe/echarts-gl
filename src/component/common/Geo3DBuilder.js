@@ -9,7 +9,7 @@ var LabelsBuilder = require('./LabelsBuilder');
 
 var vec3 = glmatrix.vec3;
 
-graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
+graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
 
 function Geo3DBuilder(api) {
 

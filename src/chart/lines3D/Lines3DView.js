@@ -3,7 +3,7 @@ var graphicGL = require('../../util/graphicGL');
 var LinesGeometry = require('../../util/geometry/Lines3D');
 var TrailMesh = require('./TrailMesh');
 
-graphicGL.Shader.import(require('text!../../util/shader/lines3D.glsl'));
+graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
 
 function getCoordSysSize(coordSys) {
     if (coordSys.radius != null) {

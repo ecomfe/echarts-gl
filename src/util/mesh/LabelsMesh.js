@@ -1,7 +1,7 @@
 var graphicGL = require('../graphicGL');
 var SpritesGeometry = require('../geometry/Sprites');
 
-graphicGL.Shader.import(require('text!../shader/labels3D.glsl'));
+graphicGL.Shader.import(require('../shader/labels3D.glsl.js'));
 
 module.exports = graphicGL.Mesh.extend(function () {
     var geometry = new SpritesGeometry({
