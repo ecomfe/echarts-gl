@@ -72,6 +72,8 @@ SceneHelper.prototype = {
                         if (self._skybox instanceof Skybox) {
                             self._skybox.setEnvironmentMap(lights.specular.cubemap);
                         }
+
+                        api.getZr().refresh();
                     });
             }
             this._lightRoot.add(lights.diffuse);

@@ -178,7 +178,7 @@ module.exports = echarts.extendComponentView({
         this._sceneHelper.updateLight(grid3DModel);
 
         // Set post effect
-        cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
+        cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'), api);
         cartesian.viewGL.setTemporalSuperSampling(grid3DModel.getModel('temporalSuperSampling'));
 
         this._initMouseHandler(grid3DModel);

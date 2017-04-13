@@ -303,16 +303,18 @@ ViewGL.prototype.dispose = function (renderer) {
 /**
  * @param {module:echarts/Model} Post effect model
  */
-ViewGL.prototype.setPostEffect = function (postEffectModel) {
+ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     var compositor = this._compositor;
     this._enablePostEffect = postEffectModel.get('enable');
     var bloomModel = postEffectModel.getModel('bloom');
     var dofModel = postEffectModel.getModel('depthOfField');
     var ssaoModel = postEffectModel.getModel('SSAO');
     var fxaaModel = postEffectModel.getModel('FXAA');
+    var colorCorrModel = postEffectModel.getModel('colorCorrection');
     fxaaModel.get('enable') ? compositor.enableFXAA() : compositor.disableFXAA();
     bloomModel.get('enable') ? compositor.enableBloom() : compositor.disableBloom();
     dofModel.get('enable') ? compositor.enableDOF() : compositor.disableDOF();
+    colorCorrModel.get('enable') ? compositor.enableColorCorrection() : compositor.disableColorCorrection();
 
     this._enableDOF = dofModel.get('enable');
     this._enableSSAO = ssaoModel.get('enable');
@@ -328,6 +330,12 @@ ViewGL.prototype.setPostEffect = function (postEffectModel) {
     compositor.setDOFFocalRange(dofModel.get('focalRange'));
     compositor.setDOFBlurSize(dofModel.get('blurRadius'));
     compositor.setDOFFStop(dofModel.get('fstop'));
+
+    compositor.setColorLookupTexture(colorCorrModel.get('lookupTexture'), api);
+    compositor.setExposure(colorCorrModel.get('exposure'));
+    ['brightness', 'contrast', 'saturation'].forEach(function (name) {
+        compositor.setColorCorrection(name, colorCorrModel.get(name));
+    });
 };
 
 ViewGL.prototype.setDOFFocusOnPoint = function (depth) {

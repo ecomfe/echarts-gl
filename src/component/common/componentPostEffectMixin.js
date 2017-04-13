@@ -24,6 +24,21 @@ module.exports = {
                 quality: 'medium',
                 intensity: 1
             },
+
+            colorCorrection: {
+                enable: true,
+
+                exposure: 0,
+
+                brightness: 0,
+
+                contrast: 1,
+
+                saturation: 1,
+
+                lookupTexture: ''
+            },
+
             FXAA: {
                 enable: false
             }

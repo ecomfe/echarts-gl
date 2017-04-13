@@ -44,7 +44,7 @@ module.exports = echarts.extendChartView({
         this._sceneHelper.updateLight(map3DModel);
 
         // Set post effect
-        geo3D.viewGL.setPostEffect(map3DModel.getModel('postEffect'));
+        geo3D.viewGL.setPostEffect(map3DModel.getModel('postEffect'), api);
         geo3D.viewGL.setTemporalSuperSampling(map3DModel.getModel('temporalSuperSampling'));
 
         // Must update after geo3D.viewGL.setPostEffect

@@ -56,7 +56,7 @@ module.exports = echarts.extendComponentView({
         this._sceneHelper.updateLight(geo3DModel);
 
         // Set post effect
-        geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'));
+        geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'), api);
         geo3D.viewGL.setTemporalSuperSampling(geo3DModel.getModel('temporalSuperSampling'));
 
         // Must update after geo3D.viewGL.setPostEffect

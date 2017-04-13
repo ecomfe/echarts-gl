@@ -6,6 +6,7 @@ var FrameBuffer = require('qtek/lib/FrameBuffer');
 var FXLoader = require('qtek/lib/loader/FX');
 var SSAOPass = require('./SSAOPass');
 var poissonKernel = require('./poissonKernel');
+var graphicGL = require('../util/graphicGL');
 
 var effectJson = JSON.parse(require('text!./composite.json'));
 
@@ -166,17 +167,48 @@ EffectCompositor.prototype.disableDOF = function () {
     this._compositeNode.inputs.texture = 'source';
 };
 
+/**
+ * Enable color correction
+ */
+EffectCompositor.prototype.enableColorCorrection = function () {
+    this._compositeNode.shaderDefine('COLOR_CORRECTION');
+    this._enableColorCorrection = true;
+};
+/**
+ * Disable color correction
+ */
+EffectCompositor.prototype.disableColorCorrection = function () {
+    this._compositeNode.shaderUndefine('COLOR_CORRECTION');
+    this._enableColorCorrection = false;
+};
+
+/**
+ * Set bloom intensity
+ * @param {number} value
+ */
 EffectCompositor.prototype.setBloomIntensity = function (value) {
     this._compositeNode.setParameter('bloomIntensity', value);
 };
 
+/**
+ * Set SSAO sample radius
+ * @param {number} value
+ */
 EffectCompositor.prototype.setSSAORadius = function (value) {
     this._ssaoPass.setParameter('radius', value);
 };
+/**
+ * Set SSAO intensity
+ * @param {number} value
+ */
 EffectCompositor.prototype.setSSAOIntensity = function (value) {
     this._ssaoPass.setParameter('ssaoIntensity', value);
 };
 
+/**
+ * Set SSAO quality
+ * @param {string} value
+ */
 EffectCompositor.prototype.setSSAOQuality = function (value) {
     var kernelSize = ({
         low: 8,
@@ -187,23 +219,43 @@ EffectCompositor.prototype.setSSAOQuality = function (value) {
     this._ssaoPass.setParameter('kernelSize', kernelSize);
 };
 
+/**
+ * Set depth of field focal distance
+ * @param {number} focalDist
+ */
 EffectCompositor.prototype.setDOFFocalDistance = function (focalDist) {
     this._cocNode.setParameter('focalDist', focalDist);
 };
 
+/**
+ * Set depth of field focal range
+ * @param {number} focalRange
+ */
 EffectCompositor.prototype.setDOFFocalRange = function (focalRange) {
     this._cocNode.setParameter('focalRange', focalRange);
 };
+/**
+ * Set depth of field fstop
+ * @param {number} focalRange
+ */
 EffectCompositor.prototype.setDOFFStop = function (fstop) {
     this._cocNode.setParameter('fstop', fstop);
 };
 
+/**
+ * Set depth of field max blur size
+ * @param {number} focalRange
+ */
 EffectCompositor.prototype.setDOFBlurSize = function (blurSize) {
     for (var i = 0; i < this._dofBlurNodes.length; i++) {
         this._dofBlurNodes[i].setParameter('blurSize', blurSize);
     }
 };
 
+/**
+ * Set depth of field blur quality
+ * @param {string} quality
+ */
 EffectCompositor.prototype.setDOFBlurQuality = function (quality) {
     var kernelSize = ({
         low: 4, medium: 8, high: 16, ultra: 32
@@ -216,6 +268,21 @@ EffectCompositor.prototype.setDOFBlurQuality = function (quality) {
     }
 
     this._dofBlurKernel = new Float32Array(kernelSize * 2);
+};
+
+EffectCompositor.prototype.setExposure = function (value) {
+    this._compositeNode.setParameter('exposure', Math.pow(2, value));
+};
+
+EffectCompositor.prototype.setColorLookupTexture = function (image, api) {
+    this._compositeNode.pass.material.setTextureImage('lut', this._enableColorCorrection ? image : 'none', api, {
+        minFilter: graphicGL.Texture.NEAREST,
+        magFilter: graphicGL.Texture.NEAREST,
+        flipY: false
+    });
+};
+EffectCompositor.prototype.setColorCorrection = function (type, value) {
+    this._compositeNode.setParameter(type, value);
 };
 
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {

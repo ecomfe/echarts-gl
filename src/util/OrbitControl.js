@@ -82,6 +82,16 @@ var OrbitControl = Base.extend(function () {
         damping: 0.8,
 
         /**
+         * @param {number}
+         */
+        rotateSensitivity: 1,
+
+        /**
+         * @param {number}
+         */
+        zoomSensitivity: 1,
+
+        /**
          * @type {qtek.Camera}
          */
         _camera: null,
@@ -257,6 +267,8 @@ var OrbitControl = Base.extend(function () {
         this.maxAlpha = retrieve.firstNotNull(viewControlModel.get('maxAlpha'), 90);
         this.minBeta = retrieve.firstNotNull(viewControlModel.get('minBeta'), -Infinity);
         this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), Infinity);
+        this.rotateSensitivity = retrieve.firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
+        this.zoomSensitivity = retrieve.firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
 
         this.setAlpha(viewControlModel.get('alpha') || 0);
         this.setBeta(viewControlModel.get('beta') || 0);
@@ -534,8 +546,8 @@ var OrbitControl = Base.extend(function () {
         }
 
         if (this.mode === 'rotate') {
-            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2;
-            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2;
+            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * this.rotateSensitivity;
+            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * this.rotateSensitivity;
         }
         else if (this.mode === 'pan') {
             this._panVelocity.x = e.offsetX - this._mouseX;
@@ -579,7 +591,7 @@ var OrbitControl = Base.extend(function () {
             this._distance - this.minDistance,
             this.maxDistance - this._distance
         ));
-        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20, 0.5);
+        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20 * this.zoomSensitivity, 0.5);
 
         this._rotating = false;
 
