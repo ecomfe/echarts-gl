@@ -534,8 +534,8 @@ var OrbitControl = Base.extend(function () {
         }
 
         if (this.mode === 'rotate') {
-            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 3;
-            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 3;
+            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2;
+            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2;
         }
         else if (this.mode === 'pan') {
             this._panVelocity.x = e.offsetX - this._mouseX;
