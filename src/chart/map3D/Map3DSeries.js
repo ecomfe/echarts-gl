@@ -15,6 +15,8 @@ var Map3DModel = echarts.extendSeriesModel({
 
     coordinateSystem: null,
 
+    visualColorAccessPath: 'itemStyle.areaColor',
+
     getInitialData: function (option) {
         option.data = this.getFilledRegions(option.data, option.map);
 
