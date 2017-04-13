@@ -12,6 +12,8 @@ ECharts-GL is an extension pack of [echarts](http://echarts.baidu.com), which pr
 
 + [Option Manual](https://ecomfe.github.io/echarts-doc/public/cn/option-gl.html)
 
++ [Gallery](http://gallery.echartsjs.com/explore.html#tags=echarts-gl)
+
 ## Installing
 
 Use npm and webpack
@@ -32,6 +34,26 @@ For example, load it by script tag.
 ```html
 <script src="dist/echarts.min.js"></script>
 <script src="dist/echarts-gl.min.js"></script>
+```
+
+## Basic Usage
+
+```js
+var chart = echarts.init(document.getElementById('main'));
+chart.setOption({
+    grid3D: {},
+    xAxis3D: {},
+    yAxis3D: {},
+    zAxis3D: {},
+    series: [{
+        type: 'scatter3D',
+        symbolSize: 50,
+        data: [[-1, -1, -1], [0, 0, 0], [1, 1, 1]],
+        itemStyle: {
+            opacity: 1
+        }
+    }]
+})
 ```
 
 ## Dependencies
