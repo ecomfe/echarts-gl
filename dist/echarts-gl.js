@@ -56,19 +56,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	__webpack_require__(1);
 
-	__webpack_require__(89);
-	__webpack_require__(151);
-	__webpack_require__(166);
+	__webpack_require__(90);
+	__webpack_require__(153);
+	__webpack_require__(168);
 
-	__webpack_require__(172);
-	__webpack_require__(182);
-	__webpack_require__(187);
-	__webpack_require__(195);
-	__webpack_require__(202);
-	__webpack_require__(206);
+	__webpack_require__(174);
+	__webpack_require__(184);
+	__webpack_require__(189);
+	__webpack_require__(197);
+	__webpack_require__(204);
+	__webpack_require__(208);
 
-	__webpack_require__(209);
-	__webpack_require__(212);
+	__webpack_require__(211);
+	__webpack_require__(214);
 
 /***/ },
 /* 1 */
@@ -261,9 +261,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    egl.update(ecModel, api);
 	});
 
-	echarts.registerPreprocessor(__webpack_require__(227));
+	echarts.registerPreprocessor(__webpack_require__(31));
 
-	echarts.graphicGL = __webpack_require__(31);
+	echarts.graphicGL = __webpack_require__(32);
 
 	module.exports = EChartsGL;
 
@@ -14726,33 +14726,69 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Mesh = __webpack_require__(32);
+	var echarts = __webpack_require__(2);
+
+	function convertNormalEmphasis(option, optType) {
+	    if (option && option[optType] && (option[optType].normal || option[optType].emphasis)) {
+	        var normalOpt = option[optType].normal;
+	        var emphasisOpt = option[optType].emphasis;
+
+	        if (normalOpt) {
+	            option[optType] = normalOpt;
+	        }
+	        if (emphasisOpt) {
+	            option.emphasis = option.emphasis || {};
+	            option.emphasis[optType] = emphasisOpt;
+	        }
+	    }
+	}
+
+	function convertNormalEmphasisForEach(option) {
+	    convertNormalEmphasis(option, 'itemStyle');
+	    convertNormalEmphasis(option, 'lineStyle');
+	    convertNormalEmphasis(option, 'areaStyle');
+	    convertNormalEmphasis(option, 'label');
+	}
+
+	module.exports = function (option) {
+	    echarts.util.each(option.series, function (series) {
+	        convertNormalEmphasisForEach(series);
+	    });
+
+	    convertNormalEmphasis(option.geo3D);
+	};
+
+/***/ },
+/* 32 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Mesh = __webpack_require__(33);
 	var Renderer = __webpack_require__(5);
-	var Texture2D = __webpack_require__(33);
+	var Texture2D = __webpack_require__(34);
 	var Texture = __webpack_require__(21);
 	var Shader = __webpack_require__(18);
 	var Material = __webpack_require__(20);
 	var Node3D = __webpack_require__(28);
-	var StaticGeometry = __webpack_require__(35);
+	var StaticGeometry = __webpack_require__(36);
 	var echarts = __webpack_require__(2);
-	var Scene = __webpack_require__(37);
-	var LRUCache = __webpack_require__(39);
-	var textureUtil = __webpack_require__(40);
-	var EChartsSurface = __webpack_require__(54);
-	var AmbientCubemapLight = __webpack_require__(55);
-	var AmbientSHLight = __webpack_require__(66);
-	var shUtil = __webpack_require__(67);
-	var retrieve = __webpack_require__(69);
+	var Scene = __webpack_require__(38);
+	var LRUCache = __webpack_require__(40);
+	var textureUtil = __webpack_require__(41);
+	var EChartsSurface = __webpack_require__(55);
+	var AmbientCubemapLight = __webpack_require__(56);
+	var AmbientSHLight = __webpack_require__(67);
+	var shUtil = __webpack_require__(68);
+	var retrieve = __webpack_require__(70);
 
-	var animatableMixin = __webpack_require__(70);
+	var animatableMixin = __webpack_require__(71);
 	echarts.util.extend(Node3D.prototype, animatableMixin);
 
 	// Some common shaders
-	Shader.import(__webpack_require__(76));
 	Shader.import(__webpack_require__(77));
 	Shader.import(__webpack_require__(78));
 	Shader.import(__webpack_require__(79));
 	Shader.import(__webpack_require__(80));
+	Shader.import(__webpack_require__(81));
 
 	function isValueNone(value) {
 	    return !value || value === 'none';
@@ -14848,38 +14884,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Geometries
 	graphicGL.Geometry = StaticGeometry;
 
-	graphicGL.SphereGeometry = __webpack_require__(50);
+	graphicGL.SphereGeometry = __webpack_require__(51);
 
-	graphicGL.PlaneGeometry = __webpack_require__(59);
+	graphicGL.PlaneGeometry = __webpack_require__(60);
 
-	graphicGL.CubeGeometry = __webpack_require__(62);
+	graphicGL.CubeGeometry = __webpack_require__(63);
 
 	// Lights
-	graphicGL.AmbientLight = __webpack_require__(81);
-	graphicGL.DirectionalLight = __webpack_require__(82);
-	graphicGL.PointLight = __webpack_require__(83);
-	graphicGL.SpotLight = __webpack_require__(84);
+	graphicGL.AmbientLight = __webpack_require__(82);
+	graphicGL.DirectionalLight = __webpack_require__(83);
+	graphicGL.PointLight = __webpack_require__(84);
+	graphicGL.SpotLight = __webpack_require__(85);
 
 	// Cameras
-	graphicGL.PerspectiveCamera = __webpack_require__(44);
-	graphicGL.OrthographicCamera = __webpack_require__(58);
+	graphicGL.PerspectiveCamera = __webpack_require__(45);
+	graphicGL.OrthographicCamera = __webpack_require__(59);
 
 	// Math
 	graphicGL.Vector2 = __webpack_require__(22);
 	graphicGL.Vector3 = __webpack_require__(14);
-	graphicGL.Vector4 = __webpack_require__(85);
+	graphicGL.Vector4 = __webpack_require__(86);
 
 	graphicGL.Quaternion = __webpack_require__(29);
 
-	graphicGL.Matrix2 = __webpack_require__(86);
-	graphicGL.Matrix2d = __webpack_require__(87);
-	graphicGL.Matrix3 = __webpack_require__(88);
+	graphicGL.Matrix2 = __webpack_require__(87);
+	graphicGL.Matrix2d = __webpack_require__(88);
+	graphicGL.Matrix3 = __webpack_require__(89);
 	graphicGL.Matrix4 = __webpack_require__(16);
 
-	graphicGL.Plane = __webpack_require__(47);
+	graphicGL.Plane = __webpack_require__(48);
 	graphicGL.Ray = __webpack_require__(26);
 	graphicGL.BoundingBox = __webpack_require__(13);
-	graphicGL.Frustum = __webpack_require__(46);
+	graphicGL.Frustum = __webpack_require__(47);
 
 	// Texture utilities
 
@@ -15223,7 +15259,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = graphicGL;
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -15286,7 +15322,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -15294,7 +15330,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var Texture = __webpack_require__(21);
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
-	    var mathUtil = __webpack_require__(34);
+	    var mathUtil = __webpack_require__(35);
 	    var isPowerOfTwo = mathUtil.isPowerOfTwo;
 
 	    /**
@@ -15477,7 +15513,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports) {
 
 	
@@ -15508,7 +15544,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -15517,7 +15553,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var Geometry = __webpack_require__(36);
+	    var Geometry = __webpack_require__(37);
 	    var BoundingBox = __webpack_require__(13);
 	    var glMatrix = __webpack_require__(15);
 	    var vendor = __webpack_require__(12);
@@ -16190,7 +16226,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -16542,14 +16578,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 37 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Node = __webpack_require__(28);
-	    var Light = __webpack_require__(38);
+	    var Light = __webpack_require__(39);
 	    var BoundingBox = __webpack_require__(13);
 
 	    /**
@@ -16895,7 +16931,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 38 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -16971,7 +17007,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 39 */
+/* 40 */
 /***/ function(module, exports) {
 
 	// Simple LRU cache use doubly linked list
@@ -17173,21 +17209,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 40 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Texture2D = __webpack_require__(33);
-	    var TextureCube = __webpack_require__(41);
-	    var request = __webpack_require__(42);
-	    var EnvironmentMapPass = __webpack_require__(43);
-	    var Skydome = __webpack_require__(49);
-	    var Scene = __webpack_require__(37);
+	    var Texture2D = __webpack_require__(34);
+	    var TextureCube = __webpack_require__(42);
+	    var request = __webpack_require__(43);
+	    var EnvironmentMapPass = __webpack_require__(44);
+	    var Skydome = __webpack_require__(50);
+	    var Scene = __webpack_require__(38);
 
-	    var dds = __webpack_require__(52);
-	    var hdr = __webpack_require__(53);
+	    var dds = __webpack_require__(53);
+	    var hdr = __webpack_require__(54);
 
 	    /**
 	     * @namespace qtek.util.texture
@@ -17402,7 +17438,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 41 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -17411,7 +17447,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
 	    var util = __webpack_require__(9);
-	    var mathUtil = __webpack_require__(34);
+	    var mathUtil = __webpack_require__(35);
 	    var isPowerOfTwo = mathUtil.isPowerOfTwo;
 
 	    var targetList = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
@@ -17631,7 +17667,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 42 */
+/* 43 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -17674,15 +17710,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 43 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
 	    var Base = __webpack_require__(6);
 	    var Vector3 = __webpack_require__(14);
-	    var PerspectiveCamera = __webpack_require__(44);
-	    var FrameBuffer = __webpack_require__(48);
+	    var PerspectiveCamera = __webpack_require__(45);
+	    var FrameBuffer = __webpack_require__(49);
 
 	    var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
 
@@ -17827,13 +17863,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 44 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Camera = __webpack_require__(45);
+	    var Camera = __webpack_require__(46);
 
 	    /**
 	     * @constructor qtek.camera.Perspective
@@ -17896,7 +17932,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 45 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -17904,7 +17940,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var Node = __webpack_require__(28);
 	    var Matrix4 = __webpack_require__(16);
-	    var Frustum = __webpack_require__(46);
+	    var Frustum = __webpack_require__(47);
 	    var Ray = __webpack_require__(26);
 
 	    var glMatrix = __webpack_require__(15);
@@ -18027,7 +18063,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 46 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -18035,7 +18071,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var Vector3 = __webpack_require__(14);
 	    var BoundingBox = __webpack_require__(13);
-	    var Plane = __webpack_require__(47);
+	    var Plane = __webpack_require__(48);
 
 	    var glMatrix = __webpack_require__(15);
 	    var vec3 = glMatrix.vec3;
@@ -18221,7 +18257,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 47 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -18398,7 +18434,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 48 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -18406,7 +18442,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var Base = __webpack_require__(6);
 	    var Texture = __webpack_require__(21);
-	    var TextureCube = __webpack_require__(41);
+	    var TextureCube = __webpack_require__(42);
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
 	    var Cache = __webpack_require__(19);
@@ -18800,17 +18836,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 49 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	    var Mesh = __webpack_require__(32);
-	    var SphereGeometry = __webpack_require__(50);
+	    var Mesh = __webpack_require__(33);
+	    var SphereGeometry = __webpack_require__(51);
 	    var Shader = __webpack_require__(18);
 	    var Material = __webpack_require__(20);
 
-	    Shader.import(__webpack_require__(51));
+	    Shader.import(__webpack_require__(52));
 	    /**
 	     * @constructor qtek.plugin.Skydome
 	     *
@@ -18912,13 +18948,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 50 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var StaticGeometry = __webpack_require__(35);
+	    var StaticGeometry = __webpack_require__(36);
 	    var glMatrix = __webpack_require__(15);
 	    var vec3 = glMatrix.vec3;
 	    var vec2 = glMatrix.vec2;
@@ -19064,7 +19100,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 51 */
+/* 52 */
 /***/ function(module, exports) {
 
 	
@@ -19072,15 +19108,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 52 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Texture = __webpack_require__(21);
-	    var Texture2D = __webpack_require__(33);
-	    var TextureCube = __webpack_require__(41);
+	    var Texture2D = __webpack_require__(34);
+	    var TextureCube = __webpack_require__(42);
 
 	    // http://msdn.microsoft.com/en-us/library/windows/desktop/bb943991(v=vs.85).aspx
 	    // https://github.com/toji/webgl-texture-utils/blob/master/texture-util/dds.js
@@ -19237,14 +19273,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 53 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Texture = __webpack_require__(21);
-	    var Texture2D = __webpack_require__(33);
+	    var Texture2D = __webpack_require__(34);
 	    var toChar = String.fromCharCode;
 
 	    var MINELEN = 8;
@@ -19423,7 +19459,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 54 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -19434,7 +19470,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @author Yi Shen(http://github.com/pissang)
 	 */
 
-	var Texture2D = __webpack_require__(33);
+	var Texture2D = __webpack_require__(34);
 	var Vector3 = __webpack_require__(14);
 	var Vector2 = __webpack_require__(22);
 
@@ -19605,15 +19641,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = EChartsSurface;
 
 /***/ },
-/* 55 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	// https://docs.unrealengine.com/latest/INT/Engine/Rendering/LightingAndShadows/AmbientCubemap/define(function(require) {
 
 
-	    var Light = __webpack_require__(38);
-	    var cubemapUtil = __webpack_require__(56);
+	    var Light = __webpack_require__(39);
+	    var cubemapUtil = __webpack_require__(57);
 
 	    /**
 	     * @constructor qtek.light.AmbientCubemap
@@ -19697,7 +19733,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 56 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Cubemap prefilter utility
@@ -19705,21 +19741,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	// http://http.developer.nvidia.com/GPUGems3/gpugems3_ch20.html
 
 
-	    var Texture2D = __webpack_require__(33);
-	    var TextureCube = __webpack_require__(41);
+	    var Texture2D = __webpack_require__(34);
+	    var TextureCube = __webpack_require__(42);
 	    var Texture = __webpack_require__(21);
-	    var FrameBuffer = __webpack_require__(48);
-	    var Pass = __webpack_require__(57);
+	    var FrameBuffer = __webpack_require__(49);
+	    var Pass = __webpack_require__(58);
 	    var Material = __webpack_require__(20);
 	    var Shader = __webpack_require__(18);
-	    var Skybox = __webpack_require__(61);
-	    var Scene = __webpack_require__(37);
-	    var EnvironmentMapPass = __webpack_require__(43);
+	    var Skybox = __webpack_require__(62);
+	    var Scene = __webpack_require__(38);
+	    var EnvironmentMapPass = __webpack_require__(44);
 	    var vendor = __webpack_require__(12);
-	    var textureUtil = __webpack_require__(40);
+	    var textureUtil = __webpack_require__(41);
 
-	    var integrateBRDFShaderCode = __webpack_require__(64);
-	    var prefilterFragCode = __webpack_require__(65);
+	    var integrateBRDFShaderCode = __webpack_require__(65);
+	    var prefilterFragCode = __webpack_require__(66);
 
 	    var cubemapUtil = {};
 
@@ -19973,22 +20009,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 57 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Base = __webpack_require__(6);
-	    var OrthoCamera = __webpack_require__(58);
-	    var Plane = __webpack_require__(59);
+	    var OrthoCamera = __webpack_require__(59);
+	    var Plane = __webpack_require__(60);
 	    var Shader = __webpack_require__(18);
 	    var Material = __webpack_require__(20);
-	    var Mesh = __webpack_require__(32);
+	    var Mesh = __webpack_require__(33);
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
 
-	    Shader['import'](__webpack_require__(60));
+	    Shader['import'](__webpack_require__(61));
 
 	    var planeGeo = new Plane();
 	    var mesh = new Mesh({
@@ -20194,13 +20230,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 58 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Camera = __webpack_require__(45);
+	    var Camera = __webpack_require__(46);
 	    /**
 	     * @constructor qtek.camera.Orthographic
 	     * @extends qtek.Camera
@@ -20269,13 +20305,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 59 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var StaticGeometry = __webpack_require__(35);
+	    var StaticGeometry = __webpack_require__(36);
 	    var BoundingBox = __webpack_require__(13);
 
 	    /**
@@ -20349,7 +20385,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 60 */
+/* 61 */
 /***/ function(module, exports) {
 
 	
@@ -20357,19 +20393,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// TODO Should not derived from mesh?
 
 
-	    var Mesh = __webpack_require__(32);
-	    var CubeGeometry = __webpack_require__(62);
+	    var Mesh = __webpack_require__(33);
+	    var CubeGeometry = __webpack_require__(63);
 	    var Shader = __webpack_require__(18);
 	    var Material = __webpack_require__(20);
 
 
-	    Shader.import(__webpack_require__(63));
+	    Shader.import(__webpack_require__(64));
 	    /**
 	     * @constructor qtek.plugin.Skybox
 	     *
@@ -20481,14 +20517,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var StaticGeometry = __webpack_require__(35);
-	    var Plane = __webpack_require__(59);
+	    var StaticGeometry = __webpack_require__(36);
+	    var Plane = __webpack_require__(60);
 	    var Matrix4 = __webpack_require__(16);
 	    var Vector3 = __webpack_require__(14);
 	    var BoundingBox = __webpack_require__(13);
@@ -20626,7 +20662,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 63 */
+/* 64 */
 /***/ function(module, exports) {
 
 	
@@ -20634,7 +20670,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 64 */
+/* 65 */
 /***/ function(module, exports) {
 
 	
@@ -20642,7 +20678,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 65 */
+/* 66 */
 /***/ function(module, exports) {
 
 	
@@ -20650,13 +20686,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 66 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(38);
+	    var Light = __webpack_require__(39);
 	    var vendor = __webpack_require__(12);
 
 	    /**
@@ -20714,29 +20750,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 67 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Spherical Harmonic Helpers
 
 
 	    var Texture = __webpack_require__(21);
-	    var FrameBuffer = __webpack_require__(48);
-	    var Texture2D = __webpack_require__(33);
-	    var TextureCube = __webpack_require__(41);
-	    var textureUtil = __webpack_require__(40);
-	    var Pass = __webpack_require__(57);
+	    var FrameBuffer = __webpack_require__(49);
+	    var Texture2D = __webpack_require__(34);
+	    var TextureCube = __webpack_require__(42);
+	    var textureUtil = __webpack_require__(41);
+	    var Pass = __webpack_require__(58);
 	    var vendor = __webpack_require__(12);
-	    var Skybox = __webpack_require__(61);
-	    var Skydome = __webpack_require__(49);
-	    var EnvironmentMapPass = __webpack_require__(43);
-	    var Scene = __webpack_require__(37);
+	    var Skybox = __webpack_require__(62);
+	    var Skydome = __webpack_require__(50);
+	    var EnvironmentMapPass = __webpack_require__(44);
+	    var Scene = __webpack_require__(38);
 	    var glmatrix = __webpack_require__(15);
 	    var vec3 = glmatrix.vec3;
 	    var sh = {};
 
 
-	    var projectEnvMapShaderCode = __webpack_require__(68);
+	    var projectEnvMapShaderCode = __webpack_require__(69);
 
 	    var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
 
@@ -20942,7 +20978,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 68 */
+/* 69 */
 /***/ function(module, exports) {
 
 	
@@ -20950,7 +20986,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 69 */
+/* 70 */
 /***/ function(module, exports) {
 
 	var retrieve = {
@@ -20967,10 +21003,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = retrieve;
 
 /***/ },
-/* 70 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Animator = __webpack_require__(71);
+	var Animator = __webpack_require__(72);
 
 	var animatableMixin = {
 
@@ -21065,7 +21101,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = animatableMixin;
 
 /***/ },
-/* 71 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -21073,9 +21109,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var Clip = __webpack_require__(72);
-	    var color = __webpack_require__(74);
-	    var util = __webpack_require__(75);
+	    var Clip = __webpack_require__(73);
+	    var color = __webpack_require__(75);
+	    var util = __webpack_require__(76);
 	    var isArrayLike = util.isArrayLike;
 
 	    var arraySlice = Array.prototype.slice;
@@ -21719,7 +21755,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 72 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -21738,7 +21774,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var easingFuncs = __webpack_require__(73);
+	    var easingFuncs = __webpack_require__(74);
 
 	    function Clip(options) {
 
@@ -21848,7 +21884,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 73 */
+/* 74 */
 /***/ function(module, exports) {
 
 	/**
@@ -22199,7 +22235,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 74 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -22207,7 +22243,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var LRU = __webpack_require__(39);
+	    var LRU = __webpack_require__(40);
 
 	    var kCSSColorTable = {
 	        'transparent': [0,0,0,0], 'aliceblue': [240,248,255,1],
@@ -22737,7 +22773,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 76 */
 /***/ function(module, exports) {
 
 	/**
@@ -23286,7 +23322,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 76 */
+/* 77 */
 /***/ function(module, exports) {
 
 	
@@ -23294,37 +23330,37 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 77 */
+/* 78 */
 /***/ function(module, exports) {
 
 	module.exports = "// COMMON SHADERS\n// -----------------WIREFRAME -----------\n@export ecgl.wireframe.common.vertexHeader\n\n#ifdef WIREFRAME_QUAD\nattribute vec4 barycentric;\nvarying vec4 v_Barycentric;\n#elif defined(WIREFRAME_TRIANGLE)\nattribute vec3 barycentric;\nvarying vec3 v_Barycentric;\n#endif\n\n@end\n\n@export ecgl.wireframe.common.vertexMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n    v_Barycentric = barycentric;\n#endif\n\n@end\n\n\n@export ecgl.wireframe.common.fragmentHeader\n\nuniform float wireframeLineWidth : 1;\nuniform vec3 wireframeLineColor: [0.5, 0.5, 0.5];\n\n#ifdef WIREFRAME_QUAD\nvarying vec4 v_Barycentric;\nfloat edgeFactor () {\n    vec4 d = fwidth(v_Barycentric);\n    vec4 a4 = smoothstep(vec4(0.0), d * wireframeLineWidth, v_Barycentric);\n    return min(min(min(a4.x, a4.y), a4.z), a4.w);\n}\n#elif defined(WIREFRAME_TRIANGLE)\nvarying vec3 v_Barycentric;\nfloat edgeFactor () {\n    vec3 d = fwidth(v_Barycentric);\n    vec3 a3 = smoothstep(vec3(0.0), d * wireframeLineWidth, v_Barycentric);\n    return min(min(a3.x, a3.y), a3.z);\n}\n#endif\n\n@end\n\n\n@export ecgl.wireframe.common.fragmentMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n    if (wireframeLineWidth > 0.) {\n        vec3 lineColor = wireframeLineColor;\n#ifdef SRGB_DECODE\n        lineColor = sRGBToLinear(vec4(lineColor, 1.0)).rgb;\n#endif\n\n        gl_FragColor.rgb = mix(lineColor, gl_FragColor.rgb, edgeFactor());\n    }\n#endif\n@end\n\n"
 
 /***/ },
-/* 78 */
+/* 79 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.color.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec2 uvRepeat: [1, 1];\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position: POSITION;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Texcoord = texcoord * uvRepeat;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n\n}\n\n@end\n\n@export ecgl.color.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\nuniform sampler2D diffuseMap;\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nvarying vec2 v_Texcoord;\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color);\n#else\n    gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n        // source-over blend\n        albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        // PENDING BLEND?\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n\n    @import ecgl.wireframe.common.fragmentMain\n\n}\n@end"
 
 /***/ },
-/* 79 */
+/* 80 */
 /***/ function(module, exports) {
 
 	module.exports = "/**\n * http://en.wikipedia.org/wiki/Lambertian_reflectance\n */\n\n@export ecgl.lambert.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n// Derivative maps - bump mapping unparametrized surfaces by Morten Mikkelsen\n//  http://mmikkelsen3d.blogspot.sk/2011/07/derivative-maps.html\n\n// Evaluate the derivative of the height w.r.t. screen-space using forward differencing (listing 2)\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import qtek.util.srgb\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color);\n#else\n    gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n    // PENDING\n    #ifdef SRGB_DECODE\n    gl_FragColor *= sRGBToLinear(v_Color);\n    #else\n    gl_FragColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n        // source-over blend\n        albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n    vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n    // PENDING\n    ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n        // Multiply a dot factor to make sure the bump detail can be seen\n        // in the dark side\n        diffuseColor += ambientLightColor[i] * ambientFactor;\n    }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseColor += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];\n    }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[i];\n        }\n#endif\n\n        float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end"
 
 /***/ },
-/* 80 */
+/* 81 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.realistic.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n\n}\n\n@end\n\n\n@export ecgl.realistic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n// Derivative maps - bump mapping unparametrized surfaces by Morten Mikkelsen\n//  http://mmikkelsen3d.blogspot.sk/2011/07/derivative-maps.html\n\n// Evaluate the derivative of the height w.r.t. screen-space using forward differencing (listing 2)\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\n// Fresnel\nvec3 F_Schlick(float ndv, vec3 spec) {\n    return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n    // from black ops 2\n    float a = pow(8192.0, g);\n    return (a + 2.0) / 8.0 * pow(ndh, a);\n}\nvoid main()\n{\n    vec4 albedoColor = color;\n\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n    // PENDING\n    #ifdef SRGB_DECODE\n    albedoColor *= sRGBToLinear(v_Color);\n    #else\n    albedoColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n        // source-over blend\n        albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    albedoColor *= albedoTexel;\n\n    vec3 baseColor = albedoColor.rgb;\n    albedoColor.rgb = baseColor * (1.0 - metalness);\n    vec3 specFactor = mix(vec3(0.04), baseColor, metalness);\n\n    float g = 1.0 - roughness;\n\n    vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n    // PENDING\n    ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseTerm = vec3(0.0);\n    vec3 specularTerm = vec3(0.0);\n\n    float ndv = clamp(dot(N, V), 0.0, 1.0);\n    vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n    {{\n        // Multiply a dot factor to make sure the bump detail can be seen\n        // in the dark side\n        diffuseTerm += ambientLightColor[_idx_] * ambientFactor;\n    }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];\n    }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n    {{\n        vec3 L = -directionalLightDirection[_idx_];\n        vec3 lc = directionalLightColor[_idx_];\n\n        vec3 H = normalize(L + V);\n        float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n        float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[_idx_];\n        }\n#endif\n\n        vec3 li = lc * ndl * shadowContrib;\n\n        diffuseTerm += li;\n        specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n    }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n    vec3 L = reflect(-V, N);\n    float rough2 = clamp(1.0 - g, 0.0, 1.0);\n    // FIXME fixed maxMipmapLevel ?\n    float bias2 = rough2 * 5.0;\n    // One brdf lookup is enough\n    vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n    vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n    vec3 envTexel2;\n    for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n    {{\n        envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n        // TODO mix ?\n        specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2;\n    }}\n#endif\n\n    gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n    gl_FragColor.a = albedoColor.a;\n\n    #ifdef SRGB_ENCODE\n    gl_FragColor = linearTosRGB(gl_FragColor);\n    #endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)\n    {{\n        // PENDING sRGB ?\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end"
 
 /***/ },
-/* 81 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(38);
+	    var Light = __webpack_require__(39);
 
 	    /**
 	     * @constructor qtek.light.Ambient
@@ -23360,13 +23396,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 82 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(38);
+	    var Light = __webpack_require__(39);
 	    var Vector3 = __webpack_require__(14);
 
 	    /**
@@ -23443,13 +23479,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 83 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(38);
+	    var Light = __webpack_require__(39);
 
 	    /**
 	     * @constructor qtek.light.Point
@@ -23508,13 +23544,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 84 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Light = __webpack_require__(38);
+	    var Light = __webpack_require__(39);
 	    var Vector3 = __webpack_require__(14);
 
 	    /**
@@ -23620,7 +23656,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 85 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -24347,7 +24383,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 86 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -24642,7 +24678,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 87 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -24919,7 +24955,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 88 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25323,14 +25359,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 89 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(90);
-	__webpack_require__(93);
-	__webpack_require__(97);
+	__webpack_require__(91);
+	__webpack_require__(94);
+	__webpack_require__(98);
 
-	__webpack_require__(111);
+	__webpack_require__(112);
 
 	var echarts = __webpack_require__(2);
 	echarts.registerAction({
@@ -25360,11 +25396,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 90 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var createAxis3DModel = __webpack_require__(91);
+	var createAxis3DModel = __webpack_require__(92);
 
 	var Axis3DModel = echarts.extendComponentModel({
 
@@ -25402,11 +25438,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 91 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var axisDefault = __webpack_require__(92);
+	var axisDefault = __webpack_require__(93);
 
 	var AXIS_TYPES = ['value', 'category', 'time', 'log'];
 	/**
@@ -25449,7 +25485,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 92 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -25545,13 +25581,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 93 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var componentViewControlMixin = __webpack_require__(94);
-	var componentPostEffectMixin = __webpack_require__(95);
-	var componentLightMixin = __webpack_require__(96);
+	var componentViewControlMixin = __webpack_require__(95);
+	var componentPostEffectMixin = __webpack_require__(96);
+	var componentLightMixin = __webpack_require__(97);
 
 	var Grid3DModel = echarts.extendComponentModel({
 
@@ -25695,7 +25731,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -25707,6 +25743,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            // Rotate, zoom damping.
 	            damping: 0.8,
+
+	            rotateSensitivity: 1,
+	            zoomSensitivity: 1,
 
 	            // Start rotating after still for a given time
 	            // default is 3 seconds
@@ -25749,7 +25788,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 95 */
+/* 96 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -25778,6 +25817,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	                quality: 'medium',
 	                intensity: 1
 	            },
+
+	            colorCorrection: {
+	                enable: true,
+
+	                exposure: 0,
+
+	                brightness: 0,
+
+	                contrast: 1,
+
+	                saturation: 1,
+
+	                lookupTexture: ''
+	            },
+
 	            FXAA: {
 	                enable: false
 	            }
@@ -25792,7 +25846,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 96 */
+/* 97 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -25831,24 +25885,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 97 */
+/* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// TODO orthographic camera
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var OrbitControl = __webpack_require__(98);
-	var Lines3DGeometry = __webpack_require__(99);
-	var retrieve = __webpack_require__(69);
+	var graphicGL = __webpack_require__(32);
+	var OrbitControl = __webpack_require__(99);
+	var Lines3DGeometry = __webpack_require__(100);
+	var retrieve = __webpack_require__(70);
 	var firstNotNull = retrieve.firstNotNull;
-	var ZRTextureAtlasSurface = __webpack_require__(101);
-	var SceneHelper = __webpack_require__(102);
-	var Grid3DFace = __webpack_require__(103);
-	var Grid3DAxis = __webpack_require__(106);
-	var LabelsMesh = __webpack_require__(107);
+	var ZRTextureAtlasSurface = __webpack_require__(102);
+	var SceneHelper = __webpack_require__(103);
+	var Grid3DFace = __webpack_require__(104);
+	var Grid3DAxis = __webpack_require__(107);
+	var LabelsMesh = __webpack_require__(108);
 
-	graphicGL.Shader.import(__webpack_require__(110));
+	graphicGL.Shader.import(__webpack_require__(111));
 
 	['x', 'y', 'z'].forEach(function (dim) {
 	    echarts.extendComponentView({
@@ -26014,7 +26068,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._sceneHelper.updateLight(grid3DModel);
 
 	        // Set post effect
-	        cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'));
+	        cartesian.viewGL.setPostEffect(grid3DModel.getModel('postEffect'), api);
 	        cartesian.viewGL.setTemporalSuperSampling(grid3DModel.getModel('temporalSuperSampling'));
 
 	        this._initMouseHandler(grid3DModel);
@@ -26436,7 +26490,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 98 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -26450,7 +26504,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Vector2 = __webpack_require__(22);
 	var Vector3 = __webpack_require__(14);
 	var Quaternion = __webpack_require__(29);
-	var retrieve = __webpack_require__(69);
+	var retrieve = __webpack_require__(70);
 
 	/**
 	 * @alias module:echarts-x/util/OrbitControl
@@ -26521,6 +26575,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	         * @param {number}
 	         */
 	        damping: 0.8,
+
+	        /**
+	         * @param {number}
+	         */
+	        rotateSensitivity: 1,
+
+	        /**
+	         * @param {number}
+	         */
+	        zoomSensitivity: 1,
 
 	        /**
 	         * @type {qtek.Camera}
@@ -26698,6 +26762,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.maxAlpha = retrieve.firstNotNull(viewControlModel.get('maxAlpha'), 90);
 	        this.minBeta = retrieve.firstNotNull(viewControlModel.get('minBeta'), -Infinity);
 	        this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), Infinity);
+	        this.rotateSensitivity = retrieve.firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
+	        this.zoomSensitivity = retrieve.firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
 
 	        this.setAlpha(viewControlModel.get('alpha') || 0);
 	        this.setBeta(viewControlModel.get('beta') || 0);
@@ -26975,8 +27041,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        if (this.mode === 'rotate') {
-	            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 3;
-	            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 3;
+	            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * this.rotateSensitivity;
+	            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * this.rotateSensitivity;
 	        }
 	        else if (this.mode === 'pan') {
 	            this._panVelocity.x = e.offsetX - this._mouseX;
@@ -27020,7 +27086,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this._distance - this.minDistance,
 	            this.maxDistance - this._distance
 	        ));
-	        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20, 0.5);
+	        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20 * this.zoomSensitivity, 0.5);
 
 	        this._rotating = false;
 
@@ -27068,7 +27134,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = OrbitControl;
 
 /***/ },
-/* 99 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -27079,10 +27145,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @author Yi Shen(http://github.com/pissang)
 	 */
 
-	var StaticGeometry = __webpack_require__(35);
+	var StaticGeometry = __webpack_require__(36);
 	var vec3 = __webpack_require__(15).vec3;
 	var echarts = __webpack_require__(2);
-	var dynamicConvertMixin = __webpack_require__(100);
+	var dynamicConvertMixin = __webpack_require__(101);
 
 	// var CURVE_RECURSION_LIMIT = 8;
 	// var CURVE_COLLINEAR_EPSILON = 40;
@@ -27463,7 +27529,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LinesGeometry;
 
 /***/ },
-/* 100 */
+/* 101 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -27507,7 +27573,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 101 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -27518,7 +27584,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// TODO Expand.
 	var echarts = __webpack_require__(2);
-	var Texture2D = __webpack_require__(33);
+	var Texture2D = __webpack_require__(34);
 
 	function ZRTextureAtlasSurfaceNode(zr, offsetX, offsetY, width, height, gap, dpr) {
 	    this._zr = zr;
@@ -27862,12 +27928,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ZRTextureAtlasSurface;
 
 /***/ },
-/* 102 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var graphicGL = __webpack_require__(31);
-	var Skybox = __webpack_require__(61);
-	var Skydome = __webpack_require__(49);
+	var graphicGL = __webpack_require__(32);
+	var Skybox = __webpack_require__(62);
+	var Skydome = __webpack_require__(50);
 	var echarts = __webpack_require__(2);
 
 	function SceneHelper() {
@@ -27939,6 +28005,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        if (self._skybox instanceof Skybox) {
 	                            self._skybox.setEnvironmentMap(lights.specular.cubemap);
 	                        }
+
+	                        api.getZr().refresh();
 	                    });
 	            }
 	            this._lightRoot.add(lights.diffuse);
@@ -28051,16 +28119,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = SceneHelper;
 
 /***/ },
-/* 103 */
+/* 104 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var retrieve = __webpack_require__(69);
-	var Lines3DGeometry = __webpack_require__(99);
-	var QuadsGeometry = __webpack_require__(104);
+	var graphicGL = __webpack_require__(32);
+	var retrieve = __webpack_require__(70);
+	var Lines3DGeometry = __webpack_require__(100);
+	var QuadsGeometry = __webpack_require__(105);
 	var firstNotNull = retrieve.firstNotNull;
-	var ifIgnoreOnTick = __webpack_require__(105);
+	var ifIgnoreOnTick = __webpack_require__(106);
 
 	var dimIndicesMap = {
 	    // Left to right
@@ -28257,7 +28325,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Grid3DFace;
 
 /***/ },
-/* 104 */
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -28265,10 +28333,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @author Yi Shen(http://github.com/pissang)
 	 */
 
-	var StaticGeometry = __webpack_require__(35);
+	var StaticGeometry = __webpack_require__(36);
 	var vec3 = __webpack_require__(15).vec3;
 	var echarts = __webpack_require__(2);
-	var dynamicConvertMixin = __webpack_require__(100);
+	var dynamicConvertMixin = __webpack_require__(101);
 
 	/**
 	 * @constructor
@@ -28369,7 +28437,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = QuadsGeometry;
 
 /***/ },
-/* 105 */
+/* 106 */
 /***/ function(module, exports) {
 
 	module.exports = function ifIgnoreOnTick(axis, i, interval) {
@@ -28387,16 +28455,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 106 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var Lines3DGeometry = __webpack_require__(99);
-	var retrieve = __webpack_require__(69);
-	var LabelsMesh = __webpack_require__(107);
+	var graphicGL = __webpack_require__(32);
+	var Lines3DGeometry = __webpack_require__(100);
+	var retrieve = __webpack_require__(70);
+	var LabelsMesh = __webpack_require__(108);
 	var firstNotNull = retrieve.firstNotNull;
-	var ifIgnoreOnTick = __webpack_require__(105);
+	var ifIgnoreOnTick = __webpack_require__(106);
 
 	var dimIndicesMap = {
 	    // Left to right
@@ -28635,13 +28703,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Grid3DAxis;
 
 /***/ },
-/* 107 */
+/* 108 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var graphicGL = __webpack_require__(31);
-	var SpritesGeometry = __webpack_require__(108);
+	var graphicGL = __webpack_require__(32);
+	var SpritesGeometry = __webpack_require__(109);
 
-	graphicGL.Shader.import(__webpack_require__(109));
+	graphicGL.Shader.import(__webpack_require__(110));
 
 	module.exports = graphicGL.Mesh.extend(function () {
 	    var geometry = new SpritesGeometry({
@@ -28663,7 +28731,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 108 */
+/* 109 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -28673,8 +28741,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @author Yi Shen(https://github.com/pissang)
 	 */
 	var echarts = __webpack_require__(2);
-	var StaticGeometry = __webpack_require__(35);
-	var dynamicConvertMixin = __webpack_require__(100);
+	var StaticGeometry = __webpack_require__(36);
+	var dynamicConvertMixin = __webpack_require__(101);
 
 	var squareTriangles = [
 	    0, 1, 2, 0, 2, 3
@@ -28806,27 +28874,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = SpritesGeometry;
 
 /***/ },
-/* 109 */
+/* 110 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.labels3D.vertex\n\n// https://mattdesl.svbtle.com/drawing-lines-is-hard\nattribute vec3 position: POSITION;\nattribute vec2 texcoord: TEXCOORD_0;\nattribute vec2 offset;\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    vec4 proj = worldViewProjection * vec4(position, 1.0);\n\n    vec2 screen = (proj.xy / abs(proj.w) + 1.0) * 0.5 * viewport.zw;\n\n    screen += offset;\n\n    proj.xy = (screen / viewport.zw - 0.5) * 2.0 * abs(proj.w);\n    gl_Position = proj;\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n    v_Texcoord = texcoord;\n\n    gl_PointSize = 10.0;\n}\n@end\n\n\n@export ecgl.labels3D.fragment\n\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform float alpha : 1.0;\nuniform sampler2D textureAtlas;\nuniform vec2 uvScale: [1.0, 1.0];\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\nvarying float v_Miter;\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    gl_FragColor = vec4(color, alpha) * texture2D(textureAtlas, v_Texcoord * uvScale);\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n}\n\n@end"
 
 /***/ },
-/* 110 */
+/* 111 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.lines3D.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines3D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color * v_Color);\n#else\n    gl_FragColor = color * v_Color;\n#endif\n}\n@end\n\n\n\n@export ecgl.lines3D.clipNear\n\nvec4 clipNear(vec4 p1, vec4 p2) {\n    float n = (p1.w - near) / (p1.w - p2.w);\n    // PENDING\n    return vec4(mix(p1.xy, p2.xy, n), -near, near);\n}\n\n@end\n\n@export ecgl.lines3D.expandLine\n    vec4 prevProj = worldViewProjection * vec4(positionPrev, 1.0);\n    vec4 currProj = worldViewProjection * vec4(position, 1.0);\n    vec4 nextProj = worldViewProjection * vec4(positionNext, 1.0);\n\n    if (currProj.w < 0.0) {\n        if (prevProj.w < 0.0) {\n            currProj = clipNear(currProj, nextProj);\n        }\n        else {\n            currProj = clipNear(currProj, prevProj);\n        }\n    }\n\n    vec2 prevScreen = (prevProj.xy / abs(prevProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 currScreen = (currProj.xy / abs(currProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 nextScreen = (nextProj.xy / abs(nextProj.w) + 1.0) * 0.5 * viewport.zw;\n\n    vec2 dir;\n    float len = offset;\n    // Start point\n    if (position == positionPrev) {\n        dir = normalize(nextScreen - currScreen);\n    }\n    // End point\n    else if (position == positionNext) {\n        dir = normalize(currScreen - prevScreen);\n    }\n    else {\n        vec2 dirA = normalize(currScreen - prevScreen);\n        vec2 dirB = normalize(nextScreen - currScreen);\n\n        vec2 tanget = normalize(dirA + dirB);\n\n        // TODO, simple miterLimit\n        float miter = 1.0 / max(dot(tanget, dirA), 0.5);\n        len *= miter;\n        dir = tanget;\n    }\n\n    dir = vec2(-dir.y, dir.x) * len;\n    currScreen += dir;\n\n    currProj.xy = (currScreen / viewport.zw - 0.5) * 2.0 * abs(currProj.w);\n@end\n\n\n@export ecgl.meshLines3D.vertex\n\n// https://mattdesl.svbtle.com/drawing-lines-is-hard\nattribute vec3 position: POSITION;\nattribute vec3 positionPrev;\nattribute vec3 positionNext;\nattribute float offset;\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\nuniform float near : NEAR;\n\nvarying vec4 v_Color;\n\n@import ecgl.wireframe.common.vertexHeader\n\n@import ecgl.lines3D.clipNear\n\nvoid main()\n{\n    @import ecgl.lines3D.expandLine\n\n    gl_Position = currProj;\n\n    v_Color = a_Color;\n\n    @import ecgl.wireframe.common.vertexMain\n}\n@end\n\n\n@export ecgl.meshLines3D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color * v_Color);\n#else\n    gl_FragColor = color * v_Color;\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end"
 
 /***/ },
-/* 111 */
+/* 112 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cartesian3D = __webpack_require__(112);
-	var Axis3D = __webpack_require__(114);
+	var Cartesian3D = __webpack_require__(113);
+	var Axis3D = __webpack_require__(115);
 	var echarts = __webpack_require__(2);
-	var layoutUtil = __webpack_require__(115);
-	var ViewGL = __webpack_require__(122);
-	var retrieve = __webpack_require__(69);
+	var layoutUtil = __webpack_require__(116);
+	var ViewGL = __webpack_require__(123);
+	var retrieve = __webpack_require__(70);
 
 	function resizeCartesian3D(grid3DModel, api) {
 	    // Use left/top/width/height
@@ -29023,11 +29091,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = grid3DCreator;
 
 /***/ },
-/* 112 */
+/* 113 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var Cartesian = __webpack_require__(113);
+	var Cartesian = __webpack_require__(114);
 
 	function Cartesian3D(name) {
 
@@ -29080,7 +29148,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Cartesian3D;
 
 /***/ },
-/* 113 */
+/* 114 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29091,7 +29159,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var zrUtil = __webpack_require__(75);
+	    var zrUtil = __webpack_require__(76);
 
 	    function dimAxisMapper(dim) {
 	        return this._axes[dim];
@@ -29198,7 +29266,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 114 */
+/* 115 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -29227,17 +29295,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Axis3D;
 
 /***/ },
-/* 115 */
+/* 116 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	// Layout helpers for each component positioning
 
 
-	    var zrUtil = __webpack_require__(75);
-	    var BoundingRect = __webpack_require__(116);
-	    var numberUtil = __webpack_require__(119);
-	    var formatUtil = __webpack_require__(120);
+	    var zrUtil = __webpack_require__(76);
+	    var BoundingRect = __webpack_require__(117);
+	    var numberUtil = __webpack_require__(120);
+	    var formatUtil = __webpack_require__(121);
 	    var parsePercent = numberUtil.parsePercent;
 	    var each = zrUtil.each;
 
@@ -29710,7 +29778,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 116 */
+/* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29719,8 +29787,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var vec2 = __webpack_require__(117);
-	    var matrix = __webpack_require__(118);
+	    var vec2 = __webpack_require__(118);
+	    var matrix = __webpack_require__(119);
 
 	    var v2ApplyTransform = vec2.applyTransform;
 	    var mathMin = Math.min;
@@ -29914,7 +29982,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 117 */
+/* 118 */
 /***/ function(module, exports) {
 
 	
@@ -30200,7 +30268,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 118 */
+/* 119 */
 /***/ function(module, exports) {
 
 	
@@ -30364,7 +30432,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 119 */
+/* 120 */
 /***/ function(module, exports) {
 
 	/**
@@ -30773,14 +30841,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 120 */
+/* 121 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	    var zrUtil = __webpack_require__(75);
-	    var numberUtil = __webpack_require__(119);
-	    var textContain = __webpack_require__(121);
+	    var zrUtil = __webpack_require__(76);
+	    var numberUtil = __webpack_require__(120);
+	    var textContain = __webpack_require__(122);
 
 	    var formatUtil = {};
 
@@ -30977,7 +31045,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 121 */
+/* 122 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -30986,8 +31054,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var textWidthCacheCounter = 0;
 	    var TEXT_CACHE_MAX = 5000;
 
-	    var util = __webpack_require__(75);
-	    var BoundingRect = __webpack_require__(116);
+	    var util = __webpack_require__(76);
+	    var BoundingRect = __webpack_require__(117);
 	    var retrieve = util.retrieve;
 
 	    function getTextWidth(text, textFont) {
@@ -31259,7 +31327,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 122 */
+/* 123 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -31269,19 +31337,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var echarts = __webpack_require__(2);
 
-	var Scene = __webpack_require__(37);
-	var ShadowMapPass = __webpack_require__(123);
-	var PerspectiveCamera = __webpack_require__(44);
-	var OrthographicCamera = __webpack_require__(58);
+	var Scene = __webpack_require__(38);
+	var ShadowMapPass = __webpack_require__(124);
+	var PerspectiveCamera = __webpack_require__(45);
+	var OrthographicCamera = __webpack_require__(59);
 	var Matrix4 = __webpack_require__(16);
 	var Vector3 = __webpack_require__(14);
 	var Vector2 = __webpack_require__(22);
 
 	var notifier = __webpack_require__(8);
 
-	var EffectCompositor = __webpack_require__(126);
-	var TemporalSuperSampling = __webpack_require__(150);
-	var halton = __webpack_require__(135);
+	var EffectCompositor = __webpack_require__(127);
+	var TemporalSuperSampling = __webpack_require__(152);
+	var halton = __webpack_require__(136);
 
 	/**
 	 * @constructor
@@ -31567,16 +31635,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * @param {module:echarts/Model} Post effect model
 	 */
-	ViewGL.prototype.setPostEffect = function (postEffectModel) {
+	ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
 	    var compositor = this._compositor;
 	    this._enablePostEffect = postEffectModel.get('enable');
 	    var bloomModel = postEffectModel.getModel('bloom');
 	    var dofModel = postEffectModel.getModel('depthOfField');
 	    var ssaoModel = postEffectModel.getModel('SSAO');
 	    var fxaaModel = postEffectModel.getModel('FXAA');
+	    var colorCorrModel = postEffectModel.getModel('colorCorrection');
 	    fxaaModel.get('enable') ? compositor.enableFXAA() : compositor.disableFXAA();
 	    bloomModel.get('enable') ? compositor.enableBloom() : compositor.disableBloom();
 	    dofModel.get('enable') ? compositor.enableDOF() : compositor.disableDOF();
+	    colorCorrModel.get('enable') ? compositor.enableColorCorrection() : compositor.disableColorCorrection();
 
 	    this._enableDOF = dofModel.get('enable');
 	    this._enableSSAO = ssaoModel.get('enable');
@@ -31592,6 +31662,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    compositor.setDOFFocalRange(dofModel.get('focalRange'));
 	    compositor.setDOFBlurSize(dofModel.get('blurRadius'));
 	    compositor.setDOFFStop(dofModel.get('fstop'));
+
+	    compositor.setColorLookupTexture(colorCorrModel.get('lookupTexture'), api);
+	    compositor.setExposure(colorCorrModel.get('exposure'));
+	    ['brightness', 'contrast', 'saturation'].forEach(function (name) {
+	        compositor.setColorCorrection(name, colorCorrModel.get(name));
+	    });
 	};
 
 	ViewGL.prototype.setDOFFocusOnPoint = function (depth) {
@@ -31630,7 +31706,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ViewGL;
 
 /***/ },
-/* 123 */
+/* 124 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -31639,26 +31715,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var glenum = __webpack_require__(11);
 	    var Vector3 = __webpack_require__(14);
 	    var BoundingBox = __webpack_require__(13);
-	    var Frustum = __webpack_require__(46);
+	    var Frustum = __webpack_require__(47);
 	    var Matrix4 = __webpack_require__(16);
 	    var Renderer = __webpack_require__(5);
 	    var Shader = __webpack_require__(18);
-	    var Light = __webpack_require__(38);
-	    var Mesh = __webpack_require__(32);
-	    var SpotLight = __webpack_require__(84);
-	    var DirectionalLight = __webpack_require__(82);
-	    var PointLight = __webpack_require__(83);
+	    var Light = __webpack_require__(39);
+	    var Mesh = __webpack_require__(33);
+	    var SpotLight = __webpack_require__(85);
+	    var DirectionalLight = __webpack_require__(83);
+	    var PointLight = __webpack_require__(84);
 	    var shaderLibrary = __webpack_require__(17);
 	    var Material = __webpack_require__(20);
-	    var FrameBuffer = __webpack_require__(48);
+	    var FrameBuffer = __webpack_require__(49);
 	    var Texture = __webpack_require__(21);
-	    var Texture2D = __webpack_require__(33);
-	    var TextureCube = __webpack_require__(41);
-	    var PerspectiveCamera = __webpack_require__(44);
-	    var OrthoCamera = __webpack_require__(58);
+	    var Texture2D = __webpack_require__(34);
+	    var TextureCube = __webpack_require__(42);
+	    var PerspectiveCamera = __webpack_require__(45);
+	    var OrthoCamera = __webpack_require__(59);
 
-	    var Pass = __webpack_require__(57);
-	    var TexturePool = __webpack_require__(124);
+	    var Pass = __webpack_require__(58);
+	    var TexturePool = __webpack_require__(125);
 
 	    var glMatrix = __webpack_require__(15);
 	    var mat4 = glMatrix.mat4;
@@ -31666,7 +31742,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
 
-	    Shader['import'](__webpack_require__(125));
+	    Shader['import'](__webpack_require__(126));
 
 	    /**
 	     * Pass rendering shadow map.
@@ -32503,13 +32579,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 124 */
+/* 125 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Texture2D = __webpack_require__(33);
+	    var Texture2D = __webpack_require__(34);
 	    var glenum = __webpack_require__(11);
 	    var util = __webpack_require__(9);
 
@@ -32620,7 +32696,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 125 */
+/* 126 */
 /***/ function(module, exports) {
 
 	
@@ -32628,22 +32704,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 126 */
+/* 127 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Compositor = __webpack_require__(127);
+	var Compositor = __webpack_require__(128);
 	var Shader = __webpack_require__(18);
-	var Texture2D = __webpack_require__(33);
+	var Texture2D = __webpack_require__(34);
 	var Texture = __webpack_require__(21);
-	var FrameBuffer = __webpack_require__(48);
-	var FXLoader = __webpack_require__(130);
-	var SSAOPass = __webpack_require__(134);
-	var poissonKernel = __webpack_require__(226);
+	var FrameBuffer = __webpack_require__(49);
+	var FXLoader = __webpack_require__(131);
+	var SSAOPass = __webpack_require__(135);
+	var poissonKernel = __webpack_require__(138);
+	var graphicGL = __webpack_require__(32);
 
-	var effectJson = JSON.parse(__webpack_require__(137));
+	var effectJson = JSON.parse(__webpack_require__(139));
 
-	Shader['import'](__webpack_require__(138));
-	Shader['import'](__webpack_require__(139));
 	Shader['import'](__webpack_require__(140));
 	Shader['import'](__webpack_require__(141));
 	Shader['import'](__webpack_require__(142));
@@ -32654,6 +32729,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	Shader['import'](__webpack_require__(147));
 	Shader['import'](__webpack_require__(148));
 	Shader['import'](__webpack_require__(149));
+	Shader['import'](__webpack_require__(150));
+	Shader['import'](__webpack_require__(151));
 
 	function EffectCompositor() {
 	    this._sourceTexture = new Texture2D({
@@ -32799,17 +32876,48 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this._compositeNode.inputs.texture = 'source';
 	};
 
+	/**
+	 * Enable color correction
+	 */
+	EffectCompositor.prototype.enableColorCorrection = function () {
+	    this._compositeNode.shaderDefine('COLOR_CORRECTION');
+	    this._enableColorCorrection = true;
+	};
+	/**
+	 * Disable color correction
+	 */
+	EffectCompositor.prototype.disableColorCorrection = function () {
+	    this._compositeNode.shaderUndefine('COLOR_CORRECTION');
+	    this._enableColorCorrection = false;
+	};
+
+	/**
+	 * Set bloom intensity
+	 * @param {number} value
+	 */
 	EffectCompositor.prototype.setBloomIntensity = function (value) {
 	    this._compositeNode.setParameter('bloomIntensity', value);
 	};
 
+	/**
+	 * Set SSAO sample radius
+	 * @param {number} value
+	 */
 	EffectCompositor.prototype.setSSAORadius = function (value) {
 	    this._ssaoPass.setParameter('radius', value);
 	};
+	/**
+	 * Set SSAO intensity
+	 * @param {number} value
+	 */
 	EffectCompositor.prototype.setSSAOIntensity = function (value) {
 	    this._ssaoPass.setParameter('ssaoIntensity', value);
 	};
 
+	/**
+	 * Set SSAO quality
+	 * @param {string} value
+	 */
 	EffectCompositor.prototype.setSSAOQuality = function (value) {
 	    var kernelSize = ({
 	        low: 8,
@@ -32820,23 +32928,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this._ssaoPass.setParameter('kernelSize', kernelSize);
 	};
 
+	/**
+	 * Set depth of field focal distance
+	 * @param {number} focalDist
+	 */
 	EffectCompositor.prototype.setDOFFocalDistance = function (focalDist) {
 	    this._cocNode.setParameter('focalDist', focalDist);
 	};
 
+	/**
+	 * Set depth of field focal range
+	 * @param {number} focalRange
+	 */
 	EffectCompositor.prototype.setDOFFocalRange = function (focalRange) {
 	    this._cocNode.setParameter('focalRange', focalRange);
 	};
+	/**
+	 * Set depth of field fstop
+	 * @param {number} focalRange
+	 */
 	EffectCompositor.prototype.setDOFFStop = function (fstop) {
 	    this._cocNode.setParameter('fstop', fstop);
 	};
 
+	/**
+	 * Set depth of field max blur size
+	 * @param {number} focalRange
+	 */
 	EffectCompositor.prototype.setDOFBlurSize = function (blurSize) {
 	    for (var i = 0; i < this._dofBlurNodes.length; i++) {
 	        this._dofBlurNodes[i].setParameter('blurSize', blurSize);
 	    }
 	};
 
+	/**
+	 * Set depth of field blur quality
+	 * @param {string} quality
+	 */
 	EffectCompositor.prototype.setDOFBlurQuality = function (quality) {
 	    var kernelSize = ({
 	        low: 4, medium: 8, high: 16, ultra: 32
@@ -32849,6 +32977,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    this._dofBlurKernel = new Float32Array(kernelSize * 2);
+	};
+
+	EffectCompositor.prototype.setExposure = function (value) {
+	    this._compositeNode.setParameter('exposure', Math.pow(2, value));
+	};
+
+	EffectCompositor.prototype.setColorLookupTexture = function (image, api) {
+	    this._compositeNode.pass.material.setTextureImage('lut', this._enableColorCorrection ? image : 'none', api, {
+	        minFilter: graphicGL.Texture.NEAREST,
+	        magFilter: graphicGL.Texture.NEAREST,
+	        flipY: false
+	    });
+	};
+	EffectCompositor.prototype.setColorCorrection = function (type, value) {
+	    this._compositeNode.setParameter(type, value);
 	};
 
 	EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
@@ -32882,15 +33025,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = EffectCompositor;
 
 /***/ },
-/* 127 */
+/* 128 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Graph = __webpack_require__(128);
-	    var TexturePool = __webpack_require__(124);
-	    var FrameBuffer = __webpack_require__(48);
+	    var Graph = __webpack_require__(129);
+	    var TexturePool = __webpack_require__(125);
+	    var FrameBuffer = __webpack_require__(49);
 
 	    /**
 	     * Compositor provide graph based post processing
@@ -32977,14 +33120,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 128 */
+/* 129 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Base = __webpack_require__(6);
-	    var GraphNode = __webpack_require__(129);
+	    var GraphNode = __webpack_require__(130);
 
 	    /**
 	     * @constructor qtek.compositor.Graph
@@ -33126,7 +33269,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 129 */
+/* 130 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33382,24 +33525,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 130 */
+/* 131 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
 	    var Base = __webpack_require__(6);
-	    var request = __webpack_require__(42);
+	    var request = __webpack_require__(43);
 	    var util = __webpack_require__(9);
-	    var Compositor = __webpack_require__(127);
-	    var CompoNode = __webpack_require__(129);
-	    var CompoSceneNode = __webpack_require__(131);
-	    var CompoTextureNode = __webpack_require__(132);
-	    var CompoFilterNode = __webpack_require__(133);
+	    var Compositor = __webpack_require__(128);
+	    var CompoNode = __webpack_require__(130);
+	    var CompoSceneNode = __webpack_require__(132);
+	    var CompoTextureNode = __webpack_require__(133);
+	    var CompoFilterNode = __webpack_require__(134);
 	    var Shader = __webpack_require__(18);
 	    var Texture = __webpack_require__(21);
-	    var Texture2D = __webpack_require__(33);
-	    var TextureCube = __webpack_require__(41);
+	    var Texture2D = __webpack_require__(34);
+	    var TextureCube = __webpack_require__(42);
 
 	    var shaderSourceReg = /#source\((.*?)\)/;
 	    var urlReg = /#url\((.*?)\)/;
@@ -33782,16 +33925,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 131 */
+/* 132 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Node = __webpack_require__(129);
+	    var Node = __webpack_require__(130);
 	    var glinfo = __webpack_require__(10);
 	    var glenum = __webpack_require__(11);
-	    var FrameBuffer = __webpack_require__(48);
+	    var FrameBuffer = __webpack_require__(49);
 
 	    /**
 	     * @constructor qtek.compositor.SceneNode
@@ -33887,13 +34030,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 132 */
+/* 133 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Node = __webpack_require__(129);
+	    var Node = __webpack_require__(130);
 
 	    /**
 	     * @constructor qtek.compositor.TextureNode
@@ -33927,14 +34070,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 133 */
+/* 134 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 
-	    var Pass = __webpack_require__(57);
-	    var Node = __webpack_require__(129);
+	    var Pass = __webpack_require__(58);
+	    var Node = __webpack_require__(130);
 
 	    // TODO curlnoise demo wrong
 
@@ -34299,19 +34442,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 134 */
+/* 135 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Matrix4 = __webpack_require__(16);
 	var Vector3 = __webpack_require__(14);
-	var Texture2D = __webpack_require__(33);
+	var Texture2D = __webpack_require__(34);
 	var Texture = __webpack_require__(21);
-	var Pass = __webpack_require__(57);
+	var Pass = __webpack_require__(58);
 	var Shader = __webpack_require__(18);
-	var FrameBuffer = __webpack_require__(48);
-	var halton = __webpack_require__(135);
+	var FrameBuffer = __webpack_require__(49);
+	var halton = __webpack_require__(136);
 
-	Shader.import(__webpack_require__(136));
+	Shader.import(__webpack_require__(137));
 
 	function generateNoiseData(size) {
 	    var data = new Uint8Array(size * size * 4);
@@ -34494,7 +34637,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = SSAOPass;
 
 /***/ },
-/* 135 */
+/* 136 */
 /***/ function(module, exports) {
 
 	
@@ -34517,19 +34660,60 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = halton;
 
 /***/ },
-/* 136 */
+/* 137 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.ssao.estimate\n\nuniform sampler2D depthTex;\n\nuniform sampler2D noiseTex;\n\nuniform vec2 depthTexSize;\n\nuniform vec2 noiseTexSize;\n\nuniform mat4 projection;\n\nuniform mat4 projectionInv;\n\nuniform mat4 viewInverseTranspose;\n\nuniform vec3 kernel[KERNEL_SIZE];\n\nuniform float radius : 1;\n\nuniform float power : 2;\n\nuniform float bias: 1e-2;\n\nvarying vec2 v_Texcoord;\n\n#ifdef DEPTH_ENCODED\n@import qtek.util.decode_float\n#endif\n\nvec3 ssaoEstimator(in vec3 originPos) {\n    float occlusion = 0.0;\n\n    for (int i = 0; i < KERNEL_SIZE; i++) {\n        vec3 samplePos = kernel[i] * radius + originPos;\n\n        vec4 texCoord = projection * vec4(samplePos, 1.0);\n        texCoord.xy /= texCoord.w;\n\n        vec4 depthTexel = texture2D(depthTex, texCoord.xy * 0.5 + 0.5);\n\n        float sampleDepth = depthTexel.r * 2.0 - 1.0;\n\n        sampleDepth = projection[3][2] / (sampleDepth * projection[2][3] - projection[2][2]);\n\n        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(originPos.z - sampleDepth));\n        occlusion += rangeCheck * step(samplePos.z, sampleDepth - bias);\n    }\n    occlusion = 1.0 - clamp((occlusion / float(KERNEL_SIZE) - 0.6) * 2.5, 0.0, 1.0);\n    return vec3(pow(occlusion, power));\n}\n\nvoid main()\n{\n\n    vec4 depthTexel = texture2D(depthTex, v_Texcoord);\n    if (depthTexel.r > 0.99999) {\n        // Ignore skybox and transparent objects like axis lines.\n        discard;\n    }\n\n#ifdef DEPTH_ENCODED\n    depthTexel.rgb /= depthTexel.a;\n    float z = decodeFloat(depthTexel) * 2.0 - 1.0;\n#else\n    float z = depthTexel.r * 2.0 - 1.0;\n#endif\n\n    vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, z, 1.0);\n    vec4 p4 = projectionInv * projectedPos;\n\n    vec3 position = p4.xyz / p4.w;\n\n    vec2 noiseTexCoord = depthTexSize / vec2(noiseTexSize) * v_Texcoord;\n    vec3 rvec = texture2D(noiseTex, noiseTexCoord).rgb * 2.0 - 1.0;\n\n    gl_FragColor = vec4(vec3(ssaoEstimator(position)), 1.0);\n}\n\n@end\n\n\n@export ecgl.ssao.blur\n\nuniform sampler2D ssaoTexture;\nuniform sampler2D sourceTexture;\n\nuniform float ssaoIntensity: 1.0;\n\nuniform vec2 textureSize;\n\nvarying vec2 v_Texcoord;\n\nvoid main ()\n{\n\n    vec2 texelSize = 1.0 / textureSize;\n\n    float ao = float(0.0);\n    vec2 hlim = vec2(float(-BLUR_SIZE) * 0.5 + 0.5);\n    float centerAo = texture2D(ssaoTexture, v_Texcoord).r;\n    float weightAll = 0.0;\n    float boxWeight = 1.0 / float(BLUR_SIZE) * float(BLUR_SIZE);\n    for (int x = 0; x < BLUR_SIZE; x++) {\n        for (int y = 0; y < BLUR_SIZE; y++) {\n            vec2 coord = (vec2(float(x), float(y)) + hlim) * texelSize + v_Texcoord;\n            float sampleAo = texture2D(ssaoTexture, coord).r;\n            // http://stackoverflow.com/questions/6538310/anyone-know-where-i-can-find-a-glsl-implementation-of-a-bilateral-filter-blur\n            // PENDING\n            float closeness = 1.0 - distance(sampleAo, centerAo) / sqrt(3.0);\n            float weight = boxWeight * closeness;\n            ao += weight * sampleAo;\n            weightAll += weight;\n        }\n    }\n\n    vec4 color = texture2D(sourceTexture, v_Texcoord);\n    color.rgb *= clamp(1.0 - (1.0 - ao / weightAll) * ssaoIntensity, 0.0, 1.0);\n    gl_FragColor = color;\n}\n@end"
 
 /***/ },
-/* 137 */
+/* 138 */
+/***/ function(module, exports) {
+
+	// Based on https://bl.ocks.org/mbostock/19168c663618b707158
+
+	module.exports = [
+	0.0, 0.0,
+	-0.321585265978, -0.154972575841,
+	0.458126042375, 0.188473391593,
+	0.842080129861, 0.527766490688,
+	0.147304551086, -0.659453822776,
+	-0.331943915203, -0.940619700594,
+	0.0479226680259, 0.54812163202,
+	0.701581552186, -0.709825561388,
+	-0.295436780218, 0.940589268233,
+	-0.901489676764, 0.237713156085,
+	0.973570876096, -0.109899459384,
+	-0.866792314779, -0.451805525005,
+	0.330975007087, 0.800048655954,
+	-0.344275183665, 0.381779221166,
+	-0.386139432542, -0.437418421534,
+	-0.576478634965, -0.0148463392551,
+	0.385798197415, -0.262426961053,
+	-0.666302061145, 0.682427250835,
+	-0.628010632582, -0.732836215494,
+	0.10163141741, -0.987658134403,
+	0.711995289051, -0.320024291314,
+	0.0296005138058, 0.950296523438,
+	0.0130612307608, -0.351024443122,
+	-0.879596633704, -0.10478487883,
+	0.435712737232, 0.504254490347,
+	0.779203817497, 0.206477676721,
+	0.388264289969, -0.896736162545,
+	-0.153106280781, -0.629203242522,
+	-0.245517550697, 0.657969239148,
+	0.126830499058, 0.26862328493,
+	-0.634888119007, -0.302301223431,
+	0.617074219636, 0.779817204925
+	];
+
+/***/ },
+/* 139 */
 /***/ function(module, exports) {
 
 	module.exports = "{\n    \"type\" : \"compositor\",\n    \"nodes\" : [\n\n        {\n            \"name\": \"source\",\n            \"type\": \"texture\",\n            \"outputs\": {\n                \"color\": {}\n            }\n        },\n        {\n            \"name\": \"source_half\",\n            \"shader\": \"#source(qtek.compositor.downsample)\",\n            \"inputs\": {\n                \"texture\": \"source\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * 1.0 / 2)\",\n                        \"height\": \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * 1.0, height * 1.0] )\"\n            }\n        },\n\n\n        {\n            \"name\" : \"bright\",\n            \"shader\" : \"#source(qtek.compositor.bright)\",\n            \"inputs\" : {\n                \"texture\" : \"source_half\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 2)\",\n                        \"height\" : \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"threshold\" : 2,\n                \"scale\": 4,\n                \"textureSize\": \"expr([width * 1.0 / 2, height / 2])\"\n            }\n        },\n        {\n            \"name\" : \"bright2\",\n            \"shader\" : \"#source(qtek.compositor.bright)\",\n            \"inputs\" : {\n                \"texture\": \"source_half\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 2)\",\n                        \"height\" : \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"threshold\": 20,\n                \"scale\": 0.01\n            }\n        },\n\n        {\n            \"name\": \"bright_downsample_4\",\n            \"shader\" : \"#source(qtek.compositor.downsample)\",\n            \"inputs\" : {\n                \"texture\" : \"bright\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 4)\",\n                        \"height\" : \"expr(height * 1.0 / 4)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * 1.0 / 2, height / 2] )\"\n            }\n        },\n        {\n            \"name\": \"bright_downsample_8\",\n            \"shader\" : \"#source(qtek.compositor.downsample)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_4\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 8)\",\n                        \"height\" : \"expr(height * 1.0 / 8)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * 1.0 / 4, height / 4] )\"\n            }\n        },\n        {\n            \"name\": \"bright_downsample_16\",\n            \"shader\" : \"#source(qtek.compositor.downsample)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_8\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 16)\",\n                        \"height\" : \"expr(height * 1.0 / 16)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * 1.0 / 8, height / 8] )\"\n            }\n        },\n        {\n            \"name\": \"bright_downsample_32\",\n            \"shader\" : \"#source(qtek.compositor.downsample)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_16\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 32)\",\n                        \"height\" : \"expr(height * 1.0 / 32)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\": \"expr( [width * 1.0 / 16, height / 16] )\"\n            }\n        },\n\n\n        {\n            \"name\" : \"bright_upsample_16_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_32\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 16)\",\n                        \"height\" : \"expr(height * 1.0 / 16)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * 1.0 / 32, height / 32] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_16_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_16_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 16)\",\n                        \"height\" : \"expr(height * 1.0 / 16)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * 1.0 / 32, height * 1.0 / 32] )\"\n            }\n        },\n\n\n\n        {\n            \"name\" : \"bright_upsample_8_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_16\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 8)\",\n                        \"height\" : \"expr(height * 1.0 / 8)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * 1.0 / 16, height * 1.0 / 16] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_8_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_8_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 8)\",\n                        \"height\" : \"expr(height * 1.0 / 8)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * 1.0 / 16, height * 1.0 / 16] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_8_blend\",\n            \"shader\" : \"#source(qtek.compositor.blend)\",\n            \"inputs\" : {\n                \"texture1\" : \"bright_upsample_8_blur_v\",\n                \"texture2\" : \"bright_upsample_16_blur_v\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 8)\",\n                        \"height\" : \"expr(height * 1.0 / 8)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"weight1\" : 0.3,\n                \"weight2\" : 0.7\n            }\n        },\n\n\n        {\n            \"name\" : \"bright_upsample_4_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_8\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 4)\",\n                        \"height\" : \"expr(height * 1.0 / 4)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * 1.0 / 8, height * 1.0 / 8] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_4_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_4_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 4)\",\n                        \"height\" : \"expr(height * 1.0 / 4)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * 1.0 / 8, height * 1.0 / 8] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_4_blend\",\n            \"shader\" : \"#source(qtek.compositor.blend)\",\n            \"inputs\" : {\n                \"texture1\" : \"bright_upsample_4_blur_v\",\n                \"texture2\" : \"bright_upsample_8_blend\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 4)\",\n                        \"height\" : \"expr(height * 1.0 / 4)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"weight1\" : 0.3,\n                \"weight2\" : 0.7\n            }\n        },\n\n\n\n\n\n        {\n            \"name\" : \"bright_upsample_2_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_downsample_4\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 2)\",\n                        \"height\" : \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * 1.0 / 4, height * 1.0 / 4] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_2_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_2_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 2)\",\n                        \"height\" : \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * 1.0 / 4, height * 1.0 / 4] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_2_blend\",\n            \"shader\" : \"#source(qtek.compositor.blend)\",\n            \"inputs\" : {\n                \"texture1\" : \"bright_upsample_2_blur_v\",\n                \"texture2\" : \"bright_upsample_4_blend\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 2)\",\n                        \"height\" : \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"weight1\" : 0.3,\n                \"weight2\" : 0.7\n            }\n        },\n\n\n\n        {\n            \"name\" : \"bright_upsample_full_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0)\",\n                        \"height\" : \"expr(height * 1.0)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\": \"expr( [width * 1.0 / 2, height * 1.0 / 2] )\"\n            }\n        },\n        {\n            \"name\" : \"bright_upsample_full_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"bright_upsample_full_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0)\",\n                        \"height\" : \"expr(height * 1.0)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\": \"expr( [width * 1.0 / 2, height * 1.0 / 2] )\"\n            }\n        },\n        {\n            \"name\" : \"bloom_composite\",\n            \"shader\" : \"#source(qtek.compositor.blend)\",\n            \"inputs\" : {\n                \"texture1\" : \"bright_upsample_full_blur_v\",\n                \"texture2\" : \"bright_upsample_2_blend\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0)\",\n                        \"height\" : \"expr(height * 1.0)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"weight1\" : 0.3,\n                \"weight2\" : 0.7\n            }\n        },\n\n\n        {\n            \"name\": \"coc\",\n            \"shader\": \"#source(qtek.compositor.dof.coc)\",\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"minFilter\": \"NEAREST\",\n                        \"magFilter\": \"NEAREST\",\n                        \"width\": \"expr(width * 1.0)\",\n                        \"height\": \"expr(height * 1.0)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"focalDist\": 50,\n                \"focalRange\": 30\n            }\n        },\n\n        {\n            \"name\": \"dof_far_blur\",\n            \"shader\": \"#source(ecgl.dof.diskBlur)\",\n            \"inputs\": {\n                \"texture\": \"source\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * 1.0)\",\n                        \"height\": \"expr(height * 1.0)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * 1.0, height * 1.0] )\"\n            }\n        },\n        {\n            \"name\": \"dof_near_blur\",\n            \"shader\": \"#source(ecgl.dof.diskBlur)\",\n            \"inputs\": {\n                \"texture\": \"source\",\n                \"coc\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * 1.0)\",\n                        \"height\": \"expr(height * 1.0)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * 1.0, height * 1.0] )\"\n            },\n            \"defines\": {\n                \"BLUR_NEARFIELD\": null\n            }\n        },\n\n\n        {\n            \"name\": \"dof_coc_blur\",\n            \"shader\": \"#source(ecgl.dof.diskBlur)\",\n            \"inputs\": {\n                \"texture\": \"coc\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"minFilter\": \"NEAREST\",\n                        \"magFilter\": \"NEAREST\",\n                        \"width\": \"expr(width * 1.0)\",\n                        \"height\": \"expr(height * 1.0)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"textureSize\": \"expr( [width * 1.0, height * 1.0] )\"\n            },\n            \"defines\": {\n                \"BLUR_COC\": null\n            }\n        },\n\n        {\n            \"name\": \"dof_composite\",\n            \"shader\": \"#source(qtek.compositor.dof.composite)\",\n            \"inputs\": {\n                \"original\": \"source\",\n                \"blurred\": \"dof_far_blur\",\n                \"nearfield\": \"dof_near_blur\",\n                \"coc\": \"coc\",\n                \"nearcoc\": \"dof_coc_blur\"\n            },\n            \"outputs\": {\n                \"color\": {\n                    \"parameters\": {\n                        \"width\": \"expr(width * 1.0)\",\n                        \"height\": \"expr(height * 1.0)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            }\n        },\n\n        {\n            \"name\" : \"lensflare\",\n            \"shader\" : \"#source(qtek.compositor.lensflare)\",\n            \"inputs\" : {\n                \"texture\" : \"bright2\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 2)\",\n                        \"height\" : \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"textureSize\" : \"expr([width * 1.0 / 2, height * 1.0 / 2])\",\n                \"lensColor\" : \"#lenscolor\"\n            }\n        },\n        {\n            \"name\" : \"lensflare_blur_h\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"lensflare\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 2)\",\n                        \"height\" : \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 0.0,\n                \"textureSize\" : \"expr([width * 1.0 / 2, height * 1.0 / 2])\"\n            }\n        },\n        {\n            \"name\" : \"lensflare_blur_v\",\n            \"shader\" : \"#source(qtek.compositor.gaussian_blur)\",\n            \"inputs\" : {\n                \"texture\" : \"lensflare_blur_h\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0 / 2)\",\n                        \"height\" : \"expr(height * 1.0 / 2)\",\n                        \"type\": \"HALF_FLOAT\"\n                    }\n                }\n            },\n            \"parameters\" : {\n                \"blurSize\" : 1,\n                \"blurDir\": 1.0,\n                \"textureSize\" : \"expr([width * 1.0 / 2, height * 1.0 / 2])\"\n            }\n        },\n        {\n            \"name\" : \"composite\",\n            \"shader\" : \"#source(qtek.compositor.hdr.composite)\",\n            \"inputs\" : {\n                \"texture\": \"source\",\n                \"bloom\" : \"bloom_composite\"\n            },\n            \"outputs\" : {\n                \"color\" : {\n                    \"parameters\" : {\n                        \"width\" : \"expr(width * 1.0)\",\n                        \"height\" : \"expr(height * 1.0)\"\n                    }\n                }\n            },\n            \"parameters\": {\n                \"bloomIntensity\": 0.03\n            },\n            \"defines\": {\n                \"PREMULTIPLY_ALPHA\": null\n            }\n        },\n        {\n            \"name\" : \"FXAA\",\n            \"shader\" : \"#source(qtek.compositor.fxaa)\",\n            \"inputs\" : {\n                \"texture\" : \"composite\"\n            }\n        }\n    ]\n}"
 
 /***/ },
-/* 138 */
+/* 140 */
 /***/ function(module, exports) {
 
 	
@@ -34537,7 +34721,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 139 */
+/* 141 */
 /***/ function(module, exports) {
 
 	
@@ -34545,7 +34729,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 140 */
+/* 142 */
 /***/ function(module, exports) {
 
 	
@@ -34553,7 +34737,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 141 */
+/* 143 */
 /***/ function(module, exports) {
 
 	
@@ -34561,7 +34745,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 142 */
+/* 144 */
 /***/ function(module, exports) {
 
 	
@@ -34569,7 +34753,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 143 */
+/* 145 */
 /***/ function(module, exports) {
 
 	
@@ -34577,27 +34761,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 144 */
-/***/ function(module, exports) {
-
-	
-	module.exports = "@export qtek.compositor.hdr.log_lum\n\nvarying vec2 v_Texcoord;\n\nuniform sampler2D texture;\n\nconst vec3 w = vec3(0.2125, 0.7154, 0.0721);\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n    vec4 tex = decodeHDR(texture2D(texture, v_Texcoord));\n    float luminance = dot(tex.rgb, w);\n    luminance = log(luminance + 0.001);\n\n    gl_FragColor = encodeHDR(vec4(vec3(luminance), 1.0));\n}\n\n@end\n\n@export qtek.compositor.hdr.lum_adaption\nvarying vec2 v_Texcoord;\n\nuniform sampler2D adaptedLum;\nuniform sampler2D currentLum;\n\nuniform float frameTime : 0.02;\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n    float fAdaptedLum = decodeHDR(texture2D(adaptedLum, vec2(0.5, 0.5))).r;\n    float fCurrentLum = exp(encodeHDR(texture2D(currentLum, vec2(0.5, 0.5))).r);\n\n    fAdaptedLum += (fCurrentLum - fAdaptedLum) * (1.0 - pow(0.98, 30.0 * frameTime));\n    gl_FragColor = encodeHDR(vec4(vec3(fAdaptedLum), 1.0));\n}\n@end\n\n@export qtek.compositor.hdr.composite\n\nuniform sampler2D texture;\n#ifdef BLOOM_ENABLED\nuniform sampler2D bloom;\n#endif\n#ifdef LENSFLARE_ENABLED\nuniform sampler2D lensflare;\nuniform sampler2D lensdirt;\n#endif\n\n#ifdef LUM_ENABLED\nuniform sampler2D lum;\n#endif\n\n#ifdef LUT_ENABLED\nuniform sampler2D lut;\n#endif\n\n#ifdef VIGNETTE\nuniform float vignetteDarkness: 1.0;\nuniform float vignetteOffset: 1.0;\n#endif\n\nuniform float exposure : 1.0;\nuniform float bloomIntensity : 0.25;\nuniform float lensflareIntensity : 1;\n\nvarying vec2 v_Texcoord;\n\nconst vec3 whiteScale = vec3(11.2);\n\n@import qtek.util.srgb\n\nvec3 uncharted2ToneMap(vec3 x)\n{\n    const float A = 0.22;       const float B = 0.30;       const float C = 0.10;       const float D = 0.20;       const float E = 0.01;       const float F = 0.30;   \n    return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;\n}\n\nvec3 filmicToneMap(vec3 color)\n{\n    vec3 x = max(vec3(0.0), color - 0.004);\n    return (x*(6.2*x+0.5))/(x*(6.2*x+1.7)+0.06);\n}\n\nvec3 ACESToneMapping(vec3 color)\n{\n    const float A = 2.51;\n    const float B = 0.03;\n    const float C = 2.43;\n    const float D = 0.59;\n    const float E = 0.14;\n    return (color * (A * color + B)) / (color * (C * color + D) + E);\n}\n\nfloat eyeAdaption(float fLum)\n{\n    return mix(0.2, fLum, 0.5);\n}\n\n#ifdef LUT_ENABLED\nvec3 lutTransform(vec3 color) {\n    float blueColor = color.b * 63.0;\n\n    vec2 quad1;\n    quad1.y = floor(floor(blueColor) / 8.0);\n    quad1.x = floor(blueColor) - (quad1.y * 8.0);\n\n    vec2 quad2;\n    quad2.y = floor(ceil(blueColor) / 8.0);\n    quad2.x = ceil(blueColor) - (quad2.y * 8.0);\n\n    vec2 texPos1;\n    texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.r);\n    texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.g);\n\n    vec2 texPos2;\n    texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.r);\n    texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.g);\n\n    vec4 newColor1 = texture2D(lut, texPos1);\n    vec4 newColor2 = texture2D(lut, texPos2);\n\n    vec4 newColor = mix(newColor1, newColor2, fract(blueColor));\n    return newColor.rgb;\n}\n#endif\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n        vec4 texel = vec4(0.0);\n#ifdef TEXTURE_ENABLED\n    texel += decodeHDR(texture2D(texture, v_Texcoord));\n#endif\n\n#ifdef BLOOM_ENABLED\n    texel += decodeHDR(texture2D(bloom, v_Texcoord)) * bloomIntensity;\n#endif\n\n#ifdef LENSFLARE_ENABLED\n    texel += decodeHDR(texture2D(lensflare, v_Texcoord)) * texture2D(lensdirt, v_Texcoord) * lensflareIntensity;\n#endif\n\n#ifdef LUM_ENABLED\n    float fLum = texture2D(lum, vec2(0.5, 0.5)).r;\n    float adaptedLumDest = 3.0 / (max(0.1, 1.0 + 10.0*eyeAdaption(fLum)));\n    float exposureBias = adaptedLumDest * exposure;\n#else\n    float exposureBias = exposure;\n#endif\n    texel.rgb *= exposureBias;\n\n                texel.rgb = ACESToneMapping(texel.rgb);\n    texel = linearTosRGB(texel);\n\n#ifdef LUT_ENABLED\n    texel.rgb = lutTransform(clamp(texel.rgb,vec3(0.0),vec3(1.0)));\n#endif\n\n#ifdef VIGNETTE\n    vec2 uv = (v_Texcoord - vec2(0.5)) * vec2(vignetteOffset);\n    texel.rgb = mix(texel.rgb, vec3(1.0 - vignetteDarkness), dot(uv, uv));\n#endif\n\n    gl_FragColor = encodeHDR(texel);\n\n#ifdef DEBUG\n        #if DEBUG == 1\n    gl_FragColor = encodeHDR(decodeHDR(texture2D(texture, v_Texcoord)));\n        #elif DEBUG == 2\n    gl_FragColor = encodeHDR(decodeHDR(texture2D(bloom, v_Texcoord)) * bloomIntensity);\n        #elif DEBUG == 3\n    gl_FragColor = encodeHDR(decodeHDR(texture2D(lensflare, v_Texcoord) * lensflareIntensity));\n    #endif\n#endif\n        #ifdef PREMULTIPLY_ALPHA\n    gl_FragColor.rgb *= gl_FragColor.a;\n#endif\n}\n\n@end";
-
-
-/***/ },
-/* 145 */
-/***/ function(module, exports) {
-
-	
-	module.exports = "@export qtek.compositor.dof.coc\n\nuniform sampler2D depth;\n\nuniform float zNear: 0.1;\nuniform float zFar: 2000;\n\nuniform float focalDist: 3;\nuniform float focalRange: 1;\nuniform float focalLength: 30;\nuniform float fstop: 2.8;\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.encode_float\n\nvoid main()\n{\n    float z = texture2D(depth, v_Texcoord).r * 2.0 - 1.0;\n\n    float dist = 2.0 * zNear * zFar / (zFar + zNear - z * (zFar - zNear));\n\n    float aperture = focalLength / fstop;\n\n    float coc;\n\n    float uppper = focalDist + focalRange;\n    float lower = focalDist - focalRange;\n    if (dist <= uppper && dist >= lower) {\n                coc = 0.5;\n    }\n    else {\n                float focalAdjusted = dist > uppper ? uppper : lower;\n\n                coc = abs(aperture * (focalLength * (dist - focalAdjusted)) / (dist * (focalAdjusted - focalLength)));\n                                coc = clamp(coc, 0.0, 0.4) / 0.4000001;\n\n                if (dist < lower) {\n            coc = -coc;\n        }\n        coc = coc * 0.5 + 0.5;\n    }\n\n        gl_FragColor = encodeFloat(coc);\n}\n\n@end\n\n@export qtek.compositor.dof.premultiply\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n\n@import qtek.util.decode_float\n\nvoid main() {\n    float fCoc = max(abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0), 0.1);\n    gl_FragColor = encodeHDR(\n        vec4(decodeHDR(texture2D(texture, v_Texcoord)).rgb * fCoc, 1.0)\n    );\n}\n@end\n\n\n@export qtek.compositor.dof.min_coc\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.float\n\nvoid main()\n{\n    vec4 d = vec4(-1.0, -1.0, 1.0, 1.0) / textureSize.xyxy;\n\n    float fCoc = decodeFloat(texture2D(coc, v_Texcoord + d.xy));\n    fCoc = min(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.zy)));\n    fCoc = min(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.xw)));\n    fCoc = min(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.zw)));\n\n    gl_FragColor = encodeFloat(fCoc);\n}\n\n@end\n\n\n@export qtek.compositor.dof.max_coc\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.float\n\nvoid main()\n{\n\n    vec4 d = vec4(-1.0, -1.0, 1.0, 1.0) / textureSize.xyxy;\n\n    float fCoc = decodeFloat(texture2D(coc, v_Texcoord + d.xy));\n    fCoc = max(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.zy)));\n    fCoc = max(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.xw)));\n    fCoc = max(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.zw)));\n\n    gl_FragColor = encodeFloat(fCoc);\n}\n\n@end\n\n\n\n\n@export qtek.compositor.dof.coc_upsample\n\n#define HIGH_QUALITY\n\nuniform sampler2D coc;\nuniform vec2 textureSize : [512, 512];\n\nuniform float sampleScale: 0.5;\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.float\n\nvoid main()\n{\n\n#ifdef HIGH_QUALITY\n        vec4 d = vec4(1.0, 1.0, -1.0, 0.0) / textureSize.xyxy * sampleScale;\n\n    float s;\n    s  = decodeFloat(texture2D(coc, v_Texcoord - d.xy));\n    s += decodeFloat(texture2D(coc, v_Texcoord - d.wy)) * 2.0;\n    s += decodeFloat(texture2D(coc, v_Texcoord - d.zy));\n\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.zw)) * 2.0;\n    s += decodeFloat(texture2D(coc, v_Texcoord       )) * 4.0;\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.xw)) * 2.0;\n\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.zy));\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.wy)) * 2.0;\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.xy));\n\n    gl_FragColor = encodeFloat(s / 16.0);\n#else\n        vec4 d = vec4(-1.0, -1.0, +1.0, +1.0) / textureSize.xyxy;\n\n    float s;\n    s  = decodeFloat(texture2D(coc, v_Texcoord + d.xy));\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.zy));\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.xw));\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.zw));\n\n    gl_FragColor = encodeFloat(s / 4.0);\n#endif\n}\n\n@end\n\n\n\n@export qtek.compositor.dof.upsample\n\n#define HIGH_QUALITY\n\nuniform sampler2D coc;\nuniform sampler2D texture;\nuniform vec2 textureSize : [512, 512];\n\nuniform float sampleScale: 0.5;\n\nvarying vec2 v_Texcoord;\n\n\n@import qtek.util.rgbm\n\n@import qtek.util.decode_float\n\nfloat tap(vec2 uv, inout vec4 color, float baseWeight) {\n    float weight = abs(decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0) * baseWeight;\n    color += decodeHDR(texture2D(texture, uv)) * weight;\n    return weight;\n}\n\nvoid main()\n{\n#ifdef HIGH_QUALITY\n        vec4 d = vec4(1.0, 1.0, -1.0, 0.0) / textureSize.xyxy * sampleScale;\n\n    vec4 color = vec4(0.0);\n    float baseWeight = 1.0 / 16.0;\n    float w  = tap(v_Texcoord - d.xy, color, baseWeight);\n    w += tap(v_Texcoord - d.wy, color, baseWeight * 2.0);\n    w += tap(v_Texcoord - d.zy, color, baseWeight);\n\n    w += tap(v_Texcoord + d.zw, color, baseWeight * 2.0);\n    w += tap(v_Texcoord       , color, baseWeight * 4.0);\n    w += tap(v_Texcoord + d.xw, color, baseWeight * 2.0);\n\n    w += tap(v_Texcoord + d.zy, color, baseWeight);\n    w += tap(v_Texcoord + d.wy, color, baseWeight * 2.0);\n    w += tap(v_Texcoord + d.xy, color, baseWeight);\n\n    gl_FragColor = encodeHDR(color / w);\n#else\n        vec4 d = vec4(-1.0, -1.0, +1.0, +1.0) / textureSize.xyxy;\n\n    vec4 color = vec4(0.0);\n    float baseWeight = 1.0 / 4.0;\n    float w  = tap(v_Texcoord + d.xy, color, baseWeight);\n    w += tap(v_Texcoord + d.zy, color, baseWeight);\n    w += tap(v_Texcoord + d.xw, color, baseWeight);\n    w += tap(v_Texcoord + d.zw, color, baseWeight);\n\n    gl_FragColor = encodeHDR(color / w);\n#endif\n}\n\n@end\n\n\n\n@export qtek.compositor.dof.downsample\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nuniform vec2 textureSize : [512, 512];\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n\n@import qtek.util.decode_float\n\nfloat tap(vec2 uv, inout vec4 color) {\n    float weight = abs(decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0) * 0.25;\n    color += decodeHDR(texture2D(texture, uv)) * weight;\n    return weight;\n}\n\nvoid main()\n{\n    vec4 d = vec4(-1.0, -1.0, 1.0, 1.0) / textureSize.xyxy;\n\n    vec4 color = vec4(0.0);\n    float weight = tap(v_Texcoord + d.xy, color);\n    weight += tap(v_Texcoord + d.zy, color);\n    weight += tap(v_Texcoord + d.xw, color);\n    weight += tap(v_Texcoord + d.zw, color);\n    color /= weight;\n\n    gl_FragColor = encodeHDR(color);\n}\n\n@end\n\n\n\n@export qtek.compositor.dof.hexagonal_blur_frag\n\n@import qtek.util.float\n\n\nvec4 doBlur(sampler2D targetTexture, vec2 offset) {\n#ifdef BLUR_COC\n    float cocSum = 0.0;\n#else\n    vec4 color = vec4(0.0);\n#endif\n\n    float weightSum = 0.0;\n    float kernelWeight = 1.0 / float(KERNEL_SIZE);\n\n    for (int i = 0; i < KERNEL_SIZE; i++) {\n        vec2 coord = v_Texcoord + offset * float(i);\n\n        float w = kernelWeight;\n#ifdef BLUR_COC\n        float fCoc = decodeFloat(texture2D(targetTexture, coord)) * 2.0 - 1.0;\n                cocSum += clamp(fCoc, -1.0, 0.0) * w;\n#else\n        float fCoc = decodeFloat(texture2D(coc, coord)) * 2.0 - 1.0;\n        vec4 texel = texture2D(targetTexture, coord);\n    #if !defined(BLUR_NEARFIELD)\n        w *= abs(fCoc);\n    #endif\n        color += decodeHDR(texel) * w;\n#endif\n\n        weightSum += w;\n    }\n#ifdef BLUR_COC\n    return encodeFloat(clamp(cocSum / weightSum, -1.0, 0.0) * 0.5 + 0.5);\n#else\n    return color / weightSum;\n#endif\n}\n\n@end\n\n\n@export qtek.compositor.dof.hexagonal_blur_1\n\n#define KERNEL_SIZE 5\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 1.0;\n\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.rgbm\n\n@import qtek.compositor.dof.hexagonal_blur_frag\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n        gl_FragColor = doBlur(texture, vec2(0.0, offset.y));\n#if !defined(BLUR_COC)\n    gl_FragColor = encodeHDR(gl_FragColor);\n#endif\n}\n\n@end\n\n@export qtek.compositor.dof.hexagonal_blur_2\n\n#define KERNEL_SIZE 5\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 1.0;\n\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.rgbm\n\n@import qtek.compositor.dof.hexagonal_blur_frag\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n    offset.y /= 2.0;\n\n        gl_FragColor = doBlur(texture, -offset);\n#if !defined(BLUR_COC)\n    gl_FragColor = encodeHDR(gl_FragColor);\n#endif\n}\n@end\n\n@export qtek.compositor.dof.hexagonal_blur_3\n\n#define KERNEL_SIZE 5\n\nuniform sampler2D texture1;\nuniform sampler2D texture2;\nuniform sampler2D coc;\n\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 1.0;\n\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.rgbm\n\n@import qtek.compositor.dof.hexagonal_blur_frag\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n    offset.y /= 2.0;\n    vec2 vDownRight = vec2(offset.x, -offset.y);\n\n        vec4 texel1 = doBlur(texture1, -offset);\n        vec4 texel2 = doBlur(texture1, vDownRight);\n        vec4 texel3 = doBlur(texture2, vDownRight);\n\n#ifdef BLUR_COC\n    float coc1 = decodeFloat(texel1) * 2.0 - 1.0;\n    float coc2 = decodeFloat(texel2) * 2.0 - 1.0;\n    float coc3 = decodeFloat(texel3) * 2.0 - 1.0;\n    gl_FragColor = encodeFloat(\n        ((coc1 + coc2 + coc3) / 3.0) * 0.5 + 0.5\n    );\n\n#else\n    vec4 color = (texel1 + texel2 + texel3) / 3.0;\n    gl_FragColor = encodeHDR(color);\n#endif\n}\n\n@end\n\n@export qtek.compositor.dof.composite\n\n#define DEBUG 0\n\nuniform sampler2D original;\nuniform sampler2D blurred;\nuniform sampler2D nearfield;\nuniform sampler2D coc;\nuniform sampler2D nearcoc;\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n@import qtek.util.float\n\nvoid main()\n{\n    vec4 blurredColor = decodeHDR(texture2D(blurred, v_Texcoord));\n    vec4 originalColor = decodeHDR(texture2D(original, v_Texcoord));\n\n    float fCoc = decodeFloat(texture2D(coc, v_Texcoord));\n\n            fCoc = abs(fCoc * 2.0 - 1.0);\n\n    float weight = smoothstep(0.0, 1.0, fCoc);\n    \n#ifdef NEARFIELD_ENABLED\n    vec4 nearfieldColor = decodeHDR(texture2D(nearfield, v_Texcoord));\n    float fNearCoc = decodeFloat(texture2D(nearcoc, v_Texcoord));\n    fNearCoc = abs(fNearCoc * 2.0 - 1.0);\n\n        gl_FragColor = encodeHDR(\n        mix(\n            nearfieldColor, mix(originalColor, blurredColor, weight),\n                        pow(1.0 - fNearCoc, 4.0)\n        )\n    );\n#else\n    gl_FragColor = encodeHDR(mix(originalColor, blurredColor, weight));\n#endif\n\n#if DEBUG == 1\n        gl_FragColor = vec4(vec3(fCoc), 1.0);\n#elif DEBUG == 2\n        gl_FragColor = vec4(vec3(fNearCoc), 1.0);\n#elif DEBUG == 3\n    gl_FragColor = encodeHDR(blurredColor);\n#elif DEBUG == 4\n        gl_FragColor = encodeHDR(nearfieldColor);\n#endif\n}\n\n@end";
-
-
-/***/ },
 /* 146 */
 /***/ function(module, exports) {
 
 	
-	module.exports = "@export qtek.compositor.lensflare\n\n#define SAMPLE_NUMBER 8\n\nuniform sampler2D texture;\nuniform sampler2D lenscolor;\n\nuniform vec2 textureSize : [512, 512];\n\nuniform float dispersal : 0.3;\nuniform float haloWidth : 0.4;\nuniform float distortion : 1.0;\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n\nvec4 textureDistorted(\n    in vec2 texcoord,\n    in vec2 direction,\n    in vec3 distortion\n) {\n    return vec4(\n        decodeHDR(texture2D(texture, texcoord + direction * distortion.r)).r,\n        decodeHDR(texture2D(texture, texcoord + direction * distortion.g)).g,\n        decodeHDR(texture2D(texture, texcoord + direction * distortion.b)).b,\n        1.0\n    );\n}\n\nvoid main()\n{\n    vec2 texcoord = -v_Texcoord + vec2(1.0);     vec2 textureOffset = 1.0 / textureSize;\n\n    vec2 ghostVec = (vec2(0.5) - texcoord) * dispersal;\n    vec2 haloVec = normalize(ghostVec) * haloWidth;\n\n    vec3 distortion = vec3(-textureOffset.x * distortion, 0.0, textureOffset.x * distortion);\n        vec4 result = vec4(0.0);\n    for (int i = 0; i < SAMPLE_NUMBER; i++)\n    {\n        vec2 offset = fract(texcoord + ghostVec * float(i));\n\n        float weight = length(vec2(0.5) - offset) / length(vec2(0.5));\n        weight = pow(1.0 - weight, 10.0);\n\n        result += textureDistorted(offset, normalize(ghostVec), distortion) * weight;\n    }\n\n    result *= texture2D(lenscolor, vec2(length(vec2(0.5) - texcoord)) / length(vec2(0.5)));\n        float weight = length(vec2(0.5) - fract(texcoord + haloVec)) / length(vec2(0.5));\n    weight = pow(1.0 - weight, 10.0);\n    vec2 offset = fract(texcoord + haloVec);\n    result += textureDistorted(offset, normalize(ghostVec), distortion) * weight;\n\n    gl_FragColor = result;\n}\n@end";
+	module.exports = "@export qtek.compositor.hdr.log_lum\n\nvarying vec2 v_Texcoord;\n\nuniform sampler2D texture;\n\nconst vec3 w = vec3(0.2125, 0.7154, 0.0721);\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n    vec4 tex = decodeHDR(texture2D(texture, v_Texcoord));\n    float luminance = dot(tex.rgb, w);\n    luminance = log(luminance + 0.001);\n\n    gl_FragColor = encodeHDR(vec4(vec3(luminance), 1.0));\n}\n\n@end\n\n@export qtek.compositor.hdr.lum_adaption\nvarying vec2 v_Texcoord;\n\nuniform sampler2D adaptedLum;\nuniform sampler2D currentLum;\n\nuniform float frameTime : 0.02;\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n    float fAdaptedLum = decodeHDR(texture2D(adaptedLum, vec2(0.5, 0.5))).r;\n    float fCurrentLum = exp(encodeHDR(texture2D(currentLum, vec2(0.5, 0.5))).r);\n\n    fAdaptedLum += (fCurrentLum - fAdaptedLum) * (1.0 - pow(0.98, 30.0 * frameTime));\n    gl_FragColor = encodeHDR(vec4(vec3(fAdaptedLum), 1.0));\n}\n@end\n\n@export qtek.compositor.hdr.composite\n\nuniform sampler2D texture;\n#ifdef BLOOM_ENABLED\nuniform sampler2D bloom;\n#endif\n#ifdef LENSFLARE_ENABLED\nuniform sampler2D lensflare;\nuniform sampler2D lensdirt;\n#endif\n\n#ifdef LUM_ENABLED\nuniform sampler2D lum;\n#endif\n\n#ifdef LUT_ENABLED\nuniform sampler2D lut;\n#endif\n\n#ifdef COLOR_CORRECTION\nuniform float brightness : 0.0;\nuniform float contrast : 1.0;\nuniform float saturation : 1.0;\n#endif\n\n#ifdef VIGNETTE\nuniform float vignetteDarkness: 1.0;\nuniform float vignetteOffset: 1.0;\n#endif\n\nuniform float exposure : 1.0;\nuniform float bloomIntensity : 0.25;\nuniform float lensflareIntensity : 1;\n\nvarying vec2 v_Texcoord;\n\nconst vec3 whiteScale = vec3(11.2);\n\n@import qtek.util.srgb\n\nvec3 uncharted2ToneMap(vec3 x)\n{\n    const float A = 0.22;       const float B = 0.30;       const float C = 0.10;       const float D = 0.20;       const float E = 0.01;       const float F = 0.30;   \n    return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;\n}\n\nvec3 filmicToneMap(vec3 color)\n{\n    vec3 x = max(vec3(0.0), color - 0.004);\n    return (x*(6.2*x+0.5))/(x*(6.2*x+1.7)+0.06);\n}\n\nvec3 ACESToneMapping(vec3 color)\n{\n    const float A = 2.51;\n    const float B = 0.03;\n    const float C = 2.43;\n    const float D = 0.59;\n    const float E = 0.14;\n    return (color * (A * color + B)) / (color * (C * color + D) + E);\n}\n\nfloat eyeAdaption(float fLum)\n{\n    return mix(0.2, fLum, 0.5);\n}\n\n#ifdef LUT_ENABLED\nvec3 lutTransform(vec3 color) {\n    float blueColor = color.b * 63.0;\n\n    vec2 quad1;\n    quad1.y = floor(floor(blueColor) / 8.0);\n    quad1.x = floor(blueColor) - (quad1.y * 8.0);\n\n    vec2 quad2;\n    quad2.y = floor(ceil(blueColor) / 8.0);\n    quad2.x = ceil(blueColor) - (quad2.y * 8.0);\n\n    vec2 texPos1;\n    texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.r);\n    texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.g);\n\n    vec2 texPos2;\n    texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.r);\n    texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.g);\n\n    vec4 newColor1 = texture2D(lut, texPos1);\n    vec4 newColor2 = texture2D(lut, texPos2);\n\n    vec4 newColor = mix(newColor1, newColor2, fract(blueColor));\n    return newColor.rgb;\n}\n#endif\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n        vec4 texel = vec4(0.0);\n#ifdef TEXTURE_ENABLED\n    texel += decodeHDR(texture2D(texture, v_Texcoord));\n#endif\n\n#ifdef BLOOM_ENABLED\n    texel += decodeHDR(texture2D(bloom, v_Texcoord)) * bloomIntensity;\n#endif\n\n#ifdef LENSFLARE_ENABLED\n    texel += decodeHDR(texture2D(lensflare, v_Texcoord)) * texture2D(lensdirt, v_Texcoord) * lensflareIntensity;\n#endif\n\n#ifdef LUM_ENABLED\n    float fLum = texture2D(lum, vec2(0.5, 0.5)).r;\n    float adaptedLumDest = 3.0 / (max(0.1, 1.0 + 10.0*eyeAdaption(fLum)));\n    float exposureBias = adaptedLumDest * exposure;\n#else\n    float exposureBias = exposure;\n#endif\n    texel.rgb *= exposureBias;\n\n                texel.rgb = ACESToneMapping(texel.rgb);\n    texel = linearTosRGB(texel);\n\n#ifdef LUT_ENABLED\n    texel.rgb = lutTransform(clamp(texel.rgb,vec3(0.0),vec3(1.0)));\n#endif\n\n#ifdef COLOR_CORRECTION\n        texel.rgb = clamp(texel.rgb + vec3(brightness), 0.0, 1.0);\n        texel.rgb = clamp((texel.rgb - vec3(0.5))*contrast+vec3(0.5), 0.0, 1.0);\n        float lum = dot(texel.rgb, vec3(0.2125, 0.7154, 0.0721));\n    texel.rgb = mix(vec3(lum), texel.rgb, saturation);\n#endif\n\n#ifdef VIGNETTE\n    vec2 uv = (v_Texcoord - vec2(0.5)) * vec2(vignetteOffset);\n    texel.rgb = mix(texel.rgb, vec3(1.0 - vignetteDarkness), dot(uv, uv));\n#endif\n\n    gl_FragColor = encodeHDR(texel);\n\n#ifdef DEBUG\n        #if DEBUG == 1\n    gl_FragColor = encodeHDR(decodeHDR(texture2D(texture, v_Texcoord)));\n        #elif DEBUG == 2\n    gl_FragColor = encodeHDR(decodeHDR(texture2D(bloom, v_Texcoord)) * bloomIntensity);\n        #elif DEBUG == 3\n    gl_FragColor = encodeHDR(decodeHDR(texture2D(lensflare, v_Texcoord) * lensflareIntensity));\n    #endif\n#endif\n        #ifdef PREMULTIPLY_ALPHA\n    gl_FragColor.rgb *= gl_FragColor.a;\n#endif\n}\n\n@end";
 
 
 /***/ },
@@ -34605,7 +34773,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	
-	module.exports = "@export qtek.compositor.blend\n#ifdef TEXTURE1_ENABLED\nuniform sampler2D texture1;\nuniform float weight1 : 1.0;\n#endif\n#ifdef TEXTURE2_ENABLED\nuniform sampler2D texture2;\nuniform float weight2 : 1.0;\n#endif\n#ifdef TEXTURE3_ENABLED\nuniform sampler2D texture3;\nuniform float weight3 : 1.0;\n#endif\n#ifdef TEXTURE4_ENABLED\nuniform sampler2D texture4;\nuniform float weight4 : 1.0;\n#endif\n#ifdef TEXTURE5_ENABLED\nuniform sampler2D texture5;\nuniform float weight5 : 1.0;\n#endif\n#ifdef TEXTURE6_ENABLED\nuniform sampler2D texture6;\nuniform float weight6 : 1.0;\n#endif\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n    vec4 tex = vec4(0.0);\n#ifdef TEXTURE1_ENABLED\n    tex += decodeHDR(texture2D(texture1, v_Texcoord)) * weight1;\n#endif\n#ifdef TEXTURE2_ENABLED\n    tex += decodeHDR(texture2D(texture2, v_Texcoord)) * weight2;\n#endif\n#ifdef TEXTURE3_ENABLED\n    tex += decodeHDR(texture2D(texture3, v_Texcoord)) * weight3;\n#endif\n#ifdef TEXTURE4_ENABLED\n    tex += decodeHDR(texture2D(texture4, v_Texcoord)) * weight4;\n#endif\n#ifdef TEXTURE5_ENABLED\n    tex += decodeHDR(texture2D(texture5, v_Texcoord)) * weight5;\n#endif\n#ifdef TEXTURE6_ENABLED\n    tex += decodeHDR(texture2D(texture6, v_Texcoord)) * weight6;\n#endif\n\n    gl_FragColor = encodeHDR(tex);\n}\n@end";
+	module.exports = "@export qtek.compositor.dof.coc\n\nuniform sampler2D depth;\n\nuniform float zNear: 0.1;\nuniform float zFar: 2000;\n\nuniform float focalDist: 3;\nuniform float focalRange: 1;\nuniform float focalLength: 30;\nuniform float fstop: 2.8;\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.encode_float\n\nvoid main()\n{\n    float z = texture2D(depth, v_Texcoord).r * 2.0 - 1.0;\n\n    float dist = 2.0 * zNear * zFar / (zFar + zNear - z * (zFar - zNear));\n\n    float aperture = focalLength / fstop;\n\n    float coc;\n\n    float uppper = focalDist + focalRange;\n    float lower = focalDist - focalRange;\n    if (dist <= uppper && dist >= lower) {\n                coc = 0.5;\n    }\n    else {\n                float focalAdjusted = dist > uppper ? uppper : lower;\n\n                coc = abs(aperture * (focalLength * (dist - focalAdjusted)) / (dist * (focalAdjusted - focalLength)));\n                                coc = clamp(coc, 0.0, 0.4) / 0.4000001;\n\n                if (dist < lower) {\n            coc = -coc;\n        }\n        coc = coc * 0.5 + 0.5;\n    }\n\n        gl_FragColor = encodeFloat(coc);\n}\n\n@end\n\n@export qtek.compositor.dof.premultiply\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n\n@import qtek.util.decode_float\n\nvoid main() {\n    float fCoc = max(abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0), 0.1);\n    gl_FragColor = encodeHDR(\n        vec4(decodeHDR(texture2D(texture, v_Texcoord)).rgb * fCoc, 1.0)\n    );\n}\n@end\n\n\n@export qtek.compositor.dof.min_coc\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.float\n\nvoid main()\n{\n    vec4 d = vec4(-1.0, -1.0, 1.0, 1.0) / textureSize.xyxy;\n\n    float fCoc = decodeFloat(texture2D(coc, v_Texcoord + d.xy));\n    fCoc = min(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.zy)));\n    fCoc = min(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.xw)));\n    fCoc = min(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.zw)));\n\n    gl_FragColor = encodeFloat(fCoc);\n}\n\n@end\n\n\n@export qtek.compositor.dof.max_coc\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.float\n\nvoid main()\n{\n\n    vec4 d = vec4(-1.0, -1.0, 1.0, 1.0) / textureSize.xyxy;\n\n    float fCoc = decodeFloat(texture2D(coc, v_Texcoord + d.xy));\n    fCoc = max(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.zy)));\n    fCoc = max(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.xw)));\n    fCoc = max(fCoc, decodeFloat(texture2D(coc, v_Texcoord + d.zw)));\n\n    gl_FragColor = encodeFloat(fCoc);\n}\n\n@end\n\n\n\n\n@export qtek.compositor.dof.coc_upsample\n\n#define HIGH_QUALITY\n\nuniform sampler2D coc;\nuniform vec2 textureSize : [512, 512];\n\nuniform float sampleScale: 0.5;\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.float\n\nvoid main()\n{\n\n#ifdef HIGH_QUALITY\n        vec4 d = vec4(1.0, 1.0, -1.0, 0.0) / textureSize.xyxy * sampleScale;\n\n    float s;\n    s  = decodeFloat(texture2D(coc, v_Texcoord - d.xy));\n    s += decodeFloat(texture2D(coc, v_Texcoord - d.wy)) * 2.0;\n    s += decodeFloat(texture2D(coc, v_Texcoord - d.zy));\n\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.zw)) * 2.0;\n    s += decodeFloat(texture2D(coc, v_Texcoord       )) * 4.0;\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.xw)) * 2.0;\n\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.zy));\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.wy)) * 2.0;\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.xy));\n\n    gl_FragColor = encodeFloat(s / 16.0);\n#else\n        vec4 d = vec4(-1.0, -1.0, +1.0, +1.0) / textureSize.xyxy;\n\n    float s;\n    s  = decodeFloat(texture2D(coc, v_Texcoord + d.xy));\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.zy));\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.xw));\n    s += decodeFloat(texture2D(coc, v_Texcoord + d.zw));\n\n    gl_FragColor = encodeFloat(s / 4.0);\n#endif\n}\n\n@end\n\n\n\n@export qtek.compositor.dof.upsample\n\n#define HIGH_QUALITY\n\nuniform sampler2D coc;\nuniform sampler2D texture;\nuniform vec2 textureSize : [512, 512];\n\nuniform float sampleScale: 0.5;\n\nvarying vec2 v_Texcoord;\n\n\n@import qtek.util.rgbm\n\n@import qtek.util.decode_float\n\nfloat tap(vec2 uv, inout vec4 color, float baseWeight) {\n    float weight = abs(decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0) * baseWeight;\n    color += decodeHDR(texture2D(texture, uv)) * weight;\n    return weight;\n}\n\nvoid main()\n{\n#ifdef HIGH_QUALITY\n        vec4 d = vec4(1.0, 1.0, -1.0, 0.0) / textureSize.xyxy * sampleScale;\n\n    vec4 color = vec4(0.0);\n    float baseWeight = 1.0 / 16.0;\n    float w  = tap(v_Texcoord - d.xy, color, baseWeight);\n    w += tap(v_Texcoord - d.wy, color, baseWeight * 2.0);\n    w += tap(v_Texcoord - d.zy, color, baseWeight);\n\n    w += tap(v_Texcoord + d.zw, color, baseWeight * 2.0);\n    w += tap(v_Texcoord       , color, baseWeight * 4.0);\n    w += tap(v_Texcoord + d.xw, color, baseWeight * 2.0);\n\n    w += tap(v_Texcoord + d.zy, color, baseWeight);\n    w += tap(v_Texcoord + d.wy, color, baseWeight * 2.0);\n    w += tap(v_Texcoord + d.xy, color, baseWeight);\n\n    gl_FragColor = encodeHDR(color / w);\n#else\n        vec4 d = vec4(-1.0, -1.0, +1.0, +1.0) / textureSize.xyxy;\n\n    vec4 color = vec4(0.0);\n    float baseWeight = 1.0 / 4.0;\n    float w  = tap(v_Texcoord + d.xy, color, baseWeight);\n    w += tap(v_Texcoord + d.zy, color, baseWeight);\n    w += tap(v_Texcoord + d.xw, color, baseWeight);\n    w += tap(v_Texcoord + d.zw, color, baseWeight);\n\n    gl_FragColor = encodeHDR(color / w);\n#endif\n}\n\n@end\n\n\n\n@export qtek.compositor.dof.downsample\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nuniform vec2 textureSize : [512, 512];\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n\n@import qtek.util.decode_float\n\nfloat tap(vec2 uv, inout vec4 color) {\n    float weight = abs(decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0) * 0.25;\n    color += decodeHDR(texture2D(texture, uv)) * weight;\n    return weight;\n}\n\nvoid main()\n{\n    vec4 d = vec4(-1.0, -1.0, 1.0, 1.0) / textureSize.xyxy;\n\n    vec4 color = vec4(0.0);\n    float weight = tap(v_Texcoord + d.xy, color);\n    weight += tap(v_Texcoord + d.zy, color);\n    weight += tap(v_Texcoord + d.xw, color);\n    weight += tap(v_Texcoord + d.zw, color);\n    color /= weight;\n\n    gl_FragColor = encodeHDR(color);\n}\n\n@end\n\n\n\n@export qtek.compositor.dof.hexagonal_blur_frag\n\n@import qtek.util.float\n\n\nvec4 doBlur(sampler2D targetTexture, vec2 offset) {\n#ifdef BLUR_COC\n    float cocSum = 0.0;\n#else\n    vec4 color = vec4(0.0);\n#endif\n\n    float weightSum = 0.0;\n    float kernelWeight = 1.0 / float(KERNEL_SIZE);\n\n    for (int i = 0; i < KERNEL_SIZE; i++) {\n        vec2 coord = v_Texcoord + offset * float(i);\n\n        float w = kernelWeight;\n#ifdef BLUR_COC\n        float fCoc = decodeFloat(texture2D(targetTexture, coord)) * 2.0 - 1.0;\n                cocSum += clamp(fCoc, -1.0, 0.0) * w;\n#else\n        float fCoc = decodeFloat(texture2D(coc, coord)) * 2.0 - 1.0;\n        vec4 texel = texture2D(targetTexture, coord);\n    #if !defined(BLUR_NEARFIELD)\n        w *= abs(fCoc);\n    #endif\n        color += decodeHDR(texel) * w;\n#endif\n\n        weightSum += w;\n    }\n#ifdef BLUR_COC\n    return encodeFloat(clamp(cocSum / weightSum, -1.0, 0.0) * 0.5 + 0.5);\n#else\n    return color / weightSum;\n#endif\n}\n\n@end\n\n\n@export qtek.compositor.dof.hexagonal_blur_1\n\n#define KERNEL_SIZE 5\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 1.0;\n\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.rgbm\n\n@import qtek.compositor.dof.hexagonal_blur_frag\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n        gl_FragColor = doBlur(texture, vec2(0.0, offset.y));\n#if !defined(BLUR_COC)\n    gl_FragColor = encodeHDR(gl_FragColor);\n#endif\n}\n\n@end\n\n@export qtek.compositor.dof.hexagonal_blur_2\n\n#define KERNEL_SIZE 5\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 1.0;\n\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.rgbm\n\n@import qtek.compositor.dof.hexagonal_blur_frag\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n    offset.y /= 2.0;\n\n        gl_FragColor = doBlur(texture, -offset);\n#if !defined(BLUR_COC)\n    gl_FragColor = encodeHDR(gl_FragColor);\n#endif\n}\n@end\n\n@export qtek.compositor.dof.hexagonal_blur_3\n\n#define KERNEL_SIZE 5\n\nuniform sampler2D texture1;\nuniform sampler2D texture2;\nuniform sampler2D coc;\n\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 1.0;\n\nuniform vec2 textureSize : [512.0, 512.0];\n\n@import qtek.util.rgbm\n\n@import qtek.compositor.dof.hexagonal_blur_frag\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n    offset.y /= 2.0;\n    vec2 vDownRight = vec2(offset.x, -offset.y);\n\n        vec4 texel1 = doBlur(texture1, -offset);\n        vec4 texel2 = doBlur(texture1, vDownRight);\n        vec4 texel3 = doBlur(texture2, vDownRight);\n\n#ifdef BLUR_COC\n    float coc1 = decodeFloat(texel1) * 2.0 - 1.0;\n    float coc2 = decodeFloat(texel2) * 2.0 - 1.0;\n    float coc3 = decodeFloat(texel3) * 2.0 - 1.0;\n    gl_FragColor = encodeFloat(\n        ((coc1 + coc2 + coc3) / 3.0) * 0.5 + 0.5\n    );\n\n#else\n    vec4 color = (texel1 + texel2 + texel3) / 3.0;\n    gl_FragColor = encodeHDR(color);\n#endif\n}\n\n@end\n\n@export qtek.compositor.dof.composite\n\n#define DEBUG 0\n\nuniform sampler2D original;\nuniform sampler2D blurred;\nuniform sampler2D nearfield;\nuniform sampler2D coc;\nuniform sampler2D nearcoc;\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n@import qtek.util.float\n\nvoid main()\n{\n    vec4 blurredColor = decodeHDR(texture2D(blurred, v_Texcoord));\n    vec4 originalColor = decodeHDR(texture2D(original, v_Texcoord));\n\n    float fCoc = decodeFloat(texture2D(coc, v_Texcoord));\n\n            fCoc = abs(fCoc * 2.0 - 1.0);\n\n    float weight = smoothstep(0.0, 1.0, fCoc);\n    \n#ifdef NEARFIELD_ENABLED\n    vec4 nearfieldColor = decodeHDR(texture2D(nearfield, v_Texcoord));\n    float fNearCoc = decodeFloat(texture2D(nearcoc, v_Texcoord));\n    fNearCoc = abs(fNearCoc * 2.0 - 1.0);\n\n        gl_FragColor = encodeHDR(\n        mix(\n            nearfieldColor, mix(originalColor, blurredColor, weight),\n                        pow(1.0 - fNearCoc, 4.0)\n        )\n    );\n#else\n    gl_FragColor = encodeHDR(mix(originalColor, blurredColor, weight));\n#endif\n\n#if DEBUG == 1\n        gl_FragColor = vec4(vec3(fCoc), 1.0);\n#elif DEBUG == 2\n        gl_FragColor = vec4(vec3(fNearCoc), 1.0);\n#elif DEBUG == 3\n    gl_FragColor = encodeHDR(blurredColor);\n#elif DEBUG == 4\n        gl_FragColor = encodeHDR(nearfieldColor);\n#endif\n}\n\n@end";
 
 
 /***/ },
@@ -34613,24 +34781,40 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	
-	module.exports = "@export qtek.compositor.fxaa\n\nuniform sampler2D texture;\nuniform vec4 viewport : VIEWPORT;\n\nvarying vec2 v_Texcoord;\n\n#define FXAA_REDUCE_MIN   (1.0/128.0)\n#define FXAA_REDUCE_MUL   (1.0/8.0)\n#define FXAA_SPAN_MAX     8.0\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n    vec2 resolution = 1.0 / viewport.zw;\n    vec3 rgbNW =  decodeHDR( texture2D( texture, ( gl_FragCoord.xy + vec2( -1.0, -1.0 ) ) * resolution ) ).xyz;\n    vec3 rgbNE = decodeHDR( texture2D( texture, ( gl_FragCoord.xy + vec2( 1.0, -1.0 ) ) * resolution ) ).xyz;\n    vec3 rgbSW = decodeHDR( texture2D( texture, ( gl_FragCoord.xy + vec2( -1.0, 1.0 ) ) * resolution ) ).xyz;\n    vec3 rgbSE = decodeHDR( texture2D( texture, ( gl_FragCoord.xy + vec2( 1.0, 1.0 ) ) * resolution ) ).xyz;\n    vec4 rgbaM  = decodeHDR( texture2D( texture,  gl_FragCoord.xy  * resolution ) );\n    vec3 rgbM  = rgbaM.xyz;\n    float opacity  = rgbaM.w;\n\n    vec3 luma = vec3( 0.299, 0.587, 0.114 );\n\n    float lumaNW = dot( rgbNW, luma );\n    float lumaNE = dot( rgbNE, luma );\n    float lumaSW = dot( rgbSW, luma );\n    float lumaSE = dot( rgbSE, luma );\n    float lumaM  = dot( rgbM,  luma );\n    float lumaMin = min( lumaM, min( min( lumaNW, lumaNE ), min( lumaSW, lumaSE ) ) );\n    float lumaMax = max( lumaM, max( max( lumaNW, lumaNE) , max( lumaSW, lumaSE ) ) );\n\n    vec2 dir;\n    dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));\n    dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));\n\n    float dirReduce = max( ( lumaNW + lumaNE + lumaSW + lumaSE ) * ( 0.25 * FXAA_REDUCE_MUL ), FXAA_REDUCE_MIN );\n\n    float rcpDirMin = 1.0 / ( min( abs( dir.x ), abs( dir.y ) ) + dirReduce );\n    dir = min( vec2( FXAA_SPAN_MAX,  FXAA_SPAN_MAX),\n          max( vec2(-FXAA_SPAN_MAX, -FXAA_SPAN_MAX),\n                dir * rcpDirMin)) * resolution;\n\n    vec3 rgbA = decodeHDR( texture2D( texture, gl_FragCoord.xy  * resolution + dir * ( 1.0 / 3.0 - 0.5 ) ) ).xyz;\n    rgbA += decodeHDR( texture2D( texture, gl_FragCoord.xy  * resolution + dir * ( 2.0 / 3.0 - 0.5 ) ) ).xyz;\n    rgbA *= 0.5;\n\n    vec3 rgbB = decodeHDR( texture2D( texture, gl_FragCoord.xy  * resolution + dir * -0.5 ) ).xyz;\n    rgbB += decodeHDR( texture2D( texture, gl_FragCoord.xy  * resolution + dir * 0.5 ) ).xyz;\n    rgbB *= 0.25;\n    rgbB += rgbA * 0.5;\n\n    float lumaB = dot( rgbB, luma );\n\n    if ( ( lumaB < lumaMin ) || ( lumaB > lumaMax ) )\n    {\n                gl_FragColor = vec4( rgbA, opacity );\n\n    }\n    else {\n\n        gl_FragColor = vec4( rgbB, opacity );\n\n    }\n}\n\n@end";
+	module.exports = "@export qtek.compositor.lensflare\n\n#define SAMPLE_NUMBER 8\n\nuniform sampler2D texture;\nuniform sampler2D lenscolor;\n\nuniform vec2 textureSize : [512, 512];\n\nuniform float dispersal : 0.3;\nuniform float haloWidth : 0.4;\nuniform float distortion : 1.0;\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n\nvec4 textureDistorted(\n    in vec2 texcoord,\n    in vec2 direction,\n    in vec3 distortion\n) {\n    return vec4(\n        decodeHDR(texture2D(texture, texcoord + direction * distortion.r)).r,\n        decodeHDR(texture2D(texture, texcoord + direction * distortion.g)).g,\n        decodeHDR(texture2D(texture, texcoord + direction * distortion.b)).b,\n        1.0\n    );\n}\n\nvoid main()\n{\n    vec2 texcoord = -v_Texcoord + vec2(1.0);     vec2 textureOffset = 1.0 / textureSize;\n\n    vec2 ghostVec = (vec2(0.5) - texcoord) * dispersal;\n    vec2 haloVec = normalize(ghostVec) * haloWidth;\n\n    vec3 distortion = vec3(-textureOffset.x * distortion, 0.0, textureOffset.x * distortion);\n        vec4 result = vec4(0.0);\n    for (int i = 0; i < SAMPLE_NUMBER; i++)\n    {\n        vec2 offset = fract(texcoord + ghostVec * float(i));\n\n        float weight = length(vec2(0.5) - offset) / length(vec2(0.5));\n        weight = pow(1.0 - weight, 10.0);\n\n        result += textureDistorted(offset, normalize(ghostVec), distortion) * weight;\n    }\n\n    result *= texture2D(lenscolor, vec2(length(vec2(0.5) - texcoord)) / length(vec2(0.5)));\n        float weight = length(vec2(0.5) - fract(texcoord + haloVec)) / length(vec2(0.5));\n    weight = pow(1.0 - weight, 10.0);\n    vec2 offset = fract(texcoord + haloVec);\n    result += textureDistorted(offset, normalize(ghostVec), distortion) * weight;\n\n    gl_FragColor = result;\n}\n@end";
 
 
 /***/ },
 /* 149 */
 /***/ function(module, exports) {
 
-	module.exports = "@export ecgl.dof.diskBlur\n\n#define POISSON_KERNEL_SIZE 16;\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 10.0;\nuniform vec2 textureSize : [512.0, 512.0];\n\nuniform vec2 poissonKernel[POISSON_KERNEL_SIZE];\n\nuniform float percent;\n\nfloat nrand(const in vec2 n) {\n    return fract(sin(dot(n.xy ,vec2(12.9898,78.233))) * 43758.5453);\n}\n\n@import qtek.util.rgbm\n@import qtek.util.float\n\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n\n    float rnd = 6.28318 * nrand(v_Texcoord + 0.07 * percent );\n    float cosa = cos(rnd);\n    float sina = sin(rnd);\n    vec4 basis = vec4(cosa, -sina, sina, cosa);\n\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n#ifdef BLUR_COC\n    float cocSum = 0.0;\n#else\n    vec4 color = vec4(0.0);\n#endif\n\n\n    float weightSum = 0.0;\n\n    for (int i = 0; i < POISSON_KERNEL_SIZE; i++) {\n        vec2 ofs = poissonKernel[i];\n\n        ofs = vec2(dot(ofs, basis.xy), dot(ofs, basis.zw));\n\n        vec2 uv = v_Texcoord + ofs * offset;\n        vec4 texel = texture2D(texture, uv);\n\n        float w = 1.0;\n#ifdef BLUR_COC\n        float fCoc = decodeFloat(texel) * 2.0 - 1.0;\n        // Blur coc in nearfield\n        cocSum += clamp(fCoc, -1.0, 0.0) * w;\n#else\n        texel = decodeHDR(texel);\n    #if !defined(BLUR_NEARFIELD)\n        float fCoc = decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0;\n        // TODO DOF premult to avoid bleeding, can be tweaked (currently x^3)\n        // tradeoff between bleeding dof and out of focus object that shrinks too much\n        w *= abs(fCoc);\n    #endif\n        color += texel * w;\n#endif\n\n        weightSum += w;\n    }\n\n#ifdef BLUR_COC\n    gl_FragColor = encodeFloat(clamp(cocSum / weightSum, -1.0, 0.0) * 0.5 + 0.5);\n#else\n    color /= weightSum;\n    // TODO Windows will not be totally transparent if color.rgb is not 0 and color.a is 0.\n    gl_FragColor = encodeHDR(color);\n#endif\n}\n\n@end"
+	
+	module.exports = "@export qtek.compositor.blend\n#ifdef TEXTURE1_ENABLED\nuniform sampler2D texture1;\nuniform float weight1 : 1.0;\n#endif\n#ifdef TEXTURE2_ENABLED\nuniform sampler2D texture2;\nuniform float weight2 : 1.0;\n#endif\n#ifdef TEXTURE3_ENABLED\nuniform sampler2D texture3;\nuniform float weight3 : 1.0;\n#endif\n#ifdef TEXTURE4_ENABLED\nuniform sampler2D texture4;\nuniform float weight4 : 1.0;\n#endif\n#ifdef TEXTURE5_ENABLED\nuniform sampler2D texture5;\nuniform float weight5 : 1.0;\n#endif\n#ifdef TEXTURE6_ENABLED\nuniform sampler2D texture6;\nuniform float weight6 : 1.0;\n#endif\n\nvarying vec2 v_Texcoord;\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n    vec4 tex = vec4(0.0);\n#ifdef TEXTURE1_ENABLED\n    tex += decodeHDR(texture2D(texture1, v_Texcoord)) * weight1;\n#endif\n#ifdef TEXTURE2_ENABLED\n    tex += decodeHDR(texture2D(texture2, v_Texcoord)) * weight2;\n#endif\n#ifdef TEXTURE3_ENABLED\n    tex += decodeHDR(texture2D(texture3, v_Texcoord)) * weight3;\n#endif\n#ifdef TEXTURE4_ENABLED\n    tex += decodeHDR(texture2D(texture4, v_Texcoord)) * weight4;\n#endif\n#ifdef TEXTURE5_ENABLED\n    tex += decodeHDR(texture2D(texture5, v_Texcoord)) * weight5;\n#endif\n#ifdef TEXTURE6_ENABLED\n    tex += decodeHDR(texture2D(texture6, v_Texcoord)) * weight6;\n#endif\n\n    gl_FragColor = encodeHDR(tex);\n}\n@end";
+
 
 /***/ },
 /* 150 */
+/***/ function(module, exports) {
+
+	
+	module.exports = "@export qtek.compositor.fxaa\n\nuniform sampler2D texture;\nuniform vec4 viewport : VIEWPORT;\n\nvarying vec2 v_Texcoord;\n\n#define FXAA_REDUCE_MIN   (1.0/128.0)\n#define FXAA_REDUCE_MUL   (1.0/8.0)\n#define FXAA_SPAN_MAX     8.0\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n    vec2 resolution = 1.0 / viewport.zw;\n    vec3 rgbNW =  decodeHDR( texture2D( texture, ( gl_FragCoord.xy + vec2( -1.0, -1.0 ) ) * resolution ) ).xyz;\n    vec3 rgbNE = decodeHDR( texture2D( texture, ( gl_FragCoord.xy + vec2( 1.0, -1.0 ) ) * resolution ) ).xyz;\n    vec3 rgbSW = decodeHDR( texture2D( texture, ( gl_FragCoord.xy + vec2( -1.0, 1.0 ) ) * resolution ) ).xyz;\n    vec3 rgbSE = decodeHDR( texture2D( texture, ( gl_FragCoord.xy + vec2( 1.0, 1.0 ) ) * resolution ) ).xyz;\n    vec4 rgbaM  = decodeHDR( texture2D( texture,  gl_FragCoord.xy  * resolution ) );\n    vec3 rgbM  = rgbaM.xyz;\n    float opacity  = rgbaM.w;\n\n    vec3 luma = vec3( 0.299, 0.587, 0.114 );\n\n    float lumaNW = dot( rgbNW, luma );\n    float lumaNE = dot( rgbNE, luma );\n    float lumaSW = dot( rgbSW, luma );\n    float lumaSE = dot( rgbSE, luma );\n    float lumaM  = dot( rgbM,  luma );\n    float lumaMin = min( lumaM, min( min( lumaNW, lumaNE ), min( lumaSW, lumaSE ) ) );\n    float lumaMax = max( lumaM, max( max( lumaNW, lumaNE) , max( lumaSW, lumaSE ) ) );\n\n    vec2 dir;\n    dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));\n    dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));\n\n    float dirReduce = max( ( lumaNW + lumaNE + lumaSW + lumaSE ) * ( 0.25 * FXAA_REDUCE_MUL ), FXAA_REDUCE_MIN );\n\n    float rcpDirMin = 1.0 / ( min( abs( dir.x ), abs( dir.y ) ) + dirReduce );\n    dir = min( vec2( FXAA_SPAN_MAX,  FXAA_SPAN_MAX),\n          max( vec2(-FXAA_SPAN_MAX, -FXAA_SPAN_MAX),\n                dir * rcpDirMin)) * resolution;\n\n    vec3 rgbA = decodeHDR( texture2D( texture, gl_FragCoord.xy  * resolution + dir * ( 1.0 / 3.0 - 0.5 ) ) ).xyz;\n    rgbA += decodeHDR( texture2D( texture, gl_FragCoord.xy  * resolution + dir * ( 2.0 / 3.0 - 0.5 ) ) ).xyz;\n    rgbA *= 0.5;\n\n    vec3 rgbB = decodeHDR( texture2D( texture, gl_FragCoord.xy  * resolution + dir * -0.5 ) ).xyz;\n    rgbB += decodeHDR( texture2D( texture, gl_FragCoord.xy  * resolution + dir * 0.5 ) ).xyz;\n    rgbB *= 0.25;\n    rgbB += rgbA * 0.5;\n\n    float lumaB = dot( rgbB, luma );\n\n    if ( ( lumaB < lumaMin ) || ( lumaB > lumaMax ) )\n    {\n                gl_FragColor = vec4( rgbA, opacity );\n\n    }\n    else {\n\n        gl_FragColor = vec4( rgbB, opacity );\n\n    }\n}\n\n@end";
+
+
+/***/ },
+/* 151 */
+/***/ function(module, exports) {
+
+	module.exports = "@export ecgl.dof.diskBlur\n\n#define POISSON_KERNEL_SIZE 16;\n\nuniform sampler2D texture;\nuniform sampler2D coc;\nvarying vec2 v_Texcoord;\n\nuniform float blurSize : 10.0;\nuniform vec2 textureSize : [512.0, 512.0];\n\nuniform vec2 poissonKernel[POISSON_KERNEL_SIZE];\n\nuniform float percent;\n\nfloat nrand(const in vec2 n) {\n    return fract(sin(dot(n.xy ,vec2(12.9898,78.233))) * 43758.5453);\n}\n\n@import qtek.util.rgbm\n@import qtek.util.float\n\n\nvoid main()\n{\n    vec2 offset = blurSize / textureSize;\n\n    float rnd = 6.28318 * nrand(v_Texcoord + 0.07 * percent );\n    float cosa = cos(rnd);\n    float sina = sin(rnd);\n    vec4 basis = vec4(cosa, -sina, sina, cosa);\n\n#if !defined(BLUR_NEARFIELD) && !defined(BLUR_COC)\n    offset *= abs(decodeFloat(texture2D(coc, v_Texcoord)) * 2.0 - 1.0);\n#endif\n\n#ifdef BLUR_COC\n    float cocSum = 0.0;\n#else\n    vec4 color = vec4(0.0);\n#endif\n\n\n    float weightSum = 0.0;\n\n    for (int i = 0; i < POISSON_KERNEL_SIZE; i++) {\n        vec2 ofs = poissonKernel[i];\n\n        ofs = vec2(dot(ofs, basis.xy), dot(ofs, basis.zw));\n\n        vec2 uv = v_Texcoord + ofs * offset;\n        vec4 texel = texture2D(texture, uv);\n\n        float w = 1.0;\n#ifdef BLUR_COC\n        float fCoc = decodeFloat(texel) * 2.0 - 1.0;\n        // Blur coc in nearfield\n        cocSum += clamp(fCoc, -1.0, 0.0) * w;\n#else\n        texel = decodeHDR(texel);\n    #if !defined(BLUR_NEARFIELD)\n        float fCoc = decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0;\n        // TODO DOF premult to avoid bleeding, can be tweaked (currently x^3)\n        // tradeoff between bleeding dof and out of focus object that shrinks too much\n        w *= abs(fCoc);\n    #endif\n        color += texel * w;\n#endif\n\n        weightSum += w;\n    }\n\n#ifdef BLUR_COC\n    gl_FragColor = encodeFloat(clamp(cocSum / weightSum, -1.0, 0.0) * 0.5 + 0.5);\n#else\n    color /= weightSum;\n    // TODO Windows will not be totally transparent if color.rgb is not 0 and color.a is 0.\n    gl_FragColor = encodeHDR(color);\n#endif\n}\n\n@end"
+
+/***/ },
+/* 152 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Temporal Super Sample for static Scene
-	var halton = __webpack_require__(135);
-	var Pass = __webpack_require__(57);
-	var FrameBuffer = __webpack_require__(48);
-	var Texture2D = __webpack_require__(33);
+	var halton = __webpack_require__(136);
+	var Pass = __webpack_require__(58);
+	var FrameBuffer = __webpack_require__(49);
+	var Texture2D = __webpack_require__(34);
 	var Shader = __webpack_require__(18);
 
 	function TemporalSuperSampling () {
@@ -34786,15 +34970,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = TemporalSuperSampling;
 
 /***/ },
-/* 151 */
+/* 153 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(152);
-	__webpack_require__(155);
+	__webpack_require__(154);
+	__webpack_require__(157);
 
-	__webpack_require__(162);
+	__webpack_require__(164);
 
 	echarts.registerAction({
 	    type: 'geo3DChangeCamera',
@@ -34809,15 +34993,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 152 */
+/* 154 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var componentViewControlMixin = __webpack_require__(94);
-	var componentPostEffectMixin = __webpack_require__(95);
-	var componentLightMixin = __webpack_require__(96);
-	var componentShadingMixin = __webpack_require__(153);
-	var geo3DModelMixin = __webpack_require__(154);
+	var componentViewControlMixin = __webpack_require__(95);
+	var componentPostEffectMixin = __webpack_require__(96);
+	var componentLightMixin = __webpack_require__(97);
+	var componentShadingMixin = __webpack_require__(155);
+	var geo3DModelMixin = __webpack_require__(156);
 
 	var Geo3DModel = echarts.extendComponentModel({
 
@@ -34906,7 +35090,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Geo3DModel;
 
 /***/ },
-/* 153 */
+/* 155 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -34940,7 +35124,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 154 */
+/* 156 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -35062,15 +35246,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 155 */
+/* 157 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Geo3DBuilder = __webpack_require__(156);
+	var Geo3DBuilder = __webpack_require__(158);
 	var echarts = __webpack_require__(2);
 
-	var graphicGL = __webpack_require__(31);
-	var OrbitControl = __webpack_require__(98);
-	var SceneHelper = __webpack_require__(102);
+	var graphicGL = __webpack_require__(32);
+	var OrbitControl = __webpack_require__(99);
+	var SceneHelper = __webpack_require__(103);
 
 	module.exports = echarts.extendComponentView({
 
@@ -35123,7 +35307,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._sceneHelper.updateLight(geo3DModel);
 
 	        // Set post effect
-	        geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'));
+	        geo3D.viewGL.setPostEffect(geo3DModel.getModel('postEffect'), api);
 	        geo3D.viewGL.setTemporalSuperSampling(geo3DModel.getModel('temporalSuperSampling'));
 
 	        // Must update after geo3D.viewGL.setPostEffect
@@ -35163,21 +35347,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 156 */
+/* 158 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var Triangulation = __webpack_require__(157);
-	var LinesGeo = __webpack_require__(99);
-	var retrieve = __webpack_require__(69);
+	var graphicGL = __webpack_require__(32);
+	var Triangulation = __webpack_require__(159);
+	var LinesGeo = __webpack_require__(100);
+	var retrieve = __webpack_require__(70);
 	var glmatrix = __webpack_require__(15);
-	var trianglesSortMixin = __webpack_require__(159);
-	var LabelsBuilder = __webpack_require__(161);
+	var trianglesSortMixin = __webpack_require__(161);
+	var LabelsBuilder = __webpack_require__(163);
 
 	var vec3 = glmatrix.vec3;
 
-	graphicGL.Shader.import(__webpack_require__(110));
+	graphicGL.Shader.import(__webpack_require__(111));
 
 	function Geo3DBuilder(api) {
 
@@ -35932,7 +36116,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Geo3DBuilder;
 
 /***/ },
-/* 157 */
+/* 159 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Ear clipping polygon triangulation.
@@ -35942,7 +36126,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// http://www.cosy.sbg.ac.at/~held/projects/triang/triang.html
 	// Z Order Hash ?
 
-	var LinkedList = __webpack_require__(158);
+	var LinkedList = __webpack_require__(160);
 
 	// From x,y point cast a ray to right. and intersect with edge x0, y0, x1, y1;
 	// Return x value of intersect point
@@ -36541,7 +36725,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = TriangulationContext;
 
 /***/ },
-/* 158 */
+/* 160 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -36808,11 +36992,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 159 */
+/* 161 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var vec3 = __webpack_require__(15).vec3;
-	var ProgressiveQuickSort = __webpack_require__(160);
+	var ProgressiveQuickSort = __webpack_require__(162);
 
 	var p0 = vec3.create();
 	var p1 = vec3.create();
@@ -36938,7 +37122,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 160 */
+/* 162 */
 /***/ function(module, exports) {
 
 	
@@ -37073,12 +37257,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ProgressiveQuickSort;
 
 /***/ },
-/* 161 */
+/* 163 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var ZRTextureAtlasSurface = __webpack_require__(101);
-	var LabelsMesh = __webpack_require__(107);
+	var ZRTextureAtlasSurface = __webpack_require__(102);
+	var LabelsMesh = __webpack_require__(108);
 
 	var LABEL_NORMAL_SHOW_BIT = 1;
 	var LABEL_EMPHASIS_SHOW_BIT = 2;
@@ -37237,14 +37421,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LabelsBuilder;
 
 /***/ },
-/* 162 */
+/* 164 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Geo3D = __webpack_require__(163);
+	var Geo3D = __webpack_require__(165);
 	var echarts = __webpack_require__(2);
-	var layoutUtil = __webpack_require__(115);
-	var ViewGL = __webpack_require__(122);
-	var retrieve = __webpack_require__(69);
+	var layoutUtil = __webpack_require__(116);
+	var ViewGL = __webpack_require__(123);
+	var retrieve = __webpack_require__(70);
 
 	function resizeGeo3D(geo3DModel, api) {
 	    // Use left/top/width/height
@@ -37363,7 +37547,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = geo3DCreator;
 
 /***/ },
-/* 163 */
+/* 165 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -37373,8 +37557,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// Geo fix functions
 	var geoFixFuncs = [
-	    __webpack_require__(164),
-	    __webpack_require__(165)
+	    __webpack_require__(166),
+	    __webpack_require__(167)
 	];
 
 	function Geo3D(name, map, geoJson, specialAreas, nameMap) {
@@ -37544,12 +37728,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Geo3D;
 
 /***/ },
-/* 164 */
+/* 166 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	    var zrUtil = __webpack_require__(75);
+	    var zrUtil = __webpack_require__(76);
 
 	    var coordsOffsetMap = {
 	        '南海诸岛' : [32, 80],
@@ -37574,12 +37758,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 165 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	    var zrUtil = __webpack_require__(75);
+	    var zrUtil = __webpack_require__(76);
 
 	    var geoCoordMap = {
 	        'Russia': [100, 60],
@@ -37600,15 +37784,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 166 */
+/* 168 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(167);
-	__webpack_require__(168);
-
+	__webpack_require__(169);
 	__webpack_require__(170);
+
+	__webpack_require__(172);
 
 	echarts.registerAction({
 	    type: 'globeChangeCamera',
@@ -37623,14 +37807,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 167 */
+/* 169 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var componentViewControlMixin = __webpack_require__(94);
-	var componentPostEffectMixin = __webpack_require__(95);
-	var componentLightMixin = __webpack_require__(96);
-	var componentShadingMixin = __webpack_require__(153);
+	var componentViewControlMixin = __webpack_require__(95);
+	var componentPostEffectMixin = __webpack_require__(96);
+	var componentLightMixin = __webpack_require__(97);
+	var componentShadingMixin = __webpack_require__(155);
 
 
 	function defaultId(option, idx) {
@@ -37772,17 +37956,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = GlobeModel;
 
 /***/ },
-/* 168 */
+/* 170 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	var graphicGL = __webpack_require__(31);
-	var OrbitControl = __webpack_require__(98);
-	var SceneHelper = __webpack_require__(102);
+	var graphicGL = __webpack_require__(32);
+	var OrbitControl = __webpack_require__(99);
+	var SceneHelper = __webpack_require__(103);
 
-	var sunCalc = __webpack_require__(169);
-	var retrieve = __webpack_require__(69);
+	var sunCalc = __webpack_require__(171);
+	var retrieve = __webpack_require__(70);
 
 	module.exports = echarts.extendComponentView({
 
@@ -37863,7 +38047,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._sceneHelper.setScene(coordSys.viewGL.scene);
 
 	        // Set post effect
-	        coordSys.viewGL.setPostEffect(globeModel.getModel('postEffect'));
+	        coordSys.viewGL.setPostEffect(globeModel.getModel('postEffect'), api);
 	        coordSys.viewGL.setTemporalSuperSampling(globeModel.getModel('temporalSuperSampling'));
 
 	        var earthMesh = this._earthMesh;
@@ -38209,7 +38393,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 169 */
+/* 171 */
 /***/ function(module, exports) {
 
 	/*
@@ -38299,14 +38483,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = SunCalc;
 
 /***/ },
-/* 170 */
+/* 172 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Globe = __webpack_require__(171);
+	var Globe = __webpack_require__(173);
 	var echarts = __webpack_require__(2);
-	var layoutUtil = __webpack_require__(115);
-	var ViewGL = __webpack_require__(122);
-	var retrieve = __webpack_require__(69);
+	var layoutUtil = __webpack_require__(116);
+	var ViewGL = __webpack_require__(123);
+	var retrieve = __webpack_require__(70);
 
 	function resizeGlobe(globeModel, api) {
 	    // Use left/top/width/height
@@ -38380,7 +38564,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = globeCreator;
 
 /***/ },
-/* 171 */
+/* 173 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var glmatrix = __webpack_require__(15);
@@ -38454,18 +38638,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Globe;
 
 /***/ },
-/* 172 */
+/* 174 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(173);
-
 	__webpack_require__(175);
-	__webpack_require__(178);
+
+	__webpack_require__(177);
+	__webpack_require__(180);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(181), 'bar3D'
+	    __webpack_require__(183), 'bar3D'
 	));
 
 	echarts.registerProcessor(function (ecModel, api) {
@@ -38478,13 +38662,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 173 */
+/* 175 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 	var Vector3 = __webpack_require__(14);
 	var vec3 = __webpack_require__(15).vec3;
-	var cartesian3DLayout = __webpack_require__(174);
+	var cartesian3DLayout = __webpack_require__(176);
 
 	function globeLayout(seriesModel, coordSys) {
 	    var data = seriesModel.getData();
@@ -38570,7 +38754,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 174 */
+/* 176 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -38631,15 +38815,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = cartesian3DLayout;
 
 /***/ },
-/* 175 */
+/* 177 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var retrieve = __webpack_require__(69);
-	var BarsGeometry = __webpack_require__(176);
-	var LabelsBuilder = __webpack_require__(161);
-	var TooltipHelper = __webpack_require__(177);
+	var graphicGL = __webpack_require__(32);
+	var retrieve = __webpack_require__(70);
+	var BarsGeometry = __webpack_require__(178);
+	var LabelsBuilder = __webpack_require__(163);
+	var TooltipHelper = __webpack_require__(179);
 	var vec3 = __webpack_require__(15).vec3;
 
 	function getShader(shading) {
@@ -38922,7 +39106,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 176 */
+/* 178 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -38933,9 +39117,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	var echarts = __webpack_require__(2);
-	var dynamicConvertMixin = __webpack_require__(100);
-	var trianglesSortMixin = __webpack_require__(159);
-	var StaticGeometry = __webpack_require__(35);
+	var dynamicConvertMixin = __webpack_require__(101);
+	var trianglesSortMixin = __webpack_require__(161);
+	var StaticGeometry = __webpack_require__(36);
 
 	var glMatrix = __webpack_require__(15);
 	var vec3 = glMatrix.vec3;
@@ -39315,7 +39499,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = BarsGeometry;
 
 /***/ },
-/* 177 */
+/* 179 */
 /***/ function(module, exports) {
 
 	module.exports = function (api) {
@@ -39352,13 +39536,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 178 */
+/* 180 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var componentShadingMixin = __webpack_require__(153);
-	var formatUtil = __webpack_require__(179);
-	var formatTooltip = __webpack_require__(180);
+	var componentShadingMixin = __webpack_require__(155);
+	var formatUtil = __webpack_require__(181);
+	var formatTooltip = __webpack_require__(182);
 
 	var Bar3DSeries = echarts.extendSeriesModel({
 
@@ -39445,7 +39629,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Bar3DSeries;
 
 /***/ },
-/* 179 */
+/* 181 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -39479,7 +39663,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = formatUtil;
 
 /***/ },
-/* 180 */
+/* 182 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -39544,7 +39728,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 181 */
+/* 183 */
 /***/ function(module, exports) {
 
 	module.exports = function (seriesType, ecModel, api) {
@@ -39570,20 +39754,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 182 */
+/* 184 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(183);
-	__webpack_require__(184);
+	__webpack_require__(185);
+	__webpack_require__(186);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(186), 'line3D', 'circle', null
+	    __webpack_require__(188), 'line3D', 'circle', null
 	));
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(181), 'line3D'
+	    __webpack_require__(183), 'line3D'
 	));
 
 	echarts.registerLayout(function (ecModel, api) {
@@ -39621,11 +39805,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 183 */
+/* 185 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var formatTooltip = __webpack_require__(180);
+	var formatTooltip = __webpack_require__(182);
 
 	var Line3DSeries = echarts.extendSeriesModel({
 
@@ -39662,20 +39846,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Line3DSeries;
 
 /***/ },
-/* 184 */
+/* 186 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var retrieve = __webpack_require__(69);
-	var Lines3DGeometry = __webpack_require__(99);
+	var graphicGL = __webpack_require__(32);
+	var retrieve = __webpack_require__(70);
+	var Lines3DGeometry = __webpack_require__(100);
 	var Matrix4 = __webpack_require__(16);
 	var Vector3 = __webpack_require__(14);
 	var vec3 = __webpack_require__(15).vec3;
-	var lineContain = __webpack_require__(185);
-	var TooltipHelper = __webpack_require__(177);
+	var lineContain = __webpack_require__(187);
+	var TooltipHelper = __webpack_require__(179);
 
-	graphicGL.Shader.import(__webpack_require__(110));
+	graphicGL.Shader.import(__webpack_require__(111));
 
 	module.exports = echarts.extendChartView({
 
@@ -39971,7 +40155,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 185 */
+/* 187 */
 /***/ function(module, exports) {
 
 	
@@ -40019,7 +40203,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 186 */
+/* 188 */
 /***/ function(module, exports) {
 
 	
@@ -40068,20 +40252,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 187 */
+/* 189 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(188);
-	__webpack_require__(189);
+	__webpack_require__(190);
+	__webpack_require__(191);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(186), 'scatter3D', 'circle', null
+	    __webpack_require__(188), 'scatter3D', 'circle', null
 	));
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(181), 'scatter3D'
+	    __webpack_require__(183), 'scatter3D'
 	));
 
 	echarts.registerLayout(function (ecModel, api) {
@@ -40133,12 +40317,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 188 */
+/* 190 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var formatUtil = __webpack_require__(179);
-	var formatTooltip = __webpack_require__(180);
+	var formatUtil = __webpack_require__(181);
+	var formatTooltip = __webpack_require__(182);
 
 	var Scatter3DSeries = echarts.extendSeriesModel({
 
@@ -40219,13 +40403,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 189 */
+/* 191 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
+	var graphicGL = __webpack_require__(32);
 
-	var PointsBuilder = __webpack_require__(190);
+	var PointsBuilder = __webpack_require__(192);
 
 	echarts.extendChartView({
 
@@ -40279,16 +40463,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 190 */
+/* 192 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var spriteUtil = __webpack_require__(191);
-	var PointsMesh = __webpack_require__(192);
-	var LabelsBuilder = __webpack_require__(161);
+	var graphicGL = __webpack_require__(32);
+	var spriteUtil = __webpack_require__(193);
+	var PointsMesh = __webpack_require__(194);
+	var LabelsBuilder = __webpack_require__(163);
 	var Matrix4 = __webpack_require__(16);
-	var TooltipHelper = __webpack_require__(177);
+	var TooltipHelper = __webpack_require__(179);
 
 	var SDF_RANGE = 20;
 
@@ -40661,7 +40845,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = PointsBuilder;
 
 /***/ },
-/* 191 */
+/* 193 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -40848,16 +41032,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = spriteUtil;
 
 /***/ },
-/* 192 */
+/* 194 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var graphicGL = __webpack_require__(31);
-	var verticesSortMixin = __webpack_require__(193);
+	var graphicGL = __webpack_require__(32);
+	var verticesSortMixin = __webpack_require__(195);
 	var echarts = __webpack_require__(2);
 	var glmatrix = __webpack_require__(15);
 	var vec4 = glmatrix.vec4;
 
-	graphicGL.Shader.import(__webpack_require__(194));
+	graphicGL.Shader.import(__webpack_require__(196));
 
 	var PointsMesh = graphicGL.Mesh.extend(function () {
 	    var geometry = new graphicGL.Geometry({
@@ -40974,11 +41158,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = PointsMesh;
 
 /***/ },
-/* 193 */
+/* 195 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var vec3 = __webpack_require__(15).vec3;
-	var ProgressiveQuickSort = __webpack_require__(160);
+	var ProgressiveQuickSort = __webpack_require__(162);
 
 	module.exports = {
 
@@ -41073,24 +41257,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 194 */
+/* 196 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.sdfSprite.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_FillColor: COLOR;\nvarying vec4 v_Color;\n#endif\n\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\n#ifdef POSITIONTEXTURE_ENABLED\nuniform sampler2D positionTexture;\n#endif\n\nvarying float v_Size;\n\nvoid main()\n{\n\n#ifdef POSITIONTEXTURE_ENABLED\n    // Only 2d position texture supported\n    gl_Position = worldViewProjection * vec4(texture2D(positionTexture, position.xy).xy, -10.0, 1.0);\n#else\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n#endif\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_FillColor;\n    // v_StrokeColor = a_StrokeColor;\n#endif\n\n    v_Size = size;\n}\n\n@end\n\n@export ecgl.sdfSprite.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\nuniform vec4 strokeColor: [1, 1, 1, 1];\nuniform float smoothing: 0.07;\n\nuniform float lineWidth: 0.0;\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n// varying vec4 v_StrokeColor;\n#endif\n\nvarying float v_Size;\n\nuniform sampler2D sprite;\n\n@import qtek.util.srgb\n\nvoid main()\n{\n    gl_FragColor = color;\n\n    vec4 _strokeColor = strokeColor;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n    // TODO\n    // _strokeColor *= v_StrokeColor;\n#endif\n\n#ifdef SPRITE_ENABLED\n    float d = texture2D(sprite, gl_PointCoord).r;\n    // Antialias\n    gl_FragColor.a *= smoothstep(0.5 - smoothing, 0.5 + smoothing, d);\n\n    if (lineWidth > 0.0) {\n        // TODO SCREEN SPACE OUTLINE\n        float sLineWidth = lineWidth / 2.0;\n\n        float outlineMaxValue0 = 0.5 + sLineWidth;\n        float outlineMaxValue1 = 0.5 + sLineWidth + smoothing;\n        float outlineMinValue0 = 0.5 - sLineWidth - smoothing;\n        float outlineMinValue1 = 0.5 - sLineWidth;\n\n        // FIXME Aliasing\n        if (d <= outlineMaxValue1 && d >= outlineMinValue0) {\n            float a = _strokeColor.a;\n            if (d <= outlineMinValue1) {\n                a = a * smoothstep(outlineMinValue0, outlineMinValue1, d);\n            }\n            else {\n                a = a * smoothstep(outlineMaxValue1, outlineMaxValue0, d);\n            }\n            gl_FragColor.rgb = mix(gl_FragColor.rgb * gl_FragColor.a, _strokeColor.rgb, a);\n            gl_FragColor.a = gl_FragColor.a * (1.0 - a) + a;\n        }\n    }\n#endif\n\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(gl_FragColor);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end"
 
 /***/ },
-/* 195 */
+/* 197 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(196);
+	__webpack_require__(198);
 
-	__webpack_require__(197);
-	__webpack_require__(201);
+	__webpack_require__(199);
+	__webpack_require__(203);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(181), 'lines3D'
+	    __webpack_require__(183), 'lines3D'
 	));
 
 
@@ -41113,7 +41297,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}, function () {});
 
 /***/ },
-/* 196 */
+/* 198 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -41254,15 +41438,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 197 */
+/* 199 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var LinesGeometry = __webpack_require__(99);
-	var TrailMesh = __webpack_require__(198);
+	var graphicGL = __webpack_require__(32);
+	var LinesGeometry = __webpack_require__(100);
+	var TrailMesh = __webpack_require__(200);
 
-	graphicGL.Shader.import(__webpack_require__(110));
+	graphicGL.Shader.import(__webpack_require__(111));
 
 	function getCoordSysSize(coordSys) {
 	    if (coordSys.radius != null) {
@@ -41448,16 +41632,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 198 */
+/* 200 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var spriteUtil = __webpack_require__(191);
+	var graphicGL = __webpack_require__(32);
+	var spriteUtil = __webpack_require__(193);
 
-	var TrailGeometry = __webpack_require__(199);
+	var TrailGeometry = __webpack_require__(201);
 
-	graphicGL.Shader.import(__webpack_require__(200));
+	graphicGL.Shader.import(__webpack_require__(202));
 
 	module.exports = graphicGL.Mesh.extend(function () {
 
@@ -41571,7 +41755,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 199 */
+/* 201 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -41582,7 +41766,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @author Yi Shen(http://github.com/pissang)
 	 */
 
-	var StaticGeometry = __webpack_require__(35);
+	var StaticGeometry = __webpack_require__(36);
 	var vec3 = __webpack_require__(15).vec3;
 
 	/**
@@ -41739,13 +41923,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = CurveTrailGeometry;
 
 /***/ },
-/* 200 */
+/* 202 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.trail.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float percent : 0.0;\nuniform float trailLength: 0.3;\n\nuniform sampler2D pointsTexture;\nuniform float textureWidth : 1024;\n\nuniform vec4 viewport : VIEWPORT;\nuniform float near : NEAR;\n\nattribute vec2 uv;\nattribute vec4 color : COLOR;\n\nattribute float start;\nattribute float prevT;\nattribute float currT;\nattribute float nextT;\nattribute float offset;\n\nvarying vec4 v_Color;\n\n@import ecgl.lines3D.clipNear\n\nvec3 getPointAt(in float off, in vec3 p0, in vec3 p1, in vec3 p2, in vec3 p3) {\n    float t = max(min(mod(start + percent, (1.0 + trailLength)) + off, 1.0), 0.0);\n    float onet = 1.0 - t;\n    return onet * onet * (onet * p0 + 3.0 * t * p1)\n        + t * t * (t * p3 + 3.0 * onet * p2);\n}\n\nvoid main()\n{\n    vec2 unit = vec2(1.0 / textureWidth, 0.0);\n    vec3 p0 = texture2D(pointsTexture, uv).rgb;\n    vec3 p1 = texture2D(pointsTexture, uv + unit).rgb;\n    vec3 p2 = texture2D(pointsTexture, uv + unit * 2.0).rgb;\n    vec3 p3 = texture2D(pointsTexture, uv + unit * 3.0).rgb;\n\n    vec3 positionPrev = getPointAt(prevT, p0, p1, p2, p3);\n    vec3 position = getPointAt(currT, p0, p1, p2, p3);\n    vec3 positionNext = getPointAt(nextT, p0, p1, p2, p3);\n\n    @import ecgl.lines3D.expandLine\n\n    gl_Position = currProj;\n\n    v_Color = color;\n}\n\n@end\n\n@export ecgl.trail.fragment\n\nvarying vec4 v_Color;\n\nuniform sampler2D sprite;\n\nvoid main()\n{\n    gl_FragColor = v_Color;\n\n#ifdef SPRITE_ENABLED\n    gl_FragColor *= texture2D(sprite, gl_PointCoord);\n#endif\n\n}\n@end"
 
 /***/ },
-/* 201 */
+/* 203 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -41815,27 +41999,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 202 */
+/* 204 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(203);
-	__webpack_require__(204);
 	__webpack_require__(205);
+	__webpack_require__(206);
+	__webpack_require__(207);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(181), 'surface'
+	    __webpack_require__(183), 'surface'
 	));
 
 
 /***/ },
-/* 203 */
+/* 205 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var componentShadingMixin = __webpack_require__(153);
-	var formatTooltip = __webpack_require__(180);
+	var componentShadingMixin = __webpack_require__(155);
+	var formatTooltip = __webpack_require__(182);
 
 	var SurfaceSeries = echarts.extendSeriesModel({
 
@@ -42017,15 +42201,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = SurfaceSeries;
 
 /***/ },
-/* 204 */
+/* 206 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var retrieve = __webpack_require__(69);
+	var graphicGL = __webpack_require__(32);
+	var retrieve = __webpack_require__(70);
 	var vec3 = __webpack_require__(15).vec3;
-	var trianglesSortMixin = __webpack_require__(159);
-	var TooltipHelper = __webpack_require__(177);
+	var trianglesSortMixin = __webpack_require__(161);
+	var TooltipHelper = __webpack_require__(179);
 
 	function isPointsNaN(pt) {
 	    return isNaN(pt[0]) || isNaN(pt[1]) || isNaN(pt[2]);
@@ -42471,7 +42655,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 205 */
+/* 207 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -42506,18 +42690,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 206 */
+/* 208 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(207);
-	__webpack_require__(208);
+	__webpack_require__(209);
+	__webpack_require__(210);
 
-	__webpack_require__(162);
+	__webpack_require__(164);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(181), 'map3D'
+	    __webpack_require__(183), 'map3D'
 	));
 
 	echarts.registerAction({
@@ -42533,17 +42717,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 207 */
+/* 209 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var componentViewControlMixin = __webpack_require__(94);
-	var componentPostEffectMixin = __webpack_require__(95);
-	var componentLightMixin = __webpack_require__(96);
-	var componentShadingMixin = __webpack_require__(153);
-	var geo3DModelMixin = __webpack_require__(154);
-	var formatUtil = __webpack_require__(179);
-	var formatTooltip = __webpack_require__(180);
+	var componentViewControlMixin = __webpack_require__(95);
+	var componentPostEffectMixin = __webpack_require__(96);
+	var componentLightMixin = __webpack_require__(97);
+	var componentShadingMixin = __webpack_require__(155);
+	var geo3DModelMixin = __webpack_require__(156);
+	var formatUtil = __webpack_require__(181);
+	var formatTooltip = __webpack_require__(182);
 
 	var Map3DModel = echarts.extendSeriesModel({
 
@@ -42552,6 +42736,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    layoutMode: 'box',
 
 	    coordinateSystem: null,
+
+	    visualColorAccessPath: 'itemStyle.areaColor',
 
 	    getInitialData: function (option) {
 	        option.data = this.getFilledRegions(option.data, option.map);
@@ -42613,15 +42799,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Map3DModel;
 
 /***/ },
-/* 208 */
+/* 210 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	var graphicGL = __webpack_require__(31);
-	var OrbitControl = __webpack_require__(98);
-	var SceneHelper = __webpack_require__(102);
-	var Geo3DBuilder = __webpack_require__(156);
+	var graphicGL = __webpack_require__(32);
+	var OrbitControl = __webpack_require__(99);
+	var SceneHelper = __webpack_require__(103);
+	var Geo3DBuilder = __webpack_require__(158);
 
 	module.exports = echarts.extendChartView({
 
@@ -42662,7 +42848,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._sceneHelper.updateLight(map3DModel);
 
 	        // Set post effect
-	        geo3D.viewGL.setPostEffect(map3DModel.getModel('postEffect'));
+	        geo3D.viewGL.setPostEffect(map3DModel.getModel('postEffect'), api);
 	        geo3D.viewGL.setTemporalSuperSampling(map3DModel.getModel('temporalSuperSampling'));
 
 	        // Must update after geo3D.viewGL.setPostEffect
@@ -42694,20 +42880,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 209 */
+/* 211 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(210);
-	__webpack_require__(211);
+	__webpack_require__(212);
+	__webpack_require__(213);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(186), 'scatterGL', 'circle', null
+	    __webpack_require__(188), 'scatterGL', 'circle', null
 	));
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(181), 'scatterGL'
+	    __webpack_require__(183), 'scatterGL'
 	));
 
 	echarts.registerLayout(function (ecModel, api) {
@@ -42743,7 +42929,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 210 */
+/* 212 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
@@ -42788,14 +42974,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 211 */
+/* 213 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var ViewGL = __webpack_require__(122);
+	var graphicGL = __webpack_require__(32);
+	var ViewGL = __webpack_require__(123);
 
-	var PointsBuilder = __webpack_require__(190);
+	var PointsBuilder = __webpack_require__(192);
 
 	echarts.extendChartView({
 
@@ -42845,20 +43031,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 212 */
+/* 214 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
 
-	__webpack_require__(213);
-	__webpack_require__(217);
+	__webpack_require__(215);
+	__webpack_require__(219);
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(186), 'graphGL', 'circle', null
+	    __webpack_require__(188), 'graphGL', 'circle', null
 	));
 
 	echarts.registerVisual(echarts.util.curry(
-	    __webpack_require__(181), 'graphGL'
+	    __webpack_require__(183), 'graphGL'
 	));
 
 	echarts.registerVisual(function (ecModel) {
@@ -42957,11 +43143,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	}, function () {});
 
 /***/ },
-/* 213 */
+/* 215 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var createGraphFromNodeEdge = __webpack_require__(214);
+	var createGraphFromNodeEdge = __webpack_require__(216);
 
 	var GraphSeries = echarts.extendSeriesModel({
 
@@ -43203,13 +43389,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = GraphSeries;
 
 /***/ },
-/* 214 */
+/* 216 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var Graph = __webpack_require__(215);
-	var linkList = __webpack_require__(216);
-	var retrieve = __webpack_require__(69);
+	var Graph = __webpack_require__(217);
+	var linkList = __webpack_require__(218);
+	var retrieve = __webpack_require__(70);
 
 	module.exports = function (nodes, edges, hostModel, directed, beforeLink) {
 	    var graph = new Graph(directed);
@@ -43264,7 +43450,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 215 */
+/* 217 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -43276,7 +43462,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var zrUtil = __webpack_require__(75);
+	    var zrUtil = __webpack_require__(76);
 
 	    /**
 	     * @alias module:echarts/data/Graph
@@ -43783,7 +43969,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 216 */
+/* 218 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -43791,7 +43977,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 
-	    var zrUtil = __webpack_require__(75);
+	    var zrUtil = __webpack_require__(76);
 	    var each = zrUtil.each;
 
 	    var DATAS = '\0__link_datas';
@@ -43921,25 +44107,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 217 */
+/* 219 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var layoutUtil = __webpack_require__(115);
-	var graphicGL = __webpack_require__(31);
-	var ViewGL = __webpack_require__(122);
-	var Lines2DGeometry = __webpack_require__(218);
-	var retrieve = __webpack_require__(69);
-	var ForceAtlas2GPU = __webpack_require__(219);
-	var ForceAtlas2 = __webpack_require__(221);
+	var layoutUtil = __webpack_require__(116);
+	var graphicGL = __webpack_require__(32);
+	var ViewGL = __webpack_require__(123);
+	var Lines2DGeometry = __webpack_require__(220);
+	var retrieve = __webpack_require__(70);
+	var ForceAtlas2GPU = __webpack_require__(221);
+	var ForceAtlas2 = __webpack_require__(223);
 	var requestAnimationFrame = __webpack_require__(30);
 	var vec2 = __webpack_require__(15).vec2;
 
-	var Roam2DControl = __webpack_require__(223);
+	var Roam2DControl = __webpack_require__(225);
 
-	var PointsBuilder = __webpack_require__(190);
+	var PointsBuilder = __webpack_require__(192);
 
-	graphicGL.Shader.import(__webpack_require__(224));
+	graphicGL.Shader.import(__webpack_require__(226));
 
 	var globalLayoutId = 1;
 
@@ -44375,7 +44561,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	});
 
 /***/ },
-/* 218 */
+/* 220 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -44386,10 +44572,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @author Yi Shen(http://github.com/pissang)
 	 */
 
-	var StaticGeometry = __webpack_require__(35);
+	var StaticGeometry = __webpack_require__(36);
 	var vec2 = __webpack_require__(15).vec2;
 	var echarts = __webpack_require__(2);
-	var dynamicConvertMixin = __webpack_require__(100);
+	var dynamicConvertMixin = __webpack_require__(101);
 
 	// var CURVE_RECURSION_LIMIT = 8;
 	// var CURVE_COLLINEAR_EPSILON = 40;
@@ -44793,15 +44979,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = LinesGeometry;
 
 /***/ },
-/* 219 */
+/* 221 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var echarts = __webpack_require__(2);
-	var graphicGL = __webpack_require__(31);
-	var Pass = __webpack_require__(57);
-	var FrameBuffer = __webpack_require__(48);
+	var graphicGL = __webpack_require__(32);
+	var Pass = __webpack_require__(58);
+	var FrameBuffer = __webpack_require__(49);
 
-	graphicGL.Shader.import(__webpack_require__(220));
+	graphicGL.Shader.import(__webpack_require__(222));
 
 	var defaultConfigs = {
 	    repulsionByDegree: true,
@@ -45273,18 +45459,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ForceAtlas2GPU;
 
 /***/ },
-/* 220 */
+/* 222 */
 /***/ function(module, exports) {
 
 	module.exports = "@export ecgl.forceAtlas2.updateNodeRepulsion\n\n#define NODE_COUNT 0\n\nuniform sampler2D positionTex;\n\nuniform vec2 textureSize;\nuniform float gravity;\nuniform float scaling;\nuniform vec2 gravityCenter;\n\nuniform bool strongGravityMode;\nuniform bool preventOverlap;\n\nvarying vec2 v_Texcoord;\n\nvoid main() {\n\n    vec4 n0 = texture2D(positionTex, v_Texcoord);\n\n    vec2 force = vec2(0.0);\n    for (int i = 0; i < NODE_COUNT; i++) {\n        vec2 uv = vec2(\n            mod(float(i), textureSize.x) / (textureSize.x - 1.0),\n            floor(float(i) / textureSize.x) / (textureSize.y - 1.0)\n        );\n        vec4 n1 = texture2D(positionTex, uv);\n\n        vec2 dir = n0.xy - n1.xy;\n        float d2 = dot(dir, dir);\n\n        if (d2 > 0.0) {\n            float factor = 0.0;\n            if (preventOverlap) {\n                float d = sqrt(d2);\n                d = d - n0.w - n1.w;\n                if (d > 0.0) {\n                    factor = scaling * n0.z * n1.z / (d * d);\n                }\n                else if (d < 0.0) {\n                    // A stronger repulsion if overlap\n                    factor = scaling * 100.0 * n0.z * n1.z;\n                }\n            }\n            else {\n                // Divide factor by an extra `d` to normalize the `v`\n                factor = scaling * n0.z * n1.z / d2;\n            }\n            force += dir * factor;\n        }\n    }\n\n    // Gravity\n    vec2 dir = gravityCenter - n0.xy;\n    float d = 1.0;\n    if (!strongGravityMode) {\n        d = length(dir);\n    }\n\n    force += dir * n0.z * gravity / (d + 1.0);\n\n    gl_FragColor = vec4(force, 0.0, 1.0);\n}\n@end\n\n@export ecgl.forceAtlas2.updateEdgeAttraction.vertex\n\nattribute vec2 node1;\nattribute vec2 node2;\nattribute float weight;\n\nuniform sampler2D positionTex;\nuniform float edgeWeightInfluence;\nuniform bool preventOverlap;\nuniform bool linLogMode;\n\nuniform vec2 windowSize: WINDOW_SIZE;\n\nvarying vec2 v_Force;\n\nvoid main() {\n\n    vec4 n0 = texture2D(positionTex, node1);\n    vec4 n1 = texture2D(positionTex, node2);\n\n    vec2 dir = n1.xy - n0.xy;\n    float d = length(dir);\n    float w;\n    if (edgeWeightInfluence == 0.0) {\n        w = 1.0;\n    }\n    else if (edgeWeightInfluence == 1.0) {\n        w = weight;\n    }\n    else {\n        w = pow(weight, edgeWeightInfluence);\n    }\n    // Add 0.5 offset.\n    // PENDING.\n    vec2 offset = vec2(1.0 / windowSize.x, 1.0 / windowSize.y);\n    vec2 scale = vec2((windowSize.x - 1.0) / windowSize.x, (windowSize.y - 1.0) / windowSize.y);\n    vec2 pos = node1 * scale * 2.0 - 1.0;\n    gl_Position = vec4(pos + offset, 0.0, 1.0);\n    gl_PointSize = 1.0;\n\n    float factor;\n    if (preventOverlap) {\n        d = d - n1.w - n0.w;\n    }\n    if (d <= 0.0) {\n        v_Force = vec2(0.0);\n        return;\n    }\n\n    if (linLogMode) {\n        // Divide factor by an extra `d` to normalize the `v`\n        factor = w * log(d) / d;\n    }\n    else {\n        factor = w;\n    }\n    v_Force = dir * factor;\n}\n@end\n\n@export ecgl.forceAtlas2.updateEdgeAttraction.fragment\n\nvarying vec2 v_Force;\n\nvoid main() {\n    gl_FragColor = vec4(v_Force, 0.0, 0.0);\n}\n@end\n\n@export ecgl.forceAtlas2.calcWeightedSum.vertex\n\nattribute vec2 node;\n\nvarying vec2 v_NodeUv;\n\nvoid main() {\n\n    v_NodeUv = node;\n    gl_Position = vec4(0.0, 0.0, 0.0, 1.0);\n    gl_PointSize = 1.0;\n}\n@end\n\n@export ecgl.forceAtlas2.calcWeightedSum.fragment\n\nvarying vec2 v_NodeUv;\n\nuniform sampler2D positionTex;\nuniform sampler2D forceTex;\nuniform sampler2D forcePrevTex;\n\nvoid main() {\n    vec2 force = texture2D(forceTex, v_NodeUv).rg;\n    vec2 forcePrev = texture2D(forcePrevTex, v_NodeUv).rg;\n\n    float mass = texture2D(positionTex, v_NodeUv).z;\n    float swing = length(force - forcePrev) * mass;\n    float traction = length(force + forcePrev) * 0.5 * mass;\n\n    gl_FragColor = vec4(swing, traction, 0.0, 0.0);\n}\n@end\n\n@export ecgl.forceAtlas2.calcGlobalSpeed\n\nuniform sampler2D globalSpeedPrevTex;\nuniform sampler2D weightedSumTex;\nuniform float jitterTolerence;\n\nvoid main() {\n    vec2 weightedSum = texture2D(weightedSumTex, vec2(0.5)).xy;\n    float prevGlobalSpeed = texture2D(globalSpeedPrevTex, vec2(0.5)).x;\n    float globalSpeed = jitterTolerence * jitterTolerence\n        // traction / swing\n        * weightedSum.y / weightedSum.x;\n    if (prevGlobalSpeed > 0.0) {\n        globalSpeed = min(globalSpeed / prevGlobalSpeed, 1.5) * prevGlobalSpeed;\n    }\n    gl_FragColor = vec4(globalSpeed, 0.0, 0.0, 1.0);\n}\n@end\n\n@export ecgl.forceAtlas2.updatePosition\n\nuniform sampler2D forceTex;\nuniform sampler2D forcePrevTex;\nuniform sampler2D positionTex;\nuniform sampler2D globalSpeedTex;\n\nvarying vec2 v_Texcoord;\n\nvoid main() {\n    vec2 force = texture2D(forceTex, v_Texcoord).xy;\n    vec2 forcePrev = texture2D(forcePrevTex, v_Texcoord).xy;\n    vec4 node = texture2D(positionTex, v_Texcoord);\n\n    float globalSpeed = texture2D(globalSpeedTex, vec2(0.5)).r;\n    float swing = length(force - forcePrev);\n    float speed = 0.1 * globalSpeed / (0.1 + globalSpeed * sqrt(swing));\n\n    // Additional constraint to prevent local speed gets too high\n    float df = length(force);\n    if (df > 0.0) {\n        speed = min(df * speed, 10.0) / df;\n\n        gl_FragColor = vec4(node.xy + speed * force, node.zw);\n    }\n    else {\n        gl_FragColor = node;\n    }\n}\n@end\n\n// For edge draw\n@export ecgl.forceAtlas2.edges.vertex\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec2 node;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nuniform sampler2D positionTex;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(\n        texture2D(positionTex, node).xy, -10.0, 1.0\n    );\n    v_Color = a_Color;\n}\n@end\n\n@export ecgl.forceAtlas2.edges.fragment\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\nvarying vec4 v_Color;\nvoid main() {\n    gl_FragColor = color * v_Color;\n}\n@end"
 
 /***/ },
-/* 221 */
+/* 223 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Texture2D = __webpack_require__(33);
+	var Texture2D = __webpack_require__(34);
 	var Texture = __webpack_require__(21);
-	var workerFunc = __webpack_require__(222);
+	var workerFunc = __webpack_require__(224);
 	var workerUrl = workerFunc.toString();
 	workerUrl = workerUrl.slice(workerUrl.indexOf('{') + 1, workerUrl.lastIndexOf('}'));
 
@@ -45565,7 +45751,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ForceAtlas2;
 
 /***/ },
-/* 222 */
+/* 224 */
 /***/ function(module, exports) {
 
 	/****************************
@@ -46232,12 +46418,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = forceAtlas2Worker;
 
 /***/ },
-/* 223 */
+/* 225 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var Base = __webpack_require__(6);
-	var retrieve = __webpack_require__(69);
+	var retrieve = __webpack_require__(70);
 
 	/**
 	 * @alias module:echarts-gl/util/Roam2DControl
@@ -46434,88 +46620,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Roam2DControl;
 
 /***/ },
-/* 224 */
-/***/ function(module, exports) {
-
-	module.exports = "@export ecgl.lines2D.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec2 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\n#ifdef POSITIONTEXTURE_ENABLED\nuniform sampler2D positionTexture;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, -10.0, 1.0);\n\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines2D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = color * v_Color;\n}\n@end\n\n\n@export ecgl.meshLines2D.vertex\n\n// https://mattdesl.svbtle.com/drawing-lines-is-hard\nattribute vec2 position: POSITION;\nattribute vec2 normal;\nattribute float offset;\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvoid main()\n{\n    vec4 p2 = worldViewProjection * vec4(position + normal, -10.0, 1.0);\n    gl_Position = worldViewProjection * vec4(position, -10.0, 1.0);\n\n    p2.xy /= p2.w;\n    gl_Position.xy /= gl_Position.w;\n\n    // Get normal on projection space.\n    vec2 N = normalize(p2.xy - gl_Position.xy);\n    gl_Position.xy += N * offset / viewport.zw * 2.0;\n\n    gl_Position.xy *= gl_Position.w;\n\n    v_Color = a_Color;\n}\n@end\n\n\n@export ecgl.meshLines2D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvoid main()\n{\n    // TODO Fadeout pixels v_Miter > 1\n    gl_FragColor = color * v_Color;\n}\n\n@end"
-
-/***/ },
-/* 225 */,
 /* 226 */
 /***/ function(module, exports) {
 
-	// Based on https://bl.ocks.org/mbostock/19168c663618b707158
-
-	module.exports = [
-	0.0, 0.0,
-	-0.321585265978, -0.154972575841,
-	0.458126042375, 0.188473391593,
-	0.842080129861, 0.527766490688,
-	0.147304551086, -0.659453822776,
-	-0.331943915203, -0.940619700594,
-	0.0479226680259, 0.54812163202,
-	0.701581552186, -0.709825561388,
-	-0.295436780218, 0.940589268233,
-	-0.901489676764, 0.237713156085,
-	0.973570876096, -0.109899459384,
-	-0.866792314779, -0.451805525005,
-	0.330975007087, 0.800048655954,
-	-0.344275183665, 0.381779221166,
-	-0.386139432542, -0.437418421534,
-	-0.576478634965, -0.0148463392551,
-	0.385798197415, -0.262426961053,
-	-0.666302061145, 0.682427250835,
-	-0.628010632582, -0.732836215494,
-	0.10163141741, -0.987658134403,
-	0.711995289051, -0.320024291314,
-	0.0296005138058, 0.950296523438,
-	0.0130612307608, -0.351024443122,
-	-0.879596633704, -0.10478487883,
-	0.435712737232, 0.504254490347,
-	0.779203817497, 0.206477676721,
-	0.388264289969, -0.896736162545,
-	-0.153106280781, -0.629203242522,
-	-0.245517550697, 0.657969239148,
-	0.126830499058, 0.26862328493,
-	-0.634888119007, -0.302301223431,
-	0.617074219636, 0.779817204925
-	];
-
-/***/ },
-/* 227 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var echarts = __webpack_require__(2);
-
-	function convertNormalEmphasis(option, optType) {
-	    if (option && option[optType] && (option[optType].normal || option[optType].emphasis)) {
-	        var normalOpt = option[optType].normal;
-	        var emphasisOpt = option[optType].emphasis;
-
-	        if (normalOpt) {
-	            option[optType] = normalOpt;
-	        }
-	        if (emphasisOpt) {
-	            option.emphasis = option.emphasis || {};
-	            option.emphasis[optType] = emphasisOpt;
-	        }
-	    }
-	}
-
-	function convertNormalEmphasisForEach(option) {
-	    convertNormalEmphasis(option, 'itemStyle');
-	    convertNormalEmphasis(option, 'lineStyle');
-	    convertNormalEmphasis(option, 'areaStyle');
-	    convertNormalEmphasis(option, 'label');
-	}
-
-	module.exports = function (option) {
-	    echarts.util.each(option.series, function (series) {
-	        convertNormalEmphasisForEach(series);
-	    });
-
-	    convertNormalEmphasis(option.geo3D);
-	};
+	module.exports = "@export ecgl.lines2D.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec2 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\n#ifdef POSITIONTEXTURE_ENABLED\nuniform sampler2D positionTexture;\n#endif\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, -10.0, 1.0);\n\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines2D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_FragColor = color * v_Color;\n}\n@end\n\n\n@export ecgl.meshLines2D.vertex\n\n// https://mattdesl.svbtle.com/drawing-lines-is-hard\nattribute vec2 position: POSITION;\nattribute vec2 normal;\nattribute float offset;\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvoid main()\n{\n    vec4 p2 = worldViewProjection * vec4(position + normal, -10.0, 1.0);\n    gl_Position = worldViewProjection * vec4(position, -10.0, 1.0);\n\n    p2.xy /= p2.w;\n    gl_Position.xy /= gl_Position.w;\n\n    // Get normal on projection space.\n    vec2 N = normalize(p2.xy - gl_Position.xy);\n    gl_Position.xy += N * offset / viewport.zw * 2.0;\n\n    gl_Position.xy *= gl_Position.w;\n\n    v_Color = a_Color;\n}\n@end\n\n\n@export ecgl.meshLines2D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\nvarying float v_Miter;\n\nvoid main()\n{\n    // TODO Fadeout pixels v_Miter > 1\n    gl_FragColor = color * v_Color;\n}\n\n@end"
 
 /***/ }
 /******/ ])
