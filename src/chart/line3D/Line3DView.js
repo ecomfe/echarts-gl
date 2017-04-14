@@ -153,7 +153,7 @@ module.exports = echarts.extendChartView({
         lineMesh.off('mouseout');
         lineMesh.on('mousemove', function (e) {
             var value = coordSys.pointToData(e.point._array);
-            var dataIndex = data.indexOfNearest('x', value[0]);
+            var dataIndex = data.indicesOfNearest('x', value[0])[0];
             if (dataIndex !== lastDataIndex) {
                 this._downplay(lastDataIndex);
                 this._highlight(dataIndex);
