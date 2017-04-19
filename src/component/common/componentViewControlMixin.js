@@ -21,6 +21,8 @@ module.exports = {
 
             maxDistance: 400,
 
+            // Center view point
+            center: [0, 0, 0],
             // Alpha angle for top-down rotation
             // Positive to rotate to top.
             alpha: 0,
@@ -47,6 +49,9 @@ module.exports = {
         }
         if (opts.distance != null) {
             this.option.viewControl.distance = opts.distance;
+        }
+        if (opts.center != null) {
+            this.option.viewControl.center = opts.center;
         }
     }
 };

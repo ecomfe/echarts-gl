@@ -284,6 +284,7 @@ module.exports = echarts.extendComponentView({
                 alpha: control.getAlpha(),
                 beta: control.getBeta(),
                 distance: control.getDistance() - coordSys.radius,
+                center: control.getCenter(),
                 from: this.uid,
                 globeId: globeModel.id
             };

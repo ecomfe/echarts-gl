@@ -280,6 +280,7 @@ module.exports = echarts.extendComponentView({
             alpha: control.getAlpha(),
             beta: control.getBeta(),
             distance: control.getDistance(),
+            center: control.getCenter(),
             from: this.uid,
             grid3DId: grid3DModel.id
         });

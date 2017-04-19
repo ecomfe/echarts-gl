@@ -77,6 +77,7 @@ module.exports = echarts.extendComponentView({
                 alpha: control.getAlpha(),
                 beta: control.getBeta(),
                 distance: control.getDistance(),
+                center: control.getCenter(),
                 from: this.uid,
                 geo3DId: geo3DModel.id
             });

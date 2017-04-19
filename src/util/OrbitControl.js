@@ -5,6 +5,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
+// TODO Remove magic numbers on sensitivity
 var Base = require('qtek/lib/core/Base');
 var Vector2 = require('qtek/lib/math/Vector2');
 var Vector3 = require('qtek/lib/math/Vector3');
@@ -30,17 +31,17 @@ var OrbitControl = Base.extend(function () {
         /**
          * @type {qtek.math.Vector3}
          */
-        origin: new Vector3(),
+        _center: new Vector3(),
 
         /**
-         * Minimum distance to the origin
+         * Minimum distance to the center
          * @type {number}
          * @default 0.5
          */
         minDistance: 0.5,
 
         /**
-         * Maximum distance to the origin
+         * Maximum distance to the center
          * @type {number}
          * @default 2
          */
@@ -74,7 +75,7 @@ var OrbitControl = Base.extend(function () {
          * Pan or rotate
          * @type {String}
          */
-        mode: 'rotate',
+        _mode: 'rotate',
 
         /**
          * @param {number}
@@ -90,6 +91,11 @@ var OrbitControl = Base.extend(function () {
          * @param {number}
          */
         zoomSensitivity: 1,
+
+        /**
+         * @param {number}
+         */
+        panSensitivity: 1,
 
         /**
          * @type {qtek.Camera}
@@ -201,6 +207,14 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
+     * Get control center
+     * @return {Array.<number>}
+     */
+    getCenter: function () {
+        return this._center.toArray();
+    },
+
+    /**
      * Set alpha rotation angle
      * @param {number} alpha
      */
@@ -223,11 +237,19 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
+     * Set control center
+     * @param {Array.<number>} center
+     */
+    setCenter: function (centerArr) {
+        this._center.setArray(centerArr);
+    },
+
+    /**
      * @param {qtek.Camera} camera
      */
     setCamera: function (camera) {
         this._camera = camera;
-        this._decomposeTransform();
+        // this._decomposeTransform();
 
         this._needsUpdate = true;
     },
@@ -257,9 +279,6 @@ var OrbitControl = Base.extend(function () {
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
         if (this._distance !== targetDistance) {
-            // this.zoomTo({
-            //     distance: targetDistance
-            // });
             this.setDistance(targetDistance);
         }
 
@@ -269,9 +288,11 @@ var OrbitControl = Base.extend(function () {
         this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), Infinity);
         this.rotateSensitivity = retrieve.firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
         this.zoomSensitivity = retrieve.firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
+        this.panSensitivity = retrieve.firstNotNull(viewControlModel.get('panSensitivity'), 1);
 
         this.setAlpha(viewControlModel.get('alpha') || 0);
         this.setBeta(viewControlModel.get('beta') || 0);
+        this.setCenter(viewControlModel.get('center') || [0, 0, 0]);
     },
 
     /**
@@ -300,17 +321,17 @@ var OrbitControl = Base.extend(function () {
      * @param {number} [opts.easing='linear']
      */
     rotateTo: function (opts) {
-        var toQuat;
-        var self = this;
-        if (!opts.rotation) {
-            toQuat = new Quaternion();
-            var view = new Vector3();
-            Vector3.negate(view, opts.z);
-            toQuat.setAxes(view, opts.x, opts.y);
-        }
-        else {
-            toQuat = opts.rotation;
-        }
+        // var toQuat;
+        // var self = this;
+        // if (!opts.rotation) {
+        //     toQuat = new Quaternion();
+        //     var view = new Vector3();
+        //     Vector3.negate(view, opts.z);
+        //     toQuat.setAxes(view, opts.x, opts.y);
+        // }
+        // else {
+        //     toQuat = opts.rotation;
+        // }
 
         // TODO
         // var zr = this.zr;
@@ -384,10 +405,8 @@ var OrbitControl = Base.extend(function () {
         else if (this._rotateVelocity.len() > 0) {
             this._needsUpdate = true;
         }
-        if (Math.abs(this._zoomSpeed) > 0.1) {
-            this._needsUpdate = true;
-        }
-        if (this._panVelocity.len() > 0) {
+
+        if (Math.abs(this._zoomSpeed) > 0.1 || this._panVelocity.len() > 0) {
             this._needsUpdate = true;
         }
 
@@ -397,12 +416,13 @@ var OrbitControl = Base.extend(function () {
 
         // Fixed deltaTime
         this._updateDistance(Math.min(deltaTime, 30));
-        this._updateRotate(Math.min(deltaTime, 30));
         this._updatePan(Math.min(deltaTime, 30));
 
-        this._camera.update();
+        this._updateRotate(Math.min(deltaTime, 30));
 
         this._updateTransform();
+
+        this._camera.update();
 
         this.zr.refresh();
         this.trigger('update');
@@ -432,7 +452,7 @@ var OrbitControl = Base.extend(function () {
 
     _updatePan: function (deltaTime) {
 
-        var velocity = this._rotateVelocity;
+        var velocity = this._panVelocity;
         var len = this._distance;
 
         var target = this._camera;
@@ -440,11 +460,11 @@ var OrbitControl = Base.extend(function () {
         var xAxis = target.worldTransform.x;
 
         // PENDING
-        this.origin
-            .scaleAndAdd(xAxis, velocity.x * len / 400)
-            .scaleAndAdd(yAxis, velocity.y * len / 400);
+        this._center
+            .scaleAndAdd(xAxis, -velocity.x * len / 200)
+            .scaleAndAdd(yAxis, -velocity.y * len / 200);
 
-        this._vectorDamping(velocity, this.damping);
+        this._vectorDamping(velocity, 0);
     },
 
     _updateTransform: function () {
@@ -459,7 +479,7 @@ var OrbitControl = Base.extend(function () {
         dir.y = -Math.cos(theta);
         dir.z = r * Math.sin(phi);
 
-        camera.position.copy(this.origin).scaleAndAdd(dir, this._distance);
+        camera.position.copy(this._center).scaleAndAdd(dir, this._distance);
         camera.rotation.identity()
             // First around y, then around x
             .rotateY(-this._phi)
@@ -504,7 +524,7 @@ var OrbitControl = Base.extend(function () {
 
     //     this._theta = Math.max(Math.min(this._theta, Math.PI / 2), -Math.PI / 2);
 
-    //     this._setDistance(this._camera.position.dist(this.origin));
+    //     this._setDistance(this._camera.position.dist(this._center));
     },
 
     _mouseDownHandler: function (e) {
@@ -525,15 +545,18 @@ var OrbitControl = Base.extend(function () {
         this.zr.on('mousemove', this._mouseMoveHandler);
         this.zr.on('mouseup', this._mouseUpHandler);
 
-        if (this.mode === 'rotate') {
-            // Reset rotate velocity
-            this._rotateVelocity.set(0, 0);
+        if (e.event.button === 0) {
+            this._mode = 'rotate';
+        }
+        else if (e.event.button === 1) {
+            this._mode = 'pan';
+        }
 
-            this._rotating = false;
-
-            if (this.autoRotate) {
-                this._startCountingStill();
-            }
+        // Reset rotate velocity
+        this._rotateVelocity.set(0, 0);
+        this._rotating = false;
+        if (this.autoRotate) {
+            this._startCountingStill();
         }
 
         this._mouseX = e.offsetX;
@@ -545,13 +568,13 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        if (this.mode === 'rotate') {
+        if (this._mode === 'rotate') {
             this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * this.rotateSensitivity;
             this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * this.rotateSensitivity;
         }
-        else if (this.mode === 'pan') {
-            this._panVelocity.x = e.offsetX - this._mouseX;
-            this._panVelocity.y = -e.offsetY + this._mouseY;
+        else if (this._mode === 'pan') {
+            this._panVelocity.x = (e.offsetX - this._mouseX) / this.zr.getWidth() * this.panSensitivity * 400;
+            this._panVelocity.y = (-e.offsetY + this._mouseY) / this.zr.getHeight() * this.panSensitivity * 400;
         }
 
         this._mouseX = e.offsetX;
@@ -595,7 +618,7 @@ var OrbitControl = Base.extend(function () {
 
         this._rotating = false;
 
-        if (this.autoRotate && this.mode === 'rotate') {
+        if (this.autoRotate && this._mode === 'rotate') {
             this._startCountingStill();
         }
 
