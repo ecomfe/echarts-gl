@@ -10,6 +10,7 @@ module.exports = {
 
             rotateSensitivity: 1,
             zoomSensitivity: 1,
+            panSensitivity: 1,
 
             // Start rotating after still for a given time
             // default is 3 seconds

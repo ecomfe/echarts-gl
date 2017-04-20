@@ -142,14 +142,14 @@ var OrbitControl = Base.extend(function () {
     init: function () {
         var zr = this.zr;
 
-        zr.on('mousedown', this._mouseDownHandler);
-        zr.on('globalout', this._mouseUpHandler);
-        zr.on('mousewheel', this._mouseWheelHandler);
-        zr.on('pinch', this._pinchHandler);
+        if (zr) {
+            zr.on('mousedown', this._mouseDownHandler);
+            zr.on('globalout', this._mouseUpHandler);
+            zr.on('mousewheel', this._mouseWheelHandler);
+            zr.on('pinch', this._pinchHandler);
 
-        this._decomposeTransform();
-
-        zr.animation.on('frame', this._update);
+            zr.animation.on('frame', this._update);
+        }
     },
 
     /**
@@ -158,14 +158,17 @@ var OrbitControl = Base.extend(function () {
      */
     dispose: function () {
         var zr = this.zr;
-        zr.off('mousedown', this._mouseDownHandler);
-        zr.off('mousemove', this._mouseMoveHandler);
-        zr.off('mouseup', this._mouseUpHandler);
-        zr.off('mousewheel', this._mouseWheelHandler);
-        zr.off('pinch', this._pinchHandler);
-        zr.off('globalout', this._mouseUpHandler);
 
-        zr.animation.off('frame', this._update);
+        if (zr) {
+            zr.off('mousedown', this._mouseDownHandler);
+            zr.off('mousemove', this._mouseMoveHandler);
+            zr.off('mouseup', this._mouseUpHandler);
+            zr.off('mousewheel', this._mouseWheelHandler);
+            zr.off('pinch', this._pinchHandler);
+            zr.off('globalout', this._mouseUpHandler);
+
+            zr.animation.off('frame', this._update);
+        }
         this.stopAllAnimation();
     },
 
@@ -296,73 +299,13 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
-     * Rotation to animation, Params can be target quaternion or x, y, z axis
-     * @example
-     *     control.rotateTo({
-     *         x: transform.x,
-     *         y: transform.y,
-     *         z: transform.z,
-     *         time: 1000
-     *     });
-     *     control.rotateTo({
-     *         rotation: quat,
-     *         time: 1000,
-     *         easing: 'CubicOut'
-     *     })
-     *     .done(function() {
-     *         xxx
-     *     });
-     * @param {Object} opts
-     * @param {qtek.math.Quaternion} [opts.rotation]
-     * @param {qtek.math.Vector3} [opts.x]
-     * @param {qtek.math.Vector3} [opts.y]
-     * @param {qtek.math.Vector3} [opts.z]
-     * @param {number} [opts.time=1000]
-     * @param {number} [opts.easing='linear']
-     */
-    rotateTo: function (opts) {
-        // var toQuat;
-        // var self = this;
-        // if (!opts.rotation) {
-        //     toQuat = new Quaternion();
-        //     var view = new Vector3();
-        //     Vector3.negate(view, opts.z);
-        //     toQuat.setAxes(view, opts.x, opts.y);
-        // }
-        // else {
-        //     toQuat = opts.rotation;
-        // }
-
-        // TODO
-        // var zr = this.zr;
-        // var obj = {
-        //     p: 0
-        // };
-
-        // var target = this._camera;
-        // var fromQuat = target.rotation.clone();
-        // return this._addAnimator(
-        //     zr.animation.animate(obj)
-        //         .when(opts.time || 1000, {
-        //             p: 1
-        //         })
-        //         .during(function () {
-        //             Quaternion.slerp(
-        //                 target.rotation, fromQuat, toQuat, obj.p
-        //             );
-        //             zr.refresh();
-        //         })
-        // ).start(opts.easing || 'linear')
-    },
-
-    /**
      * Zoom to animation
      * @param {Object} opts
      * @param {number} opts.distance
      * @param {number} [opts.time=1000]
      * @param {number} [opts.easing='linear']
      */
-    zoomTo: function (opts) {
+    animateTo: function (opts) {
         var zr = this.zr;
         var distance = opts.distance;
         var self = this;
@@ -424,7 +367,8 @@ var OrbitControl = Base.extend(function () {
 
         this._camera.update();
 
-        this.zr.refresh();
+        this.zr && this.zr.refresh();
+
         this.trigger('update');
 
         this._needsUpdate = false;
@@ -508,23 +452,24 @@ var OrbitControl = Base.extend(function () {
     },
 
     _decomposeTransform: function () {
-    //     if (!this._camera) {
-    //         return;
-    //     }
+        if (!this._camera) {
+            return;
+        }
 
-    //     // TODO
-    //     var euler = new Vector3();
-    //     // Z Rotate at last so it can be zero
-    //     euler.eulerFromQuat(
-    //         this._camera.rotation.normalize(), 'ZXY'
-    //     );
+        // FIXME euler order......
+        // FIXME alpha is not certain when beta is 90 or -90
+        var euler = new Vector3();
+        euler.eulerFromQuat(
+            this._camera.rotation.normalize(), 'ZYX'
+        );
 
-    //     this._theta = euler.x;
-    //     this._phi = euler.y;
+        this._theta = -euler.x;
+        this._phi = -euler.y;
 
-    //     this._theta = Math.max(Math.min(this._theta, Math.PI / 2), -Math.PI / 2);
+        this.setBeta(this.getBeta());
+        this.setAlpha(this.getAlpha());
 
-    //     this._setDistance(this._camera.position.dist(this._center));
+        this._setDistance(this._camera.position.dist(this._center));
     },
 
     _mouseDownHandler: function (e) {
