@@ -1,6 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
-var Triangulation = require('../../util/Triangulation');
+// var Triangulation = require('../../util/Triangulation');
+var earcut = require('../../util/earcut');
 var LinesGeo = require('../../util/geometry/Lines3D');
 var retrieve = require('../../util/retrieve');
 var glmatrix = require('qtek/lib/dep/glmatrix');
@@ -20,7 +21,7 @@ function Geo3DBuilder(api) {
     // Cache triangulation result
     this._triangulationResults = {};
 
-    this._triangulator = new Triangulation();
+    // this._triangulator = new Triangulation();
 
     this._shadersMap = graphicGL.COMMON_SHADERS.reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
@@ -405,17 +406,18 @@ Geo3DBuilder.prototype = {
                     if (interiors[j].length.length < 3) {
                         continue;
                     }
-                    var holePoints = [];
+                    var startIdx = points.length / 2;
                     for (var k = 0; k < interiors[j].length; k++) {
                         var p = interiors[j][k];
-                        holePoints.push(p[0]);
-                        holePoints.push(p[1]);
+                        points.push(p[0]);
+                        points.push(p[1]);
                     }
 
-                    holes.push(holePoints);
+                    holes.push(startIdx);
                 }
-                triangulator.triangulate(points, holes);
-                points = triangulator.points;
+                // triangulator.triangulate(points, holes);
+                // points = triangulator.points;
+                var triangles = earcut(points, holes);
 
                 var points3 = new Float32Array(points.length / 2 * 3);
                 var pos = [];
@@ -439,7 +441,7 @@ Geo3DBuilder.prototype = {
                     points: points3,
                     minAll: minAll,
                     maxAll: maxAll,
-                    indices: triangulator.triangles
+                    indices: triangles
                 });
             }
             this._triangulationResults[region.name] = polygons;

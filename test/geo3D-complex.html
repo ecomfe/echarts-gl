@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Geo3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var points = [123.046875, 39.5302734375, 123.0458984375, 39.5302734375, 123.0458984375, 39.53125, 123.0458984375, 39.53125, 123.0458984375, 39.53125, 123.046875, 39.53125, 123.046875, 39.53125, 123.0478515625, 39.53125, 123.0478515625, 39.53125, 123.0478515625, 39.5302734375, 123.048828125, 39.5302734375, 123.048828125, 39.5302734375, 123.048828125, 39.5302734375, 123.0498046875, 39.5302734375, 123.0498046875, 39.5302734375, 123.0498046875, 39.5302734375, 123.0498046875, 39.5302734375, 123.0498046875, 39.5302734375, 123.0498046875, 39.5302734375, 123.0498046875, 39.5302734375, 123.0498046875, 39.529296875, 123.0498046875, 39.529296875, 123.0498046875, 39.529296875, 123.0498046875, 39.529296875, 123.0498046875, 39.529296875, 123.048828125, 39.529296875, 123.048828125, 39.529296875, 123.048828125, 39.529296875, 123.0478515625, 39.5302734375, 123.046875, 39.53125, 123.046875, 39.53125, 123.046875, 39.5302734375];
+
+            var exterior = [];
+            for (var i = 0; i < points.length;) {
+                exterior.push([points[i++], points[i++]]);
+            }
+
+            // var canvas = document.createElement('canvas');
+            // var ctx = canvas.getContext('2d');
+            // canvas.width = 500;
+            // canvas.height = 500;
+            // canvas.style.cssText = 'position:absolute;left:0;top:0;z-index:100';
+            // document.body.appendChild(canvas);
+            // ctx.translate(-200, -300);
+            // ctx.strokeStyle = '#fff';
+            // ctx.beginPath();
+            // ctx.moveTo(exterior[0][0], exterior[0][1]);
+            // for (var i = 1; i < exterior.length; i++) {
+            //     ctx.lineTo(exterior[i][0], exterior[i][1]);
+            // }
+            // ctx.closePath();
+            // ctx.stroke();
+
+            echarts.registerMap('sample', {
+                type: 'FeatureCollection',
+                features: [{
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Polygon',
+                        coordinates: [exterior]
+                    },
+                    properties: {
+                        name: 'Dude'
+                    }
+                }]
+            })
+            var chart = echarts.init(document.getElementById('main'));
+
+            chart.setOption({
+                geo3D: {
+                    map: 'sample',
+                    bevelSize: 1,
+
+                    itemStyle: {
+                        borderColor: '#222',
+                        borderWidth: 1
+                    }
+                },
+                series: []
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

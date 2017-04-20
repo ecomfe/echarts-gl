@@ -173,6 +173,7 @@ TriangulationContext.prototype._prepare = function () {
     var points = this.points;
 
     this._pointsTypes = [];
+
     // Update bounding box and determine point type is reflex or convex
     for (var i = 0, j = n - 1; i < n;) {
         var k = (i + 1) % n;
@@ -199,7 +200,8 @@ TriangulationContext.prototype._prepare = function () {
 
         var area = triangleArea(x0, y0, x1, y1, x2, y2);
 
-        this._pointsTypes[i] = area < 0 ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
+        // Including 0.
+        this._pointsTypes[i] = area <= 0 ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
 
         j = i;
         i++;
@@ -416,7 +418,7 @@ TriangulationContext.prototype._earClipping = function () {
     while (candidates.length() > 2) {
         var isDesperate = true;
         var entry = candidates.head;
-        while (entry) {
+        while (entry && candidates.length() > 2) {
             if (this._isEar(entry)) {
                 entry = this._clipEar(entry);
                 isDesperate = false;
@@ -426,7 +428,18 @@ TriangulationContext.prototype._earClipping = function () {
             }
         }
 
-        if (isDesperate) {
+        if (isDesperate && candidates.length() > 2) {
+            // var entry = candidates.head;
+            // console.log('------');
+            // while (entry) {
+            //     var idx = entry.value.idx;
+            //     var xi = this.points[idx * 2];
+            //     var yi = this.points[idx * 2 + 1];
+            //     console.log([xi, yi]);
+            //     entry = entry.next;
+            // }
+
+
             // Random pick a convex vertex when there is no more ear
             // can be clipped and there are more than 3 points left
             // After clip the random picked vertex, go on finding ears again
@@ -461,9 +474,9 @@ TriangulationContext.prototype._isEar = function (pointEntry) {
     var y2 = points[p2 + 1];
 
     // Clipped the tiny triangles directly
-    // if (Math.abs(triangleArea(x0, y0, x1, y1, x2, y2)) < 1) {
-    //     return true;
-    // }
+    if (Math.abs(triangleArea(x0, y0, x1, y1, x2, y2)) < Number.EPSILON) {
+        return true;
+    }
 
     if (this._needsGreed) {
         var range = this._getTriangleGrids(x0, y0, x1, y1, x2, y2);
@@ -588,7 +601,8 @@ TriangulationContext.prototype._getTriangleGrids = (function () {
 })();
 
 TriangulationContext.prototype.isTriangleConvex2 = function (p0, p1, p2) {
-    return this.triangleArea(p0, p1, p2) < 0;
+    // Including 0
+    return this.triangleArea(p0, p1, p2) <= 0;
 };
 
 TriangulationContext.prototype.triangleArea = function (p0, p1, p2) {
