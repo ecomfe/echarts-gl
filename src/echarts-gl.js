@@ -34,7 +34,7 @@
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.0-alpha.1',
+    version: '1.0.0-alpha.2',
     dependencies: {
         echarts: '3.5.3',
         qtek: '0.3.3'

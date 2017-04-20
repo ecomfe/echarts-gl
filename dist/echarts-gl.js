@@ -4465,16 +4465,16 @@ var Scene = __webpack_require__(31);
 var LRUCache = __webpack_require__(84);
 var textureUtil = __webpack_require__(60);
 var EChartsSurface = __webpack_require__(154);
-var AmbientCubemapLight = __webpack_require__(184);
-var AmbientSHLight = __webpack_require__(185);
-var shUtil = __webpack_require__(214);
+var AmbientCubemapLight = __webpack_require__(183);
+var AmbientSHLight = __webpack_require__(184);
+var shUtil = __webpack_require__(213);
 var retrieve = __webpack_require__(4);
 
-var animatableMixin = __webpack_require__(157);
+var animatableMixin = __webpack_require__(156);
 echarts.util.extend(Node3D.prototype, animatableMixin);
 
 // Some common shaders
-Shader.import(__webpack_require__(210));
+Shader.import(__webpack_require__(209));
 Shader.import(__webpack_require__(164));
 Shader.import(__webpack_require__(163));
 Shader.import(__webpack_require__(166));
@@ -4581,7 +4581,7 @@ graphicGL.PlaneGeometry = __webpack_require__(53);
 graphicGL.CubeGeometry = __webpack_require__(74);
 
 // Lights
-graphicGL.AmbientLight = __webpack_require__(183);
+graphicGL.AmbientLight = __webpack_require__(182);
 graphicGL.DirectionalLight = __webpack_require__(76);
 graphicGL.PointLight = __webpack_require__(77);
 graphicGL.SpotLight = __webpack_require__(78);
@@ -4593,13 +4593,13 @@ graphicGL.OrthographicCamera = __webpack_require__(42);
 // Math
 graphicGL.Vector2 = __webpack_require__(24);
 graphicGL.Vector3 = __webpack_require__(3);
-graphicGL.Vector4 = __webpack_require__(190);
+graphicGL.Vector4 = __webpack_require__(189);
 
 graphicGL.Quaternion = __webpack_require__(55);
 
-graphicGL.Matrix2 = __webpack_require__(187);
-graphicGL.Matrix2d = __webpack_require__(188);
-graphicGL.Matrix3 = __webpack_require__(189);
+graphicGL.Matrix2 = __webpack_require__(186);
+graphicGL.Matrix2d = __webpack_require__(187);
+graphicGL.Matrix3 = __webpack_require__(188);
 graphicGL.Matrix4 = __webpack_require__(10);
 
 graphicGL.Plane = __webpack_require__(79);
@@ -4804,14 +4804,15 @@ graphicGL.additiveBlend = function (gl) {
  */
 graphicGL.parseColor = function (colorStr, rgba) {
     if (colorStr instanceof Array) {
-        // Color has been parsed.
-        if (rgba) {
-            rgba[0] = colorStr[0];
-            rgba[1] = colorStr[1];
-            rgba[2] = colorStr[2];
-            rgba[3] = colorStr[3];
+        if (!rgba) {
+            rgba = [];
         }
-        return colorStr;
+        // Color has been parsed.
+        rgba[0] = colorStr[0];
+        rgba[1] = colorStr[1];
+        rgba[2] = colorStr[2];
+        rgba[3] = colorStr[3];
+        return rgba;
     }
 
     rgba = echarts.color.parse(colorStr || '#000', rgba) || [0, 0, 0, 0];
@@ -5935,7 +5936,7 @@ module.exports = retrieve;
 
 
 
-    var extendMixin = __webpack_require__(182);
+    var extendMixin = __webpack_require__(181);
     var notifierMixin = __webpack_require__(52);
     var util = __webpack_require__(23);
 
@@ -11683,7 +11684,7 @@ module.exports = function (seriesType, ecModel, api) {
     var glinfo = __webpack_require__(17);
     var glenum = __webpack_require__(8);
 
-    Shader['import'](__webpack_require__(205));
+    Shader['import'](__webpack_require__(204));
 
     var planeGeo = new Plane();
     var mesh = new Mesh({
@@ -13340,7 +13341,7 @@ module.exports = {
 var echarts = __webpack_require__(0);
 
 var Scene = __webpack_require__(31);
-var ShadowMapPass = __webpack_require__(192);
+var ShadowMapPass = __webpack_require__(191);
 var PerspectiveCamera = __webpack_require__(43);
 var OrthographicCamera = __webpack_require__(42);
 var Matrix4 = __webpack_require__(10);
@@ -15430,6 +15431,7 @@ module.exports = {
 
             rotateSensitivity: 1,
             zoomSensitivity: 1,
+            panSensitivity: 1,
 
             // Start rotating after still for a given time
             // default is 3 seconds
@@ -15441,6 +15443,8 @@ module.exports = {
 
             maxDistance: 400,
 
+            // Center view point
+            center: [0, 0, 0],
             // Alpha angle for top-down rotation
             // Positive to rotate to top.
             alpha: 0,
@@ -15468,6 +15472,9 @@ module.exports = {
         if (opts.distance != null) {
             this.option.viewControl.distance = opts.distance;
         }
+        if (opts.center != null) {
+            this.option.viewControl.center = opts.center;
+        }
     }
 };
 
@@ -15482,6 +15489,7 @@ module.exports = {
  * @author Yi Shen(http://github.com/pissang)
  */
 
+// TODO Remove magic numbers on sensitivity
 var Base = __webpack_require__(5);
 var Vector2 = __webpack_require__(24);
 var Vector3 = __webpack_require__(3);
@@ -15507,17 +15515,17 @@ var OrbitControl = Base.extend(function () {
         /**
          * @type {qtek.math.Vector3}
          */
-        origin: new Vector3(),
+        _center: new Vector3(),
 
         /**
-         * Minimum distance to the origin
+         * Minimum distance to the center
          * @type {number}
          * @default 0.5
          */
         minDistance: 0.5,
 
         /**
-         * Maximum distance to the origin
+         * Maximum distance to the center
          * @type {number}
          * @default 2
          */
@@ -15551,7 +15559,7 @@ var OrbitControl = Base.extend(function () {
          * Pan or rotate
          * @type {String}
          */
-        mode: 'rotate',
+        _mode: 'rotate',
 
         /**
          * @param {number}
@@ -15567,6 +15575,11 @@ var OrbitControl = Base.extend(function () {
          * @param {number}
          */
         zoomSensitivity: 1,
+
+        /**
+         * @param {number}
+         */
+        panSensitivity: 1,
 
         /**
          * @type {qtek.Camera}
@@ -15613,14 +15626,14 @@ var OrbitControl = Base.extend(function () {
     init: function () {
         var zr = this.zr;
 
-        zr.on('mousedown', this._mouseDownHandler);
-        zr.on('globalout', this._mouseUpHandler);
-        zr.on('mousewheel', this._mouseWheelHandler);
-        zr.on('pinch', this._pinchHandler);
+        if (zr) {
+            zr.on('mousedown', this._mouseDownHandler);
+            zr.on('globalout', this._mouseUpHandler);
+            zr.on('mousewheel', this._mouseWheelHandler);
+            zr.on('pinch', this._pinchHandler);
 
-        this._decomposeTransform();
-
-        zr.animation.on('frame', this._update);
+            zr.animation.on('frame', this._update);
+        }
     },
 
     /**
@@ -15629,14 +15642,17 @@ var OrbitControl = Base.extend(function () {
      */
     dispose: function () {
         var zr = this.zr;
-        zr.off('mousedown', this._mouseDownHandler);
-        zr.off('mousemove', this._mouseMoveHandler);
-        zr.off('mouseup', this._mouseUpHandler);
-        zr.off('mousewheel', this._mouseWheelHandler);
-        zr.off('pinch', this._pinchHandler);
-        zr.off('globalout', this._mouseUpHandler);
 
-        zr.animation.off('frame', this._update);
+        if (zr) {
+            zr.off('mousedown', this._mouseDownHandler);
+            zr.off('mousemove', this._mouseMoveHandler);
+            zr.off('mouseup', this._mouseUpHandler);
+            zr.off('mousewheel', this._mouseWheelHandler);
+            zr.off('pinch', this._pinchHandler);
+            zr.off('globalout', this._mouseUpHandler);
+
+            zr.animation.off('frame', this._update);
+        }
         this.stopAllAnimation();
     },
 
@@ -15678,6 +15694,14 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
+     * Get control center
+     * @return {Array.<number>}
+     */
+    getCenter: function () {
+        return this._center.toArray();
+    },
+
+    /**
      * Set alpha rotation angle
      * @param {number} alpha
      */
@@ -15700,11 +15724,19 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
+     * Set control center
+     * @param {Array.<number>} center
+     */
+    setCenter: function (centerArr) {
+        this._center.setArray(centerArr);
+    },
+
+    /**
      * @param {qtek.Camera} camera
      */
     setCamera: function (camera) {
         this._camera = camera;
-        this._decomposeTransform();
+        // this._decomposeTransform();
 
         this._needsUpdate = true;
     },
@@ -15734,9 +15766,6 @@ var OrbitControl = Base.extend(function () {
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
         if (this._distance !== targetDistance) {
-            // this.zoomTo({
-            //     distance: targetDistance
-            // });
             this.setDistance(targetDistance);
         }
 
@@ -15746,89 +15775,43 @@ var OrbitControl = Base.extend(function () {
         this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), Infinity);
         this.rotateSensitivity = retrieve.firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
         this.zoomSensitivity = retrieve.firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
+        this.panSensitivity = retrieve.firstNotNull(viewControlModel.get('panSensitivity'), 1);
 
         this.setAlpha(viewControlModel.get('alpha') || 0);
         this.setBeta(viewControlModel.get('beta') || 0);
+        this.setCenter(viewControlModel.get('center') || [0, 0, 0]);
     },
 
     /**
-     * Rotation to animation, Params can be target quaternion or x, y, z axis
-     * @example
-     *     control.rotateTo({
-     *         x: transform.x,
-     *         y: transform.y,
-     *         z: transform.z,
-     *         time: 1000
-     *     });
-     *     control.rotateTo({
-     *         rotation: quat,
-     *         time: 1000,
-     *         easing: 'CubicOut'
-     *     })
-     *     .done(function() {
-     *         xxx
-     *     });
-     * @param {Object} opts
-     * @param {qtek.math.Quaternion} [opts.rotation]
-     * @param {qtek.math.Vector3} [opts.x]
-     * @param {qtek.math.Vector3} [opts.y]
-     * @param {qtek.math.Vector3} [opts.z]
-     * @param {number} [opts.time=1000]
-     * @param {number} [opts.easing='linear']
-     */
-    rotateTo: function (opts) {
-        var toQuat;
-        var self = this;
-        if (!opts.rotation) {
-            toQuat = new Quaternion();
-            var view = new Vector3();
-            Vector3.negate(view, opts.z);
-            toQuat.setAxes(view, opts.x, opts.y);
-        }
-        else {
-            toQuat = opts.rotation;
-        }
-
-        // TODO
-        // var zr = this.zr;
-        // var obj = {
-        //     p: 0
-        // };
-
-        // var target = this._camera;
-        // var fromQuat = target.rotation.clone();
-        // return this._addAnimator(
-        //     zr.animation.animate(obj)
-        //         .when(opts.time || 1000, {
-        //             p: 1
-        //         })
-        //         .during(function () {
-        //             Quaternion.slerp(
-        //                 target.rotation, fromQuat, toQuat, obj.p
-        //             );
-        //             zr.refresh();
-        //         })
-        // ).start(opts.easing || 'linear')
-    },
-
-    /**
-     * Zoom to animation
      * @param {Object} opts
      * @param {number} opts.distance
+     * @param {number} opts.alpha
+     * @param {number} opts.beta
      * @param {number} [opts.time=1000]
      * @param {number} [opts.easing='linear']
      */
-    zoomTo: function (opts) {
+    animateTo: function (opts) {
         var zr = this.zr;
-        var distance = opts.distance;
         var self = this;
 
-        distance = Math.max(Math.min(this.maxDistance, distance), this.minDistance);
+        var source = {};
+        var target = {};
+        if (opts.distance != null) {
+            source.distance = this.getDistance();
+            target.distance = opts.distance;
+        }
+        if (opts.alpha != null) {
+            source.alpha = this.getAlpha();
+            target.alpha = opts.alpha;
+        }
+        if (opts.distance != null) {
+            source.distance = this.getDistance();
+            target.distance = opts.distance;
+        }
+
         return this._addAnimator(
             zr.animation.animate(this)
-                .when(opts.time || 1000, {
-                    _distance: distance
-                })
+                .when(opts.time || 1000, target)
                 .during(function () {
                     self._needsUpdate = true;
                 })
@@ -15861,10 +15844,8 @@ var OrbitControl = Base.extend(function () {
         else if (this._rotateVelocity.len() > 0) {
             this._needsUpdate = true;
         }
-        if (Math.abs(this._zoomSpeed) > 0.1) {
-            this._needsUpdate = true;
-        }
-        if (this._panVelocity.len() > 0) {
+
+        if (Math.abs(this._zoomSpeed) > 0.1 || this._panVelocity.len() > 0) {
             this._needsUpdate = true;
         }
 
@@ -15874,14 +15855,16 @@ var OrbitControl = Base.extend(function () {
 
         // Fixed deltaTime
         this._updateDistance(Math.min(deltaTime, 30));
-        this._updateRotate(Math.min(deltaTime, 30));
         this._updatePan(Math.min(deltaTime, 30));
 
-        this._camera.update();
+        this._updateRotate(Math.min(deltaTime, 30));
 
         this._updateTransform();
 
-        this.zr.refresh();
+        this._camera.update();
+
+        this.zr && this.zr.refresh();
+
         this.trigger('update');
 
         this._needsUpdate = false;
@@ -15909,7 +15892,7 @@ var OrbitControl = Base.extend(function () {
 
     _updatePan: function (deltaTime) {
 
-        var velocity = this._rotateVelocity;
+        var velocity = this._panVelocity;
         var len = this._distance;
 
         var target = this._camera;
@@ -15917,11 +15900,11 @@ var OrbitControl = Base.extend(function () {
         var xAxis = target.worldTransform.x;
 
         // PENDING
-        this.origin
-            .scaleAndAdd(xAxis, velocity.x * len / 400)
-            .scaleAndAdd(yAxis, velocity.y * len / 400);
+        this._center
+            .scaleAndAdd(xAxis, -velocity.x * len / 200)
+            .scaleAndAdd(yAxis, -velocity.y * len / 200);
 
-        this._vectorDamping(velocity, this.damping);
+        this._vectorDamping(velocity, 0);
     },
 
     _updateTransform: function () {
@@ -15936,7 +15919,7 @@ var OrbitControl = Base.extend(function () {
         dir.y = -Math.cos(theta);
         dir.z = r * Math.sin(phi);
 
-        camera.position.copy(this.origin).scaleAndAdd(dir, this._distance);
+        camera.position.copy(this._center).scaleAndAdd(dir, this._distance);
         camera.rotation.identity()
             // First around y, then around x
             .rotateY(-this._phi)
@@ -15965,23 +15948,24 @@ var OrbitControl = Base.extend(function () {
     },
 
     _decomposeTransform: function () {
-    //     if (!this._camera) {
-    //         return;
-    //     }
+        if (!this._camera) {
+            return;
+        }
 
-    //     // TODO
-    //     var euler = new Vector3();
-    //     // Z Rotate at last so it can be zero
-    //     euler.eulerFromQuat(
-    //         this._camera.rotation.normalize(), 'ZXY'
-    //     );
+        // FIXME euler order......
+        // FIXME alpha is not certain when beta is 90 or -90
+        var euler = new Vector3();
+        euler.eulerFromQuat(
+            this._camera.rotation.normalize(), 'ZYX'
+        );
 
-    //     this._theta = euler.x;
-    //     this._phi = euler.y;
+        this._theta = -euler.x;
+        this._phi = -euler.y;
 
-    //     this._theta = Math.max(Math.min(this._theta, Math.PI / 2), -Math.PI / 2);
+        this.setBeta(this.getBeta());
+        this.setAlpha(this.getAlpha());
 
-    //     this._setDistance(this._camera.position.dist(this.origin));
+        this._setDistance(this._camera.position.dist(this._center));
     },
 
     _mouseDownHandler: function (e) {
@@ -16002,15 +15986,18 @@ var OrbitControl = Base.extend(function () {
         this.zr.on('mousemove', this._mouseMoveHandler);
         this.zr.on('mouseup', this._mouseUpHandler);
 
-        if (this.mode === 'rotate') {
-            // Reset rotate velocity
-            this._rotateVelocity.set(0, 0);
+        if (e.event.button === 0) {
+            this._mode = 'rotate';
+        }
+        else if (e.event.button === 1) {
+            this._mode = 'pan';
+        }
 
-            this._rotating = false;
-
-            if (this.autoRotate) {
-                this._startCountingStill();
-            }
+        // Reset rotate velocity
+        this._rotateVelocity.set(0, 0);
+        this._rotating = false;
+        if (this.autoRotate) {
+            this._startCountingStill();
         }
 
         this._mouseX = e.offsetX;
@@ -16022,13 +16009,13 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        if (this.mode === 'rotate') {
+        if (this._mode === 'rotate') {
             this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * this.rotateSensitivity;
             this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * this.rotateSensitivity;
         }
-        else if (this.mode === 'pan') {
-            this._panVelocity.x = e.offsetX - this._mouseX;
-            this._panVelocity.y = -e.offsetY + this._mouseY;
+        else if (this._mode === 'pan') {
+            this._panVelocity.x = (e.offsetX - this._mouseX) / this.zr.getWidth() * this.panSensitivity * 400;
+            this._panVelocity.y = (-e.offsetY + this._mouseY) / this.zr.getHeight() * this.panSensitivity * 400;
         }
 
         this._mouseX = e.offsetX;
@@ -16072,7 +16059,7 @@ var OrbitControl = Base.extend(function () {
 
         this._rotating = false;
 
-        if (this.autoRotate && this.mode === 'rotate') {
+        if (this.autoRotate && this._mode === 'rotate') {
             this._startCountingStill();
         }
 
@@ -17710,7 +17697,7 @@ module.exports = graphicGL.Mesh.extend(function () {
 
     // Light header
     var Shader = __webpack_require__(9);
-    Shader['import'](__webpack_require__(207));
+    Shader['import'](__webpack_require__(206));
 
     var glMatrix = __webpack_require__(1);
     var mat4 = glMatrix.mat4;
@@ -20290,7 +20277,7 @@ module.exports = graphicGL.Mesh.extend(function () {
     var Material = __webpack_require__(19);
 
 
-    Shader.import(__webpack_require__(209));
+    Shader.import(__webpack_require__(208));
     /**
      * @constructor qtek.plugin.Skybox
      *
@@ -20412,7 +20399,7 @@ module.exports = graphicGL.Mesh.extend(function () {
     var Shader = __webpack_require__(9);
     var Material = __webpack_require__(19);
 
-    Shader.import(__webpack_require__(193));
+    Shader.import(__webpack_require__(192));
     /**
      * @constructor qtek.plugin.Skydome
      *
@@ -20681,8 +20668,8 @@ module.exports = graphicGL.Mesh.extend(function () {
     var Skydome = __webpack_require__(58);
     var Scene = __webpack_require__(31);
 
-    var dds = __webpack_require__(212);
-    var hdr = __webpack_require__(213);
+    var dds = __webpack_require__(211);
+    var hdr = __webpack_require__(212);
 
     /**
      * @namespace qtek.util.texture
@@ -20902,7 +20889,8 @@ module.exports = graphicGL.Mesh.extend(function () {
 
 var echarts = __webpack_require__(0);
 var graphicGL = __webpack_require__(2);
-var Triangulation = __webpack_require__(156);
+// var Triangulation = require('../../util/Triangulation');
+var earcut = __webpack_require__(157);
 var LinesGeo = __webpack_require__(22);
 var retrieve = __webpack_require__(4);
 var glmatrix = __webpack_require__(1);
@@ -20922,7 +20910,7 @@ function Geo3DBuilder(api) {
     // Cache triangulation result
     this._triangulationResults = {};
 
-    this._triangulator = new Triangulation();
+    // this._triangulator = new Triangulation();
 
     this._shadersMap = graphicGL.COMMON_SHADERS.reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
@@ -21307,17 +21295,18 @@ Geo3DBuilder.prototype = {
                     if (interiors[j].length.length < 3) {
                         continue;
                     }
-                    var holePoints = [];
+                    var startIdx = points.length / 2;
                     for (var k = 0; k < interiors[j].length; k++) {
                         var p = interiors[j][k];
-                        holePoints.push(p[0]);
-                        holePoints.push(p[1]);
+                        points.push(p[0]);
+                        points.push(p[1]);
                     }
 
-                    holes.push(holePoints);
+                    holes.push(startIdx);
                 }
-                triangulator.triangulate(points, holes);
-                points = triangulator.points;
+                // triangulator.triangulate(points, holes);
+                // points = triangulator.points;
+                var triangles = earcut(points, holes);
 
                 var points3 = new Float32Array(points.length / 2 * 3);
                 var pos = [];
@@ -21341,7 +21330,7 @@ Geo3DBuilder.prototype = {
                     points: points3,
                     minAll: minAll,
                     maxAll: maxAll,
-                    indices: triangulator.triangles
+                    indices: triangles
                 });
             }
             this._triangulationResults[region.name] = polygons;
@@ -24747,8 +24736,8 @@ module.exports = spriteUtil;
  */
 
 
-    var vec2 = __webpack_require__(225);
-    var matrix = __webpack_require__(224);
+    var vec2 = __webpack_require__(224);
+    var matrix = __webpack_require__(223);
 
     var v2ApplyTransform = vec2.applyTransform;
     var mathMin = Math.min;
@@ -25643,14 +25632,14 @@ echarts.registerAction({
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.0-alpha.1',
+    version: '1.0.0-alpha.2',
     dependencies: {
         echarts: '3.5.3',
         qtek: '0.3.3'
     }
 };
 var echarts = __webpack_require__(0);
-var qtekVersion = __webpack_require__(218);
+var qtekVersion = __webpack_require__(217);
 var LayerGL = __webpack_require__(145);
 
 // Version checking
@@ -27185,6 +27174,7 @@ ForceAtlas2GPU.prototype.getTextureSize = function () {
 };
 
 ForceAtlas2GPU.prototype.isFinished = function (renderer, threshold) {
+    // TODO Safari not support float texture reading
     var globalSpeedData = this.getTextureData(renderer, 'globalSpeed');
     // console.log(globalSpeedData[0]);
     // PENDING
@@ -28743,7 +28733,7 @@ var Lines3DGeometry = __webpack_require__(22);
 var Matrix4 = __webpack_require__(10);
 var Vector3 = __webpack_require__(3);
 var vec3 = __webpack_require__(1).vec3;
-var lineContain = __webpack_require__(222);
+var lineContain = __webpack_require__(221);
 var TooltipHelper = __webpack_require__(33);
 
 graphicGL.Shader.import(__webpack_require__(39));
@@ -31011,6 +31001,7 @@ module.exports = echarts.extendComponentView({
                 alpha: control.getAlpha(),
                 beta: control.getBeta(),
                 distance: control.getDistance(),
+                center: control.getCenter(),
                 from: this.uid,
                 geo3DId: geo3DModel.id
             });
@@ -31468,6 +31459,7 @@ module.exports = echarts.extendComponentView({
                 alpha: control.getAlpha(),
                 beta: control.getBeta(),
                 distance: control.getDistance() - coordSys.radius,
+                center: control.getCenter(),
                 from: this.uid,
                 globeId: globeModel.id
             };
@@ -32547,6 +32539,7 @@ module.exports = echarts.extendComponentView({
             alpha: control.getAlpha(),
             beta: control.getBeta(),
             distance: control.getDistance(),
+            center: control.getCenter(),
             from: this.uid,
             grid3DId: grid3DModel.id
         });
@@ -33658,7 +33651,7 @@ module.exports = grid3DCreator;
 
 var echarts = __webpack_require__(0);
 var Renderer = __webpack_require__(51);
-var RayPicking = __webpack_require__(191);
+var RayPicking = __webpack_require__(190);
 var Texture = __webpack_require__(6);
 
 // PENDING, qtek notifier is same with zrender Eventful
@@ -34212,24 +34205,24 @@ var Shader = __webpack_require__(9);
 var Texture2D = __webpack_require__(7);
 var Texture = __webpack_require__(6);
 var FrameBuffer = __webpack_require__(11);
-var FXLoader = __webpack_require__(186);
+var FXLoader = __webpack_require__(185);
 var SSAOPass = __webpack_require__(149);
 var poissonKernel = __webpack_require__(152);
 var graphicGL = __webpack_require__(2);
 
 var effectJson = __webpack_require__(151);
 
-Shader['import'](__webpack_require__(195));
-Shader['import'](__webpack_require__(202));
-Shader['import'](__webpack_require__(203));
-Shader['import'](__webpack_require__(196));
-Shader['import'](__webpack_require__(198));
-Shader['import'](__webpack_require__(204));
-Shader['import'](__webpack_require__(200));
-Shader['import'](__webpack_require__(197));
-Shader['import'](__webpack_require__(201));
 Shader['import'](__webpack_require__(194));
+Shader['import'](__webpack_require__(201));
+Shader['import'](__webpack_require__(202));
+Shader['import'](__webpack_require__(195));
+Shader['import'](__webpack_require__(197));
+Shader['import'](__webpack_require__(203));
 Shader['import'](__webpack_require__(199));
+Shader['import'](__webpack_require__(196));
+Shader['import'](__webpack_require__(200));
+Shader['import'](__webpack_require__(193));
+Shader['import'](__webpack_require__(198));
 Shader['import'](__webpack_require__(146));
 
 function EffectCompositor() {
@@ -36021,616 +36014,7 @@ module.exports = Roam2DControl;
 /* 156 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// Ear clipping polygon triangulation.
-
-// https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
-
-// http://www.cosy.sbg.ac.at/~held/projects/triang/triang.html
-// Z Order Hash ?
-
-var LinkedList = __webpack_require__(181);
-
-// From x,y point cast a ray to right. and intersect with edge x0, y0, x1, y1;
-// Return x value of intersect point
-function intersectEdge(x0, y0, x1, y1, x, y) {
-    if ((y > y0 && y > y1) || (y < y0 && y < y1)) {
-        return -Infinity;
-    }
-    // Ignore horizontal line
-    if (y1 === y0) {
-        return -Infinity;
-    }
-    var dir = y1 < y0 ? 1 : -1;
-    var t = (y - y0) / (y1 - y0);
-
-    // Avoid winding error when intersection point is the connect point of two line of polygon
-    if (t === 1 || t === 0) {
-        dir = y1 < y0 ? 0.5 : -0.5;
-    }
-
-    var x_ = t * (x1 - x0) + x0;
-
-    return x_;
-};
-
-function triangleArea(x0, y0, x1, y1, x2, y2) {
-    return (x1 - x0) * (y2 - y1) - (y1 - y0) * (x2 - x1);
-}
-
-function isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi) {
-    return !(triangleArea(x0, y0, x2, y2, xi, yi) <= 0
-        || triangleArea(x0, y0, xi, yi, x1, y1) <= 0
-        || triangleArea(xi, yi, x2, y2, x1, y1) <= 0);
-}
-
-function area(points) {
-    // Signed polygon area
-    var n = points.length / 2;
-    if (n < 3) {
-        return 0;
-    }
-    var area = 0;
-    for (var i = (n - 1) * 2, j = 0; j < n * 2;) {
-        var x0 = points[i];
-        var y0 = points[i + 1];
-        var x1 = points[j];
-        var y1 = points[j + 1];
-        i = j;
-        j += 2;
-        area += x0 * y1 - x1 * y0;
-    }
-
-    return area;
-}
-
-function reverse(points, stride) {
-    var n = points.length / stride;
-    for (var i = 0; i < Math.floor(n / 2); i++) {
-        for (var j = 0; j < stride; j++) {
-            var a = i * stride + j;
-            var b = (n - i - 1) * stride + j;
-            var tmp = points[a];
-            points[a] = points[b];
-            points[b] = tmp;
-        }
-    }
-
-    return points;
-}
-
-var VERTEX_TYPE_CONVEX = 1;
-var VERTEX_TYPE_REFLEX = 2;
-
-var VERTEX_COUNT_NEEDS_GRID = 50;
-
-function Point(idx) {
-    this.idx = idx;
-}
-
-var TriangulationContext = function () {
-
-    this.points = [];
-
-    this.triangles = [];
-
-    this.maxGridNumber = 50;
-
-    this.minGridNumber = 4;
-
-    this._gridNumber = 20;
-
-    this._boundingBox = [[Infinity, Infinity], [-Infinity, -Infinity]];
-
-    this._nPoints = 0;
-
-    this._pointsTypes = [];
-
-    this._grids = [];
-
-    this._gridWidth = 0;
-    this._gridHeight = 0;
-
-    this._candidates = null;
-}
-
-/**
- * @param {Array.<number>} exterior. Exterior points
- *      exterior should be clockwise order. (When y is from bottom to top)
- * @param {Array.<Array>} holes. holes should be counter clockwise order.
- */
-TriangulationContext.prototype.triangulate = function (exterior, holes) {
-    this._nPoints = exterior.length / 2;
-    if (this._nPoints < 3) {
-        return;
-    }
-
-    // PENDING Dynamic grid number or fixed grid number ?
-    this._gridNumber = Math.ceil(Math.sqrt(this._nPoints) / 2);
-    this._gridNumber = Math.max(Math.min(this._gridNumber, this.maxGridNumber), this.minGridNumber);
-
-    this.points = exterior;
-
-    this._needsGreed = this._nPoints > VERTEX_COUNT_NEEDS_GRID;
-
-    if (area(this.points) > 0) {
-        // Don't konw why, but use slice is more faster than new Float32Array(this.points).
-        this.points = this.points.slice();
-        reverse(this.points, 2);
-    }
-
-    this.holes = (holes || []).map(function (hole) {
-        if (area(hole) < 0) {
-            hole = hole.slice();
-            reverse(hole, 2);
-        }
-        return hole;
-    });
-
-    this._reset();
-
-    this._prepare();
-
-    this._earClipping();
-}
-
-TriangulationContext.prototype._reset = function () {
-
-    this._candidates = new LinkedList();
-    this.triangles = [];
-
-    this._boundingBox[0][0] = this._boundingBox[0][1] = Infinity;
-    this._boundingBox[1][0] = this._boundingBox[1][1] = -Infinity;
-    // Initialize grid
-
-    var nGrids = this._gridNumber * this._gridNumber;
-    for (var i = 0; i < nGrids; i++) {
-        this._grids[i] = [];
-    }
-    this._grids.length = nGrids;
-}
-
-// Prepare points
-TriangulationContext.prototype._prepare = function () {
-    var bb = this._boundingBox;
-    var n = this._nPoints;
-    var points = this.points;
-
-    this._pointsTypes = [];
-    // Update bounding box and determine point type is reflex or convex
-    for (var i = 0, j = n - 1; i < n;) {
-        var k = (i + 1) % n;
-        var x0 = points[j * 2];
-        var y0 = points[j * 2 + 1];
-        var x1 = points[i * 2];
-        var y1 = points[i * 2 + 1];
-        var x2 = points[k * 2];
-        var y2 = points[k * 2 + 1];
-
-        if (this._needsGreed) {
-            if (x1 < bb[0][0]) { bb[0][0] = x1; }
-            if (y1 < bb[0][1]) { bb[0][1] = y1; }
-            if (x1 > bb[1][0]) { bb[1][0] = x1; }
-            if (y1 > bb[1][1]) { bb[1][1] = y1; }
-
-            // Make the bounding box a litte bigger
-            // Avoid the geometry hashing will touching the bound of the bounding box
-            bb[0][0] -= 0.1;
-            bb[0][1] -= 0.1;
-            bb[1][0] += 0.1;
-            bb[1][1] += 0.1;
-        }
-
-        var area = triangleArea(x0, y0, x1, y1, x2, y2);
-
-        this._pointsTypes[i] = area < 0 ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
-
-        j = i;
-        i++;
-    }
-
-    this._cutHoles();
-
-    // points may be changed after cutHoles.
-    n = this._nPoints;
-    points = this.points;
-
-    // Init candidates.
-    for (var i= 0; i < n; i++) {
-        this._candidates.insert(new Point(i));
-    }
-
-    // Put the points in the grids
-    if (this._needsGreed) {
-        this._gridWidth = (bb[1][0] - bb[0][0]) / this._gridNumber;
-        this._gridHeight = (bb[1][1] - bb[0][1]) / this._gridNumber;
-        for (var i = 0; i < n; i++) {
-            var x = points[i * 2];
-            var y = points[i * 2 + 1];
-            if (this._pointsTypes[i] == VERTEX_TYPE_REFLEX) {
-                var key = this._getPointHash(x, y);
-                this._grids[key].push(i);
-            }
-        }
-    }
-};
-
-// Finding Mutually Visible Vertices and cut the polygon to remove holes.
-TriangulationContext.prototype._cutHoles = function () {
-    var holes = this.holes;
-
-    if (!holes.length) {
-        return;
-    }
-    holes = holes.slice();
-    var xMaxOfHoles = [];
-    var xMaxIndicesOfHoles = [];
-    for (var i = 0; i < holes.length; i++) {
-        var hole = holes[i];
-        var holeMaxX = -Infinity;
-        var holeMaxXIndex = 0;
-        // Find index of xMax in the hole.
-        for (var k = 0; k < hole.length; k += 2) {
-            var x = hole[k * 2];
-            if (x > holeMaxX) {
-                holeMaxXIndex = k / 2;
-                holeMaxX = x;
-            }
-        }
-        xMaxOfHoles.push(holeMaxX);
-        xMaxIndicesOfHoles.push(holeMaxXIndex);
-    }
-
-    var self = this;
-    function cutHole() {
-        var points = self.points;
-        var nPoints = self._nPoints;
-
-        var holeMaxX = -Infinity;
-        var holeMaxXIndex = 0;
-        var holeIndex = 0;
-        // Find hole which xMax is rightest
-        for (var i = 0; i < xMaxOfHoles.length; i++) {
-            if (xMaxOfHoles[i] > holeMaxX) {
-                holeMaxX = xMaxOfHoles[i];
-                holeMaxXIndex = xMaxIndicesOfHoles[i];
-                holeIndex = i;
-            }
-        }
-
-        var holePoints = holes[holeIndex];
-
-        xMaxOfHoles.splice(holeIndex, 1);
-        xMaxIndicesOfHoles.splice(holeIndex, 1);
-        holes.splice(holeIndex, 1);
-
-        var holePointX = holePoints[holeMaxXIndex * 2];
-        var holePointY = holePoints[holeMaxXIndex * 2 + 1];
-        var minRayX = Infinity;
-        var edgeStartPointIndex = -1;
-        // Find nearest intersected line
-        for (var i = 0, j = points.length - 2; i < points.length; i += 2) {
-            var x0 = points[j], y0 = points[j + 1];
-            var x1 = points[i], y1 = points[i + 1];
-
-            var rayX = intersectEdge(x0, y0, x1, y1, holePointX, holePointY);
-            if (rayX >= holePointX) {
-                // Intersected.
-                if (rayX < minRayX) {
-                    minRayX = rayX;
-                    edgeStartPointIndex = j / 2;
-                }
-            }
-
-            j = i;
-        }
-        // Didn't find
-        if (edgeStartPointIndex < 0) {
-            if (true) {
-                console.warn('Hole must be inside exterior.');
-            }
-            return;
-        }
-        var edgeEndPointIndex = (edgeStartPointIndex + 1) % (points.length / 2);
-        // Point of seam edge/
-        var seamPointIndex = (points[edgeStartPointIndex * 2] > points[edgeEndPointIndex * 2]) ? edgeStartPointIndex : edgeEndPointIndex;
-        // Use maximum x of edge
-        var seamX = points[seamPointIndex * 2];
-        var seamY = points[seamPointIndex * 2 + 1];
-
-        var minimumAngleCos = Infinity;
-        // And figure out if any of reflex points is in the triangle,
-        // if has, use the reflex point with minimum angle with (1, 0)
-        for (var i = 0; i < nPoints; i++) {
-            if (self._pointsTypes[i] === VERTEX_TYPE_REFLEX) {
-                var xi = points[i * 2];
-                var yi = points[i * 2 + 1];
-                if (isPointInTriangle(holePointX, holePointY, minRayX, holePointY, seamX, seamY, xi, yi)) {
-                    // Use dot product with (1, 0) as angle
-                    var dx = xi - holePointX;
-                    var dy = yi - holePointY;
-                    var len = Math.sqrt(dx * dx + dy * dy);
-                    dx /= len; dy /= len;
-                    var angleCos = dx * dx;
-                    if (angleCos < minimumAngleCos) {
-                        minimumAngleCos = angleCos;
-                        // Replaced seam.
-                        seamPointIndex = i;
-                    }
-                }
-            }
-        }
-
-        // TODO Use splice to add maybe slow
-        var newPointsCount = nPoints + holePoints.length / 2 + 2;
-        var newPoints = new Float32Array(newPointsCount * 2);
-        var newPointsTypes = new Uint8Array(newPointsCount);
-        seamX = points[seamPointIndex * 2];
-        seamY = points[seamPointIndex * 2 + 1];
-
-        var offPt = 0;
-        var offType = 0;
-
-        // x, y, prevX, prevY, nextX, nextY is used for point type.
-        var x, y;
-        var prevX, prevY, nextX, nextY;
-        function copyPoints(idx, source) {
-            prevX = x;
-            prevY = y;
-            x = newPoints[offPt++] = source[idx * 2];
-            y = newPoints[offPt++] = source[idx * 2 + 1];
-        }
-        function guessAndAddPointType() {
-            var type = triangleArea(prevX, prevY, x, y, nextX, nextY) < 0 ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
-            newPointsTypes[offType++] = type;
-        }
-
-        for (var i = 0; i < seamPointIndex; i++) {
-            copyPoints(i, points);
-            newPointsTypes[offType++] = self._pointsTypes[i];
-        }
-        copyPoints(seamPointIndex, points);
-        if (0 === seamPointIndex) { // In case first point is seam.
-            prevX = points[nPoints * 2 - 2];
-            prevY = points[nPoints * 2 - 1];
-        }
-        nextX = holePoints[holeMaxXIndex * 2];
-        nextY = holePoints[holeMaxXIndex * 2 + 1];
-
-        guessAndAddPointType();
-
-        // Add hole
-        for (var i = 0, holePointsCount = holePoints.length / 2; i < holePointsCount; i++) {
-            var idx = (i + holeMaxXIndex) % holePointsCount;
-            copyPoints(idx, holePoints);
-
-            var nextIdx = (idx + 1) % holePointsCount;
-            nextX = holePoints[nextIdx * 2]; nextY = holePoints[nextIdx * 2 + 1];
-            guessAndAddPointType();
-        }
-        // Add another seam.
-        copyPoints(holeMaxXIndex, holePoints);
-        nextX = seamX; nextY = seamY;
-        guessAndAddPointType();
-        copyPoints(seamPointIndex, points);
-        var nextIdx = (seamPointIndex + 1) % nPoints;
-        nextX = points[nextIdx * 2]; nextY = points[nextIdx * 2 + 1];
-        guessAndAddPointType();
-
-        // Add rest
-        for (var i = seamPointIndex + 1; i < nPoints; i++) {
-            copyPoints(i, points);
-            newPointsTypes[offType++] = self._pointsTypes[i];
-        }
-
-        // Update points and pointsTypes
-        self.points = newPoints;
-        self._pointsTypes = newPointsTypes;
-        self._nPoints = newPointsCount;
-    }
-
-    var count = holes.length;
-    while (count--) {
-        cutHole();
-    }
-};
-
-TriangulationContext.prototype._earClipping = function () {
-    var candidates = this._candidates;
-    while (candidates.length() > 2) {
-        var isDesperate = true;
-        var entry = candidates.head;
-        while (entry) {
-            if (this._isEar(entry)) {
-                entry = this._clipEar(entry);
-                isDesperate = false;
-            }
-            else {
-                entry = entry.next;
-            }
-        }
-
-        if (isDesperate) {
-            // Random pick a convex vertex when there is no more ear
-            // can be clipped and there are more than 3 points left
-            // After clip the random picked vertex, go on finding ears again
-            // So it can be extremely slow in worst case
-            // TODO
-            this._clipEar(candidates.head);
-        }
-    }
-}
-
-TriangulationContext.prototype._isEar = function (pointEntry) {
-    if (this._pointsTypes[pointEntry.value.idx] === VERTEX_TYPE_REFLEX) {
-        return;
-    }
-
-    var points = this.points;
-
-    var prevPointEntry = pointEntry.prev || this._candidates.tail;
-    var nextPointEntry = pointEntry.next || this._candidates.head;
-    var p0 = prevPointEntry.value.idx;
-    var p1 = pointEntry.value.idx;
-    var p2 = nextPointEntry.value.idx;
-
-    p0 *= 2;
-    p1 *= 2;
-    p2 *= 2;
-    var x0 = points[p0];
-    var y0 = points[p0 + 1];
-    var x1 = points[p1];
-    var y1 = points[p1 + 1];
-    var x2 = points[p2];
-    var y2 = points[p2 + 1];
-
-    // Clipped the tiny triangles directly
-    // if (Math.abs(triangleArea(x0, y0, x1, y1, x2, y2)) < 1) {
-    //     return true;
-    // }
-
-    if (this._needsGreed) {
-        var range = this._getTriangleGrids(x0, y0, x1, y1, x2, y2);
-
-        // Find all the points in the grids covered by the triangle
-        // And figure out if any of them is in the triangle
-        for (var j = range[0][1]; j <= range[1][1]; j++) {
-            for (var i = range[0][0]; i <= range[1][0]; i++) {
-                var gridIdx = j * this._gridNumber + i;
-                var gridPoints = this._grids[gridIdx];
-
-                for (var k = 0; k < gridPoints.length; k++) {
-                    var idx = gridPoints[k];
-                    if (this._pointsTypes[idx] == VERTEX_TYPE_REFLEX) {
-                        var xi = points[idx * 2];
-                        var yi = points[idx * 2 + 1];
-                        if (isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi)) {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else {
-        var entry = this._candidates.head;
-        while (entry) {
-            var idx = entry.value.idx;
-            var xi = points[idx * 2];
-            var yi = points[idx * 2 + 1];
-            if (this._pointsTypes[idx] == VERTEX_TYPE_REFLEX) {
-                if (isPointInTriangle(x0, y0, x1, y1, x2, y2, xi, yi)) {
-                    return false;
-                }
-            }
-            entry = entry.next;
-        }
-    }
-
-    return true;
-}
-
-TriangulationContext.prototype._clipEar = function (pointEntry) {
-
-    var candidates = this._candidates;
-
-    var prevPointEntry = pointEntry.prev || candidates.tail;
-    var nextPointEntry = pointEntry.next || candidates.head;
-
-    var p0 = prevPointEntry.value.idx;
-    var p1 = pointEntry.value.idx;
-    var p2 = nextPointEntry.value.idx;
-
-    var triangles = this.triangles;
-    // FIXME e0 may same with e1
-    triangles.push(p0);
-    triangles.push(p1);
-    triangles.push(p2);
-
-    // PENDING
-    // The index in the grids also needs to be removed
-    // But because it needs `splice` and `indexOf`
-    // may cost too much
-    candidates.remove(pointEntry);
-
-    if (candidates.length() === 3) {
-        triangles.push(p0);
-        triangles.push(p2);
-        triangles.push((nextPointEntry.next || candidates.head).value.idx);
-        return;
-    }
-
-    var nextNextPointEntry = nextPointEntry.next || candidates.head;
-    var prevPrevPointEntry = prevPointEntry.prev || candidates.tail;
-
-    var p0 = prevPrevPointEntry.value.idx;
-    var p1 = prevPointEntry.value.idx;
-    var p2 = nextPointEntry.value.idx;
-    var p3 = nextNextPointEntry.value.idx;
-    // Update p1, p2, vertex type.
-    // New candidate after clipping (convex vertex)
-    this._pointsTypes[p1] = this.isTriangleConvex2(p0, p1, p2) ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
-    this._pointsTypes[p2] = this.isTriangleConvex2(p1, p2, p3) ? VERTEX_TYPE_CONVEX : VERTEX_TYPE_REFLEX;
-
-    return prevPointEntry;
-};
-
-// Get geometric hash of point
-// Actually it will find the grid index by giving the point (x y)
-TriangulationContext.prototype._getPointHash = function (x, y) {
-    var bb = this._boundingBox;
-    return Math.floor((y - bb[0][1]) / this._gridHeight) * this._gridNumber
-        + Math.floor((x - bb[0][0]) / this._gridWidth);
-};
-
-// Get the grid range covered by the triangle
-TriangulationContext.prototype._getTriangleGrids = (function () {
-    var range = [[-1, -1], [-1, -1]];
-    var minX, minY, maxX, maxY;
-    return function (x0, y0, x1, y1, x2, y2) {
-        var bb = this._boundingBox;
-
-        minX = maxX = x0;
-        minY = maxY = y0;
-        if (x1 < minX) { minX = x1; }
-        if (y1 < minY) { minY = y1; }
-        if (x1 > maxX) { maxX = x1; }
-        if (y1 > maxY) { maxY = y1; }
-        if (x2 < minX) { minX = x2; }
-        if (y2 < minY) { minY = y2; }
-        if (x2 > maxX) { maxX = x2; }
-        if (y2 > maxY) { maxY = y2; }
-
-        range[0][0] = Math.floor((minX - bb[0][0]) / this._gridWidth);
-        range[1][0] = Math.floor((maxX - bb[0][0]) / this._gridWidth);
-
-        range[0][1] = Math.floor((minY - bb[0][1]) / this._gridHeight);
-        range[1][1] = Math.floor((maxY - bb[0][1]) / this._gridHeight);
-
-        return range;
-    };
-})();
-
-TriangulationContext.prototype.isTriangleConvex2 = function (p0, p1, p2) {
-    return this.triangleArea(p0, p1, p2) < 0;
-};
-
-TriangulationContext.prototype.triangleArea = function (p0, p1, p2) {
-    var x0 = this.points[p0 * 2];
-    var y0 = this.points[p0 * 2 + 1];
-    var x1 = this.points[p1 * 2];
-    var y1 = this.points[p1 * 2 + 1];
-    var x2 = this.points[p2 * 2];
-    var y2 = this.points[p2 * 2 + 1];
-    return (x1 - x0) * (y2 - y1) - (y1 - y0) * (x2 - x1);
-};
-
-module.exports = TriangulationContext;
-
-/***/ }),
-/* 157 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Animator = __webpack_require__(219);
+var Animator = __webpack_require__(218);
 
 var animatableMixin = {
 
@@ -36723,6 +36107,631 @@ var animatableMixin = {
 };
 
 module.exports = animatableMixin;
+
+/***/ }),
+/* 157 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// https://github.com/mapbox/earcut/blob/master/src/earcut.js
+
+
+module.exports = earcut;
+
+function earcut(data, holeIndices, dim) {
+
+    dim = dim || 2;
+
+    var hasHoles = holeIndices && holeIndices.length,
+        outerLen = hasHoles ? holeIndices[0] * dim : data.length,
+        outerNode = linkedList(data, 0, outerLen, dim, true),
+        triangles = [];
+
+    if (!outerNode) return triangles;
+
+    var minX, minY, maxX, maxY, x, y, size;
+
+    if (hasHoles) outerNode = eliminateHoles(data, holeIndices, outerNode, dim);
+
+    // if the shape is not too simple, we'll use z-order curve hash later; calculate polygon bbox
+    if (data.length > 80 * dim) {
+        minX = maxX = data[0];
+        minY = maxY = data[1];
+
+        for (var i = dim; i < outerLen; i += dim) {
+            x = data[i];
+            y = data[i + 1];
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+        }
+
+        // minX, minY and size are later used to transform coords into integers for z-order calculation
+        size = Math.max(maxX - minX, maxY - minY);
+    }
+
+    earcutLinked(outerNode, triangles, dim, minX, minY, size);
+
+    return triangles;
+}
+
+// create a circular doubly linked list from polygon points in the specified winding order
+function linkedList(data, start, end, dim, clockwise) {
+    var i, last;
+
+    if (clockwise === (signedArea(data, start, end, dim) > 0)) {
+        for (i = start; i < end; i += dim) last = insertNode(i, data[i], data[i + 1], last);
+    } else {
+        for (i = end - dim; i >= start; i -= dim) last = insertNode(i, data[i], data[i + 1], last);
+    }
+
+    if (last && equals(last, last.next)) {
+        removeNode(last);
+        last = last.next;
+    }
+
+    return last;
+}
+
+// eliminate colinear or duplicate points
+function filterPoints(start, end) {
+    if (!start) return start;
+    if (!end) end = start;
+
+    var p = start,
+        again;
+    do {
+        again = false;
+
+        if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) {
+            removeNode(p);
+            p = end = p.prev;
+            if (p === p.next) return null;
+            again = true;
+
+        } else {
+            p = p.next;
+        }
+    } while (again || p !== end);
+
+    return end;
+}
+
+// main ear slicing loop which triangulates a polygon (given as a linked list)
+function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
+    if (!ear) return;
+
+    // interlink polygon nodes in z-order
+    if (!pass && size) indexCurve(ear, minX, minY, size);
+
+    var stop = ear,
+        prev, next;
+
+    // iterate through ears, slicing them one by one
+    while (ear.prev !== ear.next) {
+        prev = ear.prev;
+        next = ear.next;
+
+        if (size ? isEarHashed(ear, minX, minY, size) : isEar(ear)) {
+            // cut off the triangle
+            triangles.push(prev.i / dim);
+            triangles.push(ear.i / dim);
+            triangles.push(next.i / dim);
+
+            removeNode(ear);
+
+            // skipping the next vertice leads to less sliver triangles
+            ear = next.next;
+            stop = next.next;
+
+            continue;
+        }
+
+        ear = next;
+
+        // if we looped through the whole remaining polygon and can't find any more ears
+        if (ear === stop) {
+            // try filtering points and slicing again
+            if (!pass) {
+                earcutLinked(filterPoints(ear), triangles, dim, minX, minY, size, 1);
+
+            // if this didn't work, try curing all small self-intersections locally
+            } else if (pass === 1) {
+                ear = cureLocalIntersections(ear, triangles, dim);
+                earcutLinked(ear, triangles, dim, minX, minY, size, 2);
+
+            // as a last resort, try splitting the remaining polygon into two
+            } else if (pass === 2) {
+                splitEarcut(ear, triangles, dim, minX, minY, size);
+            }
+
+            break;
+        }
+    }
+}
+
+// check whether a polygon node forms a valid ear with adjacent nodes
+function isEar(ear) {
+    var a = ear.prev,
+        b = ear,
+        c = ear.next;
+
+    if (area(a, b, c) >= 0) return false; // reflex, can't be an ear
+
+    // now make sure we don't have other points inside the potential ear
+    var p = ear.next.next;
+
+    while (p !== ear.prev) {
+        if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.next;
+    }
+
+    return true;
+}
+
+function isEarHashed(ear, minX, minY, size) {
+    var a = ear.prev,
+        b = ear,
+        c = ear.next;
+
+    if (area(a, b, c) >= 0) return false; // reflex, can't be an ear
+
+    // triangle bbox; min & max are calculated like this for speed
+    var minTX = a.x < b.x ? (a.x < c.x ? a.x : c.x) : (b.x < c.x ? b.x : c.x),
+        minTY = a.y < b.y ? (a.y < c.y ? a.y : c.y) : (b.y < c.y ? b.y : c.y),
+        maxTX = a.x > b.x ? (a.x > c.x ? a.x : c.x) : (b.x > c.x ? b.x : c.x),
+        maxTY = a.y > b.y ? (a.y > c.y ? a.y : c.y) : (b.y > c.y ? b.y : c.y);
+
+    // z-order range for the current triangle bbox;
+    var minZ = zOrder(minTX, minTY, minX, minY, size),
+        maxZ = zOrder(maxTX, maxTY, minX, minY, size);
+
+    // first look for points inside the triangle in increasing z-order
+    var p = ear.nextZ;
+
+    while (p && p.z <= maxZ) {
+        if (p !== ear.prev && p !== ear.next &&
+            pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.nextZ;
+    }
+
+    // then look for points in decreasing z-order
+    p = ear.prevZ;
+
+    while (p && p.z >= minZ) {
+        if (p !== ear.prev && p !== ear.next &&
+            pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.prevZ;
+    }
+
+    return true;
+}
+
+// go through all polygon nodes and cure small local self-intersections
+function cureLocalIntersections(start, triangles, dim) {
+    var p = start;
+    do {
+        var a = p.prev,
+            b = p.next.next;
+
+        if (!equals(a, b) && intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
+
+            triangles.push(a.i / dim);
+            triangles.push(p.i / dim);
+            triangles.push(b.i / dim);
+
+            // remove two nodes involved
+            removeNode(p);
+            removeNode(p.next);
+
+            p = start = b;
+        }
+        p = p.next;
+    } while (p !== start);
+
+    return p;
+}
+
+// try splitting polygon into two and triangulate them independently
+function splitEarcut(start, triangles, dim, minX, minY, size) {
+    // look for a valid diagonal that divides the polygon into two
+    var a = start;
+    do {
+        var b = a.next.next;
+        while (b !== a.prev) {
+            if (a.i !== b.i && isValidDiagonal(a, b)) {
+                // split the polygon in two by the diagonal
+                var c = splitPolygon(a, b);
+
+                // filter colinear points around the cuts
+                a = filterPoints(a, a.next);
+                c = filterPoints(c, c.next);
+
+                // run earcut on each half
+                earcutLinked(a, triangles, dim, minX, minY, size);
+                earcutLinked(c, triangles, dim, minX, minY, size);
+                return;
+            }
+            b = b.next;
+        }
+        a = a.next;
+    } while (a !== start);
+}
+
+// link every hole into the outer loop, producing a single-ring polygon without holes
+function eliminateHoles(data, holeIndices, outerNode, dim) {
+    var queue = [],
+        i, len, start, end, list;
+
+    for (i = 0, len = holeIndices.length; i < len; i++) {
+        start = holeIndices[i] * dim;
+        end = i < len - 1 ? holeIndices[i + 1] * dim : data.length;
+        list = linkedList(data, start, end, dim, false);
+        if (list === list.next) list.steiner = true;
+        queue.push(getLeftmost(list));
+    }
+
+    queue.sort(compareX);
+
+    // process holes from left to right
+    for (i = 0; i < queue.length; i++) {
+        eliminateHole(queue[i], outerNode);
+        outerNode = filterPoints(outerNode, outerNode.next);
+    }
+
+    return outerNode;
+}
+
+function compareX(a, b) {
+    return a.x - b.x;
+}
+
+// find a bridge between vertices that connects hole with an outer ring and and link it
+function eliminateHole(hole, outerNode) {
+    outerNode = findHoleBridge(hole, outerNode);
+    if (outerNode) {
+        var b = splitPolygon(outerNode, hole);
+        filterPoints(b, b.next);
+    }
+}
+
+// David Eberly's algorithm for finding a bridge between hole and outer polygon
+function findHoleBridge(hole, outerNode) {
+    var p = outerNode,
+        hx = hole.x,
+        hy = hole.y,
+        qx = -Infinity,
+        m;
+
+    // find a segment intersected by a ray from the hole's leftmost point to the left;
+    // segment's endpoint with lesser x will be potential connection point
+    do {
+        if (hy <= p.y && hy >= p.next.y && p.next.y !== p.y) {
+            var x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y);
+            if (x <= hx && x > qx) {
+                qx = x;
+                if (x === hx) {
+                    if (hy === p.y) return p;
+                    if (hy === p.next.y) return p.next;
+                }
+                m = p.x < p.next.x ? p : p.next;
+            }
+        }
+        p = p.next;
+    } while (p !== outerNode);
+
+    if (!m) return null;
+
+    if (hx === qx) return m.prev; // hole touches outer segment; pick lower endpoint
+
+    // look for points inside the triangle of hole point, segment intersection and endpoint;
+    // if there are no points found, we have a valid connection;
+    // otherwise choose the point of the minimum angle with the ray as connection point
+
+    var stop = m,
+        mx = m.x,
+        my = m.y,
+        tanMin = Infinity,
+        tan;
+
+    p = m.next;
+
+    while (p !== stop) {
+        if (hx >= p.x && p.x >= mx && hx !== p.x &&
+                pointInTriangle(hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p.x, p.y)) {
+
+            tan = Math.abs(hy - p.y) / (hx - p.x); // tangential
+
+            if ((tan < tanMin || (tan === tanMin && p.x > m.x)) && locallyInside(p, hole)) {
+                m = p;
+                tanMin = tan;
+            }
+        }
+
+        p = p.next;
+    }
+
+    return m;
+}
+
+// interlink polygon nodes in z-order
+function indexCurve(start, minX, minY, size) {
+    var p = start;
+    do {
+        if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, size);
+        p.prevZ = p.prev;
+        p.nextZ = p.next;
+        p = p.next;
+    } while (p !== start);
+
+    p.prevZ.nextZ = null;
+    p.prevZ = null;
+
+    sortLinked(p);
+}
+
+// Simon Tatham's linked list merge sort algorithm
+// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+function sortLinked(list) {
+    var i, p, q, e, tail, numMerges, pSize, qSize,
+        inSize = 1;
+
+    do {
+        p = list;
+        list = null;
+        tail = null;
+        numMerges = 0;
+
+        while (p) {
+            numMerges++;
+            q = p;
+            pSize = 0;
+            for (i = 0; i < inSize; i++) {
+                pSize++;
+                q = q.nextZ;
+                if (!q) break;
+            }
+            qSize = inSize;
+
+            while (pSize > 0 || (qSize > 0 && q)) {
+
+                if (pSize !== 0 && (qSize === 0 || !q || p.z <= q.z)) {
+                    e = p;
+                    p = p.nextZ;
+                    pSize--;
+                } else {
+                    e = q;
+                    q = q.nextZ;
+                    qSize--;
+                }
+
+                if (tail) tail.nextZ = e;
+                else list = e;
+
+                e.prevZ = tail;
+                tail = e;
+            }
+
+            p = q;
+        }
+
+        tail.nextZ = null;
+        inSize *= 2;
+
+    } while (numMerges > 1);
+
+    return list;
+}
+
+// z-order of a point given coords and size of the data bounding box
+function zOrder(x, y, minX, minY, size) {
+    // coords are transformed into non-negative 15-bit integer range
+    x = 32767 * (x - minX) / size;
+    y = 32767 * (y - minY) / size;
+
+    x = (x | (x << 8)) & 0x00FF00FF;
+    x = (x | (x << 4)) & 0x0F0F0F0F;
+    x = (x | (x << 2)) & 0x33333333;
+    x = (x | (x << 1)) & 0x55555555;
+
+    y = (y | (y << 8)) & 0x00FF00FF;
+    y = (y | (y << 4)) & 0x0F0F0F0F;
+    y = (y | (y << 2)) & 0x33333333;
+    y = (y | (y << 1)) & 0x55555555;
+
+    return x | (y << 1);
+}
+
+// find the leftmost node of a polygon ring
+function getLeftmost(start) {
+    var p = start,
+        leftmost = start;
+    do {
+        if (p.x < leftmost.x) leftmost = p;
+        p = p.next;
+    } while (p !== start);
+
+    return leftmost;
+}
+
+// check if a point lies within a convex triangle
+function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
+    return (cx - px) * (ay - py) - (ax - px) * (cy - py) >= 0 &&
+           (ax - px) * (by - py) - (bx - px) * (ay - py) >= 0 &&
+           (bx - px) * (cy - py) - (cx - px) * (by - py) >= 0;
+}
+
+// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
+function isValidDiagonal(a, b) {
+    return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
+           locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b);
+}
+
+// signed area of a triangle
+function area(p, q, r) {
+    return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+}
+
+// check if two points are equal
+function equals(p1, p2) {
+    return p1.x === p2.x && p1.y === p2.y;
+}
+
+// check if two segments intersect
+function intersects(p1, q1, p2, q2) {
+    if ((equals(p1, q1) && equals(p2, q2)) ||
+        (equals(p1, q2) && equals(p2, q1))) return true;
+    return area(p1, q1, p2) > 0 !== area(p1, q1, q2) > 0 &&
+           area(p2, q2, p1) > 0 !== area(p2, q2, q1) > 0;
+}
+
+// check if a polygon diagonal intersects any polygon segments
+function intersectsPolygon(a, b) {
+    var p = a;
+    do {
+        if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i &&
+                intersects(p, p.next, a, b)) return true;
+        p = p.next;
+    } while (p !== a);
+
+    return false;
+}
+
+// check if a polygon diagonal is locally inside the polygon
+function locallyInside(a, b) {
+    return area(a.prev, a, a.next) < 0 ?
+        area(a, b, a.next) >= 0 && area(a, a.prev, b) >= 0 :
+        area(a, b, a.prev) < 0 || area(a, a.next, b) < 0;
+}
+
+// check if the middle point of a polygon diagonal is inside the polygon
+function middleInside(a, b) {
+    var p = a,
+        inside = false,
+        px = (a.x + b.x) / 2,
+        py = (a.y + b.y) / 2;
+    do {
+        if (((p.y > py) !== (p.next.y > py)) && p.next.y !== p.y &&
+                (px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x))
+            inside = !inside;
+        p = p.next;
+    } while (p !== a);
+
+    return inside;
+}
+
+// link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
+// if one belongs to the outer ring and another to a hole, it merges it into a single ring
+function splitPolygon(a, b) {
+    var a2 = new Node(a.i, a.x, a.y),
+        b2 = new Node(b.i, b.x, b.y),
+        an = a.next,
+        bp = b.prev;
+
+    a.next = b;
+    b.prev = a;
+
+    a2.next = an;
+    an.prev = a2;
+
+    b2.next = a2;
+    a2.prev = b2;
+
+    bp.next = b2;
+    b2.prev = bp;
+
+    return b2;
+}
+
+// create a node and optionally link it with previous one (in a circular doubly linked list)
+function insertNode(i, x, y, last) {
+    var p = new Node(i, x, y);
+
+    if (!last) {
+        p.prev = p;
+        p.next = p;
+
+    } else {
+        p.next = last.next;
+        p.prev = last;
+        last.next.prev = p;
+        last.next = p;
+    }
+    return p;
+}
+
+function removeNode(p) {
+    p.next.prev = p.prev;
+    p.prev.next = p.next;
+
+    if (p.prevZ) p.prevZ.nextZ = p.nextZ;
+    if (p.nextZ) p.nextZ.prevZ = p.prevZ;
+}
+
+function Node(i, x, y) {
+    // vertice index in coordinates array
+    this.i = i;
+
+    // vertex coordinates
+    this.x = x;
+    this.y = y;
+
+    // previous and next vertice nodes in a polygon ring
+    this.prev = null;
+    this.next = null;
+
+    // z-order curve value
+    this.z = null;
+
+    // previous and next nodes in z-order
+    this.prevZ = null;
+    this.nextZ = null;
+
+    // indicates whether this is a steiner point
+    this.steiner = false;
+}
+
+// return a percentage difference between the polygon area and its triangulation area;
+// used to verify correctness of triangulation
+earcut.deviation = function (data, holeIndices, dim, triangles) {
+    var hasHoles = holeIndices && holeIndices.length;
+    var outerLen = hasHoles ? holeIndices[0] * dim : data.length;
+
+    var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
+    if (hasHoles) {
+        for (var i = 0, len = holeIndices.length; i < len; i++) {
+            var start = holeIndices[i] * dim;
+            var end = i < len - 1 ? holeIndices[i + 1] * dim : data.length;
+            polygonArea -= Math.abs(signedArea(data, start, end, dim));
+        }
+    }
+
+    var trianglesArea = 0;
+    for (i = 0; i < triangles.length; i += 3) {
+        var a = triangles[i] * dim;
+        var b = triangles[i + 1] * dim;
+        var c = triangles[i + 2] * dim;
+        trianglesArea += Math.abs(
+            (data[a] - data[c]) * (data[b + 1] - data[a + 1]) -
+            (data[a] - data[b]) * (data[c + 1] - data[a + 1]));
+    }
+
+    return polygonArea === 0 && trianglesArea === 0 ? 0 :
+        Math.abs((trianglesArea - polygonArea) / polygonArea);
+};
+
+function signedArea(data, start, end, dim) {
+    var sum = 0;
+    for (var i = start, j = end - dim; i < end; i += dim) {
+        sum += (data[j] - data[i]) * (data[i + 1] + data[j + 1]);
+        j = i;
+    }
+    return sum;
+}
 
 /***/ }),
 /* 158 */
@@ -38862,7 +38871,7 @@ module.exports = SunCalc;
 
     var zrUtil = __webpack_require__(14);
     var numberUtil = __webpack_require__(68);
-    var textContain = __webpack_require__(223);
+    var textContain = __webpack_require__(222);
 
     var formatUtil = {};
 
@@ -40090,274 +40099,6 @@ module.exports = SunCalc;
 
 
     /**
-     * Simple double linked list. Compared with array, it has O(1) remove operation.
-     * @constructor
-     * @alias qtek.core.LinkedList
-     */
-    var LinkedList = function () {
-
-        /**
-         * @type {qtek.core.LinkedList.Entry}
-         */
-        this.head = null;
-
-        /**
-         * @type {qtek.core.LinkedList.Entry}
-         */
-        this.tail = null;
-
-        this._length = 0;
-    };
-
-    /**
-     * Insert a new value at the tail
-     * @param  {} val
-     * @return {qtek.core.LinkedList.Entry}
-     */
-    LinkedList.prototype.insert = function (val) {
-        var entry = new LinkedList.Entry(val);
-        this.insertEntry(entry);
-        return entry;
-    };
-
-    /**
-     * Insert a new value at idx
-     * @param {number} idx
-     * @param  {} val
-     * @return {qtek.core.LinkedList.Entry}
-     */
-    LinkedList.prototype.insertAt = function (idx, val) {
-        if (idx < 0) {
-            return;
-        }
-        var next = this.head;
-        var cursor = 0;
-        while (next && cursor != idx) {
-            next = next.next;
-            cursor++;
-        }
-        if (next) {
-            var entry = new LinkedList.Entry(val);
-            var prev = next.prev;
-            if (!prev) { //next is head
-                this.head = entry;
-            }
-            else {
-                prev.next = entry;
-                entry.prev = prev;
-            }
-            entry.next = next;
-            next.prev = entry;
-        }
-        else {
-            this.insert(val);
-        }
-    };
-
-    LinkedList.prototype.insertBeforeEntry = function (val, next) {
-        var entry = new LinkedList.Entry(val);
-        var prev = next.prev;
-        if (!prev) { //next is head
-            this.head = entry;
-        }
-        else {
-            prev.next = entry;
-            entry.prev = prev;
-        }
-        entry.next = next;
-        next.prev = entry;
-
-        this._length++;
-    };
-
-    /**
-     * Insert an entry at the tail
-     * @param  {qtek.core.LinkedList.Entry} entry
-     */
-    LinkedList.prototype.insertEntry = function (entry) {
-        if (!this.head) {
-            this.head = this.tail = entry;
-        }
-        else {
-            this.tail.next = entry;
-            entry.prev = this.tail;
-            this.tail = entry;
-        }
-        this._length++;
-    };
-
-    /**
-     * Remove entry.
-     * @param  {qtek.core.LinkedList.Entry} entry
-     */
-    LinkedList.prototype.remove = function (entry) {
-        var prev = entry.prev;
-        var next = entry.next;
-        if (prev) {
-            prev.next = next;
-        }
-        else {
-            // Is head
-            this.head = next;
-        }
-        if (next) {
-            next.prev = prev;
-        }
-        else {
-            // Is tail
-            this.tail = prev;
-        }
-        entry.next = entry.prev = null;
-        this._length--;
-    };
-
-    /**
-     * Remove entry at index.
-     * @param  {number} idx
-     * @return {}
-     */
-    LinkedList.prototype.removeAt = function (idx) {
-        if (idx < 0) {
-            return;
-        }
-        var curr = this.head;
-        var cursor = 0;
-        while (curr && cursor != idx) {
-            curr = curr.next;
-            cursor++;
-        }
-        if (curr) {
-            this.remove(curr);
-            return curr.value;
-        }
-    };
-    /**
-     * Get head value
-     * @return {}
-     */
-    LinkedList.prototype.getHead = function () {
-        if (this.head) {
-            return this.head.value;
-        }
-    };
-    /**
-     * Get tail value
-     * @return {}
-     */
-    LinkedList.prototype.getTail = function () {
-        if (this.tail) {
-            return this.tail.value;
-        }
-    };
-    /**
-     * Get value at idx
-     * @param {number} idx
-     * @return {}
-     */
-    LinkedList.prototype.getAt = function (idx) {
-        if (idx < 0) {
-            return;
-        }
-        var curr = this.head;
-        var cursor = 0;
-        while (curr && cursor != idx) {
-            curr = curr.next;
-            cursor++;
-        }
-        return curr.value;
-    };
-
-    /**
-     * @param  {} value
-     * @return {number}
-     */
-    LinkedList.prototype.indexOf = function (value) {
-        var curr = this.head;
-        var cursor = 0;
-        while (curr) {
-            if (curr.value === value) {
-                return cursor;
-            }
-            curr = curr.next;
-            cursor++;
-        }
-    };
-
-    /**
-     * @return {number}
-     */
-    LinkedList.prototype.length = function () {
-        return this._length;
-    };
-
-    /**
-     * If list is empty
-     */
-    LinkedList.prototype.isEmpty = function () {
-        return this._length === 0;
-    };
-
-    /**
-     * @param  {Function} cb
-     * @param  {} context
-     */
-    LinkedList.prototype.forEach = function (cb, context) {
-        var curr = this.head;
-        var idx = 0;
-        var haveContext = typeof(context) != 'undefined';
-        while (curr) {
-            if (haveContext) {
-                cb.call(context, curr.value, idx);
-            }
-            else {
-                cb(curr.value, idx);
-            }
-            curr = curr.next;
-            idx++;
-        }
-    };
-
-    /**
-     * Clear the list
-     */
-    LinkedList.prototype.clear = function () {
-        this.tail = this.head = null;
-        this._length = 0;
-    };
-
-    /**
-     * @constructor
-     * @param {} val
-     */
-    LinkedList.Entry = function (val) {
-        /**
-         * @type {}
-         */
-        this.value = val;
-
-        /**
-         * @type {qtek.core.LinkedList.Entry}
-         */
-        this.next = null;
-
-        /**
-         * @type {qtek.core.LinkedList.Entry}
-         */
-        this.prev = null;
-    };
-
-    module.exports = LinkedList;
-
-
-/***/ }),
-/* 182 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-
-    /**
      * Extend a sub class from base class
      * @param {object|Function} makeDefaultOpt default option of this sub class, method of the sub can use this.xxx to access this option
      * @param {Function} [initialize] Initialize after the sub class is instantiated
@@ -40466,7 +40207,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 183 */
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40509,7 +40250,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 184 */
+/* 183 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40518,7 +40259,7 @@ module.exports = SunCalc;
 
 
     var Light = __webpack_require__(16);
-    var cubemapUtil = __webpack_require__(211);
+    var cubemapUtil = __webpack_require__(210);
 
     /**
      * @constructor qtek.light.AmbientCubemap
@@ -40602,7 +40343,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 185 */
+/* 184 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40667,7 +40408,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 186 */
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41068,7 +40809,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 187 */
+/* 186 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41364,7 +41105,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 188 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41642,7 +41383,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 189 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42047,7 +41788,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 190 */
+/* 189 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42775,7 +42516,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 191 */
+/* 190 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -42992,7 +42733,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 192 */
+/* 191 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -43028,7 +42769,7 @@ module.exports = SunCalc;
 
     var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
 
-    Shader['import'](__webpack_require__(208));
+    Shader['import'](__webpack_require__(207));
 
     /**
      * Pass rendering shadow map.
@@ -43865,7 +43606,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 193 */
+/* 192 */
 /***/ (function(module, exports) {
 
 
@@ -43873,7 +43614,7 @@ module.exports = "@export qtek.basic.vertex\n\nuniform mat4 worldViewProjection 
 
 
 /***/ }),
-/* 194 */
+/* 193 */
 /***/ (function(module, exports) {
 
 
@@ -43881,7 +43622,7 @@ module.exports = "@export qtek.compositor.blend\n#ifdef TEXTURE1_ENABLED\nunifor
 
 
 /***/ }),
-/* 195 */
+/* 194 */
 /***/ (function(module, exports) {
 
 
@@ -43889,7 +43630,7 @@ module.exports = "@export qtek.compositor.kernel.gaussian_9\nfloat gaussianKerne
 
 
 /***/ }),
-/* 196 */
+/* 195 */
 /***/ (function(module, exports) {
 
 
@@ -43897,7 +43638,7 @@ module.exports = "@export qtek.compositor.bright\n\nuniform sampler2D texture;\n
 
 
 /***/ }),
-/* 197 */
+/* 196 */
 /***/ (function(module, exports) {
 
 
@@ -43905,7 +43646,7 @@ module.exports = "@export qtek.compositor.dof.coc\n\nuniform sampler2D depth;\n\
 
 
 /***/ }),
-/* 198 */
+/* 197 */
 /***/ (function(module, exports) {
 
 
@@ -43913,7 +43654,7 @@ module.exports = "@export qtek.compositor.downsample\n\nuniform sampler2D textur
 
 
 /***/ }),
-/* 199 */
+/* 198 */
 /***/ (function(module, exports) {
 
 
@@ -43921,7 +43662,7 @@ module.exports = "@export qtek.compositor.fxaa\n\nuniform sampler2D texture;\nun
 
 
 /***/ }),
-/* 200 */
+/* 199 */
 /***/ (function(module, exports) {
 
 
@@ -43929,7 +43670,7 @@ module.exports = "@export qtek.compositor.hdr.log_lum\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 201 */
+/* 200 */
 /***/ (function(module, exports) {
 
 
@@ -43937,7 +43678,7 @@ module.exports = "@export qtek.compositor.lensflare\n\n#define SAMPLE_NUMBER 8\n
 
 
 /***/ }),
-/* 202 */
+/* 201 */
 /***/ (function(module, exports) {
 
 
@@ -43945,7 +43686,7 @@ module.exports = "\n@export qtek.compositor.lut\n\nvarying vec2 v_Texcoord;\n\nu
 
 
 /***/ }),
-/* 203 */
+/* 202 */
 /***/ (function(module, exports) {
 
 
@@ -43953,7 +43694,7 @@ module.exports = "@export qtek.compositor.output\n\n#define OUTPUT_ALPHA\n\nvary
 
 
 /***/ }),
-/* 204 */
+/* 203 */
 /***/ (function(module, exports) {
 
 
@@ -43961,7 +43702,7 @@ module.exports = "\n@export qtek.compositor.upsample\n\n#define HIGH_QUALITY\n\n
 
 
 /***/ }),
-/* 205 */
+/* 204 */
 /***/ (function(module, exports) {
 
 
@@ -43969,7 +43710,7 @@ module.exports = "\n@export qtek.compositor.vertex\n\nuniform mat4 worldViewProj
 
 
 /***/ }),
-/* 206 */
+/* 205 */
 /***/ (function(module, exports) {
 
 
@@ -43977,7 +43718,7 @@ module.exports = "vec3 calcAmbientSHLight(int idx, vec3 N) {\n    int offset = 9
 
 
 /***/ }),
-/* 207 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -43999,7 +43740,7 @@ module.exports = "vec3 calcAmbientSHLight(int idx, vec3 N) {\n    int offset = 9
         exportHeaderPrefix + 'ambient_sh_light',
         uniformVec3Prefix + 'ambientSHLightColor[AMBIENT_SH_LIGHT_COUNT]' + unconfigurable,
         uniformVec3Prefix + 'ambientSHLightCoefficients[AMBIENT_SH_LIGHT_COUNT * 9]' + unconfigurable,
-        __webpack_require__(206),
+        __webpack_require__(205),
         exportEnd,
 
         exportHeaderPrefix + 'ambient_cubemap_light',
@@ -44027,7 +43768,7 @@ module.exports = "vec3 calcAmbientSHLight(int idx, vec3 N) {\n    int offset = 9
 
 
 /***/ }),
-/* 208 */
+/* 207 */
 /***/ (function(module, exports) {
 
 
@@ -44035,7 +43776,7 @@ module.exports = "@export qtek.sm.depth.vertex\n\nuniform mat4 worldViewProjecti
 
 
 /***/ }),
-/* 209 */
+/* 208 */
 /***/ (function(module, exports) {
 
 
@@ -44043,7 +43784,7 @@ module.exports = "@export qtek.skybox.vertex\n\nuniform mat4 world : WORLD;\nuni
 
 
 /***/ }),
-/* 210 */
+/* 209 */
 /***/ (function(module, exports) {
 
 
@@ -44051,7 +43792,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 211 */
+/* 210 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Cubemap prefilter utility
@@ -44072,8 +43813,8 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
     var vendor = __webpack_require__(18);
     var textureUtil = __webpack_require__(60);
 
-    var integrateBRDFShaderCode = __webpack_require__(215);
-    var prefilterFragCode = __webpack_require__(216);
+    var integrateBRDFShaderCode = __webpack_require__(214);
+    var prefilterFragCode = __webpack_require__(215);
 
     var cubemapUtil = {};
 
@@ -44327,7 +44068,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 212 */
+/* 211 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44493,7 +44234,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 213 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44680,7 +44421,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 214 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Spherical Harmonic Helpers
@@ -44702,7 +44443,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
     var sh = {};
 
 
-    var projectEnvMapShaderCode = __webpack_require__(217);
+    var projectEnvMapShaderCode = __webpack_require__(216);
 
     var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
 
@@ -44908,7 +44649,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 215 */
+/* 214 */
 /***/ (function(module, exports) {
 
 
@@ -44916,7 +44657,7 @@ module.exports = "#define SAMPLE_NUMBER 1024\n#define PI 3.14159265358979\n\n\nu
 
 
 /***/ }),
-/* 216 */
+/* 215 */
 /***/ (function(module, exports) {
 
 
@@ -44924,7 +44665,7 @@ module.exports = "#define SAMPLE_NUMBER 1024\n#define PI 3.14159265358979\n\nuni
 
 
 /***/ }),
-/* 217 */
+/* 216 */
 /***/ (function(module, exports) {
 
 
@@ -44932,7 +44673,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 218 */
+/* 217 */
 /***/ (function(module, exports) {
 
 
@@ -44940,7 +44681,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 219 */
+/* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -44948,8 +44689,8 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
  */
 
 
-    var Clip = __webpack_require__(220);
-    var color = __webpack_require__(226);
+    var Clip = __webpack_require__(219);
+    var color = __webpack_require__(225);
     var util = __webpack_require__(14);
     var isArrayLike = util.isArrayLike;
 
@@ -45594,7 +45335,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 220 */
+/* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -45613,7 +45354,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
  */
 
 
-    var easingFuncs = __webpack_require__(221);
+    var easingFuncs = __webpack_require__(220);
 
     function Clip(options) {
 
@@ -45723,7 +45464,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 221 */
+/* 220 */
 /***/ (function(module, exports) {
 
 /**
@@ -46074,7 +45815,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 222 */
+/* 221 */
 /***/ (function(module, exports) {
 
 
@@ -46122,7 +45863,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 223 */
+/* 222 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -46404,7 +46145,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 224 */
+/* 223 */
 /***/ (function(module, exports) {
 
 
@@ -46568,7 +46309,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 225 */
+/* 224 */
 /***/ (function(module, exports) {
 
 
@@ -46854,7 +46595,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 226 */
+/* 225 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**

@@ -299,23 +299,35 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
-     * Zoom to animation
      * @param {Object} opts
      * @param {number} opts.distance
+     * @param {number} opts.alpha
+     * @param {number} opts.beta
      * @param {number} [opts.time=1000]
      * @param {number} [opts.easing='linear']
      */
     animateTo: function (opts) {
         var zr = this.zr;
-        var distance = opts.distance;
         var self = this;
 
-        distance = Math.max(Math.min(this.maxDistance, distance), this.minDistance);
+        var source = {};
+        var target = {};
+        if (opts.distance != null) {
+            source.distance = this.getDistance();
+            target.distance = opts.distance;
+        }
+        if (opts.alpha != null) {
+            source.alpha = this.getAlpha();
+            target.alpha = opts.alpha;
+        }
+        if (opts.distance != null) {
+            source.distance = this.getDistance();
+            target.distance = opts.distance;
+        }
+
         return this._addAnimator(
             zr.animation.animate(this)
-                .when(opts.time || 1000, {
-                    _distance: distance
-                })
+                .when(opts.time || 1000, target)
                 .during(function () {
                     self._needsUpdate = true;
                 })
