@@ -107,6 +107,7 @@ module.exports = echarts.extendChartView({
             barMesh.geometry.attributes.prevNormal.value = previousBarMesh.geometry.attributes.normal.value;
             barMesh.geometry.dirty();
             barMesh.__percent = 0;
+            barMesh.stopAnimation();
             barMesh.animate()
                 .when(duration, {
                     __percent: 1

@@ -244,7 +244,7 @@ Geo3DBuilder.prototype = {
         // TODO Unshow
         if (debugWireframeModel.get('show')) {
             var color = graphicGL.parseColor(
-                debugWireframeModel.get('lineStyle.color')
+                debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
             );
             var width = retrieve.firstNotNull(
                 debugWireframeModel.get('lineStyle.width'), 1

@@ -29,30 +29,19 @@ echarts.extendChartView({
         });
 
         this._materials = materials;
-
-        var mesh = new graphicGL.Mesh({
-            geometry: new graphicGL.Geometry({
-                dynamic: true,
-                sortTriangles: true
-            }),
-            material: materials.lambert,
-            culling: false,
-
-            // Render after axes
-            renderOrder: 10
-        });
-        mesh.geometry.createAttribute('barycentric', 'float', 4, null),
-
-        echarts.util.extend(mesh.geometry, trianglesSortMixin);
-
-        this._surfaceMesh = mesh;
-
-        // TODO Cross mesh.
-        // this._pointerMesh = new graphicGL.Mesh({
-        // });
     },
 
     render: function (seriesModel, ecModel, api) {
+        // Swap barMesh
+        var tmp = this._prevSurfaceMesh;
+        this._prevSurfaceMesh = this._surfaceMesh;
+        this._surfaceMesh = tmp;
+
+        if (!this._surfaceMesh) {
+            this._surfaceMesh = this._createSurfaceMesh();
+        }
+
+        this.groupGL.remove(this._prevSurfaceMesh);
         this.groupGL.add(this._surfaceMesh);
 
         var coordSys = seriesModel.coordinateSystem;
@@ -92,7 +81,7 @@ echarts.extendChartView({
         if (showWireframe) {
             material.shader.define('WIREFRAME_QUAD');
             material.set('wireframeLineWidth', wireframeLineWidth);
-            material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineStyle.color')).slice(0, 3));
+            material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineStyle.color')));
         }
         else {
             material.shader.undefine('WIREFRAME_QUAD');
@@ -101,6 +90,59 @@ echarts.extendChartView({
         this._initHandler(seriesModel, api);
 
         this._tooltip = new TooltipHelper(api);
+
+        this._updateAnimation(seriesModel);
+    },
+
+    _updateAnimation: function (seriesModel) {
+        var enableAnimation = seriesModel.get('animation');
+        var duration = seriesModel.get('animationDurationUpdate');
+        var easing = seriesModel.get('animationEasingUpdate');
+        var surfaceMesh = this._surfaceMesh;
+        var prevSurfaceMesh = this._prevSurfaceMesh;
+
+        if (enableAnimation && prevSurfaceMesh && duration > 0
+        // Only animate when bar count are not changed
+        && prevSurfaceMesh.geometry.vertexCount === surfaceMesh.geometry.vertexCount
+        ) {
+            surfaceMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
+            surfaceMesh.geometry.attributes.prevPosition.value = prevSurfaceMesh.geometry.attributes.position.value;
+            surfaceMesh.geometry.attributes.prevNormal.value = prevSurfaceMesh.geometry.attributes.normal.value;
+            surfaceMesh.geometry.dirty();
+            surfaceMesh.__percent = 0;
+            surfaceMesh.stopAnimation();
+            surfaceMesh.animate()
+                .when(duration, {
+                    __percent: 1
+                })
+                .during(function () {
+                    surfaceMesh.material.set('percent', surfaceMesh.__percent);
+                })
+                .start(easing);
+        }
+        else {
+            surfaceMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
+        }
+    },
+
+    _createSurfaceMesh: function () {
+        var mesh = new graphicGL.Mesh({
+            geometry: new graphicGL.Geometry({
+                dynamic: true,
+                sortTriangles: true
+            }),
+            culling: false,
+
+            // Render after axes
+            renderOrder: 10
+        });
+        mesh.geometry.createAttribute('barycentric', 'float', 4);
+        mesh.geometry.createAttribute('prevPosition', 'float', 3);
+        mesh.geometry.createAttribute('prevNormal', 'float', 3);
+
+        echarts.util.extend(mesh.geometry, trianglesSortMixin);
+
+        return mesh;
     },
 
     _initHandler: function (seriesModel, api) {

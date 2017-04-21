@@ -24,7 +24,7 @@ varying vec3 v_Barycentric;
 @export ecgl.wireframe.common.fragmentHeader
 
 uniform float wireframeLineWidth : 1;
-uniform vec3 wireframeLineColor: [0.5, 0.5, 0.5];
+uniform vec4 wireframeLineColor: [0, 0, 0, 0.5];
 
 #ifdef WIREFRAME_QUAD
 varying vec4 v_Barycentric;
@@ -49,12 +49,12 @@ float edgeFactor () {
 
 #if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)
     if (wireframeLineWidth > 0.) {
-        vec3 lineColor = wireframeLineColor;
+        vec4 lineColor = wireframeLineColor;
 #ifdef SRGB_DECODE
-        lineColor = sRGBToLinear(vec4(lineColor, 1.0)).rgb;
+        lineColor = sRGBToLinear(lineColor);
 #endif
 
-        gl_FragColor.rgb = mix(lineColor, gl_FragColor.rgb, edgeFactor());
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, lineColor.rgb, (1.0 - edgeFactor()) * lineColor.a);
     }
 #endif
 @end

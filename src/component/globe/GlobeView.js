@@ -258,7 +258,7 @@ module.exports = echarts.extendComponentView({
         if (debugWireframeModel.get('show')) {
             earthMaterial.shader.define('both', 'WIREFRAME_TRIANGLE');
             var color = graphicGL.parseColor(
-                debugWireframeModel.get('lineStyle.color')
+                debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
             );
             var width = retrieve.firstNotNull(
                 debugWireframeModel.get('lineStyle.width'), 1
@@ -356,6 +356,7 @@ module.exports = echarts.extendComponentView({
                 if (showDebugWireframe) {
                     geometry.generateBarycentric();
                 }
+                api.getZr().refresh();
             };
             img.src = displacementTextureValue;
         }

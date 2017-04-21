@@ -125,7 +125,7 @@ module.exports = echarts.extendChartView({
             lineMesh.material.shader.define('both', 'WIREFRAME_TRIANGLE');
             lineMesh.material.set(
                 'wireframeLineColor', graphicGL.parseColor(
-                    debugWireframeModel.get('lineStyle.color')
+                    debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
                 )
             );
             lineMesh.material.set(

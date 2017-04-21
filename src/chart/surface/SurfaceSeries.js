@@ -131,7 +131,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
             show: true,
 
             lineStyle: {
-                color: '#222',
+                color: 'rgba(0,0,0,0.5)',
                 width: 1
             }
         },
@@ -173,7 +173,9 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
         itemStyle: {
             // Color
-        }
+        },
+
+        animationDurationUpdate: 500
     }
 });
 
