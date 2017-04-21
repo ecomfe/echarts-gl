@@ -25,7 +25,10 @@ var BarsGeometry = StaticGeometry.extend(function () {
         attributes: {
             position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
             normal: new StaticGeometry.Attribute('normal', 'float', 3, 'NORMAL'),
-            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR'),
+
+            prevPosition: new StaticGeometry.Attribute('prevPosition', 'float', 3),
+            prevNormal: new StaticGeometry.Attribute('prevNormal', 'float', 3)
         },
 
         dynamic: true,

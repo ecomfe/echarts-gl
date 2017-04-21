@@ -21,6 +21,7 @@ echarts.util.extend(Node3D.prototype, animatableMixin);
 
 // Some common shaders
 Shader.import(require('qtek/lib/shader/source/util.essl'));
+Shader.import(require('qtek/lib/shader/source/prez.essl'));
 Shader.import(require('./shader/common.glsl.js'));
 Shader.import(require('./shader/color.glsl.js'));
 Shader.import(require('./shader/lambert.glsl.js'));

@@ -163,15 +163,17 @@ module.exports = echarts.extendComponentView({
             }
             return obj;
         }, {});
-        this._faces.forEach(function (face) {
-            face.update(labelIntervalFuncs, grid3DModel, ecModel, api);
-        }, this);
-
-        this._axes.forEach(function (axis) {
-            axis.update(grid3DModel, labelIntervalFuncs, this._axisLabelSurface, api);
-        }, this);
 
         control.off('update');
+        if (grid3DModel.get('show')) {
+            this._faces.forEach(function (face) {
+                face.update(labelIntervalFuncs, grid3DModel, ecModel, api);
+            }, this);
+            this._axes.forEach(function (axis) {
+                axis.update(grid3DModel, labelIntervalFuncs, this._axisLabelSurface, api);
+            }, this);
+        }
+
         control.on('update', this._onCameraChange.bind(this, grid3DModel, api), this);
 
         this._sceneHelper.setScene(cartesian.viewGL.scene);
@@ -271,8 +273,12 @@ module.exports = echarts.extendComponentView({
     },
 
     _onCameraChange: function (grid3DModel, api) {
-        this._updateFaceVisibility();
-        this._updateAxisLinePosition();
+
+        if (grid3DModel.get('show')) {
+            this._updateFaceVisibility();
+            this._updateAxisLinePosition();
+        }
+
         var control = this._control;
 
         api.dispatchAction({

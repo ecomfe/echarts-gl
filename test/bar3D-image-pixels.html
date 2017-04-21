@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Bar3D Simplex Noise - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'), null, {
+                devicePixelRatio: 1
+            });
+            var img = new Image();
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+
+            var config = {
+                scale: 0.25
+            };
+
+            chart.setOption({
+                tooltip: {},
+                backgroundColor: '#fff',
+                xAxis3D: {
+                    type: 'value'
+                },
+                yAxis3D: {
+                    type: 'value'
+                },
+                zAxis3D: {
+                    type: 'value',
+                    min: 0,
+                    max: 100
+                },
+                grid3D: {
+                    show: false,
+                    viewControl: {
+                        alpha: 70,
+                        beta: 0
+                    },
+                    postEffect: {
+                        enable: true,
+                        depthOfField: {
+                            enable: true,
+                            blurRadius: 4,
+                            fstop: 10
+                        }
+                    },
+                    boxDepth: 100,
+                    boxHeight: 20,
+                    environment: 'asset/starfield.jpg',
+                    light: {
+                        main: {
+                            shadow: true,
+                            intensity: 2
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/canyon.hdr',
+                            exposure: 2,
+                            diffuseIntensity: 0.2
+                        }
+                    }
+                }
+            })
+
+            function updateData(data, width, height) {
+                console.time('update');
+                var dataItem = [];
+                var dataProvider = {
+                    getItem: function (i) {
+                        var r = data[i * 4];
+                        var g = data[i * 4 + 1];
+                        var b = data[i * 4 + 2];
+
+                        var lum = (0.2125 * r + 0.7154 * g + 0.0721 * b);
+                        lum = (lum - 125) * config.scale + 50;
+                        dataItem[0] = i % width;
+                        dataItem[1] = height - Math.floor(i / width);
+                        dataItem[2] = lum;
+                        return dataItem;
+                    },
+                    count: function () {
+                        return data.length / 4;
+                    }
+                }
+
+                // var dataProvider = [];
+                // for (var i = 0; i < data.length / 4; i++) {
+                //     var r = data[i * 4];
+                //     var g = data[i * 4 + 1];
+                //     var b = data[i * 4 + 2];
+
+                //     var lum = (0.2125 * r + 0.7154 * g + 0.0721 * b);
+                //     lum = (lum - 125) * config.scale + 50;
+                //     dataProvider.push([i % width, height - Math.floor(i / width), lum]);
+                // }
+
+                chart.setOption(option = {
+                    series: [{
+                        type: 'bar3D',
+                        shading: 'lambert',
+                        barSize: 0.8,
+                        silent: true,
+                        itemStyle: {
+                            color: function (params) {
+                                var i = params.dataIndex;
+                                var r = data[i * 4] / 255;
+                                var g = data[i * 4 + 1] / 255;
+                                var b = data[i * 4 + 2] / 255;
+                                var lum = (0.2125 * r + 0.7154 * g + 0.0721 * b);
+                                r *= lum * 2;
+                                g *= lum * 2;
+                                b *= lum * 2;
+                                return [r, g, b, 1];
+                            }
+                        },
+                        data: dataProvider
+                    }]
+                });
+
+                console.timeEnd('update');
+
+            }
+
+            img.onload = function () {
+                var width = canvas.width = img.width / 2;
+                var height = canvas.height = img.height / 2;
+                ctx.drawImage(img, 0, 0, width, height);
+                var imgData = ctx.getImageData(0, 0, width, height);
+
+                updateData(imgData.data, width, height);
+
+                var gui = new dat.GUI();
+                gui.add(config, 'scale', 0, 1).onFinishChange(function () {
+                    updateData(imgData.data, width, height);
+                })
+            }
+
+            img.src = 'asset/sample.jpg';
+
+            window.onresize = chart.resize;
+        </script>
+    </body>
+</html>

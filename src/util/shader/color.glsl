@@ -13,11 +13,22 @@ attribute vec4 a_Color : COLOR;
 varying vec4 v_Color;
 #endif
 
+#ifdef VERTEX_ANIMATION
+attribute vec3 prevPosition;
+uniform float percent;
+#endif
+
 varying vec2 v_Texcoord;
 
 void main()
 {
-    gl_Position = worldViewProjection * vec4(position, 1.0);
+#ifdef VERTEX_ANIMATION
+    vec3 pos = mix(prevPosition, position, percent);
+#else
+    vec3 pos = position;
+#endif
+
+    gl_Position = worldViewProjection * vec4(pos, 1.0);
     v_Texcoord = texcoord * uvRepeat;
 
 #ifdef VERTEX_COLOR

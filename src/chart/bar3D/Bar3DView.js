@@ -22,13 +22,6 @@ module.exports = echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
 
-        var barMesh = new graphicGL.Mesh({
-            geometry: new BarsGeometry(),
-
-            // Render after axes
-            renderOrder: 10
-        });
-
         var materials = {};
         graphicGL.COMMON_SHADERS.forEach(function (shading) {
             materials[shading] = new graphicGL.Material({
@@ -37,7 +30,6 @@ module.exports = echarts.extendChartView({
         });
 
         this._materials = materials;
-        this._barMesh = barMesh;
 
         this._api = api;
 
@@ -63,6 +55,21 @@ module.exports = echarts.extendChartView({
     },
 
     render: function (seriesModel, ecModel, api) {
+
+        // Swap barMesh
+        var tmp = this._prevBarMesh;
+        this._prevBarMesh = this._barMesh;
+        this._barMesh = tmp;
+
+        if (!this._barMesh) {
+            this._barMesh = new graphicGL.Mesh({
+                geometry: new BarsGeometry(),
+                // Render after axes
+                renderOrder: 10
+            });
+        }
+
+        this.groupGL.remove(this._prevBarMesh);
         this.groupGL.add(this._barMesh);
         this.groupGL.add(this._labelsBuilder.getMesh());
 
@@ -80,6 +87,38 @@ module.exports = echarts.extendChartView({
         this._labelsBuilder.updateData(this._data);
 
         this._labelsBuilder.updateLabels();
+
+        this._updateAnimation(seriesModel);
+    },
+
+    _updateAnimation: function (seriesModel) {
+        var enableAnimation = seriesModel.get('animation');
+        var duration = seriesModel.get('animationDurationUpdate');
+        var easing = seriesModel.get('animationEasingUpdate');
+        var barMesh = this._barMesh;
+        var previousBarMesh = this._prevBarMesh;
+
+        if (enableAnimation && previousBarMesh && duration > 0
+        // Only animate when bar count are not changed
+        && previousBarMesh.geometry.vertexCount === barMesh.geometry.vertexCount
+        ) {
+            barMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
+            barMesh.geometry.attributes.prevPosition.value = previousBarMesh.geometry.attributes.position.value;
+            barMesh.geometry.attributes.prevNormal.value = previousBarMesh.geometry.attributes.normal.value;
+            barMesh.geometry.dirty();
+            barMesh.__percent = 0;
+            barMesh.animate()
+                .when(duration, {
+                    __percent: 1
+                })
+                .during(function () {
+                    barMesh.material.set('percent', barMesh.__percent);
+                })
+                .start(easing);
+        }
+        else {
+            barMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
+        }
     },
 
     _doRender: function (seriesModel, api) {

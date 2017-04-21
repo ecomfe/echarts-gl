@@ -79,7 +79,9 @@ var Bar3DSeries = echarts.extendSeriesModel({
             label: {
                 show: true
             }
-        }
+        },
+
+        animationDurationUpdate: 500
     }
 });
 

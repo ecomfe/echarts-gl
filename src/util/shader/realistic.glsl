@@ -18,6 +18,12 @@ attribute vec4 a_Color : COLOR;
 varying vec4 v_Color;
 #endif
 
+#ifdef VERTEX_ANIMATION
+attribute vec3 prevPosition;
+attribute vec3 prevNormal;
+uniform float percent;
+#endif
+
 varying vec2 v_Texcoord;
 
 varying vec3 v_Normal;
@@ -27,10 +33,18 @@ void main()
 {
     v_Texcoord = texcoord * uvRepeat + uvOffset;
 
-    gl_Position = worldViewProjection * vec4(position, 1.0);
+#ifdef VERTEX_ANIMATION
+    vec3 pos = mix(prevPosition, position, percent);
+    vec3 norm = mix(prevNormal, normal, percent);
+#else
+    vec3 pos = position;
+    vec3 norm = normal;
+#endif
 
-    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);
-    v_WorldPosition = (world * vec4(position, 1.0)).xyz;
+    gl_Position = worldViewProjection * vec4(pos, 1.0);
+
+    v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);
+    v_WorldPosition = (world * vec4(pos, 1.0)).xyz;
 
 #ifdef VERTEX_COLOR
     v_Color = a_Color;
