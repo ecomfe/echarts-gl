@@ -501,4 +501,38 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     }
 };
 
+graphicGL.updateVertexAnimation = function (
+    mappingAttributes, previousMesh, currentMesh, seriesModel
+) {
+    var enableAnimation = seriesModel.get('animation');
+    var duration = seriesModel.get('animationDurationUpdate');
+    var easing = seriesModel.get('animationEasingUpdate');
+
+    if (enableAnimation && previousMesh && duration > 0
+    // Only animate when bar count are not changed
+    && previousMesh.geometry.vertexCount === currentMesh.geometry.vertexCount
+    ) {
+        currentMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
+        for (var i = 0; i < mappingAttributes.length; i++) {
+            currentMesh.geometry.attributes[mappingAttributes[i][0]].value =
+            previousMesh.geometry.attributes[mappingAttributes[i][1]].value;
+        }
+        currentMesh.geometry.dirty();
+        currentMesh.__percent = 0;
+        currentMesh.material.set('percent', 0);
+        currentMesh.stopAnimation();
+        currentMesh.animate()
+            .when(duration, {
+                __percent: 1
+            })
+            .during(function () {
+                currentMesh.material.set('percent', currentMesh.__percent);
+            })
+            .start(easing);
+    }
+    else {
+        currentMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
+    }
+};
+
 module.exports = graphicGL;

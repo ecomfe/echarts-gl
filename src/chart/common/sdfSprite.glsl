@@ -4,17 +4,19 @@ uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 uniform float elapsedTime : 0;
 
 attribute vec3 position : POSITION;
+attribute float size;
 
 #ifdef VERTEX_COLOR
 attribute vec4 a_FillColor: COLOR;
 varying vec4 v_Color;
 #endif
 
-attribute float size;
-
-#ifdef ANIMATING
-attribute float delay;
+#ifdef VERTEX_ANIMATION
+attribute vec3 prevPosition;
+attribute float prevSize;
+uniform float percent : 1.0;
 #endif
+
 
 #ifdef POSITIONTEXTURE_ENABLED
 uniform sampler2D positionTexture;
@@ -29,13 +31,19 @@ void main()
     // Only 2d position texture supported
     gl_Position = worldViewProjection * vec4(texture2D(positionTexture, position.xy).xy, -10.0, 1.0);
 #else
-    gl_Position = worldViewProjection * vec4(position, 1.0);
+
+    #ifdef VERTEX_ANIMATION
+    vec3 pos = mix(prevPosition, position, percent);
+    #else
+    vec3 pos = position;
+    #endif
+    gl_Position = worldViewProjection * vec4(pos, 1.0);
 #endif
 
-#ifdef ANIMATING
-    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);
+#ifdef VERTEX_ANIMATION
+    v_Size = mix(prevSize, size, percent);
 #else
-    gl_PointSize = size;
+    v_Size = size;
 #endif
 
 #ifdef VERTEX_COLOR
@@ -43,7 +51,7 @@ void main()
     // v_StrokeColor = a_StrokeColor;
 #endif
 
-    v_Size = size;
+    gl_PointSize = v_Size;
 }
 
 @end

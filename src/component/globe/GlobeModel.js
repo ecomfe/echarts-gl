@@ -114,7 +114,9 @@ var GlobeModel = echarts.extendComponentModel({
         // temporalSuperSampling
 
         viewControl: {
-            autoRotate: true
+            autoRotate: true,
+
+            panSensitivity: 0
         },
 
 

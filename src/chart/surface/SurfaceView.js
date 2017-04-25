@@ -32,7 +32,7 @@ echarts.extendChartView({
     },
 
     render: function (seriesModel, ecModel, api) {
-        // Swap barMesh
+        // Swap surfaceMesh
         var tmp = this._prevSurfaceMesh;
         this._prevSurfaceMesh = this._surfaceMesh;
         this._surfaceMesh = tmp;
@@ -95,34 +95,13 @@ echarts.extendChartView({
     },
 
     _updateAnimation: function (seriesModel) {
-        var enableAnimation = seriesModel.get('animation');
-        var duration = seriesModel.get('animationDurationUpdate');
-        var easing = seriesModel.get('animationEasingUpdate');
-        var surfaceMesh = this._surfaceMesh;
-        var prevSurfaceMesh = this._prevSurfaceMesh;
-
-        if (enableAnimation && prevSurfaceMesh && duration > 0
-        // Only animate when bar count are not changed
-        && prevSurfaceMesh.geometry.vertexCount === surfaceMesh.geometry.vertexCount
-        ) {
-            surfaceMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
-            surfaceMesh.geometry.attributes.prevPosition.value = prevSurfaceMesh.geometry.attributes.position.value;
-            surfaceMesh.geometry.attributes.prevNormal.value = prevSurfaceMesh.geometry.attributes.normal.value;
-            surfaceMesh.geometry.dirty();
-            surfaceMesh.__percent = 0;
-            surfaceMesh.stopAnimation();
-            surfaceMesh.animate()
-                .when(duration, {
-                    __percent: 1
-                })
-                .during(function () {
-                    surfaceMesh.material.set('percent', surfaceMesh.__percent);
-                })
-                .start(easing);
-        }
-        else {
-            surfaceMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
-        }
+        graphicGL.updateVertexAnimation(
+            [['prevPosition', 'position'],
+            ['prevNormal', 'normal']],
+            this._prevSurfaceMesh,
+            this._surfaceMesh,
+            seriesModel
+        );
     },
 
     _createSurfaceMesh: function () {

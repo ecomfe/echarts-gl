@@ -13,14 +13,7 @@ function isSymbolSizeSame(a, b) {
 }
 // TODO gl_PointSize has max value.
 function PointsBuilder(is2D, api) {
-
-    this._mesh = new PointsMesh({
-        // Render after axes
-        renderOrder: 10
-    });
-
     this.rootNode = new graphicGL.Node();
-    this.rootNode.add(this._mesh);
 
     /**
      * @type {boolean}
@@ -45,6 +38,24 @@ PointsBuilder.prototype = {
     constructor: PointsBuilder,
 
     update: function (seriesModel, ecModel, api) {
+        // Swap barMesh
+        var tmp = this._prevMesh;
+        this._prevMesh = this._mesh;
+        this._mesh = tmp;
+
+        if (!this._mesh) {
+            var material = this._prevMesh && this._prevMesh.material;
+            this._mesh = new PointsMesh({
+                // Render after axes
+                renderOrder: 10
+            });
+            if (material) {
+                this._mesh.material = material;
+            }
+        }
+        this.rootNode.remove(this._prevMesh);
+        this.rootNode.add(this._mesh);
+
         var data = seriesModel.getData();
 
         var symbolInfo = this._getSymbolInfo(data);
@@ -194,7 +205,19 @@ PointsBuilder.prototype = {
             this._labelsBuilder.updateLabels();
         }
 
+        this._updateAnimation(seriesModel);
+
         this._api = api;
+    },
+
+    _updateAnimation: function (seriesModel) {
+        graphicGL.updateVertexAnimation(
+            [['prevPosition', 'position'],
+            ['prevSize', 'size']],
+            this._prevMesh,
+            this._mesh,
+            seriesModel
+        );
     },
 
     _updateHandler: function (seriesModel, ecModel, api) {

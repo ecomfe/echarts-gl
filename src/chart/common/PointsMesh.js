@@ -8,12 +8,16 @@ graphicGL.Shader.import(require('./sdfSprite.glsl.js'));
 
 var PointsMesh = graphicGL.Mesh.extend(function () {
     var geometry = new graphicGL.Geometry({
-        dynamic: true
+        dynamic: true,
+        attributes: {
+            color: new graphicGL.Geometry.Attribute('color', 'float', 4, 'COLOR'),
+            position: new graphicGL.Geometry.Attribute('position', 'float', 3, 'POSITION'),
+            size: new graphicGL.Geometry.Attribute('size', 'float', 1),
+            prevPosition: new graphicGL.Geometry.Attribute('prevPosition', 'float', 3),
+            prevSize: new graphicGL.Geometry.Attribute('prevSize', 'float', 1)
+        }
     });
     echarts.util.extend(geometry, verticesSortMixin);
-    geometry.createAttribute('color', 'float', 4, 'COLOR');
-    geometry.createAttribute('strokeColor', 'float', 4);
-    geometry.createAttribute('size', 'float', 1);
 
     var material = new graphicGL.Material({
         shader: graphicGL.createShader('ecgl.sdfSprite'),

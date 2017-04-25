@@ -92,34 +92,13 @@ module.exports = echarts.extendChartView({
     },
 
     _updateAnimation: function (seriesModel) {
-        var enableAnimation = seriesModel.get('animation');
-        var duration = seriesModel.get('animationDurationUpdate');
-        var easing = seriesModel.get('animationEasingUpdate');
-        var barMesh = this._barMesh;
-        var previousBarMesh = this._prevBarMesh;
-
-        if (enableAnimation && previousBarMesh && duration > 0
-        // Only animate when bar count are not changed
-        && previousBarMesh.geometry.vertexCount === barMesh.geometry.vertexCount
-        ) {
-            barMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
-            barMesh.geometry.attributes.prevPosition.value = previousBarMesh.geometry.attributes.position.value;
-            barMesh.geometry.attributes.prevNormal.value = previousBarMesh.geometry.attributes.normal.value;
-            barMesh.geometry.dirty();
-            barMesh.__percent = 0;
-            barMesh.stopAnimation();
-            barMesh.animate()
-                .when(duration, {
-                    __percent: 1
-                })
-                .during(function () {
-                    barMesh.material.set('percent', barMesh.__percent);
-                })
-                .start(easing);
-        }
-        else {
-            barMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
-        }
+        graphicGL.updateVertexAnimation(
+            [['prevPosition', 'position'],
+            ['prevNormal', 'normal']],
+            this._prevBarMesh,
+            this._barMesh,
+            seriesModel
+        );
     },
 
     _doRender: function (seriesModel, api) {

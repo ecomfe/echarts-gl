@@ -15,7 +15,7 @@ varying vec4 v_Color;
 
 #ifdef VERTEX_ANIMATION
 attribute vec3 prevPosition;
-uniform float percent;
+uniform float percent : 1.0;
 #endif
 
 varying vec2 v_Texcoord;
