@@ -29,7 +29,9 @@ var Line3DSeries = echarts.extendSeriesModel({
 
         lineStyle: {
             width: 2
-        }
+        },
+
+        animationDurationUpdate: 500
     }
 });
 

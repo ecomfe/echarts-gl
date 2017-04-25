@@ -20,35 +20,40 @@ module.exports = echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
 
-        var line3DMesh = new graphicGL.Mesh({
-            geometry: new Lines3DGeometry({
-                useNativeLine: false,
-                sortTriangles: true
-            }),
-            material: new graphicGL.Material({
-                shader: graphicGL.createShader('ecgl.meshLines3D')
-            }),
-            // Render after axes
-            renderOrder: 10
-        });
-
-        this._line3DMesh = line3DMesh;
-        this._line3DMesh.geometry.pick = this._pick.bind(this);
-
         this._api = api;
 
         this._tooltip = new TooltipHelper(api);
     },
 
     render: function (seriesModel, ecModel, api) {
+        var tmp = this._prevLine3DMesh;
+        this._prevLine3DMesh = this._line3DMesh;
+        this._line3DMesh = tmp;
+
+        if (!this._line3DMesh) {
+            this._line3DMesh = new graphicGL.Mesh({
+                geometry: new Lines3DGeometry({
+                    useNativeLine: false,
+                    sortTriangles: true
+                }),
+                material: new graphicGL.Material({
+                    shader: graphicGL.createShader('ecgl.meshLines3D')
+                }),
+                // Render after axes
+                renderOrder: 10
+            });
+            this._line3DMesh.geometry.pick = this._pick.bind(this);
+        }
+
+        this.groupGL.remove(this._prevLine3DMesh);
         this.groupGL.add(this._line3DMesh);
 
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
             // TODO
-            // var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
-            // this._line3DMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
+            this._line3DMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
         this._doRender(seriesModel, api);
 
@@ -57,6 +62,8 @@ module.exports = echarts.extendChartView({
         this._camera = coordSys.viewGL.camera;
 
         this.updateCamera();
+
+        this._updateAnimation(seriesModel);
     },
 
     updateCamera: function () {
@@ -77,9 +84,6 @@ module.exports = echarts.extendChartView({
         var hasTransparent = false;
 
         data.each(function (idx) {
-            // if (!data.hasValue(idx)) {
-            //     return;
-            // }
             var color = data.getItemVisual(idx, 'color');
             var opacity = data.getItemVisual(idx, 'opacity');
             if (opacity == null) {
@@ -143,6 +147,17 @@ module.exports = echarts.extendChartView({
         this._initHandler(seriesModel, api);
     },
 
+    _updateAnimation: function (seriesModel) {
+        graphicGL.updateVertexAnimation(
+            [['prevPosition', 'position'],
+            ['prevPositionPrev', 'positionPrev'],
+            ['prevPositionNext', 'positionNext']],
+            this._prevLine3DMesh,
+            this._line3DMesh,
+            seriesModel
+        );
+    },
+
     _initHandler: function (seriesModel, api) {
         var data = seriesModel.getData();
         var coordSys = seriesModel.coordinateSystem;
@@ -155,8 +170,8 @@ module.exports = echarts.extendChartView({
             var value = coordSys.pointToData(e.point._array);
             var dataIndex = data.indicesOfNearest('x', value[0])[0];
             if (dataIndex !== lastDataIndex) {
-                this._downplay(lastDataIndex);
-                this._highlight(dataIndex);
+                // this._downplay(lastDataIndex);
+                // this._highlight(dataIndex);
 
                 api.dispatchAction({
                     type: 'grid3DShowAxisPointer',
@@ -169,7 +184,7 @@ module.exports = echarts.extendChartView({
             lastDataIndex = dataIndex;
         }, this);
         lineMesh.on('mouseout', function (e) {
-            this._downplay(lastDataIndex);
+            // this._downplay(lastDataIndex);
             lastDataIndex = -1;
             api.dispatchAction({
                 type: 'grid3DHideAxisPointer'
@@ -178,48 +193,20 @@ module.exports = echarts.extendChartView({
         }, this);
     },
 
-    _highlight: function (dataIndex) {
-        var data = this._data;
-        if (!data) {
-            return;
-        }
-        // var barIndex = this._barIndexOfData[dataIndex];
-        // if (barIndex < 0) {
-        //     return;
-        // }
+    // _highlight: function (dataIndex) {
+    //     var data = this._data;
+    //     if (!data) {
+    //         return;
+    //     }
 
-        // var itemModel = data.getItemModel(dataIndex);
-        // var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
-        // var emphasisColor = emphasisItemStyleModel.get('color');
-        // var emphasisOpacity = emphasisItemStyleModel.get('opacity');
-        // if (emphasisColor == null) {
-        //     var color = data.getItemVisual(dataIndex, 'color');
-        //     emphasisColor = echarts.color.lift(color, -0.4);
-        // }
-        // if (emphasisOpacity == null) {
-        //     emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
-        // }
-        // var colorArr = graphicGL.parseColor(emphasisColor);
-        // colorArr[3] *= emphasisOpacity;
+    // },
 
-    },
-
-    _downplay: function (dataIndex) {
-        var data = this._data;
-        if (!data) {
-            return;
-        }
-        // var barIndex = this._barIndexOfData[dataIndex];
-        // if (barIndex < 0) {
-        //     return;
-        // }
-
-        // var color = data.getItemVisual(dataIndex, 'color');
-        // var opacity = data.getItemVisual(dataIndex, 'opacity');
-
-        // var colorArr = graphicGL.parseColor(color);
-        // colorArr[3] *= opacity;
-    },
+    // _downplay: function (dataIndex) {
+    //     var data = this._data;
+    //     if (!data) {
+    //         return;
+    //     }
+    // },
 
     _updateNDCPosition: function () {
 

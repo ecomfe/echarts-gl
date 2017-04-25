@@ -36,6 +36,9 @@ var LinesGeometry = StaticGeometry.extend(function () {
             position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
             positionPrev: new StaticGeometry.Attribute('positionPrev', 'float', 3),
             positionNext: new StaticGeometry.Attribute('positionNext', 'float', 3),
+            prevPositionPrev: new StaticGeometry.Attribute('prevPositionPrev', 'float', 3),
+            prevPosition: new StaticGeometry.Attribute('prevPosition', 'float', 3),
+            prevPositionNext: new StaticGeometry.Attribute('prevPositionNext', 'float', 3),
             offset: new StaticGeometry.Attribute('offset', 'float', 1),
             color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
         }
@@ -163,7 +166,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
     getPolylineTriangleCount: function (points) {
         var is2DArray = typeof points[0] !== 'number';
         var pointsLen = is2DArray ? points.length : (points.length / 3);
-        return !this.useNativeLine ? (pointsLen - 1) * 2 : 0;
+        return !this.useNativeLine ? Math.max(pointsLen - 1, 0) * 2 : 0;
     },
 
     /**

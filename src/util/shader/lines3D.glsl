@@ -45,9 +45,15 @@ vec4 clipNear(vec4 p1, vec4 p2) {
 @end
 
 @export ecgl.lines3D.expandLine
-    vec4 prevProj = worldViewProjection * vec4(positionPrev, 1.0);
-    vec4 currProj = worldViewProjection * vec4(position, 1.0);
-    vec4 nextProj = worldViewProjection * vec4(positionNext, 1.0);
+#ifdef VERTEX_ANIMATION
+    vec4 prevProj = MVP * vec4(mix(prevPositionPrev, positionPrev, percent), 1.0);
+    vec4 currProj = MVP * vec4(mix(prevPosition, position, percent), 1.0);
+    vec4 nextProj = MVP * vec4(mix(prevPositionNext, positionNext, percent), 1.0);
+#else
+    vec4 prevProj = MVP * vec4(positionPrev, 1.0);
+    vec4 currProj = MVP * vec4(position, 1.0);
+    vec4 nextProj = MVP * vec4(positionNext, 1.0);
+#endif
 
     if (currProj.w < 0.0) {
         if (prevProj.w < 0.0) {
@@ -100,7 +106,14 @@ attribute vec3 positionNext;
 attribute float offset;
 attribute vec4 a_Color : COLOR;
 
-uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
+#ifdef VERTEX_ANIMATION
+attribute vec3 prevPosition;
+attribute vec3 prevPositionPrev;
+attribute vec3 prevPositionNext;
+uniform float percent : 1.0;
+#endif
+
+uniform mat4 MVP : WORLDVIEWPROJECTION;
 uniform vec4 viewport : VIEWPORT;
 uniform float near : NEAR;
 
