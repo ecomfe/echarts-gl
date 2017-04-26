@@ -11,6 +11,7 @@ var Vector2 = require('qtek/lib/math/Vector2');
 var Vector3 = require('qtek/lib/math/Vector3');
 var Quaternion = require('qtek/lib/math/Quaternion');
 var retrieve = require('./retrieve');
+var firstNotNull = retrieve.firstNotNull;
 
 /**
  * @alias module:echarts-x/util/OrbitControl
@@ -281,21 +282,46 @@ var OrbitControl = Base.extend(function () {
         this.maxDistance = viewControlModel.get('maxDistance') + baseDistance;
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
-        if (this._distance !== targetDistance) {
+
+        this.minAlpha = firstNotNull(viewControlModel.get('minAlpha'), -90);
+        this.maxAlpha = firstNotNull(viewControlModel.get('maxAlpha'), 90);
+        this.minBeta = firstNotNull(viewControlModel.get('minBeta'), -Infinity);
+        this.maxBeta = firstNotNull(viewControlModel.get('maxBeta'), Infinity);
+        this.rotateSensitivity = firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
+        this.zoomSensitivity = firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
+        this.panSensitivity = firstNotNull(viewControlModel.get('panSensitivity'), 1);
+
+        var ecModel = viewControlModel.ecModel;
+
+        var animationOpts = {};
+        ['animation', 'animationDurationUpdate', 'animationEasingUpdate'].forEach(function (key) {
+            animationOpts[key] = firstNotNull(
+                viewControlModel.get(key), ecModel && ecModel.get(key)
+            );
+        });
+
+        var alpha = viewControlModel.get('alpha') || 0;
+        var beta = viewControlModel.get('beta') || 0;
+        var center = viewControlModel.get('center') || [0, 0, 0];
+        if (animationOpts.animation && animationOpts.animationDurationUpdate > 0 && this._notFirst) {
+            this.animateTo({
+                alpha: alpha,
+                beta: beta,
+                center: center,
+                distance: targetDistance,
+                easing: animationOpts.animationEasingUpdate,
+                duration: animationOpts.animationDurationUpdate
+            });
+        }
+        else {
             this.setDistance(targetDistance);
+            this.setAlpha(alpha);
+            this.setBeta(beta);
+            this.setCenter(center);
         }
 
-        this.minAlpha = retrieve.firstNotNull(viewControlModel.get('minAlpha'), -90);
-        this.maxAlpha = retrieve.firstNotNull(viewControlModel.get('maxAlpha'), 90);
-        this.minBeta = retrieve.firstNotNull(viewControlModel.get('minBeta'), -Infinity);
-        this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), Infinity);
-        this.rotateSensitivity = retrieve.firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
-        this.zoomSensitivity = retrieve.firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
-        this.panSensitivity = retrieve.firstNotNull(viewControlModel.get('panSensitivity'), 1);
+        this._notFirst = true;
 
-        this.setAlpha(viewControlModel.get('alpha') || 0);
-        this.setBeta(viewControlModel.get('beta') || 0);
-        this.setCenter(viewControlModel.get('center') || [0, 0, 0]);
     },
 
     /**
@@ -303,32 +329,48 @@ var OrbitControl = Base.extend(function () {
      * @param {number} opts.distance
      * @param {number} opts.alpha
      * @param {number} opts.beta
-     * @param {number} [opts.time=1000]
+     * @param {number} [opts.duration=1000]
      * @param {number} [opts.easing='linear']
      */
     animateTo: function (opts) {
         var zr = this.zr;
         var self = this;
 
-        var source = {};
+        var obj = {};
         var target = {};
         if (opts.distance != null) {
-            source.distance = this.getDistance();
+            obj.distance = this.getDistance();
             target.distance = opts.distance;
         }
         if (opts.alpha != null) {
-            source.alpha = this.getAlpha();
+            obj.alpha = this.getAlpha();
             target.alpha = opts.alpha;
         }
-        if (opts.distance != null) {
-            source.distance = this.getDistance();
-            target.distance = opts.distance;
+        if (opts.beta != null) {
+            obj.beta = this.getBeta();
+            target.beta = opts.beta;
+        }
+        if (opts.center != null) {
+            obj.center = this.getCenter();
+            target.center = opts.center;
         }
 
         return this._addAnimator(
-            zr.animation.animate(this)
-                .when(opts.time || 1000, target)
+            zr.animation.animate(obj)
+                .when(opts.duration || 1000, target)
                 .during(function () {
+                    if (obj.alpha != null) {
+                        self.setAlpha(obj.alpha);
+                    }
+                    if (obj.beta != null) {
+                        self.setBeta(obj.beta);
+                    }
+                    if (obj.distance != null) {
+                        self.setDistance(obj.distance);
+                    }
+                    if (obj.center != null) {
+                        self.setCenter(obj.center);
+                    }
                     self._needsUpdate = true;
                 })
         ).start(opts.easing || 'linear');
