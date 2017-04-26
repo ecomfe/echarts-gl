@@ -4465,20 +4465,22 @@ var Scene = __webpack_require__(31);
 var LRUCache = __webpack_require__(84);
 var textureUtil = __webpack_require__(60);
 var EChartsSurface = __webpack_require__(154);
-var AmbientCubemapLight = __webpack_require__(183);
-var AmbientSHLight = __webpack_require__(184);
-var shUtil = __webpack_require__(213);
+var AmbientCubemapLight = __webpack_require__(184);
+var AmbientSHLight = __webpack_require__(185);
+var shUtil = __webpack_require__(214);
 var retrieve = __webpack_require__(4);
 
-var animatableMixin = __webpack_require__(156);
+var animatableMixin = __webpack_require__(157);
 echarts.util.extend(Node3D.prototype, animatableMixin);
 
 // Some common shaders
-Shader.import(__webpack_require__(209));
+Shader.import(__webpack_require__(210));
+Shader.import(__webpack_require__(228));
 Shader.import(__webpack_require__(164));
 Shader.import(__webpack_require__(163));
 Shader.import(__webpack_require__(166));
 Shader.import(__webpack_require__(168));
+Shader.import(__webpack_require__(229));
 
 function isValueNone(value) {
     return !value || value === 'none';
@@ -4581,7 +4583,7 @@ graphicGL.PlaneGeometry = __webpack_require__(53);
 graphicGL.CubeGeometry = __webpack_require__(74);
 
 // Lights
-graphicGL.AmbientLight = __webpack_require__(182);
+graphicGL.AmbientLight = __webpack_require__(183);
 graphicGL.DirectionalLight = __webpack_require__(76);
 graphicGL.PointLight = __webpack_require__(77);
 graphicGL.SpotLight = __webpack_require__(78);
@@ -4593,13 +4595,13 @@ graphicGL.OrthographicCamera = __webpack_require__(42);
 // Math
 graphicGL.Vector2 = __webpack_require__(24);
 graphicGL.Vector3 = __webpack_require__(3);
-graphicGL.Vector4 = __webpack_require__(189);
+graphicGL.Vector4 = __webpack_require__(190);
 
 graphicGL.Quaternion = __webpack_require__(55);
 
-graphicGL.Matrix2 = __webpack_require__(186);
-graphicGL.Matrix2d = __webpack_require__(187);
-graphicGL.Matrix3 = __webpack_require__(188);
+graphicGL.Matrix2 = __webpack_require__(187);
+graphicGL.Matrix2d = __webpack_require__(188);
+graphicGL.Matrix3 = __webpack_require__(189);
 graphicGL.Matrix4 = __webpack_require__(10);
 
 graphicGL.Plane = __webpack_require__(79);
@@ -4811,7 +4813,12 @@ graphicGL.parseColor = function (colorStr, rgba) {
         rgba[0] = colorStr[0];
         rgba[1] = colorStr[1];
         rgba[2] = colorStr[2];
-        rgba[3] = colorStr[3];
+        if (colorStr.length > 3) {
+            rgba[3] = colorStr[3];
+        }
+        else {
+            rgba[3] = 1;
+        }
         return rgba;
     }
 
@@ -4946,6 +4953,50 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
             uvRepeat: uvRepeat,
             uvOffset: uvOffset
         });
+    }
+};
+
+graphicGL.updateVertexAnimation = function (
+    mappingAttributes, previousMesh, currentMesh, seriesModel
+) {
+    var enableAnimation = seriesModel.get('animation');
+    var duration = seriesModel.get('animationDurationUpdate');
+    var easing = seriesModel.get('animationEasingUpdate');
+    var shadowDepthMaterial = currentMesh.shadowDepthMaterial;
+
+    if (enableAnimation && previousMesh && duration > 0
+    // Only animate when bar count are not changed
+    && previousMesh.geometry.vertexCount === currentMesh.geometry.vertexCount
+    ) {
+        currentMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
+        if (shadowDepthMaterial) {
+            shadowDepthMaterial.shader.define('vertex', 'VERTEX_ANIMATION');
+        }
+        for (var i = 0; i < mappingAttributes.length; i++) {
+            currentMesh.geometry.attributes[mappingAttributes[i][0]].value =
+            previousMesh.geometry.attributes[mappingAttributes[i][1]].value;
+        }
+        currentMesh.geometry.dirty();
+        currentMesh.__percent = 0;
+        currentMesh.material.set('percent', 0);
+        currentMesh.stopAnimation();
+        currentMesh.animate()
+            .when(duration, {
+                __percent: 1
+            })
+            .during(function () {
+                currentMesh.material.set('percent', currentMesh.__percent);
+                if (shadowDepthMaterial) {
+                    shadowDepthMaterial.set('percent', currentMesh.__percent);
+                }
+            })
+            .start(easing);
+    }
+    else {
+        currentMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
+        if (shadowDepthMaterial) {
+            shadowDepthMaterial.shader.undefine('vertex', 'VERTEX_ANIMATION');
+        }
     }
 };
 
@@ -5936,7 +5987,7 @@ module.exports = retrieve;
 
 
 
-    var extendMixin = __webpack_require__(181);
+    var extendMixin = __webpack_require__(182);
     var notifierMixin = __webpack_require__(52);
     var util = __webpack_require__(23);
 
@@ -11684,7 +11735,7 @@ module.exports = function (seriesType, ecModel, api) {
     var glinfo = __webpack_require__(17);
     var glenum = __webpack_require__(8);
 
-    Shader['import'](__webpack_require__(204));
+    Shader['import'](__webpack_require__(205));
 
     var planeGeo = new Plane();
     var mesh = new Mesh({
@@ -11931,6 +11982,9 @@ var LinesGeometry = StaticGeometry.extend(function () {
             position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
             positionPrev: new StaticGeometry.Attribute('positionPrev', 'float', 3),
             positionNext: new StaticGeometry.Attribute('positionNext', 'float', 3),
+            prevPositionPrev: new StaticGeometry.Attribute('prevPositionPrev', 'float', 3),
+            prevPosition: new StaticGeometry.Attribute('prevPosition', 'float', 3),
+            prevPositionNext: new StaticGeometry.Attribute('prevPositionNext', 'float', 3),
             offset: new StaticGeometry.Attribute('offset', 'float', 1),
             color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
         }
@@ -12058,7 +12112,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
     getPolylineTriangleCount: function (points) {
         var is2DArray = typeof points[0] !== 'number';
         var pointsLen = is2DArray ? points.length : (points.length / 3);
-        return !this.useNativeLine ? (pointsLen - 1) * 2 : 0;
+        return !this.useNativeLine ? Math.max(pointsLen - 1, 0) * 2 : 0;
     },
 
     /**
@@ -13341,7 +13395,7 @@ module.exports = {
 var echarts = __webpack_require__(0);
 
 var Scene = __webpack_require__(31);
-var ShadowMapPass = __webpack_require__(191);
+var ShadowMapPass = __webpack_require__(192);
 var PerspectiveCamera = __webpack_require__(43);
 var OrthographicCamera = __webpack_require__(42);
 var Matrix4 = __webpack_require__(10);
@@ -15495,6 +15549,7 @@ var Vector2 = __webpack_require__(24);
 var Vector3 = __webpack_require__(3);
 var Quaternion = __webpack_require__(55);
 var retrieve = __webpack_require__(4);
+var firstNotNull = retrieve.firstNotNull;
 
 /**
  * @alias module:echarts-x/util/OrbitControl
@@ -15755,7 +15810,11 @@ var OrbitControl = Base.extend(function () {
         return this._camera;
     },
 
-    setFromViewControlModel: function (viewControlModel, baseDistance) {
+
+    setFromViewControlModel: function (viewControlModel, extraOpts) {
+        extraOpts = extraOpts || {};
+        var baseDistance = extraOpts.baseDistance || 0;
+
         this.autoRotate = viewControlModel.get('autoRotate');
         this.autoRotateAfterStill = viewControlModel.get('autoRotateAfterStill');
 
@@ -15765,21 +15824,46 @@ var OrbitControl = Base.extend(function () {
         this.maxDistance = viewControlModel.get('maxDistance') + baseDistance;
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
-        if (this._distance !== targetDistance) {
+
+        this.minAlpha = firstNotNull(viewControlModel.get('minAlpha'), -90);
+        this.maxAlpha = firstNotNull(viewControlModel.get('maxAlpha'), 90);
+        this.minBeta = firstNotNull(viewControlModel.get('minBeta'), -Infinity);
+        this.maxBeta = firstNotNull(viewControlModel.get('maxBeta'), Infinity);
+        this.rotateSensitivity = firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
+        this.zoomSensitivity = firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
+        this.panSensitivity = firstNotNull(viewControlModel.get('panSensitivity'), 1);
+
+        var ecModel = viewControlModel.ecModel;
+
+        var animationOpts = {};
+        ['animation', 'animationDurationUpdate', 'animationEasingUpdate'].forEach(function (key) {
+            animationOpts[key] = firstNotNull(
+                viewControlModel.get(key), ecModel && ecModel.get(key)
+            );
+        });
+
+        var alpha = firstNotNull(extraOpts.alpha, viewControlModel.get('alpha')) || 0;
+        var beta = firstNotNull(extraOpts.beta, viewControlModel.get('beta')) || 0;
+        var center = viewControlModel.get('center') || [0, 0, 0];
+        if (animationOpts.animation && animationOpts.animationDurationUpdate > 0 && this._notFirst) {
+            this.animateTo({
+                alpha: alpha,
+                beta: beta,
+                center: center,
+                distance: targetDistance,
+                easing: animationOpts.animationEasingUpdate,
+                duration: animationOpts.animationDurationUpdate
+            });
+        }
+        else {
             this.setDistance(targetDistance);
+            this.setAlpha(alpha);
+            this.setBeta(beta);
+            this.setCenter(center);
         }
 
-        this.minAlpha = retrieve.firstNotNull(viewControlModel.get('minAlpha'), -90);
-        this.maxAlpha = retrieve.firstNotNull(viewControlModel.get('maxAlpha'), 90);
-        this.minBeta = retrieve.firstNotNull(viewControlModel.get('minBeta'), -Infinity);
-        this.maxBeta = retrieve.firstNotNull(viewControlModel.get('maxBeta'), Infinity);
-        this.rotateSensitivity = retrieve.firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
-        this.zoomSensitivity = retrieve.firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
-        this.panSensitivity = retrieve.firstNotNull(viewControlModel.get('panSensitivity'), 1);
+        this._notFirst = true;
 
-        this.setAlpha(viewControlModel.get('alpha') || 0);
-        this.setBeta(viewControlModel.get('beta') || 0);
-        this.setCenter(viewControlModel.get('center') || [0, 0, 0]);
     },
 
     /**
@@ -15787,32 +15871,48 @@ var OrbitControl = Base.extend(function () {
      * @param {number} opts.distance
      * @param {number} opts.alpha
      * @param {number} opts.beta
-     * @param {number} [opts.time=1000]
+     * @param {number} [opts.duration=1000]
      * @param {number} [opts.easing='linear']
      */
     animateTo: function (opts) {
         var zr = this.zr;
         var self = this;
 
-        var source = {};
+        var obj = {};
         var target = {};
         if (opts.distance != null) {
-            source.distance = this.getDistance();
+            obj.distance = this.getDistance();
             target.distance = opts.distance;
         }
         if (opts.alpha != null) {
-            source.alpha = this.getAlpha();
+            obj.alpha = this.getAlpha();
             target.alpha = opts.alpha;
         }
-        if (opts.distance != null) {
-            source.distance = this.getDistance();
-            target.distance = opts.distance;
+        if (opts.beta != null) {
+            obj.beta = this.getBeta();
+            target.beta = opts.beta;
+        }
+        if (opts.center != null) {
+            obj.center = this.getCenter();
+            target.center = opts.center;
         }
 
         return this._addAnimator(
-            zr.animation.animate(this)
-                .when(opts.time || 1000, target)
+            zr.animation.animate(obj)
+                .when(opts.duration || 1000, target)
                 .during(function () {
+                    if (obj.alpha != null) {
+                        self.setAlpha(obj.alpha);
+                    }
+                    if (obj.beta != null) {
+                        self.setBeta(obj.beta);
+                    }
+                    if (obj.distance != null) {
+                        self.setDistance(obj.distance);
+                    }
+                    if (obj.center != null) {
+                        self.setCenter(obj.center);
+                    }
                     self._needsUpdate = true;
                 })
         ).start(opts.easing || 'linear');
@@ -15854,10 +15954,10 @@ var OrbitControl = Base.extend(function () {
         }
 
         // Fixed deltaTime
-        this._updateDistance(Math.min(deltaTime, 30));
-        this._updatePan(Math.min(deltaTime, 30));
+        this._updateDistance(Math.min(deltaTime, 100));
+        this._updatePan(Math.min(deltaTime, 100));
 
-        this._updateRotate(Math.min(deltaTime, 30));
+        this._updateRotate(Math.min(deltaTime, 100));
 
         this._updateTransform();
 
@@ -16106,7 +16206,7 @@ module.exports = OrbitControl;
 /* 39 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.lines3D.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines3D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color * v_Color);\n#else\n    gl_FragColor = color * v_Color;\n#endif\n}\n@end\n\n\n\n@export ecgl.lines3D.clipNear\n\nvec4 clipNear(vec4 p1, vec4 p2) {\n    float n = (p1.w - near) / (p1.w - p2.w);\n        return vec4(mix(p1.xy, p2.xy, n), -near, near);\n}\n\n@end\n\n@export ecgl.lines3D.expandLine\n    vec4 prevProj = worldViewProjection * vec4(positionPrev, 1.0);\n    vec4 currProj = worldViewProjection * vec4(position, 1.0);\n    vec4 nextProj = worldViewProjection * vec4(positionNext, 1.0);\n\n    if (currProj.w < 0.0) {\n        if (prevProj.w < 0.0) {\n            currProj = clipNear(currProj, nextProj);\n        }\n        else {\n            currProj = clipNear(currProj, prevProj);\n        }\n    }\n\n    vec2 prevScreen = (prevProj.xy / abs(prevProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 currScreen = (currProj.xy / abs(currProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 nextScreen = (nextProj.xy / abs(nextProj.w) + 1.0) * 0.5 * viewport.zw;\n\n    vec2 dir;\n    float len = offset;\n        if (position == positionPrev) {\n        dir = normalize(nextScreen - currScreen);\n    }\n        else if (position == positionNext) {\n        dir = normalize(currScreen - prevScreen);\n    }\n    else {\n        vec2 dirA = normalize(currScreen - prevScreen);\n        vec2 dirB = normalize(nextScreen - currScreen);\n\n        vec2 tanget = normalize(dirA + dirB);\n\n                float miter = 1.0 / max(dot(tanget, dirA), 0.5);\n        len *= miter;\n        dir = tanget;\n    }\n\n    dir = vec2(-dir.y, dir.x) * len;\n    currScreen += dir;\n\n    currProj.xy = (currScreen / viewport.zw - 0.5) * 2.0 * abs(currProj.w);\n@end\n\n\n@export ecgl.meshLines3D.vertex\n\nattribute vec3 position: POSITION;\nattribute vec3 positionPrev;\nattribute vec3 positionNext;\nattribute float offset;\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\nuniform float near : NEAR;\n\nvarying vec4 v_Color;\n\n@import ecgl.wireframe.common.vertexHeader\n\n@import ecgl.lines3D.clipNear\n\nvoid main()\n{\n    @import ecgl.lines3D.expandLine\n\n    gl_Position = currProj;\n\n    v_Color = a_Color;\n\n    @import ecgl.wireframe.common.vertexMain\n}\n@end\n\n\n@export ecgl.meshLines3D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color * v_Color);\n#else\n    gl_FragColor = color * v_Color;\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end";
+module.exports = "@export ecgl.lines3D.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position: POSITION;\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Color = a_Color;\n}\n\n@end\n\n@export ecgl.lines3D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color * v_Color);\n#else\n    gl_FragColor = color * v_Color;\n#endif\n}\n@end\n\n\n\n@export ecgl.lines3D.clipNear\n\nvec4 clipNear(vec4 p1, vec4 p2) {\n    float n = (p1.w - near) / (p1.w - p2.w);\n        return vec4(mix(p1.xy, p2.xy, n), -near, near);\n}\n\n@end\n\n@export ecgl.lines3D.expandLine\n#ifdef VERTEX_ANIMATION\n    vec4 prevProj = MVP * vec4(mix(prevPositionPrev, positionPrev, percent), 1.0);\n    vec4 currProj = MVP * vec4(mix(prevPosition, position, percent), 1.0);\n    vec4 nextProj = MVP * vec4(mix(prevPositionNext, positionNext, percent), 1.0);\n#else\n    vec4 prevProj = MVP * vec4(positionPrev, 1.0);\n    vec4 currProj = MVP * vec4(position, 1.0);\n    vec4 nextProj = MVP * vec4(positionNext, 1.0);\n#endif\n\n    if (currProj.w < 0.0) {\n        if (prevProj.w < 0.0) {\n            currProj = clipNear(currProj, nextProj);\n        }\n        else {\n            currProj = clipNear(currProj, prevProj);\n        }\n    }\n\n    vec2 prevScreen = (prevProj.xy / abs(prevProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 currScreen = (currProj.xy / abs(currProj.w) + 1.0) * 0.5 * viewport.zw;\n    vec2 nextScreen = (nextProj.xy / abs(nextProj.w) + 1.0) * 0.5 * viewport.zw;\n\n    vec2 dir;\n    float len = offset;\n        if (position == positionPrev) {\n        dir = normalize(nextScreen - currScreen);\n    }\n        else if (position == positionNext) {\n        dir = normalize(currScreen - prevScreen);\n    }\n    else {\n        vec2 dirA = normalize(currScreen - prevScreen);\n        vec2 dirB = normalize(nextScreen - currScreen);\n\n        vec2 tanget = normalize(dirA + dirB);\n\n                float miter = 1.0 / max(dot(tanget, dirA), 0.5);\n        len *= miter;\n        dir = tanget;\n    }\n\n    dir = vec2(-dir.y, dir.x) * len;\n    currScreen += dir;\n\n    currProj.xy = (currScreen / viewport.zw - 0.5) * 2.0 * abs(currProj.w);\n@end\n\n\n@export ecgl.meshLines3D.vertex\n\nattribute vec3 position: POSITION;\nattribute vec3 positionPrev;\nattribute vec3 positionNext;\nattribute float offset;\nattribute vec4 a_Color : COLOR;\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nattribute vec3 prevPositionPrev;\nattribute vec3 prevPositionNext;\nuniform float percent : 1.0;\n#endif\n\nuniform mat4 MVP : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\nuniform float near : NEAR;\n\nvarying vec4 v_Color;\n\n@import ecgl.wireframe.common.vertexHeader\n\n@import ecgl.lines3D.clipNear\n\nvoid main()\n{\n    @import ecgl.lines3D.expandLine\n\n    gl_Position = currProj;\n\n    v_Color = a_Color;\n\n    @import ecgl.wireframe.common.vertexMain\n}\n@end\n\n\n@export ecgl.meshLines3D.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color * v_Color);\n#else\n    gl_FragColor = color * v_Color;\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end";
 
 
 /***/ }),
@@ -16931,14 +17031,7 @@ function isSymbolSizeSame(a, b) {
 }
 // TODO gl_PointSize has max value.
 function PointsBuilder(is2D, api) {
-
-    this._mesh = new PointsMesh({
-        // Render after axes
-        renderOrder: 10
-    });
-
     this.rootNode = new graphicGL.Node();
-    this.rootNode.add(this._mesh);
 
     /**
      * @type {boolean}
@@ -16963,6 +17056,24 @@ PointsBuilder.prototype = {
     constructor: PointsBuilder,
 
     update: function (seriesModel, ecModel, api) {
+        // Swap barMesh
+        var tmp = this._prevMesh;
+        this._prevMesh = this._mesh;
+        this._mesh = tmp;
+
+        if (!this._mesh) {
+            var material = this._prevMesh && this._prevMesh.material;
+            this._mesh = new PointsMesh({
+                // Render after axes
+                renderOrder: 10
+            });
+            if (material) {
+                this._mesh.material = material;
+            }
+        }
+        this.rootNode.remove(this._prevMesh);
+        this.rootNode.add(this._mesh);
+
         var data = seriesModel.getData();
 
         var symbolInfo = this._getSymbolInfo(data);
@@ -17112,7 +17223,19 @@ PointsBuilder.prototype = {
             this._labelsBuilder.updateLabels();
         }
 
+        this._updateAnimation(seriesModel);
+
         this._api = api;
+    },
+
+    _updateAnimation: function (seriesModel) {
+        graphicGL.updateVertexAnimation(
+            [['prevPosition', 'position'],
+            ['prevSize', 'size']],
+            this._prevMesh,
+            this._mesh,
+            seriesModel
+        );
     },
 
     _updateHandler: function (seriesModel, ecModel, api) {
@@ -17293,6 +17416,7 @@ PointsBuilder.prototype = {
 };
 
 module.exports = PointsBuilder;
+
 
 /***/ }),
 /* 46 */
@@ -17697,7 +17821,8 @@ module.exports = graphicGL.Mesh.extend(function () {
 
     // Light header
     var Shader = __webpack_require__(9);
-    Shader['import'](__webpack_require__(206));
+    Shader['import'](__webpack_require__(207));
+    Shader['import'](__webpack_require__(228));
 
     var glMatrix = __webpack_require__(1);
     var mat4 = glMatrix.mat4;
@@ -18178,9 +18303,13 @@ module.exports = graphicGL.Mesh.extend(function () {
 
             var culledRenderQueue;
             if (preZ) {
-                var preZPassMaterial = new Material({
-                    shader: shaderLibrary.get('qtek.prez')
+                var preZPassMaterial = this._prezMaterial || new Material({
+                    shader: new Shader({
+                        vertex: Shader.source('qtek.prez.vertex'),
+                        fragment: Shader.source('qtek.prez.fragment')
+                    })
                 });
+                this._prezMaterial = preZPassMaterial;
                 var preZPassShader = preZPassMaterial.shader;
 
                 culledRenderQueue = [];
@@ -20277,7 +20406,7 @@ module.exports = graphicGL.Mesh.extend(function () {
     var Material = __webpack_require__(19);
 
 
-    Shader.import(__webpack_require__(208));
+    Shader.import(__webpack_require__(209));
     /**
      * @constructor qtek.plugin.Skybox
      *
@@ -20399,7 +20528,7 @@ module.exports = graphicGL.Mesh.extend(function () {
     var Shader = __webpack_require__(9);
     var Material = __webpack_require__(19);
 
-    Shader.import(__webpack_require__(192));
+    Shader.import(__webpack_require__(193));
     /**
      * @constructor qtek.plugin.Skydome
      *
@@ -20668,8 +20797,8 @@ module.exports = graphicGL.Mesh.extend(function () {
     var Skydome = __webpack_require__(58);
     var Scene = __webpack_require__(31);
 
-    var dds = __webpack_require__(211);
-    var hdr = __webpack_require__(212);
+    var dds = __webpack_require__(212);
+    var hdr = __webpack_require__(213);
 
     /**
      * @namespace qtek.util.texture
@@ -20890,7 +21019,7 @@ module.exports = graphicGL.Mesh.extend(function () {
 var echarts = __webpack_require__(0);
 var graphicGL = __webpack_require__(2);
 // var Triangulation = require('../../util/Triangulation');
-var earcut = __webpack_require__(157);
+var earcut = __webpack_require__(227);
 var LinesGeo = __webpack_require__(22);
 var retrieve = __webpack_require__(4);
 var glmatrix = __webpack_require__(1);
@@ -21133,7 +21262,7 @@ Geo3DBuilder.prototype = {
         // TODO Unshow
         if (debugWireframeModel.get('show')) {
             var color = graphicGL.parseColor(
-                debugWireframeModel.get('lineStyle.color')
+                debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
             );
             var width = retrieve.firstNotNull(
                 debugWireframeModel.get('lineStyle.width'), 1
@@ -24736,8 +24865,8 @@ module.exports = spriteUtil;
  */
 
 
-    var vec2 = __webpack_require__(224);
-    var matrix = __webpack_require__(223);
+    var vec2 = __webpack_require__(225);
+    var matrix = __webpack_require__(224);
 
     var v2ApplyTransform = vec2.applyTransform;
     var mathMin = Math.min;
@@ -25639,7 +25768,7 @@ var echartsGl = {
     }
 };
 var echarts = __webpack_require__(0);
-var qtekVersion = __webpack_require__(217);
+var qtekVersion = __webpack_require__(218);
 var LayerGL = __webpack_require__(145);
 
 // Version checking
@@ -25894,7 +26023,9 @@ var Bar3DSeries = echarts.extendSeriesModel({
             label: {
                 show: true
             }
-        }
+        },
+
+        animationDurationUpdate: 500
     }
 });
 
@@ -25930,13 +26061,6 @@ module.exports = echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
 
-        var barMesh = new graphicGL.Mesh({
-            geometry: new BarsGeometry(),
-
-            // Render after axes
-            renderOrder: 10
-        });
-
         var materials = {};
         graphicGL.COMMON_SHADERS.forEach(function (shading) {
             materials[shading] = new graphicGL.Material({
@@ -25945,7 +26069,6 @@ module.exports = echarts.extendChartView({
         });
 
         this._materials = materials;
-        this._barMesh = barMesh;
 
         this._api = api;
 
@@ -25971,6 +26094,27 @@ module.exports = echarts.extendChartView({
     },
 
     render: function (seriesModel, ecModel, api) {
+
+        // Swap barMesh
+        var tmp = this._prevBarMesh;
+        this._prevBarMesh = this._barMesh;
+        this._barMesh = tmp;
+
+        if (!this._barMesh) {
+            this._barMesh = new graphicGL.Mesh({
+                geometry: new BarsGeometry(),
+                shadowDepthMaterial: new graphicGL.Material({
+                    shader: new graphicGL.Shader({
+                        vertex: graphicGL.Shader.source('ecgl.sm.depth.vertex'),
+                        fragment: graphicGL.Shader.source('ecgl.sm.depth.fragment')
+                    })
+                }),
+                // Render after axes
+                renderOrder: 10
+            });
+        }
+
+        this.groupGL.remove(this._prevBarMesh);
         this.groupGL.add(this._barMesh);
         this.groupGL.add(this._labelsBuilder.getMesh());
 
@@ -25988,6 +26132,18 @@ module.exports = echarts.extendChartView({
         this._labelsBuilder.updateData(this._data);
 
         this._labelsBuilder.updateLabels();
+
+        this._updateAnimation(seriesModel);
+    },
+
+    _updateAnimation: function (seriesModel) {
+        graphicGL.updateVertexAnimation(
+            [['prevPosition', 'position'],
+            ['prevNormal', 'normal']],
+            this._prevBarMesh,
+            this._barMesh,
+            seriesModel
+        );
     },
 
     _doRender: function (seriesModel, api) {
@@ -26360,12 +26516,16 @@ graphicGL.Shader.import(__webpack_require__(103));
 
 var PointsMesh = graphicGL.Mesh.extend(function () {
     var geometry = new graphicGL.Geometry({
-        dynamic: true
+        dynamic: true,
+        attributes: {
+            color: new graphicGL.Geometry.Attribute('color', 'float', 4, 'COLOR'),
+            position: new graphicGL.Geometry.Attribute('position', 'float', 3, 'POSITION'),
+            size: new graphicGL.Geometry.Attribute('size', 'float', 1),
+            prevPosition: new graphicGL.Geometry.Attribute('prevPosition', 'float', 3),
+            prevSize: new graphicGL.Geometry.Attribute('prevSize', 'float', 1)
+        }
     });
     echarts.util.extend(geometry, verticesSortMixin);
-    geometry.createAttribute('color', 'float', 4, 'COLOR');
-    geometry.createAttribute('strokeColor', 'float', 4);
-    geometry.createAttribute('size', 'float', 1);
 
     var material = new graphicGL.Material({
         shader: graphicGL.createShader('ecgl.sdfSprite'),
@@ -26476,7 +26636,7 @@ module.exports = PointsMesh;
 /* 103 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.sdfSprite.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_FillColor: COLOR;\nvarying vec4 v_Color;\n#endif\n\nattribute float size;\n\n#ifdef ANIMATING\nattribute float delay;\n#endif\n\n#ifdef POSITIONTEXTURE_ENABLED\nuniform sampler2D positionTexture;\n#endif\n\nvarying float v_Size;\n\nvoid main()\n{\n\n#ifdef POSITIONTEXTURE_ENABLED\n        gl_Position = worldViewProjection * vec4(texture2D(positionTexture, position.xy).xy, -10.0, 1.0);\n#else\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n#endif\n\n#ifdef ANIMATING\n    gl_PointSize = size * (sin((elapsedTime + delay) * 3.14) * 0.5 + 1.0);\n#else\n    gl_PointSize = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_FillColor;\n    #endif\n\n    v_Size = size;\n}\n\n@end\n\n@export ecgl.sdfSprite.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\nuniform vec4 strokeColor: [1, 1, 1, 1];\nuniform float smoothing: 0.07;\n\nuniform float lineWidth: 0.0;\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying float v_Size;\n\nuniform sampler2D sprite;\n\n@import qtek.util.srgb\n\nvoid main()\n{\n    gl_FragColor = color;\n\n    vec4 _strokeColor = strokeColor;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n        #endif\n\n#ifdef SPRITE_ENABLED\n    float d = texture2D(sprite, gl_PointCoord).r;\n        gl_FragColor.a *= smoothstep(0.5 - smoothing, 0.5 + smoothing, d);\n\n    if (lineWidth > 0.0) {\n                float sLineWidth = lineWidth / 2.0;\n\n        float outlineMaxValue0 = 0.5 + sLineWidth;\n        float outlineMaxValue1 = 0.5 + sLineWidth + smoothing;\n        float outlineMinValue0 = 0.5 - sLineWidth - smoothing;\n        float outlineMinValue1 = 0.5 - sLineWidth;\n\n                if (d <= outlineMaxValue1 && d >= outlineMinValue0) {\n            float a = _strokeColor.a;\n            if (d <= outlineMinValue1) {\n                a = a * smoothstep(outlineMinValue0, outlineMinValue1, d);\n            }\n            else {\n                a = a * smoothstep(outlineMaxValue1, outlineMaxValue0, d);\n            }\n            gl_FragColor.rgb = mix(gl_FragColor.rgb * gl_FragColor.a, _strokeColor.rgb, a);\n            gl_FragColor.a = gl_FragColor.a * (1.0 - a) + a;\n        }\n    }\n#endif\n\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(gl_FragColor);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end";
+module.exports = "@export ecgl.sdfSprite.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform float elapsedTime : 0;\n\nattribute vec3 position : POSITION;\nattribute float size;\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_FillColor: COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nattribute float prevSize;\nuniform float percent : 1.0;\n#endif\n\n\n#ifdef POSITIONTEXTURE_ENABLED\nuniform sampler2D positionTexture;\n#endif\n\nvarying float v_Size;\n\nvoid main()\n{\n\n#ifdef POSITIONTEXTURE_ENABLED\n        gl_Position = worldViewProjection * vec4(texture2D(positionTexture, position.xy).xy, -10.0, 1.0);\n#else\n\n    #ifdef VERTEX_ANIMATION\n    vec3 pos = mix(prevPosition, position, percent);\n    #else\n    vec3 pos = position;\n    #endif\n    gl_Position = worldViewProjection * vec4(pos, 1.0);\n#endif\n\n#ifdef VERTEX_ANIMATION\n    v_Size = mix(prevSize, size, percent);\n#else\n    v_Size = size;\n#endif\n\n#ifdef VERTEX_COLOR\n    v_Color = a_FillColor;\n    #endif\n\n    gl_PointSize = v_Size;\n}\n\n@end\n\n@export ecgl.sdfSprite.fragment\n\nuniform vec4 color: [1, 1, 1, 1];\nuniform vec4 strokeColor: [1, 1, 1, 1];\nuniform float smoothing: 0.07;\n\nuniform float lineWidth: 0.0;\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying float v_Size;\n\nuniform sampler2D sprite;\n\n@import qtek.util.srgb\n\nvoid main()\n{\n    gl_FragColor = color;\n\n    vec4 _strokeColor = strokeColor;\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n        #endif\n\n#ifdef SPRITE_ENABLED\n    float d = texture2D(sprite, gl_PointCoord).r;\n        gl_FragColor.a *= smoothstep(0.5 - smoothing, 0.5 + smoothing, d);\n\n    if (lineWidth > 0.0) {\n                float sLineWidth = lineWidth / 2.0;\n\n        float outlineMaxValue0 = 0.5 + sLineWidth;\n        float outlineMaxValue1 = 0.5 + sLineWidth + smoothing;\n        float outlineMinValue0 = 0.5 - sLineWidth - smoothing;\n        float outlineMinValue1 = 0.5 - sLineWidth;\n\n                if (d <= outlineMaxValue1 && d >= outlineMinValue0) {\n            float a = _strokeColor.a;\n            if (d <= outlineMinValue1) {\n                a = a * smoothstep(outlineMinValue0, outlineMinValue1, d);\n            }\n            else {\n                a = a * smoothstep(outlineMaxValue1, outlineMaxValue0, d);\n            }\n            gl_FragColor.rgb = mix(gl_FragColor.rgb * gl_FragColor.a, _strokeColor.rgb, a);\n            gl_FragColor.a = gl_FragColor.a * (1.0 - a) + a;\n        }\n    }\n#endif\n\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(gl_FragColor);\n#endif\n\n    if (gl_FragColor.a == 0.0) {\n        discard;\n    }\n}\n@end";
 
 
 /***/ }),
@@ -28716,7 +28876,9 @@ var Line3DSeries = echarts.extendSeriesModel({
 
         lineStyle: {
             width: 2
-        }
+        },
+
+        animationDurationUpdate: 500
     }
 });
 
@@ -28733,7 +28895,7 @@ var Lines3DGeometry = __webpack_require__(22);
 var Matrix4 = __webpack_require__(10);
 var Vector3 = __webpack_require__(3);
 var vec3 = __webpack_require__(1).vec3;
-var lineContain = __webpack_require__(221);
+var lineContain = __webpack_require__(222);
 var TooltipHelper = __webpack_require__(33);
 
 graphicGL.Shader.import(__webpack_require__(39));
@@ -28748,35 +28910,40 @@ module.exports = echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
 
-        var line3DMesh = new graphicGL.Mesh({
-            geometry: new Lines3DGeometry({
-                useNativeLine: false,
-                sortTriangles: true
-            }),
-            material: new graphicGL.Material({
-                shader: graphicGL.createShader('ecgl.meshLines3D')
-            }),
-            // Render after axes
-            renderOrder: 10
-        });
-
-        this._line3DMesh = line3DMesh;
-        this._line3DMesh.geometry.pick = this._pick.bind(this);
-
         this._api = api;
 
         this._tooltip = new TooltipHelper(api);
     },
 
     render: function (seriesModel, ecModel, api) {
+        var tmp = this._prevLine3DMesh;
+        this._prevLine3DMesh = this._line3DMesh;
+        this._line3DMesh = tmp;
+
+        if (!this._line3DMesh) {
+            this._line3DMesh = new graphicGL.Mesh({
+                geometry: new Lines3DGeometry({
+                    useNativeLine: false,
+                    sortTriangles: true
+                }),
+                material: new graphicGL.Material({
+                    shader: graphicGL.createShader('ecgl.meshLines3D')
+                }),
+                // Render after axes
+                renderOrder: 10
+            });
+            this._line3DMesh.geometry.pick = this._pick.bind(this);
+        }
+
+        this.groupGL.remove(this._prevLine3DMesh);
         this.groupGL.add(this._line3DMesh);
 
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
             // TODO
-            // var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
-            // this._line3DMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
+            this._line3DMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
         this._doRender(seriesModel, api);
 
@@ -28785,6 +28952,8 @@ module.exports = echarts.extendChartView({
         this._camera = coordSys.viewGL.camera;
 
         this.updateCamera();
+
+        this._updateAnimation(seriesModel);
     },
 
     updateCamera: function () {
@@ -28805,9 +28974,6 @@ module.exports = echarts.extendChartView({
         var hasTransparent = false;
 
         data.each(function (idx) {
-            // if (!data.hasValue(idx)) {
-            //     return;
-            // }
             var color = data.getItemVisual(idx, 'color');
             var opacity = data.getItemVisual(idx, 'opacity');
             if (opacity == null) {
@@ -28853,7 +29019,7 @@ module.exports = echarts.extendChartView({
             lineMesh.material.shader.define('both', 'WIREFRAME_TRIANGLE');
             lineMesh.material.set(
                 'wireframeLineColor', graphicGL.parseColor(
-                    debugWireframeModel.get('lineStyle.color')
+                    debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
                 )
             );
             lineMesh.material.set(
@@ -28871,6 +29037,17 @@ module.exports = echarts.extendChartView({
         this._initHandler(seriesModel, api);
     },
 
+    _updateAnimation: function (seriesModel) {
+        graphicGL.updateVertexAnimation(
+            [['prevPosition', 'position'],
+            ['prevPositionPrev', 'positionPrev'],
+            ['prevPositionNext', 'positionNext']],
+            this._prevLine3DMesh,
+            this._line3DMesh,
+            seriesModel
+        );
+    },
+
     _initHandler: function (seriesModel, api) {
         var data = seriesModel.getData();
         var coordSys = seriesModel.coordinateSystem;
@@ -28883,8 +29060,8 @@ module.exports = echarts.extendChartView({
             var value = coordSys.pointToData(e.point._array);
             var dataIndex = data.indicesOfNearest('x', value[0])[0];
             if (dataIndex !== lastDataIndex) {
-                this._downplay(lastDataIndex);
-                this._highlight(dataIndex);
+                // this._downplay(lastDataIndex);
+                // this._highlight(dataIndex);
 
                 api.dispatchAction({
                     type: 'grid3DShowAxisPointer',
@@ -28897,7 +29074,7 @@ module.exports = echarts.extendChartView({
             lastDataIndex = dataIndex;
         }, this);
         lineMesh.on('mouseout', function (e) {
-            this._downplay(lastDataIndex);
+            // this._downplay(lastDataIndex);
             lastDataIndex = -1;
             api.dispatchAction({
                 type: 'grid3DHideAxisPointer'
@@ -28906,48 +29083,20 @@ module.exports = echarts.extendChartView({
         }, this);
     },
 
-    _highlight: function (dataIndex) {
-        var data = this._data;
-        if (!data) {
-            return;
-        }
-        // var barIndex = this._barIndexOfData[dataIndex];
-        // if (barIndex < 0) {
-        //     return;
-        // }
+    // _highlight: function (dataIndex) {
+    //     var data = this._data;
+    //     if (!data) {
+    //         return;
+    //     }
 
-        // var itemModel = data.getItemModel(dataIndex);
-        // var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
-        // var emphasisColor = emphasisItemStyleModel.get('color');
-        // var emphasisOpacity = emphasisItemStyleModel.get('opacity');
-        // if (emphasisColor == null) {
-        //     var color = data.getItemVisual(dataIndex, 'color');
-        //     emphasisColor = echarts.color.lift(color, -0.4);
-        // }
-        // if (emphasisOpacity == null) {
-        //     emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
-        // }
-        // var colorArr = graphicGL.parseColor(emphasisColor);
-        // colorArr[3] *= emphasisOpacity;
+    // },
 
-    },
-
-    _downplay: function (dataIndex) {
-        var data = this._data;
-        if (!data) {
-            return;
-        }
-        // var barIndex = this._barIndexOfData[dataIndex];
-        // if (barIndex < 0) {
-        //     return;
-        // }
-
-        // var color = data.getItemVisual(dataIndex, 'color');
-        // var opacity = data.getItemVisual(dataIndex, 'opacity');
-
-        // var colorArr = graphicGL.parseColor(color);
-        // colorArr[3] *= opacity;
-    },
+    // _downplay: function (dataIndex) {
+    //     var data = this._data;
+    //     if (!data) {
+    //         return;
+    //     }
+    // },
 
     _updateNDCPosition: function () {
 
@@ -29979,7 +30128,9 @@ var Scatter3DSeries = echarts.extendSeriesModel({
             label: {
                 show: true
             }
-        }
+        },
+
+        animationDurationUpdate: 500
     }
 });
 
@@ -30282,7 +30433,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
             show: true,
 
             lineStyle: {
-                color: '#222',
+                color: 'rgba(0,0,0,0.5)',
                 width: 1
             }
         },
@@ -30324,7 +30475,9 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
         itemStyle: {
             // Color
-        }
+        },
+
+        animationDurationUpdate: 500
     }
 });
 
@@ -30367,30 +30520,19 @@ echarts.extendChartView({
         });
 
         this._materials = materials;
-
-        var mesh = new graphicGL.Mesh({
-            geometry: new graphicGL.Geometry({
-                dynamic: true,
-                sortTriangles: true
-            }),
-            material: materials.lambert,
-            culling: false,
-
-            // Render after axes
-            renderOrder: 10
-        });
-        mesh.geometry.createAttribute('barycentric', 'float', 4, null),
-
-        echarts.util.extend(mesh.geometry, trianglesSortMixin);
-
-        this._surfaceMesh = mesh;
-
-        // TODO Cross mesh.
-        // this._pointerMesh = new graphicGL.Mesh({
-        // });
     },
 
     render: function (seriesModel, ecModel, api) {
+        // Swap surfaceMesh
+        var tmp = this._prevSurfaceMesh;
+        this._prevSurfaceMesh = this._surfaceMesh;
+        this._surfaceMesh = tmp;
+
+        if (!this._surfaceMesh) {
+            this._surfaceMesh = this._createSurfaceMesh();
+        }
+
+        this.groupGL.remove(this._prevSurfaceMesh);
         this.groupGL.add(this._surfaceMesh);
 
         var coordSys = seriesModel.coordinateSystem;
@@ -30430,7 +30572,7 @@ echarts.extendChartView({
         if (showWireframe) {
             material.shader.define('WIREFRAME_QUAD');
             material.set('wireframeLineWidth', wireframeLineWidth);
-            material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineStyle.color')).slice(0, 3));
+            material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineStyle.color')));
         }
         else {
             material.shader.undefine('WIREFRAME_QUAD');
@@ -30439,6 +30581,43 @@ echarts.extendChartView({
         this._initHandler(seriesModel, api);
 
         this._tooltip = new TooltipHelper(api);
+
+        this._updateAnimation(seriesModel);
+    },
+
+    _updateAnimation: function (seriesModel) {
+        graphicGL.updateVertexAnimation(
+            [['prevPosition', 'position'],
+            ['prevNormal', 'normal']],
+            this._prevSurfaceMesh,
+            this._surfaceMesh,
+            seriesModel
+        );
+    },
+
+    _createSurfaceMesh: function () {
+        var mesh = new graphicGL.Mesh({
+            geometry: new graphicGL.Geometry({
+                dynamic: true,
+                sortTriangles: true
+            }),
+            shadowDepthMaterial: new graphicGL.Material({
+                shader: new graphicGL.Shader({
+                    vertex: graphicGL.Shader.source('ecgl.sm.depth.vertex'),
+                    fragment: graphicGL.Shader.source('ecgl.sm.depth.fragment')
+                })
+            }),
+            culling: false,
+            // Render after axes
+            renderOrder: 10
+        });
+        mesh.geometry.createAttribute('barycentric', 'float', 4);
+        mesh.geometry.createAttribute('prevPosition', 'float', 3);
+        mesh.geometry.createAttribute('prevNormal', 'float', 3);
+
+        echarts.util.extend(mesh.geometry, trianglesSortMixin);
+
+        return mesh;
     },
 
     _initHandler: function (seriesModel, api) {
@@ -31140,7 +31319,12 @@ var GlobeModel = echarts.extendComponentModel({
         // temporalSuperSampling
 
         viewControl: {
-            autoRotate: true
+            autoRotate: true,
+
+            panSensitivity: 0,
+
+            longitude: null,
+            latitude: null
         },
 
 
@@ -31433,7 +31617,7 @@ module.exports = echarts.extendComponentView({
         if (debugWireframeModel.get('show')) {
             earthMaterial.shader.define('both', 'WIREFRAME_TRIANGLE');
             var color = graphicGL.parseColor(
-                debugWireframeModel.get('lineStyle.color')
+                debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
             );
             var width = retrieve.firstNotNull(
                 debugWireframeModel.get('lineStyle.width'), 1
@@ -31470,7 +31654,21 @@ module.exports = echarts.extendComponentView({
         control.setCamera(camera);
         control.setViewGL(coordSys.viewGL);
 
-        control.setFromViewControlModel(viewControlModel, coordSys.radius);
+        var longitude = viewControlModel.get('longitude');
+        var latitude = viewControlModel.get('latitude');
+        var alpha, beta;
+        if (longitude != null) {
+            beta = longitude - 90;
+        }
+        if (latitude != null) {
+            alpha = -latitude;
+        }
+
+        control.setFromViewControlModel(viewControlModel, {
+            baseDistance: coordSys.radius,
+            alpha: alpha,
+            beta: beta
+        });
 
         control.off('update');
         control.on('update', function () {
@@ -31531,6 +31729,7 @@ module.exports = echarts.extendComponentView({
                 if (showDebugWireframe) {
                     geometry.generateBarycentric();
                 }
+                api.getZr().refresh();
             };
             img.src = displacementTextureValue;
         }
@@ -32422,15 +32621,17 @@ module.exports = echarts.extendComponentView({
             }
             return obj;
         }, {});
-        this._faces.forEach(function (face) {
-            face.update(labelIntervalFuncs, grid3DModel, ecModel, api);
-        }, this);
-
-        this._axes.forEach(function (axis) {
-            axis.update(grid3DModel, labelIntervalFuncs, this._axisLabelSurface, api);
-        }, this);
 
         control.off('update');
+        if (grid3DModel.get('show')) {
+            this._faces.forEach(function (face) {
+                face.update(labelIntervalFuncs, grid3DModel, ecModel, api);
+            }, this);
+            this._axes.forEach(function (axis) {
+                axis.update(grid3DModel, labelIntervalFuncs, this._axisLabelSurface, api);
+            }, this);
+        }
+
         control.on('update', this._onCameraChange.bind(this, grid3DModel, api), this);
 
         this._sceneHelper.setScene(cartesian.viewGL.scene);
@@ -32530,8 +32731,12 @@ module.exports = echarts.extendComponentView({
     },
 
     _onCameraChange: function (grid3DModel, api) {
-        this._updateFaceVisibility();
-        this._updateAxisLinePosition();
+
+        if (grid3DModel.get('show')) {
+            this._updateFaceVisibility();
+            this._updateAxisLinePosition();
+        }
+
         var control = this._control;
 
         api.dispatchAction({
@@ -33651,7 +33856,7 @@ module.exports = grid3DCreator;
 
 var echarts = __webpack_require__(0);
 var Renderer = __webpack_require__(51);
-var RayPicking = __webpack_require__(190);
+var RayPicking = __webpack_require__(191);
 var Texture = __webpack_require__(6);
 
 // PENDING, qtek notifier is same with zrender Eventful
@@ -34205,24 +34410,24 @@ var Shader = __webpack_require__(9);
 var Texture2D = __webpack_require__(7);
 var Texture = __webpack_require__(6);
 var FrameBuffer = __webpack_require__(11);
-var FXLoader = __webpack_require__(185);
+var FXLoader = __webpack_require__(186);
 var SSAOPass = __webpack_require__(149);
 var poissonKernel = __webpack_require__(152);
 var graphicGL = __webpack_require__(2);
 
 var effectJson = __webpack_require__(151);
 
-Shader['import'](__webpack_require__(194));
-Shader['import'](__webpack_require__(201));
-Shader['import'](__webpack_require__(202));
 Shader['import'](__webpack_require__(195));
-Shader['import'](__webpack_require__(197));
+Shader['import'](__webpack_require__(202));
 Shader['import'](__webpack_require__(203));
-Shader['import'](__webpack_require__(199));
 Shader['import'](__webpack_require__(196));
-Shader['import'](__webpack_require__(200));
-Shader['import'](__webpack_require__(193));
 Shader['import'](__webpack_require__(198));
+Shader['import'](__webpack_require__(204));
+Shader['import'](__webpack_require__(200));
+Shader['import'](__webpack_require__(197));
+Shader['import'](__webpack_require__(201));
+Shader['import'](__webpack_require__(194));
+Shader['import'](__webpack_require__(199));
 Shader['import'](__webpack_require__(146));
 
 function EffectCompositor() {
@@ -36011,10 +36216,11 @@ var Roam2DControl = Base.extend(function () {
 module.exports = Roam2DControl;
 
 /***/ }),
-/* 156 */
+/* 156 */,
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Animator = __webpack_require__(218);
+var Animator = __webpack_require__(219);
 
 var animatableMixin = {
 
@@ -36109,631 +36315,6 @@ var animatableMixin = {
 module.exports = animatableMixin;
 
 /***/ }),
-/* 157 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-// https://github.com/mapbox/earcut/blob/master/src/earcut.js
-
-
-module.exports = earcut;
-
-function earcut(data, holeIndices, dim) {
-
-    dim = dim || 2;
-
-    var hasHoles = holeIndices && holeIndices.length,
-        outerLen = hasHoles ? holeIndices[0] * dim : data.length,
-        outerNode = linkedList(data, 0, outerLen, dim, true),
-        triangles = [];
-
-    if (!outerNode) return triangles;
-
-    var minX, minY, maxX, maxY, x, y, size;
-
-    if (hasHoles) outerNode = eliminateHoles(data, holeIndices, outerNode, dim);
-
-    // if the shape is not too simple, we'll use z-order curve hash later; calculate polygon bbox
-    if (data.length > 80 * dim) {
-        minX = maxX = data[0];
-        minY = maxY = data[1];
-
-        for (var i = dim; i < outerLen; i += dim) {
-            x = data[i];
-            y = data[i + 1];
-            if (x < minX) minX = x;
-            if (y < minY) minY = y;
-            if (x > maxX) maxX = x;
-            if (y > maxY) maxY = y;
-        }
-
-        // minX, minY and size are later used to transform coords into integers for z-order calculation
-        size = Math.max(maxX - minX, maxY - minY);
-    }
-
-    earcutLinked(outerNode, triangles, dim, minX, minY, size);
-
-    return triangles;
-}
-
-// create a circular doubly linked list from polygon points in the specified winding order
-function linkedList(data, start, end, dim, clockwise) {
-    var i, last;
-
-    if (clockwise === (signedArea(data, start, end, dim) > 0)) {
-        for (i = start; i < end; i += dim) last = insertNode(i, data[i], data[i + 1], last);
-    } else {
-        for (i = end - dim; i >= start; i -= dim) last = insertNode(i, data[i], data[i + 1], last);
-    }
-
-    if (last && equals(last, last.next)) {
-        removeNode(last);
-        last = last.next;
-    }
-
-    return last;
-}
-
-// eliminate colinear or duplicate points
-function filterPoints(start, end) {
-    if (!start) return start;
-    if (!end) end = start;
-
-    var p = start,
-        again;
-    do {
-        again = false;
-
-        if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) {
-            removeNode(p);
-            p = end = p.prev;
-            if (p === p.next) return null;
-            again = true;
-
-        } else {
-            p = p.next;
-        }
-    } while (again || p !== end);
-
-    return end;
-}
-
-// main ear slicing loop which triangulates a polygon (given as a linked list)
-function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
-    if (!ear) return;
-
-    // interlink polygon nodes in z-order
-    if (!pass && size) indexCurve(ear, minX, minY, size);
-
-    var stop = ear,
-        prev, next;
-
-    // iterate through ears, slicing them one by one
-    while (ear.prev !== ear.next) {
-        prev = ear.prev;
-        next = ear.next;
-
-        if (size ? isEarHashed(ear, minX, minY, size) : isEar(ear)) {
-            // cut off the triangle
-            triangles.push(prev.i / dim);
-            triangles.push(ear.i / dim);
-            triangles.push(next.i / dim);
-
-            removeNode(ear);
-
-            // skipping the next vertice leads to less sliver triangles
-            ear = next.next;
-            stop = next.next;
-
-            continue;
-        }
-
-        ear = next;
-
-        // if we looped through the whole remaining polygon and can't find any more ears
-        if (ear === stop) {
-            // try filtering points and slicing again
-            if (!pass) {
-                earcutLinked(filterPoints(ear), triangles, dim, minX, minY, size, 1);
-
-            // if this didn't work, try curing all small self-intersections locally
-            } else if (pass === 1) {
-                ear = cureLocalIntersections(ear, triangles, dim);
-                earcutLinked(ear, triangles, dim, minX, minY, size, 2);
-
-            // as a last resort, try splitting the remaining polygon into two
-            } else if (pass === 2) {
-                splitEarcut(ear, triangles, dim, minX, minY, size);
-            }
-
-            break;
-        }
-    }
-}
-
-// check whether a polygon node forms a valid ear with adjacent nodes
-function isEar(ear) {
-    var a = ear.prev,
-        b = ear,
-        c = ear.next;
-
-    if (area(a, b, c) >= 0) return false; // reflex, can't be an ear
-
-    // now make sure we don't have other points inside the potential ear
-    var p = ear.next.next;
-
-    while (p !== ear.prev) {
-        if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
-            area(p.prev, p, p.next) >= 0) return false;
-        p = p.next;
-    }
-
-    return true;
-}
-
-function isEarHashed(ear, minX, minY, size) {
-    var a = ear.prev,
-        b = ear,
-        c = ear.next;
-
-    if (area(a, b, c) >= 0) return false; // reflex, can't be an ear
-
-    // triangle bbox; min & max are calculated like this for speed
-    var minTX = a.x < b.x ? (a.x < c.x ? a.x : c.x) : (b.x < c.x ? b.x : c.x),
-        minTY = a.y < b.y ? (a.y < c.y ? a.y : c.y) : (b.y < c.y ? b.y : c.y),
-        maxTX = a.x > b.x ? (a.x > c.x ? a.x : c.x) : (b.x > c.x ? b.x : c.x),
-        maxTY = a.y > b.y ? (a.y > c.y ? a.y : c.y) : (b.y > c.y ? b.y : c.y);
-
-    // z-order range for the current triangle bbox;
-    var minZ = zOrder(minTX, minTY, minX, minY, size),
-        maxZ = zOrder(maxTX, maxTY, minX, minY, size);
-
-    // first look for points inside the triangle in increasing z-order
-    var p = ear.nextZ;
-
-    while (p && p.z <= maxZ) {
-        if (p !== ear.prev && p !== ear.next &&
-            pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
-            area(p.prev, p, p.next) >= 0) return false;
-        p = p.nextZ;
-    }
-
-    // then look for points in decreasing z-order
-    p = ear.prevZ;
-
-    while (p && p.z >= minZ) {
-        if (p !== ear.prev && p !== ear.next &&
-            pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
-            area(p.prev, p, p.next) >= 0) return false;
-        p = p.prevZ;
-    }
-
-    return true;
-}
-
-// go through all polygon nodes and cure small local self-intersections
-function cureLocalIntersections(start, triangles, dim) {
-    var p = start;
-    do {
-        var a = p.prev,
-            b = p.next.next;
-
-        if (!equals(a, b) && intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
-
-            triangles.push(a.i / dim);
-            triangles.push(p.i / dim);
-            triangles.push(b.i / dim);
-
-            // remove two nodes involved
-            removeNode(p);
-            removeNode(p.next);
-
-            p = start = b;
-        }
-        p = p.next;
-    } while (p !== start);
-
-    return p;
-}
-
-// try splitting polygon into two and triangulate them independently
-function splitEarcut(start, triangles, dim, minX, minY, size) {
-    // look for a valid diagonal that divides the polygon into two
-    var a = start;
-    do {
-        var b = a.next.next;
-        while (b !== a.prev) {
-            if (a.i !== b.i && isValidDiagonal(a, b)) {
-                // split the polygon in two by the diagonal
-                var c = splitPolygon(a, b);
-
-                // filter colinear points around the cuts
-                a = filterPoints(a, a.next);
-                c = filterPoints(c, c.next);
-
-                // run earcut on each half
-                earcutLinked(a, triangles, dim, minX, minY, size);
-                earcutLinked(c, triangles, dim, minX, minY, size);
-                return;
-            }
-            b = b.next;
-        }
-        a = a.next;
-    } while (a !== start);
-}
-
-// link every hole into the outer loop, producing a single-ring polygon without holes
-function eliminateHoles(data, holeIndices, outerNode, dim) {
-    var queue = [],
-        i, len, start, end, list;
-
-    for (i = 0, len = holeIndices.length; i < len; i++) {
-        start = holeIndices[i] * dim;
-        end = i < len - 1 ? holeIndices[i + 1] * dim : data.length;
-        list = linkedList(data, start, end, dim, false);
-        if (list === list.next) list.steiner = true;
-        queue.push(getLeftmost(list));
-    }
-
-    queue.sort(compareX);
-
-    // process holes from left to right
-    for (i = 0; i < queue.length; i++) {
-        eliminateHole(queue[i], outerNode);
-        outerNode = filterPoints(outerNode, outerNode.next);
-    }
-
-    return outerNode;
-}
-
-function compareX(a, b) {
-    return a.x - b.x;
-}
-
-// find a bridge between vertices that connects hole with an outer ring and and link it
-function eliminateHole(hole, outerNode) {
-    outerNode = findHoleBridge(hole, outerNode);
-    if (outerNode) {
-        var b = splitPolygon(outerNode, hole);
-        filterPoints(b, b.next);
-    }
-}
-
-// David Eberly's algorithm for finding a bridge between hole and outer polygon
-function findHoleBridge(hole, outerNode) {
-    var p = outerNode,
-        hx = hole.x,
-        hy = hole.y,
-        qx = -Infinity,
-        m;
-
-    // find a segment intersected by a ray from the hole's leftmost point to the left;
-    // segment's endpoint with lesser x will be potential connection point
-    do {
-        if (hy <= p.y && hy >= p.next.y && p.next.y !== p.y) {
-            var x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y);
-            if (x <= hx && x > qx) {
-                qx = x;
-                if (x === hx) {
-                    if (hy === p.y) return p;
-                    if (hy === p.next.y) return p.next;
-                }
-                m = p.x < p.next.x ? p : p.next;
-            }
-        }
-        p = p.next;
-    } while (p !== outerNode);
-
-    if (!m) return null;
-
-    if (hx === qx) return m.prev; // hole touches outer segment; pick lower endpoint
-
-    // look for points inside the triangle of hole point, segment intersection and endpoint;
-    // if there are no points found, we have a valid connection;
-    // otherwise choose the point of the minimum angle with the ray as connection point
-
-    var stop = m,
-        mx = m.x,
-        my = m.y,
-        tanMin = Infinity,
-        tan;
-
-    p = m.next;
-
-    while (p !== stop) {
-        if (hx >= p.x && p.x >= mx && hx !== p.x &&
-                pointInTriangle(hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p.x, p.y)) {
-
-            tan = Math.abs(hy - p.y) / (hx - p.x); // tangential
-
-            if ((tan < tanMin || (tan === tanMin && p.x > m.x)) && locallyInside(p, hole)) {
-                m = p;
-                tanMin = tan;
-            }
-        }
-
-        p = p.next;
-    }
-
-    return m;
-}
-
-// interlink polygon nodes in z-order
-function indexCurve(start, minX, minY, size) {
-    var p = start;
-    do {
-        if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, size);
-        p.prevZ = p.prev;
-        p.nextZ = p.next;
-        p = p.next;
-    } while (p !== start);
-
-    p.prevZ.nextZ = null;
-    p.prevZ = null;
-
-    sortLinked(p);
-}
-
-// Simon Tatham's linked list merge sort algorithm
-// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
-function sortLinked(list) {
-    var i, p, q, e, tail, numMerges, pSize, qSize,
-        inSize = 1;
-
-    do {
-        p = list;
-        list = null;
-        tail = null;
-        numMerges = 0;
-
-        while (p) {
-            numMerges++;
-            q = p;
-            pSize = 0;
-            for (i = 0; i < inSize; i++) {
-                pSize++;
-                q = q.nextZ;
-                if (!q) break;
-            }
-            qSize = inSize;
-
-            while (pSize > 0 || (qSize > 0 && q)) {
-
-                if (pSize !== 0 && (qSize === 0 || !q || p.z <= q.z)) {
-                    e = p;
-                    p = p.nextZ;
-                    pSize--;
-                } else {
-                    e = q;
-                    q = q.nextZ;
-                    qSize--;
-                }
-
-                if (tail) tail.nextZ = e;
-                else list = e;
-
-                e.prevZ = tail;
-                tail = e;
-            }
-
-            p = q;
-        }
-
-        tail.nextZ = null;
-        inSize *= 2;
-
-    } while (numMerges > 1);
-
-    return list;
-}
-
-// z-order of a point given coords and size of the data bounding box
-function zOrder(x, y, minX, minY, size) {
-    // coords are transformed into non-negative 15-bit integer range
-    x = 32767 * (x - minX) / size;
-    y = 32767 * (y - minY) / size;
-
-    x = (x | (x << 8)) & 0x00FF00FF;
-    x = (x | (x << 4)) & 0x0F0F0F0F;
-    x = (x | (x << 2)) & 0x33333333;
-    x = (x | (x << 1)) & 0x55555555;
-
-    y = (y | (y << 8)) & 0x00FF00FF;
-    y = (y | (y << 4)) & 0x0F0F0F0F;
-    y = (y | (y << 2)) & 0x33333333;
-    y = (y | (y << 1)) & 0x55555555;
-
-    return x | (y << 1);
-}
-
-// find the leftmost node of a polygon ring
-function getLeftmost(start) {
-    var p = start,
-        leftmost = start;
-    do {
-        if (p.x < leftmost.x) leftmost = p;
-        p = p.next;
-    } while (p !== start);
-
-    return leftmost;
-}
-
-// check if a point lies within a convex triangle
-function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
-    return (cx - px) * (ay - py) - (ax - px) * (cy - py) >= 0 &&
-           (ax - px) * (by - py) - (bx - px) * (ay - py) >= 0 &&
-           (bx - px) * (cy - py) - (cx - px) * (by - py) >= 0;
-}
-
-// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
-function isValidDiagonal(a, b) {
-    return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
-           locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b);
-}
-
-// signed area of a triangle
-function area(p, q, r) {
-    return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-}
-
-// check if two points are equal
-function equals(p1, p2) {
-    return p1.x === p2.x && p1.y === p2.y;
-}
-
-// check if two segments intersect
-function intersects(p1, q1, p2, q2) {
-    if ((equals(p1, q1) && equals(p2, q2)) ||
-        (equals(p1, q2) && equals(p2, q1))) return true;
-    return area(p1, q1, p2) > 0 !== area(p1, q1, q2) > 0 &&
-           area(p2, q2, p1) > 0 !== area(p2, q2, q1) > 0;
-}
-
-// check if a polygon diagonal intersects any polygon segments
-function intersectsPolygon(a, b) {
-    var p = a;
-    do {
-        if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i &&
-                intersects(p, p.next, a, b)) return true;
-        p = p.next;
-    } while (p !== a);
-
-    return false;
-}
-
-// check if a polygon diagonal is locally inside the polygon
-function locallyInside(a, b) {
-    return area(a.prev, a, a.next) < 0 ?
-        area(a, b, a.next) >= 0 && area(a, a.prev, b) >= 0 :
-        area(a, b, a.prev) < 0 || area(a, a.next, b) < 0;
-}
-
-// check if the middle point of a polygon diagonal is inside the polygon
-function middleInside(a, b) {
-    var p = a,
-        inside = false,
-        px = (a.x + b.x) / 2,
-        py = (a.y + b.y) / 2;
-    do {
-        if (((p.y > py) !== (p.next.y > py)) && p.next.y !== p.y &&
-                (px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x))
-            inside = !inside;
-        p = p.next;
-    } while (p !== a);
-
-    return inside;
-}
-
-// link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
-// if one belongs to the outer ring and another to a hole, it merges it into a single ring
-function splitPolygon(a, b) {
-    var a2 = new Node(a.i, a.x, a.y),
-        b2 = new Node(b.i, b.x, b.y),
-        an = a.next,
-        bp = b.prev;
-
-    a.next = b;
-    b.prev = a;
-
-    a2.next = an;
-    an.prev = a2;
-
-    b2.next = a2;
-    a2.prev = b2;
-
-    bp.next = b2;
-    b2.prev = bp;
-
-    return b2;
-}
-
-// create a node and optionally link it with previous one (in a circular doubly linked list)
-function insertNode(i, x, y, last) {
-    var p = new Node(i, x, y);
-
-    if (!last) {
-        p.prev = p;
-        p.next = p;
-
-    } else {
-        p.next = last.next;
-        p.prev = last;
-        last.next.prev = p;
-        last.next = p;
-    }
-    return p;
-}
-
-function removeNode(p) {
-    p.next.prev = p.prev;
-    p.prev.next = p.next;
-
-    if (p.prevZ) p.prevZ.nextZ = p.nextZ;
-    if (p.nextZ) p.nextZ.prevZ = p.prevZ;
-}
-
-function Node(i, x, y) {
-    // vertice index in coordinates array
-    this.i = i;
-
-    // vertex coordinates
-    this.x = x;
-    this.y = y;
-
-    // previous and next vertice nodes in a polygon ring
-    this.prev = null;
-    this.next = null;
-
-    // z-order curve value
-    this.z = null;
-
-    // previous and next nodes in z-order
-    this.prevZ = null;
-    this.nextZ = null;
-
-    // indicates whether this is a steiner point
-    this.steiner = false;
-}
-
-// return a percentage difference between the polygon area and its triangulation area;
-// used to verify correctness of triangulation
-earcut.deviation = function (data, holeIndices, dim, triangles) {
-    var hasHoles = holeIndices && holeIndices.length;
-    var outerLen = hasHoles ? holeIndices[0] * dim : data.length;
-
-    var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
-    if (hasHoles) {
-        for (var i = 0, len = holeIndices.length; i < len; i++) {
-            var start = holeIndices[i] * dim;
-            var end = i < len - 1 ? holeIndices[i + 1] * dim : data.length;
-            polygonArea -= Math.abs(signedArea(data, start, end, dim));
-        }
-    }
-
-    var trianglesArea = 0;
-    for (i = 0; i < triangles.length; i += 3) {
-        var a = triangles[i] * dim;
-        var b = triangles[i + 1] * dim;
-        var c = triangles[i + 2] * dim;
-        trianglesArea += Math.abs(
-            (data[a] - data[c]) * (data[b + 1] - data[a + 1]) -
-            (data[a] - data[b]) * (data[c + 1] - data[a + 1]));
-    }
-
-    return polygonArea === 0 && trianglesArea === 0 ? 0 :
-        Math.abs((trianglesArea - polygonArea) / polygonArea);
-};
-
-function signedArea(data, start, end, dim) {
-    var sum = 0;
-    for (var i = start, j = end - dim; i < end; i += dim) {
-        sum += (data[j] - data[i]) * (data[i + 1] + data[j + 1]);
-        j = i;
-    }
-    return sum;
-}
-
-/***/ }),
 /* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -36764,7 +36345,10 @@ var BarsGeometry = StaticGeometry.extend(function () {
         attributes: {
             position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
             normal: new StaticGeometry.Attribute('normal', 'float', 3, 'NORMAL'),
-            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR'),
+
+            prevPosition: new StaticGeometry.Attribute('prevPosition', 'float', 3),
+            prevNormal: new StaticGeometry.Attribute('prevNormal', 'float', 3)
         },
 
         dynamic: true,
@@ -37902,14 +37486,14 @@ module.exports = {
 /* 163 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.color.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec2 uvRepeat: [1, 1];\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position: POSITION;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n    v_Texcoord = texcoord * uvRepeat;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n\n}\n\n@end\n\n@export ecgl.color.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\nuniform sampler2D diffuseMap;\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nvarying vec2 v_Texcoord;\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color);\n#else\n    gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n                albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n                vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n\n    @import ecgl.wireframe.common.fragmentMain\n\n}\n@end";
+module.exports = "@export ecgl.color.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec2 uvRepeat: [1, 1];\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position: POSITION;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nuniform float percent : 1.0;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n#ifdef VERTEX_ANIMATION\n    vec3 pos = mix(prevPosition, position, percent);\n#else\n    vec3 pos = position;\n#endif\n\n    gl_Position = worldViewProjection * vec4(pos, 1.0);\n    v_Texcoord = texcoord * uvRepeat;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n\n}\n\n@end\n\n@export ecgl.color.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\nuniform sampler2D diffuseMap;\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nvarying vec2 v_Texcoord;\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color);\n#else\n    gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n    gl_FragColor *= v_Color;\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n                albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n                vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n\n    @import ecgl.wireframe.common.fragmentMain\n\n}\n@end";
 
 
 /***/ }),
 /* 164 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.wireframe.common.vertexHeader\n\n#ifdef WIREFRAME_QUAD\nattribute vec4 barycentric;\nvarying vec4 v_Barycentric;\n#elif defined(WIREFRAME_TRIANGLE)\nattribute vec3 barycentric;\nvarying vec3 v_Barycentric;\n#endif\n\n@end\n\n@export ecgl.wireframe.common.vertexMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n    v_Barycentric = barycentric;\n#endif\n\n@end\n\n\n@export ecgl.wireframe.common.fragmentHeader\n\nuniform float wireframeLineWidth : 1;\nuniform vec3 wireframeLineColor: [0.5, 0.5, 0.5];\n\n#ifdef WIREFRAME_QUAD\nvarying vec4 v_Barycentric;\nfloat edgeFactor () {\n    vec4 d = fwidth(v_Barycentric);\n    vec4 a4 = smoothstep(vec4(0.0), d * wireframeLineWidth, v_Barycentric);\n    return min(min(min(a4.x, a4.y), a4.z), a4.w);\n}\n#elif defined(WIREFRAME_TRIANGLE)\nvarying vec3 v_Barycentric;\nfloat edgeFactor () {\n    vec3 d = fwidth(v_Barycentric);\n    vec3 a3 = smoothstep(vec3(0.0), d * wireframeLineWidth, v_Barycentric);\n    return min(min(a3.x, a3.y), a3.z);\n}\n#endif\n\n@end\n\n\n@export ecgl.wireframe.common.fragmentMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n    if (wireframeLineWidth > 0.) {\n        vec3 lineColor = wireframeLineColor;\n#ifdef SRGB_DECODE\n        lineColor = sRGBToLinear(vec4(lineColor, 1.0)).rgb;\n#endif\n\n        gl_FragColor.rgb = mix(lineColor, gl_FragColor.rgb, edgeFactor());\n    }\n#endif\n@end\n\n";
+module.exports = "@export ecgl.wireframe.common.vertexHeader\n\n#ifdef WIREFRAME_QUAD\nattribute vec4 barycentric;\nvarying vec4 v_Barycentric;\n#elif defined(WIREFRAME_TRIANGLE)\nattribute vec3 barycentric;\nvarying vec3 v_Barycentric;\n#endif\n\n@end\n\n@export ecgl.wireframe.common.vertexMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n    v_Barycentric = barycentric;\n#endif\n\n@end\n\n\n@export ecgl.wireframe.common.fragmentHeader\n\nuniform float wireframeLineWidth : 1;\nuniform vec4 wireframeLineColor: [0, 0, 0, 0.5];\n\n#ifdef WIREFRAME_QUAD\nvarying vec4 v_Barycentric;\nfloat edgeFactor () {\n    vec4 d = fwidth(v_Barycentric);\n    vec4 a4 = smoothstep(vec4(0.0), d * wireframeLineWidth, v_Barycentric);\n    return min(min(min(a4.x, a4.y), a4.z), a4.w);\n}\n#elif defined(WIREFRAME_TRIANGLE)\nvarying vec3 v_Barycentric;\nfloat edgeFactor () {\n    vec3 d = fwidth(v_Barycentric);\n    vec3 a3 = smoothstep(vec3(0.0), d * wireframeLineWidth, v_Barycentric);\n    return min(min(a3.x, a3.y), a3.z);\n}\n#endif\n\n@end\n\n\n@export ecgl.wireframe.common.fragmentMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n    if (wireframeLineWidth > 0.) {\n        vec4 lineColor = wireframeLineColor;\n#ifdef SRGB_DECODE\n        lineColor = sRGBToLinear(lineColor);\n#endif\n\n        gl_FragColor.rgb = mix(gl_FragColor.rgb, lineColor.rgb, (1.0 - edgeFactor()) * lineColor.a);\n    }\n#endif\n@end\n\n";
 
 
 /***/ }),
@@ -37923,7 +37507,7 @@ module.exports = "@export ecgl.labels3D.vertex\n\nattribute vec3 position: POSIT
 /* 166 */
 /***/ (function(module, exports) {
 
-module.exports = "/**\n * http: */\n\n@export ecgl.lambert.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import qtek.util.srgb\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color);\n#else\n    gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    gl_FragColor *= sRGBToLinear(v_Color);\n    #else\n    gl_FragColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n                albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n    vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n                        diffuseColor += ambientLightColor[i] * ambientFactor;\n    }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseColor += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];\n    }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[i];\n        }\n#endif\n\n        float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end";
+module.exports = "/**\n * http: */\n\n@export ecgl.lambert.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nattribute vec3 prevNormal;\nuniform float percent;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n#ifdef VERTEX_ANIMATION\n    vec3 pos = mix(prevPosition, position, percent);\n    vec3 norm = mix(prevNormal, normal, percent);\n#else\n    vec3 pos = position;\n    vec3 norm = normal;\n#endif\n\n    gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import qtek.util.srgb\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color);\n#else\n    gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    gl_FragColor *= sRGBToLinear(v_Color);\n    #else\n    gl_FragColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n                albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    gl_FragColor *= albedoTexel;\n\n    vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n                        diffuseColor += ambientLightColor[i] * ambientFactor;\n    }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseColor += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];\n    }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[i];\n        }\n#endif\n\n        float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{\n        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end";
 
 
 /***/ }),
@@ -37937,7 +37521,7 @@ module.exports = "@export ecgl.lines2D.vertex\n\nuniform mat4 worldViewProjectio
 /* 168 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.realistic.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    gl_Position = worldViewProjection * vec4(position, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n\n}\n\n@end\n\n\n@export ecgl.realistic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvec3 F_Schlick(float ndv, vec3 spec) {\n    return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n        float a = pow(8192.0, g);\n    return (a + 2.0) / 8.0 * pow(ndh, a);\n}\nvoid main()\n{\n    vec4 albedoColor = color;\n\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    albedoColor *= sRGBToLinear(v_Color);\n    #else\n    albedoColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n                albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    albedoColor *= albedoTexel;\n\n    vec3 baseColor = albedoColor.rgb;\n    albedoColor.rgb = baseColor * (1.0 - metalness);\n    vec3 specFactor = mix(vec3(0.04), baseColor, metalness);\n\n    float g = 1.0 - roughness;\n\n    vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseTerm = vec3(0.0);\n    vec3 specularTerm = vec3(0.0);\n\n    float ndv = clamp(dot(N, V), 0.0, 1.0);\n    vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n    {{\n                        diffuseTerm += ambientLightColor[_idx_] * ambientFactor;\n    }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];\n    }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n    {{\n        vec3 L = -directionalLightDirection[_idx_];\n        vec3 lc = directionalLightColor[_idx_];\n\n        vec3 H = normalize(L + V);\n        float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n        float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[_idx_];\n        }\n#endif\n\n        vec3 li = lc * ndl * shadowContrib;\n\n        diffuseTerm += li;\n        specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n    }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n    vec3 L = reflect(-V, N);\n    float rough2 = clamp(1.0 - g, 0.0, 1.0);\n        float bias2 = rough2 * 5.0;\n        vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n    vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n    vec3 envTexel2;\n    for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n    {{\n        envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n                specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2;\n    }}\n#endif\n\n    gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n    gl_FragColor.a = albedoColor.a;\n\n    #ifdef SRGB_ENCODE\n    gl_FragColor = linearTosRGB(gl_FragColor);\n    #endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)\n    {{\n                vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end";
+module.exports = "@export ecgl.realistic.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n\n@import ecgl.wireframe.common.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nattribute vec3 prevNormal;\nuniform float percent;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n#ifdef VERTEX_ANIMATION\n    vec3 pos = mix(prevPosition, position, percent);\n    vec3 norm = mix(prevNormal, normal, percent);\n#else\n    vec3 pos = position;\n    vec3 norm = normal;\n#endif\n\n    gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.wireframe.common.vertexMain\n\n}\n\n@end\n\n\n@export ecgl.realistic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\nuniform float emissionIntensity: 1.0;\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n\n\nvec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n    vec2 dSTdx = dFdx(v_Texcoord);\n    vec2 dSTdy = dFdy(v_Texcoord);\n\n    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n    vec3 vSigmaX = dFdx(surfPos);\n    vec3 vSigmaY = dFdy(surfPos);\n    vec3 vN = surfNormal;\n\n    vec3 R1 = cross(vSigmaY, vN);\n    vec3 R2 = cross(vN, vSigmaX);\n\n    float fDet = dot(vSigmaX, R1);\n\n    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n    return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.wireframe.common.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvec3 F_Schlick(float ndv, vec3 spec) {\n    return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n        float a = pow(8192.0, g);\n    return (a + 2.0) / 8.0 * pow(ndh, a);\n}\nvoid main()\n{\n    vec4 albedoColor = color;\n\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    albedoColor *= sRGBToLinear(v_Color);\n    #else\n    albedoColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n        float intensity = layerDiffuseIntensity[_idx_];\n        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n        #ifdef SRGB_DECODE\n        texel2 = sRGBToLinear(texel2);\n        #endif\n                albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n    }}\n#endif\n    albedoColor *= albedoTexel;\n\n    vec3 baseColor = albedoColor.rgb;\n    albedoColor.rgb = baseColor * (1.0 - metalness);\n    vec3 specFactor = mix(vec3(0.04), baseColor, metalness);\n\n    float g = 1.0 - roughness;\n\n    vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = perturbNormalArb(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseTerm = vec3(0.0);\n    vec3 specularTerm = vec3(0.0);\n\n    float ndv = clamp(dot(N, V), 0.0, 1.0);\n    vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n    {{\n                        diffuseTerm += ambientLightColor[_idx_] * ambientFactor;\n    }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];\n    }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n    {{\n        vec3 L = -directionalLightDirection[_idx_];\n        vec3 lc = directionalLightColor[_idx_];\n\n        vec3 H = normalize(L + V);\n        float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n        float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[_idx_];\n        }\n#endif\n\n        vec3 li = lc * ndl * shadowContrib;\n\n        diffuseTerm += li;\n        specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n    }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n    vec3 L = reflect(-V, N);\n    float rough2 = clamp(1.0 - g, 0.0, 1.0);\n        float bias2 = rough2 * 5.0;\n        vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n    vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n    vec3 envTexel2;\n    for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n    {{\n        envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n                specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2;\n    }}\n#endif\n\n    gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n    gl_FragColor.a = albedoColor.a;\n\n    #ifdef SRGB_ENCODE\n    gl_FragColor = linearTosRGB(gl_FragColor);\n    #endif\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)\n    {{\n                vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n        float intensity = layerEmissionIntensity[_idx_];\n        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n    }}\n#endif\n\n    @import ecgl.wireframe.common.fragmentMain\n}\n\n@end";
 
 
 /***/ }),
@@ -38221,6 +37805,10 @@ module.exports = SunCalc;
 
     var zrUtil = __webpack_require__(14);
 
+    // id may be function name of Object, add a prefix to avoid this problem.
+    function generateNodeKey (id) {
+        return '_EC_' + id;
+    }
     /**
      * @alias module:echarts/data/Graph
      * @constructor
@@ -38294,7 +37882,7 @@ module.exports = SunCalc;
 
         var nodesMap = this._nodesMap;
 
-        if (nodesMap[id]) {
+        if (nodesMap[generateNodeKey(id)]) {
             return;
         }
 
@@ -38303,7 +37891,7 @@ module.exports = SunCalc;
 
         this.nodes.push(node);
 
-        nodesMap[id] = node;
+        nodesMap[generateNodeKey(id)] = node;
         return node;
     };
 
@@ -38322,7 +37910,7 @@ module.exports = SunCalc;
      * @return {module:echarts/data/Graph.Node}
      */
     graphProto.getNodeById = function (id) {
-        return this._nodesMap[id];
+        return this._nodesMap[generateNodeKey(id)];
     };
 
     /**
@@ -38345,10 +37933,10 @@ module.exports = SunCalc;
         }
 
         if (!(n1 instanceof Node)) {
-            n1 = nodesMap[n1];
+            n1 = nodesMap[generateNodeKey(n1)];
         }
         if (!(n2 instanceof Node)) {
-            n2 = nodesMap[n2];
+            n2 = nodesMap[generateNodeKey(n2)];
         }
         if (!n1 || !n2) {
             return;
@@ -38455,7 +38043,7 @@ module.exports = SunCalc;
         cb, startNode, direction, context
     ) {
         if (!(startNode instanceof Node)) {
-            startNode = this._nodesMap[startNode];
+            startNode = this._nodesMap[generateNodeKey(startNode)];
         }
         if (!startNode) {
             return;
@@ -38871,7 +38459,7 @@ module.exports = SunCalc;
 
     var zrUtil = __webpack_require__(14);
     var numberUtil = __webpack_require__(68);
-    var textContain = __webpack_require__(222);
+    var textContain = __webpack_require__(223);
 
     var formatUtil = {};
 
@@ -39166,17 +38754,17 @@ module.exports = SunCalc;
                 this.get = function (idx, out) {
                     var idx3 = idx * 3;
                     var arr = this.value;
-                    out[0] = arr[idx3++];
-                    out[1] = arr[idx3++];
-                    out[2] = arr[idx3++];
+                    out[0] = arr[idx3];
+                    out[1] = arr[idx3 + 1];
+                    out[2] = arr[idx3 + 2];
                     return out;
                 };
                 this.set = function (idx, val) {
                     var idx3 = idx * 3;
                     var arr = this.value;
-                    arr[idx3++] = val[0];
-                    arr[idx3++] = val[1];
-                    arr[idx3++] = val[2];
+                    arr[idx3] = val[0];
+                    arr[idx3 + 1] = val[1];
+                    arr[idx3 + 2] = val[2];
                 };
                 this.copy = function (target, source) {
                     var arr = this.value;
@@ -39191,19 +38779,19 @@ module.exports = SunCalc;
                 this.get = function (idx, out) {
                     var arr = this.value;
                     var idx4 = idx * 4;
-                    out[0] = arr[idx4++];
-                    out[1] = arr[idx4++];
-                    out[2] = arr[idx4++];
-                    out[3] = arr[idx4++];
+                    out[0] = arr[idx4];
+                    out[1] = arr[idx4 + 1];
+                    out[2] = arr[idx4 + 2];
+                    out[3] = arr[idx4 + 3];
                     return out;
                 };
                 this.set = function (idx, val) {
                     var arr = this.value;
                     var idx4 = idx * 4;
-                    arr[idx4++] = val[0];
-                    arr[idx4++] = val[1];
-                    arr[idx4++] = val[2];
-                    arr[idx4++] = val[3];
+                    arr[idx4] = val[0];
+                    arr[idx4 + 1] = val[1];
+                    arr[idx4 + 2] = val[2];
+                    arr[idx4 + 3] = val[3];
                 };
                 this.copy = function (target, source) {
                     var arr = this.value;
@@ -40091,7 +39679,8 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 181 */
+/* 181 */,
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40207,7 +39796,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 182 */
+/* 183 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40250,7 +39839,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 183 */
+/* 184 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40259,7 +39848,7 @@ module.exports = SunCalc;
 
 
     var Light = __webpack_require__(16);
-    var cubemapUtil = __webpack_require__(210);
+    var cubemapUtil = __webpack_require__(211);
 
     /**
      * @constructor qtek.light.AmbientCubemap
@@ -40343,7 +39932,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 184 */
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40408,7 +39997,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 185 */
+/* 186 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -40809,7 +40398,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 186 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41105,7 +40694,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 187 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41383,7 +40972,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 188 */
+/* 189 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -41788,7 +41377,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 189 */
+/* 190 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -42516,7 +42105,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 190 */
+/* 191 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -42733,7 +42322,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 191 */
+/* 192 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -42769,7 +42358,7 @@ module.exports = SunCalc;
 
     var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
 
-    Shader['import'](__webpack_require__(207));
+    Shader['import'](__webpack_require__(208));
 
     /**
      * Pass rendering shadow map.
@@ -42912,8 +42501,9 @@ module.exports = SunCalc;
                     matHashKey = nJoints;
                     shaderHashKey = nJoints;
                 }
-                var depthMaterial = this._depthMaterials[matHashKey];
-                var depthShader = this._depthShaders[shaderHashKey];
+                // Use custom shadow depth material
+                var depthMaterial = mesh.shadowDepthMaterial || this._depthMaterials[matHashKey];
+                var depthShader = mesh.shadowDepthMaterial ? mesh.shadowDepthMaterial.shader : this._depthShaders[shaderHashKey];
 
                 if (mesh.material !== depthMaterial) {  // Not binded yet
                     if (!depthShader) {
@@ -43606,7 +43196,7 @@ module.exports = SunCalc;
 
 
 /***/ }),
-/* 192 */
+/* 193 */
 /***/ (function(module, exports) {
 
 
@@ -43614,7 +43204,7 @@ module.exports = "@export qtek.basic.vertex\n\nuniform mat4 worldViewProjection 
 
 
 /***/ }),
-/* 193 */
+/* 194 */
 /***/ (function(module, exports) {
 
 
@@ -43622,7 +43212,7 @@ module.exports = "@export qtek.compositor.blend\n#ifdef TEXTURE1_ENABLED\nunifor
 
 
 /***/ }),
-/* 194 */
+/* 195 */
 /***/ (function(module, exports) {
 
 
@@ -43630,7 +43220,7 @@ module.exports = "@export qtek.compositor.kernel.gaussian_9\nfloat gaussianKerne
 
 
 /***/ }),
-/* 195 */
+/* 196 */
 /***/ (function(module, exports) {
 
 
@@ -43638,7 +43228,7 @@ module.exports = "@export qtek.compositor.bright\n\nuniform sampler2D texture;\n
 
 
 /***/ }),
-/* 196 */
+/* 197 */
 /***/ (function(module, exports) {
 
 
@@ -43646,7 +43236,7 @@ module.exports = "@export qtek.compositor.dof.coc\n\nuniform sampler2D depth;\n\
 
 
 /***/ }),
-/* 197 */
+/* 198 */
 /***/ (function(module, exports) {
 
 
@@ -43654,7 +43244,7 @@ module.exports = "@export qtek.compositor.downsample\n\nuniform sampler2D textur
 
 
 /***/ }),
-/* 198 */
+/* 199 */
 /***/ (function(module, exports) {
 
 
@@ -43662,7 +43252,7 @@ module.exports = "@export qtek.compositor.fxaa\n\nuniform sampler2D texture;\nun
 
 
 /***/ }),
-/* 199 */
+/* 200 */
 /***/ (function(module, exports) {
 
 
@@ -43670,7 +43260,7 @@ module.exports = "@export qtek.compositor.hdr.log_lum\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 200 */
+/* 201 */
 /***/ (function(module, exports) {
 
 
@@ -43678,7 +43268,7 @@ module.exports = "@export qtek.compositor.lensflare\n\n#define SAMPLE_NUMBER 8\n
 
 
 /***/ }),
-/* 201 */
+/* 202 */
 /***/ (function(module, exports) {
 
 
@@ -43686,7 +43276,7 @@ module.exports = "\n@export qtek.compositor.lut\n\nvarying vec2 v_Texcoord;\n\nu
 
 
 /***/ }),
-/* 202 */
+/* 203 */
 /***/ (function(module, exports) {
 
 
@@ -43694,7 +43284,7 @@ module.exports = "@export qtek.compositor.output\n\n#define OUTPUT_ALPHA\n\nvary
 
 
 /***/ }),
-/* 203 */
+/* 204 */
 /***/ (function(module, exports) {
 
 
@@ -43702,7 +43292,7 @@ module.exports = "\n@export qtek.compositor.upsample\n\n#define HIGH_QUALITY\n\n
 
 
 /***/ }),
-/* 204 */
+/* 205 */
 /***/ (function(module, exports) {
 
 
@@ -43710,7 +43300,7 @@ module.exports = "\n@export qtek.compositor.vertex\n\nuniform mat4 worldViewProj
 
 
 /***/ }),
-/* 205 */
+/* 206 */
 /***/ (function(module, exports) {
 
 
@@ -43718,7 +43308,7 @@ module.exports = "vec3 calcAmbientSHLight(int idx, vec3 N) {\n    int offset = 9
 
 
 /***/ }),
-/* 206 */
+/* 207 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -43740,7 +43330,7 @@ module.exports = "vec3 calcAmbientSHLight(int idx, vec3 N) {\n    int offset = 9
         exportHeaderPrefix + 'ambient_sh_light',
         uniformVec3Prefix + 'ambientSHLightColor[AMBIENT_SH_LIGHT_COUNT]' + unconfigurable,
         uniformVec3Prefix + 'ambientSHLightCoefficients[AMBIENT_SH_LIGHT_COUNT * 9]' + unconfigurable,
-        __webpack_require__(205),
+        __webpack_require__(206),
         exportEnd,
 
         exportHeaderPrefix + 'ambient_cubemap_light',
@@ -43768,7 +43358,7 @@ module.exports = "vec3 calcAmbientSHLight(int idx, vec3 N) {\n    int offset = 9
 
 
 /***/ }),
-/* 207 */
+/* 208 */
 /***/ (function(module, exports) {
 
 
@@ -43776,7 +43366,7 @@ module.exports = "@export qtek.sm.depth.vertex\n\nuniform mat4 worldViewProjecti
 
 
 /***/ }),
-/* 208 */
+/* 209 */
 /***/ (function(module, exports) {
 
 
@@ -43784,7 +43374,7 @@ module.exports = "@export qtek.skybox.vertex\n\nuniform mat4 world : WORLD;\nuni
 
 
 /***/ }),
-/* 209 */
+/* 210 */
 /***/ (function(module, exports) {
 
 
@@ -43792,7 +43382,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 210 */
+/* 211 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Cubemap prefilter utility
@@ -43813,8 +43403,8 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
     var vendor = __webpack_require__(18);
     var textureUtil = __webpack_require__(60);
 
-    var integrateBRDFShaderCode = __webpack_require__(214);
-    var prefilterFragCode = __webpack_require__(215);
+    var integrateBRDFShaderCode = __webpack_require__(215);
+    var prefilterFragCode = __webpack_require__(216);
 
     var cubemapUtil = {};
 
@@ -44068,7 +43658,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 211 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44234,7 +43824,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 212 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -44421,7 +44011,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 213 */
+/* 214 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Spherical Harmonic Helpers
@@ -44443,7 +44033,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
     var sh = {};
 
 
-    var projectEnvMapShaderCode = __webpack_require__(216);
+    var projectEnvMapShaderCode = __webpack_require__(217);
 
     var targets = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
 
@@ -44649,7 +44239,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n    con
 
 
 /***/ }),
-/* 214 */
+/* 215 */
 /***/ (function(module, exports) {
 
 
@@ -44657,7 +44247,7 @@ module.exports = "#define SAMPLE_NUMBER 1024\n#define PI 3.14159265358979\n\n\nu
 
 
 /***/ }),
-/* 215 */
+/* 216 */
 /***/ (function(module, exports) {
 
 
@@ -44665,7 +44255,7 @@ module.exports = "#define SAMPLE_NUMBER 1024\n#define PI 3.14159265358979\n\nuni
 
 
 /***/ }),
-/* 216 */
+/* 217 */
 /***/ (function(module, exports) {
 
 
@@ -44673,7 +44263,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 217 */
+/* 218 */
 /***/ (function(module, exports) {
 
 
@@ -44681,7 +44271,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 218 */
+/* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -44689,8 +44279,8 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
  */
 
 
-    var Clip = __webpack_require__(219);
-    var color = __webpack_require__(225);
+    var Clip = __webpack_require__(220);
+    var color = __webpack_require__(226);
     var util = __webpack_require__(14);
     var isArrayLike = util.isArrayLike;
 
@@ -45335,7 +44925,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 219 */
+/* 220 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -45354,7 +44944,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
  */
 
 
-    var easingFuncs = __webpack_require__(220);
+    var easingFuncs = __webpack_require__(221);
 
     function Clip(options) {
 
@@ -45464,7 +45054,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 220 */
+/* 221 */
 /***/ (function(module, exports) {
 
 /**
@@ -45815,7 +45405,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 221 */
+/* 222 */
 /***/ (function(module, exports) {
 
 
@@ -45863,7 +45453,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 222 */
+/* 223 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -45993,7 +45583,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
                 break;
             case 'insideTop':
                 x += width / 2;
-                y += distance;
+                y += distance + lineHeight;
                 textAlign = 'center';
                 break;
             case 'insideBottom':
@@ -46003,12 +45593,12 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
                 break;
             case 'insideTopLeft':
                 x += distance;
-                y += distance;
+                y += distance + lineHeight;
                 textAlign = 'left';
                 break;
             case 'insideTopRight':
                 x += width - distance;
-                y += distance;
+                y += distance + lineHeight;
                 textAlign = 'right';
                 break;
             case 'insideBottomLeft':
@@ -46145,7 +45735,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 223 */
+/* 224 */
 /***/ (function(module, exports) {
 
 
@@ -46309,7 +45899,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 224 */
+/* 225 */
 /***/ (function(module, exports) {
 
 
@@ -46595,7 +46185,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 /***/ }),
-/* 225 */
+/* 226 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -47130,6 +46720,646 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
     };
 
 
+
+
+/***/ }),
+/* 227 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// https://github.com/mapbox/earcut/blob/master/src/earcut.js
+
+
+module.exports = earcut;
+
+function earcut(data, holeIndices, dim) {
+
+    dim = dim || 2;
+
+    var hasHoles = holeIndices && holeIndices.length,
+        outerLen = hasHoles ? holeIndices[0] * dim : data.length,
+        outerNode = linkedList(data, 0, outerLen, dim, true),
+        triangles = [];
+
+    if (!outerNode) return triangles;
+
+    var minX, minY, maxX, maxY, x, y, size;
+
+    if (hasHoles) outerNode = eliminateHoles(data, holeIndices, outerNode, dim);
+
+    // if the shape is not too simple, we'll use z-order curve hash later; calculate polygon bbox
+    if (data.length > 80 * dim) {
+        minX = maxX = data[0];
+        minY = maxY = data[1];
+
+        for (var i = dim; i < outerLen; i += dim) {
+            x = data[i];
+            y = data[i + 1];
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+        }
+
+        // minX, minY and size are later used to transform coords into integers for z-order calculation
+        size = Math.max(maxX - minX, maxY - minY);
+    }
+
+    earcutLinked(outerNode, triangles, dim, minX, minY, size);
+
+    return triangles;
+}
+
+// create a circular doubly linked list from polygon points in the specified winding order
+function linkedList(data, start, end, dim, clockwise) {
+    var i, last;
+
+    if (clockwise === (signedArea(data, start, end, dim) > 0)) {
+        for (i = start; i < end; i += dim) last = insertNode(i, data[i], data[i + 1], last);
+    } else {
+        for (i = end - dim; i >= start; i -= dim) last = insertNode(i, data[i], data[i + 1], last);
+    }
+
+    if (last && equals(last, last.next)) {
+        removeNode(last);
+        last = last.next;
+    }
+
+    return last;
+}
+
+// eliminate colinear or duplicate points
+function filterPoints(start, end) {
+    if (!start) return start;
+    if (!end) end = start;
+
+    var p = start,
+        again;
+    do {
+        again = false;
+
+        if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) {
+            removeNode(p);
+            p = end = p.prev;
+            if (p === p.next) return null;
+            again = true;
+
+        } else {
+            p = p.next;
+        }
+    } while (again || p !== end);
+
+    return end;
+}
+
+// main ear slicing loop which triangulates a polygon (given as a linked list)
+function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
+    if (!ear) return;
+
+    // interlink polygon nodes in z-order
+    if (!pass && size) indexCurve(ear, minX, minY, size);
+
+    var stop = ear,
+        prev, next;
+
+    // iterate through ears, slicing them one by one
+    while (ear.prev !== ear.next) {
+        prev = ear.prev;
+        next = ear.next;
+
+        if (size ? isEarHashed(ear, minX, minY, size) : isEar(ear)) {
+            // cut off the triangle
+            triangles.push(prev.i / dim);
+            triangles.push(ear.i / dim);
+            triangles.push(next.i / dim);
+
+            removeNode(ear);
+
+            // skipping the next vertice leads to less sliver triangles
+            ear = next.next;
+            stop = next.next;
+
+            continue;
+        }
+
+        ear = next;
+
+        // if we looped through the whole remaining polygon and can't find any more ears
+        if (ear === stop) {
+            // try filtering points and slicing again
+            if (!pass) {
+                earcutLinked(filterPoints(ear), triangles, dim, minX, minY, size, 1);
+
+            // if this didn't work, try curing all small self-intersections locally
+            } else if (pass === 1) {
+                ear = cureLocalIntersections(ear, triangles, dim);
+                earcutLinked(ear, triangles, dim, minX, minY, size, 2);
+
+            // as a last resort, try splitting the remaining polygon into two
+            } else if (pass === 2) {
+                splitEarcut(ear, triangles, dim, minX, minY, size);
+            }
+
+            break;
+        }
+    }
+}
+
+// check whether a polygon node forms a valid ear with adjacent nodes
+function isEar(ear) {
+    var a = ear.prev,
+        b = ear,
+        c = ear.next;
+
+    if (area(a, b, c) >= 0) return false; // reflex, can't be an ear
+
+    // now make sure we don't have other points inside the potential ear
+    var p = ear.next.next;
+
+    while (p !== ear.prev) {
+        if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.next;
+    }
+
+    return true;
+}
+
+function isEarHashed(ear, minX, minY, size) {
+    var a = ear.prev,
+        b = ear,
+        c = ear.next;
+
+    if (area(a, b, c) >= 0) return false; // reflex, can't be an ear
+
+    // triangle bbox; min & max are calculated like this for speed
+    var minTX = a.x < b.x ? (a.x < c.x ? a.x : c.x) : (b.x < c.x ? b.x : c.x),
+        minTY = a.y < b.y ? (a.y < c.y ? a.y : c.y) : (b.y < c.y ? b.y : c.y),
+        maxTX = a.x > b.x ? (a.x > c.x ? a.x : c.x) : (b.x > c.x ? b.x : c.x),
+        maxTY = a.y > b.y ? (a.y > c.y ? a.y : c.y) : (b.y > c.y ? b.y : c.y);
+
+    // z-order range for the current triangle bbox;
+    var minZ = zOrder(minTX, minTY, minX, minY, size),
+        maxZ = zOrder(maxTX, maxTY, minX, minY, size);
+
+    // first look for points inside the triangle in increasing z-order
+    var p = ear.nextZ;
+
+    while (p && p.z <= maxZ) {
+        if (p !== ear.prev && p !== ear.next &&
+            pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.nextZ;
+    }
+
+    // then look for points in decreasing z-order
+    p = ear.prevZ;
+
+    while (p && p.z >= minZ) {
+        if (p !== ear.prev && p !== ear.next &&
+            pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+            area(p.prev, p, p.next) >= 0) return false;
+        p = p.prevZ;
+    }
+
+    return true;
+}
+
+// go through all polygon nodes and cure small local self-intersections
+function cureLocalIntersections(start, triangles, dim) {
+    var p = start;
+    do {
+        var a = p.prev,
+            b = p.next.next;
+
+        if (!equals(a, b) && intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
+
+            triangles.push(a.i / dim);
+            triangles.push(p.i / dim);
+            triangles.push(b.i / dim);
+
+            // remove two nodes involved
+            removeNode(p);
+            removeNode(p.next);
+
+            p = start = b;
+        }
+        p = p.next;
+    } while (p !== start);
+
+    return p;
+}
+
+// try splitting polygon into two and triangulate them independently
+function splitEarcut(start, triangles, dim, minX, minY, size) {
+    // look for a valid diagonal that divides the polygon into two
+    var a = start;
+    do {
+        var b = a.next.next;
+        while (b !== a.prev) {
+            if (a.i !== b.i && isValidDiagonal(a, b)) {
+                // split the polygon in two by the diagonal
+                var c = splitPolygon(a, b);
+
+                // filter colinear points around the cuts
+                a = filterPoints(a, a.next);
+                c = filterPoints(c, c.next);
+
+                // run earcut on each half
+                earcutLinked(a, triangles, dim, minX, minY, size);
+                earcutLinked(c, triangles, dim, minX, minY, size);
+                return;
+            }
+            b = b.next;
+        }
+        a = a.next;
+    } while (a !== start);
+}
+
+// link every hole into the outer loop, producing a single-ring polygon without holes
+function eliminateHoles(data, holeIndices, outerNode, dim) {
+    var queue = [],
+        i, len, start, end, list;
+
+    for (i = 0, len = holeIndices.length; i < len; i++) {
+        start = holeIndices[i] * dim;
+        end = i < len - 1 ? holeIndices[i + 1] * dim : data.length;
+        list = linkedList(data, start, end, dim, false);
+        if (list === list.next) list.steiner = true;
+        queue.push(getLeftmost(list));
+    }
+
+    queue.sort(compareX);
+
+    // process holes from left to right
+    for (i = 0; i < queue.length; i++) {
+        eliminateHole(queue[i], outerNode);
+        outerNode = filterPoints(outerNode, outerNode.next);
+    }
+
+    return outerNode;
+}
+
+function compareX(a, b) {
+    return a.x - b.x;
+}
+
+// find a bridge between vertices that connects hole with an outer ring and and link it
+function eliminateHole(hole, outerNode) {
+    outerNode = findHoleBridge(hole, outerNode);
+    if (outerNode) {
+        var b = splitPolygon(outerNode, hole);
+        filterPoints(b, b.next);
+    }
+}
+
+// David Eberly's algorithm for finding a bridge between hole and outer polygon
+function findHoleBridge(hole, outerNode) {
+    var p = outerNode,
+        hx = hole.x,
+        hy = hole.y,
+        qx = -Infinity,
+        m;
+
+    // find a segment intersected by a ray from the hole's leftmost point to the left;
+    // segment's endpoint with lesser x will be potential connection point
+    do {
+        if (hy <= p.y && hy >= p.next.y && p.next.y !== p.y) {
+            var x = p.x + (hy - p.y) * (p.next.x - p.x) / (p.next.y - p.y);
+            if (x <= hx && x > qx) {
+                qx = x;
+                if (x === hx) {
+                    if (hy === p.y) return p;
+                    if (hy === p.next.y) return p.next;
+                }
+                m = p.x < p.next.x ? p : p.next;
+            }
+        }
+        p = p.next;
+    } while (p !== outerNode);
+
+    if (!m) return null;
+
+    if (hx === qx) return m.prev; // hole touches outer segment; pick lower endpoint
+
+    // look for points inside the triangle of hole point, segment intersection and endpoint;
+    // if there are no points found, we have a valid connection;
+    // otherwise choose the point of the minimum angle with the ray as connection point
+
+    var stop = m,
+        mx = m.x,
+        my = m.y,
+        tanMin = Infinity,
+        tan;
+
+    p = m.next;
+
+    while (p !== stop) {
+        if (hx >= p.x && p.x >= mx && hx !== p.x &&
+                pointInTriangle(hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p.x, p.y)) {
+
+            tan = Math.abs(hy - p.y) / (hx - p.x); // tangential
+
+            if ((tan < tanMin || (tan === tanMin && p.x > m.x)) && locallyInside(p, hole)) {
+                m = p;
+                tanMin = tan;
+            }
+        }
+
+        p = p.next;
+    }
+
+    return m;
+}
+
+// interlink polygon nodes in z-order
+function indexCurve(start, minX, minY, size) {
+    var p = start;
+    do {
+        if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, size);
+        p.prevZ = p.prev;
+        p.nextZ = p.next;
+        p = p.next;
+    } while (p !== start);
+
+    p.prevZ.nextZ = null;
+    p.prevZ = null;
+
+    sortLinked(p);
+}
+
+// Simon Tatham's linked list merge sort algorithm
+// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+function sortLinked(list) {
+    var i, p, q, e, tail, numMerges, pSize, qSize,
+        inSize = 1;
+
+    do {
+        p = list;
+        list = null;
+        tail = null;
+        numMerges = 0;
+
+        while (p) {
+            numMerges++;
+            q = p;
+            pSize = 0;
+            for (i = 0; i < inSize; i++) {
+                pSize++;
+                q = q.nextZ;
+                if (!q) break;
+            }
+            qSize = inSize;
+
+            while (pSize > 0 || (qSize > 0 && q)) {
+
+                if (pSize !== 0 && (qSize === 0 || !q || p.z <= q.z)) {
+                    e = p;
+                    p = p.nextZ;
+                    pSize--;
+                } else {
+                    e = q;
+                    q = q.nextZ;
+                    qSize--;
+                }
+
+                if (tail) tail.nextZ = e;
+                else list = e;
+
+                e.prevZ = tail;
+                tail = e;
+            }
+
+            p = q;
+        }
+
+        tail.nextZ = null;
+        inSize *= 2;
+
+    } while (numMerges > 1);
+
+    return list;
+}
+
+// z-order of a point given coords and size of the data bounding box
+function zOrder(x, y, minX, minY, size) {
+    // coords are transformed into non-negative 15-bit integer range
+    x = 32767 * (x - minX) / size;
+    y = 32767 * (y - minY) / size;
+
+    x = (x | (x << 8)) & 0x00FF00FF;
+    x = (x | (x << 4)) & 0x0F0F0F0F;
+    x = (x | (x << 2)) & 0x33333333;
+    x = (x | (x << 1)) & 0x55555555;
+
+    y = (y | (y << 8)) & 0x00FF00FF;
+    y = (y | (y << 4)) & 0x0F0F0F0F;
+    y = (y | (y << 2)) & 0x33333333;
+    y = (y | (y << 1)) & 0x55555555;
+
+    return x | (y << 1);
+}
+
+// find the leftmost node of a polygon ring
+function getLeftmost(start) {
+    var p = start,
+        leftmost = start;
+    do {
+        if (p.x < leftmost.x) leftmost = p;
+        p = p.next;
+    } while (p !== start);
+
+    return leftmost;
+}
+
+// check if a point lies within a convex triangle
+function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
+    return (cx - px) * (ay - py) - (ax - px) * (cy - py) >= 0 &&
+           (ax - px) * (by - py) - (bx - px) * (ay - py) >= 0 &&
+           (bx - px) * (cy - py) - (cx - px) * (by - py) >= 0;
+}
+
+// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
+function isValidDiagonal(a, b) {
+    return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
+           locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b);
+}
+
+// signed area of a triangle
+function area(p, q, r) {
+    return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+}
+
+// check if two points are equal
+function equals(p1, p2) {
+    return p1.x === p2.x && p1.y === p2.y;
+}
+
+// check if two segments intersect
+function intersects(p1, q1, p2, q2) {
+    if ((equals(p1, q1) && equals(p2, q2)) ||
+        (equals(p1, q2) && equals(p2, q1))) return true;
+    return area(p1, q1, p2) > 0 !== area(p1, q1, q2) > 0 &&
+           area(p2, q2, p1) > 0 !== area(p2, q2, q1) > 0;
+}
+
+// check if a polygon diagonal intersects any polygon segments
+function intersectsPolygon(a, b) {
+    var p = a;
+    do {
+        if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i &&
+                intersects(p, p.next, a, b)) return true;
+        p = p.next;
+    } while (p !== a);
+
+    return false;
+}
+
+// check if a polygon diagonal is locally inside the polygon
+function locallyInside(a, b) {
+    return area(a.prev, a, a.next) < 0 ?
+        area(a, b, a.next) >= 0 && area(a, a.prev, b) >= 0 :
+        area(a, b, a.prev) < 0 || area(a, a.next, b) < 0;
+}
+
+// check if the middle point of a polygon diagonal is inside the polygon
+function middleInside(a, b) {
+    var p = a,
+        inside = false,
+        px = (a.x + b.x) / 2,
+        py = (a.y + b.y) / 2;
+    do {
+        if (((p.y > py) !== (p.next.y > py)) && p.next.y !== p.y &&
+                (px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x))
+            inside = !inside;
+        p = p.next;
+    } while (p !== a);
+
+    return inside;
+}
+
+// link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
+// if one belongs to the outer ring and another to a hole, it merges it into a single ring
+function splitPolygon(a, b) {
+    var a2 = new Node(a.i, a.x, a.y),
+        b2 = new Node(b.i, b.x, b.y),
+        an = a.next,
+        bp = b.prev;
+
+    a.next = b;
+    b.prev = a;
+
+    a2.next = an;
+    an.prev = a2;
+
+    b2.next = a2;
+    a2.prev = b2;
+
+    bp.next = b2;
+    b2.prev = bp;
+
+    return b2;
+}
+
+// create a node and optionally link it with previous one (in a circular doubly linked list)
+function insertNode(i, x, y, last) {
+    var p = new Node(i, x, y);
+
+    if (!last) {
+        p.prev = p;
+        p.next = p;
+
+    } else {
+        p.next = last.next;
+        p.prev = last;
+        last.next.prev = p;
+        last.next = p;
+    }
+    return p;
+}
+
+function removeNode(p) {
+    p.next.prev = p.prev;
+    p.prev.next = p.next;
+
+    if (p.prevZ) p.prevZ.nextZ = p.nextZ;
+    if (p.nextZ) p.nextZ.prevZ = p.prevZ;
+}
+
+function Node(i, x, y) {
+    // vertice index in coordinates array
+    this.i = i;
+
+    // vertex coordinates
+    this.x = x;
+    this.y = y;
+
+    // previous and next vertice nodes in a polygon ring
+    this.prev = null;
+    this.next = null;
+
+    // z-order curve value
+    this.z = null;
+
+    // previous and next nodes in z-order
+    this.prevZ = null;
+    this.nextZ = null;
+
+    // indicates whether this is a steiner point
+    this.steiner = false;
+}
+
+// return a percentage difference between the polygon area and its triangulation area;
+// used to verify correctness of triangulation
+earcut.deviation = function (data, holeIndices, dim, triangles) {
+    var hasHoles = holeIndices && holeIndices.length;
+    var outerLen = hasHoles ? holeIndices[0] * dim : data.length;
+
+    var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
+    if (hasHoles) {
+        for (var i = 0, len = holeIndices.length; i < len; i++) {
+            var start = holeIndices[i] * dim;
+            var end = i < len - 1 ? holeIndices[i + 1] * dim : data.length;
+            polygonArea -= Math.abs(signedArea(data, start, end, dim));
+        }
+    }
+
+    var trianglesArea = 0;
+    for (i = 0; i < triangles.length; i += 3) {
+        var a = triangles[i] * dim;
+        var b = triangles[i + 1] * dim;
+        var c = triangles[i + 2] * dim;
+        trianglesArea += Math.abs(
+            (data[a] - data[c]) * (data[b + 1] - data[a + 1]) -
+            (data[a] - data[b]) * (data[c + 1] - data[a + 1]));
+    }
+
+    return polygonArea === 0 && trianglesArea === 0 ? 0 :
+        Math.abs((trianglesArea - polygonArea) / polygonArea);
+};
+
+function signedArea(data, start, end, dim) {
+    var sum = 0;
+    for (var i = start, j = end - dim; i < end; i += dim) {
+        sum += (data[j] - data[i]) * (data[i + 1] + data[j + 1]);
+        j = i;
+    }
+    return sum;
+}
+
+/***/ }),
+/* 228 */
+/***/ (function(module, exports) {
+
+
+module.exports = "@export qtek.prez.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position : POSITION;\n\n#ifdef SKINNING\nattribute vec3 weight : WEIGHT;\nattribute vec4 joint : JOINT;\n\nuniform mat4 skinMatrix[JOINT_COUNT] : SKIN_MATRIX;\n#endif\n\nvoid main()\n{\n\n    vec3 skinnedPosition = position;\n\n#ifdef SKINNING\n\n    @import qtek.chunk.skin_matrix\n\n    skinnedPosition = (skinMatrixWS * vec4(position, 1.0)).xyz;\n#endif\n\n    gl_Position = worldViewProjection * vec4(skinnedPosition, 1.0);\n}\n\n@end\n\n\n@export qtek.prez.fragment\n\nvoid main()\n{\n    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n}\n\n@end";
+
+
+/***/ }),
+/* 229 */
+/***/ (function(module, exports) {
+
+module.exports = "@export ecgl.sm.depth.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nattribute vec3 position : POSITION;\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nuniform float percent : 1.0;\n#endif\n\nvarying vec4 v_ViewPosition;\n\nvoid main(){\n\n#ifdef VERTEX_ANIMATION\n    vec3 pos = mix(prevPosition, position, percent);\n#else\n    vec3 pos = position;\n#endif\n\n    v_ViewPosition = worldViewProjection * vec4(pos, 1.0);\n    gl_Position = v_ViewPosition;\n\n}\n@end\n\n\n\n@export ecgl.sm.depth.fragment\n\n@import qtek.sm.depth.fragment\n\n@end";
 
 
 /***/ })
