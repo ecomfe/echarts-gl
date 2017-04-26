@@ -26,6 +26,7 @@ Shader.import(require('./shader/common.glsl.js'));
 Shader.import(require('./shader/color.glsl.js'));
 Shader.import(require('./shader/lambert.glsl.js'));
 Shader.import(require('./shader/realistic.glsl.js'));
+Shader.import(require('./shader/shadow.glsl.js'));
 
 function isValueNone(value) {
     return !value || value === 'none';
@@ -507,12 +508,16 @@ graphicGL.updateVertexAnimation = function (
     var enableAnimation = seriesModel.get('animation');
     var duration = seriesModel.get('animationDurationUpdate');
     var easing = seriesModel.get('animationEasingUpdate');
+    var shadowDepthMaterial = currentMesh.shadowDepthMaterial;
 
     if (enableAnimation && previousMesh && duration > 0
     // Only animate when bar count are not changed
     && previousMesh.geometry.vertexCount === currentMesh.geometry.vertexCount
     ) {
         currentMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
+        if (shadowDepthMaterial) {
+            shadowDepthMaterial.shader.define('vertex', 'VERTEX_ANIMATION');
+        }
         for (var i = 0; i < mappingAttributes.length; i++) {
             currentMesh.geometry.attributes[mappingAttributes[i][0]].value =
             previousMesh.geometry.attributes[mappingAttributes[i][1]].value;
@@ -527,11 +532,17 @@ graphicGL.updateVertexAnimation = function (
             })
             .during(function () {
                 currentMesh.material.set('percent', currentMesh.__percent);
+                if (shadowDepthMaterial) {
+                    shadowDepthMaterial.set('percent', currentMesh.__percent);
+                }
             })
             .start(easing);
     }
     else {
         currentMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
+        if (shadowDepthMaterial) {
+            shadowDepthMaterial.shader.undefine('vertex', 'VERTEX_ANIMATION');
+        }
     }
 };
 

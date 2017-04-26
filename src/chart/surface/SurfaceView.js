@@ -110,8 +110,13 @@ echarts.extendChartView({
                 dynamic: true,
                 sortTriangles: true
             }),
+            shadowDepthMaterial: new graphicGL.Material({
+                shader: new graphicGL.Shader({
+                    vertex: graphicGL.Shader.source('ecgl.sm.depth.vertex'),
+                    fragment: graphicGL.Shader.source('ecgl.sm.depth.fragment')
+                })
+            }),
             culling: false,
-
             // Render after axes
             renderOrder: 10
         });

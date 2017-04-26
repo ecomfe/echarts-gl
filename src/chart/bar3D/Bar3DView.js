@@ -64,6 +64,12 @@ module.exports = echarts.extendChartView({
         if (!this._barMesh) {
             this._barMesh = new graphicGL.Mesh({
                 geometry: new BarsGeometry(),
+                shadowDepthMaterial: new graphicGL.Material({
+                    shader: new graphicGL.Shader({
+                        vertex: graphicGL.Shader.source('ecgl.sm.depth.vertex'),
+                        fragment: graphicGL.Shader.source('ecgl.sm.depth.fragment')
+                    })
+                }),
                 // Render after axes
                 renderOrder: 10
             });
