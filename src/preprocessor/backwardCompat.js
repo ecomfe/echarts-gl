@@ -1,5 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 
+var GL_SERIES = ['bar3D', 'line3D', 'map3D', 'scatter3D', 'surface', 'lines3D', 'scatterGL', 'scatter3D'];
+
 function convertNormalEmphasis(option, optType) {
     if (option && option[optType] && (option[optType].normal || option[optType].emphasis)) {
         var normalOpt = option[optType].normal;
@@ -24,7 +26,9 @@ function convertNormalEmphasisForEach(option) {
 
 module.exports = function (option) {
     echarts.util.each(option.series, function (series) {
-        convertNormalEmphasisForEach(series);
+        if (echarts.util.indexOf(GL_SERIES, series.type) >= 0) {
+            convertNormalEmphasisForEach(series);
+        }
     });
 
     convertNormalEmphasis(option.geo3D);
