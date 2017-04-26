@@ -116,7 +116,9 @@ var GlobeModel = echarts.extendComponentModel({
         viewControl: {
             autoRotate: true,
 
-            panSensitivity: 0
+            panSensitivity: 0,
+
+            targetCoord: null
         },
 
 

@@ -272,7 +272,11 @@ var OrbitControl = Base.extend(function () {
         return this._camera;
     },
 
-    setFromViewControlModel: function (viewControlModel, baseDistance) {
+
+    setFromViewControlModel: function (viewControlModel, extraOpts) {
+        extraOpts = extraOpts || {};
+        var baseDistance = extraOpts.baseDistance || 0;
+
         this.autoRotate = viewControlModel.get('autoRotate');
         this.autoRotateAfterStill = viewControlModel.get('autoRotateAfterStill');
 
@@ -300,9 +304,9 @@ var OrbitControl = Base.extend(function () {
             );
         });
 
-        var alpha = viewControlModel.get('alpha') || 0;
-        var beta = viewControlModel.get('beta') || 0;
-        var center = viewControlModel.get('center') || [0, 0, 0];
+        var alpha = firstNotNull(extraOpts.alpha, viewControlModel.get('alpha')) || 0;
+        var beta = firstNotNull(extraOpts.beta, viewControlModel.get('beta')) || 0;
+        var center = firstNotNull(extraOpts.center, viewControlModel.get('center')) || [0, 0, 0];
         if (animationOpts.animation && animationOpts.animationDurationUpdate > 0 && this._notFirst) {
             this.animateTo({
                 alpha: alpha,

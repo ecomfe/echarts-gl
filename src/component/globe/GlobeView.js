@@ -295,7 +295,18 @@ module.exports = echarts.extendComponentView({
         control.setCamera(camera);
         control.setViewGL(coordSys.viewGL);
 
-        control.setFromViewControlModel(viewControlModel, coordSys.radius);
+        var coord = viewControlModel.get('targetCoord');
+        var alpha, beta;
+        if (coord != null) {
+            beta = coord[0] + 90;
+            alpha = coord[1];
+        }
+
+        control.setFromViewControlModel(viewControlModel, {
+            baseDistance: coordSys.radius,
+            alpha: alpha,
+            beta: beta
+        });
 
         control.off('update');
         control.on('update', function () {
