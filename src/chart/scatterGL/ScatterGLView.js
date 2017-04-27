@@ -26,10 +26,12 @@ echarts.extendChartView({
         this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
 
         this._pointsBuilder.update(seriesModel, ecModel, api);
+        this._pointsBuilder.updateView(this.viewGL.camera);
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
         this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
+        this._pointsBuilder.updateView(this.viewGL.camera);
     },
 
     _updateCamera: function (width, height, dpr) {

@@ -97,27 +97,15 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
             positionNDC = this._positionNDC = new Float32Array(geometry.vertexCount * 2);
         }
 
-        if (!is2D) {
-            var pos = vec4.create();
-            for (var i = 0; i < geometry.vertexCount; i++) {
-                geometry.attributes.position.get(i, pos);
-                pos[3] = 1;
-                vec4.transformMat4(pos, pos, worldViewProjection._array);
-                vec4.scale(pos, pos, 1 / pos[3]);
+        var pos = vec4.create();
+        for (var i = 0; i < geometry.vertexCount; i++) {
+            geometry.attributes.position.get(i, pos);
+            pos[3] = 1;
+            vec4.transformMat4(pos, pos, worldViewProjection._array);
+            vec4.scale(pos, pos, 1 / pos[3]);
 
-                positionNDC[i * 2] = pos[0];
-                positionNDC[i * 2 + 1] = pos[1];
-            }
-        }
-        else {
-            // TODO
-            // var width = api.getWidth();
-            // var height = api.getHeight();
-
-            // for (var i = 0; i < geometry.vertexCount; i++) {
-            //     positionNDC[i * 2] = geometry.attributes.position.value[i * 3];
-            //     positionNDC[i * 2 + 1] = geometry.attributes.position.value[i * 3 + 1];
-            // }
+            positionNDC[i * 2] = pos[0];
+            positionNDC[i * 2 + 1] = pos[1];
         }
     }
 });
