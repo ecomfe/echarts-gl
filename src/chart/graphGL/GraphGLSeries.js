@@ -234,7 +234,9 @@ var GraphSeries = echarts.extendSeriesModel({
             label: {
                 show: true
             }
-        }
+        },
+
+        animation: false
     }
 });
 

@@ -536,6 +536,12 @@ graphicGL.updateVertexAnimation = function (
                     shadowDepthMaterial.set('percent', currentMesh.__percent);
                 }
             })
+            .done(function () {
+                currentMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
+                if (shadowDepthMaterial) {
+                    shadowDepthMaterial.shader.undefine('vertex', 'VERTEX_ANIMATION');
+                }
+            })
             .start(easing);
     }
     else {

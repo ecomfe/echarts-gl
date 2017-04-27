@@ -56,6 +56,8 @@ PointsBuilder.prototype = {
         this.rootNode.remove(this._prevMesh);
         this.rootNode.add(this._mesh);
 
+        this._setPositionTextureToMesh(this._mesh, this._positionTexture);
+
         var data = seriesModel.getData();
 
         var symbolInfo = this._getSymbolInfo(data);
@@ -334,8 +336,18 @@ PointsBuilder.prototype = {
     },
 
     setPositionTexture: function (texture) {
-        this._mesh.material.set('positionTexture', texture);
-        this._mesh.material.shader[
+        if (this._mesh) {
+            this._setPositionTextureToMesh(this._mesh, texture);
+        }
+
+        this._positionTexture = texture;
+    },
+
+    _setPositionTextureToMesh: function (mesh, texture) {
+        if (texture) {
+            mesh.material.set('positionTexture', texture);
+        }
+        mesh.material.shader[
             texture ? 'enableTexture' : 'disableTexture'
         ]('positionTexture');
     },
