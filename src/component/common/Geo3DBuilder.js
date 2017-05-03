@@ -225,6 +225,7 @@ Geo3DBuilder.prototype = {
                 this._moveRegionToCenter(polygonMesh, linesMesh, hasLine);
                 // Bind events.
                 polygonMesh.dataIndex = dataIndex;
+                polygonMesh.seriesIndex = componentModel.seriesIndex;
                 polygonMesh.on('mouseover', this._onmouseover, this);
                 polygonMesh.on('mouseout', this._onmouseout, this);
             }
