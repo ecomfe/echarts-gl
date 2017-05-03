@@ -430,6 +430,7 @@ module.exports = echarts.extendComponentView({
         }
 
         this._axisPointerLineMesh.invisible = false;
+        this._axisPointerLabelsMesh.invisible = false;
         this._api.getZr().refresh();
     },
 
@@ -439,6 +440,7 @@ module.exports = echarts.extendComponentView({
         }
 
         this._axisPointerLineMesh.invisible = true;
+        this._axisPointerLabelsMesh.invisible = true;
         this._api.getZr().refresh();
     },
     /**
