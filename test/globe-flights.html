@@ -123,6 +123,16 @@
                 });
 
                 chart.setOption({
+                    toolbox: {
+                        feature: {
+                            saveAsImage: {}
+                        },
+                        iconStyle: {
+                            normal: {
+                                borderColor: '#fff'
+                            }
+                        }
+                    },
                     legend: {
                         selectedMode: 'single',
                         left: 'left',
