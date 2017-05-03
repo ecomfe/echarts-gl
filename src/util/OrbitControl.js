@@ -567,6 +567,11 @@ var OrbitControl = Base.extend(function () {
     },
 
     _mouseMoveHandler: function (e) {
+        // FIXME
+        if (e.target && e.target.__isGLToZRProxy) {
+            return;
+        }
+
         if (this._isAnimating()) {
             return;
         }
@@ -579,6 +584,7 @@ var OrbitControl = Base.extend(function () {
             this._panVelocity.x = (e.offsetX - this._mouseX) / this.zr.getWidth() * this.panSensitivity * 400;
             this._panVelocity.y = (-e.offsetY + this._mouseY) / this.zr.getHeight() * this.panSensitivity * 400;
         }
+
 
         this._mouseX = e.offsetX;
         this._mouseY = e.offsetY;

@@ -4,7 +4,6 @@ var spriteUtil = require('../../util/sprite');
 var PointsMesh = require('./PointsMesh');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var Matrix4 = require('qtek/lib/math/Matrix4');
-var TooltipHelper = require('./TooltipHelper');
 
 var SDF_RANGE = 20;
 
@@ -29,8 +28,6 @@ function PointsBuilder(is2D, api) {
     this._api = api;
 
     this._spriteImageCanvas = document.createElement('canvas');
-
-    this._tooltip = new TooltipHelper(api);
 }
 
 PointsBuilder.prototype = {
@@ -235,6 +232,8 @@ PointsBuilder.prototype = {
             grid3DModel = seriesModel.coordinateSystem.model;
         }
 
+        pointsMesh.seriesIndex = seriesModel.seriesIndex;
+
         pointsMesh.off('mousemove');
         pointsMesh.off('mouseout');
         pointsMesh.on('mousemove', function (e) {
@@ -254,14 +253,14 @@ PointsBuilder.prototype = {
                 }
             }
 
-            this._tooltip.updateTooltip(seriesModel, dataIndex, e.offsetX, e.offsetY);
-
+            pointsMesh.dataIndex = dataIndex;
             lastDataIndex = dataIndex;
         }, this);
         pointsMesh.on('mouseout', function (e) {
             this.downplay(data, e.vertexIndex);
             this._labelsBuilder.updateLabels();
             lastDataIndex = -1;
+            pointsMesh.dataIndex = -1;
 
             if (isCartesian3D) {
                 api.dispatchAction({
@@ -269,7 +268,6 @@ PointsBuilder.prototype = {
                     grid3DIndex: grid3DModel.componentIndex
                 });
             }
-            this._tooltip.hideTooltip();
         }, this);
     },
 

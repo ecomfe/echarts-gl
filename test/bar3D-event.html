@@ -12,6 +12,7 @@
         <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
+        <script src="lib/facePrint.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
@@ -117,10 +118,17 @@
                 }]
             });
 
-            window.addEventListener('resize', function () {
-                chart.resize();
+            ['mousedown', 'mouseup', 'mouseover', 'mouseout'].forEach(function (eventName) {
+                chart.on(eventName, function (params) {
+                    facePrint(eventName, params.dataIndex);
+                });
             });
-
+            ['click', 'dblclick'].forEach(function (eventName) {
+                chart.on(eventName, function (params) {
+                    facePrint(eventName);
+                    facePrint(params);
+                });
+            });
         </script>
     </body>
 </html>

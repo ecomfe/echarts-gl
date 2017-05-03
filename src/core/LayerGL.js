@@ -92,6 +92,12 @@ var LayerGL = function (id, zr) {
      * Current accumulating id.
      */
     this._accumulatingId = 0;
+
+    this._zrEventProxy = new echarts.graphic.Rect({
+        shape: {x: -1, y: -1, width: 2, height: 2},
+        // FIXME Better solution.
+        __isGLToZRProxy: true
+    });
 };
 
 /**
@@ -396,10 +402,15 @@ LayerGL.prototype.dispose = function () {
 
 // Event handlers
 LayerGL.prototype.onmousedown = function (e) {
+    if (e.target && e.target.__isGLToZRProxy) {
+        return;
+    }
+
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
     if (obj) {
         this._dispatchEvent('mousedown', e, obj);
+        this._dispatchDataEvent('mousedown', e, obj);
     }
 
     this._downX = e.offsetX;
@@ -407,6 +418,10 @@ LayerGL.prototype.onmousedown = function (e) {
 };
 
 LayerGL.prototype.onmousemove = function (e) {
+        if (e.target && e.target.__isGLToZRProxy) {
+        return;
+    }
+
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
 
@@ -417,6 +432,7 @@ LayerGL.prototype.onmousemove = function (e) {
     if (lastHovered && target !== lastHovered.target) {
         lastHovered.relatedTarget = target;
         this._dispatchEvent('mouseout', e, lastHovered);
+        // this._dispatchDataEvent('mouseout', e, lastHovered);
 
         this.zr.setCursorStyle('default');
     }
@@ -428,21 +444,35 @@ LayerGL.prototype.onmousemove = function (e) {
 
         if (!lastHovered || (target !== lastHovered.target)) {
             this._dispatchEvent('mouseover', e, obj);
+            // this._dispatchDataEvent('mouseover', e, obj);
         }
     }
+
+    this._dispatchDataEvent('mousemove', e, obj);
 };
 
 LayerGL.prototype.onmouseup = function (e) {
+    if (e.target && e.target.__isGLToZRProxy) {
+        return;
+    }
+
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
 
-    this._dispatchEvent('mouseup', e, obj);
+    if (obj) {
+        this._dispatchEvent('mouseup', e, obj);
+        this._dispatchDataEvent('mouseup', e, obj);
+    }
 
     this._upX = e.offsetX;
     this._upY = e.offsetY;
 };
 
-LayerGL.prototype.onclick = function (e) {
+LayerGL.prototype.onclick = LayerGL.prototype.dblclick = function (e) {
+    if (e.target && e.target.__isGLToZRProxy) {
+        return;
+    }
+
     // Ignore click event if mouse moved
     var dx = this._upX - this._downX;
     var dy = this._upY - this._downY;
@@ -453,7 +483,10 @@ LayerGL.prototype.onclick = function (e) {
     e = e.event;
     var obj = this.pickObject(e.offsetX, e.offsetY);
 
-    this._dispatchEvent('click', e, obj);
+    if (obj) {
+        this._dispatchEvent(e.type, e, obj);
+        this._dispatchDataEvent(e.type, e, obj);
+    }
 
     // Try set depth of field onclick
     var result = this._clickToSetFocusPoint(e);
@@ -540,6 +573,46 @@ LayerGL.prototype._dispatchEvent = function (eveName, originalEvent, newEvent) {
     }
 
     this._dispatchToView(eveName, newEvent);
+};
+
+LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEvent) {
+    var mesh = newEvent && newEvent.target;
+
+    var dataIndex = mesh && mesh.dataIndex;
+    var seriesIndex = mesh && mesh.seriesIndex;
+    var dataIndexChangedInMouseMove = false;
+
+    var eventProxy = this._zrEventProxy;
+    eventProxy.position = [originalEvent.offsetX, originalEvent.offsetY];
+    eventProxy.update();
+
+    var targetInfo = {
+        target: eventProxy
+    };
+    if (eveName === 'mousemove') {
+        if (dataIndex !== this._lastDataIndex) {
+            if (this._lastDataIndex != null && this._lastDataIndex >= 0) {
+                eventProxy.dataIndex = this._lastDataIndex;
+                eventProxy.seriesIndex = this._lastSeriesIndex;
+                // FIXME May cause double events.
+                this.zr.handler.dispatchToElement(targetInfo, 'mouseout', originalEvent);
+            }
+            dataIndexChangedInMouseMove = true;
+        }
+        this._lastDataIndex = dataIndex;
+        this._lastSeriesIndex = seriesIndex;
+    }
+
+    eventProxy.dataIndex = dataIndex;
+    eventProxy.seriesIndex = seriesIndex;
+
+    if (dataIndex != null && dataIndex >= 0) {
+        this.zr.handler.dispatchToElement(targetInfo, eveName, originalEvent);
+
+        if (dataIndexChangedInMouseMove) {
+            this.zr.handler.dispatchToElement(targetInfo, 'mouseover', originalEvent);
+        }
+    }
 };
 
 LayerGL.prototype._dispatchToView = function (eventName, e) {

@@ -3,7 +3,6 @@ var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
-var TooltipHelper = require('../common/TooltipHelper');
 
 function isPointsNaN(pt) {
     return isNaN(pt[0]) || isNaN(pt[1]) || isNaN(pt[2]);
@@ -89,8 +88,6 @@ echarts.extendChartView({
 
         this._initHandler(seriesModel, api);
 
-        this._tooltip = new TooltipHelper(api);
-
         this._updateAnimation(seriesModel);
     },
 
@@ -150,6 +147,8 @@ echarts.extendChartView({
             return nearestIdx;
         }
 
+        surfaceMesh.seriesIndex = seriesModel.seriesIndex;
+
         var lastDataIndex = -1;
 
         surfaceMesh.off('mousemove');
@@ -160,10 +159,7 @@ echarts.extendChartView({
                 var point = [];
                 surfaceMesh.geometry.attributes.position.get(idx, point);
                 var value = coordSys.pointToData(point);
-                api.dispatchAction({
-                    type: 'grid3DShowAxisPointer',
-                    value: value
-                });
+
                 var minDist = Infinity;
                 var dataIndex = -1;
                 var item = [];
@@ -177,20 +173,28 @@ echarts.extendChartView({
                         minDist = dist;
                     }
                 }
-                this._tooltip.updateTooltip(seriesModel, dataIndex, e.offsetX, e.offsetY);
+
+                if (dataIndex !== lastDataIndex) {
+                    api.dispatchAction({
+                        type: 'grid3DShowAxisPointer',
+                        value: value
+                    });
+                }
+
+                lastDataIndex = dataIndex;
+                surfaceMesh.dataIndex = dataIndex;
             }
             else {
-                this._tooltip.hideTooltip();
+                surfaceMesh.dataIndex = -1;
             }
         }, this);
         surfaceMesh.on('mouseout', function (e) {
             lastDataIndex = -1;
+            surfaceMesh.dataIndex = -1;
 
             api.dispatchAction({
                 type: 'grid3DHideAxisPointer'
             });
-
-            this._tooltip.hideTooltip();
         }, this);
     },
 

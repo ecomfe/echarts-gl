@@ -3,7 +3,6 @@ var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
-var TooltipHelper = require('../common/TooltipHelper');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
 function getShader(shading) {
@@ -50,8 +49,6 @@ module.exports = echarts.extendChartView({
 
         // Give a large render order.
         this._labelsBuilder.getMesh().renderOrder = 100;
-
-        this._tooltip = new TooltipHelper(api);
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -215,6 +212,8 @@ module.exports = echarts.extendChartView({
         var barMesh = this._barMesh;
         var isCartesian3D = seriesModel.coordinateSystem.type === 'cartesian3D';
 
+        barMesh.seriesIndex = seriesModel.seriesIndex;
+
         var lastDataIndex = -1;
         barMesh.off('mousemove');
         barMesh.off('mouseout');
@@ -231,23 +230,22 @@ module.exports = echarts.extendChartView({
                         value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex)]
                     });
                 }
-
             }
-            this._tooltip.updateTooltip(seriesModel, dataIndex, e.offsetX, e.offsetY);
 
             lastDataIndex = dataIndex;
+            barMesh.dataIndex = dataIndex;
         }, this);
         barMesh.on('mouseout', function (e) {
             this._downplay(lastDataIndex);
             this._labelsBuilder.updateLabels();
             lastDataIndex = -1;
+            barMesh.dataIndex = -1;
 
             if (isCartesian3D) {
                 api.dispatchAction({
                     type: 'grid3DHideAxisPointer'
                 });
             }
-            this._tooltip.hideTooltip();
         }, this);
     },
 
