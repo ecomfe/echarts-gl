@@ -382,7 +382,7 @@ Geo3DBuilder.prototype = {
 
     _triangulation: function (geo3D) {
         this._triangulationResults = {};
-        var triangulator = this._triangulator;
+        // var triangulator = this._triangulator;
 
         var minAll = [Infinity, Infinity, Infinity];
         var maxAll = [-Infinity, -Infinity, -Infinity];

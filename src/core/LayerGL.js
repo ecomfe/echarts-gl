@@ -237,6 +237,13 @@ LayerGL.prototype.refresh = function () {
     this._startAccumulating();
 };
 
+
+LayerGL.prototype.renderToCanvas = function (ctx) {
+    // PENDING will block the page
+    this._startAccumulating(true);
+    ctx.drawImage(this.dom, 0, 0, ctx.canvas.width, ctx.canvas.height);
+};
+
 LayerGL.prototype._doRender = function (accumulating) {
     this.clear();
     this.renderer.saveViewport();
@@ -260,7 +267,7 @@ var accumulatingId = 1;
  * Accumulating is for antialising and have more sampling in SSAO
  * @private
  */
-LayerGL.prototype._startAccumulating = function () {
+LayerGL.prototype._startAccumulating = function (immediate) {
     var self = this;
     this._stopAccumulating();
 
@@ -284,16 +291,28 @@ LayerGL.prototype._startAccumulating = function () {
 
         if (!isFinished) {
             self._doRender(true);
-            requestAnimationFrame(function () {
+
+            if (immediate) {
                 accumulate(id);
-            });
+            }
+            else {
+                requestAnimationFrame(function () {
+                    accumulate(id);
+                });
+            }
         }
     }
 
     this._accumulatingId = accumulatingId++;
-    this._accumulatingTimeout = setTimeout(function () {
+
+    if (immediate) {
         accumulate(self._accumulatingId);
-    }, 50);
+    }
+    else {
+        this._accumulatingTimeout = setTimeout(function () {
+            accumulate(self._accumulatingId);
+        }, 50);
+    }
 };
 
 function getId(resource) {
