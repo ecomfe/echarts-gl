@@ -13,7 +13,7 @@ module.exports = function (seriesType, ecModel, api) {
                 var itemModel = data.getItemModel(idx);
                 var opacity = itemModel.get(opacityAccessPath);
                 if (opacity != null) {
-                    data.setItemVisual(idx, opacity);
+                    data.setItemVisual(idx, 'opacity', opacity);
                 }
             });
         }
