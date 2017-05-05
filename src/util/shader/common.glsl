@@ -1,4 +1,24 @@
 // COMMON SHADERS
+
+// ----------------- UNIFORM AND ATTRIBUTES -----------
+@export ecgl.common.transformUniforms
+uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
+uniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;
+uniform mat4 world : WORLD;
+@end
+
+@export ecgl.common.attributes
+attribute vec3 position : POSITION;
+attribute vec2 texcoord : TEXCOORD_0;
+attribute vec3 normal : NORMAL;
+@end
+
+@export ecgl.common.uvUniforms
+uniform vec2 uvRepeat : [1.0, 1.0];
+uniform vec2 uvOffset : [0.0, 0.0];
+@end
+
+
 // -----------------WIREFRAME -----------
 @export ecgl.common.wireframe.vertexHeader
 
@@ -61,7 +81,7 @@ float edgeFactor () {
 
 
 
-// ----------------- Bumpmap -----------
+// ----------------- Bumpmap and normal map -----------
 
 @export ecgl.common.bumpmap.header
 
@@ -97,8 +117,53 @@ vec3 bumpNormal(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)
 }
 #endif
 
+@end
+
+@export ecgl.common.normalMap.vertexHeader
+
+#ifdef NORMALMAP_ENABLED
+attribute vec4 tangent : TANGENT;
+varying vec3 v_Tangent;
+varying vec3 v_Bitangent;
+#endif
 
 @end
+
+@export ecgl.common.normalMap.vertexMain
+
+#ifdef NORMALMAP_ENABLED
+    if (dot(tangent, tangent) > 0.0) {
+        v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);
+        v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);
+    }
+#endif
+
+@end
+
+
+@export ecgl.common.normalMap.fragmentHeader
+
+#ifdef NORMALMAP_ENABLED
+uniform sampler2D normalMap;
+varying vec3 v_Tangent;
+varying vec3 v_Bitangent;
+#endif
+
+@end
+
+@export ecgl.common.normalMap.fragmentMain
+#ifdef NORMALMAP_ENABLED
+    if (dot(v_Tangent, v_Tangent) > 0.0) {
+        vec3 normalTexel = texture2D(normalMap, v_Texcoord).xyz;
+        if (dot(normalTexel, normalTexel) > 0.0) { // Valid normal map
+            N = normalTexel * 2.0 - 1.0;
+            mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);
+            N = normalize(tbn * N);
+        }
+    }
+#endif
+@end
+
 
 //----------- Vertex animation ---------
 

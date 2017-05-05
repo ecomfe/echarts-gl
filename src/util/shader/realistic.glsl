@@ -1,15 +1,11 @@
 @export ecgl.realistic.vertex
 
-uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
-uniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;
-uniform mat4 world : WORLD;
+@import ecgl.common.transformUniforms
 
-uniform vec2 uvRepeat : [1.0, 1.0];
-uniform vec2 uvOffset : [0.0, 0.0];
+@import ecgl.common.uvUniforms
 
-attribute vec3 position : POSITION;
-attribute vec2 texcoord : TEXCOORD_0;
-attribute vec3 normal : NORMAL;
+@import ecgl.common.attributes
+
 
 @import ecgl.common.wireframe.vertexHeader
 

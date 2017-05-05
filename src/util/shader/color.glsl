@@ -1,7 +1,8 @@
 @export ecgl.color.vertex
 
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
-uniform vec2 uvRepeat: [1, 1];
+
+@import ecgl.common.uvUniforms
 
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 position: POSITION;
@@ -29,7 +30,7 @@ void main()
 #endif
 
     gl_Position = worldViewProjection * vec4(pos, 1.0);
-    v_Texcoord = texcoord * uvRepeat;
+    v_Texcoord = texcoord * uvRepeat + uvOffset;
 
 #ifdef VERTEX_COLOR
     v_Color = a_Color;
