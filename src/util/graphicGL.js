@@ -308,6 +308,7 @@ graphicGL.createAmbientCubemap = function (opt, renderer, api, cb) {
         coefficients: [0.844, 0.712, 0.691, -0.037, 0.083, 0.167, 0.343, 0.288, 0.299, -0.041, -0.021, -0.009, -0.003, -0.041, -0.064, -0.011, -0.007, -0.004, -0.031, 0.034, 0.081, -0.060, -0.049, -0.060, 0.046, 0.056, 0.050]
     });
 
+
     ambientCubemap.cubemap = graphicGL.loadTexture(textureUrl, api, {
         exposure: exposure
     }, function () {
@@ -433,6 +434,7 @@ graphicGL.createShader = function (prefix) {
         console.error('Fragment shader of \'%s\' not exits', prefix);
     }
     return new Shader({
+        name: prefix,
         vertex: vertexShaderStr,
         fragment: fragmentShaderStr
     });

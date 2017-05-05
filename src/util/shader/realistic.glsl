@@ -11,18 +11,14 @@ attribute vec3 position : POSITION;
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 normal : NORMAL;
 
-@import ecgl.wireframe.common.vertexHeader
+@import ecgl.common.wireframe.vertexHeader
 
 #ifdef VERTEX_COLOR
 attribute vec4 a_Color : COLOR;
 varying vec4 v_Color;
 #endif
 
-#ifdef VERTEX_ANIMATION
-attribute vec3 prevPosition;
-attribute vec3 prevNormal;
-uniform float percent;
-#endif
+@import ecgl.common.vertexAnimation.header
 
 varying vec2 v_Texcoord;
 
@@ -33,13 +29,7 @@ void main()
 {
     v_Texcoord = texcoord * uvRepeat + uvOffset;
 
-#ifdef VERTEX_ANIMATION
-    vec3 pos = mix(prevPosition, position, percent);
-    vec3 norm = mix(prevNormal, normal, percent);
-#else
-    vec3 pos = position;
-    vec3 norm = normal;
-#endif
+    @import ecgl.common.vertexAnimation.main
 
     gl_Position = worldViewProjection * vec4(pos, 1.0);
 
@@ -50,7 +40,7 @@ void main()
     v_Color = a_Color;
 #endif
 
-    @import ecgl.wireframe.common.vertexMain
+    @import ecgl.common.wireframe.vertexMain
 
 }
 
@@ -75,49 +65,9 @@ varying vec3 v_WorldPosition;
 uniform sampler2D diffuseMap;
 #endif
 
-#if (LAYER_DIFFUSEMAP_COUNT > 0)
-uniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];
-uniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];
-#endif
-
-#if (LAYER_EMISSIVEMAP_COUNT > 0)
-uniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];
-uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
-#endif
+@import ecgl.common.layers.header
 
 uniform float emissionIntensity: 1.0;
-
-#ifdef BUMPMAP_ENABLED
-uniform sampler2D bumpMap;
-uniform float bumpScale : 1.0;
-// Derivative maps - bump mapping unparametrized surfaces by Morten Mikkelsen
-//  http://mmikkelsen3d.blogspot.sk/2011/07/derivative-maps.html
-
-// Evaluate the derivative of the height w.r.t. screen-space using forward differencing (listing 2)
-
-vec3 perturbNormalArb(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)
-{
-    vec2 dSTdx = dFdx(v_Texcoord);
-    vec2 dSTdy = dFdy(v_Texcoord);
-
-    float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;
-    float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;
-    float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;
-
-    vec3 vSigmaX = dFdx(surfPos);
-    vec3 vSigmaY = dFdy(surfPos);
-    vec3 vN = surfNormal;
-
-    vec3 R1 = cross(vSigmaY, vN);
-    vec3 R2 = cross(vN, vSigmaX);
-
-    float fDet = dot(vSigmaX, R1);
-
-    vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);
-    return normalize(abs(fDet) * baseNormal - vGrad);
-
-}
-#endif
 
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
@@ -142,11 +92,13 @@ uniform mat4 viewInverse : VIEWINVERSE;
 @import qtek.header.directional_light
 #endif
 
+@import ecgl.common.bumpmap.header
+
 @import qtek.util.srgb
 
 @import qtek.util.rgbm
 
-@import ecgl.wireframe.common.fragmentHeader
+@import ecgl.common.wireframe.fragmentHeader
 
 @import qtek.plugin.compute_shadow_map
 
@@ -183,18 +135,8 @@ void main()
     #endif
 #endif
 
-#if (LAYER_DIFFUSEMAP_COUNT > 0)
-    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{
-        float intensity = layerDiffuseIntensity[_idx_];
-        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);
-        #ifdef SRGB_DECODE
-        texel2 = sRGBToLinear(texel2);
-        #endif
-        // source-over blend
-        albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);
-        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;
-    }}
-#endif
+    @import ecgl.common.diffuseLayer.main
+
     albedoColor *= albedoTexel;
 
     vec3 baseColor = albedoColor.rgb;
@@ -214,7 +156,7 @@ void main()
     float ambientFactor = 1.0;
 
 #ifdef BUMPMAP_ENABLED
-    N = perturbNormalArb(v_WorldPosition, v_Normal, N);
+    N = bumpNormal(v_WorldPosition, v_Normal, N);
     // PENDING
     ambientFactor = dot(v_Normal, N);
 #endif
@@ -298,17 +240,9 @@ void main()
     gl_FragColor = linearTosRGB(gl_FragColor);
     #endif
 
-#if (LAYER_EMISSIVEMAP_COUNT > 0)
-    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)
-    {{
-        // PENDING sRGB ?
-        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];
-        float intensity = layerEmissionIntensity[_idx_];
-        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;
-    }}
-#endif
+    @import ecgl.common.emissiveLayer.main
 
-    @import ecgl.wireframe.common.fragmentMain
+    @import ecgl.common.wireframe.fragmentMain
 }
 
 @end

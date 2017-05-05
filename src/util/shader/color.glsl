@@ -6,7 +6,7 @@ uniform vec2 uvRepeat: [1, 1];
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 position: POSITION;
 
-@import ecgl.wireframe.common.vertexHeader
+@import ecgl.common.wireframe.vertexHeader
 
 #ifdef VERTEX_COLOR
 attribute vec4 a_Color : COLOR;
@@ -35,7 +35,7 @@ void main()
     v_Color = a_Color;
 #endif
 
-    @import ecgl.wireframe.common.vertexMain
+    @import ecgl.common.wireframe.vertexMain
 
 }
 
@@ -53,19 +53,11 @@ uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 varying vec4 v_Color;
 #endif
 
-#if (LAYER_DIFFUSEMAP_COUNT > 0)
-uniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];
-uniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];
-#endif
-
-#if (LAYER_EMISSIVEMAP_COUNT > 0)
-uniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];
-uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
-#endif
+@import ecgl.common.layers.header
 
 varying vec2 v_Texcoord;
 
-@import ecgl.wireframe.common.fragmentHeader
+@import ecgl.common.wireframe.fragmentHeader
 
 @import qtek.util.srgb
 
@@ -89,31 +81,13 @@ void main()
     #endif
 #endif
 
-#if (LAYER_DIFFUSEMAP_COUNT > 0)
-    for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{
-        float intensity = layerDiffuseIntensity[_idx_];
-        vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);
-        #ifdef SRGB_DECODE
-        texel2 = sRGBToLinear(texel2);
-        #endif
-        // source-over blend
-        albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);
-        albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;
-    }}
-#endif
+    @import ecgl.common.diffuseLayer.main
+
     gl_FragColor *= albedoTexel;
 
-#if (LAYER_EMISSIVEMAP_COUNT > 0)
-    for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++) {{
-        // PENDING BLEND?
-        vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord);
-        float intensity = layerEmissionIntensity[_idx_];
-        gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;
-    }}
-#endif
+    @import ecgl.common.emissiveLayer.main
 
-
-    @import ecgl.wireframe.common.fragmentMain
+    @import ecgl.common.wireframe.fragmentMain
 
 }
 @end

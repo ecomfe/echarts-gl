@@ -119,7 +119,7 @@ uniform float near : NEAR;
 
 varying vec4 v_Color;
 
-@import ecgl.wireframe.common.vertexHeader
+@import ecgl.common.wireframe.vertexHeader
 
 @import ecgl.lines3D.clipNear
 
@@ -131,7 +131,7 @@ void main()
 
     v_Color = a_Color;
 
-    @import ecgl.wireframe.common.vertexMain
+    @import ecgl.common.wireframe.vertexMain
 }
 @end
 
@@ -142,7 +142,7 @@ uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 varying vec4 v_Color;
 
-@import ecgl.wireframe.common.fragmentHeader
+@import ecgl.common.wireframe.fragmentHeader
 
 @import qtek.util.srgb
 
@@ -154,7 +154,7 @@ void main()
     gl_FragColor = color * v_Color;
 #endif
 
-    @import ecgl.wireframe.common.fragmentMain
+    @import ecgl.common.wireframe.fragmentMain
 }
 
 @end

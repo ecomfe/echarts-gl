@@ -34,7 +34,7 @@ function EffectCompositor() {
 
     this._framebuffer = new FrameBuffer();
     this._framebuffer.attach(this._sourceTexture);
-    this._framebuffer.attach(this._depthTexture, FrameBuffer.DEPTH_ATTACHMENT)
+    this._framebuffer.attach(this._depthTexture, FrameBuffer.DEPTH_ATTACHMENT);
 
     var loader = new FXLoader();
     this._compositor = loader.parse(effectJson);
