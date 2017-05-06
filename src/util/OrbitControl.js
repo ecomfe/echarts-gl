@@ -440,12 +440,12 @@ var OrbitControl = Base.extend(function () {
         this.setAlpha(this.getAlpha());
         this.setBeta(this.getBeta());
 
-        this._vectorDamping(velocity, this.damping);
+        this._vectorDamping(velocity, Math.pow(this.damping, deltaTime / 16));
     },
 
     _updateDistance: function (deltaTime) {
         this._setDistance(this._distance + this._zoomSpeed * deltaTime / 20);
-        this._zoomSpeed *= this.damping;
+        this._zoomSpeed *= Math.pow(this.damping, deltaTime / 16);
     },
 
     _setDistance: function (distance) {

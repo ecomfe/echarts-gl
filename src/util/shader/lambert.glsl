@@ -86,7 +86,7 @@ uniform mat4 viewInverse : VIEWINVERSE;
 varying vec4 v_Color;
 #endif
 
-@import ecgl.common.bumpmap.header
+@import ecgl.common.bumpMap.header
 
 @import qtek.util.srgb
 

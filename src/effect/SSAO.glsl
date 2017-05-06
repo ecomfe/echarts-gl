@@ -2,6 +2,8 @@
 
 uniform sampler2D depthTex;
 
+uniform sampler2D normalTex;
+
 uniform sampler2D noiseTex;
 
 uniform vec2 depthTexSize;
@@ -18,21 +20,21 @@ uniform vec3 kernel[KERNEL_SIZE];
 
 uniform float radius : 1;
 
-uniform float power : 2;
+uniform float power : 1;
 
 uniform float bias: 1e-2;
 
 varying vec2 v_Texcoord;
 
-#ifdef DEPTH_ENCODED
-@import qtek.util.decode_float
-#endif
-
-vec3 ssaoEstimator(in vec3 originPos) {
+vec3 ssaoEstimator(in vec3 originPos, in mat3 kernelBasis) {
     float occlusion = 0.0;
 
     for (int i = 0; i < KERNEL_SIZE; i++) {
-        vec3 samplePos = kernel[i] * radius + originPos;
+        vec3 samplePos = kernel[i];
+#ifdef NORMALTEX_ENABLED
+        samplePos = kernelBasis * samplePos;
+#endif
+        samplePos = samplePos * radius + originPos;
 
         vec4 texCoord = projection * vec4(samplePos, 1.0);
         texCoord.xy /= texCoord.w;
@@ -46,7 +48,11 @@ vec3 ssaoEstimator(in vec3 originPos) {
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(originPos.z - sampleDepth));
         occlusion += rangeCheck * step(samplePos.z, sampleDepth - bias);
     }
+#ifdef NORMALTEX_ENABLED
+    occlusion = 1.0 - occlusion / float(KERNEL_SIZE);
+#else
     occlusion = 1.0 - clamp((occlusion / float(KERNEL_SIZE) - 0.6) * 2.5, 0.0, 1.0);
+#endif
     return vec3(pow(occlusion, power));
 }
 
@@ -54,27 +60,40 @@ void main()
 {
 
     vec4 depthTexel = texture2D(depthTex, v_Texcoord);
-    if (depthTexel.r > 0.99999) {
-        // Ignore skybox and transparent objects like axis lines.
-        discard;
-    }
 
-#ifdef DEPTH_ENCODED
-    depthTexel.rgb /= depthTexel.a;
-    float z = decodeFloat(depthTexel) * 2.0 - 1.0;
+#ifdef NORMALTEX_ENABLED
+    vec4 tex = texture2D(normalTex, v_Texcoord);
+    // Is empty
+    if (tex.a == 0.0) {
+        gl_FragColor = vec4(1.0);
+        return;
+    }
+    vec3 N = tex.rgb * 2.0 - 1.0;
+    N = (viewInverseTranspose * vec4(N, 0.0)).xyz;
+
+    vec2 noiseTexCoord = depthTexSize / vec2(noiseTexSize) * v_Texcoord;
+    vec3 rvec = texture2D(noiseTex, noiseTexCoord).rgb * 2.0 - 1.0;
+    // Tangent
+    vec3 T = normalize(rvec - N * dot(rvec, N));
+    // Bitangent
+    vec3 BT = normalize(cross(N, T));
+    mat3 kernelBasis = mat3(T, BT, N);
 #else
-    float z = depthTexel.r * 2.0 - 1.0;
+    if (depthTexel.r > 0.99999) {
+        gl_FragColor = vec4(1.0);
+        return;
+    }
+    mat3 kernelBasis;
 #endif
+
+    float z = depthTexel.r * 2.0 - 1.0;
 
     vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, z, 1.0);
     vec4 p4 = projectionInv * projectedPos;
 
     vec3 position = p4.xyz / p4.w;
 
-    vec2 noiseTexCoord = depthTexSize / vec2(noiseTexSize) * v_Texcoord;
-    vec3 rvec = texture2D(noiseTex, noiseTexCoord).rgb * 2.0 - 1.0;
-
-    gl_FragColor = vec4(vec3(ssaoEstimator(position)), 1.0);
+    gl_FragColor = vec4(vec3(ssaoEstimator(position, kernelBasis)), 1.0);
 }
 
 @end

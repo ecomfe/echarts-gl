@@ -88,7 +88,7 @@ uniform mat4 viewInverse : VIEWINVERSE;
 @import qtek.header.directional_light
 #endif
 
-@import ecgl.common.bumpmap.header
+@import ecgl.common.bumpMap.header
 
 @import qtek.util.srgb
 

@@ -36,11 +36,11 @@ function generateNoiseTexture(size) {
     });
 }
 
-function generateKernel(size, offset) {
+function generateKernel(size, offset, hemisphere) {
     var kernel = new Float32Array(size * 3);
     offset = offset || 0;
     for (var i = 0; i < size; i++) {
-        var phi = halton(i + offset, 2) * 2 * Math.PI;
+        var phi = halton(i + offset, 2) * (hemisphere ? 1 : 2) * Math.PI;
         var theta = halton(i + offset, 3) * Math.PI;
         var r = Math.random();
         var x = Math.cos(phi) * Math.sin(theta) * r;
@@ -52,6 +52,17 @@ function generateKernel(size, offset) {
         kernel[i * 3 + 2] = z;
     }
     return kernel;
+
+    // var kernel = new Float32Array(size * 3);
+    // var v3 = new Vector3();
+    // for (var i = 0; i < size; i++) {
+    //     v3.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random())
+    //         .normalize().scale(Math.random());
+    //     kernel[i * 3] = v3.x;
+    //     kernel[i * 3 + 1] = v3.y;
+    //     kernel[i * 3 + 2] = v3.z;
+    // }
+    // return kernel;
 }
 
 function SSAOPass(opt) {
@@ -70,7 +81,8 @@ function SSAOPass(opt) {
         type: Texture.HALF_FLOAT
     });
 
-    this._depthTexture = opt.depthTexture;
+    this._depthTex = opt.depthTexture;
+    this._normalTex = opt.normalTexture;
 
     this.setNoiseSize(4);
     this.setKernelSize(opt.kernelSize || 16);
@@ -81,10 +93,21 @@ function SSAOPass(opt) {
     if (opt.power != null) {
         this.setParameter('power', opt.power);
     }
+
+    if (!this._normalTex) {
+        this._ssaoPass.material.shader.disableTexture('normalTex');
+    }
 }
 
 SSAOPass.prototype.setDepthTexture = function (depthTex) {
-    this._depthTexture = depthTex;
+    this._depthTex = depthTex;
+};
+
+SSAOPass.prototype.setNormalTexture = function (normalTex) {
+    this._normalTex = normalTex;
+    this._ssaoPass.material.shader[normalTex ? 'enableTexture' : 'disableTexture']('normalTex');
+    // Switch between hemisphere and shere kernel.
+    this.setKernelSize(this._kernelSize);
 };
 
 SSAOPass.prototype.update = function (renderer, camera, frame) {
@@ -94,8 +117,11 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     var ssaoPass = this._ssaoPass;
 
     ssaoPass.setUniform('kernel', this._kernels[frame % this._kernels.length]);
-    ssaoPass.setUniform('depthTex', this._depthTexture);
-    ssaoPass.setUniform('depthTexSize', [this._depthTexture.width, this._depthTexture.height]);
+    ssaoPass.setUniform('depthTex', this._depthTex);
+    if (this._normalTex != null) {
+        ssaoPass.setUniform('normalTex', this._normalTex);
+    }
+    ssaoPass.setUniform('depthTexSize', [this._depthTex.width, this._depthTex.height]);
 
     var viewInverseTranspose = new Matrix4();
     Matrix4.transpose(viewInverseTranspose, camera.worldTransform);
@@ -105,11 +131,10 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     ssaoPass.setUniform('viewInverseTranspose', viewInverseTranspose._array);
 
     var ssaoTexture = this._ssaoTexture;
-    if (width !== ssaoTexture.width || height !== ssaoTexture.height) {
-        ssaoTexture.width = width;
-        ssaoTexture.height = height;
-        ssaoTexture.dirty();
-    }
+
+    ssaoTexture.width = width;
+    ssaoTexture.height = height;
+
     this._framebuffer.attach(ssaoTexture);
     this._framebuffer.bind(renderer);
     renderer.gl.clearColor(1, 1, 1, 1);
@@ -124,17 +149,14 @@ SSAOPass.prototype.getTargetTexture = function () {
 
 SSAOPass.prototype.blend = function (renderer, sourceTexture) {
     var blendPass = this._blendPass;
-    var width = this._depthTexture.width;
-    var height = this._depthTexture.height;
+    var width = this._depthTex.width;
+    var height = this._depthTex.height;
 
     var targetTexture = this._targetTexture;
-    if (sourceTexture.width !== targetTexture.width
-        || sourceTexture.height !== targetTexture.height
-    ) {
-        targetTexture.width = sourceTexture.width;
-        targetTexture.height = sourceTexture.height;
-        targetTexture.dirty();
-    }
+
+    targetTexture.width = sourceTexture.width;
+    targetTexture.height = sourceTexture.height;
+
     this._framebuffer.attach(targetTexture);
     this._framebuffer.bind(renderer);
 
@@ -165,10 +187,11 @@ SSAOPass.prototype.setParameter = function (name, val) {
 };
 
 SSAOPass.prototype.setKernelSize = function (size) {
+    this._kernelSize = size;
     this._ssaoPass.material.shader.define('fragment', 'KERNEL_SIZE', size);
     this._kernels = this._kernels || [];
     for (var i = 0; i < 30; i++) {
-        this._kernels[i] = generateKernel(size, i * size);
+        this._kernels[i] = generateKernel(size, i * size, !!this._normalTex);
     }
 };
 

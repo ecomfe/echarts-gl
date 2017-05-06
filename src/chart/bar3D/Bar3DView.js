@@ -68,7 +68,9 @@ module.exports = echarts.extendChartView({
                     })
                 }),
                 // Render after axes
-                renderOrder: 10
+                renderOrder: 10,
+                // Render normal in normal pass
+                renderNormal: true
             });
         }
 

@@ -115,7 +115,9 @@ echarts.extendChartView({
             }),
             culling: false,
             // Render after axes
-            renderOrder: 10
+            renderOrder: 10,
+            // Render normal in normal pass
+            renderNormal: true
         });
         mesh.geometry.createAttribute('barycentric', 'float', 4);
         mesh.geometry.createAttribute('prevPosition', 'float', 3);

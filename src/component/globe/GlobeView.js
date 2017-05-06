@@ -50,7 +50,7 @@ module.exports = echarts.extendComponentView({
          * @type {qtek.geometry.Mesh}
          */
         this._earthMesh = new graphicGL.Mesh({
-            name: 'earth'
+            renderNormal: true
         });
 
         this._lightRoot = new graphicGL.Node();

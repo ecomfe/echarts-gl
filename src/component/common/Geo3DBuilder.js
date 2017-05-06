@@ -43,6 +43,7 @@ function Geo3DBuilder(api) {
     this._groundMesh = new graphicGL.Mesh({
         geometry: new graphicGL.PlaneGeometry(),
         castShadow: false,
+        renderNormal: true,
         $ignorePicking: true
     });
     this._groundMesh.rotation.rotateX(-Math.PI / 2);
@@ -317,7 +318,9 @@ Geo3DBuilder.prototype = {
                 culling: false,
                 geometry: new graphicGL.Geometry({
                     sortTriangles: true
-                })
+                }),
+                // Render normal in normal pass
+                renderNormal: true
             });
             echarts.util.extend(mesh.geometry, trianglesSortMixin);
             return mesh;

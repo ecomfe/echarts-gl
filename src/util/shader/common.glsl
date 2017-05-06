@@ -83,7 +83,7 @@ float edgeFactor () {
 
 // ----------------- Bumpmap and normal map -----------
 
-@export ecgl.common.bumpmap.header
+@export ecgl.common.bumpMap.header
 
 #ifdef BUMPMAP_ENABLED
 uniform sampler2D bumpMap;

@@ -119,9 +119,5 @@ void main()
 #ifdef SRGB_DECODE
     gl_FragColor = sRGBToLinear(gl_FragColor);
 #endif
-
-    if (gl_FragColor.a == 0.0) {
-        discard;
-    }
 }
 @end

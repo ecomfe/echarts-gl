@@ -234,6 +234,12 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         this._shadowMapPass.kernelPCF = this._pcfKernels[0];
         // Not render shadowmap pass in accumulating frame.
         this._shadowMapPass.render(renderer, scene, camera, true);
+
+        if (this._enablePostEffect
+            && this._enableSSAO
+        ) {
+            this._compositor.updateNormal(renderer, scene, camera, this._temporalSS.getFrame());
+        }
     }
 
     this._updateShadowPCFKernel(accumFrame);
@@ -242,13 +248,16 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
     renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
     if (this._enablePostEffect) {
+        if (this._enableSSAO) {
+            this._compositor.updateSSAO(renderer, scene, camera, this._temporalSS.getFrame());
+        }
+
         var frameBuffer = this._compositor.getSourceFrameBuffer();
         frameBuffer.bind(renderer);
         renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
         renderer.render(scene, camera, true);
         frameBuffer.unbind(renderer);
         if (this._enableSSAO) {
-            this._compositor.updateSSAO(renderer, camera, this._temporalSS.getFrame());
             this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
         }
 
