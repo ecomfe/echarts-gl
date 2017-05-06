@@ -8,6 +8,7 @@ var SSAOPass = require('./SSAOPass');
 var poissonKernel = require('./poissonKernel');
 var graphicGL = require('../util/graphicGL');
 var NormalPass = require('./NormalPass');
+var Matrix4 = require('qtek/lib/math/Matrix4');
 
 var effectJson = require('./composite.js');
 
@@ -70,11 +71,12 @@ function EffectCompositor() {
 
     this._edgeNode = this._compositor.getNodeByName('edge');
     this._edgeNode.setParameter('normalTexture', this._normalPass.getNormalTexture());
-    this._edgeNode.setParameter('depthTexture', this._normalPass.getDepthTexture());
+    // FIXME depthTexture in normalPass have glitches
+    this._edgeNode.setParameter('depthTexture', this._depthTexture);
 
     this._ssaoPass = new SSAOPass({
         normalTexture: this._normalPass.getNormalTexture(),
-        depthTexture: this._normalPass.getDepthTexture()
+        depthTexture: this._depthTexture
     });
 
     this._dofBlurNodes = ['dof_far_blur', 'dof_near_blur', 'dof_coc_blur'].map(function (name) {
@@ -387,12 +389,7 @@ EffectCompositor.prototype.setColorCorrection = function (type, value) {
 
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
 
-    if (this._ifRenderNormalPass()) {
-        this._cocNode.setParameter('depth', this._normalPass.getDepthTexture());
-    }
-    else {
-        this._cocNode.setParameter('depth', this._depthTexture);
-    }
+    this._cocNode.setParameter('depth', this._depthTexture);
 
     var blurKernel = this._dofBlurKernel;
     var blurKernelSize = this._dofBlurKernelSize;
@@ -410,6 +407,9 @@ EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, 
 
     this._cocNode.setParameter('zNear', camera.near);
     this._cocNode.setParameter('zFar', camera.far);
+
+    this._edgeNode.setParameter('projectionInv', camera.invProjectionMatrix._array);
+
     this._compositor.render(renderer, framebuffer);
 };
 

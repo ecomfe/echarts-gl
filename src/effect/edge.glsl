@@ -10,16 +10,22 @@ uniform sampler2D texture;
 uniform sampler2D normalTexture;
 uniform sampler2D depthTexture;
 
+uniform mat4 projectionInv;
+
 uniform vec2 textureSize;
 
-uniform vec4 edgeColor: [0,0,0,0.6];
+uniform vec4 edgeColor: [0,0,0,0.8];
 
 varying vec2 v_Texcoord;
 
 vec3 packColor(vec2 coord) {
+    float z = texture2D(depthTexture, coord).r * 2.0 - 1.0;
+    vec4 p = vec4(v_Texcoord * 2.0 - 1.0, z, 1.0);
+    vec4 p4 = projectionInv * p;
+
     return vec3(
         texture2D(normalTexture, coord).rg,
-        log(texture2D(depthTexture, coord).a)
+        -p4.z / p4.w / 5.0
     );
 }
 
@@ -53,8 +59,11 @@ void main() {
 
     float edge = sqrt(dot(h, h) + dot(v, v));
 
-    edge = smoothstep(0.0, 0.01, edge);
+    // TODO fadeOut during depth
+    edge = smoothstep(0.8, 1.0, edge);
 
     gl_FragColor = mix(texture2D(texture, v_Texcoord), vec4(edgeColor.rgb, 1.0), edgeColor.a * edge);
+
+    // gl_FragColor = vec4(vec3(center.b / 50.0), 1.0);
 }
 @end
