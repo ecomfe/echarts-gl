@@ -71,12 +71,12 @@ function EffectCompositor() {
 
     this._edgeNode = this._compositor.getNodeByName('edge');
     this._edgeNode.setParameter('normalTexture', this._normalPass.getNormalTexture());
-    // FIXME depthTexture in normalPass have glitches
+    // FIXME depthTexture in normalPass have glitches WHEN edge is enabled
     this._edgeNode.setParameter('depthTexture', this._depthTexture);
 
     this._ssaoPass = new SSAOPass({
         normalTexture: this._normalPass.getNormalTexture(),
-        depthTexture: this._depthTexture
+        depthTexture: this._normalPass.getDepthTexture()
     });
 
     this._dofBlurNodes = ['dof_far_blur', 'dof_near_blur', 'dof_coc_blur'].map(function (name) {
