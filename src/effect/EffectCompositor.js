@@ -23,6 +23,7 @@ Shader['import'](require('qtek/lib/shader/source/compositor/lensflare.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/blend.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
 Shader['import'](require('./DOF.glsl.js'));
+Shader['import'](require('./edge.glsl.js'));
 
 function EffectCompositor() {
     this._sourceTexture = new Texture2D({
@@ -35,7 +36,7 @@ function EffectCompositor() {
 
     this._framebuffer = new FrameBuffer();
     this._framebuffer.attach(this._sourceTexture);
-    // this._framebuffer.attach(this._depthTexture, FrameBuffer.DEPTH_ATTACHMENT);
+    this._framebuffer.attach(this._depthTexture, FrameBuffer.DEPTH_ATTACHMENT);
 
     this._normalPass = new NormalPass();
 
@@ -45,8 +46,6 @@ function EffectCompositor() {
     var sourceNode = this._compositor.getNodeByName('source');
     sourceNode.texture = this._sourceTexture;
     var cocNode = this._compositor.getNodeByName('coc');
-    cocNode.setParameter('depth', this._normalPass.getDepthTexture());
-    // cocNode.setParameter('depth', this._depthTexture);
 
     this._sourceNode = sourceNode;
     this._cocNode = cocNode;
@@ -54,7 +53,6 @@ function EffectCompositor() {
     this._fxaaNode = this._compositor.getNodeByName('FXAA');
 
     this._ssaoPass = new SSAOPass({
-        // depthTexture: this._depthTexture
         normalTexture: this._normalPass.getNormalTexture(),
         depthTexture: this._normalPass.getDepthTexture()
     });
@@ -72,12 +70,12 @@ EffectCompositor.prototype.resize = function (width, height, dpr) {
     var width = width * dpr;
     var height = height * dpr;
     var sourceTexture = this._sourceTexture;
-    // var depthTexture = this._depthTexture;
+    var depthTexture = this._depthTexture;
 
     sourceTexture.width = width;
     sourceTexture.height = height;
-    // depthTexture.width = width;
-    // depthTexture.height = height;
+    depthTexture.width = width;
+    depthTexture.height = height;
 };
 
 /**
@@ -92,6 +90,20 @@ EffectCompositor.prototype.updateNormal = function (renderer, scene, camera, fra
  */
 EffectCompositor.prototype.updateSSAO = function (renderer, scene, camera, frame) {
     this._ssaoPass.update(renderer, camera, frame);
+};
+
+/**
+ * Enable SSAO effect
+ */
+EffectCompositor.prototype.enableSSAO = function () {
+    this._enableSSAO = true;
+};
+
+/**
+ * Disable SSAO effect
+ */
+EffectCompositor.prototype.disableSSAO = function () {
+    this._enableSSAO = false;
 };
 
 /**
@@ -283,6 +295,13 @@ EffectCompositor.prototype.setColorCorrection = function (type, value) {
 
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
 
+    if (this._enableSSAO) {
+        this._cocNode.setParameter('depth', this._normalPass.getDepthTexture());
+    }
+    else {
+        this._cocNode.setParameter('depth', this._depthTexture);
+    }
+
     var blurKernel = this._dofBlurKernel;
     var blurKernelSize = this._dofBlurKernelSize;
     var frameAll = Math.floor(poissonKernel.length / 2 / blurKernelSize);
@@ -304,7 +323,7 @@ EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, 
 
 EffectCompositor.prototype.dispose = function (gl) {
     this._sourceTexture.dispose(gl);
-    // this._depthTexture.dispose(gl);
+    this._depthTexture.dispose(gl);
     this._framebuffer.dispose(gl);
     this._compositor.dispose(gl);
 

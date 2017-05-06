@@ -350,6 +350,8 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     this._enableDOF = dofModel.get('enable');
     this._enableSSAO = ssaoModel.get('enable');
 
+    this._enableSSAO ? compositor.enableSSAO() : compositor.disableSSAO();
+
     compositor.setBloomIntensity(bloomModel.get('intensity'));
     compositor.setSSAORadius(ssaoModel.get('radius'));
     compositor.setSSAOQuality(ssaoModel.get('quality'));
