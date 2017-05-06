@@ -33,8 +33,8 @@ void main() {
     // center
     vec3 center = packColor(cc);
 
-    // PENDING Fade out in 50 - 1000
-    float size = clamp(1.0 - (center.z - 10.0) / 200.0, 0.0, 1.0) * 0.5;
+    // PENDING Fade out in 50 - 500
+    float size = clamp(1.0 - (center.z - 10.0) / 100.0, 0.0, 1.0) * 0.5;
     float dx = size / textureSize.x;
     float dy = size / textureSize.y;
 
