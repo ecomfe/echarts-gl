@@ -71,7 +71,7 @@ function SSAOPass(opt) {
     this._ssaoPass = new Pass({
         fragment: Shader.source('ecgl.ssao.estimate')
     });
-    this._blendPass = new Pass({
+    this._blurPass = new Pass({
         fragment: Shader.source('ecgl.ssao.blur')
     });
     this._framebuffer = new FrameBuffer();
@@ -85,7 +85,7 @@ function SSAOPass(opt) {
     this._normalTex = opt.normalTexture;
 
     this.setNoiseSize(4);
-    this.setKernelSize(opt.kernelSize || 16);
+    this.setKernelSize(opt.kernelSize || 12);
     this.setParameter('blurSize', Math.round(opt.blurSize || 4));
     if (opt.radius != null) {
         this.setParameter('radius', opt.radius);
@@ -115,6 +115,7 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     var height = renderer.getHeight();
 
     var ssaoPass = this._ssaoPass;
+    var blurPass = this._blurPass;
 
     ssaoPass.setUniform('kernel', this._kernels[frame % this._kernels.length]);
     ssaoPass.setUniform('depthTex', this._depthTex);
@@ -131,42 +132,30 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     ssaoPass.setUniform('viewInverseTranspose', viewInverseTranspose._array);
 
     var ssaoTexture = this._ssaoTexture;
+    var targetTexture = this._targetTexture;
 
     ssaoTexture.width = width;
     ssaoTexture.height = height;
+    targetTexture.width = width;
+    targetTexture.height = height;
 
     this._framebuffer.attach(ssaoTexture);
     this._framebuffer.bind(renderer);
     renderer.gl.clearColor(1, 1, 1, 1);
     renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
     ssaoPass.render(renderer);
+
+    this._framebuffer.attach(targetTexture);
+    blurPass.setUniform('textureSize', [width, height]);
+    blurPass.setUniform('ssaoTexture', this._ssaoTexture);
+    blurPass.render(renderer);
+
     this._framebuffer.unbind(renderer);
 };
 
 SSAOPass.prototype.getTargetTexture = function () {
     return this._targetTexture;
 }
-
-SSAOPass.prototype.blend = function (renderer, sourceTexture) {
-    var blendPass = this._blendPass;
-    var width = this._depthTex.width;
-    var height = this._depthTex.height;
-
-    var targetTexture = this._targetTexture;
-
-    targetTexture.width = sourceTexture.width;
-    targetTexture.height = sourceTexture.height;
-
-    this._framebuffer.attach(targetTexture);
-    this._framebuffer.bind(renderer);
-
-    blendPass.setUniform('textureSize', [width, height]);
-    blendPass.setUniform('ssaoTexture', this._ssaoTexture);
-    blendPass.setUniform('sourceTexture', sourceTexture);
-    blendPass.render(renderer);
-
-    this._framebuffer.unbind(renderer);
-};
 
 SSAOPass.prototype.setParameter = function (name, val) {
     if (name === 'noiseTexSize') {
@@ -176,10 +165,10 @@ SSAOPass.prototype.setParameter = function (name, val) {
         this.setKernelSize(val);
     }
     else if (name === 'blurSize') {
-        this._blendPass.material.shader.define('fragment', 'BLUR_SIZE', val);
+        this._blurPass.material.shader.define('fragment', 'BLUR_SIZE', val);
     }
-    else if (name === 'ssaoIntensity') {
-        this._blendPass.material.set('ssaoIntensity', val);
+    else if (name === 'intensity') {
+        this._ssaoPass.material.set('intensity', val);
     }
     else {
         this._ssaoPass.setUniform(name, val);

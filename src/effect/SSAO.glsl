@@ -20,13 +20,16 @@ uniform vec3 kernel[KERNEL_SIZE];
 
 uniform float radius : 1;
 
+// PENDING
 uniform float power : 1;
 
 uniform float bias: 1e-2;
 
+uniform float intensity: 1.0;
+
 varying vec2 v_Texcoord;
 
-vec3 ssaoEstimator(in vec3 originPos, in mat3 kernelBasis) {
+float ssaoEstimator(in vec3 originPos, in mat3 kernelBasis) {
     float occlusion = 0.0;
 
     for (int i = 0; i < KERNEL_SIZE; i++) {
@@ -53,7 +56,7 @@ vec3 ssaoEstimator(in vec3 originPos, in mat3 kernelBasis) {
 #else
     occlusion = 1.0 - clamp((occlusion / float(KERNEL_SIZE) - 0.6) * 2.5, 0.0, 1.0);
 #endif
-    return vec3(pow(occlusion, power));
+    return pow(occlusion, power);
 }
 
 void main()
@@ -93,7 +96,9 @@ void main()
 
     vec3 position = p4.xyz / p4.w;
 
-    gl_FragColor = vec4(vec3(ssaoEstimator(position, kernelBasis)), 1.0);
+    float ao = ssaoEstimator(position, kernelBasis);
+    ao = clamp(1.0 - (1.0 - ao) * intensity, 0.0, 1.0);
+    gl_FragColor = vec4(vec3(ao), 1.0);
 }
 
 @end
@@ -103,8 +108,6 @@ void main()
 
 uniform sampler2D ssaoTexture;
 uniform sampler2D sourceTexture;
-
-uniform float ssaoIntensity: 1.0;
 
 uniform vec2 textureSize;
 
@@ -134,7 +137,7 @@ void main ()
     }
 
     vec4 color = texture2D(sourceTexture, v_Texcoord);
-    color.rgb *= clamp(1.0 - (1.0 - ao / weightAll) * ssaoIntensity, 0.0, 1.0);
+    color.rgb *= clamp(ao / weightAll, 0.0, 1.0);
     gl_FragColor = color;
 }
 @end

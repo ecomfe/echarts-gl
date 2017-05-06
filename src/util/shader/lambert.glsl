@@ -86,6 +86,9 @@ uniform mat4 viewInverse : VIEWINVERSE;
 varying vec4 v_Color;
 #endif
 
+
+@import ecgl.common.ssaoMap.header
+
 @import ecgl.common.bumpMap.header
 
 @import qtek.util.srgb
@@ -143,18 +146,20 @@ void main()
 
     vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
 
+    @import ecgl.common.ssaoMap.main
+
 #ifdef AMBIENT_LIGHT_COUNT
     for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)
     {
         // Multiply a dot factor to make sure the bump detail can be seen
         // in the dark side
-        diffuseColor += ambientLightColor[i] * ambientFactor;
+        diffuseColor += ambientLightColor[i] * ambientFactor * ao;
     }
 #endif
 #ifdef AMBIENT_SH_LIGHT_COUNT
     for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)
     {{
-        diffuseColor += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];
+        diffuseColor += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_] * ao;
     }}
 #endif
 #ifdef DIRECTIONAL_LIGHT_COUNT

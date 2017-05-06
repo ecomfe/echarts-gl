@@ -67,7 +67,6 @@ function EffectCompositor() {
     this._dofBlurKernelSize = new Float32Array(0);
 }
 
-
 EffectCompositor.prototype.resize = function (width, height, dpr) {
     dpr = dpr || 1;
     var width = width * dpr;
@@ -98,8 +97,8 @@ EffectCompositor.prototype.updateSSAO = function (renderer, scene, camera, frame
 /**
  * Render SSAO after render the scene, before compositing
  */
-EffectCompositor.prototype.blendSSAO = function (renderer, camera) {
-    this._ssaoPass.blend(renderer, camera);
+EffectCompositor.prototype.getSSAOTexture = function (renderer, scene, camera, frame) {
+    return this._ssaoPass.getTargetTexture();
 };
 
 /**
@@ -114,20 +113,6 @@ EffectCompositor.prototype.getSourceFrameBuffer = function () {
  */
 EffectCompositor.prototype.getSourceTexture = function () {
     return this._sourceTexture;
-};
-
-/**
- * Disable ssao effect
- */
-EffectCompositor.prototype.disableSSAO = function () {
-    this._sourceNode.texture = this._sourceTexture;
-};
-
-/**
- * Enable ssao effect
- */
-EffectCompositor.prototype.enableSSAO = function () {
-    this._sourceNode.texture = this._ssaoPass.getTargetTexture();
 };
 
 /**
@@ -212,7 +197,7 @@ EffectCompositor.prototype.setSSAORadius = function (value) {
  * @param {number} value
  */
 EffectCompositor.prototype.setSSAOIntensity = function (value) {
-    this._ssaoPass.setParameter('ssaoIntensity', value);
+    this._ssaoPass.setParameter('intensity', value);
 };
 
 /**
@@ -225,7 +210,7 @@ EffectCompositor.prototype.setSSAOQuality = function (value) {
         low: 6,
         medium: 12,
         high: 32,
-        ultra: 128
+        ultra: 62
     })[value] || 16;
     this._ssaoPass.setParameter('kernelSize', kernelSize);
 };

@@ -189,6 +189,22 @@ uniform float percent;
 
 @end
 
+//---------- SSAO MAP -------
+
+@export ecgl.common.ssaoMap.header
+#ifdef SSAOMAP_ENABLED
+uniform sampler2D ssaoMap;
+uniform vec4 viewport : VIEWPORT;
+#endif
+@end
+
+@export ecgl.common.ssaoMap.main
+    float ao = 1.0;
+#ifdef SSAOMAP_ENABLED
+    ao = texture2D(ssaoMap, (gl_FragCoord.xy - viewport.xy) / viewport.zw).r;
+#endif
+@end
+
 
 //----------- Layers ---------
 

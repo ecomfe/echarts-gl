@@ -88,6 +88,8 @@ uniform mat4 viewInverse : VIEWINVERSE;
 @import qtek.header.directional_light
 #endif
 
+@import ecgl.common.ssaoMap.header
+
 @import ecgl.common.bumpMap.header
 
 @import qtek.util.srgb
@@ -163,19 +165,21 @@ void main()
     float ndv = clamp(dot(N, V), 0.0, 1.0);
     vec3 fresnelTerm = F_Schlick(ndv, specFactor);
 
+    @import ecgl.common.ssaoMap.main
+
 #ifdef AMBIENT_LIGHT_COUNT
     for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)
     {{
         // Multiply a dot factor to make sure the bump detail can be seen
         // in the dark side
-        diffuseTerm += ambientLightColor[_idx_] * ambientFactor;
+        diffuseTerm += ambientLightColor[_idx_] * ambientFactor * ao;
     }}
 #endif
 
 #ifdef AMBIENT_SH_LIGHT_COUNT
     for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)
     {{
-        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_];
+        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_] * ao;
     }}
 #endif
 
@@ -225,7 +229,7 @@ void main()
     {{
         envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);
         // TODO mix ?
-        specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2;
+        specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2 * ao;
     }}
 #endif
 

@@ -212,23 +212,9 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
     var scene = this.scene;
     var camera = this.camera;
 
-    var v3 = new Vector3();
-    var invWorldTransform = new Matrix4();
-    var cameraWorldPosition = camera.getWorldPosition();
     accumFrame = accumFrame || 0;
-    // Sort transparent object.
-    for (var i = 0; i < scene.transparentQueue.length; i++) {
-        var renderable = scene.transparentQueue[i];
-        var geometry = renderable.geometry;
-        Matrix4.invert(invWorldTransform, renderable.worldTransform);
-        Vector3.transformMat4(v3, cameraWorldPosition, invWorldTransform);
-        if (geometry.needsSortTriangles && geometry.needsSortTriangles()) {
-            geometry.doSortTriangles(v3, accumFrame);
-        }
-        if (geometry.needsSortVertices && geometry.needsSortVertices()) {
-            geometry.doSortVertices(v3, accumFrame);
-        }
-    }
+
+    this._updateTransparent(renderer, scene, camera, accumFrame);
 
     if (!accumulating) {
         this._shadowMapPass.kernelPCF = this._pcfKernels[0];
@@ -247,19 +233,16 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
     // Shadowmap will set clearColor.
     renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
+    // Always update SSAO to make sure have correct ssaoMap status
+    this._updateSSAO(renderer, scene, camera, this._temporalSS.getFrame());
+
     if (this._enablePostEffect) {
-        if (this._enableSSAO) {
-            this._compositor.updateSSAO(renderer, scene, camera, this._temporalSS.getFrame());
-        }
 
         var frameBuffer = this._compositor.getSourceFrameBuffer();
         frameBuffer.bind(renderer);
         renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
         renderer.render(scene, camera, true);
         frameBuffer.unbind(renderer);
-        if (this._enableSSAO) {
-            this._compositor.blendSSAO(renderer, this._compositor.getSourceTexture());
-        }
 
         if (this.needsTemporalSS() && accumulating) {
             this._compositor.composite(renderer, camera, this._temporalSS.getSourceFrameBuffer(), this._temporalSS.getFrame());
@@ -291,6 +274,45 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
     }
 
     // this._shadowMapPass.renderDebug(renderer);
+};
+
+ViewGL.prototype._updateTransparent = function (renderer, scene, camera, frame) {
+
+    var v3 = new Vector3();
+    var invWorldTransform = new Matrix4();
+    var cameraWorldPosition = camera.getWorldPosition();
+
+    // Sort transparent object.
+    for (var i = 0; i < scene.transparentQueue.length; i++) {
+        var renderable = scene.transparentQueue[i];
+        var geometry = renderable.geometry;
+        Matrix4.invert(invWorldTransform, renderable.worldTransform);
+        Vector3.transformMat4(v3, cameraWorldPosition, invWorldTransform);
+        if (geometry.needsSortTriangles && geometry.needsSortTriangles()) {
+            geometry.doSortTriangles(v3, frame);
+        }
+        if (geometry.needsSortVertices && geometry.needsSortVertices()) {
+            geometry.doSortVertices(v3, frame);
+        }
+    }
+};
+
+ViewGL.prototype._updateSSAO = function (renderer, scene, camera, frame) {
+    var ifEnableSSAO = this._enableSSAO && this._enablePostEffect;
+    if (ifEnableSSAO) {
+        this._compositor.updateSSAO(renderer, scene, camera, this._temporalSS.getFrame());
+    }
+
+    for (var i = 0; i < scene.opaqueQueue.length; i++) {
+        var renderable = scene.opaqueQueue[i];
+        // PENDING
+        if (renderable.renderNormal) {
+            renderable.material.shader[ifEnableSSAO ? 'enableTexture' : 'disableTexture']('ssaoMap');
+        }
+        if (ifEnableSSAO) {
+            renderable.material.set('ssaoMap', this._compositor.getSSAOTexture());
+        }
+    }
 };
 
 ViewGL.prototype._updateShadowPCFKernel = function (frame) {
@@ -327,7 +349,6 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
 
     this._enableDOF = dofModel.get('enable');
     this._enableSSAO = ssaoModel.get('enable');
-    this._enableSSAO ? compositor.enableSSAO() : compositor.disableSSAO();
 
     compositor.setBloomIntensity(bloomModel.get('intensity'));
     compositor.setSSAORadius(ssaoModel.get('radius'));
