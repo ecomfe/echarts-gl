@@ -67,8 +67,6 @@ function ViewGL(cameraType) {
             this._temporalSS.jitterProjection(renderer, camera);
         }
     }, this);
-
-
 }
 
 /**
@@ -220,18 +218,20 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         this._shadowMapPass.kernelPCF = this._pcfKernels[0];
         // Not render shadowmap pass in accumulating frame.
         this._shadowMapPass.render(renderer, scene, camera, true);
-
-        if (this._enablePostEffect
-            && this._enableSSAO
-        ) {
-            this._compositor.updateNormal(renderer, scene, camera, this._temporalSS.getFrame());
-        }
     }
 
     this._updateShadowPCFKernel(accumFrame);
 
     // Shadowmap will set clearColor.
     renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+
+    if (this._enablePostEffect) {
+        // normal render also needs to be jittered when have edge pass.
+        if (this.needsTemporalSS()) {
+            this._temporalSS.jitterProjection(renderer, camera);
+        }
+        this._compositor.updateNormal(renderer, scene, camera, this._temporalSS.getFrame());
+    }
 
     // Always update SSAO to make sure have correct ssaoMap status
     this._updateSSAO(renderer, scene, camera, this._temporalSS.getFrame());
@@ -338,14 +338,16 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     var compositor = this._compositor;
     this._enablePostEffect = postEffectModel.get('enable');
     var bloomModel = postEffectModel.getModel('bloom');
+    var edgeModel = postEffectModel.getModel('edge');
     var dofModel = postEffectModel.getModel('depthOfField');
     var ssaoModel = postEffectModel.getModel('SSAO');
     var fxaaModel = postEffectModel.getModel('FXAA');
     var colorCorrModel = postEffectModel.getModel('colorCorrection');
-    fxaaModel.get('enable') ? compositor.enableFXAA() : compositor.disableFXAA();
     bloomModel.get('enable') ? compositor.enableBloom() : compositor.disableBloom();
     dofModel.get('enable') ? compositor.enableDOF() : compositor.disableDOF();
     colorCorrModel.get('enable') ? compositor.enableColorCorrection() : compositor.disableColorCorrection();
+    edgeModel.get('enable') ? compositor.enableEdge() : compositor.disableEdge();
+    fxaaModel.get('enable') ? compositor.enableFXAA() : compositor.disableFXAA();
 
     this._enableDOF = dofModel.get('enable');
     this._enableSSAO = ssaoModel.get('enable');

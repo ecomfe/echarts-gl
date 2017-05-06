@@ -25,6 +25,22 @@ Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
 Shader['import'](require('./DOF.glsl.js'));
 Shader['import'](require('./edge.glsl.js'));
 
+
+var commonOutputs = {
+    color : {
+        parameters : {
+            width : function (renderer) {
+                return renderer.getWidth();
+            },
+            height : function (renderer) {
+                return renderer.getHeight();
+            }
+        }
+    }
+}
+
+var FINAL_NODES_CHAIN = ['composite', 'edge', 'FXAA'];
+
 function EffectCompositor() {
     this._sourceTexture = new Texture2D({
         type: Texture.HALF_FLOAT
@@ -52,6 +68,10 @@ function EffectCompositor() {
     this._compositeNode = this._compositor.getNodeByName('composite');
     this._fxaaNode = this._compositor.getNodeByName('FXAA');
 
+    this._edgeNode = this._compositor.getNodeByName('edge');
+    this._edgeNode.setParameter('normalTexture', this._normalPass.getNormalTexture());
+    this._edgeNode.setParameter('depthTexture', this._normalPass.getDepthTexture());
+
     this._ssaoPass = new SSAOPass({
         normalTexture: this._normalPass.getNormalTexture(),
         depthTexture: this._normalPass.getDepthTexture()
@@ -63,6 +83,10 @@ function EffectCompositor() {
 
     this._dofBlurKernel = 0;
     this._dofBlurKernelSize = new Float32Array(0);
+
+    this._finalNodesChain = FINAL_NODES_CHAIN.map(function (name) {
+        return this._compositor.getNodeByName(name);
+    }, this);
 }
 
 EffectCompositor.prototype.resize = function (width, height, dpr) {
@@ -78,11 +102,69 @@ EffectCompositor.prototype.resize = function (width, height, dpr) {
     depthTexture.height = height;
 };
 
+EffectCompositor.prototype._ifRenderNormalPass = function () {
+    return this._enableSSAO || this._enableEdge;
+};
+
+EffectCompositor.prototype._getPrevNode = function (node) {
+    var idx = FINAL_NODES_CHAIN.indexOf(node.name) - 1;
+    var prevNode = this._finalNodesChain[idx];
+    while (prevNode && !this._compositor.getNodeByName(prevNode.name)) {
+        idx -= 1;
+        prevNode = this._finalNodesChain[idx];
+    }
+    return prevNode;
+};
+EffectCompositor.prototype._getNextNode = function (node) {
+    var idx = FINAL_NODES_CHAIN.indexOf(node.name) + 1;
+    var nextNode = this._finalNodesChain[idx];
+    while (nextNode && !this._compositor.getNodeByName(nextNode.name)) {
+        idx += 1;
+        nextNode = this._finalNodesChain[idx];
+    }
+    return nextNode;
+};
+EffectCompositor.prototype._addChainNode = function (node) {
+    var prevNode = this._getPrevNode(node);
+    var nextNode = this._getNextNode(node);
+    if (!prevNode) {
+        return;
+    }
+
+    prevNode.outputs = commonOutputs;
+    node.inputs.texture = prevNode.name;
+    if (nextNode) {
+        node.outputs = commonOutputs;
+        nextNode.inputs.texture = node.name;
+    }
+    else {
+        node.outputs = null;
+    }
+    this._compositor.addNode(node);
+};
+EffectCompositor.prototype._removeChainNode = function (node) {
+    var prevNode = this._getPrevNode(node);
+    var nextNode = this._getNextNode(node);
+    if (!prevNode) {
+        return;
+    }
+
+    if (nextNode) {
+        prevNode.outputs = commonOutputs;
+        nextNode.inputs.texture = prevNode.name;
+    }
+    else {
+        prevNode.outputs = null;
+    }
+    this._compositor.removeNode(node);
+};
 /**
  * Update normal
  */
 EffectCompositor.prototype.updateNormal = function (renderer, scene, camera, frame) {
-    this._normalPass.update(renderer, scene, camera);
+    if (this._ifRenderNormalPass()) {
+        this._normalPass.update(renderer, scene, camera);
+    }
 };
 
 /**
@@ -131,22 +213,16 @@ EffectCompositor.prototype.getSourceTexture = function () {
  * Disable fxaa effect
  */
 EffectCompositor.prototype.disableFXAA = function () {
-    this._compositor.removeNode(this._fxaaNode);
-    if (this._compositeNode.outputs) {
-        this._compositeNode.__outputs = this._compositeNode.outputs;
-    }
-    this._compositeNode.outputs = null;
+    this._removeChainNode(this._fxaaNode);
 };
 
 /**
  * Enable fxaa effect
  */
 EffectCompositor.prototype.enableFXAA = function () {
-    this._compositor.addNode(this._fxaaNode);
-    if (this._compositeNode.__outputs) {
-        this._compositeNode.outputs = this._compositeNode.__outputs;
-    }
+    this._addChainNode(this._fxaaNode);
 };
+
 /**
  * Enable bloom effect
  */
@@ -187,6 +263,22 @@ EffectCompositor.prototype.enableColorCorrection = function () {
 EffectCompositor.prototype.disableColorCorrection = function () {
     this._compositeNode.shaderUndefine('COLOR_CORRECTION');
     this._enableColorCorrection = false;
+};
+
+/**
+ * Enable edge detection
+ */
+EffectCompositor.prototype.enableEdge = function () {
+    this._enableEdge = true;
+    this._addChainNode(this._edgeNode);
+};
+
+/**
+ * Disable edge detection
+ */
+EffectCompositor.prototype.disableEdge = function () {
+    this._enableEdge = false;
+    this._removeChainNode(this._edgeNode);
 };
 
 /**
@@ -295,7 +387,7 @@ EffectCompositor.prototype.setColorCorrection = function (type, value) {
 
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
 
-    if (this._enableSSAO) {
+    if (this._ifRenderNormalPass()) {
         this._cocNode.setParameter('depth', this._normalPass.getDepthTexture());
     }
     else {

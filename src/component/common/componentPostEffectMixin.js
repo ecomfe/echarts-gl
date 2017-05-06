@@ -39,6 +39,10 @@ module.exports = {
                 lookupTexture: ''
             },
 
+            edge: {
+                enable: false
+            },
+
             FXAA: {
                 enable: false
             }

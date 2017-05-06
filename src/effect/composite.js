@@ -636,19 +636,18 @@ module.exports = {
                 'texture': 'source',
                 'bloom' : 'bloom_composite'
             },
-            'outputs' : {
-                'color' : {
-                    'parameters' : {
-                        'width' : 'expr(width * 1.0)',
-                        'height' : 'expr(height * 1.0)'
-                    }
-                }
-            },
-            'parameters': {
-                'bloomIntensity': 0.03
-            },
             'defines': {
                 'PREMULTIPLY_ALPHA': null
+            }
+        },
+        {
+            'name': 'edge',
+            'shader':'#source(ecgl.edge)',
+            'inputs': {
+                'texture': 'composite'
+            },
+            'parameters': {
+                'textureSize' : 'expr([width * 1.0, height * 1.0])'
             }
         },
         {
