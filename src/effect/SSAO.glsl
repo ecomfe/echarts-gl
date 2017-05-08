@@ -107,7 +107,6 @@ void main()
 @export ecgl.ssao.blur
 
 uniform sampler2D ssaoTexture;
-uniform sampler2D sourceTexture;
 
 uniform vec2 textureSize;
 
@@ -118,7 +117,7 @@ void main ()
 
     vec2 texelSize = 1.0 / textureSize;
 
-    float ao = float(0.0);
+    float ao = 0.0;
     vec2 hlim = vec2(float(-BLUR_SIZE) * 0.5 + 0.5);
     float centerAo = texture2D(ssaoTexture, v_Texcoord).r;
     float weightAll = 0.0;
@@ -136,8 +135,6 @@ void main ()
         }
     }
 
-    vec4 color = texture2D(sourceTexture, v_Texcoord);
-    color.rgb *= clamp(ao / weightAll, 0.0, 1.0);
-    gl_FragColor = color;
+    gl_FragColor = vec4(vec3(clamp(ao / weightAll, 0.0, 1.0)), 1.0);
 }
 @end

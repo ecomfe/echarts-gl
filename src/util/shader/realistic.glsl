@@ -43,8 +43,8 @@ void main()
 @end
 
 
-@export ecgl.realistic.fragment
 
+@export ecgl.realistic.header
 #define LAYER_DIFFUSEMAP_COUNT 0
 #define LAYER_EMISSIVEMAP_COUNT 0
 #define PI 3.14159265358979
@@ -110,6 +110,12 @@ float D_Phong(float g, float ndh) {
     float a = pow(8192.0, g);
     return (a + 2.0) / 8.0 * pow(ndh, a);
 }
+@end
+
+
+@export ecgl.realistic.fragment
+
+@import ecgl.realistic.header
 void main()
 {
     vec4 albedoColor = color;

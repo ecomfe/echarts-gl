@@ -365,6 +365,8 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     compositor.setDOFBlurSize(dofModel.get('blurRadius'));
     compositor.setDOFFStop(dofModel.get('fstop'));
 
+    compositor.setEdgeColor(edgeModel.get('color'));
+
     compositor.setColorLookupTexture(colorCorrModel.get('lookupTexture'), api);
     compositor.setExposure(colorCorrModel.get('exposure'));
     ['brightness', 'contrast', 'saturation'].forEach(function (name) {

@@ -33,7 +33,7 @@ void main() {
     // center
     vec3 center = packColor(cc);
 
-    // PENDING Fade out in 50 - 500
+    // PENDING Fade out in 100 - 500
     float size = clamp(1.0 - (center.z - 10.0) / 100.0, 0.0, 1.0) * 0.5;
     float dx = size / textureSize.x;
     float dy = size / textureSize.y;
@@ -64,7 +64,5 @@ void main() {
     edge = smoothstep(0.8, 1.0, edge);
 
     gl_FragColor = mix(texture2D(texture, v_Texcoord), vec4(edgeColor.rgb, 1.0), edgeColor.a * edge);
-
-    // gl_FragColor = vec4(vec3(center.b / 50.0), 1.0);
 }
 @end

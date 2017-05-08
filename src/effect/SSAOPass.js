@@ -151,6 +151,10 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     blurPass.render(renderer);
 
     this._framebuffer.unbind(renderer);
+
+    // Restore clear
+    var clearColor = renderer.clearColor;
+    renderer.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
 };
 
 SSAOPass.prototype.getTargetTexture = function () {

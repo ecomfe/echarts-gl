@@ -38,6 +38,11 @@
             var data = generateData(2, -5, 5);
 
             chart.setOption({
+                toolbox: {
+                    feature: {
+                        saveAsImage: {}
+                    }
+                },
                 visualMap: {
                     show: false,
                     min: 2,
