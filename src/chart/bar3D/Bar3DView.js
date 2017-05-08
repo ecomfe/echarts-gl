@@ -193,9 +193,8 @@ module.exports = echarts.extendChartView({
             colorArr[3] = vertexColors[idx4++];
             if (colorArr[3] > 0) {
                 self._barMesh.geometry.addBar(start, dir, orient, size, colorArr, idx);
+                barIndexOfData[idx] = barCount++;
             }
-
-            barIndexOfData[idx] = barCount++;
         });
 
         barMesh.geometry.dirty();
