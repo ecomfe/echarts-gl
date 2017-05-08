@@ -34,10 +34,10 @@
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.0-alpha.3',
+    version: '1.0.0-alpha.4',
     dependencies: {
         echarts: '3.5.3',
-        qtek: '0.3.4'
+        qtek: '0.3.5'
     }
 };
 var echarts = require('echarts/lib/echarts');
@@ -174,6 +174,76 @@ EChartsGL.prototype.update = function (ecModel, api) {
             });
         }
     });
+};
+
+// Hack original getRenderedCanvas. Will removed after new echarts released
+// TODO
+var oldInit = echarts.init;
+echarts.init = function () {
+    var chart = oldInit.apply(this, arguments);
+    chart.getZr().painter.getRenderedCanvas = function (opts) {
+        opts = opts || {};
+        if (this._singleCanvas) {
+            return this._layers[0].dom;
+        }
+
+        var canvas = document.createElement('canvas');
+        var dpr = opts.pixelRatio || this.dpr;
+        canvas.width = this.getWidth() * dpr;
+        canvas.height = this.getHeight() * dpr;
+        var ctx = canvas.getContext('2d');
+        ctx.dpr = dpr;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (opts.backgroundColor) {
+            ctx.fillStyle = opts.backgroundColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        var displayList = this.storage.getDisplayList(true);
+
+        var scope = {};
+        var zlevel;
+
+        var self = this;
+        function findAndDrawOtherLayer(smaller, larger) {
+            var zlevelList = self._zlevelList;
+            if (smaller == null) {
+                smaller = -Infinity;
+            }
+            var intermediateLayer;
+            for (var i = 0; i < zlevelList.length; i++) {
+                var z = zlevelList[i];
+                var layer = self._layers[z];
+                if (!layer.__builtin__ && z > smaller && z < larger) {
+                    intermediateLayer = layer;
+                    break;
+                }
+            }
+            if (intermediateLayer && intermediateLayer.renderToCanvas) {
+                ctx.save();
+                intermediateLayer.renderToCanvas(ctx);
+                ctx.restore();
+            }
+        }
+        var layer = {
+            ctx: ctx
+        };
+        for (var i = 0; i < displayList.length; i++) {
+            var el = displayList[i];
+
+            if (el.zlevel !== zlevel) {
+                findAndDrawOtherLayer(zlevel, el.zlevel);
+                zlevel = el.zlevel;
+            }
+            this._doPaintEl(el, layer, true, scope);
+        }
+
+        findAndDrawOtherLayer(zlevel, Infinity);
+
+        return canvas;
+    }
+    return chart;
 };
 
 

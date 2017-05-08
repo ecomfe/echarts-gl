@@ -26,6 +26,11 @@
 
                 chart.setOption({
                     backgroundColor: '#cdcfd5',
+                    toolbox: {
+                        feature: {
+                            saveAsImage: {}
+                        }
+                    },
                     geo3D: {
                         map: 'world',
                         shading: 'lambert',
@@ -59,7 +64,7 @@
                             },
                             SSAO: {
                                 radius: 1,
-                                intensity: 1.5,
+                                intensity: 1,
                                 enable: true,
                                 quality: 'high'
                             },
