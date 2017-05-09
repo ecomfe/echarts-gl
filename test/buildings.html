@@ -9,14 +9,14 @@
     </head>
     <body>
         <div id="main"></div>
-        <script src="../node_modules/echarts/dist/echarts.js"></script>
-        <script src="../node_modules/echarts/map/js/world.js"></script>
+        <script src="https://rawgit.com/ecomfe/echarts/master/dist/echarts.min.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
             $.getJSON('data/buildings.json', function (buildingsGeoJSON) {
+
 
                 echarts.registerMap('buildings', buildingsGeoJSON);
 
