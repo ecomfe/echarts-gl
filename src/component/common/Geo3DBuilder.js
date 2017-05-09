@@ -188,6 +188,9 @@ Geo3DBuilder.prototype = {
                 polygonMesh.material.transparent = isTransparent;
                 polygonMesh.material.depthMask = !isTransparent;
             }
+            else {
+                polygonMesh.material.set('color', [1,1,1,1]);
+            }
             hasTranparentRegion = hasTranparentRegion || isTransparent;
 
             var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), geo3D.size[1]);
@@ -322,7 +325,8 @@ Geo3DBuilder.prototype = {
                 }),
                 culling: false,
                 geometry: new graphicGL.Geometry({
-                    sortTriangles: true
+                    sortTriangles: true,
+                    dynamic: true
                 }),
                 // Render normal in normal pass
                 renderNormal: true
@@ -620,6 +624,8 @@ Geo3DBuilder.prototype = {
             geometry.updateBoundingBox();
         }
 
+        geometry.dirty();
+
         return {
             vertexOffset: vertexOffset,
             triangleOffset: triangleOffset
@@ -673,7 +679,7 @@ Geo3DBuilder.prototype = {
                 points[offset++] = pos[2];
             }
             return points;
-        };
+        }
 
         var whiteColor = [1, 1, 1, 1];
         region.geometries.forEach(function (geo) {

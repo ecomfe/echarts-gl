@@ -12,6 +12,7 @@
         <script src="https://rawgit.com/ecomfe/echarts/master/dist/echarts.min.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
             chart.showLoading();
@@ -103,6 +104,24 @@
                     }]
                 });
 
+                var config = {
+                    color: '#000'
+                };
+                var gui = new dat.GUI();
+                gui.addColor(config, 'color').onFinishChange(function () {
+                    chart.setOption({
+                        series: [{
+                            itemStyle: {
+                                areaColor: config.color
+                            },
+                            postEffect: {
+                                edge: {
+                                    color: config.color
+                                }
+                            }
+                        }]
+                    })
+                });
             });
             window.addEventListener('resize', function () {
                 chart.resize();
