@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Globe - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            // http://visibleearth.nasa.gov/view_cat.php?categoryID=1484
+            chart.setOption({
+                globe: {
+
+                    heightTexture: 'asset/elev_bump_4k.jpg',
+
+                    displacementScale: 0.1,
+
+                    shading: 'hatching',
+
+                    baseColor: '#000',
+
+                    hatchingMaterial: {
+                        hatchingTextures: [
+                            'asset/tam/hatch_0.jpg',
+                            'asset/tam/hatch_1.jpg',
+                            'asset/tam/hatch_2.jpg',
+                            'asset/tam/hatch_3.jpg',
+                            'asset/tam/hatch_4.jpg',
+                            'asset/tam/hatch_5.jpg'
+                        ],
+                        textureTiling: [10, 10]
+                    },
+
+                    postEffect: {
+                        enable: true,
+                        edge: {
+                            enable: true
+                        }
+                    },
+                    light: {
+                        ambient: {
+                            intensity: 0
+                        },
+                        main: {
+                            intensity: 0.5,
+                            shadow: true
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/pisa.hdr',
+                            exposure: 0,
+                            diffuseIntensity: 0.1
+                        }
+                    }
+                },
+                series: []
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

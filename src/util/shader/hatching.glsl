@@ -162,6 +162,6 @@ void main()
 #endif
 
     gl_FragColor = mix(inkColor, paperColor, shade(clamp(tone, 0.0, 1.0)));
-    gl_FragColor = vec4(vec3(clamp(tone, 0.0, 1.0)), 1.0);
+    // gl_FragColor = vec4(vec3(clamp(tone, 0.0, 1.0)), 1.0);
 }
 @end

@@ -109,6 +109,11 @@ module.exports = echarts.extendComponentView({
                 metalness: matModel.get('metalness') || 0
             });
         }
+        if (shading === 'hatching') {
+            graphicGL.setMaterialFromModel(
+                shading, earthMesh.material, globeModel, api
+            );
+        }
 
         earthMesh.material.set('color', graphicGL.parseColor(
             globeModel.get('baseColor')

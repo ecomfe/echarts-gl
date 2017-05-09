@@ -29,52 +29,43 @@
                 });
 
                 chart.setOption({
-                    // visualMap: {
-                    //     show: false,
-                    //     min: 0.4,
-                    //     max: 1,
-                    //     inRange: {
-                    //         colorLightness: [0.2, 1]
-                    //     }
-                    // },
+
                     series: [{
                         type: 'map3D',
                         map: 'buildings',
-                        shading: 'realistic',
-                        realisticMaterial: {
-                            roughness: 0.6,
-                            baseTexture: 'asset/woods.jpg',
-                            textureTiling: 20
+                        shading: 'hatching',
+
+                        environment: '#fff',
+
+                        hatchingMaterial: {
+                            hatchingTextures: [
+                                'asset/tam/hatch_0.jpg',
+                                'asset/tam/hatch_1.jpg',
+                                'asset/tam/hatch_2.jpg',
+                                'asset/tam/hatch_3.jpg',
+                                'asset/tam/hatch_4.jpg',
+                                'asset/tam/hatch_5.jpg'
+                            ],
+                            textureTiling: [40, 20]
                         },
+
                         postEffect: {
                             enable: true,
-                            bloom: {
-                                enable: false
-                            },
                             SSAO: {
                                 enable: true,
                                 radius: 10,
                                 intensity: 1.2
                             },
-                            depthOfField: {
-                                enable: false,
-                                focalRange: 5,
-                                fstop: 1,
-                                blurRadius: 6
-                            },
                             edge: {
                                 enable: true
-                            },
-                            colorCorrection: {
-                                lookupTexture: 'asset/crispwinter.png'
                             }
                         },
                         groundPlane: {
-                            show: true
+                            show: false
                         },
                         light: {
                             main: {
-                                intensity: 2,
+                                intensity: 1,
                                 shadow: true,
                                 shadowQuality: 'high',
                                 alpha: 30
@@ -84,26 +75,19 @@
                             },
                             ambientCubemap: {
                                 texture: 'asset/canyon.hdr',
-                                exposure: 2,
-                                diffuseIntensity: 1,
-                                specularIntensity: 1
+                                exposure: 0,
+                                diffuseIntensity: 0.1
                             }
                         },
                         viewControl: {
                             alpha: 80,
-                            distance: 100
+                            distance: 100,
+                            minBeta: -Infinity,
+                            maxBeta: Infinity
                         },
 
                         itemStyle: {
-                            areaColor: '#aaa'
-                            // borderColor: '#222',
-                            // borderWidth: 1
-                        },
-
-                        label: {
-                            textStyle: {
-                                color: 'white'
-                            }
+                            areaColor: '#000'
                         },
 
                         silent: true,

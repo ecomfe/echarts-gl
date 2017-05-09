@@ -565,26 +565,27 @@ Geo3DBuilder.prototype = {
             var b = [];
             var normal = [];
             var uv = [];
+            var len = 0;
             for (var v = 0; v < ringVertexCount; v++) {
                 var next = (v + 1) % ringVertexCount;
+
+                var dx = polygon.points[next * 3] - polygon.points[v * 3];
+                var dy = polygon.points[next * 3 + 2] - polygon.points[v * 3 + 2];
+                var sideLen = Math.sqrt(dx * dx + dy * dy);
+
                 // 0----1
                 // 3----2
                 for (var k = 0; k < 4; k++) {
-                    var idx3 = ((k === 0 || k === 3) ? v : next) * 3;
+                    var isCurrent = (k === 0 || k === 3);
+                    var idx3 = (isCurrent ? v : next) * 3;
                     quadPos[k][0] = polygon.points[idx3];
                     quadPos[k][1] = k > 1 ? regionHeight : 0;
                     quadPos[k][2] = polygon.points[idx3 + 2];
 
                     positionAttr.set(vertexOffset + k, quadPos[k]);
 
-                    // Make sure side uv and top uv have no seam.
-                    // PENDING
-                    uv[0] = (quadPos[k][0] - min[0]) / maxDimSize;
-                    uv[1] = (quadPos[k][2] - min[2]) / maxDimSize;
-                    if (k > 1) {
-                        // TODO left, right
-                        uv[0] -= regionHeight / maxDimSize;
-                    }
+                    uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
+                    uv[1] = (quadPos[k][1] - min[1]) / maxDimSize;
                     texcoordAttr.set(vertexOffset + k, uv);
                 }
                 vec3.sub(a, quadPos[1], quadPos[0]);
@@ -605,6 +606,8 @@ Geo3DBuilder.prototype = {
 
                 vertexOffset += 4;
                 triangleOffset += 2;
+
+                len += sideLen;
             }
         }
 
