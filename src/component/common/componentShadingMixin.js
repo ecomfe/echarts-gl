@@ -7,9 +7,6 @@ module.exports = {
             textureOffset: 0,
 
             baseTexture: null
-
-            // roughness: 0.5
-            // metalness: 0
         },
 
         lambertMaterial: {
@@ -24,6 +21,13 @@ module.exports = {
             textureOffset: 0,
 
             baseTexture: null
+        },
+
+        hatchingMaterial: {
+            textureTiling: 1,
+            textureOffset: 0,
+
+            paperColor: '#fff'
         }
     }
 };

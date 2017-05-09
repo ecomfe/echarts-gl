@@ -26,6 +26,7 @@ Shader.import(require('./shader/common.glsl.js'));
 Shader.import(require('./shader/color.glsl.js'));
 Shader.import(require('./shader/lambert.glsl.js'));
 Shader.import(require('./shader/realistic.glsl.js'));
+Shader.import(require('./shader/hatching.glsl.js'));
 Shader.import(require('./shader/shadow.glsl.js'));
 
 function isValueNone(value) {
@@ -56,7 +57,7 @@ Scene.prototype.addToScene = function (node) {
             if (child.addAnimatorsToZr) {
                 child.addAnimatorsToZr(zr);
             }
-        })
+        });
     }
 };
 
@@ -418,7 +419,7 @@ graphicGL.getShadowResolution = function (shadowQuality) {
 /**
  * Shading utilities
  */
-graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic'];
+graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic', 'hatching'];
 
 /**
  * Create shader including vertex and fragment
@@ -497,6 +498,25 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     }
     else if (shading === 'color') {
         material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.set({
+            uvRepeat: uvRepeat,
+            uvOffset: uvOffset
+        });
+    }
+    else if (shading === 'hatching') {
+        var tams = materialModel.get('hatchingTextures') || [];
+        if (tams.length < 6) {
+            if (__DEV__) {
+                console.error('Invalid hatchingTextures.');
+            }
+        }
+        for (var i = 0; i < 6; i++) {
+            material.setTextureImage('hatch' + (i + 1), tams[i], api, {
+                anisotropic: 8,
+                wrapS: graphicGL.Texture.REPEAT,
+                wrapT: graphicGL.Texture.REPEAT
+            });
+        }
         material.set({
             uvRepeat: uvRepeat,
             uvOffset: uvOffset

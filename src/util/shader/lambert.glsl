@@ -52,7 +52,6 @@ void main()
 
 #define LAYER_DIFFUSEMAP_COUNT 0
 #define LAYER_EMISSIVEMAP_COUNT 0
-#define PI 3.14159265358979
 
 varying vec2 v_Texcoord;
 

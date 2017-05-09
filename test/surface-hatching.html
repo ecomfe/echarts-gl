@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Rose - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            var sin = Math.sin;
+            var cos = Math.cos;
+            var pow = Math.pow;
+            var sqrt = Math.sqrt;
+            var cosh = Math.cosh;
+            var sinh = Math.sinh;
+            var exp = Math.exp;
+            var PI = Math.PI;
+            var square = function (x) {
+                return x*x;
+            }
+            var mod2 = function (a, b) {
+                var c = a % b;
+                return c > 0 ? c : (c + b);
+            }
+
+            var theta1 = -(20/9) * PI;
+            var theta2 = 15 * PI;
+            function getParametricEquation() {
+                return {
+                    u: {
+                        min: -13.2,
+                        max: 13.2,
+                        step: 0.5
+                    },
+                    v: {
+                        min: -37.4,
+                        max: 37.4,
+                        step: 0.5
+                    },
+                    x: function (u, v) {
+                        var aa = 0.4;
+                        var r = 1 - aa * aa;
+                        var w = sqrt(r);
+                        var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                        return -u + (2 * r * cosh(aa * u) * sinh(aa * u) / denom);
+                    },
+                    y: function (u, v) {
+                        var aa = 0.4;
+                        var r = 1 - aa * aa;
+                        var w = sqrt(r);
+                        var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                        return 2 * w * cosh(aa * u) * (-(w * cos(v) * cos(w * v)) - (sin(v) * sin(w * v))) / denom;
+                    },
+                    z: function (u, v) {
+                        var aa = 0.4;
+                        var r = 1 - aa * aa;
+                        var w = sqrt(r);
+                        var denom = aa * (pow(w * cosh(aa * u), 2) + aa * pow(sin(w * v), 2))
+                        return  2 * w * cosh(aa * u) * (-(w * sin(v) * cos(w * v)) + (cos(v) * sin(w * v))) / denom
+                    }
+                };
+            }
+
+            chart.setOption({
+                toolbox: {
+                    feature: {
+                        saveAsImage: {
+                            backgroundColor: '#111'
+                        }
+                    },
+                    iconStyle: {
+                        normal: {
+                            borderColor: '#fff'
+                        }
+                    },
+                    left: 0
+                },
+                xAxis3D: {
+                    type: 'value'
+                },
+                yAxis3D: {
+                    type: 'value'
+                },
+                zAxis3D: {
+                    type: 'value'
+                },
+                grid3D: {
+
+                    show: false,
+
+                    environment: 'none',
+
+                    axisPointer: {
+                        show: false
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#fff'
+                        }
+                    },
+                    postEffect: {
+                        enable: true,
+                        SSAO: {
+                            enable: true,
+                            radius: 10,
+                            intensity: 2
+                        },
+                        edge: {
+                            enable: true
+                        }
+                    },
+                    light: {
+                        main: {
+                            intensity: 0.5,
+                            shadow: true,
+                        },
+                        ambient: {
+                            intensity: 0
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/pisa.hdr',
+                            exposure: 0,
+                            diffuseIntensity: 0.1
+                        }
+                    },
+                    viewControl: {
+                        // projection: 'orthographic'
+                    }
+                },
+                series: [{
+                    type: 'surface',
+                    parametric: true,
+                    shading: 'hatching',
+                    silent: true,
+                    wireframe: {
+                        show: false
+                    },
+                    hatchingMaterial: {
+                        hatchingTextures: [
+                            'asset/tam/hatch_0.jpg',
+                            'asset/tam/hatch_1.jpg',
+                            'asset/tam/hatch_2.jpg',
+                            'asset/tam/hatch_3.jpg',
+                            'asset/tam/hatch_4.jpg',
+                            'asset/tam/hatch_5.jpg'
+                        ],
+                        textureTiling: [20, 20]
+                    },
+                    itemStyle: {
+                        color: '#000'
+                    },
+                    parametricEquation: getParametricEquation()
+                }]
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>

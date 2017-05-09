@@ -387,8 +387,8 @@ echarts.extendChartView({
                         }
 
                         var idx = quadIndices[k];
-                        uvArr[0] = (idx % row) / (row - 1);
-                        uvArr[1] = Math.floor(idx / column) / (column - 1);
+                        uvArr[0] = (idx % column) / (column - 1);
+                        uvArr[1] = Math.floor(idx / column) / (row - 1);
                         texcoordAttr.set(vertexOffset + k, uvArr);
                     }
                     dataIndex++;
@@ -398,8 +398,8 @@ echarts.extendChartView({
         else {
             var uvArr = [];
             for (var i = 0; i < data.count(); i++) {
-                uvArr[0] = (i % row) / (row - 1);
-                uvArr[1] = Math.floor(i / column) / (column - 1);
+                uvArr[0] = (i % column) / (column - 1);
+                uvArr[1] = Math.floor(i / column) / (row - 1);
                 var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
                 var opacity = data.getItemVisual(i, 'opacity');
                 rgbaArr[3] *= opacity;

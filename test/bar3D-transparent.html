@@ -56,15 +56,17 @@
                 series: [{
                     type: 'bar3D',
                     data: data.map(function (item) {
-                        return [item[1], item[0], item[2]];
+                        return {
+                            value: [item[1], item[0], item[2]],
+                            itemStyle: {
+                                opacity: item[2] / 20
+                            }
+                        };
                     }),
                     bevelSize: 0.8,
                     bevelSmoothness: 2,
                     shading: 'color',
 
-                    itemStyle: {
-                        opacity: 0.8
-                    },
                     label: {
                         textStyle: {
                         }
