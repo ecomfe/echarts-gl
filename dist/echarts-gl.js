@@ -4480,6 +4480,7 @@ Shader.import(__webpack_require__(166));
 Shader.import(__webpack_require__(165));
 Shader.import(__webpack_require__(168));
 Shader.import(__webpack_require__(171));
+Shader.import(__webpack_require__(230));
 Shader.import(__webpack_require__(172));
 
 function isValueNone(value) {
@@ -4510,7 +4511,7 @@ Scene.prototype.addToScene = function (node) {
             if (child.addAnimatorsToZr) {
                 child.addAnimatorsToZr(zr);
             }
-        })
+        });
     }
 };
 
@@ -4872,7 +4873,7 @@ graphicGL.getShadowResolution = function (shadowQuality) {
 /**
  * Shading utilities
  */
-graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic'];
+graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic', 'hatching'];
 
 /**
  * Create shader including vertex and fragment
@@ -4951,6 +4952,25 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     }
     else if (shading === 'color') {
         material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.set({
+            uvRepeat: uvRepeat,
+            uvOffset: uvOffset
+        });
+    }
+    else if (shading === 'hatching') {
+        var tams = materialModel.get('hatchingTextures') || [];
+        if (tams.length < 6) {
+            if (true) {
+                console.error('Invalid hatchingTextures.');
+            }
+        }
+        for (var i = 0; i < 6; i++) {
+            material.setTextureImage('hatch' + (i + 1), tams[i], api, {
+                anisotropic: 8,
+                wrapS: graphicGL.Texture.REPEAT,
+                wrapT: graphicGL.Texture.REPEAT
+            });
+        }
         material.set({
             uvRepeat: uvRepeat,
             uvOffset: uvOffset
@@ -13511,9 +13531,6 @@ module.exports = {
             textureOffset: 0,
 
             baseTexture: null
-
-            // roughness: 0.5
-            // metalness: 0
         },
 
         lambertMaterial: {
@@ -13528,6 +13545,13 @@ module.exports = {
             textureOffset: 0,
 
             baseTexture: null
+        },
+
+        hatchingMaterial: {
+            textureTiling: 1,
+            textureOffset: 0,
+
+            paperColor: '#fff'
         }
     }
 };
@@ -21242,7 +21266,6 @@ function Geo3DBuilder(api) {
         $ignorePicking: true
     });
     this._groundMesh.rotation.rotateX(-Math.PI / 2);
-    this._groundMesh.scale.set(1000, 1000, 1);
 
     this._labelsBuilder = new LabelsBuilder(1024, 1024, api);
 
@@ -21287,7 +21310,7 @@ Geo3DBuilder.prototype = {
         }
         this._updateRegionMesh(componentModel, shader, api, enableInstancing);
 
-        this._updateGroundPlane(componentModel);
+        this._updateGroundPlane(componentModel, api);
         this._groundMesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
 
         this._labelsBuilder.updateData(data);
@@ -21483,7 +21506,8 @@ Geo3DBuilder.prototype = {
         }
     },
 
-    _updateGroundPlane: function (componentModel) {
+    _updateGroundPlane: function (componentModel, api) {
+        var geo3D = componentModel.coordinateSystem;
         var groundModel = componentModel.getModel('groundPlane');
 
         var shading = componentModel.get('shading');
@@ -21494,9 +21518,14 @@ Geo3DBuilder.prototype = {
             }
             material = this._groundMaterials.lambert;
         }
+
+        graphicGL.setMaterialFromModel(shading, material, componentModel, api);
+
         this._groundMesh.material = material;
         this._groundMesh.material.set('color', graphicGL.parseColor(groundModel.get('color')));
         this._groundMesh.invisible = !groundModel.get('show');
+
+        this._groundMesh.scale.set(geo3D.size[0], geo3D.size[2], 1);
     },
 
     _initMeshes: function (componentModel) {
@@ -21760,26 +21789,27 @@ Geo3DBuilder.prototype = {
             var b = [];
             var normal = [];
             var uv = [];
+            var len = 0;
             for (var v = 0; v < ringVertexCount; v++) {
                 var next = (v + 1) % ringVertexCount;
+
+                var dx = polygon.points[next * 3] - polygon.points[v * 3];
+                var dy = polygon.points[next * 3 + 2] - polygon.points[v * 3 + 2];
+                var sideLen = Math.sqrt(dx * dx + dy * dy);
+
                 // 0----1
                 // 3----2
                 for (var k = 0; k < 4; k++) {
-                    var idx3 = ((k === 0 || k === 3) ? v : next) * 3;
+                    var isCurrent = (k === 0 || k === 3);
+                    var idx3 = (isCurrent ? v : next) * 3;
                     quadPos[k][0] = polygon.points[idx3];
                     quadPos[k][1] = k > 1 ? regionHeight : 0;
                     quadPos[k][2] = polygon.points[idx3 + 2];
 
                     positionAttr.set(vertexOffset + k, quadPos[k]);
 
-                    // Make sure side uv and top uv have no seam.
-                    // PENDING
-                    uv[0] = (quadPos[k][0] - min[0]) / maxDimSize;
-                    uv[1] = (quadPos[k][2] - min[2]) / maxDimSize;
-                    if (k > 1) {
-                        // TODO left, right
-                        uv[0] -= regionHeight / maxDimSize;
-                    }
+                    uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
+                    uv[1] = (quadPos[k][1] - min[1]) / maxDimSize;
                     texcoordAttr.set(vertexOffset + k, uv);
                 }
                 vec3.sub(a, quadPos[1], quadPos[0]);
@@ -21800,6 +21830,8 @@ Geo3DBuilder.prototype = {
 
                 vertexOffset += 4;
                 triangleOffset += 2;
+
+                len += sideLen;
             }
         }
 
@@ -23608,8 +23640,8 @@ module.exports = spriteUtil;
             var useUintExt = uintExt && nVertex > 0xffff;
             var indicesType = useUintExt ? _gl.UNSIGNED_INT : _gl.UNSIGNED_SHORT;
 
-            var vaoExt = glinfo.getExtension(_gl, 'OES_vertex_array_object');
-            // var vaoExt = null;
+            // var vaoExt = glinfo.getExtension(_gl, 'OES_vertex_array_object');
+            var vaoExt = null;
 
             var isStatic = !geometry.dynamic;
 
@@ -31131,8 +31163,8 @@ echarts.extendChartView({
                         }
 
                         var idx = quadIndices[k];
-                        uvArr[0] = (idx % row) / (row - 1);
-                        uvArr[1] = Math.floor(idx / column) / (column - 1);
+                        uvArr[0] = (idx % column) / (column - 1);
+                        uvArr[1] = Math.floor(idx / column) / (row - 1);
                         texcoordAttr.set(vertexOffset + k, uvArr);
                     }
                     dataIndex++;
@@ -31142,8 +31174,8 @@ echarts.extendChartView({
         else {
             var uvArr = [];
             for (var i = 0; i < data.count(); i++) {
-                uvArr[0] = (i % row) / (row - 1);
-                uvArr[1] = Math.floor(i / column) / (column - 1);
+                uvArr[0] = (i % column) / (column - 1);
+                uvArr[1] = Math.floor(i / column) / (row - 1);
                 var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
                 var opacity = data.getItemVisual(i, 'opacity');
                 rgbaArr[3] *= opacity;
@@ -31725,6 +31757,11 @@ module.exports = echarts.extendComponentView({
                 roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
                 metalness: matModel.get('metalness') || 0
             });
+        }
+        if (shading === 'hatching') {
+            graphicGL.setMaterialFromModel(
+                shading, earthMesh.material, globeModel, api
+            );
         }
 
         earthMesh.material.set('color', graphicGL.parseColor(
@@ -38797,7 +38834,7 @@ module.exports = "@export ecgl.labels3D.vertex\n\nattribute vec3 position: POSIT
 /* 168 */
 /***/ (function(module, exports) {
 
-module.exports = "/**\n * http: */\n\n@export ecgl.lambert.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uvUniforms\n\n@import ecgl.common.attributes\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.vertexAnimation.header\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n\n    @import ecgl.common.vertexAnimation.main\n\n\n    gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.common.wireframe.vertexMain\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color);\n#else\n    gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    gl_FragColor *= sRGBToLinear(v_Color);\n    #else\n    gl_FragColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n    @import ecgl.common.diffuseLayer.main\n\n    gl_FragColor *= albedoTexel;\n\n    vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = bumpNormal(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n    @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n                        diffuseColor += ambientLightColor[i] * ambientFactor * ao;\n    }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseColor += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_] * ao;\n    }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[i];\n        }\n#endif\n\n        float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n\n    @import ecgl.common.emissiveLayer.main\n\n    @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
+module.exports = "/**\n * http: */\n\n@export ecgl.lambert.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uvUniforms\n\n@import ecgl.common.attributes\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.vertexAnimation.header\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n\n    @import ecgl.common.vertexAnimation.main\n\n\n    gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.common.wireframe.vertexMain\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color);\n#else\n    gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    gl_FragColor *= sRGBToLinear(v_Color);\n    #else\n    gl_FragColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n    @import ecgl.common.diffuseLayer.main\n\n    gl_FragColor *= albedoTexel;\n\n    vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = bumpNormal(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n    @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n                        diffuseColor += ambientLightColor[i] * ambientFactor * ao;\n    }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseColor += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_] * ao;\n    }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        vec3 lightColor = directionalLightColor[i];\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[i];\n        }\n#endif\n\n        float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n        diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);\n    }\n#endif\n\n    gl_FragColor.rgb *= diffuseColor;\n\n    @import ecgl.common.emissiveLayer.main\n\n    @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
 
 
 /***/ }),
@@ -38818,7 +38855,7 @@ module.exports = "@export ecgl.normal.vertex\n\n@import ecgl.common.transformUni
 /* 171 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.realistic.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uvUniforms\n\n@import ecgl.common.attributes\n\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n@import ecgl.common.vertexAnimation.header\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    @import ecgl.common.vertexAnimation.main\n\n    gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.common.wireframe.vertexMain\n\n}\n\n@end\n\n\n\n@export ecgl.realistic.header\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvec3 F_Schlick(float ndv, vec3 spec) {\n    return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n        float a = pow(8192.0, g);\n    return (a + 2.0) / 8.0 * pow(ndh, a);\n}\n@end\n\n\n@export ecgl.realistic.fragment\n\n@import ecgl.realistic.header\nvoid main()\n{\n    vec4 albedoColor = color;\n\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    albedoColor *= sRGBToLinear(v_Color);\n    #else\n    albedoColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n    @import ecgl.common.diffuseLayer.main\n\n    albedoColor *= albedoTexel;\n\n    vec3 baseColor = albedoColor.rgb;\n    albedoColor.rgb = baseColor * (1.0 - metalness);\n    vec3 specFactor = mix(vec3(0.04), baseColor, metalness);\n\n    float g = 1.0 - roughness;\n\n    vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = bumpNormal(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseTerm = vec3(0.0);\n    vec3 specularTerm = vec3(0.0);\n\n    float ndv = clamp(dot(N, V), 0.0, 1.0);\n    vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n    @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n    {{\n                        diffuseTerm += ambientLightColor[_idx_] * ambientFactor * ao;\n    }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_] * ao;\n    }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n    {{\n        vec3 L = -directionalLightDirection[_idx_];\n        vec3 lc = directionalLightColor[_idx_];\n\n        vec3 H = normalize(L + V);\n        float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n        float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[_idx_];\n        }\n#endif\n\n        vec3 li = lc * ndl * shadowContrib;\n\n        diffuseTerm += li;\n        specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n    }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n    vec3 L = reflect(-V, N);\n    float rough2 = clamp(1.0 - g, 0.0, 1.0);\n        float bias2 = rough2 * 5.0;\n        vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n    vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n    vec3 envTexel2;\n    for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n    {{\n        envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n                specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2 * ao;\n    }}\n#endif\n\n    gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n    gl_FragColor.a = albedoColor.a;\n\n    #ifdef SRGB_ENCODE\n    gl_FragColor = linearTosRGB(gl_FragColor);\n    #endif\n\n    @import ecgl.common.emissiveLayer.main\n\n    @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
+module.exports = "@export ecgl.realistic.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uvUniforms\n\n@import ecgl.common.attributes\n\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n@import ecgl.common.vertexAnimation.header\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n    @import ecgl.common.vertexAnimation.main\n\n    gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n    v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n    v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n    v_Color = a_Color;\n#endif\n\n    @import ecgl.common.wireframe.vertexMain\n\n}\n\n@end\n\n\n\n@export ecgl.realistic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvec3 F_Schlick(float ndv, vec3 spec) {\n    return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n        float a = pow(8192.0, g);\n    return (a + 2.0) / 8.0 * pow(ndh, a);\n}\n\nvoid main()\n{\n    vec4 albedoColor = color;\n\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    albedoColor *= sRGBToLinear(v_Color);\n    #else\n    albedoColor *= v_Color;\n    #endif\n#endif\n\n    vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n    albedoTexel = texture2D(diffuseMap, v_Texcoord);\n    #ifdef SRGB_DECODE\n    albedoTexel = sRGBToLinear(albedoTexel);\n    #endif\n#endif\n\n    @import ecgl.common.diffuseLayer.main\n\n    albedoColor *= albedoTexel;\n\n    vec3 baseColor = albedoColor.rgb;\n    albedoColor.rgb = baseColor * (1.0 - metalness);\n    vec3 specFactor = mix(vec3(0.04), baseColor, metalness);\n\n    float g = 1.0 - roughness;\n\n    vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = bumpNormal(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    vec3 diffuseTerm = vec3(0.0);\n    vec3 specularTerm = vec3(0.0);\n\n    float ndv = clamp(dot(N, V), 0.0, 1.0);\n    vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n    @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n    {{\n                        diffuseTerm += ambientLightColor[_idx_] * ambientFactor * ao;\n    }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_] * ao;\n    }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n    {{\n        vec3 L = -directionalLightDirection[_idx_];\n        vec3 lc = directionalLightColor[_idx_];\n\n        vec3 H = normalize(L + V);\n        float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n        float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[_idx_];\n        }\n#endif\n\n        vec3 li = lc * ndl * shadowContrib;\n\n        diffuseTerm += li;\n        specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n    }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n    vec3 L = reflect(-V, N);\n    float rough2 = clamp(1.0 - g, 0.0, 1.0);\n        float bias2 = rough2 * 5.0;\n        vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n    vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n    vec3 envTexel2;\n    for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n    {{\n        envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n                specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2 * ao;\n    }}\n#endif\n\n    gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n    gl_FragColor.a = albedoColor.a;\n\n    #ifdef SRGB_ENCODE\n    gl_FragColor = linearTosRGB(gl_FragColor);\n    #endif\n\n    @import ecgl.common.emissiveLayer.main\n\n    @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
 
 
 /***/ }),
@@ -39890,6 +39927,15 @@ module.exports = SunCalc;
         return tpl;
     };
 
+    /**
+     * @param {string} color
+     * @return {string}
+     */
+    formatUtil.getTooltipMarker = function (color) {
+        return '<span style="display:inline-block;margin-right:5px;'
+            + 'border-radius:10px;width:9px;height:9px;background-color:'
+            + formatUtil.encodeHTML(color) + '"></span>';
+    };
 
     /**
      * @param {string} str
@@ -44503,7 +44549,7 @@ module.exports = SunCalc;
 /***/ (function(module, exports) {
 
 
-module.exports = "@export qtek.basic.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position : POSITION;\n\nattribute vec3 barycentric;\n\n#ifdef SKINNING\nattribute vec3 weight : WEIGHT;\nattribute vec4 joint : JOINT;\n\nuniform mat4 skinMatrix[JOINT_COUNT] : SKIN_MATRIX;\n#endif\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Barycentric;\n\nvoid main()\n{\n    vec3 skinnedPosition = position;\n\n#ifdef SKINNING\n    @import qtek.chunk.skin_matrix\n\n    skinnedPosition = (skinMatrixWS * vec4(position, 1.0)).xyz;\n#endif\n\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n    v_Barycentric = barycentric;\n\n    gl_Position = worldViewProjection * vec4(skinnedPosition, 1.0);\n}\n\n@end\n\n\n\n\n@export qtek.basic.fragment\n\nvarying vec2 v_Texcoord;\nuniform sampler2D diffuseMap;\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform vec3 emission : [0.0, 0.0, 0.0];\nuniform float alpha : 1.0;\n\nuniform float lineWidth : 0.0;\nuniform vec3 lineColor : [0.0, 0.0, 0.0];\nvarying vec3 v_Barycentric;\n\n@import qtek.util.edge_factor\n\n@import qtek.util.rgbm\n\n@import qtek.util.srgb\n\nvoid main()\n{\n\n#ifdef RENDER_TEXCOORD\n    gl_FragColor = vec4(v_Texcoord, 1.0, 1.0);\n    return;\n#endif\n\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef DIFFUSEMAP_ENABLED\n    vec4 tex = decodeHDR(texture2D(diffuseMap, v_Texcoord));\n\n#ifdef SRGB_DECODE\n    tex = sRGBToLinear(tex);\n#endif\n\n#if defined(DIFFUSEMAP_ALPHA_ALPHA)\n    gl_FragColor.a = tex.a;\n#endif\n\n    gl_FragColor.rgb *= tex.rgb;\n#endif\n\n    gl_FragColor.rgb += emission;\n    if( lineWidth > 0.01)\n    {\n        gl_FragColor.rgb = gl_FragColor.rgb * mix(lineColor, vec3(1.0), edgeFactor(lineWidth));\n    }\n\n#ifdef GAMMA_ENCODE\n        gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1 / 2.2));\n#endif\n\n    gl_FragColor = encodeHDR(gl_FragColor);\n\n}\n\n@end";
+module.exports = "@export qtek.basic.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position : POSITION;\n\nattribute vec3 barycentric;\n\n#ifdef SKINNING\nattribute vec3 weight : WEIGHT;\nattribute vec4 joint : JOINT;\n\nuniform mat4 skinMatrix[JOINT_COUNT] : SKIN_MATRIX;\n#endif\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Barycentric;\n\nvoid main()\n{\n    vec3 skinnedPosition = position;\n\n#ifdef SKINNING\n    @import qtek.chunk.skin_matrix\n\n    skinnedPosition = (skinMatrixWS * vec4(position, 1.0)).xyz;\n#endif\n\n    v_Texcoord = texcoord * uvRepeat + uvOffset;\n    v_Barycentric = barycentric;\n\n    gl_Position = worldViewProjection * vec4(skinnedPosition, 1.0);\n}\n\n@end\n\n\n\n\n@export qtek.basic.fragment\n\n#define ALPHA_TEST_THRESHOLD 0.5\n\nvarying vec2 v_Texcoord;\nuniform sampler2D diffuseMap;\nuniform vec3 color : [1.0, 1.0, 1.0];\nuniform vec3 emission : [0.0, 0.0, 0.0];\nuniform float alpha : 1.0;\n\nuniform float lineWidth : 0.0;\nuniform vec3 lineColor : [0.0, 0.0, 0.0];\nvarying vec3 v_Barycentric;\n\n@import qtek.util.edge_factor\n\n@import qtek.util.rgbm\n\n@import qtek.util.srgb\n\nvoid main()\n{\n\n#ifdef RENDER_TEXCOORD\n    gl_FragColor = vec4(v_Texcoord, 1.0, 1.0);\n    return;\n#endif\n\n    gl_FragColor = vec4(color, alpha);\n\n#ifdef DIFFUSEMAP_ENABLED\n    vec4 tex = decodeHDR(texture2D(diffuseMap, v_Texcoord));\n\n#ifdef SRGB_DECODE\n    tex = sRGBToLinear(tex);\n#endif\n\n#if defined(DIFFUSEMAP_ALPHA_ALPHA)\n    gl_FragColor.a = tex.a;\n#endif\n\n    gl_FragColor.rgb *= tex.rgb;\n#endif\n\n    gl_FragColor.rgb += emission;\n    if( lineWidth > 0.01)\n    {\n        gl_FragColor.rgb = gl_FragColor.rgb * mix(lineColor, vec3(1.0), edgeFactor(lineWidth));\n    }\n\n#ifdef GAMMA_ENCODE\n        gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1 / 2.2));\n#endif\n\n#ifdef ALPHA_TEST\n    if (gl_FragColor.a < ALPHA_TEST_THRESHOLD) {\n        discard;\n    }\n#endif\n\n    gl_FragColor = encodeHDR(gl_FragColor);\n\n}\n\n@end";
 
 
 /***/ }),
@@ -48023,6 +48069,13 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
     };
 
 
+
+
+/***/ }),
+/* 230 */
+/***/ (function(module, exports) {
+
+module.exports = "@export ecgl.hatching.vertex\n\n@import ecgl.realistic.vertex\n\n@end\n\n\n@export ecgl.hatching.fragment\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform vec4 color : [0.0, 0.0, 0.0, 1.0];\nuniform vec4 paperColor : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nuniform sampler2D hatch1;\nuniform sampler2D hatch2;\nuniform sampler2D hatch3;\nuniform sampler2D hatch4;\nuniform sampler2D hatch5;\nuniform sampler2D hatch6;\n\nfloat shade(in float tone) {\n    vec4 c = vec4(1. ,1., 1., 1.);\n    float step = 1. / 6.;\n    if (tone <= step / 2.0) {\n        c = mix(vec4(0.), texture2D(hatch6, v_Texcoord), 12. * tone);\n    }\n    else if (tone <= step) {\n        c = mix(texture2D(hatch6, v_Texcoord), texture2D(hatch5, v_Texcoord), 6. * tone);\n    }\n    if(tone > step && tone <= 2. * step){\n        c = mix(texture2D(hatch5, v_Texcoord), texture2D(hatch4, v_Texcoord) , 6. * (tone - step));\n    }\n    if(tone > 2. * step && tone <= 3. * step){\n        c = mix(texture2D(hatch4, v_Texcoord), texture2D(hatch3, v_Texcoord), 6. * (tone - 2. * step));\n    }\n    if(tone > 3. * step && tone <= 4. * step){\n        c = mix(texture2D(hatch3, v_Texcoord), texture2D(hatch2, v_Texcoord), 6. * (tone - 3. * step));\n    }\n    if(tone > 4. * step && tone <= 5. * step){\n        c = mix(texture2D(hatch2, v_Texcoord), texture2D(hatch1, v_Texcoord), 6. * (tone - 4. * step));\n    }\n    if(tone > 5. * step){\n        c = mix(texture2D(hatch1, v_Texcoord), vec4(1.), 6. * (tone - 5. * step));\n    }\n\n    return c.r;\n}\n\nconst vec3 w = vec3(0.2125, 0.7154, 0.0721);\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n    vec4 inkColor = sRGBToLinear(color);\n#else\n    vec4 inkColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n        #ifdef SRGB_DECODE\n    inkColor *= sRGBToLinear(v_Color);\n    #else\n    inkColor *= v_Color;\n    #endif\n#endif\n\n    vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n    vec3 eyePos = viewInverse[3].xyz;\n    vec3 V = normalize(eyePos - v_WorldPosition);\n\n    if (dot(N, V) < 0.0) {\n        N = -N;\n    }\n#endif\n\n    float tone = 0.0;\n\n    float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n    N = bumpNormal(v_WorldPosition, v_Normal, N);\n        ambientFactor = dot(v_Normal, N);\n#endif\n\n    @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n    for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n    {\n                        tone += dot(ambientLightColor[i], w) * ambientFactor * ao;\n    }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n    for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n    {{\n        tone += dot(calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_], w) * ao;\n    }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n    float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n    if(shadowEnabled)\n    {\n        computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n    }\n#endif\n    for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n    {\n        vec3 lightDirection = -directionalLightDirection[i];\n        float lightTone = dot(directionalLightColor[i], w);\n\n        float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n        if (shadowEnabled)\n        {\n            shadowContrib = shadowContribsDir[i];\n        }\n#endif\n\n        float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n        tone += lightTone * clamp(ndl, 0.0, 1.0);\n    }\n#endif\n\n    gl_FragColor = mix(inkColor, paperColor, shade(clamp(tone, 0.0, 1.0)));\n    }\n@end\n";
 
 
 /***/ })

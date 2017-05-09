@@ -47,7 +47,6 @@ function Geo3DBuilder(api) {
         $ignorePicking: true
     });
     this._groundMesh.rotation.rotateX(-Math.PI / 2);
-    this._groundMesh.scale.set(1000, 1000, 1);
 
     this._labelsBuilder = new LabelsBuilder(1024, 1024, api);
 
@@ -92,7 +91,7 @@ Geo3DBuilder.prototype = {
         }
         this._updateRegionMesh(componentModel, shader, api, enableInstancing);
 
-        this._updateGroundPlane(componentModel);
+        this._updateGroundPlane(componentModel, api);
         this._groundMesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
 
         this._labelsBuilder.updateData(data);
@@ -288,7 +287,8 @@ Geo3DBuilder.prototype = {
         }
     },
 
-    _updateGroundPlane: function (componentModel) {
+    _updateGroundPlane: function (componentModel, api) {
+        var geo3D = componentModel.coordinateSystem;
         var groundModel = componentModel.getModel('groundPlane');
 
         var shading = componentModel.get('shading');
@@ -299,9 +299,14 @@ Geo3DBuilder.prototype = {
             }
             material = this._groundMaterials.lambert;
         }
+
+        graphicGL.setMaterialFromModel(shading, material, componentModel, api);
+
         this._groundMesh.material = material;
         this._groundMesh.material.set('color', graphicGL.parseColor(groundModel.get('color')));
         this._groundMesh.invisible = !groundModel.get('show');
+
+        this._groundMesh.scale.set(geo3D.size[0], geo3D.size[2], 1);
     },
 
     _initMeshes: function (componentModel) {
