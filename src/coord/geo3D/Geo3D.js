@@ -150,8 +150,10 @@ Geo3D.prototype = {
         out[1] = data[2];
 
         if (isNaN(out[1])) {
-            out[1] = this.size[1];
+            out[1] = 0;
         }
+        // PENDING.
+        out[1] += this.size[1];
 
         vec3.transformMat4(out, out, this.transform);
 

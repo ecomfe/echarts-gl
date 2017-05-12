@@ -55,9 +55,7 @@ module.exports = echarts.extendChartView({
             var viewGL = coordSys.viewGL;
             viewGL.add(this.groupGL);
 
-            if (data.getLayout('lineType') === 'cubicBezier') {
-                this._generateBezierCurves(seriesModel, ecModel, api);
-            }
+            this._updateLines(seriesModel, ecModel, api);
 
             var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
             this._linesMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
@@ -117,10 +115,11 @@ module.exports = echarts.extendChartView({
         }
     },
 
-    _generateBezierCurves: function (seriesModel, ecModel, api) {
+    _updateLines: function (seriesModel, ecModel, api) {
         var data = seriesModel.getData();
         var coordSys = seriesModel.coordinateSystem;
         var geometry = this._linesMesh.geometry;
+        var isPolyline = seriesModel.get('polyline');
 
         geometry.expandLine = true;
 
@@ -149,8 +148,14 @@ module.exports = echarts.extendChartView({
         var nTriangle = 0;
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
-            nVertex += geometry.getCubicCurveVertexCount(pts[0], pts[1], pts[2], pts[3]);
-            nTriangle += geometry.getCubicCurveTriangleCount(pts[0], pts[1], pts[2], pts[3]);
+            if (isPolyline) {
+                nVertex += geometry.getPolylineVertexCount(pts);
+                nTriangle += geometry.getPolylineTriangleCount(pts);
+            }
+            else {
+                nVertex += geometry.getCubicCurveVertexCount(pts[0], pts[1], pts[2], pts[3]);
+                nTriangle += geometry.getCubicCurveTriangleCount(pts[0], pts[1], pts[2], pts[3]);
+            }
         });
 
         this._linesMesh.material = canUseNativeLine ? this._nativeLinesMaterial : this._projectedLinesMaterial;
@@ -172,8 +177,12 @@ module.exports = echarts.extendChartView({
 
             colorArr = graphicGL.parseColor(color, colorArr);
             colorArr[3] *= opacity;
-
-            geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr, lineWidth);
+            if (isPolyline) {
+                geometry.addPolyline(pts, colorArr, lineWidth);
+            }
+            else {
+                geometry.addCubicCurve(pts[0], pts[1], pts[2], pts[3], colorArr, lineWidth);
+            }
         });
 
         geometry.dirty();

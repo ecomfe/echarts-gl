@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Hangzhou Hiking Tracks - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="data/xihuqu.js"></script>
+        <script src="../node_modules/echarts/theme/dark.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            $.getJSON('data/hangzhou-tracks.json', function (data) {
+                var lines = data.map(function (track) {
+                    return {
+                        coords: track.map(function (seg, idx) {
+                            return seg.coord.concat([seg.elevation]);
+                        })
+                    };
+                });
+
+                chart.setOption({
+                    geo3D: {
+                        map: 'xihuqu',
+                        shading: 'realistic',
+
+                        environment: '#111',
+
+                        silent: true,
+
+                        realisticMaterial: {
+                            roughness: 0.8,
+                            metalness: 0
+                        },
+                        postEffect: {
+                            enable: true
+                        },
+                        groundPlane: {
+                            show: true,
+                            color: '#000'
+                        },
+                        light: {
+                            main: {
+                                intensity: 0,
+                                shadow: true,
+                                shadowQuality: 'high',
+                                alpha: 30
+                            },
+                            ambient: {
+                                intensity: 0.2
+                            }
+                        },
+                        viewControl: {
+                            distance: 50
+                        },
+
+                        itemStyle: {
+                            areaColor: '#333',
+                            borderColor: '#fff'
+                        },
+
+                        boxHeight: 0.5
+                    },
+                    series: [{
+                        type: 'lines3D',
+
+                        coordinateSystem: 'geo3D',
+
+                        effect: {
+                            show: false,
+                            trailWidth: 1,
+                            trailLength: 0.4
+                        },
+
+                        blendMode: 'lighter',
+
+                        polyline: true,
+
+                        lineStyle: {
+                            width: 1,
+                            color: 'rgb(50, 50, 150)',
+                            opacity: 0.5
+                        },
+
+                        distanceToGeo3D: [0, 10],
+
+                        data: lines
+                    }]
+                });
+
+                window.onresize = chart.resize;
+
+                window.addEventListener('keydown', function () {
+                    chart.dispatchAction({
+                        type: 'lines3DToggleEffect',
+                        seriesIndex: 0
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
