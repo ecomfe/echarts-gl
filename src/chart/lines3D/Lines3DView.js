@@ -1,7 +1,8 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var LinesGeometry = require('../../util/geometry/Lines3D');
-var TrailMesh = require('./TrailMesh');
+// var TrailMesh = require('./TrailMesh');
+var TrailMesh2 = require('./TrailMesh2');
 
 graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
 
@@ -26,13 +27,7 @@ module.exports = echarts.extendChartView({
     init: function (ecModel, api) {
         this.groupGL = new graphicGL.Node();
 
-        this._nativeLinesMaterial = new graphicGL.Material({
-            shader: graphicGL.createShader('ecgl.lines3D'),
-            transparent: true,
-            depthMask: false
-        });
-
-        this._projectedLinesMaterial = new graphicGL.Material({
+        this._meshLinesMaterial = new graphicGL.Material({
             shader: graphicGL.createShader('ecgl.meshLines3D'),
             transparent: true,
             depthMask: false
@@ -41,7 +36,8 @@ module.exports = echarts.extendChartView({
             geometry: new LinesGeometry()
         });
 
-        this._trailMesh = new TrailMesh();
+        // this._trailMesh = new TrailMesh();
+        this._trailMesh = new TrailMesh2();
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -65,24 +61,18 @@ module.exports = echarts.extendChartView({
         trailMesh.stopAnimation();
 
         if (seriesModel.get('effect.show')) {
-            var trailLength = seriesModel.get('effect.trailLength');
-            var percentScale = trailLength + 1.0;
-
             this.groupGL.add(trailMesh);
 
-            trailMesh.setScale(getCoordSysSize(coordSys));
-            trailMesh.setData(data, api);
+            trailMesh.updateData(data, api, this._linesMesh.geometry);
 
-            var period = seriesModel.get('effect.period') * 1000;
-            var delay = trailMesh.__percent ? -(period * trailMesh.__percent / percentScale) : 0;
-            trailMesh.__percent = 0;
+            trailMesh.__time = trailMesh.__time || 0;
+            var time = 3600 * 1000; // 1hour
             this._curveEffectsAnimator = trailMesh.animate('', { loop: true })
-                .when(period * percentScale, {
-                    __percent: percentScale
+                .when(time, {
+                    __time: time
                 })
-                .delay(delay)
                 .during(function () {
-                    trailMesh.setAnimationPercent(trailMesh.__percent);
+                    trailMesh.setAnimationTime(trailMesh.__time);
                 })
                 .start();
         }
@@ -96,7 +86,7 @@ module.exports = echarts.extendChartView({
             ? graphicGL.additiveBlend : null;
     },
 
-    puaseEffect: function () {
+    pauseEffect: function () {
         if (this._curveEffectsAnimator) {
             this._curveEffectsAnimator.pause();
         }
@@ -128,7 +118,6 @@ module.exports = echarts.extendChartView({
 
         var lineWidthQueryPath = 'lineStyle.width'.split('.');
         var dpr = api.getDevicePixelRatio();
-        var canUseNativeLine = true;
         var maxLineWidth = 0;
         data.each(function (idx) {
             var itemModel = data.getItemModel(idx);
@@ -139,10 +128,9 @@ module.exports = echarts.extendChartView({
             data.setItemVisual(idx, 'lineWidth', lineWidth);
             maxLineWidth = Math.max(lineWidth, maxLineWidth);
         });
-        var canUseNativeLine = false;
-        // var canUseNativeLine = maxLineWidth * dpr <= 1;
+
         // Must set useNativeLine before calling any other methods
-        geometry.useNativeLine = canUseNativeLine;
+        geometry.useNativeLine = false;
 
         var nVertex = 0;
         var nTriangle = 0;
@@ -158,8 +146,8 @@ module.exports = echarts.extendChartView({
             }
         });
 
-        this._linesMesh.material = canUseNativeLine ? this._nativeLinesMaterial : this._projectedLinesMaterial;
-        this._linesMesh.mode = canUseNativeLine ? graphicGL.Mesh.LINES : graphicGL.Mesh.TRIANGLES;
+        this._linesMesh.material = this._meshLinesMaterial;
+        this._linesMesh.mode = graphicGL.Mesh.TRIANGLES;
 
         geometry.setVertexCount(nVertex);
         geometry.setTriangleCount(nTriangle);

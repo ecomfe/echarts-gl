@@ -248,7 +248,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
             }
         }
 
-        this.addPolyline(points, color, lineWidth, false);
+        return this.addPolyline(points, color, lineWidth, false);
     },
 
     /**
@@ -259,7 +259,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
      * @param {number} [lineWidth=1]
      */
     addLine: function (p0, p1, color, lineWidth) {
-        this.addPolyline([p0, p1], color, lineWidth, false);
+        return this.addPolyline([p0, p1], color, lineWidth, false);
     },
 
     /**
@@ -285,6 +285,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         if (lineWidth == null) {
             lineWidth = 1;
         }
+        lineWidth = Math.max(lineWidth, 0.01);
 
         var vertexOffset = this._vertexOffset;
         var pointCount = is2DArray ? points.length : points.length / 3;
@@ -385,6 +386,22 @@ var LinesGeometry = StaticGeometry.extend(function () {
         }
 
         this._vertexOffset = vertexOffset;
+
+        return this._vertexOffset;
+    },
+
+    /**
+     * @return {number}
+     */
+    currentTriangleOffset: function () {
+        return this._triangleOffset;
+    },
+
+    /**
+     * @return {number}
+     */
+    currentVertexOffset: function () {
+        return this._vertexOffset;
     }
 });
 

@@ -1,6 +1,5 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
-var spriteUtil = require('../../util/sprite');
 
 var TrailGeometry = require('./TrailGeometry');
 
