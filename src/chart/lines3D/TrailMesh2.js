@@ -61,11 +61,11 @@ module.exports = graphicGL.Mesh.extend(function () {
 
         geometry.resetOffset();
 
-        ['position', 'positionPrev', 'positionNext', 'color'].forEach(function (attrName) {
+        ['position', 'positionPrev', 'positionNext'].forEach(function (attrName) {
             geometry.attributes[attrName].value = lines3DGeometry.attributes[attrName].value;
         });
 
-        var extraAttrs = ['dist', 'distAll', 'start', 'offset'];
+        var extraAttrs = ['dist', 'distAll', 'start', 'offset', 'color'];
 
         extraAttrs.forEach(function (attrName) {
             geometry.attributes[attrName].init(geometry.vertexCount);
@@ -114,6 +114,7 @@ module.exports = graphicGL.Mesh.extend(function () {
                 geometry.attributes.offset.set(
                     i, sign(lines3DGeometry.attributes.offset.get(i)) * size / 2
                 );
+                geometry.attributes.color.set(i, colorArr);
             }
 
             vertexOffset += vertexCount;

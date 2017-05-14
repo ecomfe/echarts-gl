@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Beijing Bus - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/province/beijing.js"></script>
+        <script src="../node_modules/echarts/theme/dark.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            $.getJSON('data/lines-bus.json', function (data) {
+                var hStep = 300 / (data.length - 1);
+                var busLines = data.map(function (busLine, idx) {
+                    var prevPt;
+                    var points = [];
+                    for (var i = 0; i < busLine.length; i += 2) {
+                        var pt = [busLine[i], busLine[i + 1]];
+                        if (i > 0) {
+                            pt = [
+                                prevPt[0] + pt[0],
+                                prevPt[1] + pt[1]
+                            ];
+                        }
+                        prevPt = pt;
+
+                        points.push([pt[0] / 1e4, pt[1] / 1e4]);
+                    }
+                    return {
+                        coords: points
+                        // lineStyle: {
+                        //     color: echarts.color.modifyHSL('#5A94DF', Math.round(hStep * idx))
+                        // }
+                    };
+                });
+
+                chart.setOption({
+                    geo3D: {
+                        map: '北京',
+                        shading: 'realistic',
+
+                        environment: '#111',
+
+                        silent: true,
+
+                        realisticMaterial: {
+                            roughness: 0.8,
+                            metalness: 0
+                        },
+                        postEffect: {
+                            enable: true
+                        },
+                        groundPlane: {
+                            show: true,
+                            color: '#000'
+                        },
+                        light: {
+                            main: {
+                                intensity: 0,
+                                shadow: true,
+                                shadowQuality: 'high',
+                                alpha: 30
+                            },
+                            ambient: {
+                                intensity: 0.2
+                            }
+                        },
+                        viewControl: {
+                            distance: 50
+                        },
+
+                        itemStyle: {
+                            areaColor: '#333',
+                            borderColor: '#fff'
+                        },
+
+                        boxHeight: 0.5
+                    },
+                    series: [{
+                        type: 'lines3D',
+
+                        coordinateSystem: 'geo3D',
+
+                        effect: {
+                            show: true,
+                            constantSpeed: 2,
+                            trailWidth: 2,
+                            trailLength: 0.4,
+                            // trailColor: [1, 1, 5],
+                            trailOpacity: 0.5
+                        },
+
+                        blendMode: 'lighter',
+
+                        polyline: true,
+
+                        lineStyle: {
+                            width: 0.1,
+                            color: 'rgb(50, 50, 150)',
+                            opacity: 0.
+                        },
+
+                        distanceToGeo3D: [0, 1],
+
+                        data: busLines
+                    }]
+                });
+
+                window.onresize = chart.resize;
+
+                window.addEventListener('keydown', function () {
+                    chart.dispatchAction({
+                        type: 'lines3DToggleEffect',
+                        seriesIndex: 0
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>

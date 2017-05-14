@@ -73,6 +73,13 @@ if (v_Percent > 1.0 || v_Percent < 0.0) {
     discard;
 }
 
+    float fade = v_Percent;
+    // Spot part
+    // PENDING
+    if (v_Percent > 0.9) {
+        fade *= 2.0;
+    }
+
 #ifdef SRGB_DECODE
     gl_FragColor = sRGBToLinear(color * v_Color);
 #else
@@ -81,7 +88,7 @@ if (v_Percent > 1.0 || v_Percent < 0.0) {
 
     @import ecgl.common.wireframe.fragmentMain
 
-    gl_FragColor.a *= v_Percent;
+    gl_FragColor.a *= fade;
 }
 
 @end

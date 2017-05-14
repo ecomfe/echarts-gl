@@ -33,7 +33,8 @@ module.exports = echarts.extendChartView({
             depthMask: false
         });
         this._linesMesh = new graphicGL.Mesh({
-            geometry: new LinesGeometry()
+            geometry: new LinesGeometry(),
+            $ignorePicking: true
         });
 
         // this._trailMesh = new TrailMesh();

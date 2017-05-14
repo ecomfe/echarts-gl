@@ -110,6 +110,17 @@ EChartsGL.prototype.update = function (ecModel, api) {
         return layerGL;
     }
 
+    function setSilent(groupGL, silent) {
+        if (groupGL) {
+            groupGL.traverse(function (mesh) {
+                if (mesh.isRenderable && mesh.isRenderable()) {
+                    mesh.ignorePicking = mesh.$ignorePicking != null
+                        ? mesh.$ignorePicking : silent;
+                }
+            });
+        }
+    }
+
     for (var zlevel in this._layers) {
         this._layers[zlevel].removeViewsAll();
     }
@@ -144,6 +155,8 @@ EChartsGL.prototype.update = function (ecModel, api) {
                 view.afterRender && view.afterRender(
                     componentModel, ecModel, api, layerGL
                 );
+
+                setSilent(view.groupGL, componentModel.get('silent'));
             }
         }
     });
@@ -165,13 +178,7 @@ EChartsGL.prototype.update = function (ecModel, api) {
                 seriesModel, ecModel, api, layerGL
             );
 
-            var silent = seriesModel.get('silent');
-            chartView.groupGL && chartView.groupGL.traverse(function (mesh) {
-                if (mesh.isRenderable && mesh.isRenderable()) {
-                    mesh.ignorePicking = mesh.$ignorePicking != null
-                        ? mesh.$ignorePicking : silent;
-                }
-            });
+            setSilent(chartView.groupGL, seriesModel.get('silent'));
         }
     });
 };
