@@ -39,10 +39,19 @@ void main()
     @import ecgl.common.wireframe.vertexMain
 
 #ifdef CONSTANT_SPEED
-    v_Percent = mod(speed * time + start - dist, distAll * (1.0 + trailLength)) / distAll;
+    float t = mod((speed * time + start) / distAll, 1. + trailLength) - trailLength;
 #else
-    v_Percent = mod(time + start - dist / distAll * period, period * (1.0 + trailLength)) / period;
+    float t = mod((time + start) / period, 1. + trailLength) - trailLength;
 #endif
+
+    float trailLen = distAll * trailLength;
+
+    v_Percent = (dist - t * distAll) / trailLen;
+
+    // if (t > 1.0 - trailLength) {
+    //     float t2 = t - 1.0;
+    //     v_Percent = max(v_Percent, (dist - t2 * distAll) / trailLen);
+    // }
 }
 @end
 

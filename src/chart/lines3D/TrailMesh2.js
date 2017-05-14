@@ -49,7 +49,7 @@ module.exports = graphicGL.Mesh.extend(function () {
         var useConstantSpeed = speed != null;
 
         useConstantSpeed
-            ? this.material.set('speed', speed)
+            ? this.material.set('speed', speed / 1000)
             : this.material.set('period', period);
 
         this.material.shader[useConstantSpeed ? 'define' : 'undefine']('vertex', 'CONSTANT_SPEED');
@@ -91,7 +91,7 @@ module.exports = graphicGL.Mesh.extend(function () {
             colorArr[3] *= opacity;
 
             var vertexCount = isPolyline
-                ? lines3DGeometry.getLineVertexCount(pts)
+                ? lines3DGeometry.getPolylineVertexCount(pts)
                 : lines3DGeometry.getCubicCurveVertexCount(pts[0], pts[1], pts[2], pts[3])
 
             var dist = 0;
