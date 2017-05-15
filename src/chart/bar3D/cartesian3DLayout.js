@@ -1,11 +1,16 @@
 var echarts = require('echarts/lib/echarts');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 
+function ifCrossZero(extent) {
+    var min = extent[0];
+    var max = extent[1];
+    return !((min > 0 && max > 0) || (min < 0 && max < 0));
+};
 
 function cartesian3DLayout(seriesModel, coordSys) {
 
     var data = seriesModel.getData();
-    var barOnPlane = seriesModel.get('onGridPlane');
+    // var barOnPlane = seriesModel.get('onGridPlane');
 
     var barSize = seriesModel.get('barSize');
     if (barSize == null) {
@@ -33,14 +38,19 @@ function cartesian3DLayout(seriesModel, coordSys) {
         barSize = [barSize, barSize];
     }
 
-    var dir = [0, 1, 0];
+    var zAxisExtent = coordSys.getAxis('z').scale.getExtent();
+    var ifZAxisCrossZero = ifCrossZero(zAxisExtent);
+
     data.each(['x', 'y', 'z'], function (x, y, z, idx) {
         // TODO On the face or on the zero barOnPlane
         // TODO zAxis is inversed
         // TODO On different plane.
-        var start = coordSys.dataToPoint([x, y, 0]);
+        var baseValue = ifZAxisCrossZero ? 0 : zAxisExtent[0];
+        var start = coordSys.dataToPoint([x, y, baseValue]);
         var end = coordSys.dataToPoint([x, y, z]);
         var height = vec3.dist(start, end);
+        // PENDING When zAxis is not cross zero.
+        var dir = [0, end[1] < start[1] ? -1 : 1, 0];
         if (Math.abs(height) === 0) {
             // TODO
             height = 0.1;
