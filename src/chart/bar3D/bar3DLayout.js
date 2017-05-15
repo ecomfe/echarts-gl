@@ -52,7 +52,7 @@ function geo3DLayout(seriesModel, coordSys) {
     var dir = [0, 1, 0];
     data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
         var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, extent, heightExtent);
-        var start = coordSys.dataToPoint([lng, lat, coordSys.size[1]]);
+        var start = coordSys.dataToPoint([lng, lat, 0]);
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
     });
