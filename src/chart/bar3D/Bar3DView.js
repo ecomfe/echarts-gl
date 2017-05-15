@@ -4,6 +4,7 @@ var retrieve = require('../../util/retrieve');
 var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var modelUtil = require('echarts/lib/util/model');
 
 function getShader(shading) {
     var shader = graphicGL.createShader('ecgl.' + shading);
@@ -298,6 +299,31 @@ module.exports = echarts.extendChartView({
         this._barMesh.geometry.setColor(barIndex, colorArr);
 
         this._api.getZr().refresh();
+    },
+
+    highlight: function (seriesModel, ecModel, api, payload) {
+        this._toggleStatus('highlight', seriesModel, ecModel, api, payload);
+    },
+
+    downplay: function (seriesModel, ecModel, api, payload) {
+        this._toggleStatus('downplay', seriesModel, ecModel, api, payload);
+    },
+
+    _toggleStatus: function (status, seriesModel, ecModel, api, payload) {
+        var data = seriesModel.getData();
+        var dataIndex = modelUtil.queryDataIndex(data, payload);
+
+        var self = this;
+        if (dataIndex != null) {
+            echarts.util.each(modelUtil.normalizeToArray(dataIndex), function (dataIdx) {
+                status === 'highlight' ? this._highlight(dataIdx) : this._downplay(dataIdx);
+            }, this);
+        }
+        else {
+            data.each(function (dataIdx) {
+                status === 'highlight' ? self._highlight(dataIdx) : self._downplay(dataIdx);
+            });
+        }
     },
 
     remove: function () {
