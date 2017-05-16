@@ -197,13 +197,15 @@ Geo3DBuilder.prototype = {
 
             if (instancing) {
                 var newOffsets = this._updatePolygonGeometry(
-                    polygonMesh.geometry, region, regionHeight, vertexOffset, triangleOffset, color
+                    componentModel, polygonMesh.geometry, region, regionHeight, vertexOffset, triangleOffset, color
                 );
                 vertexOffset = newOffsets.vertexOffset;
                 triangleOffset = newOffsets.triangleOffset;
             }
             else {
-                this._updatePolygonGeometry(polygonMesh.geometry, region, regionHeight);
+                this._updatePolygonGeometry(
+                    componentModel, polygonMesh.geometry, region, regionHeight
+                );
             }
 
             // Update lines.
@@ -487,8 +489,11 @@ Geo3DBuilder.prototype = {
     },
 
     _updatePolygonGeometry: function (
-        geometry, region, regionHeight, vertexOffset, triangleOffset, color
+        componentModel, geometry, region, regionHeight, vertexOffset, triangleOffset, color
     ) {
+        // FIXME
+        var projectUVOnGround = componentModel.get('projectUVOnGround');
+
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
         var texcoordAttr = geometry.attributes.texcoord0;
@@ -593,10 +598,14 @@ Geo3DBuilder.prototype = {
 
                     positionAttr.set(vertexOffset + k, quadPos[k]);
 
-                    uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
-                    uv[1] = (quadPos[k][1] - min[1]) / maxDimSize;
-                    // uv[0] = (polygon.points[idx3] - min[0]) / maxDimSize;
-                    // uv[1] = (polygon.points[idx3 + 2] - min[2]) / maxDimSize;
+                    if (projectUVOnGround) {
+                        uv[0] = (polygon.points[idx3] - min[0]) / maxDimSize;
+                        uv[1] = (polygon.points[idx3 + 2] - min[2]) / maxDimSize;
+                    }
+                    else {
+                        uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
+                        uv[1] = (quadPos[k][1] - min[1]) / maxDimSize;
+                    }
                     texcoordAttr.set(vertexOffset + k, uv);
                 }
                 vec3.sub(a, quadPos[1], quadPos[0]);
