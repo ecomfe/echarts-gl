@@ -40,8 +40,14 @@
                 }
             }
 
+            var chart = echarts.init(document.getElementById('main'));
+
+            chart.showLoading();
+
             $.getJSON('data/ec-option-doc-statistics-201604.json', function (rawData) {
                 var data = [];
+
+                chart.hideLoading();
 
                 convert(rawData, data, '');
 
@@ -129,8 +135,6 @@
                         return !!item;
                     })
                 });
-                var chart = echarts.init(document.getElementById('main'));
-
                 var regions = treemapData.mapArray(function (idx) {
                     var itemLayout = treemapData.getItemLayout(idx);
                     if (itemLayout && itemLayout.height && itemLayout.width && !itemLayout.invisible) {
