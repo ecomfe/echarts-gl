@@ -434,7 +434,7 @@ module.exports = echarts.extendComponentView({
         var time = globeModel.get('light.main.time') || new Date();
 
         // http://en.wikipedia.org/wiki/Azimuth
-        var pos = sunCalc.getPosition(Date.parse(time), 0, 0);
+        var pos = sunCalc.getPosition(echarts.number.parseDate(time), 0, 0);
         var r0 = Math.cos(pos.altitude);
         // FIXME How to calculate the y ?
         mainLight.position.y = -r0 * Math.cos(pos.azimuth);

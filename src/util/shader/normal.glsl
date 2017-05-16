@@ -16,6 +16,8 @@ varying vec3 v_WorldPosition;
 
 void main()
 {
+
+    // TODO Animation
     @import ecgl.common.vertexAnimation.main
 
     v_Texcoord = texcoord * uvRepeat + uvOffset;

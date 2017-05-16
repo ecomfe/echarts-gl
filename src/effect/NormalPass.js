@@ -1,5 +1,6 @@
 // NormalPass will generate normal and depth data.
 
+// TODO Animation
 var Texture2D = require('qtek/lib/Texture2D');
 var Texture = require('qtek/lib/Texture');
 var Shader = require('qtek/lib/Shader');
