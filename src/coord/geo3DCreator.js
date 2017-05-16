@@ -19,7 +19,7 @@ function resizeGeo3D(geo3DModel, api) {
     this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 
     var geoRect = this.getGeoBoundingRect();
-    var aspect = geoRect.width / geoRect.height * 0.75;
+    var aspect = geoRect.width / geoRect.height * (geo3DModel.get('aspectScale') || 0.75);
 
     var width = geo3DModel.get('boxWidth');
     var depth = geo3DModel.get('boxDepth');

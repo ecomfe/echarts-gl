@@ -595,6 +595,8 @@ Geo3DBuilder.prototype = {
 
                     uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
                     uv[1] = (quadPos[k][1] - min[1]) / maxDimSize;
+                    // uv[0] = (polygon.points[idx3] - min[0]) / maxDimSize;
+                    // uv[1] = (polygon.points[idx3 + 2] - min[2]) / maxDimSize;
                     texcoordAttr.set(vertexOffset + k, uv);
                 }
                 vec3.sub(a, quadPos[1], quadPos[0]);

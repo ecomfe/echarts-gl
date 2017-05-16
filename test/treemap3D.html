@@ -1,0 +1,206 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Geo3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            function convert(source, target, basePath) {
+                for (var key in source) {
+                    var path = basePath ? (basePath + '.' + key) : key;
+                    if (key.match(/^\$/)) {
+
+                    }
+                    else {
+                        target.children = target.children || [];
+                        var child = {
+                            name: path
+                        };
+                        target.children.push(child);
+                        convert(source[key], child, path);
+                    }
+                }
+
+                if (!target.children) {
+                    target.value = source.$count || 1;
+                }
+                else {
+                    target.children.push({
+                        name: basePath,
+                        value: source.$count
+                    });
+                }
+            }
+
+            $.getJSON('data/ec-option-doc-statistics-201604.json', function (rawData) {
+                var data = [];
+
+                convert(rawData, data, '');
+
+                var canvas = document.createElement('canvas');
+                canvas.width = canvas.height = 2048;
+                var treemapChart = echarts.init(canvas);
+
+                treemapChart.setOption(option = {
+                    tooltip: {},
+                    series: [{
+                        name: 'option',
+                        type: 'treemap',
+                        visibleMin: 300,
+                        data: data.children,
+                        // leafDepth: 4,
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        breadcrumb: {
+                            show: false
+                        },
+                        levels: [
+                            {
+                                itemStyle: {
+                                    normal: {
+                                        borderColor: '#555',
+                                        borderWidth: 4,
+                                        gapWidth: 4
+                                    }
+                                }
+                            },
+                            {
+                                colorSaturation: [0.3, 0.6],
+                                itemStyle: {
+                                    normal: {
+                                        borderColorSaturation: 0.7,
+                                        gapWidth: 2,
+                                        borderWidth: 2
+                                    }
+                                }
+                            },
+                            {
+                                colorSaturation: [0.3, 0.5],
+                                itemStyle: {
+                                    normal: {
+                                        borderColorSaturation: 0.6,
+                                        gapWidth: 1
+                                    }
+                                }
+                            },
+                            {
+                                colorSaturation: [0.3, 0.5]
+                            }
+                        ]
+                    }]
+                });
+
+
+                var treemapData = treemapChart.getModel().getSeriesByIndex(0).getData();
+                var tree = treemapData.tree;
+
+                echarts.registerMap('treemap', {
+                    type: 'FeatureCollection',
+                    features: treemapData.mapArray(function (idx) {
+                        var itemLayout = treemapData.getItemLayout(idx);
+                        if (itemLayout && itemLayout.height && itemLayout.width && !itemLayout.invisible) {
+                            return {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Polygon',
+                                    coordinates: [[
+                                        [itemLayout.x, 2048 - itemLayout.y],
+                                        [itemLayout.x + itemLayout.width, 2048 - itemLayout.y],
+                                        [itemLayout.x + itemLayout.width, 2048 - itemLayout.y - itemLayout.height],
+                                        [itemLayout.x, 2048 - itemLayout.y - itemLayout.height]
+                                    ]]
+                                },
+                                properties: {
+                                    name: treemapData.getName(idx)
+                                }
+                            }
+                        }
+                    }).filter(function (item) {
+                        return !!item;
+                    })
+                });
+                var chart = echarts.init(document.getElementById('main'));
+
+                var regions = treemapData.mapArray(function (idx) {
+                    var itemLayout = treemapData.getItemLayout(idx);
+                    if (itemLayout && itemLayout.height && itemLayout.width && !itemLayout.invisible) {
+                        return {
+                            height: tree.getNodeByDataIndex(idx).depth + 1,
+                            name: treemapData.getName(idx)
+                            // itemStyle: {
+                            //     areaColor: treemapData.getItemVisual(idx, 'color')
+                            // }
+                        };
+                    }
+                }).filter(function (item) {
+                    return !!item;
+                });
+
+                chart.setOption({
+                    geo3D: {
+                        silent: true,
+                        map: 'treemap',
+                        instancing: true,
+                        regions: regions,
+
+                        aspectScale: 1,
+
+                        lambertMaterial: {
+                            baseTexture: treemapChart
+                        },
+
+                        postEffect: {
+                            enable: true,
+                            SSAO: {
+                                enable: true,
+                                radius: 3,
+                                intensity: 1.5
+                            },
+                            depthOfField: {
+                                enable: true,
+                                blurRadius: 3
+                            }
+                        },
+                        light: {
+                            main: {
+                                intensity: 1,
+                                shadow: true,
+                                shadowQuality: 'high',
+                                alpha: 30
+                            },
+                            ambient: {
+                                intensity: 0
+                            },
+                            ambientCubemap: {
+                                texture: 'asset/canyon.hdr',
+                                exposure: 2,
+                                diffuseIntensity: 0.3
+                            }
+                        },
+
+                        viewControl: {
+                            minBeta: -Infinity,
+                            maxBeta: Infinity
+                        }
+                    },
+                    series: []
+                });
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>
