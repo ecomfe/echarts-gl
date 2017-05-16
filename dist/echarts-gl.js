@@ -21877,13 +21877,15 @@ Geo3DBuilder.prototype = {
 
             if (instancing) {
                 var newOffsets = this._updatePolygonGeometry(
-                    polygonMesh.geometry, region, regionHeight, vertexOffset, triangleOffset, color
+                    componentModel, polygonMesh.geometry, region, regionHeight, vertexOffset, triangleOffset, color
                 );
                 vertexOffset = newOffsets.vertexOffset;
                 triangleOffset = newOffsets.triangleOffset;
             }
             else {
-                this._updatePolygonGeometry(polygonMesh.geometry, region, regionHeight);
+                this._updatePolygonGeometry(
+                    componentModel, polygonMesh.geometry, region, regionHeight
+                );
             }
 
             // Update lines.
@@ -22167,8 +22169,11 @@ Geo3DBuilder.prototype = {
     },
 
     _updatePolygonGeometry: function (
-        geometry, region, regionHeight, vertexOffset, triangleOffset, color
+        componentModel, geometry, region, regionHeight, vertexOffset, triangleOffset, color
     ) {
+        // FIXME
+        var projectUVOnGround = componentModel.get('projectUVOnGround');
+
         var positionAttr = geometry.attributes.position;
         var normalAttr = geometry.attributes.normal;
         var texcoordAttr = geometry.attributes.texcoord0;
@@ -22273,8 +22278,14 @@ Geo3DBuilder.prototype = {
 
                     positionAttr.set(vertexOffset + k, quadPos[k]);
 
-                    uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
-                    uv[1] = (quadPos[k][1] - min[1]) / maxDimSize;
+                    if (projectUVOnGround) {
+                        uv[0] = (polygon.points[idx3] - min[0]) / maxDimSize;
+                        uv[1] = (polygon.points[idx3 + 2] - min[2]) / maxDimSize;
+                    }
+                    else {
+                        uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
+                        uv[1] = (quadPos[k][1] - min[1]) / maxDimSize;
+                    }
                     texcoordAttr.set(vertexOffset + k, uv);
                 }
                 vec3.sub(a, quadPos[1], quadPos[0]);
@@ -22628,7 +22639,7 @@ function resizeGeo3D(geo3DModel, api) {
     this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 
     var geoRect = this.getGeoBoundingRect();
-    var aspect = geoRect.width / geoRect.height * 0.75;
+    var aspect = geoRect.width / geoRect.height * (geo3DModel.get('aspectScale') || 0.75);
 
     var width = geo3DModel.get('boxWidth');
     var depth = geo3DModel.get('boxDepth');
@@ -23356,12 +23367,15 @@ module.exports = ZRTextureAtlasSurface;
 
     /**
      * @param {string} color
+     * @param {string} [extraCssText]
      * @return {string}
      */
-    formatUtil.getTooltipMarker = function (color) {
-        return '<span style="display:inline-block;margin-right:5px;'
-            + 'border-radius:10px;width:9px;height:9px;background-color:'
-            + formatUtil.encodeHTML(color) + '"></span>';
+    formatUtil.getTooltipMarker = function (color, extraCssText) {
+        return color
+            ? '<span style="display:inline-block;margin-right:5px;'
+                + 'border-radius:10px;width:9px;height:9px;background-color:'
+                + formatUtil.encodeHTML(color) + ';' + (extraCssText || '') + '"></span>'
+            : '';
     };
 
     /**
@@ -23583,6 +23597,7 @@ module.exports = ZRTextureAtlasSurface;
             var rawDataIndex = data.getRawIndex(dataIndex);
             var name = data.getName(dataIndex, true);
             var itemOpt = data.getRawDataItem(dataIndex);
+            var color = data.getItemVisual(dataIndex, 'color');
 
             return {
                 componentType: this.mainType,
@@ -23596,7 +23611,8 @@ module.exports = ZRTextureAtlasSurface;
                 data: itemOpt,
                 dataType: dataType,
                 value: rawValue,
-                color: data.getItemVisual(dataIndex, 'color'),
+                color: color,
+                marker: formatUtil.getTooltipMarker(color),
 
                 // Param name list for mapping `a`, `b`, `c`, `d`, `e`
                 $vars: ['seriesName', 'name', 'value']
@@ -31151,7 +31167,7 @@ echarts.registerLayout(function (ecModel, api) {
 /* 120 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.trail2.vertex\nattribute vec3 position: POSITION;\nattribute vec3 positionPrev;\nattribute vec3 positionNext;\nattribute float offset;\nattribute float dist;\nattribute float distAll;\nattribute float start;\n\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\nuniform float near : NEAR;\n\nuniform float speed : 0;\nuniform float trailLength: 0.3;\nuniform float time;\nuniform float period: 1000;\n\nvarying vec4 v_Color;\nvarying float v_Percent;\n\n@import ecgl.common.wireframe.vertexHeader\n\n@import ecgl.lines3D.clipNear\n\nvoid main()\n{\n    @import ecgl.lines3D.expandLine\n\n    gl_Position = currProj;\n\n    v_Color = a_Color;\n\n    @import ecgl.common.wireframe.vertexMain\n\n#ifdef CONSTANT_SPEED\n    float t = mod((speed * time + start) / distAll, 1. + trailLength) - trailLength;\n#else\n    float t = mod((time + start) / period, 1. + trailLength) - trailLength;\n#endif\n\n    float trailLen = distAll * trailLength;\n\n    v_Percent = (dist - t * distAll) / trailLen;\n\n                }\n@end\n\n\n@export ecgl.trail2.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\nvarying float v_Percent;\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\nif (v_Percent > 1.0 || v_Percent < 0.0) {\n    discard;\n}\n\n    float fade = v_Percent;\n            if (v_Percent > 0.9) {\n        fade *= 2.0;\n    }\n\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color * v_Color);\n#else\n    gl_FragColor = color * v_Color;\n#endif\n\n    @import ecgl.common.wireframe.fragmentMain\n\n    gl_FragColor.a *= fade;\n}\n\n@end";
+module.exports = "@export ecgl.trail2.vertex\nattribute vec3 position: POSITION;\nattribute vec3 positionPrev;\nattribute vec3 positionNext;\nattribute float offset;\nattribute float dist;\nattribute float distAll;\nattribute float start;\n\nattribute vec4 a_Color : COLOR;\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform vec4 viewport : VIEWPORT;\nuniform float near : NEAR;\n\nuniform float speed : 0;\nuniform float trailLength: 0.3;\nuniform float time;\nuniform float period: 1000;\n\nvarying vec4 v_Color;\nvarying float v_Percent;\n\n@import ecgl.common.wireframe.vertexHeader\n\n@import ecgl.lines3D.clipNear\n\nvoid main()\n{\n    @import ecgl.lines3D.expandLine\n\n    gl_Position = currProj;\n\n    v_Color = a_Color;\n\n    @import ecgl.common.wireframe.vertexMain\n\n#ifdef CONSTANT_SPEED\n    float t = mod((speed * time + start) / distAll, 1. + trailLength) - trailLength;\n#else\n    float t = mod((time + start) / period, 1. + trailLength) - trailLength;\n#endif\n\n    float trailLen = distAll * trailLength;\n\n    v_Percent = (dist - t * distAll) / trailLen;\n\n                }\n@end\n\n\n@export ecgl.trail2.fragment\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nvarying vec4 v_Color;\nvarying float v_Percent;\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\nif (v_Percent > 1.0 || v_Percent < 0.0) {\n    discard;\n}\n\n    float fade = v_Percent;\n            if (v_Percent > 0.9) {\n        fade *= 4.0;\n    }\n\n#ifdef SRGB_DECODE\n    gl_FragColor = sRGBToLinear(color * v_Color);\n#else\n    gl_FragColor = color * v_Color;\n#endif\n\n    @import ecgl.common.wireframe.fragmentMain\n\n    gl_FragColor.a *= fade;\n}\n\n@end";
 
 
 /***/ }),
@@ -40621,7 +40637,7 @@ module.exports = SunCalc;
                 var otherNode = e.node1 === currentNode
                     ? e.node2 : e.node1;
                 if (!otherNode.__visited) {
-                    if (cb.call(otherNode, otherNode, currentNode)) {
+                    if (cb.call(context, otherNode, currentNode)) {
                         // Stop traversing
                         return;
                     }
