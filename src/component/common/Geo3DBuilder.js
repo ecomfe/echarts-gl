@@ -87,7 +87,7 @@ Geo3DBuilder.prototype = {
 
 
         if (enableInstancing) {
-            this._updateInstancingMesh(componentModel, shader, api);
+            this._prepareInstancingMesh(componentModel, shader, api);
         }
         this._updateRegionMesh(componentModel, shader, api, enableInstancing);
 
@@ -112,7 +112,7 @@ Geo3DBuilder.prototype = {
         this._updateDebugWireframe(componentModel);
     },
 
-    _updateInstancingMesh: function (componentModel, shader, api) {
+    _prepareInstancingMesh: function (componentModel, shader, api) {
         var geo3D = componentModel.coordinateSystem;
 
         var vertexCount = 0;
@@ -225,22 +225,33 @@ Geo3DBuilder.prototype = {
                 });
             }
 
-            // Move regions to center so they can be sorted right when material is transparent.
             if (!instancing) {
+                // Move regions to center so they can be sorted right when material is transparent.
                 this._moveRegionToCenter(polygonMesh, linesMesh, hasLine);
                 // Bind events.
                 polygonMesh.dataIndex = dataIndex;
                 polygonMesh.seriesIndex = componentModel.seriesIndex;
                 polygonMesh.on('mouseover', this._onmouseover, this);
                 polygonMesh.on('mouseout', this._onmouseout, this);
+
+                // Update tangents
+                if (polygonMesh.material.get('normalMap')) {
+                    polygonMesh.geometry.generateTangents();
+                }
             }
 
         }, this);
 
         if (instancing) {
-            this._polygonMesh.material.transparent = hasTranparentRegion;
-            this._polygonMesh.material.depthMask = !hasTranparentRegion;
-            this._polygonMesh.geometry.updateBoundingBox();
+            var polygonMesh = this._polygonMesh;
+            polygonMesh.material.transparent = hasTranparentRegion;
+            polygonMesh.material.depthMask = !hasTranparentRegion;
+            polygonMesh.geometry.updateBoundingBox();
+
+            // Update tangents
+            if (polygonMesh.material.get('normalMap')) {
+                polygonMesh.geometry.generateTangents();
+            }
         }
     },
 
@@ -306,6 +317,9 @@ Geo3DBuilder.prototype = {
         }
 
         graphicGL.setMaterialFromModel(shading, material, componentModel, api);
+        if (material.get('normalMap')) {
+            this._groundMesh.geometry.generateTangents();
+        }
 
         this._groundMesh.material = material;
         this._groundMesh.material.set('color', graphicGL.parseColor(groundModel.get('color')));
