@@ -429,6 +429,9 @@ echarts.extendChartView({
                 normalAttr.value = null;
             }
         }
+        if (surfaceMesh.material.get('normalMap')) {
+            geometry.generateTangents();
+        }
 
 
         geometry.updateBoundingBox();

@@ -96,9 +96,10 @@ Material.prototype.setTextureImage = function (textureName, imgValue, api, textu
     if (!isValueNone(imgValue)) {
         texture = graphicGL.loadTexture(imgValue, api, textureOpts, function (texture) {
             material.shader.enableTexture(textureName);
-            material.set(textureName, texture);
             zr && zr.refresh();
         });
+        // Set texture immediately for other code to verify if have this texture.
+        material.set(textureName, texture);
     }
 
     return texture;
@@ -313,6 +314,7 @@ graphicGL.createAmbientCubemap = function (opt, renderer, api, cb) {
     ambientCubemap.cubemap = graphicGL.loadTexture(textureUrl, api, {
         exposure: exposure
     }, function () {
+        // TODO Performance when multiple view
         ambientCubemap.cubemap.flipY = false;
         ambientCubemap.prefilter(renderer, 32);
         ambientSH.coefficients = shUtil.projectEnvironmentMap(renderer, ambientCubemap.cubemap, {
@@ -464,24 +466,27 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     };
     if (shading === 'realistic') {
         var roughness = retrieve.firstNotNull(materialModel.get('roughness'), 0.5);
-        var metalness = materialModel.get('metalness') || 0;
-        var roughnessTexture = materialModel.get('roughnessTexture');
-        var metalnessTexture = materialModel.get('metalnessTexture');
-        if (metalness == null) {
-            if (metalnessTexture == null) {
-                metalness = 0.0;
-            }
-            else {
-                metalness = 0.5;
+        var metalness = materialModel.get('metalness');
+        var metalnesTexture;
+        var rougness = materialModel.get('rougness');
+        var roughnessTexture;
+        if (metalness != null) {
+            // Try to treat as a texture, TODO More check
+            if (isNaN(metalness)) {
+                material.setTextureImage('metalnessMap', metalness, api, textureOpt);
+                metalness = retrieve.firstNotNull(materialModel.get('metalnessTint'), 0.5);
             }
         }
-        if (roughness == null) {
-            roughness = 0.5;
+        if (roughness != null) {
+            // Try to treat as a texture, TODO More check
+            if (isNaN(roughness)) {
+                material.setTextureImage('roughnessMap', roughness, api, textureOpt);
+                roughness = retrieve.firstNotNull(materialModel.get('roughnessTint'), 0.5);
+            }
         }
-
+        var normalTexture = materialModel.get('normalTexture');
         material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
-        material.setTextureImage('roughnessMap', roughnessTexture, api, textureOpt);
-        material.setTextureImage('metalnessMap', metalnessTexture, api, textureOpt);
+        material.setTextureImage('normalMap', normalTexture, api, textureOpt);
         material.set({
             roughness: roughness,
             metalness: metalness,

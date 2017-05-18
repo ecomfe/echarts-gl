@@ -14,7 +14,15 @@ attribute vec4 a_Color : COLOR;
 varying vec4 v_Color;
 #endif
 
+#ifdef NORMALMAP_ENABLED
+attribute vec4 tangent : TANGENT;
+varying vec3 v_Tangent;
+varying vec3 v_Bitangent;
+#endif
+
 @import ecgl.common.vertexAnimation.header
+
+
 
 varying vec2 v_Texcoord;
 
@@ -36,6 +44,11 @@ void main()
     v_Color = a_Color;
 #endif
 
+#ifdef NORMALMAP_ENABLED
+    v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);
+    v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);
+#endif
+
     @import ecgl.common.wireframe.vertexMain
 
 }
@@ -49,6 +62,9 @@ void main()
 #define LAYER_DIFFUSEMAP_COUNT 0
 #define LAYER_EMISSIVEMAP_COUNT 0
 #define PI 3.14159265358979
+#define ROUGHNESS_CHANEL 0
+#define METALNESS_CHANEL 1
+
 
 #ifdef VERTEX_COLOR
 varying vec4 v_Color;
@@ -60,6 +76,14 @@ varying vec3 v_WorldPosition;
 
 #ifdef DIFFUSEMAP_ENABLED
 uniform sampler2D diffuseMap;
+#endif
+
+#ifdef METALNESSMAP_ENABLED
+uniform sampler2D metalnessMap;
+#endif
+
+#ifdef ROUGHNESSMAP_ENABLED
+uniform sampler2D roughnessMap;
 #endif
 
 @import ecgl.common.layers.header
@@ -87,6 +111,12 @@ uniform mat4 viewInverse : VIEWINVERSE;
 
 #ifdef DIRECTIONAL_LIGHT_COUNT
 @import qtek.header.directional_light
+#endif
+
+#ifdef NORMALMAP_ENABLED
+varying vec3 v_Tangent;
+varying vec3 v_Bitangent;
+uniform sampler2D normalMap;
 #endif
 
 @import ecgl.common.ssaoMap.header
@@ -139,11 +169,25 @@ void main()
 
     albedoColor *= albedoTexel;
 
+    float m = metalness;
+
+#ifdef METALNESSMAP_ENABLED
+    float m2 = texture2D(metalnessMap, v_Texcoord)[METALNESS_CHANEL];
+    // Adjust the brightness
+    m = clamp(m2 + (m - 0.5) * 2.0, 0.0, 1.0);
+#endif
+
     vec3 baseColor = albedoColor.rgb;
-    albedoColor.rgb = baseColor * (1.0 - metalness);
-    vec3 specFactor = mix(vec3(0.04), baseColor, metalness);
+    albedoColor.rgb = baseColor * (1.0 - m);
+    vec3 specFactor = mix(vec3(0.04), baseColor, m);
 
     float g = 1.0 - roughness;
+
+#ifdef ROUGHNESSMAP_ENABLED
+    float g2 = 1.0 - texture2D(roughnessMap, v_Texcoord)[ROUGHNESS_CHANEL];
+    // Adjust the brightness
+    g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);
+#endif
 
     vec3 N = v_Normal;
 
@@ -159,6 +203,18 @@ void main()
     N = bumpNormal(v_WorldPosition, v_Normal, N);
     // PENDING
     ambientFactor = dot(v_Normal, N);
+#endif
+
+#ifdef NORMALMAP_ENABLED
+    if (dot(v_Tangent, v_Tangent) > 0.0) {
+        vec3 normalTexel = texture2D(normalMap, v_Texcoord).xyz;
+        if (dot(normalTexel, normalTexel) > 0.0) { // Valid normal map
+            N = normalTexel * 2.0 - 1.0;
+            mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);
+            // FIXME Why need to normalize again?
+            N = normalize(tbn * N);
+        }
+    }
 #endif
 
     vec3 diffuseTerm = vec3(0.0);
