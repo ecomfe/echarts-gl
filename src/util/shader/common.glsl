@@ -254,8 +254,10 @@ uniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];
 #if (LAYER_EMISSIVEMAP_COUNT > 0)
     for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)
     {{
-        // PENDING sRGB ?
         vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];
+        #ifdef SRGB_DECODE
+        texel2 = sRGBToLinear(texel2);
+        #endif
         float intensity = layerEmissionIntensity[_idx_];
         gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;
     }}

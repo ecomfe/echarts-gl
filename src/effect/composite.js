@@ -636,6 +636,7 @@ module.exports = {
                 'texture': 'source',
                 'bloom' : 'bloom_composite'
             },
+            // PENDING
             'defines': {
                 'PREMULTIPLY_ALPHA': null
             }
