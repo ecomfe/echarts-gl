@@ -37,8 +37,12 @@ void main()
 
 @export ecgl.normal.fragment
 
+#define ROUGHNESS_CHANEL 0
+
 uniform bool useBumpMap;
+uniform bool useRoughnessMap;
 uniform bool doubleSide;
+uniform float roughness;
 
 varying vec2 v_Texcoord;
 varying vec3 v_Normal;
@@ -49,6 +53,8 @@ uniform mat4 viewInverse : VIEWINVERSE;
 @import ecgl.common.normalMap.fragmentHeader
 @import ecgl.common.bumpMap.header
 
+uniform sampler2D roughnessMap;
+
 void main()
 {
     vec3 N = v_Normal;
@@ -57,6 +63,14 @@ void main()
 
     if (useBumpMap) {
         N = bumpNormal(v_WorldPosition, v_Normal, N);
+    }
+
+    float g = 1.0 - roughness;
+
+    if (useRoughnessMap) {
+        float g2 = 1.0 - texture2D(roughnessMap, v_Texcoord)[ROUGHNESS_CHANEL];
+        // Adjust the brightness
+        g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);
     }
 
     if (doubleSide) {
@@ -69,6 +83,6 @@ void main()
     }
 
     gl_FragColor.rgb = (N.xyz + 1.0) * 0.5;
-    gl_FragColor.a = 1.0;
+    gl_FragColor.a = g;
 }
 @end

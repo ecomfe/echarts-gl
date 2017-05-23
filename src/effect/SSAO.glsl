@@ -67,7 +67,7 @@ void main()
 #ifdef NORMALTEX_ENABLED
     vec4 tex = texture2D(normalTex, v_Texcoord);
     // Is empty
-    if (tex.a == 0.0) {
+    if (dot(tex.rgb, tex.rgb) == 0.0) {
         gl_FragColor = vec4(1.0);
         return;
     }
