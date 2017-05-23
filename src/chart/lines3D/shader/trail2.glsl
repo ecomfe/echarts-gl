@@ -77,7 +77,7 @@ if (v_Percent > 1.0 || v_Percent < 0.0) {
     // Spot part
     // PENDING
     if (v_Percent > 0.9) {
-        fade *= 4.0;
+        fade *= (7.0 * (v_Percent - 0.9) / 0.1 + 1.0);
     }
 
 #ifdef SRGB_DECODE
