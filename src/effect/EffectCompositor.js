@@ -5,6 +5,7 @@ var Texture = require('qtek/lib/Texture');
 var FrameBuffer = require('qtek/lib/FrameBuffer');
 var FXLoader = require('qtek/lib/loader/FX');
 var SSAOPass = require('./SSAOPass');
+var SSRPass = require('./SSRPass');
 var poissonKernel = require('./poissonKernel');
 var graphicGL = require('../util/graphicGL');
 var NormalPass = require('./NormalPass');
@@ -74,11 +75,6 @@ function EffectCompositor() {
     // FIXME FIXME depthTexture in normalPass have glitches WHEN edge is enabled
     this._edgeNode.setParameter('depthTexture', this._depthTexture);
 
-    this._ssaoPass = new SSAOPass({
-        normalTexture: this._normalPass.getNormalTexture(),
-        depthTexture: this._normalPass.getDepthTexture()
-    });
-
     this._dofBlurNodes = ['dof_far_blur', 'dof_near_blur', 'dof_coc_blur'].map(function (name) {
         return this._compositor.getNodeByName(name);
     }, this);
@@ -89,6 +85,13 @@ function EffectCompositor() {
     this._finalNodesChain = FINAL_NODES_CHAIN.map(function (name) {
         return this._compositor.getNodeByName(name);
     }, this);
+
+    var gBufferObj = {
+        normalTexture: this._normalPass.getNormalTexture(),
+        depthTexture: this._normalPass.getDepthTexture()
+    };
+    this._ssaoPass = new SSAOPass(gBufferObj);
+    this._ssrPass = new SSRPass(gBufferObj)
 }
 
 EffectCompositor.prototype.resize = function (width, height, dpr) {
@@ -396,6 +399,9 @@ EffectCompositor.prototype.setColorCorrection = function (type, value) {
 };
 
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
+
+    this._ssrPass.update(renderer, camera, this._sourceTexture, frame);
+    this._sourceNode.texture = this._ssrPass.getTargetTexture();
 
     this._cocNode.setParameter('depth', this._depthTexture);
 
