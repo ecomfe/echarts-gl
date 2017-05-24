@@ -41,7 +41,7 @@ function Geo3DBuilder(api) {
     this._groundMaterials = groundMaterials;
 
     this._groundMesh = new graphicGL.Mesh({
-        geometry: new graphicGL.PlaneGeometry(),
+        geometry: new graphicGL.PlaneGeometry({ dynamic: true }),
         castShadow: false,
         renderNormal: true,
         $ignorePicking: true
@@ -101,7 +101,7 @@ Geo3DBuilder.prototype = {
             var region = geo3D.getRegion(name);
             var center = region.center;
 
-            var height = itemModel.get('height') + distance;
+            var height = distance;
             return geo3D.dataToPoint([center[0], center[1], height]);
         };
 
