@@ -294,9 +294,9 @@ void main()
     gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;
     gl_FragColor.a = albedoColor.a;
 
-    #ifdef SRGB_ENCODE
+#ifdef SRGB_ENCODE
     gl_FragColor = linearTosRGB(gl_FragColor);
-    #endif
+#endif
 
     @import ecgl.common.emissiveLayer.main
 

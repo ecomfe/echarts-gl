@@ -12,7 +12,7 @@ uniform mat4 projection;
 uniform mat4 projectionInv;
 uniform mat4 viewInverseTranspose;
 
-uniform float maxRayDistance: 20;
+uniform float maxRayDistance: 50;
 
 uniform float pixelStride: 16;
 uniform float pixelStrideZCutoff: 50; // ray origin Z at this distance will have a pixel stride of 1.0
