@@ -50,26 +50,6 @@ module.exports = {
                 'textureSize': 'expr([width * 1.0 / 2, height / 2])'
             }
         },
-        {
-            'name' : 'bright2',
-            'shader' : '#source(qtek.compositor.bright)',
-            'inputs' : {
-                'texture': 'source_half'
-            },
-            'outputs' : {
-                'color' : {
-                    'parameters' : {
-                        'width' : 'expr(width * 1.0 / 2)',
-                        'height' : 'expr(height * 1.0 / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters' : {
-                'threshold': 20,
-                'scale': 0.01
-            }
-        },
 
         {
             'name': 'bright_downsample_4',
@@ -460,7 +440,7 @@ module.exports = {
 
         {
             'name': 'coc',
-            'shader': '#source(qtek.compositor.dof.coc)',
+            'shader': '#source(ecgl.dof.coc)',
             'outputs': {
                 'color': {
                     'parameters': {
@@ -548,7 +528,7 @@ module.exports = {
 
         {
             'name': 'dof_composite',
-            'shader': '#source(qtek.compositor.dof.composite)',
+            'shader': '#source(ecgl.dof.composite)',
             'inputs': {
                 'original': 'source',
                 'blurred': 'dof_far_blur',
@@ -564,69 +544,6 @@ module.exports = {
                         'type': 'HALF_FLOAT'
                     }
                 }
-            }
-        },
-
-        {
-            'name' : 'lensflare',
-            'shader' : '#source(qtek.compositor.lensflare)',
-            'inputs' : {
-                'texture' : 'bright2'
-            },
-            'outputs' : {
-                'color' : {
-                    'parameters' : {
-                        'width' : 'expr(width * 1.0 / 2)',
-                        'height' : 'expr(height * 1.0 / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters' : {
-                'textureSize' : 'expr([width * 1.0 / 2, height * 1.0 / 2])',
-                'lensColor' : '#lenscolor'
-            }
-        },
-        {
-            'name' : 'lensflare_blur_h',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
-            'inputs' : {
-                'texture' : 'lensflare'
-            },
-            'outputs' : {
-                'color' : {
-                    'parameters' : {
-                        'width' : 'expr(width * 1.0 / 2)',
-                        'height' : 'expr(height * 1.0 / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters' : {
-                'blurSize' : 1,
-                'blurDir': 0.0,
-                'textureSize' : 'expr([width * 1.0 / 2, height * 1.0 / 2])'
-            }
-        },
-        {
-            'name' : 'lensflare_blur_v',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
-            'inputs' : {
-                'texture' : 'lensflare_blur_h'
-            },
-            'outputs' : {
-                'color' : {
-                    'parameters' : {
-                        'width' : 'expr(width * 1.0 / 2)',
-                        'height' : 'expr(height * 1.0 / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters' : {
-                'blurSize' : 1,
-                'blurDir': 1.0,
-                'textureSize' : 'expr([width * 1.0 / 2, height * 1.0 / 2])'
             }
         },
         {

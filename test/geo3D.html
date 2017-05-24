@@ -56,7 +56,7 @@
 
                         postEffect: {
                             enable: true,
-                            SSAO: {
+                            screenSpaceAmbientOcculusion: {
                                 enable: true,
                                 radius: 3
                             }
@@ -80,6 +80,13 @@
                                 diffuseIntensity: 0.3
                             }
                         },
+
+                        debug: {
+                            wireframe: {
+                                show: true
+                            }
+                        },
+
                         viewControl: {
                             distance: 50
                         },
@@ -95,7 +102,6 @@
                     },
                     series: []
                 });
-
             });
             window.addEventListener('resize', function () {
                 chart.resize();

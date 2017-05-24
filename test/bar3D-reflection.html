@@ -13,6 +13,7 @@
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script src="lib/simplex.js"></script>
+        <script src="lib/dat.gui.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'), null, {
                 devicePixelRatio: 1
@@ -23,8 +24,8 @@
             var yData = [];
             function generateData(theta, min, max) {
                 var data = [];
-                for (var i = 0; i <= 20; i++) {
-                    for (var j = 0; j <= 20; j++) {
+                for (var i = 0; i <= 30; i++) {
+                    for (var j = 0; j <= 30; j++) {
                         var value = noise.noise2D(i / 20, j / 20);
                         valMax = Math.max(valMax, value);
                         valMin = Math.min(valMin, value);
@@ -36,13 +37,9 @@
             var valMin = Infinity;
             var valMax = -Infinity;
             var data = generateData(2, -5, 5);
+            console.log(valMin, valMax);
 
             chart.setOption({
-                toolbox: {
-                    feature: {
-                        saveAsImage: {}
-                    }
-                },
                 visualMap: {
                     show: false,
                     min: 2,
@@ -69,19 +66,25 @@
                         screenSpaceAmbientOcculusion: {
                             enable: true,
                             radius: 2,
-                            intensity: 2.0,
+                            intensity: 1.0,
                             quality: 'medium'
                         },
-                        edge: {
+                        screenSpaceReflection: {
                             enable: true
+                        },
+                        depthOfField: {
+                            // enable: true
                         }
                     },
                     axisLine: {
+                        lineStyle: { color: '#fff' }
                     },
                     axisPointer: {
+                        lineStyle: { color: '#fff' }
                     },
                     viewControl: {
-                        // autoRotate: true
+                        distance: 100,
+                        alpha: 20
                     },
                     light: {
                         main: {
@@ -92,7 +95,7 @@
                             intensity: 0
                         },
                         ambientCubemap: {
-                            texture: 'asset/canyon.hdr',
+                            texture: 'asset/pisa.hdr',
                             exposure: 2,
                             diffuseIntensity: 1
                         }
@@ -101,12 +104,35 @@
                 series: [{
                     type: 'bar3D',
                     data: data,
-                    shading: 'lambert',
-                    silent: true
+                    shading: 'realistic',
+                    silent: true,
+                    bevelSize: 0.4,
+                    barSize: 2,
+                    realisticMaterial: {
+                        roughness: .2,
+                        metalness: 1
+                    },
+                    itemStyle: {
+                        color: '#fff'
+                    }
                 }]
             });
 
             window.onresize = chart.resize;
+
+            var config = {
+                roughness: 0.2
+            }
+            var gui = new dat.GUI();
+            gui.add(config, 'roughness', 0, 1).onChange(function () {
+                chart.setOption({
+                    series: [{
+                        realisticMaterial: {
+                            roughness: config.roughness
+                        }
+                    }]
+                });
+            });
         </script>
     </body>
 </html>

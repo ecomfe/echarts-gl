@@ -339,12 +339,14 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     this._enablePostEffect = postEffectModel.get('enable');
     var bloomModel = postEffectModel.getModel('bloom');
     var edgeModel = postEffectModel.getModel('edge');
-    var dofModel = postEffectModel.getModel('depthOfField');
-    var ssaoModel = postEffectModel.getModel('SSAO');
+    var dofModel = postEffectModel.getModel('DOF', postEffectModel.getModel('depthOfField'));
+    var ssaoModel = postEffectModel.getModel('SSAO', postEffectModel.getModel('screenSpaceAmbientOcculusion'));
+    var ssrModel = postEffectModel.getModel('SSR', postEffectModel.getModel('screenSpaceReflection'));
     var fxaaModel = postEffectModel.getModel('FXAA');
     var colorCorrModel = postEffectModel.getModel('colorCorrection');
     bloomModel.get('enable') ? compositor.enableBloom() : compositor.disableBloom();
     dofModel.get('enable') ? compositor.enableDOF() : compositor.disableDOF();
+    ssrModel.get('enable') ? compositor.enableSSR() : compositor.disableSSR();
     colorCorrModel.get('enable') ? compositor.enableColorCorrection() : compositor.disableColorCorrection();
     edgeModel.get('enable') ? compositor.enableEdge() : compositor.disableEdge();
     fxaaModel.get('enable') ? compositor.enableFXAA() : compositor.disableFXAA();
@@ -355,23 +357,20 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     this._enableSSAO ? compositor.enableSSAO() : compositor.disableSSAO();
 
     compositor.setBloomIntensity(bloomModel.get('intensity'));
-    compositor.setSSAORadius(ssaoModel.get('radius'));
-    compositor.setSSAOQuality(ssaoModel.get('quality'));
-    compositor.setSSAOIntensity(ssaoModel.get('intensity'));
-
-    compositor.setDOFBlurQuality(dofModel.get('quality'));
-    compositor.setDOFFocalDistance(dofModel.get('focalDistance'));
-    compositor.setDOFFocalRange(dofModel.get('focalRange'));
-    compositor.setDOFBlurSize(dofModel.get('blurRadius'));
-    compositor.setDOFFStop(dofModel.get('fstop'));
-
     compositor.setEdgeColor(edgeModel.get('color'));
-
     compositor.setColorLookupTexture(colorCorrModel.get('lookupTexture'), api);
     compositor.setExposure(colorCorrModel.get('exposure'));
+
+    ['radius', 'quality', 'intensity'].forEach(function (name) {
+        compositor.setSSAOParameter(name, ssaoModel.get(name));
+    });
+    ['quality', 'focalDistance', 'focalRange', 'blurRadius', 'fstop'].forEach(function (name) {
+        compositor.setDOFParameter(name, dofModel.get(name));
+    });
     ['brightness', 'contrast', 'saturation'].forEach(function (name) {
         compositor.setColorCorrection(name, colorCorrModel.get(name));
     });
+    
 };
 
 ViewGL.prototype.setDOFFocusOnPoint = function (depth) {

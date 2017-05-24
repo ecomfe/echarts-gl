@@ -17,12 +17,16 @@ module.exports = {
                 quality: 'medium'
             },
 
-            SSAO: {
+            screenSpaceAmbientOcculusion: {
                 enable: false,
                 radius: 2,
                 // low, medium, high, ultra
                 quality: 'medium',
                 intensity: 1
+            },
+
+            screenSpaceReflection: {
+                enable: false
             },
 
             colorCorrection: {

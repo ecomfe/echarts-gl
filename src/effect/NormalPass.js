@@ -74,10 +74,10 @@ function getBeforeRenderHook1 (gl, defaultNormalMap, normalMaterial) {
             if (previousNormalMap !== normalMap) {
                 attachTextureToSlot(gl, normalMaterial.shader, 'normalMap', normalMap, 0);
             }
-            if (previousBumpMap !== bumpMap) {
+            if (previousBumpMap !== bumpMap && bumpMap) {
                 attachTextureToSlot(gl, normalMaterial.shader, 'bumpMap', bumpMap, 1);
             }
-            if (previousRoughnessMap !== roughnessMap) {
+            if (previousRoughnessMap !== roughnessMap && roughnessMap) {
                 attachTextureToSlot(gl, normalMaterial.shader, 'roughnessMap', roughnessMap, 2);
             }
             if (uvRepeat != null) {

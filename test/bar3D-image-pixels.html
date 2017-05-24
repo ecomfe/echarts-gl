@@ -47,11 +47,15 @@
                     },
                     postEffect: {
                         enable: true,
-                        depthOfField: {
+                        screenSpaceAmbientOcculusion: {
                             enable: true,
-                            blurRadius: 4,
-                            fstop: 10
+                            intensity: 0
                         }
+                        // depthOfField: {
+                        //     enable: true,
+                        //     blurRadius: 4,
+                        //     fstop: 10
+                        // }
                     },
                     boxDepth: 100,
                     boxHeight: 20,
@@ -94,7 +98,10 @@
                 chart.setOption({
                     series: [{
                         type: 'bar3D',
-                        shading: 'lambert',
+                        shading: 'realistic',
+                        realisticMaterial: {
+                            roughness: 0.4
+                        },
                         barSize: 0.8,
                         silent: true,
                         itemStyle: {

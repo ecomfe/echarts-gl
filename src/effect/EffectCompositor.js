@@ -20,8 +20,6 @@ Shader['import'](require('qtek/lib/shader/source/compositor/bright.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/downsample.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/upsample.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/hdr.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/dof.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/lensflare.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/blend.essl'));
 Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
 Shader['import'](require('./DOF.glsl.js'));
@@ -108,7 +106,7 @@ EffectCompositor.prototype.resize = function (width, height, dpr) {
 };
 
 EffectCompositor.prototype._ifRenderNormalPass = function () {
-    return this._enableSSAO || this._enableEdge;
+    return this._enableSSAO || this._enableEdge || this._enableSSR;
 };
 
 EffectCompositor.prototype._getPrevNode = function (node) {
@@ -191,6 +189,19 @@ EffectCompositor.prototype.enableSSAO = function () {
  */
 EffectCompositor.prototype.disableSSAO = function () {
     this._enableSSAO = false;
+};
+
+/**
+ * Enable SSR effect
+ */
+EffectCompositor.prototype.enableSSR = function () {
+    this._enableSSR = true;
+};
+/**
+ * Disable SSR effect
+ */
+EffectCompositor.prototype.disableSSR = function () {
+    this._enableSSR = false;
 };
 
 /**
@@ -294,85 +305,56 @@ EffectCompositor.prototype.setBloomIntensity = function (value) {
     this._compositeNode.setParameter('bloomIntensity', value);
 };
 
-/**
- * Set SSAO sample radius
- * @param {number} value
- */
-EffectCompositor.prototype.setSSAORadius = function (value) {
-    this._ssaoPass.setParameter('radius', value);
-};
-/**
- * Set SSAO intensity
- * @param {number} value
- */
-EffectCompositor.prototype.setSSAOIntensity = function (value) {
-    this._ssaoPass.setParameter('intensity', value);
-};
-
-/**
- * Set SSAO quality
- * @param {string} value
- */
-EffectCompositor.prototype.setSSAOQuality = function (value) {
-    // PENDING
-    var kernelSize = ({
-        low: 6,
-        medium: 12,
-        high: 32,
-        ultra: 62
-    })[value] || 16;
-    this._ssaoPass.setParameter('kernelSize', kernelSize);
-};
-
-/**
- * Set depth of field focal distance
- * @param {number} focalDist
- */
-EffectCompositor.prototype.setDOFFocalDistance = function (focalDist) {
-    this._cocNode.setParameter('focalDist', focalDist);
-};
-
-/**
- * Set depth of field focal range
- * @param {number} focalRange
- */
-EffectCompositor.prototype.setDOFFocalRange = function (focalRange) {
-    this._cocNode.setParameter('focalRange', focalRange);
-};
-/**
- * Set depth of field fstop
- * @param {number} focalRange
- */
-EffectCompositor.prototype.setDOFFStop = function (fstop) {
-    this._cocNode.setParameter('fstop', fstop);
-};
-
-/**
- * Set depth of field max blur size
- * @param {number} focalRange
- */
-EffectCompositor.prototype.setDOFBlurSize = function (blurSize) {
-    for (var i = 0; i < this._dofBlurNodes.length; i++) {
-        this._dofBlurNodes[i].setParameter('blurSize', blurSize);
+EffectCompositor.prototype.setSSAOParameter = function (name, value) {
+    switch (name) {
+        case 'quality':
+            // PENDING
+            var kernelSize = ({
+                low: 6,
+                medium: 12,
+                high: 32,
+                ultra: 62
+            })[value] || 16;
+            this._ssaoPass.setParameter('kernelSize', kernelSize);
+            break;
+        case 'radius':
+        case 'intensity':
+            this._ssaoPass.setParameter('radius', value);
+            break;
+        default:
+            if (__DEV__) {
+                console.warn('Unkown SSAO parameter ' + name);
+            }
     }
 };
 
-/**
- * Set depth of field blur quality
- * @param {string} quality
- */
-EffectCompositor.prototype.setDOFBlurQuality = function (quality) {
-    var kernelSize = ({
-        low: 4, medium: 8, high: 16, ultra: 32
-    })[quality] || 8;
-
-    this._dofBlurKernelSize = kernelSize;
-
-    for (var i = 0; i < this._dofBlurNodes.length; i++) {
-        this._dofBlurNodes[i].shaderDefine('POISSON_KERNEL_SIZE', kernelSize);
+EffectCompositor.prototype.setDOFParameter = function (name, value) {
+    switch (name) {
+        case 'focalDistance':
+        case 'focalRange':
+        case 'fstop':
+            this._cocNode.setParameter(name, value);
+            break;
+        case 'blurRadius':
+            for (var i = 0; i < this._dofBlurNodes.length; i++) {
+                this._dofBlurNodes[i].setParameter('blurRadius', value);
+            }
+            break;
+        case 'quality':
+            var kernelSize = ({
+                low: 4, medium: 8, high: 16, ultra: 32
+            })[value] || 8;
+            this._dofBlurKernelSize = kernelSize;
+            for (var i = 0; i < this._dofBlurNodes.length; i++) {
+                this._dofBlurNodes[i].shaderDefine('POISSON_KERNEL_SIZE', kernelSize);
+            }
+            this._dofBlurKernel = new Float32Array(kernelSize * 2);
+            break;
+        default:
+            if (__DEV__) {
+                console.warn('Unkown DOF parameter ' + name);
+            }
     }
-
-    this._dofBlurKernel = new Float32Array(kernelSize * 2);
 };
 
 /**
@@ -400,8 +382,13 @@ EffectCompositor.prototype.setColorCorrection = function (type, value) {
 
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
 
-    this._ssrPass.update(renderer, camera, this._sourceTexture, frame);
-    this._sourceNode.texture = this._ssrPass.getTargetTexture();
+    if (this._enableSSR) {
+        this._ssrPass.update(renderer, camera, this._sourceTexture, frame);
+        this._sourceNode.texture = this._ssrPass.getTargetTexture();
+    }
+    else {
+        this._sourceNode.texture = this._sourceTexture;
+    }
 
     this._cocNode.setParameter('depth', this._depthTexture);
 
