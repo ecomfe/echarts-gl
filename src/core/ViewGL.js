@@ -380,7 +380,7 @@ ViewGL.prototype.setDOFFocusOnPoint = function (depth) {
             return;
         }
 
-        this._compositor.setDOFFocalDistance(depth);
+        this._compositor.setDOFParameter('focalDistance', depth);
         return true;
     }
 };
