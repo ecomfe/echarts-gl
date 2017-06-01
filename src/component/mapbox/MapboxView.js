@@ -22,7 +22,8 @@ module.exports = echarts.extendComponentView({
         var mapbox = this._zrLayer.getMapbox();
         var dispatchInteractAction = this._dispatchInteractAction.bind(this, api, mapbox);
 
-        ['zoom', 'rotate', 'drag', 'pitch'].forEach(function (eName) {
+        // PENDING
+        ['zoom', 'rotate', 'drag', 'pitch', 'rotate', 'move'].forEach(function (eName) {
             mapbox.on(eName, dispatchInteractAction);
         });
     },
