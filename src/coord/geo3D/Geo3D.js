@@ -21,9 +21,9 @@ function Geo3D(name, map, geoJson, specialAreas, nameMap) {
 
     this.loadGeoJson(geoJson, specialAreas, nameMap);
 
-    this.transform = mat4.create();
+    this.transform = new Float64Array(16);
 
-    this.invTransform = mat4.create();
+    this.invTransform = new Float64Array(16);
 }
 
 Geo3D.prototype = {

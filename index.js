@@ -3,6 +3,7 @@ require('./src/echarts-gl');
 require('./src/component/grid3D');
 require('./src/component/geo3D');
 require('./src/component/globe');
+require('./src/component/mapbox');
 
 require('./src/chart/bar3D');
 require('./src/chart/line3D');

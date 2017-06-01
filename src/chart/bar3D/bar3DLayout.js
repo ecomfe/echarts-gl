@@ -3,6 +3,8 @@ var Vector3 = require('qtek/lib/math/Vector3');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 var cartesian3DLayout = require('./cartesian3DLayout');
 
+var TILE_SIZE = 512;
+
 function globeLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var extent = data.getDataExtent('z', true);
@@ -60,6 +62,42 @@ function geo3DLayout(seriesModel, coordSys) {
     data.setLayout('orient', [1, 0, 0]);
 }
 
+function mapboxLayout(seriesModel, coordSys) {
+    var data = seriesModel.getData();
+    var zExtent = data.getDataExtent('z', true);
+    var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
+    var isZeroExtent = Math.abs(zExtent[1] - zExtent[0]) < 1e-10;
+    var barSize = seriesModel.get('barSize');
+    if (barSize == null) {
+        var xExtent = data.getDataExtent('x');
+        var yExtent = data.getDataExtent('y');
+        var corner0 = coordSys.projectOnTileWithScale([xExtent[0], yExtent[0]], TILE_SIZE);
+        var corner1 = coordSys.projectOnTileWithScale([xExtent[1], yExtent[1]], TILE_SIZE);
+        var size = Math.min(
+            Math.abs(corner0[0] - corner1[0]),
+            Math.abs(corner0[1] - corner1[1])
+        ) || 1;
+        // PENDING, data density
+        barSize = [
+            size / Math.sqrt(data.count()),
+            size / Math.sqrt(data.count())
+        ];
+    }
+    else if (!echarts.util.isArray(barSize)) {
+        barSize = [barSize, barSize];
+    }
+    var dir = [0, 0, 1];
+    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
+        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, zExtent, heightExtent);
+        var start = coordSys.projectOnTileWithScale([lng, lat], TILE_SIZE);
+        start[2] = 0;
+        var size = [barSize[0], height, barSize[1]];
+        data.setItemLayout(idx, [start, dir, size]);
+    });
+
+    data.setLayout('orient', [1, 0, 0]);
+}
+
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('bar3D', function (seriesModel) {
         var coordSys = seriesModel.coordinateSystem;
@@ -73,13 +111,16 @@ echarts.registerLayout(function (ecModel, api) {
         else if (coordSysType === 'geo3D') {
             geo3DLayout(seriesModel, coordSys);
         }
+        else if (coordSysType === 'mapbox') {
+            mapboxLayout(seriesModel, coordSys);
+        }
         else {
             if (__DEV__) {
                 if (!coordSys) {
-                    console.error('bar3D does\'nt have coordinate system.');
+                    throw new Error('bar3D does\'nt have coordinate system.');
                 }
                 else {
-                    console.error('bar3D does\'nt support coordinate system ' + coordSys.type);
+                    throw new Error('bar3D does\'nt support coordinate system ' + coordSys.type);
                 }
             }
         }

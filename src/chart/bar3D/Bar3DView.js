@@ -68,6 +68,9 @@ module.exports = echarts.extendChartView({
                         fragment: graphicGL.Shader.source('ecgl.sm.depth.fragment')
                     })
                 }),
+                // Only cartesian3D enable culling
+                // FIXME Performance
+                culling: seriesModel.coordinateSystem.type === 'cartesian3D',
                 // Render after axes
                 renderOrder: 10,
                 // Render normal in normal pass

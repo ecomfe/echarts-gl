@@ -91,6 +91,16 @@ module.exports = {
                 borderColor: '#fff'
             }
         },
+
+        // TODO
+        // altitude: {
+        //     min: 'auto',
+        //     max: 'auto',
+
+        //     height: []
+        // },
+
+
         // labelLine
 
         // light
