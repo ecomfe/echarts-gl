@@ -17,6 +17,7 @@ function Mapbox() {
      * Height of mapbox viewport
      */
     this.height = 0;
+    
 
     this.bearing = 0;
     this.pitch = 0;

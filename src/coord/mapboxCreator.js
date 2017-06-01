@@ -9,13 +9,14 @@ function resizeMapbox(mapboxModel, api) {
     var dpr = api.getDevicePixelRatio();
     this.viewGL.setViewport(0, 0, width, height, dpr);
 
-    this.width = width * dpr;
-    this.height = height * dpr;
+    this.width = width;
+    this.height = height;
 
     this.updateCamera();
 }
 
 var mapboxCreator = {
+
 
     dimensions: Mapbox.prototype.dimensions,
 
