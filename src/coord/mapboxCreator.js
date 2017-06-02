@@ -12,6 +12,8 @@ function resizeMapbox(mapboxModel, api) {
     this.width = width;
     this.height = height;
 
+    this.altitudeScale = mapboxModel.get('altitudeScale');
+
     this.updateCamera();
 }
 

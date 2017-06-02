@@ -31,7 +31,9 @@ var MapboxModel = echarts.extendComponentModel({
                 alpha: 20,
                 beta: 20
             }
-        }
+        },
+
+        altitudeScale: 1
     },
 
     getMapboxCameraOption: function () {

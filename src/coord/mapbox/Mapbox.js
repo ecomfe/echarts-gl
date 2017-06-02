@@ -19,7 +19,7 @@ function Mapbox() {
      */
     this.height = 0;
 
-    this.altitude = 10;
+    this.altitudeScale = 1;
     
 
     this.bearing = 0;
@@ -102,10 +102,12 @@ Mapbox.prototype = {
         // scale vertically to meters per pixel (inverse of ground resolution):
         // worldSize / (circumferenceOfEarth * cos(lat * π / 180))
         var worldSize = TILE_SIZE * this._getScale();
-        var verticalScale = worldSize / (2 * Math.PI * 6378 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))));
+        var verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))));
         // Include scale to avoid zoom needs relayout
         // FIXME Camera scale may have problem in shadow
-        this.viewGL.scene.scale.set(this._getScale(), this._getScale(), this._getScale());
+        this.viewGL.scene.scale.set(
+            this._getScale(), this._getScale(), verticalScale * this.altitudeScale
+        );
 
     },
 
