@@ -7,6 +7,7 @@ var Shader = require('qtek/lib/Shader');
 var FrameBuffer = require('qtek/lib/FrameBuffer');
 var Material = require('qtek/lib/Material');
 var Shader = require('qtek/lib/Shader');
+var Pass = require('qtek/lib/compositor/Pass');
 var textureUtil = require('qtek/lib/util/texture');
 
 Shader.import(require('../util/shader/normal.glsl.js'));
@@ -26,7 +27,7 @@ function attachTextureToSlot(gl, shader, symbol, texture, slot) {
 }
 
 // TODO Use globalShader insteadof globalMaterial?
-function getBeforeRenderHook1 (gl, defaultNormalMap, normalMaterial) {
+function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRoughnessMap, normalMaterial) {
 
     var previousNormalMap;
     var previousBumpMap;
@@ -56,10 +57,13 @@ function getBeforeRenderHook1 (gl, defaultNormalMap, normalMaterial) {
         var useRoughnessMap = !!roughnessMap && material.shader.isTextureEnabled('roughnessMap');
         var doubleSide = material.shader.isDefined('fragment', 'DOUBLE_SIDE');
 
+        bumpMap = bumpMap || defaultBumpMap;
+        roughnessMap = roughnessMap || defaultRoughnessMap;
+
         if (prevMaterial !== normalMaterial) {
             normalMaterial.set('normalMap', normalMap);
-            normalMaterial.set('bumpMap', bumpMap || null);
-            normalMaterial.set('roughnessMap', roughnessMap || null);
+            normalMaterial.set('bumpMap', bumpMap);
+            normalMaterial.set('roughnessMap', roughnessMap);
             normalMaterial.set('useBumpMap', useBumpMap);
             normalMaterial.set('useRoughnessMap', useRoughnessMap);
             normalMaterial.set('doubleSide', doubleSide);
@@ -120,9 +124,18 @@ function NormalPass(opt) {
             fragment: Shader.source('ecgl.normal.fragment')
         })
     });
-    this._normalMaterial.shader.enableTexture(['normalMap', 'bumpMap']);
+    this._normalMaterial.shader.enableTexture(['normalMap', 'bumpMap', 'roughnessMap']);
 
     this._defaultNormalMap = textureUtil.createBlank('#000');
+    this._defaultBumpMap = textureUtil.createBlank('#000');
+    this._defaultRoughessMap = textureUtil.createBlank('#000');
+
+
+    this._debugPass = new Pass({
+        fragment: Shader.source('qtek.compositor.output')
+    });
+    this._debugPass.setUniform('texture', this._normalTex);
+    this._debugPass.material.shader.undefine('fragment', 'OUTPUT_ALPHA');
 }
 
 NormalPass.prototype.getDepthTexture = function () {
@@ -154,8 +167,8 @@ NormalPass.prototype.update = function (renderer, scene, camera) {
         return object.renderNormal;
     };
 
-    renderer.beforeRenderObject = getBeforeRenderHook1(
-        renderer.gl, this._defaultNormalMap, this._normalMaterial
+    renderer.beforeRenderObject = getBeforeRenderHook(
+        renderer.gl, this._defaultNormalMap, this._defaultBumpMap, this._defaultRoughessMap, this._normalMaterial
     );
     this._framebuffer.bind(renderer);
     renderer.gl.clearColor(0, 0, 0, 0);
@@ -166,6 +179,10 @@ NormalPass.prototype.update = function (renderer, scene, camera) {
 
     renderer.ifRenderObject = oldIfRenderObject;
     renderer.beforeRenderObject = oldBeforeRenderObject;
+};
+
+NormalPass.prototype.renderDebug = function (renderer) {
+    this._debugPass.render(renderer);
 };
 
 NormalPass.prototype.dispose = function (gl) {

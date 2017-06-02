@@ -75,11 +75,9 @@ function SSAOPass(opt) {
         fragment: Shader.source('ecgl.ssao.blur')
     });
     this._framebuffer = new FrameBuffer();
+    
     this._ssaoTexture = new Texture2D();
-
-    this._targetTexture = new Texture2D({
-        type: Texture.HALF_FLOAT
-    });
+    this._targetTexture = new Texture2D();
 
     this._depthTex = opt.depthTexture;
     this._normalTex = opt.normalTexture;
@@ -138,7 +136,7 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     ssaoTexture.height = height;
     targetTexture.width = width;
     targetTexture.height = height;
-
+    
     this._framebuffer.attach(ssaoTexture);
     this._framebuffer.bind(renderer);
     renderer.gl.clearColor(1, 1, 1, 1);

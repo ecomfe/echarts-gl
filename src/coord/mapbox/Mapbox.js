@@ -1,6 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var glmatrix = require('qtek/lib/dep/glmatrix');
 var Vector3 = require('qtek/lib/math/Vector3');
+var Matrix4 = require('qtek/lib/math/Matrix4');
 var vec3 = glmatrix.vec3;
 var mat4 = glmatrix.mat4;
 
@@ -17,6 +18,8 @@ function Mapbox() {
      * Height of mapbox viewport
      */
     this.height = 0;
+
+    this.altitude = 10;
     
 
     this.bearing = 0;
@@ -68,8 +71,9 @@ Mapbox.prototype = {
 
         // matrix for conversion from location to GL coordinates (-1 .. 1)
         var m = new Float64Array(16);
-        mat4.perspective(m, FOV, this.width / this.height, 1, farZ);
-        this.viewGL.camera.projectionMatrix._array = m;
+        mat4.perspective(m, FOV, this.width / this.height, 0.1, farZ);
+        this.viewGL.camera.projectionMatrix.setArray(m);
+        this.viewGL.camera.decomposeProjectionMatrix();
 
         var m = mat4.identity(new Float64Array(16));
         var pt = this.projectOnTile(this.center);
@@ -82,20 +86,27 @@ Mapbox.prototype = {
         // Translate to center.
         mat4.translate(m, m, [-pt[0], -pt[1], 0]);
 
-        // scale vertically to meters per pixel (inverse of ground resolution):
-        // worldSize / (circumferenceOfEarth * cos(lat * π / 180))
-        var worldSize = TILE_SIZE * this._getScale();
-        var verticalScale = worldSize / (2 * Math.PI * 6378137 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))));
-        // Include scale to avoid zoom needs relayout
-        mat4.scale(m, m, [this._getScale(), this._getScale(), verticalScale, 1]);
-
         this.viewGL.camera.viewMatrix._array = m;
         var invertM = new Float64Array(16);
         mat4.invert(invertM, m);
         this.viewGL.camera.worldTransform._array = invertM;
         // Don't update this camera.
         // FIXME decomposeWorldTransform will be wrong. Precision issue?
-        this.viewGL.camera.update = function () {};
+        // this.viewGL.camera.decomposeWorldTransform();
+        this.viewGL.camera.update = function () {
+            this.updateProjectionMatrix();
+            Matrix4.invert(this.invProjectionMatrix, this.projectionMatrix);
+            this.frustum.setFromProjection(this.projectionMatrix);
+        }
+
+        // scale vertically to meters per pixel (inverse of ground resolution):
+        // worldSize / (circumferenceOfEarth * cos(lat * π / 180))
+        var worldSize = TILE_SIZE * this._getScale();
+        var verticalScale = worldSize / (2 * Math.PI * 6378 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))));
+        // Include scale to avoid zoom needs relayout
+        // FIXME Camera scale may have problem in shadow
+        this.viewGL.scene.scale.set(this._getScale(), this._getScale(), this._getScale());
+
     },
 
     _getScale: function () {

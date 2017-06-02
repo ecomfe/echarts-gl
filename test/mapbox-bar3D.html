@@ -43,19 +43,29 @@
                         zoom: 3,
                         pitch: 50,
                         bearing: -10,
-                        style: 'mapbox://styles/mapbox/dark-v9',
+                        style: 'mapbox://styles/mapbox/light-v9',
+                        postEffect: {
+                            enable: true,
+                            screenSpaceAmbientOcculusion: {
+                                enable: false,
+                                intensity: 1,
+                                radius: 200,
+                                quality: 'high'
+                            }
+                        },
                         light: {
                             main: {
-                                intensity: 1,
-                                shadow: true
+                                intensity: 2,
+                                shadow: true,
+                                shadowQuality: 'ultra'
                             },
                             ambient: {
-                                intensity: 0
+                                intensity: 0.
                             },
                             ambientCubemap: {
                                 texture: 'asset/canyon.hdr',
                                 exposure: 2,
-                                diffuseIntensity: 2
+                                diffuseIntensity: 0.5
                             }
                         }
                     },
@@ -63,8 +73,8 @@
                         type: 'bar3D',
                         coordinateSystem: 'mapbox',
                         shading: 'lambert',
-                        maxHeight: 2e6,
-                        minHeight: 1e2,
+                        maxHeight: 20,
+                        minHeight: 0.1,
                         barSize: 0.4,
                         data: data,
                         silent: true
