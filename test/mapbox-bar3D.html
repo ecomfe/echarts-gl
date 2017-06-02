@@ -14,6 +14,7 @@
         <script src='https://api.mapbox.com/mapbox-gl-js/v0.37.0/mapbox-gl.js'></script>
         <link href='https://api.mapbox.com/mapbox-gl-js/v0.37.0/mapbox-gl.css' rel='stylesheet' />
         <script src="lib/jquery.min.js"></script>
+        <script src="./data/capitals.js"></script>
         <script>
             mapboxgl.accessToken = 'pk.eyJ1IjoicGlzc2FuZyIsImEiOiJjaXBnaGYxcW8wMDFodWNtNDc4NzdqMWR2In0.4XUWeduDltiCbsIiS-U8Lg';
             var chart = echarts.init(document.getElementById('main'));
@@ -28,6 +29,7 @@
 
                 chart.setOption({
                     visualMap: {
+                        show: false,
                         max: 1000,
                         calculable: true,
                         realtime: false,
@@ -80,6 +82,43 @@
                         silent: true
                     }]
                 });
+
+                var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
+                var cities = [
+                    'Beijing',
+                    'Washington',
+                    'Berlin',
+                    'Tokyo',
+                    'London',
+                    'New Delhi',
+                    'Canberra',
+                    'Paris'
+                ]
+                var current = 0;
+                function flyToNextCity() {
+                    // var idx = Math.round(Math.random() * (cities.length - 1));
+                    var name = cities[current];
+                    var city = capitals.find(function (item) {
+                        return item.CapitalName === name;
+                    });
+
+                    if (isNaN(city.CapitalLatitude) || isNaN(city.CapitalLongitude)) {
+                        debugger;
+                    }
+                    mapbox.flyTo({
+                        center: [city.CapitalLongitude, city.CapitalLatitude],
+                        zoom: 5,
+                        speed: 0.4,
+                        curve: 2
+                    });
+                    current = (current + 1) % (cities.length - 1);
+                }
+
+                window.addEventListener('keydown', function (e) {
+                    if (e.keyCode === 32) {
+                        flyToNextCity();
+                    }
+                })
             });
 
             window.addEventListener('resize', function () {
