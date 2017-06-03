@@ -73,6 +73,16 @@ var OrbitControl = Base.extend(function () {
         autoRotateAfterStill: 0,
 
         /**
+         * Direction of autoRotate. cw or ccw when looking top down.
+         */
+        autoRotateDirection: 'cw',
+
+        /**
+         * Degree per second
+         */
+        autoRotateSpeed: 60,
+
+        /**
          * Pan or rotate
          * @type {String}
          */
@@ -107,9 +117,9 @@ var OrbitControl = Base.extend(function () {
 
         _rotating: false,
 
-        // Rotation around yAxis
+        // Rotation around yAxis in radian
         _phi: 0,
-        // Rotation around xAxis
+        // Rotation around xAxis in radian
         _theta: 0,
 
         _mouseX: 0,
@@ -279,6 +289,8 @@ var OrbitControl = Base.extend(function () {
 
         this.autoRotate = viewControlModel.get('autoRotate');
         this.autoRotateAfterStill = viewControlModel.get('autoRotateAfterStill');
+        this.autoRotateDirection = viewControlModel.get('autoRotateDirection');
+        this.autoRotateSpeed = viewControlModel.get('autoRotateSpeed');
 
         this.damping = viewControlModel.get('damping');
 
@@ -400,7 +412,9 @@ var OrbitControl = Base.extend(function () {
     _update: function (deltaTime) {
 
         if (this._rotating) {
-            this._phi -= deltaTime * 1e-4;
+            var radian = (this.autoRotateDirection === 'cw' ? 1 : -1)
+                 * this.autoRotateSpeed / 180 * Math.PI;
+            this._phi -= radian * deltaTime / 1000;
             this._needsUpdate = true;
         }
         else if (this._rotateVelocity.len() > 0) {

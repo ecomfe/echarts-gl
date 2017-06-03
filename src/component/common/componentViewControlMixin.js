@@ -4,6 +4,14 @@ module.exports = {
         viewControl: {
             // If rotate on on init
             autoRotate: false,
+            // cw or ccw
+            autoRotateDirection: 'cw',
+            // Degree per second
+            autoRotateSpeed: 10,
+
+            // Start rotating after still for a given time
+            // default is 3 seconds
+            autoRotateAfterStill: 3,
 
             // Rotate, zoom damping.
             damping: 0.8,
@@ -11,10 +19,6 @@ module.exports = {
             rotateSensitivity: 1,
             zoomSensitivity: 1,
             panSensitivity: 1,
-
-            // Start rotating after still for a given time
-            // default is 3 seconds
-            autoRotateAfterStill: 3,
 
             distance: 150,
 
