@@ -151,7 +151,8 @@ var OrbitControl = Base.extend(function () {
     };
 }, function () {
     // Each OrbitControl has it's own handler
-    ['_mouseDownHandler', '_mouseWheelHandler', '_mouseMoveHandler', '_mouseUpHandler', '_pinchHandler', '_update'].forEach(function (hdlName) {
+    ['_mouseDownHandler', '_mouseWheelHandler', '_mouseMoveHandler', '_mouseUpHandler',
+    '_pinchHandler', '_contextMenuHandler', '_update'].forEach(function (hdlName) {
         this[hdlName] = this[hdlName].bind(this);
     }, this);
 }, {
@@ -169,6 +170,8 @@ var OrbitControl = Base.extend(function () {
             zr.on('pinch', this._pinchHandler);
 
             zr.animation.on('frame', this._update);
+
+            zr.dom.addEventListener('contextmenu', this._contextMenuHandler);
         }
     },
 
@@ -186,6 +189,7 @@ var OrbitControl = Base.extend(function () {
             zr.off('mousewheel', this._mouseWheelHandler);
             zr.off('pinch', this._pinchHandler);
             zr.off('globalout', this._mouseUpHandler);
+            zr.dom.removeEventListener('contextmenu', this._contextMenuHandler);
 
             zr.animation.off('frame', this._update);
         }
@@ -291,7 +295,6 @@ var OrbitControl = Base.extend(function () {
         return this._camera;
     },
 
-
     setFromViewControlModel: function (viewControlModel, extraOpts) {
         extraOpts = extraOpts || {};
         var baseDistance = extraOpts.baseDistance || 0;
@@ -316,10 +319,8 @@ var OrbitControl = Base.extend(function () {
             ['panSensitivity', 1],
             ['panMouseButton', 'left'],
             ['rotateMouseButton', 'middle']
-        ].forEach(function (props) {
-            var propName = props[0];
-            var propDefault = props[1];
-            this[propName] = firstNotNull(viewControlModel.get(propName), propDefault);
+        ].forEach(function (prop) {
+            this[prop[0]] = firstNotNull(viewControlModel.get(prop[0]), prop[1]);
         }, this);
         
         var ecModel = viewControlModel.ecModel;
@@ -598,6 +599,9 @@ var OrbitControl = Base.extend(function () {
         else if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.panMouseButton]) {
             this._mode = 'pan';
         }
+        else {
+            this._mode = '';
+        }
 
         // Reset rotate velocity
         this._rotateVelocity.set(0, 0);
@@ -681,6 +685,17 @@ var OrbitControl = Base.extend(function () {
     _mouseUpHandler: function () {
         this.zr.off('mousemove', this._mouseMoveHandler);
         this.zr.off('mouseup', this._mouseUpHandler);
+    },
+
+    _isRightMouseButtonUsed: function () {
+        return this.rotateMouseButton === 'right'
+            || this.panMouseButton === 'right';
+    },
+
+    _contextMenuHandler: function (e) {
+        if (this._isRightMouseButtonUsed()) {
+            e.preventDefault();
+        }
     },
 
     _addAnimator: function (animator) {
