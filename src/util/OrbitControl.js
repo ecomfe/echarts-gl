@@ -637,7 +637,7 @@ var OrbitControl = Base.extend(function () {
             this._distance - this.minDistance,
             this.maxDistance - this._distance
         ));
-        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20 * this.zoomSensitivity, 0.5);
+        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20, 0.5) * this.zoomSensitivity;
 
         this._rotating = false;
 
