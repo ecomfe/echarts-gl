@@ -13,6 +13,13 @@ var Quaternion = require('qtek/lib/math/Quaternion');
 var retrieve = require('./retrieve');
 var firstNotNull = retrieve.firstNotNull;
 
+
+var MOUSE_BUTTON_KEY_MAP = {
+    left: 0,
+    middle: 1,
+    right: 2  
+};
+
 /**
  * @alias module:echarts-x/util/OrbitControl
  */
@@ -83,12 +90,6 @@ var OrbitControl = Base.extend(function () {
         autoRotateSpeed: 60,
 
         /**
-         * Pan or rotate
-         * @type {String}
-         */
-        _mode: 'rotate',
-
-        /**
          * @param {number}
          */
         damping: 0.8,
@@ -108,7 +109,18 @@ var OrbitControl = Base.extend(function () {
          */
         panSensitivity: 1,
 
+        panMouseButton: 'middle',
+        rotateMouseButton: 'left',
+
         /**
+         * Pan or rotate
+         * @private
+         * @type {String}
+         */
+        _mode: 'rotate',
+
+        /**
+         * @private
          * @type {qtek.Camera}
          */
         _camera: null,
@@ -139,12 +151,9 @@ var OrbitControl = Base.extend(function () {
     };
 }, function () {
     // Each OrbitControl has it's own handler
-    this._mouseDownHandler = this._mouseDownHandler.bind(this);
-    this._mouseWheelHandler = this._mouseWheelHandler.bind(this);
-    this._mouseMoveHandler = this._mouseMoveHandler.bind(this);
-    this._mouseUpHandler = this._mouseUpHandler.bind(this);
-    this._pinchHandler = this._pinchHandler.bind(this);
-    this._update = this._update.bind(this);
+    ['_mouseDownHandler', '_mouseWheelHandler', '_mouseMoveHandler', '_mouseUpHandler', '_pinchHandler', '_update'].forEach(function (hdlName) {
+        this[hdlName] = this[hdlName].bind(this);
+    }, this);
 }, {
     /**
      * Initialize.
@@ -287,26 +296,32 @@ var OrbitControl = Base.extend(function () {
         extraOpts = extraOpts || {};
         var baseDistance = extraOpts.baseDistance || 0;
 
-        this.autoRotate = viewControlModel.get('autoRotate');
-        this.autoRotateAfterStill = viewControlModel.get('autoRotateAfterStill');
-        this.autoRotateDirection = viewControlModel.get('autoRotateDirection');
-        this.autoRotateSpeed = viewControlModel.get('autoRotateSpeed');
-
-        this.damping = viewControlModel.get('damping');
-
         this.minDistance = viewControlModel.get('minDistance') + baseDistance;
         this.maxDistance = viewControlModel.get('maxDistance') + baseDistance;
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
 
-        this.minAlpha = firstNotNull(viewControlModel.get('minAlpha'), -90);
-        this.maxAlpha = firstNotNull(viewControlModel.get('maxAlpha'), 90);
-        this.minBeta = firstNotNull(viewControlModel.get('minBeta'), -Infinity);
-        this.maxBeta = firstNotNull(viewControlModel.get('maxBeta'), Infinity);
-        this.rotateSensitivity = firstNotNull(viewControlModel.get('rotateSensitivity'), 1);
-        this.zoomSensitivity = firstNotNull(viewControlModel.get('zoomSensitivity'), 1);
-        this.panSensitivity = firstNotNull(viewControlModel.get('panSensitivity'), 1);
-
+        [
+            ['damping', 0.8],
+            ['autoRotate', false],
+            ['autoRotateAfterStill', 3],
+            ['autoRotateDirection', 'cw'],
+            ['autoRotateSpeed', 10],
+            ['minAlpha', -90],
+            ['maxAlpha', 90],
+            ['minBeta', -Infinity],
+            ['maxBeta', Infinity],
+            ['rotateSensitivity', 1],
+            ['zoomSensitivity', 1],
+            ['panSensitivity', 1],
+            ['panMouseButton', 'left'],
+            ['rotateMouseButton', 'middle']
+        ].forEach(function (props) {
+            var propName = props[0];
+            var propDefault = props[1];
+            this[propName] = firstNotNull(viewControlModel.get(propName), propDefault);
+        }, this);
+        
         var ecModel = viewControlModel.ecModel;
 
         var animationOpts = {};
@@ -338,6 +353,21 @@ var OrbitControl = Base.extend(function () {
 
         this._notFirst = true;
 
+        this._validateProperties();
+    },
+
+    _validateProperties: function () {
+        if (__DEV__) {
+            if (MOUSE_BUTTON_KEY_MAP[this.panMouseButton] == null) {
+                console.error('Unkown panMouseButton %s. It should be left|middle|right', this.panMouseButton);
+            }
+            if (MOUSE_BUTTON_KEY_MAP[this.rotateMouseButton] == null) {
+                console.error('Unkown rotateMouseButton %s. It should be left|middle|right', this.rotateMouseButton);
+            }
+            if (this.autoRotateDirection !== 'cw' && this.autoRotateDirection !== 'ccw') {
+                console.error('Unkown autoRotateDirection %s. It should be cw|ccw', this.autoRotateDirection);
+            }
+        }
     },
 
     /**
@@ -562,10 +592,10 @@ var OrbitControl = Base.extend(function () {
         this.zr.on('mousemove', this._mouseMoveHandler);
         this.zr.on('mouseup', this._mouseUpHandler);
 
-        if (e.event.button === 0) {
+        if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.rotateMouseButton]) {
             this._mode = 'rotate';
         }
-        else if (e.event.button === 1) {
+        else if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.panMouseButton]) {
             this._mode = 'pan';
         }
 

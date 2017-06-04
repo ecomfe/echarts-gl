@@ -274,6 +274,7 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
     }
 
     // this._shadowMapPass.renderDebug(renderer);
+    // this._compositor._normalPass.renderDebug(renderer);
 };
 
 ViewGL.prototype._updateTransparent = function (renderer, scene, camera, frame) {

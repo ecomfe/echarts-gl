@@ -15,15 +15,19 @@ module.exports = {
 
             // Rotate, zoom damping.
             damping: 0.8,
-
+            // Sensitivities for operations.
             rotateSensitivity: 1,
             zoomSensitivity: 1,
             panSensitivity: 1,
+            // Which mouse button do rotate or pan
+            panMouseButton: 'middle',
+            rotateMouseButton: 'left',
 
+            // Distance to the target
             distance: 150,
-
+            // Min distance mouse can zoom in
             minDistance: 40,
-
+            // Max distance mouse can zoom out
             maxDistance: 400,
 
             // Center view point
