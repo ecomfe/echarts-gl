@@ -50,7 +50,6 @@ function Geo3DBuilder(api) {
 
     this._labelsBuilder = new LabelsBuilder(1024, 1024, api);
 
-
     // Give a large render order.
     this._labelsBuilder.getMesh().renderOrder = 100;
     this._labelsBuilder.getMesh().material.depthTest = false;
@@ -62,8 +61,10 @@ Geo3DBuilder.prototype = {
 
     constructor: Geo3DBuilder,
 
-    update: function (componentModel, ecModel, api) {
-        var geo3D = componentModel.coordinateSystem;
+    // Which dimension to extrude. Y or Z
+    extrudeY: true,
+
+    update: function (componentModel, geo3D, ecModel, api) {
         var enableInstancing = componentModel.get('instancing');
         if (
             geo3D.map !== this._currentMap
@@ -74,29 +75,24 @@ Geo3DBuilder.prototype = {
             this._currentMap = geo3D.map;
 
             // Reset meshes
-            this._initMeshes(componentModel);
+            this._initMeshes(componentModel, geo3D);
 
             this.rootNode.add(this._labelsBuilder.getMesh());
         }
 
         var shader = this._getShader(componentModel.get('shading'));
-        var srgbDefineMethod = geo3D.viewGL.isLinearSpace() ? 'define' : 'undefine';
-        shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
 
         var data = componentModel.getData();
 
-
         if (enableInstancing) {
-            this._prepareInstancingMesh(componentModel, shader, api);
+            this._prepareInstancingMesh(componentModel, geo3D, shader, api);
         }
-        this._updateRegionMesh(componentModel, shader, api, enableInstancing);
+        this._updateRegionMesh(componentModel, geo3D, shader, api, enableInstancing);
 
-        this._updateGroundPlane(componentModel, api);
-        this._groundMesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+        this._updateGroundPlane(componentModel, geo3D, api);
 
         this._labelsBuilder.updateData(data);
         this._labelsBuilder.getLabelPosition = function (dataIndex, positionDesc, distance) {
-            var itemModel = data.getItemModel(dataIndex);
             var name = data.getName(dataIndex);
             var region = geo3D.getRegion(name);
             var center = region.center;
@@ -109,12 +105,10 @@ Geo3DBuilder.prototype = {
 
         this._labelsBuilder.updateLabels();
 
-        this._updateDebugWireframe(componentModel);
+        this._updateDebugWireframe(componentModel, geo3D);
     },
 
-    _prepareInstancingMesh: function (componentModel, shader, api) {
-        var geo3D = componentModel.coordinateSystem;
-
+    _prepareInstancingMesh: function (componentModel, geo3D, shader, api) {
         var vertexCount = 0;
         var triangleCount = 0;
         // TODO Lines
@@ -137,10 +131,9 @@ Geo3DBuilder.prototype = {
         }
     },
 
-    _updateRegionMesh: function (componentModel, shader, api, instancing) {
+    _updateRegionMesh: function (componentModel, geo3D, shader, api, instancing) {
 
         var data = componentModel.getData();
-        var geo3D = componentModel.coordinateSystem;
 
         var vertexOffset = 0;
         var triangleOffset = 0;
@@ -193,11 +186,12 @@ Geo3DBuilder.prototype = {
             }
             hasTranparentRegion = hasTranparentRegion || isTransparent;
 
-            var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), geo3D.size[1]);
+            var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), componentModel.get('regionHeight'));
 
             if (instancing) {
                 var newOffsets = this._updatePolygonGeometry(
-                    componentModel, polygonMesh.geometry, region, regionHeight, vertexOffset, triangleOffset, color
+                    componentModel, polygonMesh.geometry, region, regionHeight,
+                    vertexOffset, triangleOffset, color
                 );
                 vertexOffset = newOffsets.vertexOffset;
                 triangleOffset = newOffsets.triangleOffset;
@@ -255,7 +249,7 @@ Geo3DBuilder.prototype = {
         }
     },
 
-    _updateDebugWireframe: function (componentModel) {
+    _updateDebugWireframe: function (componentModel, geo3D) {
         var debugWireframeModel = componentModel.getModel('debug.wireframe');
 
         // TODO Unshow
@@ -274,7 +268,7 @@ Geo3DBuilder.prototype = {
                 mesh.material.set('wireframeLineWidth', width);
             }
             if (this._polygonMeshesMap) {
-                componentModel.coordinateSystem.regions.forEach(function (region) {
+                geo3D.regions.forEach(function (region) {
                     setWireframe(this._polygonMeshesMap[region.name]);
                 }, this);
             }
@@ -303,9 +297,12 @@ Geo3DBuilder.prototype = {
         }
     },
 
-    _updateGroundPlane: function (componentModel, api) {
-        var geo3D = componentModel.coordinateSystem;
+    _updateGroundPlane: function (componentModel, geo3D, api) {
         var groundModel = componentModel.getModel('groundPlane');
+        this._groundMesh.invisible = !groundModel.get('show');
+        if (!groundModel.get('show')) {
+            return;
+        }
 
         var shading = componentModel.get('shading');
         var material = this._groundMaterials[shading];
@@ -323,15 +320,13 @@ Geo3DBuilder.prototype = {
 
         this._groundMesh.material = material;
         this._groundMesh.material.set('color', graphicGL.parseColor(groundModel.get('color')));
-        this._groundMesh.invisible = !groundModel.get('show');
 
         this._groundMesh.scale.set(geo3D.size[0], geo3D.size[2], 1);
     },
 
-    _initMeshes: function (componentModel) {
+    _initMeshes: function (componentModel, geo3D) {
         this.rootNode.removeAll();
 
-        var geo3D = componentModel.coordinateSystem;
         var shader = this._getShader(componentModel.get('shading'));
 
         function createPolygonMesh() {
@@ -448,7 +443,7 @@ Geo3DBuilder.prototype = {
                 // points = triangulator.points;
                 var triangles = earcut(points, holes);
 
-                var points3 = new Float32Array(points.length / 2 * 3);
+                var points3 = new Float64Array(points.length / 2 * 3);
                 var pos = [];
                 var min = [Infinity, Infinity, Infinity];
                 var max = [-Infinity, -Infinity, -Infinity];
@@ -503,7 +498,8 @@ Geo3DBuilder.prototype = {
     },
 
     _updatePolygonGeometry: function (
-        componentModel, geometry, region, regionHeight, vertexOffset, triangleOffset, color
+        componentModel, geometry, region, regionHeight,
+        vertexOffset, triangleOffset, color
     ) {
         // FIXME
         var projectUVOnGround = componentModel.get('projectUVOnGround');
@@ -518,6 +514,10 @@ Geo3DBuilder.prototype = {
 
         var indices = geometry.indices;
         var instancing = vertexOffset != null;
+
+        var extrudeCoordIndex = this.extrudeY ? 1 : 2;
+        var sideCoordIndex = this.extrudeY ? 2 : 1;
+
         if (!instancing) {
 
             var geoInfo = this._getRegionPolygonGeoInfo(region);
@@ -544,8 +544,8 @@ Geo3DBuilder.prototype = {
 
             for (var k = 0; k < pointsLen; k += 3) {
                 currentPosition[0] = points[k];
-                currentPosition[1] = y;
-                currentPosition[2] = points[k + 2];
+                currentPosition[extrudeCoordIndex] = y;
+                currentPosition[sideCoordIndex] = points[k + 2];
 
                 uv[0] = (points[k] - min[0]) / maxDimSize;
                 uv[1] = (points[k + 2] - min[2]) / maxDimSize;
@@ -570,8 +570,8 @@ Geo3DBuilder.prototype = {
             triangleOffset += polygon.indices.length / 3;
         }
 
-        var normalTop = [0, 1, 0];
-        var normalBottom = [0, -1, 0];
+        var normalTop = this.extrudeY ? [0, 1, 0] : [0, 0, 1];
+        var normalBottom = vec3.negate([], normalTop);
         for (var p = 0; p < polygons.length; p++) {
             var startVertexOffset = vertexOffset;
             var polygon = polygons[p];
@@ -607,8 +607,8 @@ Geo3DBuilder.prototype = {
                     var isCurrent = (k === 0 || k === 3);
                     var idx3 = (isCurrent ? v : next) * 3;
                     quadPos[k][0] = polygon.points[idx3];
-                    quadPos[k][1] = k > 1 ? regionHeight : 0;
-                    quadPos[k][2] = polygon.points[idx3 + 2];
+                    quadPos[k][extrudeCoordIndex] = k > 1 ? regionHeight : 0;
+                    quadPos[k][sideCoordIndex] = polygon.points[idx3 + 2];
 
                     positionAttr.set(vertexOffset + k, quadPos[k]);
 
@@ -689,7 +689,7 @@ Geo3DBuilder.prototype = {
         geometry.setTriangleCount(geoInfo.triangleCount);
 
         function convertToPoints3(polygon) {
-            var points = new Float32Array(polygon.length * 3);
+            var points = new Float64Array(polygon.length * 3);
             var offset = 0;
             var pos = [];
             for (var i = 0; i < polygon.length; i++) {

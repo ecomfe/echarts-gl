@@ -47,8 +47,10 @@ module.exports = {
         height: '100%',
 
         boxWidth: 100,
-        boxHeight: 3,
+        boxHeight: 30,
         boxDepth: 'auto',
+
+        regionHeight: 3,
 
         environment: 'auto',
 
@@ -106,7 +108,6 @@ module.exports = {
         // light
         // postEffect
         // temporalSuperSampling
-        // viewControl
 
         itemStyle: {
             areaColor: '#fff',

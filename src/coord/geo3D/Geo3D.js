@@ -15,15 +15,20 @@ function Geo3D(name, map, geoJson, specialAreas, nameMap) {
 
     this.map = map;
 
+    this.regionHeight = 0;
+
     this.regions = [];
 
     this._nameCoordMap = {};
 
     this.loadGeoJson(geoJson, specialAreas, nameMap);
 
-    this.transform = new Float64Array(16);
+    this.transform = mat4.identity(new Float64Array(16));
 
-    this.invTransform = new Float64Array(16);
+    this.invTransform = mat4.identity(new Float64Array(16));
+
+    // Which dimension to extrude. Y or Z
+    this.extrudeY = true;
 }
 
 Geo3D.prototype = {
@@ -128,8 +133,8 @@ Geo3D.prototype = {
         var translateX = -width / 2 - rect.x * scaleX;
         var translateZ = depth / 2 - rect.y * scaleZ;
 
-        var position = [translateX, 0, translateZ];
-        var scale = [scaleX, 1, scaleZ];
+        var position = this.extrudeY ? [translateX, 0, translateZ] : [translateX, translateZ, 0];
+        var scale = this.extrudeY ? [scaleX, 1, scaleZ] : [scaleX, scaleZ, 1];
 
         var m = this.transform;
         mat4.identity(m);
@@ -141,19 +146,22 @@ Geo3D.prototype = {
 
     dataToPoint: function (data, out) {
         out = out || [];
+
+        var extrudeCoordIndex = this.extrudeY ? 1 : 2;
+        var sideCoordIndex = this.extrudeY ? 2 : 1;
+
         // lng
         out[0] = data[0];
         // lat
-        out[2] = data[1];
-
+        out[sideCoordIndex] = data[1];
         // alt
-        out[1] = data[2];
+        out[extrudeCoordIndex] = data[2];
 
-        if (isNaN(out[1])) {
-            out[1] = 0;
+        if (isNaN(out[extrudeCoordIndex])) {
+            out[extrudeCoordIndex] = 0;
         }
         // PENDING.
-        out[1] += this.size[1];
+        out[extrudeCoordIndex] += this.regionHeight;
 
         vec3.transformMat4(out, out, this.transform);
 
@@ -161,17 +169,7 @@ Geo3D.prototype = {
     },
 
     pointToData: function (point, out) {
-        out = out || [];
-        // lng
-        out[0] = point[0];
-        // lat
-        out[1] = point[1];
-        // alt
-        out[2] = point[2];
-
-        vec3.transformMat4(out, out, this.invTransform);
-
-        return out;
+        // TODO
     }
 };
 

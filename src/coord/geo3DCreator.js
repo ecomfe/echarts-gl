@@ -39,6 +39,8 @@ function resizeGeo3D(geo3DModel, api) {
     }
 
     this.setSize(width, height, depth);
+
+    this.regionHeight = geo3DModel.get('regionHeight');
 }
 
 
@@ -57,7 +59,7 @@ var geo3DCreator = {
         var geo3DList = [];
 
         if (!echarts.getMap) {
-            throw new Error('geo3D component depends on geo component')
+            throw new Error('geo3D component depends on geo component');
         }
 
         function createGeo3D(componentModel, idx) {
@@ -92,11 +94,20 @@ var geo3DCreator = {
         });
 
         ecModel.eachSeriesByType('map3D', function (map3DModel, idx) {
-            createGeo3D(map3DModel, idx);
+            var coordSys = map3DModel.get('coordinateSystem');
+            if (coordSys == null) {
+                coordSys = 'geo3D';
+            }
+            if (coordSys === 'geo3D') {
+                createGeo3D(map3DModel, idx);
+            }
         });
 
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'geo3D') {
+                if (seriesModel.type === 'series.map3D') {
+                    return;
+                }
                 var geo3DModel = seriesModel.getReferringComponents('geo3D')[0];
                 if (!geo3DModel) {
                     geo3DModel = ecModel.getComponent('geo3D');

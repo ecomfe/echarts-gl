@@ -2,7 +2,7 @@
  * Provide WebGL layer to zrender. Which is rendered on top of qtek.
  *
  *
- * Relationship between zrender, LayerGL and ViewGL(Scene, Camera, Viewport)
+ * Relationship between zrender, LayerGL(renderer) and ViewGL(Scene, Camera, Viewport)
  *           zrender
  *           /     \
  *      LayerGL   LayerGL
@@ -22,6 +22,12 @@ var Texture = require('qtek/lib/Texture');
 // PENDING, qtek notifier is same with zrender Eventful
 var notifier = require('qtek/lib/core/mixin/notifier');
 var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
+
+// configs for Auto GC for GPU resources
+// PENDING
+var MAX_SHADER_COUNT = 60;
+var MAX_GEOMETRY_COUNT = 20;
+var MAX_TEXTURE_COUNT = 20;
 
 /**
  * @constructor
@@ -318,11 +324,6 @@ LayerGL.prototype._startAccumulating = function (immediate) {
 function getId(resource) {
     return resource.__GUID__;
 }
-// configs for Auto GC for GPU resources
-// PENDING
-var MAX_SHADER_COUNT = 60;
-var MAX_GEOMETRY_COUNT = 20;
-var MAX_TEXTURE_COUNT = 20;
 
 function checkAndDispose(gl, resourceMap, maxCount) {
     var count = 0;

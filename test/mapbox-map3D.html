@@ -10,22 +10,16 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/china.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src='lib/mapbox-gl.js'></script>
         <link href='lib/mapbox-gl.css' rel='stylesheet' />
         <script src="lib/jquery.min.js"></script>
-        <script src="./data/capitals.js"></script>
         <script>
             mapboxgl.accessToken = 'pk.eyJ1IjoicGlzc2FuZyIsImEiOiJjaXBnaGYxcW8wMDFodWNtNDc4NzdqMWR2In0.4XUWeduDltiCbsIiS-U8Lg';
             var chart = echarts.init(document.getElementById('main'));
 
-            $.getJSON('./data/population.json', function (data) {
-
-                data = data.filter(function (dataItem) {
-                    return dataItem[2] > 0;
-                }).map(function (dataItem) {
-                    return [dataItem[0], dataItem[1], dataItem[2]];
-                });
+            $.getJSON('./data/alcohol.json', function (data) {
 
                 chart.setOption({
                     visualMap: {
@@ -58,7 +52,7 @@
                         },
                         light: {
                             main: {
-                                intensity: 2,
+                                intensity: 1,
                                 shadow: true,
                                 shadowQuality: 'high'
                             },
@@ -73,53 +67,13 @@
                         }
                     },
                     series: [{
-                        type: 'bar3D',
+                        type: 'map3D',
                         coordinateSystem: 'mapbox',
-                        shading: 'lambert',
-                        maxHeight: 20,
-                        minHeight: 0.1,
-                        barSize: 0.4,
-                        data: data,
-                        silent: true
+                        map: 'china',
+                        regionHeight: 0.5,
+                        shading: 'lambert'
                     }]
                 });
-
-                var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
-                var cities = [
-                    'Beijing',
-                    'Washington',
-                    'Berlin',
-                    'Tokyo',
-                    'London',
-                    'New Delhi',
-                    'Canberra',
-                    'Paris'
-                ]
-                var current = 0;
-                function flyToNextCity() {
-                    // var idx = Math.round(Math.random() * (cities.length - 1));
-                    var name = cities[current];
-                    var city = capitals.find(function (item) {
-                        return item.CapitalName === name;
-                    });
-
-                    if (isNaN(city.CapitalLatitude) || isNaN(city.CapitalLongitude)) {
-                        debugger;
-                    }
-                    mapbox.flyTo({
-                        center: [city.CapitalLongitude, city.CapitalLatitude],
-                        zoom: 5,
-                        speed: 0.4,
-                        curve: 2
-                    });
-                    current = (current + 1) % (cities.length - 1);
-                }
-
-                window.addEventListener('keydown', function (e) {
-                    if (e.keyCode === 32) {
-                        flyToNextCity();
-                    }
-                })
             });
 
             window.addEventListener('resize', function () {

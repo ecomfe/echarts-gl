@@ -35,6 +35,13 @@ SceneHelper.prototype = {
         rootNode.add(this.ambientLight);
     },
 
+    dispose: function () {
+        if (this._lightRoot) {
+            this._lightRoot.remove(this.mainLight);
+            this._lightRoot.remove(this.ambientLight);
+        }
+    },
+
     updateLight: function (componentModel) {
 
         var mainLight = this.mainLight;

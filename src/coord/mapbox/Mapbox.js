@@ -133,7 +133,10 @@ Mapbox.prototype = {
     },
 
     unprojectFromTile: function (point, out) {
-        var scale = this._getScale() * TILE_SIZE;
+        return this.unprojectOnTileWithScale(point, this._getScale() * TILE_SIZE, out);
+    },
+
+    unprojectOnTileWithScale: function (point, scale, out) {
         var x = point[0];
         var y = point[1];
         var lambda2 = (x / scale) * (2 * PI) - PI;
@@ -141,6 +144,12 @@ Mapbox.prototype = {
         out = out || [];
         out[0] = lambda2 * 180 / PI;
         out[1] = phi2 * 180 / PI;
+        return out;
+    },
+
+    dataToPoint: function (data, out) {
+        out = this.projectOnTileWithScale(data, TILE_SIZE, out);
+        out[2] = data[2] != null ? data[2] : 0;
         return out;
     }
 };

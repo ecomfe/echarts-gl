@@ -17,6 +17,40 @@ var Map3DModel = echarts.extendSeriesModel({
 
     visualColorAccessPath: 'itemStyle.areaColor',
 
+    optionUpdated: function (newOpt) {
+        newOpt = newOpt || {};
+        var coordSysType = this.get('coordinateSystem');
+        if (coordSysType == null || coordSysType === 'geo3D') {
+            return;
+        }
+
+        if (__DEV__) {
+            var propsNeedToCheck = [
+                'left', 'top', 'width', 'height',
+                'boxWidth', 'boxDepth', 'boxHeight',
+                'light', 'viewControl', 'postEffect', 'temporalSuperSampling',
+                'environment', 'groundPlane'
+            ];
+            var ignoredProperties = [];
+            propsNeedToCheck.forEach(function (propName) {
+                if (newOpt[propName] != null) {
+                    ignoredProperties.push(propName);
+                }
+            });
+            if (ignoredProperties.length) {
+                console.warn(
+                    'Property %s in map3D series will be ignored if coordinate system is %s',
+                    ignoredProperties.join(', '), coordSysType
+                );
+            }
+        }
+
+        if (this.get('groundPlane.show')) {
+            // Force disable groundPlane if map3D has other coordinate systems.
+            this.option.groundPlane.show = false;
+        }
+    },
+
     getInitialData: function (option) {
         option.data = this.getFilledRegions(option.data, option.map);
 
@@ -59,7 +93,8 @@ var Map3DModel = echarts.extendSeriesModel({
     },
 
     defaultOption: {
-
+        // Support geo3D, mapbox
+        coordinateSystem: 'geo3D',
         // itemStyle: {},
         // height,
         // label: {}

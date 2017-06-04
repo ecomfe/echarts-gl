@@ -14,44 +14,48 @@ module.exports = echarts.extendChartView({
     init: function (ecModel, api) {
         this._geo3DBuilder = new Geo3DBuilder(api);
         this.groupGL = new graphicGL.Node();
-
-        this._sceneHelper = new SceneHelper();
-        this._sceneHelper.initLight(this.groupGL);
-
-        this._control = new OrbitControl({
-            zr: api.getZr()
-        });
-        this._control.init();
     },
 
     render: function (map3DModel, ecModel, api) {
-        this.groupGL.add(this._geo3DBuilder.rootNode);
 
-        var geo3D = map3DModel.coordinateSystem;
+        var coordSys = map3DModel.coordinateSystem;
 
-        if (!geo3D || !geo3D.viewGL) {
+        if (!coordSys || !coordSys.viewGL) {
             return;
         }
-        geo3D.viewGL.add(this.groupGL);
+        
+        this.groupGL.add(this._geo3DBuilder.rootNode);
+        coordSys.viewGL.add(this.groupGL);
 
-        var control = this._control;
-        control.setCamera(geo3D.viewGL.camera);
+        var geo3D;
+        if (coordSys.type === 'geo3D') {
+            geo3D = coordSys;
 
-        var viewControlModel = map3DModel.getModel('viewControl');
-        control.setFromViewControlModel(viewControlModel, 0);
+            if (!this._sceneHelper) {
+                this._sceneHelper = new SceneHelper();
+                this._sceneHelper.initLight(this.groupGL);
+            }
 
-        this._sceneHelper.setScene(geo3D.viewGL.scene);
-        this._sceneHelper.updateLight(map3DModel);
+            this._sceneHelper.setScene(coordSys.viewGL.scene);
+            this._sceneHelper.updateLight(map3DModel);
 
-        // Set post effect
-        geo3D.viewGL.setPostEffect(map3DModel.getModel('postEffect'), api);
-        geo3D.viewGL.setTemporalSuperSampling(map3DModel.getModel('temporalSuperSampling'));
+            // Set post effect
+            coordSys.viewGL.setPostEffect(map3DModel.getModel('postEffect'), api);
+            coordSys.viewGL.setTemporalSuperSampling(map3DModel.getModel('temporalSuperSampling'));
 
-        // Must update after geo3D.viewGL.setPostEffect
-        this._geo3DBuilder.update(map3DModel, ecModel, api);
+            var control = this._control;
+            if (!control) {
+                control = this._control = new OrbitControl({
+                    zr: api.getZr()
+                });
+                this._control.init();
+            }
+            control.setCamera(coordSys.viewGL.camera);
+            var viewControlModel = map3DModel.getModel('viewControl');
+            control.setFromViewControlModel(viewControlModel, 0);
 
-        control.off('update');
-        control.on('update', function () {
+            control.off('update');
+            control.on('update', function () {
                 api.dispatchAction({
                     type: 'map3DChangeCamera',
                     alpha: control.getAlpha(),
@@ -61,12 +65,42 @@ module.exports = echarts.extendChartView({
                     map3DId: map3DModel.id
                 });
             });
+
+            this._geo3DBuilder.extrudeY = true;
+        }
+        else {
+            if (this._control) {
+                this._control.dispose();
+                this._control = null;
+            }
+            if (this._sceneHelper) {
+                this._sceneHelper.dispose();
+                this._sceneHelper = null;
+            }
+            geo3D = map3DModel.getData().getLayout('geo3D');
+            
+            this._geo3DBuilder.extrudeY = false;
+        }
+
+        this._geo3DBuilder.update(map3DModel, geo3D, ecModel, api);
+        
+
+        // Must update after geo3D.viewGL.setPostEffect to determine linear space
+        var srgbDefineMethod = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
+        this._geo3DBuilder.rootNode.traverse(function (mesh) {
+            if (mesh.material) {
+                mesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+            }
+        });
     },
 
     afterRender: function (map3DModel, ecModel, api, layerGL) {
         var renderer = layerGL.renderer;
-        this._sceneHelper.updateAmbientCubemap(renderer, map3DModel, api);
-        this._sceneHelper.updateSkybox(renderer, map3DModel, api);
+        var coordSys = map3DModel.coordinateSystem;
+        if (coordSys && coordSys.type === 'geo3D') {
+            this._sceneHelper.updateAmbientCubemap(renderer, map3DModel, api);
+            this._sceneHelper.updateSkybox(renderer, map3DModel, api);
+        }
     },
 
     dispose: function () {

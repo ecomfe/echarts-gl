@@ -3,8 +3,6 @@ var Vector3 = require('qtek/lib/math/Vector3');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
 var cartesian3DLayout = require('./cartesian3DLayout');
 
-var TILE_SIZE = 512;
-
 function globeLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var extent = data.getDataExtent('z', true);
@@ -71,8 +69,8 @@ function mapboxLayout(seriesModel, coordSys) {
     if (barSize == null) {
         var xExtent = data.getDataExtent('x');
         var yExtent = data.getDataExtent('y');
-        var corner0 = coordSys.projectOnTileWithScale([xExtent[0], yExtent[0]], TILE_SIZE);
-        var corner1 = coordSys.projectOnTileWithScale([xExtent[1], yExtent[1]], TILE_SIZE);
+        var corner0 = coordSys.dataToPoint([xExtent[0], yExtent[0]]);
+        var corner1 = coordSys.dataToPoint([xExtent[1], yExtent[1]]);
         var size = Math.min(
             Math.abs(corner0[0] - corner1[0]),
             Math.abs(corner0[1] - corner1[1])
@@ -89,8 +87,7 @@ function mapboxLayout(seriesModel, coordSys) {
     var dir = [0, 0, 1];
     data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
         var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, zExtent, heightExtent);
-        var start = coordSys.projectOnTileWithScale([lng, lat], TILE_SIZE);
-        start[2] = 0;
+        var start = coordSys.dataToPoint([lng, lat]);
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
     });
