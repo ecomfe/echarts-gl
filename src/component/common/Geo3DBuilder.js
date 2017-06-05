@@ -533,7 +533,7 @@ Geo3DBuilder.prototype = {
 
         var min = polygons[0].minAll;
         var max = polygons[0].maxAll;
-        var maxDimSize = Math.max(max[0] - min[0], max[2] - min[2]);
+        var maxDimSize = Math.max(max[0] - min[0], max[sideCoordIndex] - min[sideCoordIndex]);
 
         function addVertices(polygon, y, insideOffset) {
             var points = polygon.points;
