@@ -65,6 +65,8 @@ void main()
 #define ROUGHNESS_CHANEL 0
 #define METALNESS_CHANEL 1
 
+#define NORMAL_UP_AXIS 1
+#define NORMAL_FRONT_AXIS 2
 
 #ifdef VERTEX_COLOR
 varying vec4 v_Color;
@@ -216,6 +218,7 @@ void main()
         }
     }
 #endif
+    N = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);
 
     vec3 diffuseTerm = vec3(0.0);
     vec3 specularTerm = vec3(0.0);

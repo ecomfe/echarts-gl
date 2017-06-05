@@ -7,6 +7,9 @@
 
 @export ecgl.hatching.fragment
 
+#define NORMAL_UP_AXIS 1
+#define NORMAL_FRONT_AXIS 2
+
 varying vec2 v_Texcoord;
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
@@ -118,6 +121,8 @@ void main()
     ambientFactor = dot(v_Normal, N);
 #endif
 
+    N = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);
+    
     @import ecgl.common.ssaoMap.main
 
 #ifdef AMBIENT_LIGHT_COUNT

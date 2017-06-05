@@ -614,11 +614,11 @@ Geo3DBuilder.prototype = {
 
                     if (projectUVOnGround) {
                         uv[0] = (polygon.points[idx3] - min[0]) / maxDimSize;
-                        uv[1] = (polygon.points[idx3 + 2] - min[2]) / maxDimSize;
+                        uv[1] = (polygon.points[idx3 + 2] - min[sideCoordIndex]) / maxDimSize;
                     }
                     else {
                         uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
-                        uv[1] = (quadPos[k][1] - min[1]) / maxDimSize;
+                        uv[1] = (quadPos[k][extrudeCoordIndex] - min[extrudeCoordIndex]) / maxDimSize;
                     }
                     texcoordAttr.set(vertexOffset + k, uv);
                 }

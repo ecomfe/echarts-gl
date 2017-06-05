@@ -53,6 +53,9 @@ void main()
 #define LAYER_DIFFUSEMAP_COUNT 0
 #define LAYER_EMISSIVEMAP_COUNT 0
 
+#define NORMAL_UP_AXIS 1
+#define NORMAL_FRONT_AXIS 2
+
 varying vec2 v_Texcoord;
 
 varying vec3 v_Normal;
@@ -142,6 +145,8 @@ void main()
     // PENDING
     ambientFactor = dot(v_Normal, N);
 #endif
+
+    N = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);
 
     vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
 

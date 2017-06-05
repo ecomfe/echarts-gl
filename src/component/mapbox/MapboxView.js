@@ -88,6 +88,14 @@ module.exports = echarts.extendComponentView({
         var renderer = layerGL.renderer;
         this._sceneHelper.updateAmbientCubemap(renderer, mapboxModel, api);
         this._sceneHelper.updateSkybox(renderer, mapboxModel, api);
+
+        // FIXME If other series changes coordinate system.
+        mapboxModel.coordinateSystem.viewGL.scene.traverse(function (mesh) {
+            if (mesh.material) {
+                mesh.material.shader.define('fragment', 'NORMAL_UP_AXIS', 2);
+                mesh.material.shader.define('fragment', 'NORMAL_FRONT_AXIS', 1);
+            }
+        });
     },
 
     updateCamera: function (mapboxModel, ecModel, api, payload) {
