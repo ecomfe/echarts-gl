@@ -25,6 +25,7 @@ function Mapbox() {
     this.bearing = 0;
     this.pitch = 0;
     this.center = [0, 0];
+    this._origin;
     this.zoom = 0;
 }
 
@@ -45,11 +46,15 @@ Mapbox.prototype = {
         this.center = option.center;
         this.zoom = option.zoom;
 
-        this.updateCamera();
+        if (!this._origin) {
+            this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
+        }
+
+        this.updateTransform();
     },
 
     // https://github.com/mapbox/mapbox-gl-js/blob/master/src/geo/transform.js#L479
-    updateCamera: function () {
+    updateTransform: function () {
         if (!this.height) { return; }
 
         var cameraToCenterDistance = 0.5 / Math.tan(FOV / 2) * this.height;
@@ -67,16 +72,16 @@ Mapbox.prototype = {
         // Calculate z distance of the farthest fragment that should be rendered.
         var furthestDistance = Math.cos(Math.PI / 2 - pitch) * topHalfSurfaceDistance + cameraToCenterDistance;
         // Add a bit extra to avoid precision problems when a fragment's distance is exactly `furthestDistance`
-        var farZ = furthestDistance * 1.01;
+        var farZ = furthestDistance * 1.1;
 
         // matrix for conversion from location to GL coordinates (-1 .. 1)
         var m = new Float64Array(16);
-        mat4.perspective(m, FOV, this.width / this.height, 0.1, farZ);
+        mat4.perspective(m, FOV, this.width / this.height, 1, farZ);
         this.viewGL.camera.projectionMatrix.setArray(m);
         this.viewGL.camera.decomposeProjectionMatrix();
 
         var m = mat4.identity(new Float64Array(16));
-        var pt = this.projectOnTile(this.center);
+        var pt = this.dataToPoint(this.center);
         // Inverse
         mat4.scale(m, m, [1, -1, 1]);
         // Translate to altitude
@@ -84,7 +89,7 @@ Mapbox.prototype = {
         mat4.rotateX(m, m, pitch);
         mat4.rotateZ(m, m, -this.bearing / 180 * Math.PI);
         // Translate to center.
-        mat4.translate(m, m, [-pt[0], -pt[1], 0]);
+        mat4.translate(m, m, [-pt[0] * this._getScale(), -pt[1] * this._getScale(), 0]);
 
         this.viewGL.camera.viewMatrix._array = m;
         var invertM = new Float64Array(16);
@@ -105,10 +110,13 @@ Mapbox.prototype = {
         var verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))));
         // Include scale to avoid zoom needs relayout
         // FIXME Camera scale may have problem in shadow
-        this.viewGL.scene.scale.set(
+        this.viewGL.rootNode.scale.set(
             this._getScale(), this._getScale(), verticalScale * this.altitudeScale
         );
-
+        // this.transform = mat4.identity(new Float64Array());
+        // mat4.scale(this.transform, this.transform, [
+        //     this._getScale(), this._getScale(), verticalScale * this.altitudeScale, 1
+        // ]);
     },
 
     _getScale: function () {
@@ -149,6 +157,9 @@ Mapbox.prototype = {
 
     dataToPoint: function (data, out) {
         out = this.projectOnTileWithScale(data, TILE_SIZE, out);
+        // Add a origin to avoid precision issue in WebGL.
+        out[0] -= this._origin[0];
+        out[1] -= this._origin[1];
         out[2] = data[2] != null ? data[2] : 0;
         return out;
     }

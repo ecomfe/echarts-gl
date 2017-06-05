@@ -1,6 +1,7 @@
 var Mapbox = require('./mapbox/Mapbox');
 var echarts = require('echarts/lib/echarts');
 var retrieve = require('../util/retrieve');
+var graphicGL = require('../util/graphicGL');
 var ViewGL = require('../core/ViewGL');
 
 function resizeMapbox(mapboxModel, api) {
@@ -14,7 +15,7 @@ function resizeMapbox(mapboxModel, api) {
 
     this.altitudeScale = mapboxModel.get('altitudeScale');
 
-    this.updateCamera();
+    // this.updateTransform();
 }
 
 var mapboxCreator = {
@@ -26,8 +27,11 @@ var mapboxCreator = {
         var mapboxList = [];
 
         ecModel.eachComponent('mapbox', function (mapboxModel) {
-            // FIXME
-            mapboxModel.__viewGL = mapboxModel.__viewGL || new ViewGL();
+            var viewGL = mapboxModel.__viewGL;
+            if (!viewGL) {
+                viewGL = mapboxModel.__viewGL = new ViewGL();
+                viewGL.setRootNode(new graphicGL.Node());
+            }
 
             var mapboxCoordSys = new Mapbox();
             mapboxCoordSys.viewGL = mapboxModel.__viewGL;

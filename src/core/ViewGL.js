@@ -37,6 +37,11 @@ function ViewGL(cameraType) {
      */
     this.scene = new Scene();
 
+    /**
+     * @type {qtek.Node}
+     */
+    this.rootNode = this.scene;
+
     this.viewport = {
         x: 0, y: 0, width: 0, height: 0
     };
@@ -394,15 +399,29 @@ ViewGL.prototype.isLinearSpace = function () {
     return this._enablePostEffect;
 };
 
+ViewGL.prototype.setRootNode = function (rootNode) {
+    if (this.rootNode === rootNode) {
+        return;
+    }
+    var children = this.rootNode.children();
+    for (var i = 0; i < children.length; i++) {
+        rootNode.add(children[i]);
+    }
+    if (rootNode !== this.scene) {
+        this.scene.add(rootNode);
+    }
+
+    this.rootNode = rootNode;
+};
 // Proxies
 ViewGL.prototype.add = function (node3D) {
-    this.scene.add(node3D);
+    this.rootNode.add(node3D);
 };
 ViewGL.prototype.remove = function (node3D) {
-    this.scene.remove(node3D);
+    this.rootNode.remove(node3D);
 };
 ViewGL.prototype.removeAll = function (node3D) {
-    this.scene.removeAll(node3D);
+    this.rootNode.removeAll(node3D);
 };
 
 echarts.util.extend(ViewGL.prototype, notifier);

@@ -47,6 +47,7 @@ module.exports = echarts.extendComponentView({
             $ignorePicking: true,
             renderNormal: true
         });
+        // TODO
         this._groundMesh.scale.set(1e3, 1e3, 1);
     },
 
@@ -66,10 +67,11 @@ module.exports = echarts.extendComponentView({
 
         var coordSys = mapboxModel.coordinateSystem;
 
+        // Not add to rootNode. Or light direction will be stretched by rootNode scale
         coordSys.viewGL.scene.add(this._lightRoot);
         coordSys.viewGL.scene.add(this._groundMesh);
 
-        this._updateGroundMeshPosition();
+        this._updateGroundMesh();
         
         // Update lights
         this._sceneHelper.setScene(coordSys.viewGL.scene);
@@ -90,6 +92,10 @@ module.exports = echarts.extendComponentView({
 
     updateCamera: function (mapboxModel, ecModel, api, payload) {
         mapboxModel.coordinateSystem.setCameraOption(payload);
+
+        this._updateGroundMesh();
+
+        api.getZr().refresh();
     },
 
     _dispatchInteractAction: function (api, mapbox) {
@@ -100,16 +106,12 @@ module.exports = echarts.extendComponentView({
             center: mapbox.getCenter().toArray(),
             bearing: mapbox.getBearing()
         });
-
-        this._updateGroundMeshPosition();
-
-        api.getZr().refresh();
     },
 
-    _updateGroundMeshPosition: function () {
+    _updateGroundMesh: function () {
         if (this._mapboxModel) {
             var coordSys = this._mapboxModel.coordinateSystem;
-            var pt = coordSys.projectOnTileWithScale(coordSys.center, TILE_SIZE);
+            var pt = coordSys.dataToPoint(coordSys.center);
             this._groundMesh.position.set(pt[0], pt[1], -0.01);
         }
     },

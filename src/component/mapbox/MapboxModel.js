@@ -29,7 +29,7 @@ var MapboxModel = echarts.extendComponentModel({
         light: {
             main: {
                 alpha: 20,
-                beta: 20
+                beta: 30
             }
         },
 

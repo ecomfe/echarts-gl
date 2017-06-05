@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Map3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/map/js/china.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src='lib/mapbox-gl.js'></script>
+        <link href='lib/mapbox-gl.css' rel='stylesheet' />
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            mapboxgl.accessToken = 'pk.eyJ1IjoicGlzc2FuZyIsImEiOiJjaXBnaGYxcW8wMDFodWNtNDc4NzdqMWR2In0.4XUWeduDltiCbsIiS-U8Lg';
+            var chart = echarts.init(document.getElementById('main'));
+
+            $.getJSON('data/buildings.json', function (buildingsGeoJSON) {
+
+                // buildingsGeoJSON.features = buildingsGeoJSON.features.slice(0, 10);
+                echarts.registerMap('buildings', buildingsGeoJSON);
+
+                var regions = buildingsGeoJSON.features.map(function (feature) {
+                    return {
+                        name: feature.properties.name,
+                        value: Math.random(),
+                        height: Math.max(feature.properties.height, 2)
+                    };
+                });
+
+                chart.setOption({
+                    mapbox: {
+                        center: [13.409779, 52.520645],
+                        zoom: 15,
+                        pitch: 50,
+                        bearing: -10,
+                        style: 'mapbox://styles/mapbox/light-v9',
+                        postEffect: {
+                            enable: false,
+                            screenSpaceAmbientOcculusion: {
+                                enable: false,
+                                intensity: 1,
+                                radius: 200,
+                                quality: 'high'
+                            }
+                        },
+                        light: {
+                            main: {
+                                intensity: 1,
+                                shadow: true,
+                                shadowQuality: 'high'
+                            },
+                            ambient: {
+                                intensity: 0.
+                            },
+                            ambientCubemap: {
+                                texture: 'asset/canyon.hdr',
+                                exposure: 1,
+                                diffuseIntensity: 0.4
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'map3D',
+                        coordinateSystem: 'mapbox',
+                        map: 'buildings',
+                        data: regions,
+                        shading: 'lambert',
+                        instancing: true,
+                        silent: true
+                    }]
+                });
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>
