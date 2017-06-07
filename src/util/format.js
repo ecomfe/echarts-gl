@@ -26,4 +26,17 @@ formatUtil.getFormattedLabel = function (seriesModel, dataIndex, status, dataTyp
     return text;
 };
 
+/**
+ * If value is not array, then convert it to array.
+ * @param  {*} value
+ * @return {Array} [value] or value
+ */
+formatUtil.normalizeToArray = function (value) {
+    return value instanceof Array
+        ? value
+        : value == null
+        ? []
+        : [value];
+};
+
 module.exports = formatUtil;

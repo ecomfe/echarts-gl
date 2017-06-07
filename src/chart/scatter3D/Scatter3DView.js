@@ -1,8 +1,9 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
+var retrieve = require('../../util/retrieve');
+var format = require('../../util/format');
 
 var PointsBuilder = require('../common/PointsBuilder');
-var modelUtil = require('echarts/lib/util/model');
 
 echarts.extendChartView({
 
@@ -56,11 +57,11 @@ echarts.extendChartView({
 
     _toggleStatus: function (status, seriesModel, ecModel, api, payload) {
         var data = seriesModel.getData();
-        var dataIndex = modelUtil.queryDataIndex(data, payload);
+        var dataIndex = retrieve.queryDataIndex(data, payload);
 
         var pointsBuilder = this._pointsBuilder;
         if (dataIndex != null) {
-            echarts.util.each(modelUtil.normalizeToArray(dataIndex), function (dataIdx) {
+            echarts.util.each(format.normalizeToArray(dataIndex), function (dataIdx) {
                 status === 'highlight' ? pointsBuilder.highlight(data, dataIdx) : pointsBuilder.downplay(data, dataIdx);
             }, this);
         }

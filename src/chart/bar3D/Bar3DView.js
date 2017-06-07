@@ -1,10 +1,10 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
+var format = require('../../util/format');
 var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
 var vec3 = require('qtek/lib/dep/glmatrix').vec3;
-var modelUtil = require('echarts/lib/util/model');
 
 function getShader(shading) {
     var shader = graphicGL.createShader('ecgl.' + shading);
@@ -314,11 +314,11 @@ module.exports = echarts.extendChartView({
 
     _toggleStatus: function (status, seriesModel, ecModel, api, payload) {
         var data = seriesModel.getData();
-        var dataIndex = modelUtil.queryDataIndex(data, payload);
+        var dataIndex = retrieve.queryDataIndex(data, payload);
 
         var self = this;
         if (dataIndex != null) {
-            echarts.util.each(modelUtil.normalizeToArray(dataIndex), function (dataIdx) {
+            echarts.util.each(format.normalizeToArray(dataIndex), function (dataIdx) {
                 status === 'highlight' ? this._highlight(dataIdx) : this._downplay(dataIdx);
             }, this);
         }
