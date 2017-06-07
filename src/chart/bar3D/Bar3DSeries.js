@@ -56,10 +56,7 @@ var Bar3DSeries = echarts.extendSeriesModel({
         // Shading of globe
         shading: 'color',
 
-        // If coordinateSystem is globe, value will be mapped
-        // from minHeight to maxHeight
         minHeight: 0,
-        maxHeight: 100,
 
         itemStyle: {
             opacity: 1

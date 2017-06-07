@@ -19,6 +19,11 @@ function resizeGlobe(globeModel, api) {
     this.viewGL.setViewport(viewport.x, viewport.y, viewport.width, viewport.height, api.getDevicePixelRatio());
 
     this.radius = globeModel.get('globeRadius');
+
+    var outerRadius = globeModel.get('globeOuterRadius');
+    if (this.altitudeAxis) {
+        this.altitudeAxis.setExtent(0, outerRadius - this.radius);
+    }
 }
 
 var globeCreator = {
@@ -46,6 +51,7 @@ var globeCreator = {
             globe.resize(globeModel, api);
         });
 
+        var altitudeDataExtent = [];
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'globe') {
                 var globeModel = seriesModel.getReferringComponents('globe')[0];
@@ -64,6 +70,39 @@ var globeCreator = {
                 var coordSys = globeModel.coordinateSystem;
 
                 seriesModel.coordinateSystem = coordSys;
+
+                // Get altitude data extent.
+                var globeIndex = globeModel.componentIndex;
+                var data = seriesModel.getData();
+                if (data.dimensions[2]) {
+                    // TODO Encoding can specify which dimension will be encoded to altitude
+                    var dataExtent = data.getDataExtent(data.dimensions[2]);
+                    altitudeDataExtent[globeIndex] = altitudeDataExtent[globeIndex] || [Infinity, -Infinity];
+                    altitudeDataExtent[globeIndex][0] = Math.min(
+                        altitudeDataExtent[globeIndex][0], dataExtent[0]
+                    );
+                    altitudeDataExtent[globeIndex][1] = Math.max(
+                        altitudeDataExtent[globeIndex][1], dataExtent[1]
+                    );
+                }
+            }
+        });
+
+        // Create altitude axis
+        ecModel.eachComponent('globe', function (globeModel, idx) {
+            var globe = globeModel.coordinateSystem;
+            if (altitudeDataExtent[idx]) {
+                var scale = echarts.helper.createScale(
+                    altitudeDataExtent[globeModel.componentIndex], {
+                        type: 'value',
+                        // PENDING
+                        min: 'dataMin',
+                        max: 'dataMax'
+                    }
+                );
+                globe.altitudeAxis = new echarts.Axis('altitude', scale);
+                // Resize again
+                globe.resize(globeModel, api);
             }
         });
 

@@ -41,6 +41,10 @@ function resizeGeo3D(geo3DModel, api) {
     this.setSize(width, height, depth);
 
     this.regionHeight = geo3DModel.get('regionHeight');
+
+    if (this.altitudeAxis) {
+        this.altitudeAxis.setExtent(0, Math.max(height - this.regionHeight, 0));
+    }
 }
 
 
@@ -103,6 +107,8 @@ var geo3DCreator = {
             }
         });
 
+        var altitudeDataExtent = [];
+
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'geo3D') {
                 if (seriesModel.type === 'series.map3D') {
@@ -122,8 +128,42 @@ var geo3DCreator = {
                 }
 
                 seriesModel.coordinateSystem = geo3DModel.coordinateSystem;
+
+                // Get altitude data extent.
+                var geo3DIndex = geo3DModel.componentIndex;
+                var data = seriesModel.getData();
+                if (data.dimensions[2]) {
+                    // TODO Encoding can specify which dimension will be encoded to altitude
+                    var dataExtent = data.getDataExtent(data.dimensions[2]);
+                    altitudeDataExtent[geo3DIndex] = altitudeDataExtent[geo3DIndex] || [Infinity, -Infinity];
+                    altitudeDataExtent[geo3DIndex][0] = Math.min(
+                        altitudeDataExtent[geo3DIndex][0], dataExtent[0]
+                    );
+                    altitudeDataExtent[geo3DIndex][1] = Math.max(
+                        altitudeDataExtent[geo3DIndex][1], dataExtent[1]
+                    );
+                }
             }
         });
+        // Create altitude axis
+        ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
+            var geo3D = geo3DModel.coordinateSystem;
+            if (altitudeDataExtent[idx]) {
+                var scale = echarts.helper.createScale(
+                    altitudeDataExtent[geo3DModel.componentIndex], {
+                        type: 'value',
+                        // PENDING
+                        min: 'dataMin',
+                        max: 'dataMax'
+                    }
+                );
+                geo3D.altitudeAxis = new echarts.Axis('altitude', scale);
+                // Resize again
+                geo3D.resize(geo3DModel, api);
+            }
+        });
+
+        return geo3DList;
     }
 };
 

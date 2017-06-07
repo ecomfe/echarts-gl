@@ -5,9 +5,7 @@ var cartesian3DLayout = require('./cartesian3DLayout');
 
 function globeLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
-    var extent = data.getDataExtent('z', true);
-    var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
-    var isZeroExtent = Math.abs(extent[1] - extent[0]) < 1e-10;
+    var barMinHeight = seriesModel.get('minHeight') || 0;
     var barSize = seriesModel.get('barSize');
     if (barSize == null) {
         var perimeter = coordSys.radius * Math.PI * 2;
@@ -21,9 +19,9 @@ function globeLayout(seriesModel, coordSys) {
         barSize = [barSize, barSize];
     }
     data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
-        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, extent, heightExtent);
+        var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, 0]);
-        var end = coordSys.dataToPoint([lng, lat, height]);
+        var end = coordSys.dataToPoint([lng, lat, val]);
         var dir = vec3.sub([], end, start);
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
@@ -34,10 +32,8 @@ function globeLayout(seriesModel, coordSys) {
 
 function geo3DLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
-    var extent = data.getDataExtent('z', true);
-    var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
-    var isZeroExtent = Math.abs(extent[1] - extent[0]) < 1e-10;
     var barSize = seriesModel.get('barSize');
+    var barMinHeight = seriesModel.get('minHeight') || 0;
     if (barSize == null) {
         var size = Math.min(coordSys.size[0], coordSys.size[2]);
         // PENDING, data density
@@ -51,7 +47,7 @@ function geo3DLayout(seriesModel, coordSys) {
     }
     var dir = [0, 1, 0];
     data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
-        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, extent, heightExtent);
+        var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, 0]);
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);

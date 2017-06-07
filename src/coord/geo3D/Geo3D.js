@@ -29,6 +29,8 @@ function Geo3D(name, map, geoJson, specialAreas, nameMap) {
 
     // Which dimension to extrude. Y or Z
     this.extrudeY = true;
+
+    this.altitudeAxis;
 }
 
 Geo3D.prototype = {
@@ -150,17 +152,23 @@ Geo3D.prototype = {
         var extrudeCoordIndex = this.extrudeY ? 1 : 2;
         var sideCoordIndex = this.extrudeY ? 2 : 1;
 
+        var altitudeVal = data[2];
+        // PENDING.
+        if (isNaN(altitudeVal)) {
+            altitudeVal = 0;
+        }
         // lng
         out[0] = data[0];
         // lat
         out[sideCoordIndex] = data[1];
-        // alt
-        out[extrudeCoordIndex] = data[2];
 
-        if (isNaN(out[extrudeCoordIndex])) {
+        if (this.altitudeAxis) {
+            out[extrudeCoordIndex] = this.altitudeAxis.dataToCoord(altitudeVal);
+        }
+        else {
             out[extrudeCoordIndex] = 0;
         }
-        // PENDING.
+        // PENDING different region height.
         out[extrudeCoordIndex] += this.regionHeight;
 
         vec3.transformMat4(out, out, this.transform);

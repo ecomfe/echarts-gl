@@ -29,38 +29,11 @@ echarts.registerLayout(function (ecModel, api) {
             var item = [];
             var out = [];
 
-            var isGlobe = coordSys.type === 'globe';
-            var isGeo3D = coordSys.type === 'geo3D';
-            var distanceToGlobe = seriesModel.get('distanceToGlobe');
-            var distanceToGeo3D = seriesModel.get('distanceToGeo3D');
-
-            var distance = isGlobe ? distanceToGlobe : distanceToGeo3D;
-            var isDistanceRange = echarts.util.isArray(distance);
-
-            var eleRange = [Infinity, -Infinity];
-            if (isDistanceRange && (isGlobe || isGeo3D)) {
-                data.each('z', function (z, idx) {
-                    if (isNaN(z)) {
-                        return;
-                    }
-                    eleRange[0] = Math.min(eleRange[0], z);
-                    eleRange[1] = Math.max(eleRange[1], z);
-                });
-            }
-
             if (coordSys) {
                 data.each(['x', 'y', 'z'], function (x, y, z, idx) {
                     item[0] = x;
                     item[1] = y;
-                    if (isGlobe ||isGeo3D) {
-                        // TODO Bump map
-                        item[2] = isDistanceRange
-                            ? echarts.number.linearMap(z, eleRange, distance)
-                            : distance;
-                    }
-                    else {
-                        item[2] = z;
-                    }
+                    item[2] = z;
                     coordSys.dataToPoint(item, out);
                     points[idx * 3] = out[0];
                     points[idx * 3 + 1] = out[1];

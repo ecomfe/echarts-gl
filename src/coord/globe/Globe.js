@@ -4,9 +4,11 @@ var vec3 = glmatrix.vec3;
 
 function Globe(radius) {
 
-    this.radius = radius || 100;
+    this.radius = radius;
 
     this.viewGL = null;
+
+    this.altitudeAxis;
 }
 
 Globe.prototype = {
@@ -23,11 +25,14 @@ Globe.prototype = {
         var lng = data[0];
         var lat = data[1];
         // Default have 0 altitude
-        var alt = data[2] || 0;
+        var altVal = data[2] || 0;
 
         lng = lng * Math.PI / 180;
         lat = lat * Math.PI / 180;
-        var r = alt + this.radius;
+        var r = this.radius;
+        if (this.altitudeAxis) {
+            r += this.altitudeAxis.dataToCoord(altVal);
+        }
         var r0 = Math.cos(lat) * r;
 
         out = out || [];
@@ -61,6 +66,9 @@ Globe.prototype = {
         out[0] = lng;
         out[1] = lat;
         out[2] = len - this.radius;
+        if (this.altitudeAxis) {
+            out[2] = this.altitudeAxis.coordToData(out[2]);
+        }
 
         return out;
     }

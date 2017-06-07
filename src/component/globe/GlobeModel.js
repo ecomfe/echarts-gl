@@ -95,7 +95,11 @@ var GlobeModel = echarts.extendComponentModel({
         // Detail of displacement. 'low', 'medium', 'high', 'ultra'
         displacementQuality: 'medium',
 
+        // Globe radius
         globeRadius: 100,
+
+        // Globe outer radius. Which is max of altitude.
+        globeOuterRadius: 150,
 
         // Shading of globe
         shading: 'lambert',

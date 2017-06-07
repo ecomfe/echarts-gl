@@ -47,7 +47,7 @@ module.exports = {
         height: '100%',
 
         boxWidth: 100,
-        boxHeight: 30,
+        boxHeight: 10,
         boxDepth: 'auto',
 
         regionHeight: 3,
