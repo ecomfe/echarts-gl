@@ -15,52 +15,60 @@
         <script src='lib/mapbox-gl.js'></script>
         <link href='lib/mapbox-gl.css' rel='stylesheet' />
         <script src="lib/jquery.min.js"></script>
+        <script src='data/buildings-full.json.js'></script>
         <script>
-            mapboxgl.accessToken = 'pk.eyJ1IjoicGlzc2FuZyIsImEiOiJjaXBnaGYxcW8wMDFodWNtNDc4NzdqMWR2In0.4XUWeduDltiCbsIiS-U8Lg';
-            var chart = echarts.init(document.getElementById('main'));
+            mapboxgl.accessToken = window.location.search.slice(1);
+            var chart = echarts.init(document.getElementById('main'), null, {
+                devicePixelRatio: 1
+            });
 
-            $.getJSON('data/buildings.json', function (buildingsGeoJSON) {
+            // $.getJSON('data/buildings.json', function (buildingsGeoJSON) {
 
                 // buildingsGeoJSON.features = buildingsGeoJSON.features.slice(0, 10);
                 echarts.registerMap('buildings', buildingsGeoJSON);
 
-                var regions = buildingsGeoJSON.features.map(function (feature) {
+                var regions = echarts.parseGeoJSON(buildingsGeoJSON);
+                var regionsData = buildingsGeoJSON.features.map(function (feature) {
                     return {
                         name: feature.properties.name,
                         value: Math.random(),
-                        height: Math.max(feature.properties.height, 2)
+                        height: +feature.properties.height * 10
                     };
                 });
 
                 chart.setOption({
                     mapbox: {
                         center: [13.409779, 52.520645],
-                        zoom: 15,
+                        zoom: 10,
                         pitch: 50,
                         bearing: -10,
-                        style: 'mapbox://styles/mapbox/light-v9',
+                        style: 'mapbox://styles/mapbox/dark-v9',
                         postEffect: {
-                            enable: false,
+                            enable: true,
                             screenSpaceAmbientOcculusion: {
-                                enable: false,
-                                intensity: 1,
+                                enable: true,
+                                intensity: 2,
                                 radius: 200,
                                 quality: 'high'
+                            },
+                            SSR: {
+                                enable:true
                             }
                         },
                         light: {
                             main: {
-                                intensity: 1,
-                                shadow: true,
+                                intensity: 2,
+                                shadow: false,
                                 shadowQuality: 'high'
                             },
                             ambient: {
                                 intensity: 0.
                             },
                             ambientCubemap: {
-                                texture: 'asset/canyon.hdr',
+                                texture: 'asset/pisa.hdr',
                                 exposure: 1,
-                                diffuseIntensity: 0.4
+                                diffuseIntensity: 0.5,
+                                specularIntensity: 2
                             }
                         }
                     },
@@ -68,13 +76,40 @@
                         type: 'map3D',
                         coordinateSystem: 'mapbox',
                         map: 'buildings',
-                        data: regions,
-                        shading: 'lambert',
+                        data: regionsData,
+                        shading: 'realistic',
                         instancing: true,
-                        silent: true
+                        silent: true,
+                        realisticMaterial: {
+                            metalness: 1,
+                            roughness: 0.0,
+                            // baseTexture: 'asset/iron-rusted4/iron-rusted4-basecolor.png',
+                            // metalness: 'asset/iron-rusted4/iron-rusted4-metalness.png',
+                            // roughness: 'asset/iron-rusted4/iron-rusted4-roughness.png',
+                            normalTexture: 'asset/iron-rusted4/iron-rusted4-normal.png',
+                            textureTiling: [20, 20]
+                        }
                     }]
                 });
-            });
+
+                var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
+                var current = 0;
+                function flyToNextPoint() {
+                    var randRegion = regions[Math.round(Math.random() * (regions.length - 1))];
+                    mapbox.flyTo({
+                        center: randRegion.center,
+                        zoom: 14 + Math.random(),
+                        speed: 0.3,
+                        curve: 1
+                    });
+                }
+
+                window.addEventListener('keydown', function (e) {
+                    if (e.keyCode === 32) {
+                        flyToNextPoint();
+                    }
+                })
+            // });
 
             window.addEventListener('resize', function () {
                 chart.resize();

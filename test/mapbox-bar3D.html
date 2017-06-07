@@ -16,7 +16,7 @@
         <script src="lib/jquery.min.js"></script>
         <script src="./data/capitals.js"></script>
         <script>
-            mapboxgl.accessToken = 'pk.eyJ1IjoicGlzc2FuZyIsImEiOiJjaXBnaGYxcW8wMDFodWNtNDc4NzdqMWR2In0.4XUWeduDltiCbsIiS-U8Lg';
+            mapboxgl.accessToken = window.location.search.slice(1);
             var chart = echarts.init(document.getElementById('main'));
 
             $.getJSON('./data/population.json', function (data) {
