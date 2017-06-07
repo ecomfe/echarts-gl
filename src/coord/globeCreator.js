@@ -91,7 +91,7 @@ var globeCreator = {
         // Create altitude axis
         ecModel.eachComponent('globe', function (globeModel, idx) {
             var globe = globeModel.coordinateSystem;
-            if (altitudeDataExtent[idx]) {
+            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
                 var scale = echarts.helper.createScale(
                     altitudeDataExtent[globeModel.componentIndex], {
                         type: 'value',

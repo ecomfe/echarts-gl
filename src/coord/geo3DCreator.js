@@ -148,7 +148,7 @@ var geo3DCreator = {
         // Create altitude axis
         ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
             var geo3D = geo3DModel.coordinateSystem;
-            if (altitudeDataExtent[idx]) {
+            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
                 var scale = echarts.helper.createScale(
                     altitudeDataExtent[geo3DModel.componentIndex], {
                         type: 'value',

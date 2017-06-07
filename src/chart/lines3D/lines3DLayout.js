@@ -16,19 +16,11 @@ var halfVector = create();
 var coord0 = [];
 var coord1 = [];
 
-function mapCoordElevation(coord, elevationRange, distance, isDistanceRange) {
-    coord[2] = isDistanceRange
-        ? echarts.number.linearMap(coord[2], elevationRange, distance) : distance;
-}
-
-function getCubicPointsOnGlobe(coords, coordSys, elevationRange, distanceToGlobe, isDistanceRange) {
+function getCubicPointsOnGlobe(coords, coordSys) {
     var globeRadius = coordSys.radius;
 
     vec2.copy(coord0, coords[0]);
     vec2.copy(coord1, coords[1]);
-    // PENDING, handle NaN elevation
-    mapCoordElevation(coord0, elevationRange, distanceToGlobe, isDistanceRange);
-    mapCoordElevation(coord1, elevationRange, distanceToGlobe, isDistanceRange);
 
     var pts = [];
     var p0 = pts[0] = create();
@@ -66,7 +58,7 @@ function getCubicPointsOnGlobe(coords, coordSys, elevationRange, distanceToGlobe
     var projDist = vec3.dot(p0, halfVector);
     // Angle of halfVector and p1
     var cosTheta = vec3.dot(halfVector, p1);
-    var len = ((coord0[2] + coord1[2]) / 2 + globeRadius - projDist) / cosTheta * 2;
+    var len = (globeRadius - projDist) / cosTheta * 2;
 
     vec3.scaleAndAdd(p1, p0, p1, len);
     vec3.scaleAndAdd(p2, p3, p2, len);
@@ -74,13 +66,12 @@ function getCubicPointsOnGlobe(coords, coordSys, elevationRange, distanceToGlobe
     return pts;
 }
 
-function getPolylinePoints(coords, coordSys, elevationRange, distance, isDistanceRange) {
+function getPolylinePoints(coords, coordSys) {
     var pts = new Float32Array(coords.length * 3);
     var off = 0;
     var pt = [];
     for (var i = 0; i < coords.length; i++) {
         vec3.copy(coord0, coords[i]);
-        mapCoordElevation(coord0, elevationRange, distance, isDistanceRange);
         coordSys.dataToPoint(coord0, pt);
         pts[off++] = pt[0];
         pts[off++] = pt[1];
@@ -89,9 +80,8 @@ function getPolylinePoints(coords, coordSys, elevationRange, distance, isDistanc
     return pts;
 }
 
-function prepareCoords(data, isDistanceRange) {
+function prepareCoords(data) {
     var coordsList = [];
-    var elevationRange = [Infinity, -Infinity];
 
     data.each(function (idx) {
         var itemModel = data.getItemModel(idx);
@@ -104,21 +94,10 @@ function prepareCoords(data, isDistanceRange) {
             }
         }
         coordsList.push(coords);
-
-        if (isDistanceRange) {
-            for (var i = 0; i < coords.length; i++) {
-                var elevation = coords[i][2];
-                if (elevation != null) {
-                    elevationRange[0] = Math.min(elevationRange[0], elevation);
-                    elevationRange[1] = Math.max(elevationRange[1], elevation);
-                }
-            }
-        }
     });
 
     return {
-        coordsList: coordsList,
-        elevationRange: elevationRange
+        coordsList: coordsList
     };
 }
 
@@ -126,20 +105,14 @@ function layoutGlobe(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var isPolyline = seriesModel.get('polyline');
 
-    var distanceToGlobe = seriesModel.get('distanceToGlobe') || 0;
-
     data.setLayout('lineType', isPolyline ? 'polyline' : 'cubicBezier');
 
-    var isDistanceRange = echarts.util.isArray(distanceToGlobe);
-
-    var res = prepareCoords(data, isDistanceRange);
+    var res = prepareCoords(data);
 
     data.each(function (idx) {
         var coords = res.coordsList[idx];
         var getPointsMethod = isPolyline ? getPolylinePoints : getCubicPointsOnGlobe;
-        data.setItemLayout(idx, getPointsMethod(
-            coords, coordSys, res.elevationRange, distanceToGlobe, isDistanceRange
-        ));
+        data.setItemLayout(idx, getPointsMethod(coords, coordSys));
     });
 }
 
@@ -147,10 +120,7 @@ function layoutGeo3D(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var isPolyline = seriesModel.get('polyline');
 
-    var distanceToGeo3D = seriesModel.get('distanceToGeo3D');
-    var isDistanceRange = echarts.util.isArray(distanceToGeo3D);
-
-    var res = prepareCoords(data, isDistanceRange);
+    var res = prepareCoords(data);
 
     data.setLayout('lineType', isPolyline ? 'polyline' : 'cubicBezier');
 
@@ -165,9 +135,7 @@ function layoutGeo3D(seriesModel, coordSys) {
         var coords = res.coordsList[idx];
 
         if (isPolyline) {
-            data.setItemLayout(idx, getPolylinePoints(
-                coords, coordSys, res.elevationRange, distanceToGeo3D, isDistanceRange
-            ));
+            data.setItemLayout(idx, getPolylinePoints(coords, coordSys));
         }
         else {
             var p0 = pts[0] = vec3.create();

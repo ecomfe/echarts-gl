@@ -48,15 +48,6 @@ echarts.extendSeriesModel({
             trailLength: 0.2
         },
 
-
-        // Distance to the globe, when coordinate system is globe
-        // Can be an array to represent distance range.
-        distanceToGlobe: 0,
-
-        // Distance to the geo3D, when coordinate system is geo3D
-        // Can be an array to represent distance range.
-        distanceToGeo3D: 0,
-
         silent: true,
 
         // Support source-over, lighter
