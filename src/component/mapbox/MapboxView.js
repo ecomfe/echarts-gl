@@ -40,15 +40,12 @@ module.exports = echarts.extendComponentView({
                 depthMask: false
             }),
             // Render first
-            frustumCulling: false,
             renderOrder: -100,
             culling: false,
             castShadow: false,
             $ignorePicking: true,
             renderNormal: true
         });
-        // TODO
-        this._groundMesh.scale.set(1e3, 1e3, 1);
     },
 
     render: function (mapboxModel, ecModel, api) {
@@ -69,7 +66,7 @@ module.exports = echarts.extendComponentView({
 
         // Not add to rootNode. Or light direction will be stretched by rootNode scale
         coordSys.viewGL.scene.add(this._lightRoot);
-        coordSys.viewGL.scene.add(this._groundMesh);
+        coordSys.viewGL.add(this._groundMesh);
 
         this._updateGroundMesh();
         
@@ -120,7 +117,15 @@ module.exports = echarts.extendComponentView({
         if (this._mapboxModel) {
             var coordSys = this._mapboxModel.coordinateSystem;
             var pt = coordSys.dataToPoint(coordSys.center);
-            this._groundMesh.position.set(pt[0], pt[1], -0.01);
+            this._groundMesh.position.set(pt[0], pt[1], -0.001);
+
+            var plane = new graphicGL.Plane(new graphicGL.Vector3(0, 0, 1), 0);
+            var ray1 = coordSys.viewGL.camera.castRay(new graphicGL.Vector2(-1, -1));
+            var ray2 = coordSys.viewGL.camera.castRay(new graphicGL.Vector2(1, 1));
+            var pos0 = ray1.intersectPlane(plane);
+            var pos1 = ray2.intersectPlane(plane);
+            var scale = pos0.dist(pos1) / coordSys.viewGL.rootNode.scale.x;
+            this._groundMesh.scale.set(scale, scale, 1);
         }
     },
 
