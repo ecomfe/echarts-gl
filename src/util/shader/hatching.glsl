@@ -121,7 +121,7 @@ void main()
     ambientFactor = dot(v_Normal, N);
 #endif
 
-    N = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);
+    vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);
     
     @import ecgl.common.ssaoMap.main
 
@@ -136,7 +136,7 @@ void main()
 #ifdef AMBIENT_SH_LIGHT_COUNT
     for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)
     {{
-        tone += dot(calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_], w) * ao;
+        tone += dot(calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_], w) * ao;
     }}
 #endif
 #ifdef DIRECTIONAL_LIGHT_COUNT

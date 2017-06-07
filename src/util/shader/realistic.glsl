@@ -218,7 +218,7 @@ void main()
         }
     }
 #endif
-    N = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);
+    vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);
 
     vec3 diffuseTerm = vec3(0.0);
     vec3 specularTerm = vec3(0.0);
@@ -240,7 +240,7 @@ void main()
 #ifdef AMBIENT_SH_LIGHT_COUNT
     for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)
     {{
-        diffuseTerm += calcAmbientSHLight(_idx_, N) * ambientSHLightColor[_idx_] * ao;
+        diffuseTerm += calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_] * ao;
     }}
 #endif
 
@@ -278,12 +278,13 @@ void main()
 
 
 #ifdef AMBIENT_CUBEMAP_LIGHT_COUNT
-    vec3 L = reflect(-V, N);
+    vec3 L = reflect(-V, N2);
+    float ndv2 = clamp(dot(N2, V), 0.0, 1.0);
     float rough2 = clamp(1.0 - g, 0.0, 1.0);
     // FIXME fixed maxMipmapLevel ?
     float bias2 = rough2 * 5.0;
     // One brdf lookup is enough
-    vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;
+    vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv2)).xy;
     vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;
     vec3 envTexel2;
     for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)
