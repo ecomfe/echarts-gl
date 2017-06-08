@@ -9,6 +9,11 @@ function Globe(radius) {
     this.viewGL = null;
 
     this.altitudeAxis;
+
+    // Displacement data provided by texture.
+    this.displacementData = null;
+    this.displacementWidth;
+    this.displacementHeight;
 }
 
 Globe.prototype = {
@@ -21,18 +26,38 @@ Globe.prototype = {
 
     containPoint: function () {},
 
+    setDisplacementData: function (data, width, height) {
+        this.displacementData = data;
+        this.displacementWidth = width;
+        this.displacementHeight = height;
+    },
+    
+    _getDisplacementScale: function (lng, lat) {
+        var i = (lng + 180) / 360 * (this.displacementWidth - 1);
+        var j = (90 - lat) / 180 * (this.displacementHeight - 1);
+        // NEAREST SAMPLING
+        // TODO Better bilinear sampling
+        var idx = Math.round(i) + Math.round(j) * this.displacementWidth;
+        return this.displacementData[idx];
+    },
+
     dataToPoint: function (data, out) {
         var lng = data[0];
         var lat = data[1];
         // Default have 0 altitude
         var altVal = data[2] || 0;
 
-        lng = lng * Math.PI / 180;
-        lat = lat * Math.PI / 180;
         var r = this.radius;
+        if (this.displacementData) {
+            r *= 1 + this._getDisplacementScale(lng, lat);
+        }
         if (this.altitudeAxis) {
             r += this.altitudeAxis.dataToCoord(altVal);
         }
+
+        lng = lng * Math.PI / 180;
+        lat = lat * Math.PI / 180;
+        
         var r0 = Math.cos(lat) * r;
 
         out = out || [];

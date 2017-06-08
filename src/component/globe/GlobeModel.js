@@ -60,6 +60,10 @@ var GlobeModel = echarts.extendComponentModel({
         }, this);
     },
 
+    optionUpdated: function () {
+        this.updateDisplacementHash();
+    },
+
     defaultLayerOption: {
         show: true,
         type: 'overlay'
@@ -141,6 +145,43 @@ var GlobeModel = echarts.extendComponentModel({
         // }
 
         layers: []
+    },
+    
+    getDisplacementTexture: function () {
+        return this.get('displacementTexture') || this.get('heightTexture');
+    },
+
+    getDisplacemenScale: function () {
+        var displacementTexture = this.getDisplacementTexture();
+        var displacementScale = this.get('displacementScale');
+        if (!displacementTexture || displacementTexture === 'none') {
+            displacementScale = 0;
+        }
+        return displacementScale;
+    },
+
+    hasDisplacement: function () {
+        return this.getDisplacemenScale() > 0;
+    },
+
+    _displacementChanged: true,
+
+    _displacementScale: 0,
+
+    updateDisplacementHash: function () {
+        var displacementTexture = this.getDisplacementTexture();
+        var displacementScale = this.getDisplacemenScale();
+
+        this._displacementChanged = 
+            this._displacementTexture !== displacementTexture
+            || this._displacementScale !== displacementScale;
+
+        this._displacementTexture = displacementTexture;
+        this._displacementScale = displacementScale;
+    },
+
+    isDisplacementChanged: function () {
+        return this._displacementChanged;
     }
 });
 

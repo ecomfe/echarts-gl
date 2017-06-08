@@ -16,3 +16,11 @@ echarts.registerAction({
         componentModel.setView(payload);
     });
 });
+
+echarts.registerAction({
+    type: 'globeupdatedisplacment',
+    event: 'globedisplacementupdated',
+    update: 'updateLayout'
+}, function (payload, ecModel) {
+    // Noop
+});

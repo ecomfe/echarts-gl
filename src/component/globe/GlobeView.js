@@ -52,6 +52,8 @@ module.exports = echarts.extendComponentView({
         this._earthMesh = new graphicGL.Mesh({
             renderNormal: true
         });
+        // shrink a little
+        this._earthMesh.scale.set(0.995, 0.99, 0.99);
 
         this._lightRoot = new graphicGL.Node();
         this._sceneHelper = new SceneHelper();
@@ -320,23 +322,17 @@ module.exports = echarts.extendComponentView({
     },
 
     _displaceVertices: function (globeModel, api) {
-        var displacementTextureValue = globeModel.get('displacementTexture') || globeModel.get('heightTexture');
-        var displacementScale = globeModel.get('displacementScale');
         var displacementQuality = globeModel.get('displacementQuality');
         var showDebugWireframe = globeModel.get('debug.wireframe.show');
+        var globe = globeModel.coordinateSystem;
 
-        if (!displacementTextureValue || displacementTextureValue === 'none') {
-            displacementScale = 0;
-        }
-
-        if (displacementScale === this._displacementScale
+        if (!globeModel.isDisplacementChanged()
             && displacementQuality === this._displacementQuality
             && showDebugWireframe === this._showDebugWireframe
         ) {
             return;
         }
 
-        this._displacementScale = displacementScale;
         this._displacementQuality = displacementQuality;
         this._showDebugWireframe = showDebugWireframe;
 
@@ -354,31 +350,14 @@ module.exports = echarts.extendComponentView({
             geometry.heightSegments = heightSegments;
             geometry.build();
         }
-
-        var img;
-
-        if (graphicGL.isImage(displacementTextureValue)) {
-            img = displacementTextureValue;
-            this._doDisplaceVertices(geometry, img, displacementScale);
-            if (showDebugWireframe) {
-                geometry.generateBarycentric();
-            }
-        }
-        else {
-            img = new Image();
-            var self = this;
-            img.onload = function () {
-                self._doDisplaceVertices(geometry, img, displacementScale);
-                if (showDebugWireframe) {
-                    geometry.generateBarycentric();
-                }
-                api.getZr().refresh();
-            };
-            img.src = displacementTextureValue;
+        
+        this._doDisplaceVertices(geometry, globe);
+        if (showDebugWireframe) {
+            geometry.generateBarycentric();
         }
     },
 
-    _doDisplaceVertices: function (geometry, img, displacementScale) {
+    _doDisplaceVertices: function (geometry, globe) {
         var positionArr = geometry.attributes.position.value;
         var uvArr = geometry.attributes.texcoord0.value;
 
@@ -389,14 +368,9 @@ module.exports = echarts.extendComponentView({
             geometry.__originalPosition = originalPositionArr;
         }
 
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        var width = img.width;
-        var height = img.height;
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-        var rgbaArr = ctx.getImageData(0, 0, width, height).data;
+        var width = globe.displacementWidth;
+        var height = globe.displacementHeight;
+        var data = globe.displacementData;
 
         for (var i = 0; i < geometry.vertexCount; i++) {
             var i3 = i * 3;
@@ -411,7 +385,7 @@ module.exports = echarts.extendComponentView({
             var j = Math.round(u * (width - 1));
             var k = Math.round(v * (height - 1));
             var idx = k * width + j;
-            var scale = rgbaArr[idx * 4] / 255 * displacementScale;
+            var scale = data ? data[idx] : 0;
 
             positionArr[i3 + 1] = x + x * scale;
             positionArr[i3 + 2] = y + y * scale;
@@ -422,6 +396,10 @@ module.exports = echarts.extendComponentView({
         geometry.dirty();
 
         geometry.updateBoundingBox();
+    },
+
+    updateLayout: function (globeModel, ecModel, api) {
+        this._displaceVertices(globeModel, api);
     },
 
     _updateLight: function (globeModel, api) {
