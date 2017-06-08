@@ -52,8 +52,6 @@ module.exports = echarts.extendComponentView({
         this._earthMesh = new graphicGL.Mesh({
             renderNormal: true
         });
-        // shrink a little
-        this._earthMesh.scale.set(0.995, 0.99, 0.99);
 
         this._lightRoot = new graphicGL.Node();
         this._sceneHelper = new SceneHelper();
@@ -121,7 +119,9 @@ module.exports = echarts.extendComponentView({
             globeModel.get('baseColor')
         ));
 
-        earthMesh.scale.set(coordSys.radius, coordSys.radius, coordSys.radius);
+        // shrink a little
+        var scale = coordSys.radius * 0.99;
+        earthMesh.scale.set(scale, scale, scale);
 
         var diffuseTexture = earthMesh.material.setTextureImage('diffuseMap', globeModel.get('baseTexture'), api, {
             flipY: false,
@@ -352,6 +352,7 @@ module.exports = echarts.extendComponentView({
         }
         
         this._doDisplaceVertices(geometry, globe);
+        
         if (showDebugWireframe) {
             geometry.generateBarycentric();
         }

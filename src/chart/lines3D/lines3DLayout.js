@@ -17,8 +17,6 @@ var coord0 = [];
 var coord1 = [];
 
 function getCubicPointsOnGlobe(coords, coordSys) {
-    var globeRadius = coordSys.radius;
-
     vec2.copy(coord0, coords[0]);
     vec2.copy(coord1, coords[1]);
 
@@ -58,7 +56,8 @@ function getCubicPointsOnGlobe(coords, coordSys) {
     var projDist = vec3.dot(p0, halfVector);
     // Angle of halfVector and p1
     var cosTheta = vec3.dot(halfVector, p1);
-    var len = (globeRadius - projDist) / cosTheta * 2;
+    
+    var len = (Math.max(vec3.len(p0), vec3.len(p3)) - projDist) / cosTheta * 2;
 
     vec3.scaleAndAdd(p1, p0, p1, len);
     vec3.scaleAndAdd(p2, p3, p2, len);
