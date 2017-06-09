@@ -1,16 +1,15 @@
 {
   "name": "echarts-gl",
   "description": "Extension pack of ECharts providing 3D plots and globe visualization",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "maintainers": [
     {
       "name": "Yi Shen"
     }
   ],
   "dependencies": {
-    "qtek": "0.3.6",
-    "viewport-mercator-project": "^4.0.2",
-    "zrender": "3.4.3"
+    "qtek": "0.3.7",
+    "zrender": "3.5.1"
   },
   "repository": "https://github.com/ecomfe/echarts-gl",
   "devDependencies": {
