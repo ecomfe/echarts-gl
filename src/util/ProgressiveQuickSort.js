@@ -32,7 +32,6 @@ function quickSort(array, compare, left, right) {
         quickSort(array, compare, left, newPivot - 1);
         quickSort(array, compare, newPivot + 1, right);
     }
-
 }
 
 

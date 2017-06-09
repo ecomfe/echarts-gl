@@ -56,11 +56,31 @@ function getCubicPointsOnGlobe(coords, coordSys) {
     var projDist = vec3.dot(p0, halfVector);
     // Angle of halfVector and p1
     var cosTheta = vec3.dot(halfVector, p1);
-    
+
     var len = (Math.max(vec3.len(p0), vec3.len(p3)) - projDist) / cosTheta * 2;
 
     vec3.scaleAndAdd(p1, p0, p1, len);
     vec3.scaleAndAdd(p2, p3, p2, len);
+
+    return pts;
+}
+
+function getCubicPointsOnPlane(coords, coordSys, up) {
+    var pts = [];
+    var p0 = pts[0] = vec3.create();
+    var p1 = pts[1] = vec3.create();
+    var p2 = pts[2] = vec3.create();
+    var p3 = pts[3] = vec3.create();
+
+    coordSys.dataToPoint(coords[0], p0);
+    coordSys.dataToPoint(coords[1], p3);
+
+    var len = vec3.dist(p0, p3);
+    vec3.lerp(p1, p0, p3, 0.3);
+    vec3.lerp(p2, p0, p3, 0.3);
+
+    vec3.scaleAndAdd(p1, p1, up, Math.min(len * 0.1, 10));
+    vec3.scaleAndAdd(p2, p2, up, Math.min(len * 0.1, 10));
 
     return pts;
 }
@@ -70,8 +90,7 @@ function getPolylinePoints(coords, coordSys) {
     var off = 0;
     var pt = [];
     for (var i = 0; i < coords.length; i++) {
-        vec3.copy(coord0, coords[i]);
-        coordSys.dataToPoint(coord0, pt);
+        coordSys.dataToPoint(coords[i], pt);
         pts[off++] = pt[0];
         pts[off++] = pt[1];
         pts[off++] = pt[2];
@@ -115,7 +134,7 @@ function layoutGlobe(seriesModel, coordSys) {
     });
 }
 
-function layoutGeo3D(seriesModel, coordSys) {
+function layoutOnPlane(seriesModel, coordSys, normal) {
     var data = seriesModel.getData();
     var isPolyline = seriesModel.get('polyline');
 
@@ -123,37 +142,11 @@ function layoutGeo3D(seriesModel, coordSys) {
 
     data.setLayout('lineType', isPolyline ? 'polyline' : 'cubicBezier');
 
-    var normal = [];
-
-    // TODO, different region may have different height.
-    // var regionHeight = coordSys.size[1];
-
     data.each(function (idx) {
-        var pts = [];
-
         var coords = res.coordsList[idx];
-
-        if (isPolyline) {
-            data.setItemLayout(idx, getPolylinePoints(coords, coordSys));
-        }
-        else {
-            var p0 = pts[0] = vec3.create();
-            var p1 = pts[1] = vec3.create();
-            var p2 = pts[2] = vec3.create();
-            var p3 = pts[3] = vec3.create();
-
-            coordSys.dataToPoint(coords[0], p0);
-            coordSys.dataToPoint(coords[1], p3);
-
-            var len = vec3.dist(p0, p3);
-            vec3.lerp(p1, p0, p3, 0.3);
-            vec3.lerp(p2, p0, p3, 0.3);
-            vec3.set(normal, 0, 1, 0);
-            vec3.scaleAndAdd(p1, p1, normal, Math.min(len * 0.1, 10));
-            vec3.scaleAndAdd(p2, p2, normal, Math.min(len * 0.1, 10));
-
-            data.setItemLayout(idx, pts);
-        }
+        var pts = isPolyline ? getPolylinePoints(coords, coordSys)
+            : getCubicPointsOnPlane(coords, coordSys, normal);
+        data.setItemLayout(idx, pts);
     });
 }
 
@@ -164,7 +157,10 @@ echarts.registerLayout(function (ecModel, api) {
             layoutGlobe(seriesModel, coordSys);
         }
         else if (coordSys.type === 'geo3D') {
-            layoutGeo3D(seriesModel, coordSys);
+            layoutOnPlane(seriesModel, coordSys, [0, 1, 0]);
+        }
+        else if (coordSys.type === 'mapbox') {
+            layoutOnPlane(seriesModel, coordSys, [0, 0, 1]);
         }
     });
 });

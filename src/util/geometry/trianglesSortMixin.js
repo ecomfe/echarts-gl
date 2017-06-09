@@ -32,6 +32,7 @@ module.exports = {
             }
 
             var cursor = 0;
+            var firstZ;
             for (var i = 0; i < indices.length;) {
                 posAttr.get(indices[i++], p0);
                 posAttr.get(indices[i++], p1);
@@ -49,6 +50,14 @@ module.exports = {
                 var z2 = vec3.sqrDist(p2, cameraPos);
                 var zMax = Math.min(z0, z1);
                 zMax = Math.min(zMax, z2);
+                if (i === 0) {
+                    firstZ = zMax;
+                    zMax = 0;
+                }
+                else {
+                    // Only store the difference to avoid the precision issue.
+                    zMax = zMax - firstZ;
+                }
                 this._triangleZList[cursor++] = zMax;
             }
         }

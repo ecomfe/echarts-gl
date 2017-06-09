@@ -133,6 +133,7 @@ var geo3DCreator = {
                 var geo3DIndex = geo3DModel.componentIndex;
                 var data = seriesModel.getData();
                 if (data.dimensions[2]) {
+                    // TODO altitiude is in coords of lines.
                     // TODO Encoding can specify which dimension will be encoded to altitude
                     var dataExtent = data.getDataExtent(data.dimensions[2]);
                     altitudeDataExtent[geo3DIndex] = altitudeDataExtent[geo3DIndex] || [Infinity, -Infinity];

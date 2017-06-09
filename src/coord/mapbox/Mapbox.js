@@ -95,14 +95,7 @@ Mapbox.prototype = {
         var invertM = new Float64Array(16);
         mat4.invert(invertM, m);
         this.viewGL.camera.worldTransform._array = invertM;
-        // Don't update this camera.
-        // FIXME decomposeWorldTransform will be wrong. Precision issue?
-        // this.viewGL.camera.decomposeWorldTransform();
-        this.viewGL.camera.update = function () {
-            this.updateProjectionMatrix();
-            Matrix4.invert(this.invProjectionMatrix, this.projectionMatrix);
-            this.frustum.setFromProjection(this.projectionMatrix);
-        }
+        this.viewGL.camera.decomposeWorldTransform();
 
         // scale vertically to meters per pixel (inverse of ground resolution):
         // worldSize / (circumferenceOfEarth * cos(lat * π / 180))
@@ -113,10 +106,6 @@ Mapbox.prototype = {
         this.viewGL.rootNode.scale.set(
             this._getScale(), this._getScale(), verticalScale * this.altitudeScale
         );
-        // this.transform = mat4.identity(new Float64Array());
-        // mat4.scale(this.transform, this.transform, [
-        //     this._getScale(), this._getScale(), verticalScale * this.altitudeScale, 1
-        // ]);
     },
 
     _getScale: function () {
@@ -160,7 +149,8 @@ Mapbox.prototype = {
         // Add a origin to avoid precision issue in WebGL.
         out[0] -= this._origin[0];
         out[1] -= this._origin[1];
-        out[2] = data[2] != null ? data[2] : 0;
+        // PENDING
+        out[2] = !isNaN(data[2]) ? data[2] : 0;
         return out;
     }
 };

@@ -30,6 +30,7 @@ module.exports = {
                 this._zList = new Float32Array(this.vertexCount);
             }
 
+            var firstZ;
             for (var i = 0; i < this.vertexCount; i++) {
                 posAttr.get(i, p);
                 // Camera position is in object space
@@ -39,6 +40,14 @@ module.exports = {
                     z = 1e7;
                     noneCount++;
                 }
+                if (i === 0) {
+                    firstZ = z;
+                    z = 0;
+                }
+                else {
+                    // Only store the difference to avoid the precision issue.
+                    z = z - firstZ;
+                }
                 this._zList[i] = z;
             }
 
@@ -46,7 +55,7 @@ module.exports = {
         }
 
         if (this.vertexCount < 2e4) {
-            // Use simple timsort for simple geometries.
+            // Use simple native sort for simple geometries.
             if (frame === 0) {
                 this._simpleSort(this._noneCount / this.vertexCount > 0.05);
             }

@@ -553,8 +553,8 @@ module.exports = {
                 'texture': 'source',
                 'bloom' : 'bloom_composite'
             },
-            // PENDING
             'defines': {
+                // PENDING
                 'PREMULTIPLY_ALPHA': null
             }
         },
