@@ -223,8 +223,15 @@ Geo3DBuilder.prototype = {
                 // Move regions to center so they can be sorted right when material is transparent.
                 this._moveRegionToCenter(polygonMesh, linesMesh, hasLine);
                 // Bind events.
-                polygonMesh.dataIndex = dataIndex;
-                polygonMesh.seriesIndex = componentModel.seriesIndex;
+                if (componentModel.type === 'geo3D') {
+                    polygonMesh.eventData = {
+                        name: region.name
+                    };
+                }
+                else {
+                    polygonMesh.dataIndex = dataIndex;
+                    polygonMesh.seriesIndex = componentModel.seriesIndex;
+                }
                 polygonMesh.on('mouseover', this._onmouseover, this);
                 polygonMesh.on('mouseout', this._onmouseout, this);
 
@@ -279,20 +286,29 @@ Geo3DBuilder.prototype = {
     },
 
     _onmouseover: function (e) {
-        if (e.target && e.target.dataIndex != null) {
-            this.highlight(e.target.dataIndex);
+        if (e.target) {
+            var dataIndex = e.target.eventData
+                ? this._data.indexOfName(e.target.eventData.name)
+                : e.target.dataIndex;
+            if (dataIndex != null) {
+                this.highlight(dataIndex);
 
-            this._labelsBuilder.updateLabels([e.target.dataIndex]);
+                this._labelsBuilder.updateLabels([dataIndex]);
+            }
         }
     },
 
     _onmouseout: function (e) {
-        if (e.target && e.target.dataIndex != null) {
-            this.downplay(e.target.dataIndex);
-
-            // TODO Merge with onmouseover
-            if (!e.relatedTarget) {
-                this._labelsBuilder.updateLabels();
+        if (e.target) {
+            var dataIndex = e.target.eventData
+                ? this._data.indexOfName(e.target.eventData.name)
+                : e.target.dataIndex;
+            if (dataIndex != null) {
+                this.downplay(dataIndex);
+                // TODO Merge with onmouseover
+                if (!e.relatedTarget) {
+                    this._labelsBuilder.updateLabels();
+                }
             }
         }
     },

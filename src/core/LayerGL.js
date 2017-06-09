@@ -600,7 +600,9 @@ LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEven
 
     var dataIndex = mesh && mesh.dataIndex;
     var seriesIndex = mesh && mesh.seriesIndex;
-    var dataIndexChangedInMouseMove = false;
+    // Custom event data
+    var eventData = mesh && mesh.eventData;
+    var elChangedInMouseMove = false;
 
     var eventProxy = this._zrEventProxy;
     eventProxy.position = [originalEvent.offsetX, originalEvent.offsetY];
@@ -610,26 +612,40 @@ LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEven
         target: eventProxy
     };
     if (eveName === 'mousemove') {
-        if (dataIndex !== this._lastDataIndex) {
-            if (this._lastDataIndex != null && this._lastDataIndex >= 0) {
-                eventProxy.dataIndex = this._lastDataIndex;
-                eventProxy.seriesIndex = this._lastSeriesIndex;
-                // FIXME May cause double events.
-                this.zr.handler.dispatchToElement(targetInfo, 'mouseout', originalEvent);
+        if (dataIndex != null) {
+            if (dataIndex !== this._lastDataIndex) {
+                if (parseInt(this._lastDataIndex, 10) >= 0) {
+                    eventProxy.dataIndex = this._lastDataIndex;
+                    eventProxy.seriesIndex = this._lastSeriesIndex;
+                    // FIXME May cause double events.
+                    this.zr.handler.dispatchToElement(targetInfo, 'mouseout', originalEvent);
+                }
+                elChangedInMouseMove = true;
             }
-            dataIndexChangedInMouseMove = true;
         }
+        else if (eventData != null) {
+            if (eventData !== this._lastEventData) {
+                if (this._lastEventData != null) {
+                    eventProxy.eventData = this._lastEventData;
+                    // FIXME May cause double events.
+                    this.zr.handler.dispatchToElement(targetInfo, 'mouseout', originalEvent);
+                }
+                elChangedInMouseMove = true;
+            }
+        }
+        this._lastEventData = eventData;
         this._lastDataIndex = dataIndex;
         this._lastSeriesIndex = seriesIndex;
     }
 
+    eventProxy.eventData = eventData;
     eventProxy.dataIndex = dataIndex;
     eventProxy.seriesIndex = seriesIndex;
 
-    if (dataIndex != null && dataIndex >= 0) {
+    if (eventData != null || parseInt(dataIndex, 10) >= 0) {
         this.zr.handler.dispatchToElement(targetInfo, eveName, originalEvent);
 
-        if (dataIndexChangedInMouseMove) {
+        if (elChangedInMouseMove) {
             this.zr.handler.dispatchToElement(targetInfo, 'mouseover', originalEvent);
         }
     }

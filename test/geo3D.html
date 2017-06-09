@@ -14,9 +14,7 @@
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
-            var chart = echarts.init(document.getElementById('main'), null, {
-                devicePixelRatio: 1
-            });
+            var chart = echarts.init(document.getElementById('main'));
 
             $.getJSON('data/world-population.json', function (populationData) {
 
@@ -83,6 +81,9 @@
 
                         debug: {
                             wireframe: {
+                                lineStyle: {
+                                    width: 0.5
+                                },
                                 show: true
                             }
                         },
@@ -101,6 +102,10 @@
                         regions: regions
                     },
                     series: []
+                });
+
+                chart.on('click', function (e) {
+                    console.log(e);
                 });
             });
             window.addEventListener('resize', function () {

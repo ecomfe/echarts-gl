@@ -27,7 +27,7 @@
 
             chart.setOption({
                 tooltip: {},
-                backgroundColor: '#fff',
+                backgroundColor: '#000',
                 xAxis3D: {
                     type: 'value'
                 },
@@ -47,6 +47,9 @@
                     },
                     postEffect: {
                         enable: true,
+                        bloom: {
+                            // intensity: 0.2
+                        },
                         screenSpaceAmbientOcculusion: {
                             enable: true,
                             intensity: 0
@@ -59,7 +62,7 @@
                     },
                     boxDepth: 100,
                     boxHeight: 20,
-                    environment: 'asset/starfield.jpg',
+                    environment: 'none',
                     light: {
                         main: {
                             shadow: true,
