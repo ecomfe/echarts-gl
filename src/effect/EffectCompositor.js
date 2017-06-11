@@ -319,7 +319,7 @@ EffectCompositor.prototype.setSSAOParameter = function (name, value) {
             break;
         case 'radius':
         case 'intensity':
-            this._ssaoPass.setParameter('radius', value);
+            this._ssaoPass.setParameter(name, value);
             break;
         default:
             if (__DEV__) {

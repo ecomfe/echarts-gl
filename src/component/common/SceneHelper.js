@@ -76,6 +76,7 @@ SceneHelper.prototype = {
                 var self = this;
                 lights = this._cubemapLightsCache[textureUrl]
                     = graphicGL.createAmbientCubemap(ambientCubemapModel.option, renderer, api, function () {
+                        // Use prefitered cubemap
                         if (self._skybox instanceof Skybox) {
                             self._skybox.setEnvironmentMap(lights.specular.cubemap);
                         }
@@ -186,6 +187,9 @@ SceneHelper.prototype = {
             else {
                 this._skybox.material.shader.undefine('fragment', 'SRGB_DECODE');
             }
+            // var ambientCubemapUrl = environmentUrl === 'auto'
+            //     ? componentModel.get('light.ambientCubemap.texture')
+            //     : environmentUrl;
         }
     }
 };
