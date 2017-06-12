@@ -471,7 +471,7 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
             // Try to treat as a texture, TODO More check
             if (isNaN(metalness)) {
                 material.setTextureImage('metalnessMap', metalness, api, textureOpt);
-                metalness = retrieve.firstNotNull(materialModel.get('metalnessOffset'), 0.5);
+                metalness = retrieve.firstNotNull(materialModel.get('metalnessAdjust'), 0.5);
             }
         }
         else {
@@ -482,7 +482,7 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
             // Try to treat as a texture, TODO More check
             if (isNaN(roughness)) {
                 material.setTextureImage('roughnessMap', roughness, api, textureOpt);
-                roughness = retrieve.firstNotNull(materialModel.get('roughnessOffset'), 0.5);
+                roughness = retrieve.firstNotNull(materialModel.get('roughnessAdjust'), 0.5);
             }
         }
         else {
