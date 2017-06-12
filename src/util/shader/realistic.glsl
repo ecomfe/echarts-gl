@@ -2,7 +2,7 @@
 
 @import ecgl.common.transformUniforms
 
-@import ecgl.common.uvUniforms
+@import ecgl.common.uv.header
 
 @import ecgl.common.attributes
 
@@ -22,16 +22,13 @@ varying vec3 v_Bitangent;
 
 @import ecgl.common.vertexAnimation.header
 
-
-
-varying vec2 v_Texcoord;
-
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
 void main()
 {
-    v_Texcoord = texcoord * uvRepeat + uvOffset;
+
+    @import ecgl.common.uv.main
 
     @import ecgl.common.vertexAnimation.main
 
@@ -72,21 +69,18 @@ void main()
 varying vec4 v_Color;
 #endif
 
-varying vec2 v_Texcoord;
+@import ecgl.common.uv.fragmentHeader
+
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
-#ifdef DIFFUSEMAP_ENABLED
+// diffuseMap, bumpMap use v_Texcoord
 uniform sampler2D diffuseMap;
-#endif
 
-#ifdef METALNESSMAP_ENABLED
+// detailMap, metalnessMap, roughnessMap, normalMap use v_DetailTexcoord.
+uniform sampler2D detailMap;
 uniform sampler2D metalnessMap;
-#endif
-
-#ifdef ROUGHNESSMAP_ENABLED
 uniform sampler2D roughnessMap;
-#endif
 
 @import ecgl.common.layers.header
 
@@ -159,13 +153,7 @@ void main()
     #endif
 #endif
 
-    vec4 albedoTexel = vec4(1.0);
-#ifdef DIFFUSEMAP_ENABLED
-    albedoTexel = texture2D(diffuseMap, v_Texcoord);
-    #ifdef SRGB_DECODE
-    albedoTexel = sRGBToLinear(albedoTexel);
-    #endif
-#endif
+    @import ecgl.common.albedo.main
 
     @import ecgl.common.diffuseLayer.main
 
@@ -174,7 +162,7 @@ void main()
     float m = metalness;
 
 #ifdef METALNESSMAP_ENABLED
-    float m2 = texture2D(metalnessMap, v_Texcoord)[METALNESS_CHANEL];
+    float m2 = texture2D(metalnessMap, v_DetailTexcoord)[METALNESS_CHANEL];
     // Adjust the brightness
     m = clamp(m2 + (m - 0.5) * 2.0, 0.0, 1.0);
 #endif
@@ -186,7 +174,7 @@ void main()
     float g = 1.0 - roughness;
 
 #ifdef ROUGHNESSMAP_ENABLED
-    float g2 = 1.0 - texture2D(roughnessMap, v_Texcoord)[ROUGHNESS_CHANEL];
+    float g2 = 1.0 - texture2D(roughnessMap, v_DetailTexcoord)[ROUGHNESS_CHANEL];
     // Adjust the brightness
     g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);
 #endif
@@ -209,7 +197,7 @@ void main()
 
 #ifdef NORMALMAP_ENABLED
     if (dot(v_Tangent, v_Tangent) > 0.0) {
-        vec3 normalTexel = texture2D(normalMap, v_Texcoord).xyz;
+        vec3 normalTexel = texture2D(normalMap, v_DetailTexcoord).xyz;
         if (dot(normalTexel, normalTexel) > 0.0) { // Valid normal map
             N = normalTexel * 2.0 - 1.0;
             mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);

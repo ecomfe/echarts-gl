@@ -102,18 +102,10 @@ module.exports = echarts.extendComponentView({
             }
             earthMesh.material = this._materials.lambert;
         }
-        if (shading === 'realistic') {
-            var matModel = globeModel.getModel('realisticMaterial');
-            earthMesh.material.set({
-                roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
-                metalness: matModel.get('metalness') || 0
-            });
-        }
-        if (shading === 'hatching') {
-            graphicGL.setMaterialFromModel(
-                shading, earthMesh.material, globeModel, api
-            );
-        }
+
+        graphicGL.setMaterialFromModel(
+            shading, earthMesh.material, globeModel, api
+        );
 
         earthMesh.material.set('color', graphicGL.parseColor(
             globeModel.get('baseColor')

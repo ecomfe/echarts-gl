@@ -84,21 +84,6 @@
                 chart.resize();
             });
 
-            var config = {
-                opacity: 0.8
-            };
-            var gui = new dat.GUI();
-
-            gui.add(config, 'opacity', 0, 1).step(0.01).onChange(function () {
-                chart.setOption({
-                    series: {
-                        itemStyle: {
-                            opacity: config.opacity
-                        }
-                    }
-                });
-            })
-
         </script>
     </body>
 </html>

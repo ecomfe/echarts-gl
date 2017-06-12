@@ -450,7 +450,7 @@ graphicGL.createShader = function (prefix) {
  */
 graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     var materialModel = model.getModel(shading + 'Material');
-    var baseTexture = materialModel.get('baseTexture');
+    var detailTexture = materialModel.get('detailTexture');
     var uvRepeat = retrieve.firstNotNull(materialModel.get('textureTiling'), 1.0);
     var uvOffset = retrieve.firstNotNull(materialModel.get('textureOffset'), 1.0);
     if (typeof uvRepeat === 'number') {
@@ -465,17 +465,18 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
         wrapT: graphicGL.Texture.REPEAT
     };
     if (shading === 'realistic') {
-        var roughness = retrieve.firstNotNull(materialModel.get('roughness'), 0.5);
+        var roughness = materialModel.get('roughness');
         var metalness = materialModel.get('metalness');
-        var metalnesTexture;
-        var rougness = materialModel.get('rougness');
-        var roughnessTexture;
         if (metalness != null) {
             // Try to treat as a texture, TODO More check
             if (isNaN(metalness)) {
                 material.setTextureImage('metalnessMap', metalness, api, textureOpt);
                 metalness = retrieve.firstNotNull(materialModel.get('metalnessTint'), 0.5);
             }
+        }
+        else {
+            // Default metalness.
+            metalness = 0;
         }
         if (roughness != null) {
             // Try to treat as a texture, TODO More check
@@ -484,28 +485,32 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
                 roughness = retrieve.firstNotNull(materialModel.get('roughnessTint'), 0.5);
             }
         }
+        else {
+            // Default roughness.
+            roughness = 0.5;
+        }
         var normalTexture = materialModel.get('normalTexture');
-        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.setTextureImage('detailMap', detailTexture, api, textureOpt);
         material.setTextureImage('normalMap', normalTexture, api, textureOpt);
         material.set({
             roughness: roughness,
             metalness: metalness,
-            uvRepeat: uvRepeat,
-            uvOffset: uvOffset
+            detailUvRepeat: uvRepeat,
+            detailUvOffset: uvOffset
         });
     }
     else if (shading === 'lambert') {
-        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.setTextureImage('detailMap', detailTexture, api, textureOpt);
         material.set({
-            uvRepeat: uvRepeat,
-            uvOffset: uvOffset
+            detailUvRepeat: uvRepeat,
+            detailUvOffset: uvOffset
         });
     }
     else if (shading === 'color') {
-        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.setTextureImage('detailMap', detailTexture, api, textureOpt);
         material.set({
-            uvRepeat: uvRepeat,
-            uvOffset: uvOffset
+            detailUvRepeat: uvRepeat,
+            detailUvOffset: uvOffset
         });
     }
     else if (shading === 'hatching') {
@@ -523,8 +528,8 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
             });
         }
         material.set({
-            uvRepeat: uvRepeat,
-            uvOffset: uvOffset
+            detailUvRepeat: uvRepeat,
+            detailUvOffset: uvOffset
         });
     }
 };

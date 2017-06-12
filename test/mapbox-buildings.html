@@ -15,14 +15,13 @@
         <script src='lib/mapbox-gl.js'></script>
         <link href='lib/mapbox-gl.css' rel='stylesheet' />
         <script src="lib/jquery.min.js"></script>
-        <script src='data/buildings-full.json.js'></script>
         <script>
             mapboxgl.accessToken = window.location.search.slice(1);
             var chart = echarts.init(document.getElementById('main'), null, {
                 devicePixelRatio: 1
             });
 
-            // $.getJSON('data/buildings.json', function (buildingsGeoJSON) {
+            $.getJSON('data/buildings.json', function (buildingsGeoJSON) {
 
                 // buildingsGeoJSON.features = buildingsGeoJSON.features.slice(0, 10);
                 echarts.registerMap('buildings', buildingsGeoJSON);
@@ -47,7 +46,7 @@
                             enable: true,
                             screenSpaceAmbientOcculusion: {
                                 enable: true,
-                                intensity: 2,
+                                intensity: 1.5,
                                 radius: 200,
                                 quality: 'high'
                             },
@@ -83,11 +82,11 @@
                         realisticMaterial: {
                             metalness: 1,
                             roughness: 0.0,
-                            // baseTexture: 'asset/iron-rusted4/iron-rusted4-basecolor.png',
-                            // metalness: 'asset/iron-rusted4/iron-rusted4-metalness.png',
-                            // roughness: 'asset/iron-rusted4/iron-rusted4-roughness.png',
+                            // detailTexture: 'asset/iron-rusted4/iron-rusted4-basecolor.jpg',
+                            // metalness: 'asset/iron-rusted4/iron-rusted4-metalness.jpg',
+                            // roughness: 'asset/iron-rusted4/iron-rusted4-roughness.jpg',
                             normalTexture: 'asset/iron-rusted4/iron-rusted4-normal.png',
-                            textureTiling: [20, 20]
+                            textureTiling: [10, 10]
                         }
                     }]
                 });
@@ -109,7 +108,7 @@
                         flyToNextPoint();
                     }
                 })
-            // });
+            });
 
             window.addEventListener('resize', function () {
                 chart.resize();

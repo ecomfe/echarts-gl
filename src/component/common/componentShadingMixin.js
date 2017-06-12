@@ -6,21 +6,21 @@ module.exports = {
             textureTiling: 1,
             textureOffset: 0,
 
-            baseTexture: null
+            detailTexture: null
         },
 
         lambertMaterial: {
             textureTiling: 1,
             textureOffset: 0,
 
-            baseTexture: null
+            detailTexture: null
         },
 
         colorMaterial: {
             textureTiling: 1,
             textureOffset: 0,
 
-            baseTexture: null
+            detailTexture: null
         },
 
         hatchingMaterial: {

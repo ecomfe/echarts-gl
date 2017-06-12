@@ -2,7 +2,7 @@
 
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 
-@import ecgl.common.uvUniforms
+@import ecgl.common.uv.header
 
 attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 position: POSITION;
@@ -30,7 +30,8 @@ void main()
 #endif
 
     gl_Position = worldViewProjection * vec4(pos, 1.0);
-    v_Texcoord = texcoord * uvRepeat + uvOffset;
+
+    @import ecgl.common.uv.main
 
 #ifdef VERTEX_COLOR
     v_Color = a_Color;
@@ -56,7 +57,7 @@ varying vec4 v_Color;
 
 @import ecgl.common.layers.header
 
-varying vec2 v_Texcoord;
+@import ecgl.common.uv.fragmentHeader
 
 @import ecgl.common.wireframe.fragmentHeader
 
@@ -74,13 +75,7 @@ void main()
     gl_FragColor *= v_Color;
 #endif
 
-    vec4 albedoTexel = vec4(1.0);
-#ifdef DIFFUSEMAP_ENABLED
-    albedoTexel = texture2D(diffuseMap, v_Texcoord);
-    #ifdef SRGB_DECODE
-    albedoTexel = sRGBToLinear(albedoTexel);
-    #endif
-#endif
+    @import ecgl.common.albedo.main
 
     @import ecgl.common.diffuseLayer.main
 

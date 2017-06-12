@@ -36,7 +36,7 @@
                         shading: 'lambert',
                         light: {
                             main: {
-                                intensity: 5,
+                                intensity: 3,
                                 shadow: true,
                                 shadowQuality: 'high',
                                 alpha: 30
@@ -59,9 +59,6 @@
                         },
                         postEffect: {
                             enable: true,
-                            bloom: {
-                                enable: false
-                            },
                             screenSpaceAmbientOcculusion: {
                                 radius: 1,
                                 intensity: 1,
@@ -69,7 +66,7 @@
                                 quality: 'high'
                             },
                             depthOfField: {
-                                enable: true,
+                                enable: false,
                                 focalRange: 10,
                                 blurRadius: 10,
                                 fstop: 1
@@ -79,9 +76,7 @@
                             enable: true
                         },
                         itemStyle: {
-                        },
-
-                        regionHeight: 2
+                        }
                     },
                     visualMap: {
                         max: 40,
@@ -104,7 +99,6 @@
                         silent: true,
                         itemStyle: {
                             color: 'orange'
-                            // opacity: 0.8
                         }
                     }]
                 });

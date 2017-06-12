@@ -4,18 +4,17 @@
 
 @import ecgl.common.transformUniforms
 
-@import ecgl.common.uvUniforms
+@import ecgl.common.uv.header
 
 @import ecgl.common.attributes
 
 varying vec3 v_WorldPosition;
 
 varying vec3 v_Normal;
-varying vec2 v_Texcoord;
 
 void main()
 {
-    v_Texcoord = texcoord * uvRepeat + uvOffset;
+    @import ecgl.common.uv.main
     v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);
     
     v_WorldPosition = (world * vec4(position, 1.0)).xyz;
@@ -27,7 +26,8 @@ void main()
 
 @export ecgl.displayShadow.fragment
 
-varying vec2 v_Texcoord;
+@import ecgl.common.uv.fragmentHeader
+
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 

@@ -13,11 +13,48 @@ attribute vec2 texcoord : TEXCOORD_0;
 attribute vec3 normal : NORMAL;
 @end
 
-@export ecgl.common.uvUniforms
+@export ecgl.common.uv.header
 uniform vec2 uvRepeat : [1.0, 1.0];
 uniform vec2 uvOffset : [0.0, 0.0];
+uniform vec2 detailUvRepeat : [1.0, 1.0];
+uniform vec2 detailUvOffset : [0.0, 0.0];
+
+varying vec2 v_Texcoord;
+varying vec2 v_DetailTexcoord;
 @end
 
+@export ecgl.common.uv.main
+v_Texcoord = texcoord * uvRepeat + uvOffset;
+v_DetailTexcoord = texcoord * detailUvRepeat + detailUvOffset;
+@end
+
+@export ecgl.common.uv.fragmentHeader
+varying vec2 v_Texcoord;
+varying vec2 v_DetailTexcoord;
+@end
+
+// ----------------- albedo -----------
+
+@export ecgl.common.albedo.main
+
+    vec4 albedoTexel = vec4(1.0);
+#ifdef DIFFUSEMAP_ENABLED
+    albedoTexel = texture2D(diffuseMap, v_Texcoord);
+    #ifdef SRGB_DECODE
+    albedoTexel = sRGBToLinear(albedoTexel);
+    #endif
+#endif
+
+#ifdef DETAILMAP_ENABLED
+    vec4 detailTexel = texture2D(detailMap, v_DetailTexcoord);
+    #ifdef SRGB_DECODE
+    detailTexel = sRGBToLinear(detailTexel);
+    #endif
+    albedoTexel.rgb = mix(albedoTexel.rgb, detailTexel.rgb, detailTexel.a);
+    albedoTexel.a = detailTexel.a + (1.0 - detailTexel.a) * albedoTexel.a;
+#endif
+
+@end
 
 // -----------------WIREFRAME -----------
 @export ecgl.common.wireframe.vertexHeader

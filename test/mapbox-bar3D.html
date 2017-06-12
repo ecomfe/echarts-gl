@@ -48,7 +48,11 @@
                         style: 'mapbox://styles/mapbox/light-v9',
                         altitudeScale: 1e5,
                         postEffect: {
-                            enable: true
+                            enable: true,
+                            screenSpaceAmbientOcculusion: {
+                                enable: true,
+                                radius: 20
+                            }
                         },
                         light: {
                             main: {

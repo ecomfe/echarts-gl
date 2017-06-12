@@ -6,7 +6,8 @@
 
 @import ecgl.common.transformUniforms
 
-@import ecgl.common.uvUniforms
+@import ecgl.common.uv.header
+
 
 @import ecgl.common.attributes
 
@@ -20,15 +21,13 @@ varying vec4 v_Color;
 
 @import ecgl.common.vertexAnimation.header
 
-varying vec2 v_Texcoord;
 
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
 void main()
 {
-    v_Texcoord = texcoord * uvRepeat + uvOffset;
-
+    @import ecgl.common.uv.main
 
     @import ecgl.common.vertexAnimation.main
 
@@ -56,7 +55,7 @@ void main()
 #define NORMAL_UP_AXIS 1
 #define NORMAL_FRONT_AXIS 2
 
-varying vec2 v_Texcoord;
+@import ecgl.common.uv.fragmentHeader
 
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
@@ -116,13 +115,7 @@ void main()
     #endif
 #endif
 
-    vec4 albedoTexel = vec4(1.0);
-#ifdef DIFFUSEMAP_ENABLED
-    albedoTexel = texture2D(diffuseMap, v_Texcoord);
-    #ifdef SRGB_DECODE
-    albedoTexel = sRGBToLinear(albedoTexel);
-    #endif
-#endif
+    @import ecgl.common.albedo.main
 
     @import ecgl.common.diffuseLayer.main
 

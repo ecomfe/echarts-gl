@@ -10,7 +10,8 @@
 #define NORMAL_UP_AXIS 1
 #define NORMAL_FRONT_AXIS 2
 
-varying vec2 v_Texcoord;
+@import ecgl.common.uv.fragmentHeader
+
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 

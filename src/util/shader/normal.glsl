@@ -2,11 +2,10 @@
 
 @import ecgl.common.transformUniforms
 
-@import ecgl.common.uvUniforms
+@import ecgl.common.uv.header
 
 @import ecgl.common.attributes
 
-varying vec2 v_Texcoord;
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
@@ -20,7 +19,7 @@ void main()
     // TODO Animation
     @import ecgl.common.vertexAnimation.main
 
-    v_Texcoord = texcoord * uvRepeat + uvOffset;
+    @import ecgl.common.uv.main
 
     v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);
     v_WorldPosition = (world * vec4(pos, 1.0)).xyz;
@@ -44,7 +43,8 @@ uniform bool useRoughnessMap;
 uniform bool doubleSide;
 uniform float roughness;
 
-varying vec2 v_Texcoord;
+@import ecgl.common.uv.fragmentHeader
+
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
@@ -68,7 +68,7 @@ void main()
     float g = 1.0 - roughness;
 
     if (useRoughnessMap) {
-        float g2 = 1.0 - texture2D(roughnessMap, v_Texcoord)[ROUGHNESS_CHANEL];
+        float g2 = 1.0 - texture2D(roughnessMap, v_DetailTexcoord)[ROUGHNESS_CHANEL];
         // Adjust the brightness
         g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);
     }
