@@ -87,11 +87,12 @@ PointsBuilder.prototype = {
                 lineWidth: itemStyle.lineWidth,
                 stroke: 'transparent',
                 shadowColor: 'transparent',
-                marginBias: 10
+                minMargin: Math.min(symbolSize[0] / 2, 10)
             }, this._spriteImageCanvas);
+            
 
             spriteUtil.createSDFFromCanvas(
-                this._spriteImageCanvas, 32, SDF_RANGE,
+                this._spriteImageCanvas, Math.min(this._spriteImageCanvas.width, 32), SDF_RANGE,
                 this._mesh.material.get('sprite').image
             );
 

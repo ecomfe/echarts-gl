@@ -109,7 +109,7 @@ function generateSDF(ctx, sourceImageData, range) {
 var spriteUtil = {
 
     getMarginByStyle: function (style) {
-        var marginBias = style.marginBias || 0;
+        var minMargin = style.minMargin || 0;
 
         var lineWidth = 0;
         if (style.stroke && style.stroke !== 'none') {
@@ -120,10 +120,10 @@ var spriteUtil = {
         var shadowOffsetY = style.shadowOffsetY || 0;
 
         var margin = {};
-        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize) + marginBias;
-        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize) + marginBias;
-        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize) + marginBias;
-        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize) + marginBias;
+        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize, minMargin);
+        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize, minMargin);
+        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize, minMargin);
+        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize, minMargin);
 
         return margin;
     },
@@ -133,11 +133,8 @@ var spriteUtil = {
      * @param {string} symbol
      * @param {number | Array.<number>} symbolSize
      * @param {Object} style
-     * @param {number} marginBias
      */
     createSymbolSprite: function (symbol, symbolSize, style, canvas) {
-
-        // TODO marginBias can be set.
         var path = makePath(symbol, symbolSize, style);
 
         var margin = spriteUtil.getMarginByStyle(style);
