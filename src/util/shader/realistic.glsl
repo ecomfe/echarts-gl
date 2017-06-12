@@ -266,13 +266,13 @@ void main()
 
 
 #ifdef AMBIENT_CUBEMAP_LIGHT_COUNT
-    vec3 L = reflect(-V, N2);
-    float ndv2 = clamp(dot(N2, V), 0.0, 1.0);
+    vec3 L = reflect(-V, N);
+    L = vec3(L.x, L[NORMAL_UP_AXIS], L[NORMAL_FRONT_AXIS]);
     float rough2 = clamp(1.0 - g, 0.0, 1.0);
     // FIXME fixed maxMipmapLevel ?
     float bias2 = rough2 * 5.0;
     // One brdf lookup is enough
-    vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv2)).xy;
+    vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;
     vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;
     vec3 envTexel2;
     for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)

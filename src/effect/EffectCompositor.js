@@ -318,6 +318,9 @@ EffectCompositor.prototype.setSSAOParameter = function (name, value) {
             this._ssaoPass.setParameter('kernelSize', kernelSize);
             break;
         case 'radius':
+            this._ssaoPass.setParameter(name, value);
+            this._ssaoPass.setParameter('bias', value / 200);
+            break;
         case 'intensity':
             this._ssaoPass.setParameter(name, value);
             break;

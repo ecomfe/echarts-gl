@@ -60,9 +60,8 @@ void main()
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
-#ifdef DIFFUSEMAP_ENABLED
 uniform sampler2D diffuseMap;
-#endif
+uniform sampler2D detailMap;
 
 @import ecgl.common.layers.header
 

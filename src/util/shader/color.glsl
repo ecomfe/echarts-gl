@@ -49,6 +49,8 @@ void main()
 #define LAYER_EMISSIVEMAP_COUNT 0
 
 uniform sampler2D diffuseMap;
+uniform sampler2D detailMap;
+
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 #ifdef VERTEX_COLOR
