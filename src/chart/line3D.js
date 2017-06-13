@@ -28,8 +28,13 @@ echarts.registerLayout(function (ecModel, api) {
             var item = [];
             var out = [];
 
+            var coordDims = coordSys.dimensions;
+            var dims = coordDims.map(function (coordDim) {
+                return seriesModel.coordDimToDataDim(coordDim)[0];
+            });
+            
             if (coordSys) {
-                data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+                data.each(dims, function (x, y, z, idx) {
                     item[0] = x;
                     item[1] = y;
                     item[2] = z;

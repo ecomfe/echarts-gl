@@ -41,7 +41,10 @@ function cartesian3DLayout(seriesModel, coordSys) {
     var zAxisExtent = coordSys.getAxis('z').scale.getExtent();
     var ifZAxisCrossZero = ifCrossZero(zAxisExtent);
 
-    data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+    var dims = ['x', 'y', 'z'].map(function (coordDimName) {
+        return seriesModel.coordDimToDataDim(coordDimName)[0];
+    });
+    data.each(dims, function (x, y, z, idx) {
         // TODO On the face or on the zero barOnPlane
         // TODO zAxis is inversed
         // TODO On different plane.

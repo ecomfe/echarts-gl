@@ -29,16 +29,32 @@
                         baseTexture: 'asset/world.topo.bathy.200401.jpg',
                         heightTexture: 'asset/elev_bump_4k.jpg',
 
-                        // displacementScale: 0.1,
+                        displacementScale: 0.1,
 
                         shading: 'lambert',
 
+                        postEffect: {
+                            enable: true,
+                            SSAO: {
+                                enable: true,
+                                radius: 5,
+                                intensity: 1.5,
+                                quality: 'high'
+                            }
+                        },
+
                         light: {
                             ambient: {
-                                intensity: 0.5
+                                intensity: 0
                             },
                             main: {
-                                intensity: 2
+                                intensity: 1
+                            },
+                            ambientCubemap: {
+                                texture: 'asset/pisa.hdr',
+                                exposure: 2,
+                                diffuseIntensity: 2,
+                                specularIntensity: 1
                             }
                         },
 
@@ -51,7 +67,7 @@
                         calculable: true,
                         realtime: false,
                         inRange: {
-                            colorLightness: [0.05, 0.9]
+                            colorLightness: [0.2, 0.9]
                         },
                         outOfRange: {
                             colorAlpha: 0
@@ -60,6 +76,7 @@
                     series: [{
                         type: 'bar3D',
                         coordinateSystem: 'globe',
+                        shading: 'lambert',
                         // data: [[0, 0, 10]],
                         data: data,
                         barSize: 0.6,

@@ -17,20 +17,24 @@ echarts.registerLayout(function (ecModel, api) {
         var coordSys = seriesModel.coordinateSystem;
 
         if (coordSys) {
-            var dims = coordSys.dimensions;
-            if (dims.length < 3) {
+            var coordDims = coordSys.dimensions;
+            if (coordDims.length < 3) {
                 if (__DEV__) {
                     console.error('scatter3D needs 3D coordinateSystem');
                 }
                 return;
             }
+            var dims = coordDims.map(function (coordDim) {
+                return seriesModel.coordDimToDataDim(coordDim)[0];
+            });
+
             var points = new Float32Array(data.count() * 3);
 
             var item = [];
             var out = [];
 
             if (coordSys) {
-                data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+                data.each(dims, function (x, y, z, idx) {
                     item[0] = x;
                     item[1] = y;
                     item[2] = z;

@@ -18,7 +18,10 @@ var Geo3DModel = echarts.extendComponentModel({
 
         option.regions = this.getFilledRegions(option.regions, option.map);
 
-        var dimensions = echarts.helper.completeDimensions(['value'], option.data);
+        var dimensions = echarts.helper.completeDimensions(['value'], option.data, {
+            encodeDef: this.get('encode'),
+            dimsDef: this.get('dimensions')
+        });
         var list = new echarts.List(dimensions, this);
         list.initData(option.regions);
 

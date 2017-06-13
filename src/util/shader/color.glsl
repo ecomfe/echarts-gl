@@ -19,8 +19,6 @@ attribute vec3 prevPosition;
 uniform float percent : 1.0;
 #endif
 
-varying vec2 v_Texcoord;
-
 void main()
 {
 #ifdef VERTEX_ANIMATION

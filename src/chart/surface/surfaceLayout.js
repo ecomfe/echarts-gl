@@ -11,8 +11,13 @@ echarts.registerLayout(function (ecModel, api) {
         var data = surfaceModel.getData();
         var points = new Float32Array(3 * data.count());
         var nanPoint = [NaN, NaN, NaN];
+
         if (cartesian && cartesian.type === 'cartesian3D') {
-            data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+            var coordDims = cartesian.dimensions;
+            var dims = coordDims.map(function (coordDim) {
+                return surfaceModel.coordDimToDataDim(coordDim)[0];
+            });
+            data.each(dims, function (x, y, z, idx) {
                 var pt;
                 if (!data.hasValue(idx)) {
                     pt = nanPoint;

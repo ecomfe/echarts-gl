@@ -10,7 +10,10 @@ var Line3DSeries = echarts.extendSeriesModel({
     visualColorAccessPath: 'lineStyle.color',
 
     getInitialData: function (option, ecModel) {
-        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data);
+        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data, {
+            encodeDef: this.get('encode'),
+            dimsDef: this.get('dimensions')
+        });
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;

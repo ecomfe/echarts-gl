@@ -18,11 +18,15 @@ function globeLayout(seriesModel, coordSys) {
     else if (!echarts.util.isArray(barSize)) {
         barSize = [barSize, barSize];
     }
-    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
+    var dims = ['lng', 'lat', 'alt'].map(function (coordDimName) {
+        return seriesModel.coordDimToDataDim(coordDimName)[0];
+    });
+    data.each(dims, function (lng, lat, val, idx) {
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, 0]);
         var end = coordSys.dataToPoint([lng, lat, val]);
         var dir = vec3.sub([], end, start);
+        vec3.normalize(dir, dir);
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
     });
@@ -46,7 +50,10 @@ function geo3DLayout(seriesModel, coordSys) {
         barSize = [barSize, barSize];
     }
     var dir = [0, 1, 0];
-    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
+    var dims = ['lng', 'lat', 'alt'].map(function (coordDimName) {
+        return seriesModel.coordDimToDataDim(coordDimName)[0];
+    });
+    data.each(dims, function (lng, lat, val, idx) {
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, 0]);
         var size = [barSize[0], height, barSize[1]];
@@ -58,7 +65,11 @@ function geo3DLayout(seriesModel, coordSys) {
 
 function mapboxLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
-    var zExtent = data.getDataExtent('z', true);
+    var dimLng = seriesModel.coordDimToDataDim('lng')[0];
+    var dimLat = seriesModel.coordDimToDataDim('lat')[0];
+    var dimAlt = seriesModel.coordDimToDataDim('alt')[0];
+    var zExtent = data.getDataExtent(dimAlt, true);
+    // TODO Remove minHeight, maxHeight.
     var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
     var isZeroExtent = Math.abs(zExtent[1] - zExtent[0]) < 1e-10;
     var barSize = seriesModel.get('barSize');
@@ -81,7 +92,7 @@ function mapboxLayout(seriesModel, coordSys) {
         barSize = [barSize, barSize];
     }
     var dir = [0, 0, 1];
-    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
+    data.each([dimLng, dimLat, dimAlt], function (lng, lat, val, idx) {
         var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, zExtent, heightExtent);
         var start = coordSys.dataToPoint([lng, lat]);
         var size = [barSize[0], height, barSize[1]];

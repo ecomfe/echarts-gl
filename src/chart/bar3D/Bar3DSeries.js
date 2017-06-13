@@ -12,8 +12,10 @@ var Bar3DSeries = echarts.extendSeriesModel({
     visualColorAccessPath: 'itemStyle.color',
 
     getInitialData: function (option, ecModel) {
-        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data, {
-            defaultNames: ['x', 'y', 'z', 'value']
+        var coordSysDimensions = echarts.getCoordinateSystemDimensions(this.get('coordinateSystem')) || ['x', 'y', 'z'];
+        var dimensions = echarts.helper.completeDimensions(coordSysDimensions, option.data, {
+            encodeDef: this.get('encode'),
+            dimsDef: this.get('dimensions')
         });
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
