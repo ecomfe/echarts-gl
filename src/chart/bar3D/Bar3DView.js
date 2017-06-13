@@ -167,9 +167,9 @@ module.exports = echarts.extendChartView({
 
             if (colorArr[3] > 0) {
                 barCount++;
-            }
-            if (colorArr[3] < 0.99) {
-                hasTransparent = true;
+                if (colorArr[3] < 0.99) {
+                    hasTransparent = true;
+                }
             }
         });
 
