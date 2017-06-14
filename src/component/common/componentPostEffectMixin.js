@@ -26,7 +26,9 @@ module.exports = {
             },
 
             screenSpaceReflection: {
-                enable: false
+                enable: false,
+                quality: 'medium',
+                maxRoughness: 0.8
             },
 
             colorCorrection: {

@@ -9,6 +9,8 @@ var TILE_SIZE = 512;
 var FOV = 0.6435011087932844;
 var PI = Math.PI;
 
+var WORLD_SCALE = 1 / 10;
+
 function Mapbox() {
     /**
      * Width of mapbox viewport
@@ -57,7 +59,7 @@ Mapbox.prototype = {
     updateTransform: function () {
         if (!this.height) { return; }
 
-        var cameraToCenterDistance = 0.5 / Math.tan(FOV / 2) * this.height;
+        var cameraToCenterDistance = 0.5 / Math.tan(FOV / 2) * this.height * WORLD_SCALE;
         // Convert to radian.
         var pitch = Math.max(Math.min(this.pitch, 60), 0) / 180 * Math.PI;
 
@@ -89,7 +91,7 @@ Mapbox.prototype = {
         mat4.rotateX(m, m, pitch);
         mat4.rotateZ(m, m, -this.bearing / 180 * Math.PI);
         // Translate to center.
-        mat4.translate(m, m, [-pt[0] * this._getScale(), -pt[1] * this._getScale(), 0]);
+        mat4.translate(m, m, [-pt[0] * this._getScale() * WORLD_SCALE, -pt[1] * this._getScale() * WORLD_SCALE, 0]);
 
         this.viewGL.camera.viewMatrix._array = m;
         var invertM = new Float64Array(16);
@@ -104,7 +106,7 @@ Mapbox.prototype = {
         // Include scale to avoid zoom needs relayout
         // FIXME Camera scale may have problem in shadow
         this.viewGL.rootNode.scale.set(
-            this._getScale(), this._getScale(), verticalScale * this.altitudeScale
+            this._getScale() * WORLD_SCALE, this._getScale() * WORLD_SCALE, verticalScale * this.altitudeScale * WORLD_SCALE
         );
     },
 

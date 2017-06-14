@@ -204,6 +204,8 @@ float calculateAlpha(
     return alpha;
 }
 
+@import qtek.util.rand
+
 @import qtek.util.rgbm
 
 void main()
@@ -236,7 +238,7 @@ void main()
     float iterationCount;
 
     vec2 uv2 = v_Texcoord * viewportSize;
-    float jitter = fract((uv2.x + uv2.y) * 0.25) + jitterOffset;
+    float jitter = rand(fract(v_Texcoord + jitterOffset));
 
     bool intersect = traceScreenSpaceRay(rayOrigin, rayDir, jitter, hitPixel, hitPoint, iterationCount);
 
@@ -273,7 +275,7 @@ uniform sampler2D gBufferTexture1;
 varying vec2 v_Texcoord;
 
 uniform vec2 textureSize;
-uniform float blurSize : 2.0;
+uniform float blurSize : 4.0;
 
 #ifdef BLEND
 // uniform sampler2D ssaoTex;

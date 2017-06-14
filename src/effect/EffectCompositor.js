@@ -314,7 +314,7 @@ EffectCompositor.prototype.setSSAOParameter = function (name, value) {
                 medium: 12,
                 high: 32,
                 ultra: 62
-            })[value] || 16;
+            })[value] || 12;
             this._ssaoPass.setParameter('kernelSize', kernelSize);
             break;
         case 'radius':
@@ -360,6 +360,35 @@ EffectCompositor.prototype.setDOFParameter = function (name, value) {
     }
 };
 
+EffectCompositor.prototype.setSSRParameter = function (name, value) {
+    switch (name) {
+        case 'quality':
+            // PENDING
+            var maxIteration = ({
+                low: 10,
+                medium: 20,
+                high: 40,
+                ultra: 80
+            })[value] || 20;
+            var pixelStride = ({
+                low: 32,
+                medium: 16,
+                high: 8,
+                ultra: 4
+            })[value] || 16;
+            this._ssrPass.setParameter('maxIteration', maxIteration);
+            this._ssrPass.setParameter('pixelStride', pixelStride);
+            break;
+        case 'maxRoughness':
+            this._ssrPass.setParameter('minGlossiness', Math.max(Math.min(1.0 - value, 1.0), 0.0));
+            break;
+        default:
+            if (__DEV__) {
+                console.warn('Unkown SSR parameter ' + name);
+            }
+    }
+}
+;
 /**
  * Set color of edge
  */

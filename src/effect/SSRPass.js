@@ -95,9 +95,6 @@ SSRPass.prototype.setParameter = function (name, val) {
     if (name === 'maxIteration') {
         this._ssrPass.material.shader.define('fragment', 'MAX_ITERATION', val);
     }
-    else if (name === 'maxBinarySearchIteration') {
-        this._ssrPass.material.shader.define('fragment', 'MAX_BINARY_SEARCH_ITERATION', val);
-    }
     else {
         this._ssrPass.setUniform(name, val);
     }

@@ -370,6 +370,9 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     ['radius', 'quality', 'intensity'].forEach(function (name) {
         compositor.setSSAOParameter(name, ssaoModel.get(name));
     });
+    ['quality', 'maxRoughness'].forEach(function (name) {
+        compositor.setSSRParameter(name, ssrModel.get(name));
+    });
     ['quality', 'focalDistance', 'focalRange', 'blurRadius', 'fstop'].forEach(function (name) {
         compositor.setDOFParameter(name, dofModel.get(name));
     });

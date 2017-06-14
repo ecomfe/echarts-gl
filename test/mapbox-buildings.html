@@ -46,17 +46,16 @@
                             enable: true,
                             screenSpaceAmbientOcculusion: {
                                 enable: true,
-                                intensity: 1.5,
-                                radius: 200,
-                                quality: 'high'
+                                intensity: 1.2,
+                                radius: 10
                             },
-                            SSR: {
+                            screenSpaceReflection: {
                                 enable:true
                             }
                         },
                         light: {
                             main: {
-                                intensity: 2,
+                                intensity: 1,
                                 shadow: false,
                                 shadowQuality: 'high'
                             },
@@ -81,11 +80,11 @@
                         silent: true,
                         realisticMaterial: {
                             metalness: 1,
-                            roughness: 0.0,
+                            roughness: 0.4,
                             // detailTexture: 'asset/iron-rusted4/iron-rusted4-basecolor.jpg',
                             // metalness: 'asset/iron-rusted4/iron-rusted4-metalness.jpg',
                             // roughness: 'asset/iron-rusted4/iron-rusted4-roughness.jpg',
-                            normalTexture: 'asset/iron-rusted4/iron-rusted4-normal.png',
+                            // normalTexture: 'asset/iron-rusted4/iron-rusted4-normal.jpg',
                             textureTiling: [10, 10]
                         }
                     }]
