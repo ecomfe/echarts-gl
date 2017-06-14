@@ -593,14 +593,21 @@ var OrbitControl = Base.extend(function () {
         this.zr.on('mousemove', this._mouseMoveHandler);
         this.zr.on('mouseup', this._mouseUpHandler);
 
-        if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.rotateMouseButton]) {
-            this._mode = 'rotate';
-        }
-        else if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.panMouseButton]) {
-            this._mode = 'pan';
+        if (e.event.targetTouches) {
+            if (e.event.targetTouches.length === 1) {
+                this._mode = 'rotate';
+            }
         }
         else {
-            this._mode = '';
+            if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.rotateMouseButton]) {
+                this._mode = 'rotate';
+            }
+            else if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.panMouseButton]) {
+                this._mode = 'pan';
+            }
+            else {
+                this._mode = '';
+            }
         }
 
         // Reset rotate velocity
@@ -654,6 +661,8 @@ var OrbitControl = Base.extend(function () {
             return;
         }
         this._zoomHandler(e, e.pinchScale > 1 ? 1 : -1);
+        // Not rotate when pinch
+        this._mode = '';
     },
 
     _zoomHandler: function (e, delta) {
