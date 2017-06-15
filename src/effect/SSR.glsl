@@ -313,7 +313,6 @@ void main()
 
 #ifdef BLEND
     gl_FragColor = encodeHDR(
-        // sum / weightAll * texture2D(ssaoTex, v_Texcoord).r
         sum / weightAll + decodeHDR(texture2D(sourceTexture, v_Texcoord))
         // sum / weightAll
     );

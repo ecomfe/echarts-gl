@@ -9,6 +9,7 @@ var SSRPass = require('./SSRPass');
 var poissonKernel = require('./poissonKernel');
 var graphicGL = require('../util/graphicGL');
 var NormalPass = require('./NormalPass');
+var EdgePass = require('./EdgePass');
 var Matrix4 = require('qtek/lib/math/Matrix4');
 
 var effectJson = require('./composite.js');
@@ -39,7 +40,7 @@ var commonOutputs = {
     }
 }
 
-var FINAL_NODES_CHAIN = ['composite', 'edge', 'FXAA'];
+var FINAL_NODES_CHAIN = ['composite', 'FXAA'];
 
 function EffectCompositor() {
     this._sourceTexture = new Texture2D({
@@ -68,11 +69,6 @@ function EffectCompositor() {
     this._compositeNode = this._compositor.getNodeByName('composite');
     this._fxaaNode = this._compositor.getNodeByName('FXAA');
 
-    this._edgeNode = this._compositor.getNodeByName('edge');
-    this._edgeNode.setParameter('normalTexture', this._normalPass.getNormalTexture());
-    // FIXME FIXME depthTexture in normalPass have glitches WHEN edge is enabled
-    this._edgeNode.setParameter('depthTexture', this._depthTexture);
-
     this._dofBlurNodes = ['dof_far_blur', 'dof_near_blur', 'dof_coc_blur'].map(function (name) {
         return this._compositor.getNodeByName(name);
     }, this);
@@ -90,6 +86,7 @@ function EffectCompositor() {
     };
     this._ssaoPass = new SSAOPass(gBufferObj);
     this._ssrPass = new SSRPass(gBufferObj)
+    this._edgePass = new EdgePass(gBufferObj);
 }
 
 EffectCompositor.prototype.resize = function (width, height, dpr) {
@@ -286,7 +283,6 @@ EffectCompositor.prototype.disableColorCorrection = function () {
  */
 EffectCompositor.prototype.enableEdge = function () {
     this._enableEdge = true;
-    this._addChainNode(this._edgeNode);
 };
 
 /**
@@ -294,7 +290,6 @@ EffectCompositor.prototype.enableEdge = function () {
  */
 EffectCompositor.prototype.disableEdge = function () {
     this._enableEdge = false;
-    this._removeChainNode(this._edgeNode);
 };
 
 /**
@@ -394,7 +389,7 @@ EffectCompositor.prototype.setSSRParameter = function (name, value) {
  */
 EffectCompositor.prototype.setEdgeColor = function (value) {
     var color = graphicGL.parseColor(value);
-    this._edgeNode.setParameter('edgeColor', color);
+    this._edgePass.setParameter('edgeColor', color);
 };
 
 EffectCompositor.prototype.setExposure = function (value) {
@@ -414,13 +409,17 @@ EffectCompositor.prototype.setColorCorrection = function (type, value) {
 
 EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
 
+    var sourceTexture = this._sourceTexture;
+    var targetTexture = sourceTexture;
+    if (this._enableEdge) {
+        this._edgePass.update(renderer, camera, sourceTexture, frame);
+        sourceTexture = targetTexture = this._edgePass.getTargetTexture();
+    }
     if (this._enableSSR) {
-        this._ssrPass.update(renderer, camera, this._sourceTexture, frame);
-        this._sourceNode.texture = this._ssrPass.getTargetTexture();
+        this._ssrPass.update(renderer, camera, sourceTexture, frame);
+        targetTexture = this._ssrPass.getTargetTexture();
     }
-    else {
-        this._sourceNode.texture = this._sourceTexture;
-    }
+    this._sourceNode.texture = targetTexture;
 
     this._cocNode.setParameter('depth', this._depthTexture);
 
@@ -440,8 +439,6 @@ EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, 
 
     this._cocNode.setParameter('zNear', camera.near);
     this._cocNode.setParameter('zFar', camera.far);
-
-    this._edgeNode.setParameter('projectionInv', camera.invProjectionMatrix._array);
 
     this._compositor.render(renderer, framebuffer);
 };

@@ -31,6 +31,9 @@ void main()
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
+// For reflection.  
+uniform float roughness: 0.2;
+
 #ifdef DIRECTIONAL_LIGHT_COUNT
 @import qtek.header.directional_light
 #endif

@@ -559,16 +559,6 @@ module.exports = {
             }
         },
         {
-            'name': 'edge',
-            'shader':'#source(ecgl.edge)',
-            'inputs': {
-                'texture': 'composite'
-            },
-            'parameters': {
-                'textureSize' : 'expr([width * 1.0, height * 1.0])'
-            }
-        },
-        {
             'name' : 'FXAA',
             'shader' : '#source(qtek.compositor.fxaa)',
             'inputs' : {
