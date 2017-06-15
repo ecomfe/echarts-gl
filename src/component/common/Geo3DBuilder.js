@@ -66,12 +66,13 @@ Geo3DBuilder.prototype = {
 
     update: function (componentModel, geo3D, ecModel, api) {
         var enableInstancing = componentModel.get('instancing');
+
+        this._triangulation(geo3D);
         if (
             geo3D.map !== this._currentMap
             || (enableInstancing && !this._polygonMesh)
             || (!enableInstancing && !this._polygonMeshesMap)
         ) {
-            this._triangulation(geo3D);
             this._currentMap = geo3D.map;
 
             // Reset meshes
@@ -486,7 +487,6 @@ Geo3DBuilder.prototype = {
             }
             this._triangulationResults[region.name] = polygons;
         }, this);
-
     },
 
     /**

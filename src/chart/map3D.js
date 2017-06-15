@@ -48,12 +48,11 @@ function createGeo3D(seriesModel) {
 }
 
 function transformPolygon(poly, mapboxCoordSys) {
-    var pt = [];
+    var newPoly = [];
     for (var k = 0; k < poly.length; k++) {
-        mapboxCoordSys.dataToPoint(poly[k], pt);
-        poly[k][0] = pt[0];
-        poly[k][1] = pt[1];
+        newPoly.push(mapboxCoordSys.dataToPoint(poly[k]));
     }
+    return newPoly;
 }
 
 function transformGeo3DOnMapbox(geo3D, mapboxCoordSys) {
@@ -62,10 +61,10 @@ function transformGeo3DOnMapbox(geo3D, mapboxCoordSys) {
         for (var k = 0; k < region.geometries.length; k++) {
             var geo = region.geometries[k];
             var interiors = geo.interiors;
-            transformPolygon(geo.exterior, mapboxCoordSys);
+            geo.exterior = transformPolygon(geo.exterior, mapboxCoordSys);
             if (interiors && interiors.length) {
                 for (var m = 0; m < interiors.length; m++) {
-                    transformPolygon(interiors[m], mapboxCoordSys);
+                    geo.interiors[m] = transformPolygon(interiors[m], mapboxCoordSys);
                 }
             }
         }

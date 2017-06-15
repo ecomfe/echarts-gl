@@ -54,9 +54,9 @@ Mapbox.prototype = {
         this.center = option.center;
         this.zoom = option.zoom;
 
-        // if (!this._origin) {
-        //     this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
-        // }
+        if (!this._origin) {
+            this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
+        }
         if (this._initialZoom == null) {
             this._initialZoom = this.zoom;
         }
@@ -167,8 +167,8 @@ Mapbox.prototype = {
     dataToPoint: function (data, out) {
         out = this.projectOnTileWithScale(data, TILE_SIZE, out);
         // Add a origin to avoid precision issue in WebGL.
-        // out[0] -= this._origin[0];
-        // out[1] -= this._origin[1];
+        out[0] -= this._origin[0];
+        out[1] -= this._origin[1];
         // PENDING
         out[2] = !isNaN(data[2]) ? data[2] : 0;
         if (!isNaN(data[2])) {
