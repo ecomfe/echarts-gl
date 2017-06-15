@@ -21469,12 +21469,13 @@ Geo3DBuilder.prototype = {
 
     update: function (componentModel, geo3D, ecModel, api) {
         var enableInstancing = componentModel.get('instancing');
+
+        this._triangulation(geo3D);
         if (
             geo3D.map !== this._currentMap
             || (enableInstancing && !this._polygonMesh)
             || (!enableInstancing && !this._polygonMeshesMap)
         ) {
-            this._triangulation(geo3D);
             this._currentMap = geo3D.map;
 
             // Reset meshes
@@ -21889,7 +21890,6 @@ Geo3DBuilder.prototype = {
             }
             this._triangulationResults[region.name] = polygons;
         }, this);
-
     },
 
     /**
@@ -26126,12 +26126,11 @@ function createGeo3D(seriesModel) {
 }
 
 function transformPolygon(poly, mapboxCoordSys) {
-    var pt = [];
+    var newPoly = [];
     for (var k = 0; k < poly.length; k++) {
-        mapboxCoordSys.dataToPoint(poly[k], pt);
-        poly[k][0] = pt[0];
-        poly[k][1] = pt[1];
+        newPoly.push(mapboxCoordSys.dataToPoint(poly[k]));
     }
+    return newPoly;
 }
 
 function transformGeo3DOnMapbox(geo3D, mapboxCoordSys) {
@@ -26140,10 +26139,10 @@ function transformGeo3DOnMapbox(geo3D, mapboxCoordSys) {
         for (var k = 0; k < region.geometries.length; k++) {
             var geo = region.geometries[k];
             var interiors = geo.interiors;
-            transformPolygon(geo.exterior, mapboxCoordSys);
+            geo.exterior = transformPolygon(geo.exterior, mapboxCoordSys);
             if (interiors && interiors.length) {
                 for (var m = 0; m < interiors.length; m++) {
-                    transformPolygon(interiors[m], mapboxCoordSys);
+                    geo.interiors[m] = transformPolygon(interiors[m], mapboxCoordSys);
                 }
             }
         }
@@ -27141,25 +27140,28 @@ var echarts = __webpack_require__(0);
 var Vector3 = __webpack_require__(3);
 var vec3 = __webpack_require__(1).vec3;
 var cartesian3DLayout = __webpack_require__(102);
+var evaluateBarSparseness = __webpack_require__(292);
+
 
 function globeLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var barMinHeight = seriesModel.get('minHeight') || 0;
     var barSize = seriesModel.get('barSize');
+    var dims = ['lng', 'lat', 'alt'].map(function (coordDimName) {
+        return seriesModel.coordDimToDataDim(coordDimName)[0];
+    });
     if (barSize == null) {
-        var perimeter = coordSys.radius * Math.PI * 2;
+        var perimeter = coordSys.radius * Math.PI;
+        var fillRatio = evaluateBarSparseness(data, dims[0], dims[1]);
         // PENDING, data density
         barSize = [
-            perimeter / 720,
-            perimeter / 720
+            perimeter / Math.sqrt(data.count() / fillRatio),
+            perimeter / Math.sqrt(data.count() / fillRatio)
         ];
     }
     else if (!echarts.util.isArray(barSize)) {
         barSize = [barSize, barSize];
     }
-    var dims = ['lng', 'lat', 'alt'].map(function (coordDimName) {
-        return seriesModel.coordDimToDataDim(coordDimName)[0];
-    });
     data.each(dims, function (lng, lat, val, idx) {
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, 0]);
@@ -27177,21 +27179,23 @@ function geo3DLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var barSize = seriesModel.get('barSize');
     var barMinHeight = seriesModel.get('minHeight') || 0;
+    var dims = ['lng', 'lat', 'alt'].map(function (coordDimName) {
+        return seriesModel.coordDimToDataDim(coordDimName)[0];
+    });
     if (barSize == null) {
         var size = Math.min(coordSys.size[0], coordSys.size[2]);
+
+        var fillRatio = evaluateBarSparseness(data, dims[0], dims[1]);
         // PENDING, data density
         barSize = [
-            size / Math.sqrt(data.count()),
-            size / Math.sqrt(data.count())
+            size / Math.sqrt(data.count() / fillRatio),
+            size / Math.sqrt(data.count() / fillRatio)
         ];
     }
     else if (!echarts.util.isArray(barSize)) {
         barSize = [barSize, barSize];
     }
     var dir = [0, 1, 0];
-    var dims = ['lng', 'lat', 'alt'].map(function (coordDimName) {
-        return seriesModel.coordDimToDataDim(coordDimName)[0];
-    });
     data.each(dims, function (lng, lat, val, idx) {
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, 0]);
@@ -27209,19 +27213,29 @@ function mapboxLayout(seriesModel, coordSys) {
     var dimAlt = seriesModel.coordDimToDataDim('alt')[0];
     var barSize = seriesModel.get('barSize');
     if (barSize == null) {
-        var xExtent = data.getDataExtent('x');
-        var yExtent = data.getDataExtent('y');
+        var xExtent = data.getDataExtent(dimLng);
+        var yExtent = data.getDataExtent(dimLat);
         var corner0 = coordSys.dataToPoint([xExtent[0], yExtent[0]]);
         var corner1 = coordSys.dataToPoint([xExtent[1], yExtent[1]]);
+
         var size = Math.min(
             Math.abs(corner0[0] - corner1[0]),
             Math.abs(corner0[1] - corner1[1])
         ) || 1;
+
+        var fillRatio = evaluateBarSparseness(data, dimLng, dimLat);
         // PENDING, data density
         barSize = [
-            size / Math.sqrt(data.count()),
-            size / Math.sqrt(data.count())
+            size / Math.sqrt(data.count() / fillRatio),
+            size / Math.sqrt(data.count() / fillRatio)
         ];
+    }
+    else {
+        if (!echarts.util.isArray(barSize)) {
+            barSize = [barSize, barSize];
+        }
+        barSize[0] /= coordSys.getScale() / 16;
+        barSize[1] /= coordSys.getScale() / 16;
     }
 
     var dir = [0, 0, 1];
@@ -27293,6 +27307,7 @@ function cartesian3DLayout(seriesModel, coordSys) {
         var barDepth;
         var xAxis = coordSys.getAxis('x');
         var yAxis = coordSys.getAxis('y');
+
         if (xAxis.type === 'category') {
             barWidth = xAxis.getBandWidth() * 0.7;
         }
@@ -34966,9 +34981,9 @@ Mapbox.prototype = {
         this.center = option.center;
         this.zoom = option.zoom;
 
-        // if (!this._origin) {
-        //     this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
-        // }
+        if (!this._origin) {
+            this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
+        }
         if (this._initialZoom == null) {
             this._initialZoom = this.zoom;
         }
@@ -35079,8 +35094,8 @@ Mapbox.prototype = {
     dataToPoint: function (data, out) {
         out = this.projectOnTileWithScale(data, TILE_SIZE, out);
         // Add a origin to avoid precision issue in WebGL.
-        // out[0] -= this._origin[0];
-        // out[1] -= this._origin[1];
+        out[0] -= this._origin[0];
+        out[1] -= this._origin[1];
         // PENDING
         out[2] = !isNaN(data[2]) ? data[2] : 0;
         if (!isNaN(data[2])) {
@@ -39135,6 +39150,8 @@ var BarsGeometry = StaticGeometry.extend(function () {
             rotateMat[0] = px[0]; rotateMat[1] = px[1]; rotateMat[2] = px[2];
             rotateMat[3] = py[0]; rotateMat[4] = py[1]; rotateMat[5] = py[2];
             rotateMat[6] = pz[0]; rotateMat[7] = pz[1]; rotateMat[8] = pz[2];
+
+            bevelSize = Math.min(size[0], size[2]) / 2 * bevelSize;
 
             for (var i = 0; i < 3; i++) {
                 bevelStartSize[i] = Math.max(size[i] - bevelSize * 2, 0);
@@ -49456,6 +49473,90 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 
 
 
+
+/***/ }),
+/* 237 */,
+/* 238 */,
+/* 239 */,
+/* 240 */,
+/* 241 */,
+/* 242 */,
+/* 243 */,
+/* 244 */,
+/* 245 */,
+/* 246 */,
+/* 247 */,
+/* 248 */,
+/* 249 */,
+/* 250 */,
+/* 251 */,
+/* 252 */,
+/* 253 */,
+/* 254 */,
+/* 255 */,
+/* 256 */,
+/* 257 */,
+/* 258 */,
+/* 259 */,
+/* 260 */,
+/* 261 */,
+/* 262 */,
+/* 263 */,
+/* 264 */,
+/* 265 */,
+/* 266 */,
+/* 267 */,
+/* 268 */,
+/* 269 */,
+/* 270 */,
+/* 271 */,
+/* 272 */,
+/* 273 */,
+/* 274 */,
+/* 275 */,
+/* 276 */,
+/* 277 */,
+/* 278 */,
+/* 279 */,
+/* 280 */,
+/* 281 */,
+/* 282 */,
+/* 283 */,
+/* 284 */,
+/* 285 */,
+/* 286 */,
+/* 287 */,
+/* 288 */,
+/* 289 */,
+/* 290 */,
+/* 291 */,
+/* 292 */
+/***/ (function(module, exports) {
+
+module.exports = function (data, dimX, dimY) {
+    var xExtent = data.getDataExtent(dimX);
+    var yExtent = data.getDataExtent(dimY);
+
+    var xRange = xExtent[1] - xExtent[0];
+    var yRange = yExtent[1] - yExtent[0];
+    var dimSize = 50;
+    var tmp = new Uint8Array(dimSize * dimSize);
+    for (var i = 0; i < data.count(); i++) {
+        var x = data.get(dimX, i);
+        var y = data.get(dimY, i);
+        var xIdx = Math.floor((x - xExtent[0]) / xRange * (dimSize - 1));
+        var yIdx = Math.floor((y - yExtent[0]) / yRange * (dimSize - 1));
+        var idx = yIdx * dimSize + xIdx;
+        tmp[idx] = tmp[idx] || 1;
+    }
+    var filledCount = 0;
+    for (var i = 0; i < tmp.length; i++) {
+        if (tmp[i]) {
+            filledCount++;
+        }
+    }
+    return filledCount / tmp.length;
+};
 
 /***/ })
 /******/ ]);
