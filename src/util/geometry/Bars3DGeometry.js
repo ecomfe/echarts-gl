@@ -302,6 +302,8 @@ var BarsGeometry = StaticGeometry.extend(function () {
             rotateMat[3] = py[0]; rotateMat[4] = py[1]; rotateMat[5] = py[2];
             rotateMat[6] = pz[0]; rotateMat[7] = pz[1]; rotateMat[8] = pz[2];
 
+            bevelSize = Math.min(size[0], size[2]) / 2 * bevelSize;
+
             for (var i = 0; i < 3; i++) {
                 bevelStartSize[i] = Math.max(size[i] - bevelSize * 2, 0);
             }
