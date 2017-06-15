@@ -68,10 +68,6 @@ function mapboxLayout(seriesModel, coordSys) {
     var dimLng = seriesModel.coordDimToDataDim('lng')[0];
     var dimLat = seriesModel.coordDimToDataDim('lat')[0];
     var dimAlt = seriesModel.coordDimToDataDim('alt')[0];
-    var zExtent = data.getDataExtent(dimAlt, true);
-    // TODO Remove minHeight, maxHeight.
-    var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
-    var isZeroExtent = Math.abs(zExtent[1] - zExtent[0]) < 1e-10;
     var barSize = seriesModel.get('barSize');
     if (barSize == null) {
         var xExtent = data.getDataExtent('x');
@@ -88,15 +84,17 @@ function mapboxLayout(seriesModel, coordSys) {
             size / Math.sqrt(data.count())
         ];
     }
-    else if (!echarts.util.isArray(barSize)) {
-        barSize = [barSize, barSize];
-    }
+
     var dir = [0, 0, 1];
+    var maxHeight = -Infinity;
     data.each([dimLng, dimLat, dimAlt], function (lng, lat, val, idx) {
-        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, zExtent, heightExtent);
         var start = coordSys.dataToPoint([lng, lat]);
+        var end = coordSys.dataToPoint([lng, lat, val]);
+        var height = end[2] - start[2];
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
+
+        maxHeight = Math.max(maxHeight, height);
     });
 
     data.setLayout('orient', [1, 0, 0]);

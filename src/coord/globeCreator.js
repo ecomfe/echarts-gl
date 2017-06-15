@@ -99,7 +99,6 @@ var globeCreator = {
                 var data = seriesModel.getData();
                 var altDim = seriesModel.coordDimToDataDim('alt')[0];
                 if (altDim) {
-                    // TODO Encoding can specify which dimension will be encoded to altitude
                     var dataExtent = data.getDataExtent(altDim);
                     altitudeDataExtent[globeIndex] = altitudeDataExtent[globeIndex] || [Infinity, -Infinity];
                     altitudeDataExtent[globeIndex][0] = Math.min(

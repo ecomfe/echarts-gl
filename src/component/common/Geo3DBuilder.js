@@ -109,22 +109,22 @@ Geo3DBuilder.prototype = {
     },
 
     _prepareInstancingMesh: function (componentModel, geo3D, shader, api) {
-        var vertexCount = 0;
-        var triangleCount = 0;
+        var polygonVertexCount = 0;
+        var polygonTriangleCount = 0;
         // TODO Lines
         geo3D.regions.forEach(function (region) {
             var info = this._getRegionPolygonGeoInfo(region);
-            vertexCount += info.vertexCount;
-            triangleCount += info.triangleCount;
+            polygonVertexCount += info.vertexCount;
+            polygonTriangleCount += info.triangleCount;
         }, this);
 
         var polygonMesh = this._polygonMesh;
         var polygonGeo = polygonMesh.geometry;
         ['position', 'normal', 'texcoord0', 'color'].forEach(function (attrName) {
-            polygonGeo.attributes[attrName].init(vertexCount);
+            polygonGeo.attributes[attrName].init(polygonVertexCount);
         });
 
-        polygonGeo.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
+        polygonGeo.indices = polygonVertexCount > 0xffff ? new Uint32Array(polygonTriangleCount * 3) : new Uint16Array(polygonTriangleCount * 3);
 
         if (polygonMesh.material.shader !== shader) {
             polygonMesh.material.attachShader(shader, true);

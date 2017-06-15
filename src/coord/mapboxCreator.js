@@ -15,6 +15,7 @@ function resizeMapbox(mapboxModel, api) {
 
     this.altitudeScale = mapboxModel.get('altitudeScale');
 
+    this.boxHeight = mapboxModel.get('boxHeight');
     // this.updateTransform();
 }
 
@@ -48,6 +49,7 @@ var mapboxCreator = {
             );
         });
 
+        var altitudeDataExtent = [];
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'mapbox') {
                 var mapboxModel = seriesModel.getReferringComponents('mapbox')[0];
@@ -64,6 +66,30 @@ var mapboxCreator = {
                 }
 
                 seriesModel.coordinateSystem = mapboxModel.coordinateSystem;
+
+                if (mapboxModel.get('boxHeight') === 'auto') {
+                    return;
+                }
+
+                var data = seriesModel.getData();
+                var mapboxIndex = mapboxModel.componentIndex;
+                var altDim = seriesModel.coordDimToDataDim('alt')[0];
+                if (altDim) {
+                    var dataExtent = data.getDataExtent(altDim);
+                    altitudeDataExtent[mapboxIndex] = altitudeDataExtent[mapboxIndex] || [Infinity, -Infinity];
+                    altitudeDataExtent[mapboxIndex][0] = Math.min(
+                        altitudeDataExtent[mapboxIndex][0], dataExtent[0]
+                    );
+                    altitudeDataExtent[mapboxIndex][1] = Math.max(
+                        altitudeDataExtent[mapboxIndex][1], dataExtent[1]
+                    );
+                }
+            }
+        });
+
+        ecModel.eachComponent('mapbox', function (mapboxModel, idx) {
+            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
+                mapboxModel.coordinateSystem.altitudeExtent = altitudeDataExtent[idx];
             }
         });
 
