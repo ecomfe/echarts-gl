@@ -22,13 +22,19 @@ function Mapbox() {
     this.height = 0;
 
     this.altitudeScale = 1;
+    this.boxHeight = 'auto';
+
+    // Set by mapbox creator
+    this.altitudeExtent;
     
 
     this.bearing = 0;
     this.pitch = 0;
     this.center = [0, 0];
     this._origin;
+
     this.zoom = 0;
+    this._initialZoom;
 }
 
 Mapbox.prototype = {
@@ -48,8 +54,11 @@ Mapbox.prototype = {
         this.center = option.center;
         this.zoom = option.zoom;
 
-        if (!this._origin) {
-            this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
+        // if (!this._origin) {
+        //     this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
+        // }
+        if (this._initialZoom == null) {
+            this._initialZoom = this.zoom;
         }
 
         this.updateTransform();
@@ -91,7 +100,7 @@ Mapbox.prototype = {
         mat4.rotateX(m, m, pitch);
         mat4.rotateZ(m, m, -this.bearing / 180 * Math.PI);
         // Translate to center.
-        mat4.translate(m, m, [-pt[0] * this._getScale() * WORLD_SCALE, -pt[1] * this._getScale() * WORLD_SCALE, 0]);
+        mat4.translate(m, m, [-pt[0] * this.getScale() * WORLD_SCALE, -pt[1] * this.getScale() * WORLD_SCALE, 0]);
 
         this.viewGL.camera.viewMatrix._array = m;
         var invertM = new Float64Array(16);
@@ -101,21 +110,30 @@ Mapbox.prototype = {
 
         // scale vertically to meters per pixel (inverse of ground resolution):
         // worldSize / (circumferenceOfEarth * cos(lat * π / 180))
-        var worldSize = TILE_SIZE * this._getScale();
-        var verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))));
+        var worldSize = TILE_SIZE * this.getScale();
+        var verticalScale;
+
+        if (this.altitudeExtent && !isNaN(this.boxHeight)) {
+            var range = this.altitudeExtent[1] - this.altitudeExtent[0];
+            verticalScale = this.boxHeight / range * this.getScale() / Math.pow(2, this._initialZoom);
+        }
+        else {
+            verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))))
+                * this.altitudeScale * WORLD_SCALE;
+        }
         // Include scale to avoid zoom needs relayout
         // FIXME Camera scale may have problem in shadow
         this.viewGL.rootNode.scale.set(
-            this._getScale() * WORLD_SCALE, this._getScale() * WORLD_SCALE, verticalScale * this.altitudeScale * WORLD_SCALE
+            this.getScale() * WORLD_SCALE, this.getScale() * WORLD_SCALE, verticalScale
         );
     },
 
-    _getScale: function () {
+    getScale: function () {
         return Math.pow(2, this.zoom);
     },
 
     projectOnTile: function (data, out) {
-        return this.projectOnTileWithScale(data, this._getScale() * TILE_SIZE, out);
+        return this.projectOnTileWithScale(data, this.getScale() * TILE_SIZE, out);
     },
 
     projectOnTileWithScale: function (data, scale, out) {
@@ -132,7 +150,7 @@ Mapbox.prototype = {
     },
 
     unprojectFromTile: function (point, out) {
-        return this.unprojectOnTileWithScale(point, this._getScale() * TILE_SIZE, out);
+        return this.unprojectOnTileWithScale(point, this.getScale() * TILE_SIZE, out);
     },
 
     unprojectOnTileWithScale: function (point, scale, out) {
@@ -149,10 +167,16 @@ Mapbox.prototype = {
     dataToPoint: function (data, out) {
         out = this.projectOnTileWithScale(data, TILE_SIZE, out);
         // Add a origin to avoid precision issue in WebGL.
-        out[0] -= this._origin[0];
-        out[1] -= this._origin[1];
+        // out[0] -= this._origin[0];
+        // out[1] -= this._origin[1];
         // PENDING
         out[2] = !isNaN(data[2]) ? data[2] : 0;
+        if (!isNaN(data[2])) {
+            out[2] = data[2];
+            if (this.altitudeExtent) {
+                out[2] -= this.altitudeExtent[0];
+            }
+        }
         return out;
     }
 };

@@ -103,13 +103,14 @@ module.exports = echarts.extendComponentView({
         api.getZr().refresh();
     },
 
-    _dispatchInteractAction: function (api, mapbox) {
+    _dispatchInteractAction: function (api, mapbox, mapboxModel) {
         api.dispatchAction({
             type: 'mapboxChangeCamera',
             pitch: mapbox.getPitch(),
             zoom: mapbox.getZoom(),
             center: mapbox.getCenter().toArray(),
-            bearing: mapbox.getBearing()
+            bearing: mapbox.getBearing(),
+            mapboxId: this._mapboxModel && this._mapboxModel.id
         });
     },
 
