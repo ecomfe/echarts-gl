@@ -50,7 +50,7 @@ module.exports = {
                 var z2 = vec3.sqrDist(p2, cameraPos);
                 var zMax = Math.min(z0, z1);
                 zMax = Math.min(zMax, z2);
-                if (i === 0) {
+                if (i === 3) {
                     firstZ = zMax;
                     zMax = 0;
                 }
