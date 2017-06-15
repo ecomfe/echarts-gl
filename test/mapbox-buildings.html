@@ -9,20 +9,19 @@
     </head>
     <body>
         <div id="main"></div>
-        <script src="../node_modules/echarts/dist/echarts.js"></script>
-        <script src="../node_modules/echarts/map/js/china.js"></script>
+        <script src="lib/echarts.min.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src='lib/mapbox-gl.js'></script>
         <link href='lib/mapbox-gl.css' rel='stylesheet' />
         <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
         <script>
             mapboxgl.accessToken = window.location.search.slice(1);
-            var chart = echarts.init(document.getElementById('main'), null, {
-                devicePixelRatio: 1
-            });
+            var chart = echarts.init(document.getElementById('main'));
 
+            chart.showLoading();
             $.getJSON('data/buildings.json', function (buildingsGeoJSON) {
-
+                chart.hideLoading();
                 // buildingsGeoJSON.features = buildingsGeoJSON.features.slice(0, 10);
                 echarts.registerMap('buildings', buildingsGeoJSON);
 
@@ -38,7 +37,7 @@
                 chart.setOption({
                     mapbox: {
                         center: [13.409779, 52.520645],
-                        zoom: 10,
+                        zoom: 13,
                         pitch: 50,
                         bearing: -10,
                         style: 'mapbox://styles/mapbox/dark-v9',
@@ -52,6 +51,10 @@
                             screenSpaceReflection: {
                                 enable:true
                             }
+                            // edge: {
+                            //     enable: true,
+                            //     color: [0, 5, 20]
+                            // }
                         },
                         light: {
                             main: {
@@ -78,6 +81,10 @@
                         shading: 'realistic',
                         instancing: true,
                         silent: true,
+                        itemStyle: {
+                            borderColor: [0, 2, 10],
+                            borderWidth: 1
+                        },
                         realisticMaterial: {
                             metalness: 1,
                             roughness: 0.4,
@@ -106,6 +113,21 @@
                     if (e.keyCode === 32) {
                         flyToNextPoint();
                     }
+                });
+
+                var config = {
+                    roughness: 0.4
+                }
+
+                var gui = new dat.GUI();
+                gui.add(config, 'roughness', 0.1, 0.9).onFinishChange(function () {
+                    chart.setOption({
+                        series: [{
+                            realisticMaterial: {
+                                roughness: config.roughness
+                            }
+                        }]
+                    });
                 })
             });
 

@@ -4904,7 +4904,7 @@ graphicGL.createShader = function (prefix) {
  */
 graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     var materialModel = model.getModel(shading + 'Material');
-    var baseTexture = materialModel.get('baseTexture');
+    var detailTexture = materialModel.get('detailTexture');
     var uvRepeat = retrieve.firstNotNull(materialModel.get('textureTiling'), 1.0);
     var uvOffset = retrieve.firstNotNull(materialModel.get('textureOffset'), 1.0);
     if (typeof uvRepeat === 'number') {
@@ -4919,47 +4919,52 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
         wrapT: graphicGL.Texture.REPEAT
     };
     if (shading === 'realistic') {
-        var roughness = retrieve.firstNotNull(materialModel.get('roughness'), 0.5);
+        var roughness = materialModel.get('roughness');
         var metalness = materialModel.get('metalness');
-        var metalnesTexture;
-        var rougness = materialModel.get('rougness');
-        var roughnessTexture;
         if (metalness != null) {
             // Try to treat as a texture, TODO More check
             if (isNaN(metalness)) {
                 material.setTextureImage('metalnessMap', metalness, api, textureOpt);
-                metalness = retrieve.firstNotNull(materialModel.get('metalnessTint'), 0.5);
+                metalness = retrieve.firstNotNull(materialModel.get('metalnessAdjust'), 0.5);
             }
+        }
+        else {
+            // Default metalness.
+            metalness = 0;
         }
         if (roughness != null) {
             // Try to treat as a texture, TODO More check
             if (isNaN(roughness)) {
                 material.setTextureImage('roughnessMap', roughness, api, textureOpt);
-                roughness = retrieve.firstNotNull(materialModel.get('roughnessTint'), 0.5);
+                roughness = retrieve.firstNotNull(materialModel.get('roughnessAdjust'), 0.5);
             }
         }
+        else {
+            // Default roughness.
+            roughness = 0.5;
+        }
         var normalTexture = materialModel.get('normalTexture');
-        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.setTextureImage('detailMap', detailTexture, api, textureOpt);
         material.setTextureImage('normalMap', normalTexture, api, textureOpt);
         material.set({
             roughness: roughness,
             metalness: metalness,
-            uvRepeat: uvRepeat,
-            uvOffset: uvOffset
+            detailUvRepeat: uvRepeat,
+            detailUvOffset: uvOffset
         });
     }
     else if (shading === 'lambert') {
-        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.setTextureImage('detailMap', detailTexture, api, textureOpt);
         material.set({
-            uvRepeat: uvRepeat,
-            uvOffset: uvOffset
+            detailUvRepeat: uvRepeat,
+            detailUvOffset: uvOffset
         });
     }
     else if (shading === 'color') {
-        material.setTextureImage('diffuseMap', baseTexture, api, textureOpt);
+        material.setTextureImage('detailMap', detailTexture, api, textureOpt);
         material.set({
-            uvRepeat: uvRepeat,
-            uvOffset: uvOffset
+            detailUvRepeat: uvRepeat,
+            detailUvOffset: uvOffset
         });
     }
     else if (shading === 'hatching') {
@@ -4977,8 +4982,8 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
             });
         }
         material.set({
-            uvRepeat: uvRepeat,
-            uvOffset: uvOffset
+            detailUvRepeat: uvRepeat,
+            detailUvOffset: uvOffset
         });
     }
 };
@@ -12924,6 +12929,9 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     ['radius', 'quality', 'intensity'].forEach(function (name) {
         compositor.setSSAOParameter(name, ssaoModel.get(name));
     });
+    ['quality', 'maxRoughness'].forEach(function (name) {
+        compositor.setSSRParameter(name, ssrModel.get(name));
+    });
     ['quality', 'focalDistance', 'focalRange', 'blurRadius', 'fstop'].forEach(function (name) {
         compositor.setDOFParameter(name, dofModel.get(name));
     });
@@ -14075,6 +14083,7 @@ SceneHelper.prototype = {
                 var self = this;
                 lights = this._cubemapLightsCache[textureUrl]
                     = graphicGL.createAmbientCubemap(ambientCubemapModel.option, renderer, api, function () {
+                        // Use prefitered cubemap
                         if (self._skybox instanceof Skybox) {
                             self._skybox.setEnvironmentMap(lights.specular.cubemap);
                         }
@@ -14185,6 +14194,9 @@ SceneHelper.prototype = {
             else {
                 this._skybox.material.shader.undefine('fragment', 'SRGB_DECODE');
             }
+            // var ambientCubemapUrl = environmentUrl === 'auto'
+            //     ? componentModel.get('light.ambientCubemap.texture')
+            //     : environmentUrl;
         }
     }
 };
@@ -14262,7 +14274,9 @@ module.exports = {
             },
 
             screenSpaceReflection: {
-                enable: false
+                enable: false,
+                quality: 'medium',
+                maxRoughness: 0.8
             },
 
             colorCorrection: {
@@ -14308,21 +14322,21 @@ module.exports = {
             textureTiling: 1,
             textureOffset: 0,
 
-            baseTexture: null
+            detailTexture: null
         },
 
         lambertMaterial: {
             textureTiling: 1,
             textureOffset: 0,
 
-            baseTexture: null
+            detailTexture: null
         },
 
         colorMaterial: {
             textureTiling: 1,
             textureOffset: 0,
 
-            baseTexture: null
+            detailTexture: null
         },
 
         hatchingMaterial: {
@@ -16456,14 +16470,21 @@ var OrbitControl = Base.extend(function () {
         this.zr.on('mousemove', this._mouseMoveHandler);
         this.zr.on('mouseup', this._mouseUpHandler);
 
-        if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.rotateMouseButton]) {
-            this._mode = 'rotate';
-        }
-        else if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.panMouseButton]) {
-            this._mode = 'pan';
+        if (e.event.targetTouches) {
+            if (e.event.targetTouches.length === 1) {
+                this._mode = 'rotate';
+            }
         }
         else {
-            this._mode = '';
+            if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.rotateMouseButton]) {
+                this._mode = 'rotate';
+            }
+            else if (e.event.button === MOUSE_BUTTON_KEY_MAP[this.panMouseButton]) {
+                this._mode = 'pan';
+            }
+            else {
+                this._mode = '';
+            }
         }
 
         // Reset rotate velocity
@@ -16517,6 +16538,8 @@ var OrbitControl = Base.extend(function () {
             return;
         }
         this._zoomHandler(e, e.pinchScale > 1 ? 1 : -1);
+        // Not rotate when pinch
+        this._mode = '';
     },
 
     _zoomHandler: function (e, delta) {
@@ -17725,11 +17748,12 @@ PointsBuilder.prototype = {
                 lineWidth: itemStyle.lineWidth,
                 stroke: 'transparent',
                 shadowColor: 'transparent',
-                marginBias: 10
+                minMargin: Math.min(symbolSize[0] / 2, 10)
             }, this._spriteImageCanvas);
+            
 
             spriteUtil.createSDFFromCanvas(
-                this._spriteImageCanvas, 32, SDF_RANGE,
+                this._spriteImageCanvas, Math.min(this._spriteImageCanvas.width, 32), SDF_RANGE,
                 this._mesh.material.get('sprite').image
             );
 
@@ -21488,22 +21512,22 @@ Geo3DBuilder.prototype = {
     },
 
     _prepareInstancingMesh: function (componentModel, geo3D, shader, api) {
-        var vertexCount = 0;
-        var triangleCount = 0;
+        var polygonVertexCount = 0;
+        var polygonTriangleCount = 0;
         // TODO Lines
         geo3D.regions.forEach(function (region) {
             var info = this._getRegionPolygonGeoInfo(region);
-            vertexCount += info.vertexCount;
-            triangleCount += info.triangleCount;
+            polygonVertexCount += info.vertexCount;
+            polygonTriangleCount += info.triangleCount;
         }, this);
 
         var polygonMesh = this._polygonMesh;
         var polygonGeo = polygonMesh.geometry;
         ['position', 'normal', 'texcoord0', 'color'].forEach(function (attrName) {
-            polygonGeo.attributes[attrName].init(vertexCount);
+            polygonGeo.attributes[attrName].init(polygonVertexCount);
         });
 
-        polygonGeo.indices = vertexCount > 0xffff ? new Uint32Array(triangleCount * 3) : new Uint16Array(triangleCount * 3);
+        polygonGeo.indices = polygonVertexCount > 0xffff ? new Uint32Array(polygonTriangleCount * 3) : new Uint16Array(polygonTriangleCount * 3);
 
         if (polygonMesh.material.shader !== shader) {
             polygonMesh.material.attachShader(shader, true);
@@ -22681,10 +22705,10 @@ var geo3DCreator = {
                 // Get altitude data extent.
                 var geo3DIndex = geo3DModel.componentIndex;
                 var data = seriesModel.getData();
-                if (data.dimensions[2]) {
+                var altDim = seriesModel.coordDimToDataDim('alt')[0];
+                if (altDim) {
                     // TODO altitiude is in coords of lines.
-                    // TODO Encoding can specify which dimension will be encoded to altitude
-                    var dataExtent = data.getDataExtent(data.dimensions[2]);
+                    var dataExtent = data.getDataExtent(altDim);
                     altitudeDataExtent[geo3DIndex] = altitudeDataExtent[geo3DIndex] || [Infinity, -Infinity];
                     altitudeDataExtent[geo3DIndex][0] = Math.min(
                         altitudeDataExtent[geo3DIndex][0], dataExtent[0]
@@ -25992,8 +26016,13 @@ echarts.registerLayout(function (ecModel, api) {
             var item = [];
             var out = [];
 
+            var coordDims = coordSys.dimensions;
+            var dims = coordDims.map(function (coordDim) {
+                return seriesModel.coordDimToDataDim(coordDim)[0];
+            });
+            
             if (coordSys) {
-                data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+                data.each(dims, function (x, y, z, idx) {
                     item[0] = x;
                     item[1] = y;
                     item[2] = z;
@@ -26160,20 +26189,24 @@ echarts.registerLayout(function (ecModel, api) {
         var coordSys = seriesModel.coordinateSystem;
 
         if (coordSys) {
-            var dims = coordSys.dimensions;
-            if (dims.length < 3) {
+            var coordDims = coordSys.dimensions;
+            if (coordDims.length < 3) {
                 if (true) {
                     console.error('scatter3D needs 3D coordinateSystem');
                 }
                 return;
             }
+            var dims = coordDims.map(function (coordDim) {
+                return seriesModel.coordDimToDataDim(coordDim)[0];
+            });
+
             var points = new Float32Array(data.count() * 3);
 
             var item = [];
             var out = [];
 
             if (coordSys) {
-                data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+                data.each(dims, function (x, y, z, idx) {
                     item[0] = x;
                     item[1] = y;
                     item[2] = z;
@@ -26680,8 +26713,10 @@ var Bar3DSeries = echarts.extendSeriesModel({
     visualColorAccessPath: 'itemStyle.color',
 
     getInitialData: function (option, ecModel) {
-        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data, {
-            defaultNames: ['x', 'y', 'z', 'value']
+        var coordSysDimensions = echarts.getCoordinateSystemDimensions(this.get('coordinateSystem')) || ['x', 'y', 'z'];
+        var dimensions = echarts.helper.completeDimensions(coordSysDimensions, option.data, {
+            encodeDef: this.get('encode'),
+            dimsDef: this.get('dimensions')
         });
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
@@ -26927,9 +26962,9 @@ module.exports = echarts.extendChartView({
 
             if (colorArr[3] > 0) {
                 barCount++;
-            }
-            if (colorArr[3] < 0.99) {
-                hasTransparent = true;
+                if (colorArr[3] < 0.99) {
+                    hasTransparent = true;
+                }
             }
         });
 
@@ -27122,11 +27157,15 @@ function globeLayout(seriesModel, coordSys) {
     else if (!echarts.util.isArray(barSize)) {
         barSize = [barSize, barSize];
     }
-    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
+    var dims = ['lng', 'lat', 'alt'].map(function (coordDimName) {
+        return seriesModel.coordDimToDataDim(coordDimName)[0];
+    });
+    data.each(dims, function (lng, lat, val, idx) {
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, 0]);
         var end = coordSys.dataToPoint([lng, lat, val]);
         var dir = vec3.sub([], end, start);
+        vec3.normalize(dir, dir);
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
     });
@@ -27150,7 +27189,10 @@ function geo3DLayout(seriesModel, coordSys) {
         barSize = [barSize, barSize];
     }
     var dir = [0, 1, 0];
-    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
+    var dims = ['lng', 'lat', 'alt'].map(function (coordDimName) {
+        return seriesModel.coordDimToDataDim(coordDimName)[0];
+    });
+    data.each(dims, function (lng, lat, val, idx) {
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, 0]);
         var size = [barSize[0], height, barSize[1]];
@@ -27162,9 +27204,9 @@ function geo3DLayout(seriesModel, coordSys) {
 
 function mapboxLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
-    var zExtent = data.getDataExtent('z', true);
-    var heightExtent = [seriesModel.get('minHeight'), seriesModel.get('maxHeight')];
-    var isZeroExtent = Math.abs(zExtent[1] - zExtent[0]) < 1e-10;
+    var dimLng = seriesModel.coordDimToDataDim('lng')[0];
+    var dimLat = seriesModel.coordDimToDataDim('lat')[0];
+    var dimAlt = seriesModel.coordDimToDataDim('alt')[0];
     var barSize = seriesModel.get('barSize');
     if (barSize == null) {
         var xExtent = data.getDataExtent('x');
@@ -27181,15 +27223,17 @@ function mapboxLayout(seriesModel, coordSys) {
             size / Math.sqrt(data.count())
         ];
     }
-    else if (!echarts.util.isArray(barSize)) {
-        barSize = [barSize, barSize];
-    }
+
     var dir = [0, 0, 1];
-    data.each(['x', 'y', 'z'], function (lng, lat, val, idx) {
-        var height = isZeroExtent ? heightExtent[1] : echarts.number.linearMap(val, zExtent, heightExtent);
+    var maxHeight = -Infinity;
+    data.each([dimLng, dimLat, dimAlt], function (lng, lat, val, idx) {
         var start = coordSys.dataToPoint([lng, lat]);
+        var end = coordSys.dataToPoint([lng, lat, val]);
+        var height = end[2] - start[2];
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
+
+        maxHeight = Math.max(maxHeight, height);
     });
 
     data.setLayout('orient', [1, 0, 0]);
@@ -27271,7 +27315,10 @@ function cartesian3DLayout(seriesModel, coordSys) {
     var zAxisExtent = coordSys.getAxis('z').scale.getExtent();
     var ifZAxisCrossZero = ifCrossZero(zAxisExtent);
 
-    data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+    var dims = ['x', 'y', 'z'].map(function (coordDimName) {
+        return seriesModel.coordDimToDataDim(coordDimName)[0];
+    });
+    data.each(dims, function (x, y, z, idx) {
         // TODO On the face or on the zero barOnPlane
         // TODO zAxis is inversed
         // TODO On different plane.
@@ -29640,7 +29687,10 @@ var Line3DSeries = echarts.extendSeriesModel({
     visualColorAccessPath: 'lineStyle.color',
 
     getInitialData: function (option, ecModel) {
-        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data);
+        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data, {
+            encodeDef: this.get('encode'),
+            dimsDef: this.get('dimensions')
+        });
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;
@@ -30784,8 +30834,10 @@ var Scatter3DSeries = echarts.extendSeriesModel({
     visualColorAccessPath: 'itemStyle.color',
 
     getInitialData: function (option, ecModel) {
-        var dimensions = echarts.helper.completeDimensions(['x', 'y', 'z'], option.data, {
-            defaultNames: ['x', 'y', 'z', 'value']
+        var coordSysDimensions = echarts.getCoordinateSystemDimensions(this.get('coordinateSystem')) || ['x', 'y', 'z'];
+        var dimensions = echarts.helper.completeDimensions(coordSysDimensions, option.data, {
+            encodeDef: this.get('encode'),
+            dimsDef: this.get('dimensions')
         });
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
@@ -31151,7 +31203,8 @@ var SurfaceSeries = echarts.extendSeriesModel({
             dims.push('u', 'v');
         }
         dims = echarts.helper.completeDimensions(dims, option.data, {
-            defaultNames: ['x', 'y', 'z', 'value']
+            encodeDef: this.get('encode'),
+            dimsDef: this.get('dimensions')
         });
 
         var list = new echarts.List(dims, this);
@@ -31735,8 +31788,13 @@ echarts.registerLayout(function (ecModel, api) {
         var data = surfaceModel.getData();
         var points = new Float32Array(3 * data.count());
         var nanPoint = [NaN, NaN, NaN];
+
         if (cartesian && cartesian.type === 'cartesian3D') {
-            data.each(['x', 'y', 'z'], function (x, y, z, idx) {
+            var coordDims = cartesian.dimensions;
+            var dims = coordDims.map(function (coordDim) {
+                return surfaceModel.coordDimToDataDim(coordDim)[0];
+            });
+            data.each(dims, function (x, y, z, idx) {
                 var pt;
                 if (!data.hasValue(idx)) {
                     pt = nanPoint;
@@ -31777,7 +31835,10 @@ var Geo3DModel = echarts.extendComponentModel({
 
         option.regions = this.getFilledRegions(option.regions, option.map);
 
-        var dimensions = echarts.helper.completeDimensions(['value'], option.data);
+        var dimensions = echarts.helper.completeDimensions(['value'], option.data, {
+            encodeDef: this.get('encode'),
+            dimsDef: this.get('dimensions')
+        });
         var list = new echarts.List(dimensions, this);
         list.initData(option.regions);
 
@@ -31836,7 +31897,6 @@ var Geo3DModel = echarts.extendComponentModel({
         // height,
         // label: {}
         // realisticMaterial
-        // baseTexture
         regions: []
     }
 });
@@ -32256,18 +32316,10 @@ module.exports = echarts.extendComponentView({
             }
             earthMesh.material = this._materials.lambert;
         }
-        if (shading === 'realistic') {
-            var matModel = globeModel.getModel('realisticMaterial');
-            earthMesh.material.set({
-                roughness: retrieve.firstNotNull(matModel.get('roughness'), 0.5),
-                metalness: matModel.get('metalness') || 0
-            });
-        }
-        if (shading === 'hatching') {
-            graphicGL.setMaterialFromModel(
-                shading, earthMesh.material, globeModel, api
-            );
-        }
+
+        graphicGL.setMaterialFromModel(
+            shading, earthMesh.material, globeModel, api
+        );
 
         earthMesh.material.set('color', graphicGL.parseColor(
             globeModel.get('baseColor')
@@ -34107,7 +34159,9 @@ var MapboxModel = echarts.extendComponentModel({
             }
         },
 
-        altitudeScale: 1
+        altitudeScale: 1,
+        // Default depend on altitudeScale
+        boxHeight: 'auto'
     },
 
     getMapboxCameraOption: function () {
@@ -34254,13 +34308,14 @@ module.exports = echarts.extendComponentView({
         api.getZr().refresh();
     },
 
-    _dispatchInteractAction: function (api, mapbox) {
+    _dispatchInteractAction: function (api, mapbox, mapboxModel) {
         api.dispatchAction({
             type: 'mapboxChangeCamera',
             pitch: mapbox.getPitch(),
             zoom: mapbox.getZoom(),
             center: mapbox.getCenter().toArray(),
-            bearing: mapbox.getBearing()
+            bearing: mapbox.getBearing(),
+            mapboxId: this._mapboxModel && this._mapboxModel.id
         });
     },
 
@@ -34495,9 +34550,9 @@ var globeCreator = {
                 // Get altitude data extent.
                 var globeIndex = globeModel.componentIndex;
                 var data = seriesModel.getData();
-                if (data.dimensions[2]) {
-                    // TODO Encoding can specify which dimension will be encoded to altitude
-                    var dataExtent = data.getDataExtent(data.dimensions[2]);
+                var altDim = seriesModel.coordDimToDataDim('alt')[0];
+                if (altDim) {
+                    var dataExtent = data.getDataExtent(altDim);
                     altitudeDataExtent[globeIndex] = altitudeDataExtent[globeIndex] || [Infinity, -Infinity];
                     altitudeDataExtent[globeIndex][0] = Math.min(
                         altitudeDataExtent[globeIndex][0], dataExtent[0]
@@ -34866,6 +34921,8 @@ var TILE_SIZE = 512;
 var FOV = 0.6435011087932844;
 var PI = Math.PI;
 
+var WORLD_SCALE = 1 / 10;
+
 function Mapbox() {
     /**
      * Width of mapbox viewport
@@ -34877,13 +34934,19 @@ function Mapbox() {
     this.height = 0;
 
     this.altitudeScale = 1;
+    this.boxHeight = 'auto';
+
+    // Set by mapbox creator
+    this.altitudeExtent;
     
 
     this.bearing = 0;
     this.pitch = 0;
     this.center = [0, 0];
     this._origin;
+
     this.zoom = 0;
+    this._initialZoom;
 }
 
 Mapbox.prototype = {
@@ -34903,8 +34966,11 @@ Mapbox.prototype = {
         this.center = option.center;
         this.zoom = option.zoom;
 
-        if (!this._origin) {
-            this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
+        // if (!this._origin) {
+        //     this._origin = this.projectOnTileWithScale(this.center, TILE_SIZE);
+        // }
+        if (this._initialZoom == null) {
+            this._initialZoom = this.zoom;
         }
 
         this.updateTransform();
@@ -34914,7 +34980,7 @@ Mapbox.prototype = {
     updateTransform: function () {
         if (!this.height) { return; }
 
-        var cameraToCenterDistance = 0.5 / Math.tan(FOV / 2) * this.height;
+        var cameraToCenterDistance = 0.5 / Math.tan(FOV / 2) * this.height * WORLD_SCALE;
         // Convert to radian.
         var pitch = Math.max(Math.min(this.pitch, 60), 0) / 180 * Math.PI;
 
@@ -34946,7 +35012,7 @@ Mapbox.prototype = {
         mat4.rotateX(m, m, pitch);
         mat4.rotateZ(m, m, -this.bearing / 180 * Math.PI);
         // Translate to center.
-        mat4.translate(m, m, [-pt[0] * this._getScale(), -pt[1] * this._getScale(), 0]);
+        mat4.translate(m, m, [-pt[0] * this.getScale() * WORLD_SCALE, -pt[1] * this.getScale() * WORLD_SCALE, 0]);
 
         this.viewGL.camera.viewMatrix._array = m;
         var invertM = new Float64Array(16);
@@ -34956,21 +35022,30 @@ Mapbox.prototype = {
 
         // scale vertically to meters per pixel (inverse of ground resolution):
         // worldSize / (circumferenceOfEarth * cos(lat * π / 180))
-        var worldSize = TILE_SIZE * this._getScale();
-        var verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))));
+        var worldSize = TILE_SIZE * this.getScale();
+        var verticalScale;
+
+        if (this.altitudeExtent && !isNaN(this.boxHeight)) {
+            var range = this.altitudeExtent[1] - this.altitudeExtent[0];
+            verticalScale = this.boxHeight / range * this.getScale() / Math.pow(2, this._initialZoom);
+        }
+        else {
+            verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))))
+                * this.altitudeScale * WORLD_SCALE;
+        }
         // Include scale to avoid zoom needs relayout
         // FIXME Camera scale may have problem in shadow
         this.viewGL.rootNode.scale.set(
-            this._getScale(), this._getScale(), verticalScale * this.altitudeScale
+            this.getScale() * WORLD_SCALE, this.getScale() * WORLD_SCALE, verticalScale
         );
     },
 
-    _getScale: function () {
+    getScale: function () {
         return Math.pow(2, this.zoom);
     },
 
     projectOnTile: function (data, out) {
-        return this.projectOnTileWithScale(data, this._getScale() * TILE_SIZE, out);
+        return this.projectOnTileWithScale(data, this.getScale() * TILE_SIZE, out);
     },
 
     projectOnTileWithScale: function (data, scale, out) {
@@ -34987,7 +35062,7 @@ Mapbox.prototype = {
     },
 
     unprojectFromTile: function (point, out) {
-        return this.unprojectOnTileWithScale(point, this._getScale() * TILE_SIZE, out);
+        return this.unprojectOnTileWithScale(point, this.getScale() * TILE_SIZE, out);
     },
 
     unprojectOnTileWithScale: function (point, scale, out) {
@@ -35004,10 +35079,16 @@ Mapbox.prototype = {
     dataToPoint: function (data, out) {
         out = this.projectOnTileWithScale(data, TILE_SIZE, out);
         // Add a origin to avoid precision issue in WebGL.
-        out[0] -= this._origin[0];
-        out[1] -= this._origin[1];
+        // out[0] -= this._origin[0];
+        // out[1] -= this._origin[1];
         // PENDING
         out[2] = !isNaN(data[2]) ? data[2] : 0;
+        if (!isNaN(data[2])) {
+            out[2] = data[2];
+            if (this.altitudeExtent) {
+                out[2] -= this.altitudeExtent[0];
+            }
+        }
         return out;
     }
 };
@@ -35035,6 +35116,7 @@ function resizeMapbox(mapboxModel, api) {
 
     this.altitudeScale = mapboxModel.get('altitudeScale');
 
+    this.boxHeight = mapboxModel.get('boxHeight');
     // this.updateTransform();
 }
 
@@ -35068,6 +35150,7 @@ var mapboxCreator = {
             );
         });
 
+        var altitudeDataExtent = [];
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'mapbox') {
                 var mapboxModel = seriesModel.getReferringComponents('mapbox')[0];
@@ -35084,6 +35167,30 @@ var mapboxCreator = {
                 }
 
                 seriesModel.coordinateSystem = mapboxModel.coordinateSystem;
+
+                if (mapboxModel.get('boxHeight') === 'auto') {
+                    return;
+                }
+
+                var data = seriesModel.getData();
+                var mapboxIndex = mapboxModel.componentIndex;
+                var altDim = seriesModel.coordDimToDataDim('alt')[0];
+                if (altDim) {
+                    var dataExtent = data.getDataExtent(altDim);
+                    altitudeDataExtent[mapboxIndex] = altitudeDataExtent[mapboxIndex] || [Infinity, -Infinity];
+                    altitudeDataExtent[mapboxIndex][0] = Math.min(
+                        altitudeDataExtent[mapboxIndex][0], dataExtent[0]
+                    );
+                    altitudeDataExtent[mapboxIndex][1] = Math.max(
+                        altitudeDataExtent[mapboxIndex][1], dataExtent[1]
+                    );
+                }
+            }
+        });
+
+        ecModel.eachComponent('mapbox', function (mapboxModel, idx) {
+            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
+                mapboxModel.coordinateSystem.altitudeExtent = altitudeDataExtent[idx];
             }
         });
 
@@ -36092,12 +36199,15 @@ EffectCompositor.prototype.setSSAOParameter = function (name, value) {
                 medium: 12,
                 high: 32,
                 ultra: 62
-            })[value] || 16;
+            })[value] || 12;
             this._ssaoPass.setParameter('kernelSize', kernelSize);
             break;
         case 'radius':
+            this._ssaoPass.setParameter(name, value);
+            this._ssaoPass.setParameter('bias', value / 200);
+            break;
         case 'intensity':
-            this._ssaoPass.setParameter('radius', value);
+            this._ssaoPass.setParameter(name, value);
             break;
         default:
             if (true) {
@@ -36135,6 +36245,35 @@ EffectCompositor.prototype.setDOFParameter = function (name, value) {
     }
 };
 
+EffectCompositor.prototype.setSSRParameter = function (name, value) {
+    switch (name) {
+        case 'quality':
+            // PENDING
+            var maxIteration = ({
+                low: 10,
+                medium: 20,
+                high: 40,
+                ultra: 80
+            })[value] || 20;
+            var pixelStride = ({
+                low: 32,
+                medium: 16,
+                high: 8,
+                ultra: 4
+            })[value] || 16;
+            this._ssrPass.setParameter('maxIteration', maxIteration);
+            this._ssrPass.setParameter('pixelStride', pixelStride);
+            break;
+        case 'maxRoughness':
+            this._ssrPass.setParameter('minGlossiness', Math.max(Math.min(1.0 - value, 1.0), 0.0));
+            break;
+        default:
+            if (true) {
+                console.warn('Unkown SSR parameter ' + name);
+            }
+    }
+}
+;
 /**
  * Set color of edge
  */
@@ -36627,7 +36766,7 @@ module.exports = SSAOPass;
 /* 155 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.ssr.main\n\n#define MAX_ITERATION 20;\n\nuniform sampler2D sourceTexture;\nuniform sampler2D gBufferTexture1;\nuniform sampler2D gBufferTexture2;\n\nuniform mat4 projection;\nuniform mat4 projectionInv;\nuniform mat4 viewInverseTranspose;\n\nuniform float maxRayDistance: 50;\n\nuniform float pixelStride: 16;\nuniform float pixelStrideZCutoff: 50; \nuniform float screenEdgeFadeStart: 0.9; \nuniform float eyeFadeStart : 0.2; uniform float eyeFadeEnd: 0.8; \nuniform float minGlossiness: 0.2; uniform float zThicknessThreshold: 10;\n\nuniform float nearZ;\nuniform vec2 viewportSize : VIEWPORT_SIZE;\n\nuniform float jitterOffset: 0;\n\nvarying vec2 v_Texcoord;\n\n#ifdef DEPTH_DECODE\n@import qtek.util.decode_float\n#endif\n\nfloat fetchDepth(sampler2D depthTexture, vec2 uv)\n{\n vec4 depthTexel = texture2D(depthTexture, uv);\n return depthTexel.r * 2.0 - 1.0;\n}\n\nfloat linearDepth(float depth)\n{\n return projection[3][2] / (depth * projection[2][3] - projection[2][2]);\n}\n\nbool rayIntersectDepth(float rayZNear, float rayZFar, vec2 hitPixel)\n{\n if (rayZFar > rayZNear)\n {\n float t = rayZFar; rayZFar = rayZNear; rayZNear = t;\n }\n float cameraZ = linearDepth(fetchDepth(gBufferTexture2, hitPixel));\n return rayZFar <= cameraZ && rayZNear >= cameraZ - zThicknessThreshold;\n}\n\n\nbool traceScreenSpaceRay(\n vec3 rayOrigin, vec3 rayDir, float jitter,\n out vec2 hitPixel, out vec3 hitPoint, out float iterationCount\n)\n{\n float rayLength = ((rayOrigin.z + rayDir.z * maxRayDistance) > -nearZ)\n ? (-nearZ - rayOrigin.z) / rayDir.z : maxRayDistance;\n\n vec3 rayEnd = rayOrigin + rayDir * rayLength;\n\n vec4 H0 = projection * vec4(rayOrigin, 1.0);\n vec4 H1 = projection * vec4(rayEnd, 1.0);\n\n float k0 = 1.0 / H0.w, k1 = 1.0 / H1.w;\n\n vec3 Q0 = rayOrigin * k0, Q1 = rayEnd * k1;\n\n vec2 P0 = (H0.xy * k0 * 0.5 + 0.5) * viewportSize;\n vec2 P1 = (H1.xy * k1 * 0.5 + 0.5) * viewportSize;\n\n P1 += dot(P1 - P0, P1 - P0) < 0.0001 ? 0.01 : 0.0;\n vec2 delta = P1 - P0;\n\n bool permute = false;\n if (abs(delta.x) < abs(delta.y)) {\n permute = true;\n delta = delta.yx;\n P0 = P0.yx;\n P1 = P1.yx;\n }\n float stepDir = sign(delta.x);\n float invdx = stepDir / delta.x;\n\n vec3 dQ = (Q1 - Q0) * invdx;\n float dk = (k1 - k0) * invdx;\n\n vec2 dP = vec2(stepDir, delta.y * invdx);\n\n float strideScaler = 1.0 - min(1.0, -rayOrigin.z / pixelStrideZCutoff);\n float pixStride = 1.0 + strideScaler * pixelStride;\n\n dP *= pixStride; dQ *= pixStride; dk *= pixStride;\n\n vec4 pqk = vec4(P0, Q0.z, k0);\n vec4 dPQK = vec4(dP, dQ.z, dk);\n\n pqk += dPQK * jitter;\n float rayZFar = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);\n float rayZNear;\n\n bool intersect = false;\n\n vec2 texelSize = 1.0 / viewportSize;\n\n iterationCount = 0.0;\n\n for (int i = 0; i < MAX_ITERATION; i++)\n {\n pqk += dPQK;\n\n rayZNear = rayZFar;\n rayZFar = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);\n\n hitPixel = permute ? pqk.yx : pqk.xy;\n hitPixel *= texelSize;\n\n intersect = rayIntersectDepth(rayZNear, rayZFar, hitPixel);\n\n iterationCount += 1.0;\n\n if (intersect) {\n break;\n }\n }\n\n\n Q0.xy += dQ.xy * iterationCount;\n Q0.z = pqk.z;\n hitPoint = Q0 / pqk.w;\n\n return intersect;\n}\n\nfloat calculateAlpha(\n float iterationCount, float reflectivity,\n vec2 hitPixel, vec3 hitPoint, float dist, vec3 rayDir\n)\n{\n float alpha = clamp(reflectivity, 0.0, 1.0);\n alpha *= 1.0 - (iterationCount / float(MAX_ITERATION));\n vec2 hitPixelNDC = hitPixel * 2.0 - 1.0;\n float maxDimension = min(1.0, max(abs(hitPixelNDC.x), abs(hitPixelNDC.y)));\n alpha *= 1.0 - max(0.0, maxDimension - screenEdgeFadeStart) / (1.0 - screenEdgeFadeStart);\n\n float _eyeFadeStart = eyeFadeStart;\n float _eyeFadeEnd = eyeFadeEnd;\n if (_eyeFadeStart > _eyeFadeEnd) {\n float tmp = _eyeFadeEnd;\n _eyeFadeEnd = _eyeFadeStart;\n _eyeFadeStart = tmp;\n }\n\n float eyeDir = clamp(rayDir.z, _eyeFadeStart, _eyeFadeEnd);\n alpha *= 1.0 - (eyeDir - _eyeFadeStart) / (_eyeFadeEnd - _eyeFadeStart);\n\n alpha *= 1.0 - clamp(dist / maxRayDistance, 0.0, 1.0);\n\n return alpha;\n}\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n vec4 normalAndGloss = texture2D(gBufferTexture1, v_Texcoord);\n\n if (dot(normalAndGloss.rgb, vec3(1.0)) == 0.0) {\n discard;\n }\n\n float g = normalAndGloss.a;\n if (g <= minGlossiness) {\n discard;\n }\n\n float reflectivity = (g - minGlossiness) / (1.0 - minGlossiness);\n\n vec3 N = normalAndGloss.rgb * 2.0 - 1.0;\n N = normalize((viewInverseTranspose * vec4(N, 0.0)).xyz);\n\n vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, fetchDepth(gBufferTexture2, v_Texcoord), 1.0);\n vec4 pos = projectionInv * projectedPos;\n vec3 rayOrigin = pos.xyz / pos.w;\n\n vec3 rayDir = normalize(reflect(normalize(rayOrigin), N));\n vec2 hitPixel;\n vec3 hitPoint;\n float iterationCount;\n\n vec2 uv2 = v_Texcoord * viewportSize;\n float jitter = fract((uv2.x + uv2.y) * 0.25) + jitterOffset;\n\n bool intersect = traceScreenSpaceRay(rayOrigin, rayDir, jitter, hitPixel, hitPoint, iterationCount);\n\n float dist = distance(rayOrigin, hitPoint);\n\n float alpha = calculateAlpha(iterationCount, reflectivity, hitPixel, hitPoint, dist, rayDir) * float(intersect);\n\n vec3 hitNormal = texture2D(gBufferTexture1, hitPixel).rgb * 2.0 - 1.0;\n hitNormal = normalize((viewInverseTranspose * vec4(hitNormal, 0.0)).xyz);\n\n if (dot(hitNormal, rayDir) >= 0.0) {\n discard;\n }\n\n \n if (!intersect) {\n discard;\n }\n vec4 color = decodeHDR(texture2D(sourceTexture, hitPixel));\n gl_FragColor = encodeHDR(vec4(color.rgb * alpha, color.a));\n}\n@end\n\n@export ecgl.ssr.blur\n\nuniform sampler2D texture;\nuniform sampler2D gBufferTexture1;\n\nvarying vec2 v_Texcoord;\n\nuniform vec2 textureSize;\nuniform float blurSize : 2.0;\n\n#ifdef BLEND\nuniform sampler2D sourceTexture;\n#endif\n\n@import qtek.util.rgbm\n\n\nvoid main()\n{\n @import qtek.compositor.kernel.gaussian_13\n\n vec4 centerNTexel = texture2D(gBufferTexture1, v_Texcoord);\n float g = centerNTexel.a;\n float maxBlurSize = clamp(1.0 - g + 0.1, 0.0, 1.0) * blurSize;\n#ifdef VERTICAL\n vec2 off = vec2(0.0, maxBlurSize / textureSize.y);\n#else\n vec2 off = vec2(maxBlurSize / textureSize.x, 0.0);\n#endif\n\n vec2 coord = v_Texcoord;\n\n vec4 sum = vec4(0.0);\n float weightAll = 0.0;\n\n vec3 cN = centerNTexel.rgb * 2.0 - 1.0;\n for (int i = 0; i < 13; i++) {\n vec2 coord = clamp((float(i) - 6.0) * off + v_Texcoord, vec2(0.0), vec2(1.0));\n float w = gaussianKernel[i] * clamp(dot(cN, texture2D(gBufferTexture1, coord).rgb * 2.0 - 1.0), 0.0, 1.0);\n weightAll += w;\n sum += decodeHDR(texture2D(texture, coord)) * w;\n }\n\n#ifdef BLEND\n gl_FragColor = encodeHDR(\n sum / weightAll + decodeHDR(texture2D(sourceTexture, v_Texcoord))\n );\n#else\n gl_FragColor = encodeHDR(sum / weightAll);\n#endif\n}\n\n@end";
+module.exports = "@export ecgl.ssr.main\n\n#define MAX_ITERATION 20;\n\nuniform sampler2D sourceTexture;\nuniform sampler2D gBufferTexture1;\nuniform sampler2D gBufferTexture2;\n\nuniform mat4 projection;\nuniform mat4 projectionInv;\nuniform mat4 viewInverseTranspose;\n\nuniform float maxRayDistance: 50;\n\nuniform float pixelStride: 16;\nuniform float pixelStrideZCutoff: 50; \nuniform float screenEdgeFadeStart: 0.9; \nuniform float eyeFadeStart : 0.2; uniform float eyeFadeEnd: 0.8; \nuniform float minGlossiness: 0.2; uniform float zThicknessThreshold: 10;\n\nuniform float nearZ;\nuniform vec2 viewportSize : VIEWPORT_SIZE;\n\nuniform float jitterOffset: 0;\n\nvarying vec2 v_Texcoord;\n\n#ifdef DEPTH_DECODE\n@import qtek.util.decode_float\n#endif\n\nfloat fetchDepth(sampler2D depthTexture, vec2 uv)\n{\n vec4 depthTexel = texture2D(depthTexture, uv);\n return depthTexel.r * 2.0 - 1.0;\n}\n\nfloat linearDepth(float depth)\n{\n return projection[3][2] / (depth * projection[2][3] - projection[2][2]);\n}\n\nbool rayIntersectDepth(float rayZNear, float rayZFar, vec2 hitPixel)\n{\n if (rayZFar > rayZNear)\n {\n float t = rayZFar; rayZFar = rayZNear; rayZNear = t;\n }\n float cameraZ = linearDepth(fetchDepth(gBufferTexture2, hitPixel));\n return rayZFar <= cameraZ && rayZNear >= cameraZ - zThicknessThreshold;\n}\n\n\nbool traceScreenSpaceRay(\n vec3 rayOrigin, vec3 rayDir, float jitter,\n out vec2 hitPixel, out vec3 hitPoint, out float iterationCount\n)\n{\n float rayLength = ((rayOrigin.z + rayDir.z * maxRayDistance) > -nearZ)\n ? (-nearZ - rayOrigin.z) / rayDir.z : maxRayDistance;\n\n vec3 rayEnd = rayOrigin + rayDir * rayLength;\n\n vec4 H0 = projection * vec4(rayOrigin, 1.0);\n vec4 H1 = projection * vec4(rayEnd, 1.0);\n\n float k0 = 1.0 / H0.w, k1 = 1.0 / H1.w;\n\n vec3 Q0 = rayOrigin * k0, Q1 = rayEnd * k1;\n\n vec2 P0 = (H0.xy * k0 * 0.5 + 0.5) * viewportSize;\n vec2 P1 = (H1.xy * k1 * 0.5 + 0.5) * viewportSize;\n\n P1 += dot(P1 - P0, P1 - P0) < 0.0001 ? 0.01 : 0.0;\n vec2 delta = P1 - P0;\n\n bool permute = false;\n if (abs(delta.x) < abs(delta.y)) {\n permute = true;\n delta = delta.yx;\n P0 = P0.yx;\n P1 = P1.yx;\n }\n float stepDir = sign(delta.x);\n float invdx = stepDir / delta.x;\n\n vec3 dQ = (Q1 - Q0) * invdx;\n float dk = (k1 - k0) * invdx;\n\n vec2 dP = vec2(stepDir, delta.y * invdx);\n\n float strideScaler = 1.0 - min(1.0, -rayOrigin.z / pixelStrideZCutoff);\n float pixStride = 1.0 + strideScaler * pixelStride;\n\n dP *= pixStride; dQ *= pixStride; dk *= pixStride;\n\n vec4 pqk = vec4(P0, Q0.z, k0);\n vec4 dPQK = vec4(dP, dQ.z, dk);\n\n pqk += dPQK * jitter;\n float rayZFar = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);\n float rayZNear;\n\n bool intersect = false;\n\n vec2 texelSize = 1.0 / viewportSize;\n\n iterationCount = 0.0;\n\n for (int i = 0; i < MAX_ITERATION; i++)\n {\n pqk += dPQK;\n\n rayZNear = rayZFar;\n rayZFar = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);\n\n hitPixel = permute ? pqk.yx : pqk.xy;\n hitPixel *= texelSize;\n\n intersect = rayIntersectDepth(rayZNear, rayZFar, hitPixel);\n\n iterationCount += 1.0;\n\n if (intersect) {\n break;\n }\n }\n\n\n Q0.xy += dQ.xy * iterationCount;\n Q0.z = pqk.z;\n hitPoint = Q0 / pqk.w;\n\n return intersect;\n}\n\nfloat calculateAlpha(\n float iterationCount, float reflectivity,\n vec2 hitPixel, vec3 hitPoint, float dist, vec3 rayDir\n)\n{\n float alpha = clamp(reflectivity, 0.0, 1.0);\n alpha *= 1.0 - (iterationCount / float(MAX_ITERATION));\n vec2 hitPixelNDC = hitPixel * 2.0 - 1.0;\n float maxDimension = min(1.0, max(abs(hitPixelNDC.x), abs(hitPixelNDC.y)));\n alpha *= 1.0 - max(0.0, maxDimension - screenEdgeFadeStart) / (1.0 - screenEdgeFadeStart);\n\n float _eyeFadeStart = eyeFadeStart;\n float _eyeFadeEnd = eyeFadeEnd;\n if (_eyeFadeStart > _eyeFadeEnd) {\n float tmp = _eyeFadeEnd;\n _eyeFadeEnd = _eyeFadeStart;\n _eyeFadeStart = tmp;\n }\n\n float eyeDir = clamp(rayDir.z, _eyeFadeStart, _eyeFadeEnd);\n alpha *= 1.0 - (eyeDir - _eyeFadeStart) / (_eyeFadeEnd - _eyeFadeStart);\n\n alpha *= 1.0 - clamp(dist / maxRayDistance, 0.0, 1.0);\n\n return alpha;\n}\n\n@import qtek.util.rand\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n vec4 normalAndGloss = texture2D(gBufferTexture1, v_Texcoord);\n\n if (dot(normalAndGloss.rgb, vec3(1.0)) == 0.0) {\n discard;\n }\n\n float g = normalAndGloss.a;\n if (g <= minGlossiness) {\n discard;\n }\n\n float reflectivity = (g - minGlossiness) / (1.0 - minGlossiness);\n\n vec3 N = normalAndGloss.rgb * 2.0 - 1.0;\n N = normalize((viewInverseTranspose * vec4(N, 0.0)).xyz);\n\n vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, fetchDepth(gBufferTexture2, v_Texcoord), 1.0);\n vec4 pos = projectionInv * projectedPos;\n vec3 rayOrigin = pos.xyz / pos.w;\n\n vec3 rayDir = normalize(reflect(normalize(rayOrigin), N));\n vec2 hitPixel;\n vec3 hitPoint;\n float iterationCount;\n\n vec2 uv2 = v_Texcoord * viewportSize;\n float jitter = rand(fract(v_Texcoord + jitterOffset));\n\n bool intersect = traceScreenSpaceRay(rayOrigin, rayDir, jitter, hitPixel, hitPoint, iterationCount);\n\n float dist = distance(rayOrigin, hitPoint);\n\n float alpha = calculateAlpha(iterationCount, reflectivity, hitPixel, hitPoint, dist, rayDir) * float(intersect);\n\n vec3 hitNormal = texture2D(gBufferTexture1, hitPixel).rgb * 2.0 - 1.0;\n hitNormal = normalize((viewInverseTranspose * vec4(hitNormal, 0.0)).xyz);\n\n if (dot(hitNormal, rayDir) >= 0.0) {\n discard;\n }\n\n \n if (!intersect) {\n discard;\n }\n vec4 color = decodeHDR(texture2D(sourceTexture, hitPixel));\n gl_FragColor = encodeHDR(vec4(color.rgb * alpha, color.a));\n}\n@end\n\n@export ecgl.ssr.blur\n\nuniform sampler2D texture;\nuniform sampler2D gBufferTexture1;\n\nvarying vec2 v_Texcoord;\n\nuniform vec2 textureSize;\nuniform float blurSize : 4.0;\n\n#ifdef BLEND\nuniform sampler2D sourceTexture;\n#endif\n\n@import qtek.util.rgbm\n\n\nvoid main()\n{\n @import qtek.compositor.kernel.gaussian_13\n\n vec4 centerNTexel = texture2D(gBufferTexture1, v_Texcoord);\n float g = centerNTexel.a;\n float maxBlurSize = clamp(1.0 - g + 0.1, 0.0, 1.0) * blurSize;\n#ifdef VERTICAL\n vec2 off = vec2(0.0, maxBlurSize / textureSize.y);\n#else\n vec2 off = vec2(maxBlurSize / textureSize.x, 0.0);\n#endif\n\n vec2 coord = v_Texcoord;\n\n vec4 sum = vec4(0.0);\n float weightAll = 0.0;\n\n vec3 cN = centerNTexel.rgb * 2.0 - 1.0;\n for (int i = 0; i < 13; i++) {\n vec2 coord = clamp((float(i) - 6.0) * off + v_Texcoord, vec2(0.0), vec2(1.0));\n float w = gaussianKernel[i] * clamp(dot(cN, texture2D(gBufferTexture1, coord).rgb * 2.0 - 1.0), 0.0, 1.0);\n weightAll += w;\n sum += decodeHDR(texture2D(texture, coord)) * w;\n }\n\n#ifdef BLEND\n gl_FragColor = encodeHDR(\n sum / weightAll + decodeHDR(texture2D(sourceTexture, v_Texcoord))\n );\n#else\n gl_FragColor = encodeHDR(sum / weightAll);\n#endif\n}\n\n@end";
 
 
 /***/ }),
@@ -36730,9 +36869,6 @@ SSRPass.prototype.getTargetTexture = function () {
 SSRPass.prototype.setParameter = function (name, val) {
     if (name === 'maxIteration') {
         this._ssrPass.material.shader.define('fragment', 'MAX_ITERATION', val);
-    }
-    else if (name === 'maxBinarySearchIteration') {
-        this._ssrPass.material.shader.define('fragment', 'MAX_BINARY_SEARCH_ITERATION', val);
     }
     else {
         this._ssrPass.setUniform(name, val);
@@ -39873,28 +40009,28 @@ module.exports = {
 /* 171 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.color.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\n@import ecgl.common.uvUniforms\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position: POSITION;\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nuniform float percent : 1.0;\n#endif\n\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n#ifdef VERTEX_ANIMATION\n vec3 pos = mix(prevPosition, position, percent);\n#else\n vec3 pos = position;\n#endif\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n#ifdef VERTEX_COLOR\n v_Color = a_Color;\n#endif\n\n @import ecgl.common.wireframe.vertexMain\n\n}\n\n@end\n\n@export ecgl.color.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\nuniform sampler2D diffuseMap;\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import ecgl.common.layers.header\n\nvarying vec2 v_Texcoord;\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n gl_FragColor = sRGBToLinear(color);\n#else\n gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n gl_FragColor *= v_Color;\n#endif\n\n vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n albedoTexel = texture2D(diffuseMap, v_Texcoord);\n #ifdef SRGB_DECODE\n albedoTexel = sRGBToLinear(albedoTexel);\n #endif\n#endif\n\n @import ecgl.common.diffuseLayer.main\n\n gl_FragColor *= albedoTexel;\n\n @import ecgl.common.emissiveLayer.main\n\n @import ecgl.common.wireframe.fragmentMain\n\n}\n@end";
+module.exports = "@export ecgl.color.vertex\n\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\n\n@import ecgl.common.uv.header\n\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 position: POSITION;\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nuniform float percent : 1.0;\n#endif\n\nvoid main()\n{\n#ifdef VERTEX_ANIMATION\n vec3 pos = mix(prevPosition, position, percent);\n#else\n vec3 pos = position;\n#endif\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n @import ecgl.common.uv.main\n\n#ifdef VERTEX_COLOR\n v_Color = a_Color;\n#endif\n\n @import ecgl.common.wireframe.vertexMain\n\n}\n\n@end\n\n@export ecgl.color.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\nuniform sampler2D diffuseMap;\nuniform sampler2D detailMap;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import ecgl.common.layers.header\n\n@import ecgl.common.uv.fragmentHeader\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.util.srgb\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n gl_FragColor = sRGBToLinear(color);\n#else\n gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n gl_FragColor *= v_Color;\n#endif\n\n @import ecgl.common.albedo.main\n\n @import ecgl.common.diffuseLayer.main\n\n gl_FragColor *= albedoTexel;\n\n @import ecgl.common.emissiveLayer.main\n\n @import ecgl.common.wireframe.fragmentMain\n\n}\n@end";
 
 
 /***/ }),
 /* 172 */
 /***/ (function(module, exports) {
 
-module.exports = "\n@export ecgl.common.transformUniforms\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n@end\n\n@export ecgl.common.attributes\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n@end\n\n@export ecgl.common.uvUniforms\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\n@end\n\n\n@export ecgl.common.wireframe.vertexHeader\n\n#ifdef WIREFRAME_QUAD\nattribute vec4 barycentric;\nvarying vec4 v_Barycentric;\n#elif defined(WIREFRAME_TRIANGLE)\nattribute vec3 barycentric;\nvarying vec3 v_Barycentric;\n#endif\n\n@end\n\n@export ecgl.common.wireframe.vertexMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n v_Barycentric = barycentric;\n#endif\n\n@end\n\n\n@export ecgl.common.wireframe.fragmentHeader\n\nuniform float wireframeLineWidth : 1;\nuniform vec4 wireframeLineColor: [0, 0, 0, 0.5];\n\n#ifdef WIREFRAME_QUAD\nvarying vec4 v_Barycentric;\nfloat edgeFactor () {\n vec4 d = fwidth(v_Barycentric);\n vec4 a4 = smoothstep(vec4(0.0), d * wireframeLineWidth, v_Barycentric);\n return min(min(min(a4.x, a4.y), a4.z), a4.w);\n}\n#elif defined(WIREFRAME_TRIANGLE)\nvarying vec3 v_Barycentric;\nfloat edgeFactor () {\n vec3 d = fwidth(v_Barycentric);\n vec3 a3 = smoothstep(vec3(0.0), d * wireframeLineWidth, v_Barycentric);\n return min(min(a3.x, a3.y), a3.z);\n}\n#endif\n\n@end\n\n\n@export ecgl.common.wireframe.fragmentMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n if (wireframeLineWidth > 0.) {\n vec4 lineColor = wireframeLineColor;\n#ifdef SRGB_DECODE\n lineColor = sRGBToLinear(lineColor);\n#endif\n\n gl_FragColor.rgb = mix(gl_FragColor.rgb, lineColor.rgb, (1.0 - edgeFactor()) * lineColor.a);\n }\n#endif\n@end\n\n\n\n\n@export ecgl.common.bumpMap.header\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n\n\nvec3 bumpNormal(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n vec2 dSTdx = dFdx(v_Texcoord);\n vec2 dSTdy = dFdy(v_Texcoord);\n\n float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n vec3 vSigmaX = dFdx(surfPos);\n vec3 vSigmaY = dFdy(surfPos);\n vec3 vN = surfNormal;\n\n vec3 R1 = cross(vSigmaY, vN);\n vec3 R2 = cross(vN, vSigmaX);\n\n float fDet = dot(vSigmaX, R1);\n\n vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\n@end\n\n@export ecgl.common.normalMap.vertexHeader\n\n#ifdef NORMALMAP_ENABLED\nattribute vec4 tangent : TANGENT;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@end\n\n@export ecgl.common.normalMap.vertexMain\n\n#ifdef NORMALMAP_ENABLED\n if (dot(tangent, tangent) > 0.0) {\n v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);\n v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);\n }\n#endif\n\n@end\n\n\n@export ecgl.common.normalMap.fragmentHeader\n\n#ifdef NORMALMAP_ENABLED\nuniform sampler2D normalMap;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@end\n\n@export ecgl.common.normalMap.fragmentMain\n#ifdef NORMALMAP_ENABLED\n if (dot(v_Tangent, v_Tangent) > 0.0) {\n vec3 normalTexel = texture2D(normalMap, v_Texcoord).xyz;\n if (dot(normalTexel, normalTexel) > 0.0) { N = normalTexel * 2.0 - 1.0;\n mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);\n N = normalize(tbn * N);\n }\n }\n#endif\n@end\n\n\n\n@export ecgl.common.vertexAnimation.header\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nattribute vec3 prevNormal;\nuniform float percent;\n#endif\n\n@end\n\n@export ecgl.common.vertexAnimation.main\n\n#ifdef VERTEX_ANIMATION\n vec3 pos = mix(prevPosition, position, percent);\n vec3 norm = mix(prevNormal, normal, percent);\n#else\n vec3 pos = position;\n vec3 norm = normal;\n#endif\n\n@end\n\n\n@export ecgl.common.ssaoMap.header\n#ifdef SSAOMAP_ENABLED\nuniform sampler2D ssaoMap;\nuniform vec4 viewport : VIEWPORT;\n#endif\n@end\n\n@export ecgl.common.ssaoMap.main\n float ao = 1.0;\n#ifdef SSAOMAP_ENABLED\n ao = texture2D(ssaoMap, (gl_FragCoord.xy - viewport.xy) / viewport.zw).r;\n#endif\n@end\n\n\n\n\n@export ecgl.common.diffuseLayer.header\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n@end\n\n@export ecgl.common.emissiveLayer.header\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\n@end\n\n@export ecgl.common.layers.header\n@import ecgl.common.diffuseLayer.header\n@import ecgl.common.emissiveLayer.header\n@end\n\n@export ecgl.common.diffuseLayer.main\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n float intensity = layerDiffuseIntensity[_idx_];\n vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n #ifdef SRGB_DECODE\n texel2 = sRGBToLinear(texel2);\n #endif\n albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n }}\n#endif\n\n@end\n\n@export ecgl.common.emissiveLayer.main\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)\n {{\n vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n #ifdef SRGB_DECODE\n texel2 = sRGBToLinear(texel2);\n #endif\n float intensity = layerEmissionIntensity[_idx_];\n gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n }}\n#endif\n\n@end\n";
+module.exports = "\n@export ecgl.common.transformUniforms\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n@end\n\n@export ecgl.common.attributes\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n@end\n\n@export ecgl.common.uv.header\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\nuniform vec2 detailUvRepeat : [1.0, 1.0];\nuniform vec2 detailUvOffset : [0.0, 0.0];\n\nvarying vec2 v_Texcoord;\nvarying vec2 v_DetailTexcoord;\n@end\n\n@export ecgl.common.uv.main\nv_Texcoord = texcoord * uvRepeat + uvOffset;\nv_DetailTexcoord = texcoord * detailUvRepeat + detailUvOffset;\n@end\n\n@export ecgl.common.uv.fragmentHeader\nvarying vec2 v_Texcoord;\nvarying vec2 v_DetailTexcoord;\n@end\n\n\n@export ecgl.common.albedo.main\n\n vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n albedoTexel = texture2D(diffuseMap, v_Texcoord);\n #ifdef SRGB_DECODE\n albedoTexel = sRGBToLinear(albedoTexel);\n #endif\n#endif\n\n#ifdef DETAILMAP_ENABLED\n vec4 detailTexel = texture2D(detailMap, v_DetailTexcoord);\n #ifdef SRGB_DECODE\n detailTexel = sRGBToLinear(detailTexel);\n #endif\n albedoTexel.rgb = mix(albedoTexel.rgb, detailTexel.rgb, detailTexel.a);\n albedoTexel.a = detailTexel.a + (1.0 - detailTexel.a) * albedoTexel.a;\n#endif\n\n@end\n\n@export ecgl.common.wireframe.vertexHeader\n\n#ifdef WIREFRAME_QUAD\nattribute vec4 barycentric;\nvarying vec4 v_Barycentric;\n#elif defined(WIREFRAME_TRIANGLE)\nattribute vec3 barycentric;\nvarying vec3 v_Barycentric;\n#endif\n\n@end\n\n@export ecgl.common.wireframe.vertexMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n v_Barycentric = barycentric;\n#endif\n\n@end\n\n\n@export ecgl.common.wireframe.fragmentHeader\n\nuniform float wireframeLineWidth : 1;\nuniform vec4 wireframeLineColor: [0, 0, 0, 0.5];\n\n#ifdef WIREFRAME_QUAD\nvarying vec4 v_Barycentric;\nfloat edgeFactor () {\n vec4 d = fwidth(v_Barycentric);\n vec4 a4 = smoothstep(vec4(0.0), d * wireframeLineWidth, v_Barycentric);\n return min(min(min(a4.x, a4.y), a4.z), a4.w);\n}\n#elif defined(WIREFRAME_TRIANGLE)\nvarying vec3 v_Barycentric;\nfloat edgeFactor () {\n vec3 d = fwidth(v_Barycentric);\n vec3 a3 = smoothstep(vec3(0.0), d * wireframeLineWidth, v_Barycentric);\n return min(min(a3.x, a3.y), a3.z);\n}\n#endif\n\n@end\n\n\n@export ecgl.common.wireframe.fragmentMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n if (wireframeLineWidth > 0.) {\n vec4 lineColor = wireframeLineColor;\n#ifdef SRGB_DECODE\n lineColor = sRGBToLinear(lineColor);\n#endif\n\n gl_FragColor.rgb = mix(gl_FragColor.rgb, lineColor.rgb, (1.0 - edgeFactor()) * lineColor.a);\n }\n#endif\n@end\n\n\n\n\n@export ecgl.common.bumpMap.header\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n\n\nvec3 bumpNormal(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n vec2 dSTdx = dFdx(v_Texcoord);\n vec2 dSTdy = dFdy(v_Texcoord);\n\n float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n vec3 vSigmaX = dFdx(surfPos);\n vec3 vSigmaY = dFdy(surfPos);\n vec3 vN = surfNormal;\n\n vec3 R1 = cross(vSigmaY, vN);\n vec3 R2 = cross(vN, vSigmaX);\n\n float fDet = dot(vSigmaX, R1);\n\n vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\n@end\n\n@export ecgl.common.normalMap.vertexHeader\n\n#ifdef NORMALMAP_ENABLED\nattribute vec4 tangent : TANGENT;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@end\n\n@export ecgl.common.normalMap.vertexMain\n\n#ifdef NORMALMAP_ENABLED\n if (dot(tangent, tangent) > 0.0) {\n v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);\n v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);\n }\n#endif\n\n@end\n\n\n@export ecgl.common.normalMap.fragmentHeader\n\n#ifdef NORMALMAP_ENABLED\nuniform sampler2D normalMap;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@end\n\n@export ecgl.common.normalMap.fragmentMain\n#ifdef NORMALMAP_ENABLED\n if (dot(v_Tangent, v_Tangent) > 0.0) {\n vec3 normalTexel = texture2D(normalMap, v_Texcoord).xyz;\n if (dot(normalTexel, normalTexel) > 0.0) { N = normalTexel * 2.0 - 1.0;\n mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);\n N = normalize(tbn * N);\n }\n }\n#endif\n@end\n\n\n\n@export ecgl.common.vertexAnimation.header\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nattribute vec3 prevNormal;\nuniform float percent;\n#endif\n\n@end\n\n@export ecgl.common.vertexAnimation.main\n\n#ifdef VERTEX_ANIMATION\n vec3 pos = mix(prevPosition, position, percent);\n vec3 norm = mix(prevNormal, normal, percent);\n#else\n vec3 pos = position;\n vec3 norm = normal;\n#endif\n\n@end\n\n\n@export ecgl.common.ssaoMap.header\n#ifdef SSAOMAP_ENABLED\nuniform sampler2D ssaoMap;\nuniform vec4 viewport : VIEWPORT;\n#endif\n@end\n\n@export ecgl.common.ssaoMap.main\n float ao = 1.0;\n#ifdef SSAOMAP_ENABLED\n ao = texture2D(ssaoMap, (gl_FragCoord.xy - viewport.xy) / viewport.zw).r;\n#endif\n@end\n\n\n\n\n@export ecgl.common.diffuseLayer.header\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n@end\n\n@export ecgl.common.emissiveLayer.header\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\n@end\n\n@export ecgl.common.layers.header\n@import ecgl.common.diffuseLayer.header\n@import ecgl.common.emissiveLayer.header\n@end\n\n@export ecgl.common.diffuseLayer.main\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n float intensity = layerDiffuseIntensity[_idx_];\n vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n #ifdef SRGB_DECODE\n texel2 = sRGBToLinear(texel2);\n #endif\n albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n }}\n#endif\n\n@end\n\n@export ecgl.common.emissiveLayer.main\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)\n {{\n vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n #ifdef SRGB_DECODE\n texel2 = sRGBToLinear(texel2);\n #endif\n float intensity = layerEmissionIntensity[_idx_];\n gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n }}\n#endif\n\n@end\n";
 
 
 /***/ }),
 /* 173 */
 /***/ (function(module, exports) {
 
-module.exports = "\n@export ecgl.displayShadow.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uvUniforms\n\n@import ecgl.common.attributes\n\nvarying vec3 v_WorldPosition;\n\nvarying vec3 v_Normal;\nvarying vec2 v_Texcoord;\n\nvoid main()\n{\n v_Texcoord = texcoord * uvRepeat + uvOffset;\n v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n \n v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n gl_Position = worldViewProjection * vec4(position, 1.0);\n}\n\n@end\n\n\n@export ecgl.displayShadow.fragment\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n@import ecgl.common.ssaoMap.header\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n float shadow = 1.0;\n\n @import ecgl.common.ssaoMap.main\n\n#if defined(DIRECTIONAL_LIGHT_COUNT) && defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n for (int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++) {\n shadow = min(shadow, shadowContribsDir[i] * 0.5 + 0.5);\n }\n#endif\n\n shadow *= 0.5 + ao * 0.5;\n shadow = clamp(shadow, 0.0, 1.0);\n\n gl_FragColor = vec4(vec3(0.0), 1.0 - shadow);\n}\n\n@end";
+module.exports = "\n@export ecgl.displayShadow.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uv.header\n\n@import ecgl.common.attributes\n\nvarying vec3 v_WorldPosition;\n\nvarying vec3 v_Normal;\n\nvoid main()\n{\n @import ecgl.common.uv.main\n v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n \n v_WorldPosition = (world * vec4(position, 1.0)).xyz;\n gl_Position = worldViewProjection * vec4(position, 1.0);\n}\n\n@end\n\n\n@export ecgl.displayShadow.fragment\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n@import ecgl.common.ssaoMap.header\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n float shadow = 1.0;\n\n @import ecgl.common.ssaoMap.main\n\n#if defined(DIRECTIONAL_LIGHT_COUNT) && defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n for (int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++) {\n shadow = min(shadow, shadowContribsDir[i] * 0.5 + 0.5);\n }\n#endif\n\n shadow *= 0.5 + ao * 0.5;\n shadow = clamp(shadow, 0.0, 1.0);\n\n gl_FragColor = vec4(vec3(0.0), 1.0 - shadow);\n}\n\n@end";
 
 
 /***/ }),
 /* 174 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.hatching.vertex\n\n@import ecgl.realistic.vertex\n\n@end\n\n\n@export ecgl.hatching.fragment\n\n#define NORMAL_UP_AXIS 1\n#define NORMAL_FRONT_AXIS 2\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform vec4 color : [0.0, 0.0, 0.0, 1.0];\nuniform vec4 paperColor : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nuniform sampler2D hatch1;\nuniform sampler2D hatch2;\nuniform sampler2D hatch3;\nuniform sampler2D hatch4;\nuniform sampler2D hatch5;\nuniform sampler2D hatch6;\n\nfloat shade(in float tone) {\n vec4 c = vec4(1. ,1., 1., 1.);\n float step = 1. / 6.;\n if (tone <= step / 2.0) {\n c = mix(vec4(0.), texture2D(hatch6, v_Texcoord), 12. * tone);\n }\n else if (tone <= step) {\n c = mix(texture2D(hatch6, v_Texcoord), texture2D(hatch5, v_Texcoord), 6. * tone);\n }\n if(tone > step && tone <= 2. * step){\n c = mix(texture2D(hatch5, v_Texcoord), texture2D(hatch4, v_Texcoord) , 6. * (tone - step));\n }\n if(tone > 2. * step && tone <= 3. * step){\n c = mix(texture2D(hatch4, v_Texcoord), texture2D(hatch3, v_Texcoord), 6. * (tone - 2. * step));\n }\n if(tone > 3. * step && tone <= 4. * step){\n c = mix(texture2D(hatch3, v_Texcoord), texture2D(hatch2, v_Texcoord), 6. * (tone - 3. * step));\n }\n if(tone > 4. * step && tone <= 5. * step){\n c = mix(texture2D(hatch2, v_Texcoord), texture2D(hatch1, v_Texcoord), 6. * (tone - 4. * step));\n }\n if(tone > 5. * step){\n c = mix(texture2D(hatch1, v_Texcoord), vec4(1.), 6. * (tone - 5. * step));\n }\n\n return c.r;\n}\n\nconst vec3 w = vec3(0.2125, 0.7154, 0.0721);\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n vec4 inkColor = sRGBToLinear(color);\n#else\n vec4 inkColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n #ifdef SRGB_DECODE\n inkColor *= sRGBToLinear(v_Color);\n #else\n inkColor *= v_Color;\n #endif\n#endif\n\n vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n#endif\n\n float tone = 0.0;\n\n float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n ambientFactor = dot(v_Normal, N);\n#endif\n\n vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);\n \n @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n {\n tone += dot(ambientLightColor[i], w) * ambientFactor * ao;\n }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n {{\n tone += dot(calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_], w) * ao;\n }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n#endif\n for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n {\n vec3 lightDirection = -directionalLightDirection[i];\n float lightTone = dot(directionalLightColor[i], w);\n\n float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n if (shadowEnabled)\n {\n shadowContrib = shadowContribsDir[i];\n }\n#endif\n\n float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n tone += lightTone * clamp(ndl, 0.0, 1.0);\n }\n#endif\n\n gl_FragColor = mix(inkColor, paperColor, shade(clamp(tone, 0.0, 1.0)));\n }\n@end\n";
+module.exports = "@export ecgl.hatching.vertex\n\n@import ecgl.realistic.vertex\n\n@end\n\n\n@export ecgl.hatching.fragment\n\n#define NORMAL_UP_AXIS 1\n#define NORMAL_FRONT_AXIS 2\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform vec4 color : [0.0, 0.0, 0.0, 1.0];\nuniform vec4 paperColor : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nuniform sampler2D hatch1;\nuniform sampler2D hatch2;\nuniform sampler2D hatch3;\nuniform sampler2D hatch4;\nuniform sampler2D hatch5;\nuniform sampler2D hatch6;\n\nfloat shade(in float tone) {\n vec4 c = vec4(1. ,1., 1., 1.);\n float step = 1. / 6.;\n if (tone <= step / 2.0) {\n c = mix(vec4(0.), texture2D(hatch6, v_Texcoord), 12. * tone);\n }\n else if (tone <= step) {\n c = mix(texture2D(hatch6, v_Texcoord), texture2D(hatch5, v_Texcoord), 6. * tone);\n }\n if(tone > step && tone <= 2. * step){\n c = mix(texture2D(hatch5, v_Texcoord), texture2D(hatch4, v_Texcoord) , 6. * (tone - step));\n }\n if(tone > 2. * step && tone <= 3. * step){\n c = mix(texture2D(hatch4, v_Texcoord), texture2D(hatch3, v_Texcoord), 6. * (tone - 2. * step));\n }\n if(tone > 3. * step && tone <= 4. * step){\n c = mix(texture2D(hatch3, v_Texcoord), texture2D(hatch2, v_Texcoord), 6. * (tone - 3. * step));\n }\n if(tone > 4. * step && tone <= 5. * step){\n c = mix(texture2D(hatch2, v_Texcoord), texture2D(hatch1, v_Texcoord), 6. * (tone - 4. * step));\n }\n if(tone > 5. * step){\n c = mix(texture2D(hatch1, v_Texcoord), vec4(1.), 6. * (tone - 5. * step));\n }\n\n return c.r;\n}\n\nconst vec3 w = vec3(0.2125, 0.7154, 0.0721);\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n vec4 inkColor = sRGBToLinear(color);\n#else\n vec4 inkColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n #ifdef SRGB_DECODE\n inkColor *= sRGBToLinear(v_Color);\n #else\n inkColor *= v_Color;\n #endif\n#endif\n\n vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n#endif\n\n float tone = 0.0;\n\n float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n ambientFactor = dot(v_Normal, N);\n#endif\n\n vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);\n \n @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n {\n tone += dot(ambientLightColor[i], w) * ambientFactor * ao;\n }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n {{\n tone += dot(calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_], w) * ao;\n }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n#endif\n for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n {\n vec3 lightDirection = -directionalLightDirection[i];\n float lightTone = dot(directionalLightColor[i], w);\n\n float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n if (shadowEnabled)\n {\n shadowContrib = shadowContribsDir[i];\n }\n#endif\n\n float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n tone += lightTone * clamp(ndl, 0.0, 1.0);\n }\n#endif\n\n gl_FragColor = mix(inkColor, paperColor, shade(clamp(tone, 0.0, 1.0)));\n }\n@end\n";
 
 
 /***/ }),
@@ -39908,7 +40044,7 @@ module.exports = "@export ecgl.labels3D.vertex\n\nattribute vec3 position: POSIT
 /* 176 */
 /***/ (function(module, exports) {
 
-module.exports = "/**\n * http: */\n\n@export ecgl.lambert.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uvUniforms\n\n@import ecgl.common.attributes\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.vertexAnimation.header\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n\n @import ecgl.common.vertexAnimation.main\n\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n v_Color = a_Color;\n#endif\n\n @import ecgl.common.wireframe.vertexMain\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\n#define NORMAL_UP_AXIS 1\n#define NORMAL_FRONT_AXIS 2\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n gl_FragColor = sRGBToLinear(color);\n#else\n gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n #ifdef SRGB_DECODE\n gl_FragColor *= sRGBToLinear(v_Color);\n #else\n gl_FragColor *= v_Color;\n #endif\n#endif\n\n vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n albedoTexel = texture2D(diffuseMap, v_Texcoord);\n #ifdef SRGB_DECODE\n albedoTexel = sRGBToLinear(albedoTexel);\n #endif\n#endif\n\n @import ecgl.common.diffuseLayer.main\n\n gl_FragColor *= albedoTexel;\n\n vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n#endif\n\n float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n ambientFactor = dot(v_Normal, N);\n#endif\n\n vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);\n\n vec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n {\n diffuseColor += ambientLightColor[i] * ambientFactor * ao;\n }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n {{\n diffuseColor += calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_] * ao;\n }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n#endif\n for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n {\n vec3 lightDirection = -directionalLightDirection[i];\n vec3 lightColor = directionalLightColor[i];\n\n float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n if (shadowEnabled)\n {\n shadowContrib = shadowContribsDir[i];\n }\n#endif\n\n float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);\n }\n#endif\n\n gl_FragColor.rgb *= diffuseColor;\n\n @import ecgl.common.emissiveLayer.main\n\n @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
+module.exports = "/**\n * http: */\n\n@export ecgl.lambert.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uv.header\n\n\n@import ecgl.common.attributes\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.vertexAnimation.header\n\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n @import ecgl.common.uv.main\n\n @import ecgl.common.vertexAnimation.main\n\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n v_Color = a_Color;\n#endif\n\n @import ecgl.common.wireframe.vertexMain\n}\n\n@end\n\n\n@export ecgl.lambert.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n\n#define NORMAL_UP_AXIS 1\n#define NORMAL_FRONT_AXIS 2\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform sampler2D diffuseMap;\nuniform sampler2D detailMap;\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvoid main()\n{\n#ifdef SRGB_DECODE\n gl_FragColor = sRGBToLinear(color);\n#else\n gl_FragColor = color;\n#endif\n\n#ifdef VERTEX_COLOR\n #ifdef SRGB_DECODE\n gl_FragColor *= sRGBToLinear(v_Color);\n #else\n gl_FragColor *= v_Color;\n #endif\n#endif\n\n @import ecgl.common.albedo.main\n\n @import ecgl.common.diffuseLayer.main\n\n gl_FragColor *= albedoTexel;\n\n vec3 N = v_Normal;\n#ifdef DOUBLE_SIDE\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n#endif\n\n float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n ambientFactor = dot(v_Normal, N);\n#endif\n\n vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);\n\n vec3 diffuseColor = vec3(0.0, 0.0, 0.0);\n\n @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n for(int i = 0; i < AMBIENT_LIGHT_COUNT; i++)\n {\n diffuseColor += ambientLightColor[i] * ambientFactor * ao;\n }\n#endif\n#ifdef AMBIENT_SH_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n {{\n diffuseColor += calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_] * ao;\n }}\n#endif\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n#endif\n for(int i = 0; i < DIRECTIONAL_LIGHT_COUNT; i++)\n {\n vec3 lightDirection = -directionalLightDirection[i];\n vec3 lightColor = directionalLightColor[i];\n\n float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n if (shadowEnabled)\n {\n shadowContrib = shadowContribsDir[i];\n }\n#endif\n\n float ndl = dot(N, normalize(lightDirection)) * shadowContrib;\n\n diffuseColor += lightColor * clamp(ndl, 0.0, 1.0);\n }\n#endif\n\n gl_FragColor.rgb *= diffuseColor;\n\n @import ecgl.common.emissiveLayer.main\n\n @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
 
 
 /***/ }),
@@ -39922,14 +40058,14 @@ module.exports = "@export ecgl.lines2D.vertex\n\nuniform mat4 worldViewProjectio
 /* 178 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.normal.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uvUniforms\n\n@import ecgl.common.attributes\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n@import ecgl.common.normalMap.vertexHeader\n\n@import ecgl.common.vertexAnimation.header\n\nvoid main()\n{\n\n @import ecgl.common.vertexAnimation.main\n\n v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n @import ecgl.common.normalMap.vertexMain\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n}\n\n\n@end\n\n\n@export ecgl.normal.fragment\n\n#define ROUGHNESS_CHANEL 0\n\nuniform bool useBumpMap;\nuniform bool useRoughnessMap;\nuniform bool doubleSide;\nuniform float roughness;\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n@import ecgl.common.normalMap.fragmentHeader\n@import ecgl.common.bumpMap.header\n\nuniform sampler2D roughnessMap;\n\nvoid main()\n{\n vec3 N = v_Normal;\n\n @import ecgl.common.normalMap.fragmentMain\n\n if (useBumpMap) {\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n }\n\n float g = 1.0 - roughness;\n\n if (useRoughnessMap) {\n float g2 = 1.0 - texture2D(roughnessMap, v_Texcoord)[ROUGHNESS_CHANEL];\n g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);\n }\n\n if (doubleSide) {\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n }\n\n gl_FragColor.rgb = (N.xyz + 1.0) * 0.5;\n gl_FragColor.a = g;\n}\n@end";
+module.exports = "@export ecgl.normal.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uv.header\n\n@import ecgl.common.attributes\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n@import ecgl.common.normalMap.vertexHeader\n\n@import ecgl.common.vertexAnimation.header\n\nvoid main()\n{\n\n @import ecgl.common.vertexAnimation.main\n\n @import ecgl.common.uv.main\n\n v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n @import ecgl.common.normalMap.vertexMain\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n}\n\n\n@end\n\n\n@export ecgl.normal.fragment\n\n#define ROUGHNESS_CHANEL 0\n\nuniform bool useBumpMap;\nuniform bool useRoughnessMap;\nuniform bool doubleSide;\nuniform float roughness;\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n@import ecgl.common.normalMap.fragmentHeader\n@import ecgl.common.bumpMap.header\n\nuniform sampler2D roughnessMap;\n\nvoid main()\n{\n vec3 N = v_Normal;\n\n @import ecgl.common.normalMap.fragmentMain\n\n if (useBumpMap) {\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n }\n\n float g = 1.0 - roughness;\n\n if (useRoughnessMap) {\n float g2 = 1.0 - texture2D(roughnessMap, v_DetailTexcoord)[ROUGHNESS_CHANEL];\n g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);\n }\n\n if (doubleSide) {\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n }\n\n gl_FragColor.rgb = (N.xyz + 1.0) * 0.5;\n gl_FragColor.a = g;\n}\n@end";
 
 
 /***/ }),
 /* 179 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.realistic.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uvUniforms\n\n@import ecgl.common.attributes\n\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef NORMALMAP_ENABLED\nattribute vec4 tangent : TANGENT;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@import ecgl.common.vertexAnimation.header\n\n\n\nvarying vec2 v_Texcoord;\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n v_Texcoord = texcoord * uvRepeat + uvOffset;\n\n @import ecgl.common.vertexAnimation.main\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n v_Color = a_Color;\n#endif\n\n#ifdef NORMALMAP_ENABLED\n v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);\n v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);\n#endif\n\n @import ecgl.common.wireframe.vertexMain\n\n}\n\n@end\n\n\n\n@export ecgl.realistic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n#define ROUGHNESS_CHANEL 0\n#define METALNESS_CHANEL 1\n\n#define NORMAL_UP_AXIS 1\n#define NORMAL_FRONT_AXIS 2\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\nvarying vec2 v_Texcoord;\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n#ifdef DIFFUSEMAP_ENABLED\nuniform sampler2D diffuseMap;\n#endif\n\n#ifdef METALNESSMAP_ENABLED\nuniform sampler2D metalnessMap;\n#endif\n\n#ifdef ROUGHNESSMAP_ENABLED\nuniform sampler2D roughnessMap;\n#endif\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef NORMALMAP_ENABLED\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\nuniform sampler2D normalMap;\n#endif\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvec3 F_Schlick(float ndv, vec3 spec) {\n return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n float a = pow(8192.0, g);\n return (a + 2.0) / 8.0 * pow(ndh, a);\n}\n\nvoid main()\n{\n vec4 albedoColor = color;\n\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n #ifdef SRGB_DECODE\n albedoColor *= sRGBToLinear(v_Color);\n #else\n albedoColor *= v_Color;\n #endif\n#endif\n\n vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n albedoTexel = texture2D(diffuseMap, v_Texcoord);\n #ifdef SRGB_DECODE\n albedoTexel = sRGBToLinear(albedoTexel);\n #endif\n#endif\n\n @import ecgl.common.diffuseLayer.main\n\n albedoColor *= albedoTexel;\n\n float m = metalness;\n\n#ifdef METALNESSMAP_ENABLED\n float m2 = texture2D(metalnessMap, v_Texcoord)[METALNESS_CHANEL];\n m = clamp(m2 + (m - 0.5) * 2.0, 0.0, 1.0);\n#endif\n\n vec3 baseColor = albedoColor.rgb;\n albedoColor.rgb = baseColor * (1.0 - m);\n vec3 specFactor = mix(vec3(0.04), baseColor, m);\n\n float g = 1.0 - roughness;\n\n#ifdef ROUGHNESSMAP_ENABLED\n float g2 = 1.0 - texture2D(roughnessMap, v_Texcoord)[ROUGHNESS_CHANEL];\n g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);\n#endif\n\n vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n#endif\n\n float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n ambientFactor = dot(v_Normal, N);\n#endif\n\n#ifdef NORMALMAP_ENABLED\n if (dot(v_Tangent, v_Tangent) > 0.0) {\n vec3 normalTexel = texture2D(normalMap, v_Texcoord).xyz;\n if (dot(normalTexel, normalTexel) > 0.0) { N = normalTexel * 2.0 - 1.0;\n mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);\n N = normalize(tbn * N);\n }\n }\n#endif\n vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);\n\n vec3 diffuseTerm = vec3(0.0);\n vec3 specularTerm = vec3(0.0);\n\n float ndv = clamp(dot(N, V), 0.0, 1.0);\n vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n {{\n diffuseTerm += ambientLightColor[_idx_] * ambientFactor * ao;\n }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n {{\n diffuseTerm += calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_] * ao;\n }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n#endif\n for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n {{\n vec3 L = -directionalLightDirection[_idx_];\n vec3 lc = directionalLightColor[_idx_];\n\n vec3 H = normalize(L + V);\n float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n if (shadowEnabled)\n {\n shadowContrib = shadowContribsDir[_idx_];\n }\n#endif\n\n vec3 li = lc * ndl * shadowContrib;\n\n diffuseTerm += li;\n specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n vec3 L = reflect(-V, N2);\n float ndv2 = clamp(dot(N2, V), 0.0, 1.0);\n float rough2 = clamp(1.0 - g, 0.0, 1.0);\n float bias2 = rough2 * 5.0;\n vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv2)).xy;\n vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n vec3 envTexel2;\n for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n {{\n envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2 * ao;\n }}\n#endif\n\n gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n gl_FragColor.a = albedoColor.a;\n\n#ifdef SRGB_ENCODE\n gl_FragColor = linearTosRGB(gl_FragColor);\n#endif\n\n @import ecgl.common.emissiveLayer.main\n\n @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
+module.exports = "@export ecgl.realistic.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uv.header\n\n@import ecgl.common.attributes\n\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef NORMALMAP_ENABLED\nattribute vec4 tangent : TANGENT;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@import ecgl.common.vertexAnimation.header\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n\n @import ecgl.common.uv.main\n\n @import ecgl.common.vertexAnimation.main\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n v_Color = a_Color;\n#endif\n\n#ifdef NORMALMAP_ENABLED\n v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);\n v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);\n#endif\n\n @import ecgl.common.wireframe.vertexMain\n\n}\n\n@end\n\n\n\n@export ecgl.realistic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n#define ROUGHNESS_CHANEL 0\n#define METALNESS_CHANEL 1\n\n#define NORMAL_UP_AXIS 1\n#define NORMAL_FRONT_AXIS 2\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform sampler2D diffuseMap;\n\nuniform sampler2D detailMap;\nuniform sampler2D metalnessMap;\nuniform sampler2D roughnessMap;\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef NORMALMAP_ENABLED\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\nuniform sampler2D normalMap;\n#endif\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvec3 F_Schlick(float ndv, vec3 spec) {\n return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n float a = pow(8192.0, g);\n return (a + 2.0) / 8.0 * pow(ndh, a);\n}\n\nvoid main()\n{\n vec4 albedoColor = color;\n\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n #ifdef SRGB_DECODE\n albedoColor *= sRGBToLinear(v_Color);\n #else\n albedoColor *= v_Color;\n #endif\n#endif\n\n @import ecgl.common.albedo.main\n\n @import ecgl.common.diffuseLayer.main\n\n albedoColor *= albedoTexel;\n\n float m = metalness;\n\n#ifdef METALNESSMAP_ENABLED\n float m2 = texture2D(metalnessMap, v_DetailTexcoord)[METALNESS_CHANEL];\n m = clamp(m2 + (m - 0.5) * 2.0, 0.0, 1.0);\n#endif\n\n vec3 baseColor = albedoColor.rgb;\n albedoColor.rgb = baseColor * (1.0 - m);\n vec3 specFactor = mix(vec3(0.04), baseColor, m);\n\n float g = 1.0 - roughness;\n\n#ifdef ROUGHNESSMAP_ENABLED\n float g2 = 1.0 - texture2D(roughnessMap, v_DetailTexcoord)[ROUGHNESS_CHANEL];\n g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);\n#endif\n\n vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n#endif\n\n float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n ambientFactor = dot(v_Normal, N);\n#endif\n\n#ifdef NORMALMAP_ENABLED\n if (dot(v_Tangent, v_Tangent) > 0.0) {\n vec3 normalTexel = texture2D(normalMap, v_DetailTexcoord).xyz;\n if (dot(normalTexel, normalTexel) > 0.0) { N = normalTexel * 2.0 - 1.0;\n mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);\n N = normalize(tbn * N);\n }\n }\n#endif\n vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);\n\n vec3 diffuseTerm = vec3(0.0);\n vec3 specularTerm = vec3(0.0);\n\n float ndv = clamp(dot(N, V), 0.0, 1.0);\n vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n {{\n diffuseTerm += ambientLightColor[_idx_] * ambientFactor * ao;\n }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n {{\n diffuseTerm += calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_] * ao;\n }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n#endif\n for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n {{\n vec3 L = -directionalLightDirection[_idx_];\n vec3 lc = directionalLightColor[_idx_];\n\n vec3 H = normalize(L + V);\n float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n if (shadowEnabled)\n {\n shadowContrib = shadowContribsDir[_idx_];\n }\n#endif\n\n vec3 li = lc * ndl * shadowContrib;\n\n diffuseTerm += li;\n specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n vec3 L = reflect(-V, N);\n L = vec3(L.x, L[NORMAL_UP_AXIS], L[NORMAL_FRONT_AXIS]);\n float rough2 = clamp(1.0 - g, 0.0, 1.0);\n float bias2 = rough2 * 5.0;\n vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n vec3 envTexel2;\n for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n {{\n envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2 * ao;\n }}\n#endif\n\n gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n gl_FragColor.a = albedoColor.a;\n\n#ifdef SRGB_ENCODE\n gl_FragColor = linearTosRGB(gl_FragColor);\n#endif\n\n @import ecgl.common.emissiveLayer.main\n\n @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
 
 
 /***/ }),
@@ -40054,7 +40190,7 @@ function generateSDF(ctx, sourceImageData, range) {
 var spriteUtil = {
 
     getMarginByStyle: function (style) {
-        var marginBias = style.marginBias || 0;
+        var minMargin = style.minMargin || 0;
 
         var lineWidth = 0;
         if (style.stroke && style.stroke !== 'none') {
@@ -40065,10 +40201,10 @@ var spriteUtil = {
         var shadowOffsetY = style.shadowOffsetY || 0;
 
         var margin = {};
-        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize) + marginBias;
-        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize) + marginBias;
-        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize) + marginBias;
-        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize) + marginBias;
+        margin.left = Math.max(lineWidth / 2, -shadowOffsetX + shadowBlurSize, minMargin);
+        margin.right = Math.max(lineWidth / 2, shadowOffsetX + shadowBlurSize, minMargin);
+        margin.top = Math.max(lineWidth / 2, -shadowOffsetY + shadowBlurSize, minMargin);
+        margin.bottom = Math.max(lineWidth / 2, shadowOffsetY + shadowBlurSize, minMargin);
 
         return margin;
     },
@@ -40078,11 +40214,8 @@ var spriteUtil = {
      * @param {string} symbol
      * @param {number | Array.<number>} symbolSize
      * @param {Object} style
-     * @param {number} marginBias
      */
     createSymbolSprite: function (symbol, symbolSize, style, canvas) {
-
-        // TODO marginBias can be set.
         var path = makePath(symbol, symbolSize, style);
 
         var margin = spriteUtil.getMarginByStyle(style);
@@ -40485,6 +40618,9 @@ module.exports = SunCalc;
         var nodesMap = this._nodesMap;
 
         if (nodesMap[generateNodeKey(id)]) {
+            if (true) {
+                console.error('Graph nodes have duplicate name or id');
+            }
             return;
         }
 
