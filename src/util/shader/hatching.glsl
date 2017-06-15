@@ -58,26 +58,27 @@ uniform sampler2D hatch6;
 float shade(in float tone) {
     vec4 c = vec4(1. ,1., 1., 1.);
     float step = 1. / 6.;
+    vec2 uv = v_DetailTexcoord;
     if (tone <= step / 2.0) {
-        c = mix(vec4(0.), texture2D(hatch6, v_Texcoord), 12. * tone);
+        c = mix(vec4(0.), texture2D(hatch6, uv), 12. * tone);
     }
     else if (tone <= step) {
-        c = mix(texture2D(hatch6, v_Texcoord), texture2D(hatch5, v_Texcoord), 6. * tone);
+        c = mix(texture2D(hatch6, uv), texture2D(hatch5, uv), 6. * tone);
     }
     if(tone > step && tone <= 2. * step){
-        c = mix(texture2D(hatch5, v_Texcoord), texture2D(hatch4, v_Texcoord) , 6. * (tone - step));
+        c = mix(texture2D(hatch5, uv), texture2D(hatch4, uv) , 6. * (tone - step));
     }
     if(tone > 2. * step && tone <= 3. * step){
-        c = mix(texture2D(hatch4, v_Texcoord), texture2D(hatch3, v_Texcoord), 6. * (tone - 2. * step));
+        c = mix(texture2D(hatch4, uv), texture2D(hatch3, uv), 6. * (tone - 2. * step));
     }
     if(tone > 3. * step && tone <= 4. * step){
-        c = mix(texture2D(hatch3, v_Texcoord), texture2D(hatch2, v_Texcoord), 6. * (tone - 3. * step));
+        c = mix(texture2D(hatch3, uv), texture2D(hatch2, uv), 6. * (tone - 3. * step));
     }
     if(tone > 4. * step && tone <= 5. * step){
-        c = mix(texture2D(hatch2, v_Texcoord), texture2D(hatch1, v_Texcoord), 6. * (tone - 4. * step));
+        c = mix(texture2D(hatch2, uv), texture2D(hatch1, uv), 6. * (tone - 4. * step));
     }
     if(tone > 5. * step){
-        c = mix(texture2D(hatch1, v_Texcoord), vec4(1.), 6. * (tone - 5. * step));
+        c = mix(texture2D(hatch1, uv), vec4(1.), 6. * (tone - 5. * step));
     }
 
     return c.r;
