@@ -19,6 +19,7 @@ function cartesian3DLayout(seriesModel, coordSys) {
         var barDepth;
         var xAxis = coordSys.getAxis('x');
         var yAxis = coordSys.getAxis('y');
+
         if (xAxis.type === 'category') {
             barWidth = xAxis.getBandWidth() * 0.7;
         }
