@@ -315,9 +315,9 @@ Geo3DBuilder.prototype = {
     },
 
     _updateGroundPlane: function (componentModel, geo3D, api) {
-        var groundModel = componentModel.getModel('groundPlane');
-        this._groundMesh.invisible = !groundModel.get('show');
-        if (!groundModel.get('show')) {
+        var groundModel = componentModel.getModel('groundPlane', componentModel);
+        this._groundMesh.invisible = !groundModel.get('show', true);
+        if (this._groundMesh.invisible) {
             return;
         }
 
@@ -330,7 +330,7 @@ Geo3DBuilder.prototype = {
             material = this._groundMaterials.lambert;
         }
 
-        graphicGL.setMaterialFromModel(shading, material, componentModel, api);
+        graphicGL.setMaterialFromModel(shading, material, groundModel, api);
         if (material.get('normalMap')) {
             this._groundMesh.geometry.generateTangents();
         }
