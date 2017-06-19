@@ -23,6 +23,7 @@ uniform float period: 1000;
 
 varying vec4 v_Color;
 varying float v_Percent;
+varying float v_SpotPercent;
 
 @import ecgl.common.wireframe.vertexHeader
 
@@ -48,6 +49,8 @@ void main()
 
     v_Percent = (dist - t * distAll) / trailLen;
 
+    v_SpotPercent = 0.1 / distAll;
+
     // if (t > 1.0 - trailLength) {
     //     float t2 = t - 1.0;
     //     v_Percent = max(v_Percent, (dist - t2 * distAll) / trailLen);
@@ -62,6 +65,7 @@ uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 varying vec4 v_Color;
 varying float v_Percent;
+varying float v_SpotPercent;
 
 @import ecgl.common.wireframe.fragmentHeader
 
@@ -69,16 +73,11 @@ varying float v_Percent;
 
 void main()
 {
-if (v_Percent > 1.0 || v_Percent < 0.0) {
-    discard;
-}
+    if (v_Percent > 1.0 || v_Percent < 0.0) {
+        discard;
+    }
 
     float fade = v_Percent;
-    // Spot part
-    // PENDING
-    if (v_Percent > 0.9) {
-        fade *= (7.0 * (v_Percent - 0.9) / 0.1 + 1.0);
-    }
 
 #ifdef SRGB_DECODE
     gl_FragColor = sRGBToLinear(color * v_Color);
@@ -87,6 +86,13 @@ if (v_Percent > 1.0 || v_Percent < 0.0) {
 #endif
 
     @import ecgl.common.wireframe.fragmentMain
+
+    // Spot part
+    // PENDING
+    if (v_Percent > (1.0 - v_SpotPercent)) {
+        gl_FragColor.rgb *= 10.0;
+        // gl_FragColor.rgb *= (10.0 * (v_Percent - 1.0 + v_SpotPercent) / v_SpotPercent + 1.0);
+    }
 
     gl_FragColor.a *= fade;
 }

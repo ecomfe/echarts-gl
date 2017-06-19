@@ -282,16 +282,20 @@ var LinesGeometry = StaticGeometry.extend(function () {
         var offsetAttr = this.attributes.offset;
         var indices = this.indices;
 
-        if (lineWidth == null) {
-            lineWidth = 1;
-        }
-        lineWidth = Math.max(lineWidth, 0.01);
-
         var vertexOffset = this._vertexOffset;
         var pointCount = is2DArray ? points.length : points.length / 3;
         var iterCount = pointCount;
         var point;
         var pointColor;
+        if (pointCount < 2) {
+            return;
+        }
+
+        if (lineWidth == null) {
+            lineWidth = 1;
+        }
+        lineWidth = Math.max(lineWidth, 0.01);
+
         for (var k = 0; k < iterCount; k++) {
             if (is2DArray) {
                 point = points[k];

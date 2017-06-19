@@ -34,6 +34,7 @@ module.exports = echarts.extendChartView({
         });
         this._linesMesh = new graphicGL.Mesh({
             geometry: new LinesGeometry(),
+            material: this._meshLinesMaterial,
             $ignorePicking: true
         });
 
@@ -146,9 +147,6 @@ module.exports = echarts.extendChartView({
                 nTriangle += geometry.getCubicCurveTriangleCount(pts[0], pts[1], pts[2], pts[3]);
             }
         });
-
-        this._linesMesh.material = this._meshLinesMaterial;
-        this._linesMesh.mode = graphicGL.Mesh.TRIANGLES;
 
         geometry.setVertexCount(nVertex);
         geometry.setTriangleCount(nTriangle);

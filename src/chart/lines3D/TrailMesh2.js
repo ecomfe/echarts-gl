@@ -48,6 +48,12 @@ module.exports = graphicGL.Mesh.extend(function () {
         var period = seriesModel.get('effect.period') * 1000;
         var useConstantSpeed = speed != null;
 
+        if (__DEV__) {
+            if (!this.getScene()) {
+                console.error('TrailMesh must been add to scene before updateData');
+            }
+        }
+
         useConstantSpeed
             ? this.material.set('speed', speed / 1000)
             : this.material.set('period', period);
@@ -78,7 +84,13 @@ module.exports = graphicGL.Mesh.extend(function () {
         var hasEffectColor = effectColor != null;
         var hasEffectOpacity = effectOpacity != null;
 
+        this.updateWorldTransform();
+        var xScale = this.worldTransform.x.len();
+        var yScale = this.worldTransform.y.len();
+        var zScale = this.worldTransform.z.len();
+
         var vertexOffset = 0;
+        
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
             var opacity = hasEffectOpacity ? effectOpacity : data.getItemVisual(idx, 'opacity');
@@ -99,6 +111,9 @@ module.exports = graphicGL.Mesh.extend(function () {
             var posPrev = [];
             for (var i = vertexOffset; i < vertexOffset + vertexCount; i++) {
                 geometry.attributes.position.get(i, pos);
+                pos[0] *= xScale;
+                pos[1] *= yScale;
+                pos[2] *= zScale;
                 if (i > vertexOffset) {
                     dist += vec3.dist(pos, posPrev);
                 }
