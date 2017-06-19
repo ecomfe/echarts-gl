@@ -50,25 +50,10 @@
                         zoom: 14,
                         pitch: 50,
                         bearing: -10,
+                        altitudeScale: 2,
                         style: 'mapbox://styles/mapbox/dark-v9',
                         postEffect: {
                             enable: true
-                        },
-                        light: {
-                            main: {
-                                intensity: 2,
-                                shadow: false,
-                                shadowQuality: 'high'
-                            },
-                            ambient: {
-                                intensity: 0.
-                            },
-                            ambientCubemap: {
-                                texture: 'asset/pisa.hdr',
-                                exposure: 1,
-                                diffuseIntensity: 0.5,
-                                specularIntensity: 2
-                            }
                         }
                     },
                     series: [{
@@ -78,9 +63,10 @@
 
                         effect: {
                             show: true,
-                            constantSpeed: 50,
+                            constantSpeed: 10,
                             trailWidth: 3,
-                            trailLength: 0.4
+                            trailLength: 0.4,
+                            trailOpacity: 1
                         },
 
                         blendMode: 'lighter',
@@ -88,7 +74,7 @@
                         polyline: true,
 
                         lineStyle: {
-                            width: 0.1,
+                            width: 1,
                             color: 'rgb(50, 50, 150)',
                             opacity: 0.5
                         },

@@ -53,22 +53,6 @@
                         style: 'mapbox://styles/mapbox/dark-v9',
                         postEffect: {
                             enable: true
-                        },
-                        light: {
-                            main: {
-                                intensity: 2,
-                                shadow: false,
-                                shadowQuality: 'high'
-                            },
-                            ambient: {
-                                intensity: 0.
-                            },
-                            ambientCubemap: {
-                                texture: 'asset/pisa.hdr',
-                                exposure: 1,
-                                diffuseIntensity: 0.5,
-                                specularIntensity: 2
-                            }
                         }
                     },
                     series: [{
@@ -78,7 +62,7 @@
 
                         effect: {
                             show: true,
-                            constantSpeed: 0.05,
+                            constantSpeed: 5,
                             trailWidth: 2,
                             trailLength: 0.6,
                             // trailColor: [1, 1, 5],

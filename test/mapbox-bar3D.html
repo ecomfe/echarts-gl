@@ -42,11 +42,12 @@
                     },
                     mapbox: {
                         center: [104.114129, 37.550339],
-                        zoom: 3,
+                        zoom: 5,
                         pitch: 50,
                         bearing: -10,
                         style: 'mapbox://styles/mapbox/light-v9',
-                        altitudeScale: 1e5,
+                        // boxHeight: 100,
+                        altitudeScale: 1e2,
                         postEffect: {
                             enable: true,
                             screenSpaceAmbientOcculusion: {
@@ -74,9 +75,8 @@
                         type: 'bar3D',
                         coordinateSystem: 'mapbox',
                         shading: 'lambert',
-                        maxHeight: 20,
                         minHeight: 0.1,
-                        barSize: 0.4,
+                        barSize: 0.5,
                         data: data,
                         silent: true
                     }]
