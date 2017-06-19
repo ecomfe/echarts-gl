@@ -160,6 +160,28 @@ graphicGL.Frustum = require('qtek/lib/math/Frustum');
 // Texture utilities
 
 var blankImage = textureUtil.createBlank('rgba(255,255,255,0)').image;
+
+
+function nearestPowerOfTwo(val) {
+    return Math.pow(2, Math.round(Math.log(val) / Math.LN2));
+}
+function convertTextureToPowerOfTwo(texture) {
+    if ((texture.wrapS === Texture.REPEAT || texture.wrapT === Texture.REPEAT)
+     && texture.image
+     ) {
+        // var canvas = document.createElement('canvas');
+        var width = nearestPowerOfTwo(texture.width);
+        var height = nearestPowerOfTwo(texture.height);
+        if (width !== texture.width || height !== texture.height) {
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(texture.image, 0, 0, width, height);
+            texture.image = canvas;
+        }
+    }
+}
 /**
  * @param {string|HTMLImageElement|HTMLCanvasElement} imgValue
  * @param {module:echarts/ExtensionAPI} api
@@ -199,7 +221,6 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
             id = imgValue.__textureid__ || '__ecgl_ec__' + textureObj.texture.__GUID__;
             imgValue.__textureid__ = id;
             textureCache.put(prefix + id, textureObj);
-            // TODO Next tick?
             cb && cb(textureObj.texture);
         }
         else {
@@ -224,6 +245,8 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
             id = imgValue.__textureid__ || '__ecgl_image__' + textureObj.texture.__GUID__;
             imgValue.__textureid__ = id;
             textureCache.put(prefix + id, textureObj);
+
+            convertTextureToPowerOfTwo(textureObj.texture);
             // TODO Next tick?
             cb && cb(textureObj.texture);
         }
@@ -275,6 +298,8 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
                 var originalImage = texture.image;
                 originalImage.onload = function () {
                     texture.image = originalImage;
+                    convertTextureToPowerOfTwo(texture);
+
                     texture.dirty();
                     textureObj.callbacks.forEach(function (cb) {
                         cb && cb(texture);
@@ -459,10 +484,11 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     if (typeof uvOffset === 'number') {
         uvOffset = [uvOffset, uvOffset];
     }
+    var repeatParam = (uvRepeat[0] > 1 || uvRepeat[1] > 1) ? graphicGL.Texture.REPEAT : graphicGL.Texture.CLAMP_TO_EDGE;
     var textureOpt = {
         anisotropic: 8,
-        wrapS: graphicGL.Texture.REPEAT,
-        wrapT: graphicGL.Texture.REPEAT
+        wrapS: repeatParam,
+        wrapT: repeatParam
     };
     if (shading === 'realistic') {
         var roughness = materialModel.get('roughness');
