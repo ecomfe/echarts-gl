@@ -90,6 +90,8 @@ module.exports = graphicGL.Mesh.extend(function () {
         var zScale = this.worldTransform.z.len();
 
         var vertexOffset = 0;
+
+        var maxDistance = 0;
         
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
@@ -121,6 +123,8 @@ module.exports = graphicGL.Mesh.extend(function () {
                 vec3.copy(posPrev, pos);
             }
 
+            maxDistance = Math.max(maxDistance, dist);
+
             var randomStart = Math.random() * (useConstantSpeed ? dist : period);
             for (var i = vertexOffset; i < vertexOffset + vertexCount; i++) {
                 geometry.attributes.distAll.set(i, dist);
@@ -134,6 +138,8 @@ module.exports = graphicGL.Mesh.extend(function () {
 
             vertexOffset += vertexCount;
         });
+
+        this.material.set('spotSize', maxDistance * 0.01);
 
         geometry.dirty();
     },

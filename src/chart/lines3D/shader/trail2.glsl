@@ -21,6 +21,8 @@ uniform float trailLength: 0.3;
 uniform float time;
 uniform float period: 1000;
 
+uniform float spotSize: 1;
+
 varying vec4 v_Color;
 varying float v_Percent;
 varying float v_SpotPercent;
@@ -49,7 +51,7 @@ void main()
 
     v_Percent = (dist - t * distAll) / trailLen;
 
-    v_SpotPercent = 0.1 / distAll;
+    v_SpotPercent = spotSize / distAll;
 
     // if (t > 1.0 - trailLength) {
     //     float t2 = t - 1.0;
