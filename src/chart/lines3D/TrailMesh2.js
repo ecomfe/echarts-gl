@@ -140,6 +140,7 @@ module.exports = graphicGL.Mesh.extend(function () {
         });
 
         this.material.set('spotSize', maxDistance * 0.1 * trailLength);
+        this.material.set('spotIntensity', effectModel.get('spotIntensity'));
 
         geometry.dirty();
     },

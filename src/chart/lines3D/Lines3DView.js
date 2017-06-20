@@ -57,6 +57,7 @@ module.exports = echarts.extendChartView({
 
             var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
             this._linesMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            this._trailMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
         }
 
         var trailMesh = this._trailMesh;

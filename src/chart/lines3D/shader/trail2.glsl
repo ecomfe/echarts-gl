@@ -64,6 +64,7 @@ void main()
 @export ecgl.trail2.fragment
 
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
+uniform float spotIntensity: 5;
 
 varying vec4 v_Color;
 varying float v_Percent;
@@ -92,7 +93,7 @@ void main()
     // Spot part
     // PENDING
     if (v_Percent > (1.0 - v_SpotPercent)) {
-        gl_FragColor.rgb *= 10.0;
+        gl_FragColor.rgb *= spotIntensity;
         // gl_FragColor.rgb *= (10.0 * (v_Percent - 1.0 + v_SpotPercent) / v_SpotPercent + 1.0);
     }
 
