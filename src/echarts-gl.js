@@ -34,10 +34,10 @@
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.0-alpha.8',
+    version: '1.0.0-alpha.9',
     dependencies: {
         echarts: '3.6.2',
-        qtek: '0.3.8'
+        qtek: '0.3.9'
     }
 };
 var echarts = require('echarts/lib/echarts');

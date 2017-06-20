@@ -22655,6 +22655,47 @@ function resizeGeo3D(geo3DModel, api) {
     }
 }
 
+function updateGeo3D(ecModel, api) {
+
+    var altitudeDataExtent = [Infinity, -Infinity]
+
+    ecModel.eachSeries(function (seriesModel) {
+        if (seriesModel.coordinateSystem !== this) {
+            return;
+        }
+        if (seriesModel.type === 'series.map3D') {
+            return;
+        }
+        // Get altitude data extent.
+        var data = seriesModel.getData();
+        var altDim = seriesModel.coordDimToDataDim('alt')[0];
+        if (altDim) {
+            // TODO altitiude is in coords of lines.
+            var dataExtent = data.getDataExtent(altDim, true);
+            altitudeDataExtent[0] = Math.min(
+                altitudeDataExtent[0], dataExtent[0]
+            );
+            altitudeDataExtent[1] = Math.max(
+                altitudeDataExtent[1], dataExtent[1]
+            );
+        }
+    }, this);
+    // Create altitude axis
+    if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
+        var scale = echarts.helper.createScale(
+            altitudeDataExtent, {
+                type: 'value',
+                // PENDING
+                min: 'dataMin',
+                max: 'dataMax'
+            }
+        );
+        this.altitudeAxis = new echarts.Axis('altitude', scale);
+        // Resize again
+        this.resize(this.model, api);
+    }
+}
+
 
 if (true) {
     var mapNotExistsError = function (name) {
@@ -22694,11 +22735,15 @@ var geo3DCreator = {
             geo3D.viewGL = componentModel.__viewGL;
 
             componentModel.coordinateSystem = geo3D;
+            geo3D.model = componentModel;
+
             geo3DList.push(geo3D);
 
             // Inject resize
             geo3D.resize = resizeGeo3D;
             geo3D.resize(componentModel, api);
+
+            geo3D.update = updateGeo3D;
         }
 
         ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
@@ -22714,8 +22759,6 @@ var geo3DCreator = {
                 createGeo3D(map3DModel, idx);
             }
         });
-
-        var altitudeDataExtent = [];
 
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'geo3D') {
@@ -22736,39 +22779,6 @@ var geo3DCreator = {
                 }
 
                 seriesModel.coordinateSystem = geo3DModel.coordinateSystem;
-
-                // Get altitude data extent.
-                var geo3DIndex = geo3DModel.componentIndex;
-                var data = seriesModel.getData();
-                var altDim = seriesModel.coordDimToDataDim('alt')[0];
-                if (altDim) {
-                    // TODO altitiude is in coords of lines.
-                    var dataExtent = data.getDataExtent(altDim);
-                    altitudeDataExtent[geo3DIndex] = altitudeDataExtent[geo3DIndex] || [Infinity, -Infinity];
-                    altitudeDataExtent[geo3DIndex][0] = Math.min(
-                        altitudeDataExtent[geo3DIndex][0], dataExtent[0]
-                    );
-                    altitudeDataExtent[geo3DIndex][1] = Math.max(
-                        altitudeDataExtent[geo3DIndex][1], dataExtent[1]
-                    );
-                }
-            }
-        });
-        // Create altitude axis
-        ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
-            var geo3D = geo3DModel.coordinateSystem;
-            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
-                var scale = echarts.helper.createScale(
-                    altitudeDataExtent[geo3DModel.componentIndex], {
-                        type: 'value',
-                        // PENDING
-                        min: 'dataMin',
-                        max: 'dataMax'
-                    }
-                );
-                geo3D.altitudeAxis = new echarts.Axis('altitude', scale);
-                // Resize again
-                geo3D.resize(geo3DModel, api);
             }
         });
 
@@ -26366,7 +26376,7 @@ echarts.registerAction({
 });
 
 echarts.registerAction({
-    type: 'globeupdatedisplacment',
+    type: 'globeUpdateDisplacment',
     event: 'globedisplacementupdated',
     update: 'updateLayout'
 }, function (payload, ecModel) {
@@ -26474,10 +26484,10 @@ echarts.registerAction({
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.0-alpha.8',
+    version: '1.0.0-alpha.9',
     dependencies: {
         echarts: '3.6.2',
-        qtek: '0.3.8'
+        qtek: '0.3.9'
     }
 };
 var echarts = __webpack_require__(0);
@@ -26751,6 +26761,12 @@ var Bar3DSeries = echarts.extendSeriesModel({
         var dimensions = echarts.helper.completeDimensions(coordSysDimensions, option.data, {
             encodeDef: this.get('encode'),
             dimsDef: this.get('dimensions')
+        });
+        // Find stackable dimension. Which will represent value.
+        dimensions.forEach(function (dimInfo) {
+            if (dimInfo.coordDim === coordSysDimensions[2]) {
+                dimInfo.stackable = true;
+            }
         });
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
@@ -27061,7 +27077,7 @@ module.exports = echarts.extendChartView({
                 if (isCartesian3D) {
                     api.dispatchAction({
                         type: 'grid3DShowAxisPointer',
-                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex)]
+                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex, true)]
                     });
                 }
             }
@@ -27188,7 +27204,6 @@ function globeLayout(seriesModel, coordSys) {
     if (barSize == null) {
         var perimeter = coordSys.radius * Math.PI;
         var fillRatio = evaluateBarSparseness(data, dims[0], dims[1]);
-        // PENDING, data density
         barSize = [
             perimeter / Math.sqrt(data.count() / fillRatio),
             perimeter / Math.sqrt(data.count() / fillRatio)
@@ -27198,9 +27213,12 @@ function globeLayout(seriesModel, coordSys) {
         barSize = [barSize, barSize];
     }
     data.each(dims, function (lng, lat, val, idx) {
+        var stackedValue = data.get(dims[2], idx, true);
+        var baseValue = data.stackedOn ? (stackedValue - val) : 0;
+        // TODO Stacked with minHeight.
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
-        var start = coordSys.dataToPoint([lng, lat, 0]);
-        var end = coordSys.dataToPoint([lng, lat, val]);
+        var start = coordSys.dataToPoint([lng, lat, baseValue]);
+        var end = coordSys.dataToPoint([lng, lat, stackedValue]);
         var dir = vec3.sub([], end, start);
         vec3.normalize(dir, dir);
         var size = [barSize[0], height, barSize[1]];
@@ -27221,7 +27239,6 @@ function geo3DLayout(seriesModel, coordSys) {
         var size = Math.min(coordSys.size[0], coordSys.size[2]);
 
         var fillRatio = evaluateBarSparseness(data, dims[0], dims[1]);
-        // PENDING, data density
         barSize = [
             size / Math.sqrt(data.count() / fillRatio),
             size / Math.sqrt(data.count() / fillRatio)
@@ -27232,8 +27249,11 @@ function geo3DLayout(seriesModel, coordSys) {
     }
     var dir = [0, 1, 0];
     data.each(dims, function (lng, lat, val, idx) {
+        var stackedValue = data.get(dims[2], idx, true);
+        var baseValue = data.stackedOn ? (stackedValue - val) : 0;
+
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
-        var start = coordSys.dataToPoint([lng, lat, 0]);
+        var start = coordSys.dataToPoint([lng, lat, baseValue]);
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
     });
@@ -27247,6 +27267,8 @@ function mapboxLayout(seriesModel, coordSys) {
     var dimLat = seriesModel.coordDimToDataDim('lat')[0];
     var dimAlt = seriesModel.coordDimToDataDim('alt')[0];
     var barSize = seriesModel.get('barSize');
+    var barMinHeight = seriesModel.get('minHeight') || 0;
+
     if (barSize == null) {
         var xExtent = data.getDataExtent(dimLng);
         var yExtent = data.getDataExtent(dimLat);
@@ -27274,15 +27296,16 @@ function mapboxLayout(seriesModel, coordSys) {
     }
 
     var dir = [0, 0, 1];
-    var maxHeight = -Infinity;
+
     data.each([dimLng, dimLat, dimAlt], function (lng, lat, val, idx) {
-        var start = coordSys.dataToPoint([lng, lat]);
-        var end = coordSys.dataToPoint([lng, lat, val]);
-        var height = end[2] - start[2];
+        var stackedValue = data.get(dimAlt, idx, true);
+        var baseValue = data.stackedOn ? (stackedValue - val) : 0;
+
+        var start = coordSys.dataToPoint([lng, lat, baseValue]);
+        var end = coordSys.dataToPoint([lng, lat, stackedValue]);
+        var height = Math.max(end[2] - start[2], barMinHeight);
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
-
-        maxHeight = Math.max(maxHeight, height);
     });
 
     data.setLayout('orient', [1, 0, 0]);
@@ -27307,10 +27330,10 @@ echarts.registerLayout(function (ecModel, api) {
         else {
             if (true) {
                 if (!coordSys) {
-                    throw new Error('bar3D does\'nt have coordinate system.');
+                    throw new Error('bar3D doesn\'t have coordinate system.');
                 }
                 else {
-                    throw new Error('bar3D does\'nt support coordinate system ' + coordSys.type);
+                    throw new Error('bar3D doesn\'t support coordinate system ' + coordSys.type);
                 }
             }
         }
@@ -27368,13 +27391,16 @@ function cartesian3DLayout(seriesModel, coordSys) {
     var dims = ['x', 'y', 'z'].map(function (coordDimName) {
         return seriesModel.coordDimToDataDim(coordDimName)[0];
     });
+    
     data.each(dims, function (x, y, z, idx) {
-        // TODO On the face or on the zero barOnPlane
         // TODO zAxis is inversed
         // TODO On different plane.
-        var baseValue = ifZAxisCrossZero ? 0 : zAxisExtent[0];
+        var stackedValue = data.get(dims[2], idx, true);
+        var baseValue = data.stackedOn ? (stackedValue - z)
+            : (ifZAxisCrossZero ? 0 : zAxisExtent[0]);
+            
         var start = coordSys.dataToPoint([x, y, baseValue]);
-        var end = coordSys.dataToPoint([x, y, z]);
+        var end = coordSys.dataToPoint([x, y, stackedValue]);
         var height = vec3.dist(start, end);
         // PENDING When zAxis is not cross zero.
         var dir = [0, end[1] < start[1] ? -1 : 1, 0];
@@ -27385,7 +27411,6 @@ function cartesian3DLayout(seriesModel, coordSys) {
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
     });
-
 
     data.setLayout('orient', [1, 0, 0]);
 }
@@ -30495,7 +30520,7 @@ module.exports = graphicGL.Mesh.extend(function () {
             vertexOffset += vertexCount;
         });
 
-        this.material.set('spotSize', maxDistance * 0.01);
+        this.material.set('spotSize', maxDistance * 0.1 * trailLength);
 
         geometry.dirty();
     },
@@ -34600,6 +34625,45 @@ function resizeGlobe(globeModel, api) {
     }
 }
 
+function updateGlobe(ecModel, api) {
+
+    var altitudeDataExtent = [Infinity, -Infinity]
+
+    ecModel.eachSeries(function (seriesModel) {
+        if (seriesModel.coordinateSystem !== this) {
+            return;
+        }
+        
+        // Get altitude data extent.
+        var data = seriesModel.getData();
+        var altDim = seriesModel.coordDimToDataDim('alt')[0];
+        if (altDim) {
+            // TODO altitiude is in coords of lines.
+            var dataExtent = data.getDataExtent(altDim, true);
+            altitudeDataExtent[0] = Math.min(
+                altitudeDataExtent[0], dataExtent[0]
+            );
+            altitudeDataExtent[1] = Math.max(
+                altitudeDataExtent[1], dataExtent[1]
+            );
+        }
+    }, this);
+    // Create altitude axis
+    if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
+        var scale = echarts.helper.createScale(
+            altitudeDataExtent, {
+                type: 'value',
+                // PENDING
+                min: 'dataMin',
+                max: 'dataMax'
+            }
+        );
+        this.altitudeAxis = new echarts.Axis('altitude', scale);
+        // Resize again
+        this.resize(this.model, api);
+    }
+}
+
 var globeCreator = {
 
     dimensions: Globe.prototype.dimensions,
@@ -34623,9 +34687,10 @@ var globeCreator = {
             // Inject resize
             globe.resize = resizeGlobe;
             globe.resize(globeModel, api);
+
+            globe.update = updateGlobe;
         });
 
-        var altitudeDataExtent = [];
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'globe') {
                 var globeModel = seriesModel.getReferringComponents('globe')[0];
@@ -34644,40 +34709,11 @@ var globeCreator = {
                 var coordSys = globeModel.coordinateSystem;
 
                 seriesModel.coordinateSystem = coordSys;
-
-                // Get altitude data extent.
-                var globeIndex = globeModel.componentIndex;
-                var data = seriesModel.getData();
-                var altDim = seriesModel.coordDimToDataDim('alt')[0];
-                if (altDim) {
-                    var dataExtent = data.getDataExtent(altDim);
-                    altitudeDataExtent[globeIndex] = altitudeDataExtent[globeIndex] || [Infinity, -Infinity];
-                    altitudeDataExtent[globeIndex][0] = Math.min(
-                        altitudeDataExtent[globeIndex][0], dataExtent[0]
-                    );
-                    altitudeDataExtent[globeIndex][1] = Math.max(
-                        altitudeDataExtent[globeIndex][1], dataExtent[1]
-                    );
-                }
             }
         });
 
         ecModel.eachComponent('globe', function (globeModel, idx) {
             var globe = globeModel.coordinateSystem;
-            // Create altitude axis
-            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
-                var scale = echarts.helper.createScale(
-                    altitudeDataExtent[globeModel.componentIndex], {
-                        type: 'value',
-                        // PENDING
-                        min: 'dataMin',
-                        max: 'dataMax'
-                    }
-                );
-                globe.altitudeAxis = new echarts.Axis('altitude', scale);
-                // Resize again
-                globe.resize(globeModel, api);
-            }
 
             // Update displacement data
             var displacementTextureValue = globeModel.getDisplacementTexture();
@@ -34693,7 +34729,7 @@ var globeCreator = {
                         if (!immediateLoaded) {
                             // Update layouts
                             api.dispatchAction({
-                                type: 'globeupdatedisplacment'
+                                type: 'globeUpdateDisplacment'
                             });
                         }
                     });
@@ -34843,6 +34879,64 @@ function resizeCartesian3D(grid3DModel, api) {
     this.size = [boxWidth, boxHeight, boxDepth];
 }
 
+function updateCartesian3D(ecModel, api) {
+    var dataExtents = {};
+    function unionDataExtents(dim, extent) {
+        dataExtents[dim] = dataExtents[dim] || [Infinity, -Infinity];
+        dataExtents[dim][0] = Math.min(extent[0], dataExtents[dim][0]);
+        dataExtents[dim][1] = Math.max(extent[1], dataExtents[dim][1]);
+    }
+    // Get data extents for scale.
+    ecModel.eachSeries(function (seriesModel) {
+        if (seriesModel.coordinateSystem !== this) {
+            return;
+        }
+        var data = seriesModel.getData();
+        ['x', 'y', 'z'].forEach(function (dim) {
+            unionDataExtents(
+                dim, data.getDataExtent(seriesModel.coordDimToDataDim(dim)[0], true)
+            );
+        });
+    }, this);
+
+    ['xAxis3D', 'yAxis3D', 'zAxis3D'].forEach(function (axisType) {
+        ecModel.eachComponent(axisType, function (axisModel) {
+            var dim = axisType.charAt(0);
+            var grid3DModel = axisModel.getReferringComponents('grid3D')[0];
+            
+            var cartesian3D = grid3DModel.coordinateSystem;
+            if (cartesian3D !== this) {
+                return;
+            }
+
+            var axis = cartesian3D.getAxis(dim);
+            if (axis) {
+                if (true) {
+                    console.warn('Can\'t have two %s in one grid3D', axisType);
+                }
+                return;
+            }
+            var scale = echarts.helper.createScale(
+                dataExtents[dim] || [Infinity, -Infinity], axisModel
+            );
+            axis = new Axis3D(dim, scale);
+            axis.type = axisModel.get('type');
+            var isCategory = axis.type === 'category';
+            axis.onBand = isCategory && axisModel.get('boundaryGap');
+            axis.inverse = axisModel.get('inverse');
+
+            axisModel.axis = axis;
+            axis.model = axisModel;
+
+            cartesian3D.addAxis(axis);
+        }, this);
+    }, this);
+
+    ecModel.eachComponent('grid3D', function (grid3DModel) {
+        grid3DModel.coordinateSystem.resize(grid3DModel, api);
+    });
+}
+
 var grid3DCreator = {
 
     dimensions: Cartesian3D.prototype.dimensions,
@@ -34862,82 +34956,10 @@ var grid3DCreator = {
             grid3DModel.coordinateSystem = cartesian3D;
             cartesian3DList.push(cartesian3D);
 
-            // Inject resize
+            // Inject resize and update
             cartesian3D.resize = resizeCartesian3D;
-        });
 
-        var dataExtents = {
-            x: [],
-            y: [],
-            z: []
-        };
-        function unionDataExtents(dim, idx, extent) {
-            dataExtents[dim][idx] = dataExtents[dim][idx] || [Infinity, -Infinity];
-            dataExtents[dim][idx][0] = Math.min(extent[0], dataExtents[dim][idx][0]);
-            dataExtents[dim][idx][1] = Math.max(extent[1], dataExtents[dim][idx][1]);
-        }
-        // Get data extents for scale.
-        ecModel.eachSeries(function (seriesModel) {
-            if (seriesModel.get('coordinateSystem') !== 'cartesian3D') {
-                return;
-            }
-            var data = seriesModel.getData();
-            Cartesian3D.prototype.dimensions.forEach(function (dim) {
-                var axisType = dim + 'Axis3D';
-                var axisModel = seriesModel.getReferringComponents(axisType)[0];
-                if (!axisModel) {
-                    if (true) {
-                        throw new Error(axisType + ' "' + retrieve.firstNotNull(
-                            seriesModel.get(axisType + 'Index'),
-                            seriesModel.get(axisType + 'Id'),
-                            0
-                        ) + '" not found');
-                    }
-                }
-                else {
-                    unionDataExtents(
-                        dim, axisModel.componentIndex,
-                        data.getDataExtent(seriesModel.coordDimToDataDim(dim)[0])
-                    );
-                }
-            });
-        });
-
-        ['xAxis3D', 'yAxis3D', 'zAxis3D'].forEach(function (axisType) {
-            ecModel.eachComponent(axisType, function (axisModel) {
-                var dim = axisType.charAt(0);
-                var grid3DModel = axisModel.getReferringComponents('grid3D')[0];
-                if (true) {
-                    if (!grid3DModel) {
-                        throw new Error('grid3D "' + retrieve.firstNotNull(
-                            axisModel.get('grid3DIndex'),
-                            axisModel.get('grid3DId'),
-                            0
-                        ) + '" not found');
-                    }
-                }
-                var cartesian3D = grid3DModel.coordinateSystem;
-                var axis = cartesian3D.getAxis(dim);
-                if (axis) {
-                    if (true) {
-                        console.warn('Can\'t have two %s in one grid3D', axisType);
-                    }
-                    return;
-                }
-                var scale = echarts.helper.createScale(
-                    dataExtents[dim][axisModel.componentIndex] || [Infinity, -Infinity], axisModel
-                );
-                axis = new Axis3D(dim, scale);
-                axis.type = axisModel.get('type');
-                var isCategory = axis.type === 'category';
-                axis.onBand = isCategory && axisModel.get('boundaryGap');
-                axis.inverse = axisModel.get('inverse');
-
-                axisModel.axis = axis;
-                axis.model = axisModel;
-
-                cartesian3D.addAxis(axis);
-            });
+            cartesian3D.update = updateCartesian3D;
         });
 
         var axesTypes = ['xAxis3D', 'yAxis3D', 'zAxis3D'];
@@ -34990,10 +35012,6 @@ var grid3DCreator = {
 
             var coordSys = firstGridModel.coordinateSystem;
             seriesModel.coordinateSystem = coordSys;
-        });
-
-        ecModel.eachComponent('grid3D', function (grid3DModel) {
-            grid3DModel.coordinateSystem.resize(grid3DModel, api);
         });
 
         return cartesian3DList;
@@ -35218,6 +35236,40 @@ function resizeMapbox(mapboxModel, api) {
     // this.updateTransform();
 }
 
+
+function updateMapbox(ecModel, api) {
+
+    if (this.model.get('boxHeight') === 'auto') {
+        return;
+    }
+    
+    var altitudeDataExtent = [Infinity, -Infinity]
+
+    ecModel.eachSeries(function (seriesModel) {
+        if (seriesModel.coordinateSystem !== this) {
+            return;
+        }
+        
+        // Get altitude data extent.
+        var data = seriesModel.getData();
+        var altDim = seriesModel.coordDimToDataDim('alt')[0];
+        if (altDim) {
+            // TODO altitiude is in coords of lines.
+            var dataExtent = data.getDataExtent(altDim, true);
+            altitudeDataExtent[0] = Math.min(
+                altitudeDataExtent[0], dataExtent[0]
+            );
+            altitudeDataExtent[1] = Math.max(
+                altitudeDataExtent[1], dataExtent[1]
+            );
+        }
+    }, this);
+    // Create altitude axis
+    if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
+        this.altitudeExtent = altitudeDataExtent[idx];
+    }
+}
+
 var mapboxCreator = {
 
 
@@ -35242,6 +35294,7 @@ var mapboxCreator = {
             mapboxList.push(mapboxCoordSys);
 
             mapboxModel.coordinateSystem = mapboxCoordSys;
+            mapboxCoordSys.model = mapboxModel;
 
             mapboxCoordSys.setCameraOption(
                 mapboxModel.getMapboxCameraOption()
@@ -35265,30 +35318,6 @@ var mapboxCreator = {
                 }
 
                 seriesModel.coordinateSystem = mapboxModel.coordinateSystem;
-
-                if (mapboxModel.get('boxHeight') === 'auto') {
-                    return;
-                }
-
-                var data = seriesModel.getData();
-                var mapboxIndex = mapboxModel.componentIndex;
-                var altDim = seriesModel.coordDimToDataDim('alt')[0];
-                if (altDim) {
-                    var dataExtent = data.getDataExtent(altDim);
-                    altitudeDataExtent[mapboxIndex] = altitudeDataExtent[mapboxIndex] || [Infinity, -Infinity];
-                    altitudeDataExtent[mapboxIndex][0] = Math.min(
-                        altitudeDataExtent[mapboxIndex][0], dataExtent[0]
-                    );
-                    altitudeDataExtent[mapboxIndex][1] = Math.max(
-                        altitudeDataExtent[mapboxIndex][1], dataExtent[1]
-                    );
-                }
-            }
-        });
-
-        ecModel.eachComponent('mapbox', function (mapboxModel, idx) {
-            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
-                mapboxModel.coordinateSystem.altitudeExtent = altitudeDataExtent[idx];
             }
         });
 
@@ -35362,7 +35391,8 @@ var LayerGL = function (id, zr) {
         this.renderer = new Renderer({
             clearBit: 0,
             devicePixelRatio: zr.painter.dpr,
-            preserveDrawingBuffer: true
+            preserveDrawingBuffer: true,
+            premultipliedAlpha: true
         });
         this.renderer.resize(zr.painter.getWidth(), zr.painter.getHeight());
     }
@@ -37766,8 +37796,9 @@ module.exports = {
                 'bloom' : 'bloom_composite'
             },
             'defines': {
-                // PENDING
-                'PREMULTIPLY_ALPHA': null
+                // Images are all premultiplied alpha before composite because of blending.
+                // 'PREMULTIPLY_ALPHA': null,
+                // 'DEBUG': 2
             }
         },
         {
@@ -46121,7 +46152,7 @@ module.exports = "@export qtek.compositor.kernel.gaussian_9\nfloat gaussianKerne
 /***/ (function(module, exports) {
 
 
-module.exports = "@export qtek.compositor.bright\n\nuniform sampler2D texture;\n\nuniform float threshold : 1;\nuniform float scale : 1.0;\n\nuniform vec2 textureSize: [512, 512];\n\nvarying vec2 v_Texcoord;\n\nconst vec3 lumWeight = vec3(0.2125, 0.7154, 0.0721);\n\n@import qtek.util.rgbm\n\n\nvec4 median(vec4 a, vec4 b, vec4 c)\n{\n return a + b + c - min(min(a, b), c) - max(max(a, b), c);\n}\n\nvoid main()\n{\n vec4 texel = decodeHDR(texture2D(texture, v_Texcoord));\n\n#ifdef ANTI_FLICKER\n vec3 d = 1.0 / textureSize.xyx * vec3(1.0, 1.0, 0.0);\n\n vec4 s1 = decodeHDR(texture2D(texture, v_Texcoord - d.xz));\n vec4 s2 = decodeHDR(texture2D(texture, v_Texcoord + d.xz));\n vec4 s3 = decodeHDR(texture2D(texture, v_Texcoord - d.zy));\n vec4 s4 = decodeHDR(texture2D(texture, v_Texcoord + d.zy));\n texel = median(median(texel, s1, s2), s3, s4);\n\n#endif\n\n float lum = dot(texel.rgb , lumWeight);\n vec4 color;\n if (lum > threshold)\n {\n color = vec4(texel.rgb * scale, texel.a * scale);\n }\n else\n {\n color = vec4(0.0);\n }\n\n gl_FragColor = encodeHDR(color);\n}\n@end\n";
+module.exports = "@export qtek.compositor.bright\n\nuniform sampler2D texture;\n\nuniform float threshold : 1;\nuniform float scale : 1.0;\n\nuniform vec2 textureSize: [512, 512];\n\nvarying vec2 v_Texcoord;\n\nconst vec3 lumWeight = vec3(0.2125, 0.7154, 0.0721);\n\n@import qtek.util.rgbm\n\n\nvec4 median(vec4 a, vec4 b, vec4 c)\n{\n return a + b + c - min(min(a, b), c) - max(max(a, b), c);\n}\n\nvoid main()\n{\n vec4 texel = decodeHDR(texture2D(texture, v_Texcoord));\n\n#ifdef ANTI_FLICKER\n vec3 d = 1.0 / textureSize.xyx * vec3(1.0, 1.0, 0.0);\n\n vec4 s1 = decodeHDR(texture2D(texture, v_Texcoord - d.xz));\n vec4 s2 = decodeHDR(texture2D(texture, v_Texcoord + d.xz));\n vec4 s3 = decodeHDR(texture2D(texture, v_Texcoord - d.zy));\n vec4 s4 = decodeHDR(texture2D(texture, v_Texcoord + d.zy));\n texel = median(median(texel, s1, s2), s3, s4);\n\n#endif\n\n float lum = dot(texel.rgb , lumWeight);\n vec4 color;\n if (lum > threshold && texel.a > 0.0)\n {\n color = vec4(texel.rgb * scale, texel.a * scale);\n }\n else\n {\n color = vec4(0.0);\n }\n\n gl_FragColor = encodeHDR(color);\n}\n@end\n";
 
 
 /***/ }),
@@ -46145,7 +46176,7 @@ module.exports = "@export qtek.compositor.fxaa\n\nuniform sampler2D texture;\nun
 /***/ (function(module, exports) {
 
 
-module.exports = "@export qtek.compositor.hdr.composite\n\nuniform sampler2D texture;\n#ifdef BLOOM_ENABLED\nuniform sampler2D bloom;\n#endif\n#ifdef LENSFLARE_ENABLED\nuniform sampler2D lensflare;\nuniform sampler2D lensdirt;\n#endif\n\n#ifdef LUM_ENABLED\nuniform sampler2D lum;\n#endif\n\n#ifdef LUT_ENABLED\nuniform sampler2D lut;\n#endif\n\n#ifdef COLOR_CORRECTION\nuniform float brightness : 0.0;\nuniform float contrast : 1.0;\nuniform float saturation : 1.0;\n#endif\n\n#ifdef VIGNETTE\nuniform float vignetteDarkness: 1.0;\nuniform float vignetteOffset: 1.0;\n#endif\n\nuniform float exposure : 1.0;\nuniform float bloomIntensity : 0.25;\nuniform float lensflareIntensity : 1;\n\nvarying vec2 v_Texcoord;\n\n\n@import qtek.util.srgb\n\n\n\n\nvec3 ACESToneMapping(vec3 color)\n{\n const float A = 2.51;\n const float B = 0.03;\n const float C = 2.43;\n const float D = 0.59;\n const float E = 0.14;\n return (color * (A * color + B)) / (color * (C * color + D) + E);\n}\n\nfloat eyeAdaption(float fLum)\n{\n return mix(0.2, fLum, 0.5);\n}\n\n#ifdef LUT_ENABLED\nvec3 lutTransform(vec3 color) {\n float blueColor = color.b * 63.0;\n\n vec2 quad1;\n quad1.y = floor(floor(blueColor) / 8.0);\n quad1.x = floor(blueColor) - (quad1.y * 8.0);\n\n vec2 quad2;\n quad2.y = floor(ceil(blueColor) / 8.0);\n quad2.x = ceil(blueColor) - (quad2.y * 8.0);\n\n vec2 texPos1;\n texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.r);\n texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.g);\n\n vec2 texPos2;\n texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.r);\n texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.g);\n\n vec4 newColor1 = texture2D(lut, texPos1);\n vec4 newColor2 = texture2D(lut, texPos2);\n\n vec4 newColor = mix(newColor1, newColor2, fract(blueColor));\n return newColor.rgb;\n}\n#endif\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n vec4 texel = vec4(0.0);\n vec4 originalTexel = vec4(0.0);\n#ifdef TEXTURE_ENABLED\n texel = decodeHDR(texture2D(texture, v_Texcoord));\n originalTexel = texel;\n#endif\n\n#ifdef BLOOM_ENABLED\n vec4 bloomTexel = decodeHDR(texture2D(bloom, v_Texcoord));\n texel.rgb += bloomTexel.rgb * bloomIntensity;\n texel.a += bloomTexel.a * bloomIntensity;\n#endif\n\n#ifdef LENSFLARE_ENABLED\n texel += decodeHDR(texture2D(lensflare, v_Texcoord)) * texture2D(lensdirt, v_Texcoord) * lensflareIntensity;\n#endif\n\n texel.a = min(texel.a, 1.0);\n\n#ifdef LUM_ENABLED\n float fLum = texture2D(lum, vec2(0.5, 0.5)).r;\n float adaptedLumDest = 3.0 / (max(0.1, 1.0 + 10.0*eyeAdaption(fLum)));\n float exposureBias = adaptedLumDest * exposure;\n#else\n float exposureBias = exposure;\n#endif\n texel.rgb *= exposureBias;\n\n texel.rgb = ACESToneMapping(texel.rgb);\n texel = linearTosRGB(texel);\n\n#ifdef LUT_ENABLED\n texel.rgb = lutTransform(clamp(texel.rgb,vec3(0.0),vec3(1.0)));\n#endif\n\n#ifdef COLOR_CORRECTION\n texel.rgb = clamp(texel.rgb + vec3(brightness), 0.0, 1.0);\n texel.rgb = clamp((texel.rgb - vec3(0.5))*contrast+vec3(0.5), 0.0, 1.0);\n float lum = dot(texel.rgb, vec3(0.2125, 0.7154, 0.0721));\n texel.rgb = mix(vec3(lum), texel.rgb, saturation);\n#endif\n\n#ifdef VIGNETTE\n vec2 uv = (v_Texcoord - vec2(0.5)) * vec2(vignetteOffset);\n texel.rgb = mix(texel.rgb, vec3(1.0 - vignetteDarkness), dot(uv, uv));\n#endif\n\n gl_FragColor = encodeHDR(texel);\n\n#ifdef DEBUG\n #if DEBUG == 1\n gl_FragColor = encodeHDR(decodeHDR(texture2D(texture, v_Texcoord)));\n #elif DEBUG == 2\n gl_FragColor = encodeHDR(decodeHDR(texture2D(bloom, v_Texcoord)) * bloomIntensity);\n #elif DEBUG == 3\n gl_FragColor = encodeHDR(decodeHDR(texture2D(lensflare, v_Texcoord) * lensflareIntensity));\n #endif\n#endif\n\n if (originalTexel.a <= 0.01) {\n gl_FragColor.rgb /= gl_FragColor.a;\n }\n #ifdef PREMULTIPLY_ALPHA\n gl_FragColor.rgb *= gl_FragColor.a;\n#endif\n}\n\n@end";
+module.exports = "@export qtek.compositor.hdr.composite\n\nuniform sampler2D texture;\n#ifdef BLOOM_ENABLED\nuniform sampler2D bloom;\n#endif\n#ifdef LENSFLARE_ENABLED\nuniform sampler2D lensflare;\nuniform sampler2D lensdirt;\n#endif\n\n#ifdef LUM_ENABLED\nuniform sampler2D lum;\n#endif\n\n#ifdef LUT_ENABLED\nuniform sampler2D lut;\n#endif\n\n#ifdef COLOR_CORRECTION\nuniform float brightness : 0.0;\nuniform float contrast : 1.0;\nuniform float saturation : 1.0;\n#endif\n\n#ifdef VIGNETTE\nuniform float vignetteDarkness: 1.0;\nuniform float vignetteOffset: 1.0;\n#endif\n\nuniform float exposure : 1.0;\nuniform float bloomIntensity : 0.25;\nuniform float lensflareIntensity : 1;\n\nvarying vec2 v_Texcoord;\n\n\n@import qtek.util.srgb\n\n\n\n\nvec3 ACESToneMapping(vec3 color)\n{\n const float A = 2.51;\n const float B = 0.03;\n const float C = 2.43;\n const float D = 0.59;\n const float E = 0.14;\n return (color * (A * color + B)) / (color * (C * color + D) + E);\n}\n\nfloat eyeAdaption(float fLum)\n{\n return mix(0.2, fLum, 0.5);\n}\n\n#ifdef LUT_ENABLED\nvec3 lutTransform(vec3 color) {\n float blueColor = color.b * 63.0;\n\n vec2 quad1;\n quad1.y = floor(floor(blueColor) / 8.0);\n quad1.x = floor(blueColor) - (quad1.y * 8.0);\n\n vec2 quad2;\n quad2.y = floor(ceil(blueColor) / 8.0);\n quad2.x = ceil(blueColor) - (quad2.y * 8.0);\n\n vec2 texPos1;\n texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.r);\n texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.g);\n\n vec2 texPos2;\n texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.r);\n texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * color.g);\n\n vec4 newColor1 = texture2D(lut, texPos1);\n vec4 newColor2 = texture2D(lut, texPos2);\n\n vec4 newColor = mix(newColor1, newColor2, fract(blueColor));\n return newColor.rgb;\n}\n#endif\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n vec4 texel = vec4(0.0);\n vec4 originalTexel = vec4(0.0);\n#ifdef TEXTURE_ENABLED\n texel = decodeHDR(texture2D(texture, v_Texcoord));\n originalTexel = texel;\n#endif\n\n#ifdef BLOOM_ENABLED\n vec4 bloomTexel = decodeHDR(texture2D(bloom, v_Texcoord));\n texel.rgb += bloomTexel.rgb * bloomIntensity;\n texel.a += bloomTexel.a * bloomIntensity;\n#endif\n\n#ifdef LENSFLARE_ENABLED\n texel += decodeHDR(texture2D(lensflare, v_Texcoord)) * texture2D(lensdirt, v_Texcoord) * lensflareIntensity;\n#endif\n\n texel.a = min(texel.a, 1.0);\n\n#ifdef LUM_ENABLED\n float fLum = texture2D(lum, vec2(0.5, 0.5)).r;\n float adaptedLumDest = 3.0 / (max(0.1, 1.0 + 10.0*eyeAdaption(fLum)));\n float exposureBias = adaptedLumDest * exposure;\n#else\n float exposureBias = exposure;\n#endif\n texel.rgb *= exposureBias;\n\n texel.rgb = ACESToneMapping(texel.rgb);\n texel = linearTosRGB(texel);\n\n#ifdef LUT_ENABLED\n texel.rgb = lutTransform(clamp(texel.rgb,vec3(0.0),vec3(1.0)));\n#endif\n\n#ifdef COLOR_CORRECTION\n texel.rgb = clamp(texel.rgb + vec3(brightness), 0.0, 1.0);\n texel.rgb = clamp((texel.rgb - vec3(0.5))*contrast+vec3(0.5), 0.0, 1.0);\n float lum = dot(texel.rgb, vec3(0.2125, 0.7154, 0.0721));\n texel.rgb = mix(vec3(lum), texel.rgb, saturation);\n#endif\n\n#ifdef VIGNETTE\n vec2 uv = (v_Texcoord - vec2(0.5)) * vec2(vignetteOffset);\n texel.rgb = mix(texel.rgb, vec3(1.0 - vignetteDarkness), dot(uv, uv));\n#endif\n\n gl_FragColor = encodeHDR(texel);\n\n#ifdef DEBUG\n #if DEBUG == 1\n gl_FragColor = encodeHDR(decodeHDR(texture2D(texture, v_Texcoord)));\n #elif DEBUG == 2\n gl_FragColor = encodeHDR(decodeHDR(texture2D(bloom, v_Texcoord)) * bloomIntensity);\n #elif DEBUG == 3\n gl_FragColor = encodeHDR(decodeHDR(texture2D(lensflare, v_Texcoord) * lensflareIntensity));\n #endif\n#endif\n\n if (originalTexel.a <= 0.01) {\n gl_FragColor.a = dot(gl_FragColor.rgb, vec3(0.2125, 0.7154, 0.0721));\n }\n #ifdef PREMULTIPLY_ALPHA\n gl_FragColor.rgb *= gl_FragColor.a;\n#endif\n}\n\n@end";
 
 
 /***/ }),
@@ -47148,7 +47179,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 /***/ (function(module, exports) {
 
 
-    module.exports = '0.3.8';
+    module.exports = '0.3.9';
 
 
 /***/ }),
