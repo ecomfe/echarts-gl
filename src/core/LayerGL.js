@@ -55,7 +55,8 @@ var LayerGL = function (id, zr) {
         this.renderer = new Renderer({
             clearBit: 0,
             devicePixelRatio: zr.painter.dpr,
-            preserveDrawingBuffer: true
+            preserveDrawingBuffer: true,
+            premultipliedAlpha: true
         });
         this.renderer.resize(zr.painter.getWidth(), zr.painter.getHeight());
     }

@@ -232,7 +232,7 @@ module.exports = echarts.extendChartView({
                 if (isCartesian3D) {
                     api.dispatchAction({
                         type: 'grid3DShowAxisPointer',
-                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex)]
+                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex, true)]
                     });
                 }
             }

@@ -554,8 +554,9 @@ module.exports = {
                 'bloom' : 'bloom_composite'
             },
             'defines': {
-                // PENDING
-                'PREMULTIPLY_ALPHA': null
+                // Images are all premultiplied alpha before composite because of blending.
+                // 'PREMULTIPLY_ALPHA': null,
+                // 'DEBUG': 2
             }
         },
         {

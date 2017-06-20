@@ -139,7 +139,7 @@ module.exports = graphicGL.Mesh.extend(function () {
             vertexOffset += vertexCount;
         });
 
-        this.material.set('spotSize', maxDistance * 0.01);
+        this.material.set('spotSize', maxDistance * 0.1 * trailLength);
 
         geometry.dirty();
     },
