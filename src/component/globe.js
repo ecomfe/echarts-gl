@@ -18,7 +18,7 @@ echarts.registerAction({
 });
 
 echarts.registerAction({
-    type: 'globeupdatedisplacment',
+    type: 'globeUpdateDisplacment',
     event: 'globedisplacementupdated',
     update: 'updateLayout'
 }, function (payload, ecModel) {

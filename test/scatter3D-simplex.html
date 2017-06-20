@@ -17,7 +17,7 @@
             var chart = echarts.init(document.getElementById('main'));
 
             var noise = new SimplexNoise(Math.random);
-            function generateData(theta, min, max) {
+            function generateData() {
                 var data = [];
                 for (var i = 0; i <= 40; i++) {
                     for (var j = 0; j <= 40; j++) {
@@ -33,7 +33,7 @@
             }
             var valMin = Infinity;
             var valMax = -Infinity;
-            var data = generateData(2, -5, 5);
+            var data = generateData();
             console.log(valMin, valMax);
 
             chart.setOption({

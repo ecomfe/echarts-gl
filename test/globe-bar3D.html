@@ -48,12 +48,14 @@
                                 intensity: 0
                             },
                             main: {
-                                intensity: 1
+                                intensity: 2,
+                                shadow: true,
+                                shadowQuality: 'high'
                             },
                             ambientCubemap: {
                                 texture: 'asset/pisa.hdr',
                                 exposure: 2,
-                                diffuseIntensity: 2,
+                                diffuseIntensity: 1,
                                 specularIntensity: 1
                             }
                         },
@@ -79,15 +81,13 @@
                         shading: 'lambert',
                         // data: [[0, 0, 10]],
                         data: data,
-                        barSize: 0.6,
+                        // barSize: 0.6,
                         // bevelSize: 0.1,
                         // bevelSmoothness: 1,
-                        // shading: 'lambert',
                         minHeight: 0.2,
                         silent: true,
                         itemStyle: {
                             color: 'orange'
-                            // opacity: 0.8
                         }
                     }]
                 });

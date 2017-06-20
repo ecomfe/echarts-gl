@@ -38,6 +38,64 @@ function resizeCartesian3D(grid3DModel, api) {
     this.size = [boxWidth, boxHeight, boxDepth];
 }
 
+function updateCartesian3D(ecModel, api) {
+    var dataExtents = {};
+    function unionDataExtents(dim, extent) {
+        dataExtents[dim] = dataExtents[dim] || [Infinity, -Infinity];
+        dataExtents[dim][0] = Math.min(extent[0], dataExtents[dim][0]);
+        dataExtents[dim][1] = Math.max(extent[1], dataExtents[dim][1]);
+    }
+    // Get data extents for scale.
+    ecModel.eachSeries(function (seriesModel) {
+        if (seriesModel.coordinateSystem !== this) {
+            return;
+        }
+        var data = seriesModel.getData();
+        ['x', 'y', 'z'].forEach(function (dim) {
+            unionDataExtents(
+                dim, data.getDataExtent(seriesModel.coordDimToDataDim(dim)[0], true)
+            );
+        });
+    }, this);
+
+    ['xAxis3D', 'yAxis3D', 'zAxis3D'].forEach(function (axisType) {
+        ecModel.eachComponent(axisType, function (axisModel) {
+            var dim = axisType.charAt(0);
+            var grid3DModel = axisModel.getReferringComponents('grid3D')[0];
+            
+            var cartesian3D = grid3DModel.coordinateSystem;
+            if (cartesian3D !== this) {
+                return;
+            }
+
+            var axis = cartesian3D.getAxis(dim);
+            if (axis) {
+                if (__DEV__) {
+                    console.warn('Can\'t have two %s in one grid3D', axisType);
+                }
+                return;
+            }
+            var scale = echarts.helper.createScale(
+                dataExtents[dim] || [Infinity, -Infinity], axisModel
+            );
+            axis = new Axis3D(dim, scale);
+            axis.type = axisModel.get('type');
+            var isCategory = axis.type === 'category';
+            axis.onBand = isCategory && axisModel.get('boundaryGap');
+            axis.inverse = axisModel.get('inverse');
+
+            axisModel.axis = axis;
+            axis.model = axisModel;
+
+            cartesian3D.addAxis(axis);
+        }, this);
+    }, this);
+
+    ecModel.eachComponent('grid3D', function (grid3DModel) {
+        grid3DModel.coordinateSystem.resize(grid3DModel, api);
+    });
+}
+
 var grid3DCreator = {
 
     dimensions: Cartesian3D.prototype.dimensions,
@@ -57,82 +115,10 @@ var grid3DCreator = {
             grid3DModel.coordinateSystem = cartesian3D;
             cartesian3DList.push(cartesian3D);
 
-            // Inject resize
+            // Inject resize and update
             cartesian3D.resize = resizeCartesian3D;
-        });
 
-        var dataExtents = {
-            x: [],
-            y: [],
-            z: []
-        };
-        function unionDataExtents(dim, idx, extent) {
-            dataExtents[dim][idx] = dataExtents[dim][idx] || [Infinity, -Infinity];
-            dataExtents[dim][idx][0] = Math.min(extent[0], dataExtents[dim][idx][0]);
-            dataExtents[dim][idx][1] = Math.max(extent[1], dataExtents[dim][idx][1]);
-        }
-        // Get data extents for scale.
-        ecModel.eachSeries(function (seriesModel) {
-            if (seriesModel.get('coordinateSystem') !== 'cartesian3D') {
-                return;
-            }
-            var data = seriesModel.getData();
-            Cartesian3D.prototype.dimensions.forEach(function (dim) {
-                var axisType = dim + 'Axis3D';
-                var axisModel = seriesModel.getReferringComponents(axisType)[0];
-                if (!axisModel) {
-                    if (__DEV__) {
-                        throw new Error(axisType + ' "' + retrieve.firstNotNull(
-                            seriesModel.get(axisType + 'Index'),
-                            seriesModel.get(axisType + 'Id'),
-                            0
-                        ) + '" not found');
-                    }
-                }
-                else {
-                    unionDataExtents(
-                        dim, axisModel.componentIndex,
-                        data.getDataExtent(seriesModel.coordDimToDataDim(dim)[0])
-                    );
-                }
-            });
-        });
-
-        ['xAxis3D', 'yAxis3D', 'zAxis3D'].forEach(function (axisType) {
-            ecModel.eachComponent(axisType, function (axisModel) {
-                var dim = axisType.charAt(0);
-                var grid3DModel = axisModel.getReferringComponents('grid3D')[0];
-                if (__DEV__) {
-                    if (!grid3DModel) {
-                        throw new Error('grid3D "' + retrieve.firstNotNull(
-                            axisModel.get('grid3DIndex'),
-                            axisModel.get('grid3DId'),
-                            0
-                        ) + '" not found');
-                    }
-                }
-                var cartesian3D = grid3DModel.coordinateSystem;
-                var axis = cartesian3D.getAxis(dim);
-                if (axis) {
-                    if (__DEV__) {
-                        console.warn('Can\'t have two %s in one grid3D', axisType);
-                    }
-                    return;
-                }
-                var scale = echarts.helper.createScale(
-                    dataExtents[dim][axisModel.componentIndex] || [Infinity, -Infinity], axisModel
-                );
-                axis = new Axis3D(dim, scale);
-                axis.type = axisModel.get('type');
-                var isCategory = axis.type === 'category';
-                axis.onBand = isCategory && axisModel.get('boundaryGap');
-                axis.inverse = axisModel.get('inverse');
-
-                axisModel.axis = axis;
-                axis.model = axisModel;
-
-                cartesian3D.addAxis(axis);
-            });
+            cartesian3D.update = updateCartesian3D;
         });
 
         var axesTypes = ['xAxis3D', 'yAxis3D', 'zAxis3D'];
@@ -185,10 +171,6 @@ var grid3DCreator = {
 
             var coordSys = firstGridModel.coordinateSystem;
             seriesModel.coordinateSystem = coordSys;
-        });
-
-        ecModel.eachComponent('grid3D', function (grid3DModel) {
-            grid3DModel.coordinateSystem.resize(grid3DModel, api);
         });
 
         return cartesian3DList;

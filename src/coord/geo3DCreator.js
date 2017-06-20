@@ -47,6 +47,47 @@ function resizeGeo3D(geo3DModel, api) {
     }
 }
 
+function updateGeo3D(ecModel, api) {
+
+    var altitudeDataExtent = [Infinity, -Infinity]
+
+    ecModel.eachSeries(function (seriesModel) {
+        if (seriesModel.coordinateSystem !== this) {
+            return;
+        }
+        if (seriesModel.type === 'series.map3D') {
+            return;
+        }
+        // Get altitude data extent.
+        var data = seriesModel.getData();
+        var altDim = seriesModel.coordDimToDataDim('alt')[0];
+        if (altDim) {
+            // TODO altitiude is in coords of lines.
+            var dataExtent = data.getDataExtent(altDim, true);
+            altitudeDataExtent[0] = Math.min(
+                altitudeDataExtent[0], dataExtent[0]
+            );
+            altitudeDataExtent[1] = Math.max(
+                altitudeDataExtent[1], dataExtent[1]
+            );
+        }
+    }, this);
+    // Create altitude axis
+    if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
+        var scale = echarts.helper.createScale(
+            altitudeDataExtent, {
+                type: 'value',
+                // PENDING
+                min: 'dataMin',
+                max: 'dataMax'
+            }
+        );
+        this.altitudeAxis = new echarts.Axis('altitude', scale);
+        // Resize again
+        this.resize(this.model, api);
+    }
+}
+
 
 if (__DEV__) {
     var mapNotExistsError = function (name) {
@@ -86,11 +127,15 @@ var geo3DCreator = {
             geo3D.viewGL = componentModel.__viewGL;
 
             componentModel.coordinateSystem = geo3D;
+            geo3D.model = componentModel;
+
             geo3DList.push(geo3D);
 
             // Inject resize
             geo3D.resize = resizeGeo3D;
             geo3D.resize(componentModel, api);
+
+            geo3D.update = updateGeo3D;
         }
 
         ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
@@ -106,8 +151,6 @@ var geo3DCreator = {
                 createGeo3D(map3DModel, idx);
             }
         });
-
-        var altitudeDataExtent = [];
 
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'geo3D') {
@@ -128,39 +171,6 @@ var geo3DCreator = {
                 }
 
                 seriesModel.coordinateSystem = geo3DModel.coordinateSystem;
-
-                // Get altitude data extent.
-                var geo3DIndex = geo3DModel.componentIndex;
-                var data = seriesModel.getData();
-                var altDim = seriesModel.coordDimToDataDim('alt')[0];
-                if (altDim) {
-                    // TODO altitiude is in coords of lines.
-                    var dataExtent = data.getDataExtent(altDim);
-                    altitudeDataExtent[geo3DIndex] = altitudeDataExtent[geo3DIndex] || [Infinity, -Infinity];
-                    altitudeDataExtent[geo3DIndex][0] = Math.min(
-                        altitudeDataExtent[geo3DIndex][0], dataExtent[0]
-                    );
-                    altitudeDataExtent[geo3DIndex][1] = Math.max(
-                        altitudeDataExtent[geo3DIndex][1], dataExtent[1]
-                    );
-                }
-            }
-        });
-        // Create altitude axis
-        ecModel.eachComponent('geo3D', function (geo3DModel, idx) {
-            var geo3D = geo3DModel.coordinateSystem;
-            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
-                var scale = echarts.helper.createScale(
-                    altitudeDataExtent[geo3DModel.componentIndex], {
-                        type: 'value',
-                        // PENDING
-                        min: 'dataMin',
-                        max: 'dataMax'
-                    }
-                );
-                geo3D.altitudeAxis = new echarts.Axis('altitude', scale);
-                // Resize again
-                geo3D.resize(geo3DModel, api);
             }
         });
 

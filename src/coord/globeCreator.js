@@ -49,6 +49,45 @@ function resizeGlobe(globeModel, api) {
     }
 }
 
+function updateGlobe(ecModel, api) {
+
+    var altitudeDataExtent = [Infinity, -Infinity]
+
+    ecModel.eachSeries(function (seriesModel) {
+        if (seriesModel.coordinateSystem !== this) {
+            return;
+        }
+        
+        // Get altitude data extent.
+        var data = seriesModel.getData();
+        var altDim = seriesModel.coordDimToDataDim('alt')[0];
+        if (altDim) {
+            // TODO altitiude is in coords of lines.
+            var dataExtent = data.getDataExtent(altDim, true);
+            altitudeDataExtent[0] = Math.min(
+                altitudeDataExtent[0], dataExtent[0]
+            );
+            altitudeDataExtent[1] = Math.max(
+                altitudeDataExtent[1], dataExtent[1]
+            );
+        }
+    }, this);
+    // Create altitude axis
+    if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
+        var scale = echarts.helper.createScale(
+            altitudeDataExtent, {
+                type: 'value',
+                // PENDING
+                min: 'dataMin',
+                max: 'dataMax'
+            }
+        );
+        this.altitudeAxis = new echarts.Axis('altitude', scale);
+        // Resize again
+        this.resize(this.model, api);
+    }
+}
+
 var globeCreator = {
 
     dimensions: Globe.prototype.dimensions,
@@ -72,9 +111,10 @@ var globeCreator = {
             // Inject resize
             globe.resize = resizeGlobe;
             globe.resize(globeModel, api);
+
+            globe.update = updateGlobe;
         });
 
-        var altitudeDataExtent = [];
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'globe') {
                 var globeModel = seriesModel.getReferringComponents('globe')[0];
@@ -93,40 +133,11 @@ var globeCreator = {
                 var coordSys = globeModel.coordinateSystem;
 
                 seriesModel.coordinateSystem = coordSys;
-
-                // Get altitude data extent.
-                var globeIndex = globeModel.componentIndex;
-                var data = seriesModel.getData();
-                var altDim = seriesModel.coordDimToDataDim('alt')[0];
-                if (altDim) {
-                    var dataExtent = data.getDataExtent(altDim);
-                    altitudeDataExtent[globeIndex] = altitudeDataExtent[globeIndex] || [Infinity, -Infinity];
-                    altitudeDataExtent[globeIndex][0] = Math.min(
-                        altitudeDataExtent[globeIndex][0], dataExtent[0]
-                    );
-                    altitudeDataExtent[globeIndex][1] = Math.max(
-                        altitudeDataExtent[globeIndex][1], dataExtent[1]
-                    );
-                }
             }
         });
 
         ecModel.eachComponent('globe', function (globeModel, idx) {
             var globe = globeModel.coordinateSystem;
-            // Create altitude axis
-            if (altitudeDataExtent[idx] && isFinite(altitudeDataExtent[idx][1] - altitudeDataExtent[idx][0])) {
-                var scale = echarts.helper.createScale(
-                    altitudeDataExtent[globeModel.componentIndex], {
-                        type: 'value',
-                        // PENDING
-                        min: 'dataMin',
-                        max: 'dataMax'
-                    }
-                );
-                globe.altitudeAxis = new echarts.Axis('altitude', scale);
-                // Resize again
-                globe.resize(globeModel, api);
-            }
 
             // Update displacement data
             var displacementTextureValue = globeModel.getDisplacementTexture();
@@ -142,7 +153,7 @@ var globeCreator = {
                         if (!immediateLoaded) {
                             // Update layouts
                             api.dispatchAction({
-                                type: 'globeupdatedisplacment'
+                                type: 'globeUpdateDisplacment'
                             });
                         }
                     });

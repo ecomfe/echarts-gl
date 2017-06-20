@@ -21,7 +21,7 @@
             var noise = new SimplexNoise(Math.random);
             var xData = [];
             var yData = [];
-            function generateData(theta, min, max) {
+            function generateData() {
                 var data = [];
                 for (var i = 0; i <= 50; i++) {
                     for (var j = 0; j <= 50; j++) {
@@ -35,7 +35,7 @@
             }
             var valMin = Infinity;
             var valMax = -Infinity;
-            var data = generateData(2, -5, 5);
+            var data = generateData();
             console.log(valMin, valMax);
 
             chart.setOption({

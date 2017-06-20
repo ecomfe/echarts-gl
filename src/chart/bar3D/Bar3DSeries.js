@@ -17,6 +17,12 @@ var Bar3DSeries = echarts.extendSeriesModel({
             encodeDef: this.get('encode'),
             dimsDef: this.get('dimensions')
         });
+        // Find stackable dimension. Which will represent value.
+        dimensions.forEach(function (dimInfo) {
+            if (dimInfo.coordDim === coordSysDimensions[2]) {
+                dimInfo.stackable = true;
+            }
+        });
         var data = new echarts.List(dimensions, this);
         data.initData(option.data);
         return data;

@@ -45,13 +45,16 @@ function cartesian3DLayout(seriesModel, coordSys) {
     var dims = ['x', 'y', 'z'].map(function (coordDimName) {
         return seriesModel.coordDimToDataDim(coordDimName)[0];
     });
+    
     data.each(dims, function (x, y, z, idx) {
-        // TODO On the face or on the zero barOnPlane
         // TODO zAxis is inversed
         // TODO On different plane.
-        var baseValue = ifZAxisCrossZero ? 0 : zAxisExtent[0];
+        var stackedValue = data.get(dims[2], idx, true);
+        var baseValue = data.stackedOn ? (stackedValue - z)
+            : (ifZAxisCrossZero ? 0 : zAxisExtent[0]);
+            
         var start = coordSys.dataToPoint([x, y, baseValue]);
-        var end = coordSys.dataToPoint([x, y, z]);
+        var end = coordSys.dataToPoint([x, y, stackedValue]);
         var height = vec3.dist(start, end);
         // PENDING When zAxis is not cross zero.
         var dir = [0, end[1] < start[1] ? -1 : 1, 0];
@@ -62,7 +65,6 @@ function cartesian3DLayout(seriesModel, coordSys) {
         var size = [barSize[0], height, barSize[1]];
         data.setItemLayout(idx, [start, dir, size]);
     });
-
 
     data.setLayout('orient', [1, 0, 0]);
 }
