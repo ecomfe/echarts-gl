@@ -117,6 +117,10 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
 
         var dpr = this._api.getDevicePixelRatio();
         var text = seriesModel.getFormattedLabel(dataIndex, isEmphasis ? 'emphasis' : 'normal');
+        if (text == null || text === '') {
+            return;
+        }
+
         var textEl = new echarts.graphic.Text({
             style: {
                 text: text,

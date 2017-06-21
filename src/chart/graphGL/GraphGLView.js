@@ -241,7 +241,7 @@ echarts.extendChartView({
             layout = 'forceAtlas2';
         }
         // Stop previous layout
-        this.stopLayout();
+        this.stopLayout(seriesModel, ecModel, api);
 
         var nodeData = seriesModel.getData();
         var edgeData = seriesModel.getData();
@@ -463,6 +463,13 @@ echarts.extendChartView({
     focusNodeAdjacency: function (seriesModel, ecModel, api, payload) {
 
         var data = this._model.getData();
+
+        if (this._focusNodes) {
+            this._focusNodes.forEach(function (node) {
+                this._pointsBuilder.downplay(data, node.dataIndex);
+            }, this);
+        }
+        
         var dataIndex = payload.dataIndex;
 
         var graph = data.graph;
@@ -480,9 +487,15 @@ echarts.extendChartView({
 
         this._pointsBuilder.fadeOutAll(0.05);
         this._fadeOutEdgesAll(0.05);
+
         focusNodes.forEach(function (node) {
             this._pointsBuilder.highlight(data, node.dataIndex);
         }, this);
+
+        this._pointsBuilder.updateLabels(focusNodes.map(function (node) {
+            return node.dataIndex;
+        }));
+
         node.edges.forEach(function (edge) {
             if (edge.dataIndex >= 0) {
                 this._setEdgeFade(edge.dataIndex, 1);
@@ -501,6 +514,8 @@ echarts.extendChartView({
         }
         this._pointsBuilder.fadeInAll();
         this._fadeInEdgesAll();
+
+        this._pointsBuilder.updateLabels();
     },
 
     _setEdgeFade: (function () {

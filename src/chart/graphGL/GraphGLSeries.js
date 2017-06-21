@@ -1,5 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var createGraphFromNodeEdge = require('./createGraphFromNodeEdge');
+var formatUtil = require('../../util/format');
 
 var GraphSeries = echarts.extendSeriesModel({
 
@@ -22,6 +23,16 @@ var GraphSeries = echarts.extendSeriesModel({
         GraphSeries.superApply(this, 'mergeOption', arguments);
 
         this._updateCategoriesData();
+    },
+
+    getFormattedLabel: function (dataIndex, status, dataType, dimIndex) {
+        var text = formatUtil.getFormattedLabel(this, dataIndex, status, dataType, dimIndex);
+        if (text == null) {
+            var data = this.getData();
+            var lastDim = data.dimensions[data.dimensions.length - 1];
+            text = data.get(lastDim, dataIndex);
+        }
+        return text;
     },
 
     getInitialData: function (option, ecModel) {
@@ -219,7 +230,8 @@ var GraphSeries = echarts.extendSeriesModel({
         label: {
             show: false,
             formatter: '{b}',
-            position: 'right'
+            position: 'right',
+            distance: 5
         },
 
         itemStyle: {},

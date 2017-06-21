@@ -196,22 +196,18 @@ PointsBuilder.prototype = {
 
         this._updateHandler(seriesModel, ecModel, api);
 
-        // TODO scatterGL
-        if (!is2D) {
-            this._labelsBuilder.updateData(data);
+        this._labelsBuilder.updateData(data);
 
-            this._labelsBuilder.getLabelPosition = function (dataIndex, positionDesc, distance) {
-                var idx3 = dataIndex * 3;
-                var pos = [points[idx3], points[idx3 + 1], points[idx3 + 2]];
-                return pos;
-            };
-
-            this._labelsBuilder.getLabelDistance = function (dataIndex, positionDesc, distance) {
-                var size = geometry.attributes.size.get(dataIndex) / pointSizeScale;
-                return size / 2 + distance;
-            };
-            this._labelsBuilder.updateLabels();
-        }
+        this._labelsBuilder.getLabelPosition = function (dataIndex, positionDesc, distance) {
+            var idx3 = dataIndex * 3;
+            return [positionArr[idx3], positionArr[idx3 + 1], positionArr[idx3 + 2]];
+        };
+            
+        this._labelsBuilder.getLabelDistance = function (dataIndex, positionDesc, distance) {
+            var size = geometry.attributes.size.get(dataIndex) / pointSizeScale;
+            return size / 2 + distance;
+        };
+        this._labelsBuilder.updateLabels();
 
         this._updateAnimation(seriesModel);
 
@@ -383,6 +379,10 @@ PointsBuilder.prototype = {
 
     getPointsMesh: function () {
         return this._mesh;
+    },
+
+    updateLabels: function (highlightDataIndices) {
+        this._labelsBuilder.updateLabels(highlightDataIndices);
     },
 
     _getSymbolInfo: function (data) {

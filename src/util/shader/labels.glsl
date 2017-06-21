@@ -28,8 +28,6 @@ void main()
     v_Color = a_Color;
 #endif
     v_Texcoord = texcoord;
-
-    gl_PointSize = 10.0;
 }
 @end
 
