@@ -7,6 +7,8 @@ var Matrix4 = require('qtek/lib/math/Matrix4');
 
 var SDF_RANGE = 20;
 
+var Z_2D = -10;
+
 function isSymbolSizeSame(a, b) {
     return a && b && a[0] === b[0] && a[1] === b[1];
 }
@@ -115,13 +117,15 @@ PointsBuilder.prototype = {
         var pointSizeScale = this._spriteImageCanvas.width / symbolInfo.maxSize * dpr;
 
         var hasTransparentPoint = false;
+
+        this._originalOpacity = new Float32Array(data.count());
         for (var i = 0; i < data.count(); i++) {
             var i3 = i * 3;
             var i2 = i * 2;
             if (is2D) {
                 positionArr[i3] = points[i2];
                 positionArr[i3 + 1] = points[i2 + 1];
-                positionArr[i3 + 2] = -10;
+                positionArr[i3 + 2] = Z_2D;
             }
             else {
                 positionArr[i3] = points[i3];
@@ -133,6 +137,10 @@ PointsBuilder.prototype = {
             var opacity = data.getItemVisual(i, 'opacity');
             graphicGL.parseColor(color, rgbaArr);
             rgbaArr[3] *= opacity;
+
+            // Save the original opacity for recover from fadeIn.
+            this._originalOpacity[i] = rgbaArr[3];
+
             attributes.color.set(i, rgbaArr);
             if (rgbaArr[3] < 0.99) {
                 hasTransparentPoint = true;
@@ -290,6 +298,7 @@ PointsBuilder.prototype = {
                 var i2 = i * 2;
                 positionArr[i3] = points[i2];
                 positionArr[i3 + 1] = points[i2 + 1];
+                positionArr[i3 + 2] = Z_2D;
             }
         }
         else {
@@ -334,12 +343,33 @@ PointsBuilder.prototype = {
         this._api.getZr().refresh();
     },
 
+    fadeOutAll: function (fadeOutPercent) {
+
+        var geo = this._mesh.geometry;
+        for (var i = 0; i < geo.vertexCount; i++) {
+            var fadeOutOpacity = this._originalOpacity[i] * fadeOutPercent;
+            geo.attributes.color.value[i * 4 + 3] = fadeOutOpacity;
+        }
+        geo.dirtyAttribute('color');
+
+        this._api.getZr().refresh();
+    },
+
+    fadeInAll: function () {
+        this.fadeOutAll(1);
+    },
+
     setPositionTexture: function (texture) {
         if (this._mesh) {
             this._setPositionTextureToMesh(this._mesh, texture);
         }
 
         this._positionTexture = texture;
+    },
+
+    removePositionTexture: function () {
+        this._positionTexture = null;
+        this._setPositionTextureToMesh(this._mesh, null);
     },
 
     _setPositionTextureToMesh: function (mesh, texture) {

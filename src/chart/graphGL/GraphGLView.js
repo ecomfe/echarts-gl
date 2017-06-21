@@ -87,8 +87,6 @@ echarts.extendChartView({
 
         this._pointsBuilder.update(seriesModel, ecModel, api);
 
-        this._updateForceNodesGeometry(seriesModel.getData());
-
         if (!(this._forceLayoutInstance instanceof ForceAtlas2GPU)) {
             this.groupGL.remove(this._forceEdgesMesh);
         }
@@ -103,10 +101,41 @@ echarts.extendChartView({
                     zoom: this._control.getZoom(),
                     offset: this._control.getOffset()
                 });
+
+                this._pointsBuilder.updateView(this.viewGL.camera);
             }, this);
 
         this._control.setZoom(retrieve.firstNotNull(seriesModel.get('zoom'), 1));
         this._control.setOffset(seriesModel.get('offset') || [0, 0]);
+
+        this._pointsBuilder.getPointsMesh().on('mouseover', this._mouseOverHandler, this);
+        this._pointsBuilder.getPointsMesh().on('mouseout', this._mouseOutHandler, this);
+    },
+
+    _mouseOverHandler: function (e) {
+        if (this._layouting) {
+            return;
+        }
+        var dataIndex = this._pointsBuilder.getPointsMesh().dataIndex;
+        if (dataIndex >= 0) {
+            this._api.dispatchAction({
+                type: 'graphGLFocusNodeAdjacency',
+                seriesId: this._model.id,
+                dataIndex: dataIndex
+            });
+        }
+    },
+
+    _mouseOutHandler: function (e) {
+        if (this._layouting) {
+            return;
+        }
+
+        this._api.dispatchAction({
+            type: 'graphGLUnfocusNodeAdjacency',
+            seriesId: this._model.id
+        });
+
     },
 
     _updateForceEdgesGeometry: function (edges, seriesModel) {
@@ -150,6 +179,9 @@ echarts.extendChartView({
         var p1 = [];
 
         var lineWidthQuery = ['lineStyle', 'width'];
+
+        this._originalEdgeColors = new Float32Array(edgeData.count() * 4);
+        this._edgeIndicesMap = new Float32Array(edgeData.count());
         for (var i = 0; i < edges.length; i++) {
             var edge = edges[i];
             var idx1 = edge.node1 * 2;
@@ -159,15 +191,18 @@ echarts.extendChartView({
             p1[0] = points[idx2];
             p1[1] = points[idx2 + 1];
 
-            var color = edgeData.getItemVisual(i, 'color');
+            var color = edgeData.getItemVisual(edge.dataIndex, 'color');
             var colorArr = graphicGL.parseColor(color);
-            colorArr[3] *= retrieve.firstNotNull(
-                edgeData.getItemVisual(i, 'opacity'), 1
-            );
-            var itemModel = edgeData.getItemModel(i);
+            colorArr[3] *= retrieve.firstNotNull(edgeData.getItemVisual(edge.dataIndexi, 'opacity'), 1);
+            var itemModel = edgeData.getItemModel(edge.dataIndexi);
             var lineWidth = retrieve.firstNotNull(itemModel.get(lineWidthQuery), 1) * this._api.getDevicePixelRatio();
 
             geometry.addLine(p0, p1, colorArr, lineWidth);
+            
+            for (var k = 0; k < 4; k++) {
+                this._originalEdgeColors[edge.dataIndex * 4 + k] = colorArr[k];
+            }
+            this._edgeIndicesMap[edge.dataIndex] = i;
         }
 
         geometry.dirty();
@@ -177,11 +212,10 @@ echarts.extendChartView({
         var pointsMesh = this._pointsBuilder.getPointsMesh();
         var pos = [];
         for (var i = 0; i < nodeData.count(); i++) {
-            pointsMesh.geometry.attributes.position.get(i, pos);
             this._forceLayoutInstance.getNodeUV(i, pos);
             pointsMesh.geometry.attributes.position.set(i, pos);
         }
-        pointsMesh.geometry.dirty();
+        pointsMesh.geometry.dirty('position');
     },
 
     _initLayout: function (seriesModel, ecModel, api) {
@@ -276,7 +310,8 @@ echarts.extendChartView({
                 edges.push({
                     node1: nodesIndicesMap[edge.node1.id],
                     node2: nodesIndicesMap[edge.node2.id],
-                    weight: weight
+                    weight: weight,
+                    dataIndex: dataIndex
                 });
             });
             if (!layoutInstance) {
@@ -324,10 +359,17 @@ echarts.extendChartView({
         }
     },
 
-    startLayout: function () {
+    _updatePositionTexture: function () {
+        var positionTex = this._forceLayoutInstance.getNodePositionTexture();
+        this._pointsBuilder.setPositionTexture(positionTex);
+        this._forceEdgesMesh.material.set('positionTex', positionTex);
+    },
+
+    startLayout: function (seriesModel, ecModel, api, payload) {
         var viewGL = this.viewGL;
         var api = this._api;
         var layoutInstance = this._forceLayoutInstance;
+        var data = this._model.getData();
         var layoutModel = this._model.getModel('forceAtlas2');
 
         this.groupGL.remove(this._edgesMesh);
@@ -336,6 +378,8 @@ echarts.extendChartView({
         if (!this._forceLayoutInstance) {
             return;
         }
+
+        this._updateForceNodesGeometry(seriesModel.getData());
 
         var self = this;
         var layoutId = this._layoutId = globalLayoutId++;
@@ -348,6 +392,10 @@ echarts.extendChartView({
             if (layoutInstance.isFinished(viewGL.layer.renderer, stopThreshold)) {
                 api.dispatchAction({
                     type: 'graphGLStopLayout'
+                });
+                api.dispatchAction({
+                    type: 'graphGLFinishLayout',
+                    points: data.getLayout('points')
                 });
                 return;
             }
@@ -372,15 +420,11 @@ echarts.extendChartView({
             }
             doLayout(layoutId);
         });
+
+        this._layouting = true;
     },
 
-    _updatePositionTexture: function () {
-        var positionTex = this._forceLayoutInstance.getNodePositionTexture();
-        this._pointsBuilder.setPositionTexture(positionTex);
-        this._forceEdgesMesh.material.set('positionTex', positionTex);
-    },
-
-    stopLayout: function () {
+    stopLayout: function (seriesModel, ecModel, api, payload) {
         this._layoutId = 0;
         this.groupGL.remove(this._forceEdgesMesh);
         this.groupGL.add(this._edgesMesh);
@@ -399,7 +443,73 @@ echarts.extendChartView({
 
         this._updateEdgesGeometry(this._forceLayoutInstance.getEdges());
 
+        this._pointsBuilder.removePositionTexture();
+
+        this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
+
+        this._pointsBuilder.updateView(this.viewGL.camera);
+
         this._api.getZr().refresh();
+
+        this._layouting = false;
+    },
+
+    focusNodeAdjacency: function (seriesModel, ecModel, api, payload) {
+
+        var data = this._model.getData();
+        var dataIndex = payload.dataIndex;
+
+        var graph = data.graph;
+
+        var focuesNodes = [];
+        var node = graph.getNodeByIndex(dataIndex);
+        focuesNodes.push(node);
+        node.edges.forEach(function (edge) {
+            if (edge.dataIndex < 0) {
+                return;
+            }
+            edge.node1 !== node && focuesNodes.push(edge.node1);
+            edge.node2 !== node && focuesNodes.push(edge.node2);
+        }, this);
+
+        this._pointsBuilder.fadeOutAll(0.1);
+        this._fadeOutEdgesAll(0.1);
+        focuesNodes.forEach(function (node) {
+            this._pointsBuilder.highlight(data, node.dataIndex);
+        }, this);
+        node.edges.forEach(function (edge) {
+            if (edge.dataIndex >= 0) {
+                this._setEdgeFade(edge.dataIndex, 1);
+            }
+        }, this);
+    },
+
+    unfocusNodeAdjacency: function (seriesModel, ecModel, api, payload) {
+        this._pointsBuilder.fadeInAll();
+        this._fadeInEdgesAll();
+    },
+
+    _setEdgeFade: (function () {
+        var color = [];
+        return function (dataIndex, percent) {
+            for (var i = 0; i < 4; i++) {
+                color[i] = this._originalEdgeColors[dataIndex * 4 + i];
+            }
+            color[3] *= percent;
+            this._edgesMesh.geometry.setItemColor(this._edgeIndicesMap[dataIndex], color);
+        };
+    })(),
+
+    _fadeOutEdgesAll: function (percent) {
+        var graph = this._model.getData().graph;
+
+        graph.eachEdge(function (edge) {
+            this._setEdgeFade(edge.dataIndex, percent);
+        }, this);
+    },
+
+    _fadeInEdgesAll: function () {
+        this._fadeOutEdgesAll(1);
     },
 
     _updateCamera: function (seriesModel, api) {

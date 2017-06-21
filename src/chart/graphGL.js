@@ -94,14 +94,29 @@ echarts.registerAction({
     });
 });
 
+function noop() {}
+
 echarts.registerAction({
     type: 'graphGLStartLayout',
     event: 'graphgllayoutstarted',
     update: 'series.graphGL:startLayout'
-}, function () {});
+}, noop);
 
 echarts.registerAction({
     type: 'graphGLStopLayout',
     event: 'graphgllayoutstopped',
     update: 'series.graphGL:stopLayout'
-}, function () {});
+}, noop);
+
+echarts.registerAction({
+    type: 'graphGLFocusNodeAdjacency',
+    event: 'graphGLFocusNodeAdjacency',
+    update: 'series.graphGL:focusNodeAdjacency'
+}, noop);
+
+
+echarts.registerAction({
+    type: 'graphGLUnfocusNodeAdjacency',
+    event: 'graphGLUnfocusNodeAdjacency',
+    update: 'series.graphGL:unfocusNodeAdjacency'
+}, noop);

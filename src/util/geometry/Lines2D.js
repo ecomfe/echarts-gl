@@ -49,6 +49,8 @@ var LinesGeometry = StaticGeometry.extend(function () {
     resetOffset: function () {
         this._vertexOffset = 0;
         this._faceOffset = 0;
+
+        this._itemVertexOffsets = [];
     },
 
     /**
@@ -261,6 +263,8 @@ var LinesGeometry = StaticGeometry.extend(function () {
             return;
         }
 
+        this._itemVertexOffsets.push(this._vertexOffset);
+
         var is2DArray = typeof points[0] !== 'number';
         var positionAttr = this.attributes.position;
         var colorAttr = this.attributes.color;
@@ -405,6 +409,19 @@ var LinesGeometry = StaticGeometry.extend(function () {
         }
 
         this._vertexOffset = vertexOffset;
+    },
+
+    /**
+     * Set color of single line.
+     */
+    setItemColor: function (idx, color) {
+        var startOffset = this._itemVertexOffsets[idx];
+        var endOffset = idx < this._itemVertexOffsets.length - 1 ? this._itemVertexOffsets[idx + 1] : this._vertexOffset;
+        
+        for (var i = startOffset; i < endOffset; i++) {
+            this.attributes.color.set(i, color);
+        }
+        this.dirty('color');
     }
 });
 
