@@ -108,8 +108,14 @@ echarts.extendChartView({
         this._control.setZoom(retrieve.firstNotNull(seriesModel.get('zoom'), 1));
         this._control.setOffset(seriesModel.get('offset') || [0, 0]);
 
-        this._pointsBuilder.getPointsMesh().on('mouseover', this._mouseOverHandler, this);
-        this._pointsBuilder.getPointsMesh().on('mouseout', this._mouseOutHandler, this);
+        var mesh = this._pointsBuilder.getPointsMesh();
+        mesh.off('mouseover', this._mouseOverHandler);
+        mesh.off('mosueout', this._mouseOutHandler);
+
+        if (seriesModel.get('focusNodeAdjacency')) {
+            mesh.on('mouseover', this._mouseOverHandler, this);
+            mesh.on('mouseout', this._mouseOutHandler, this);
+        }
     },
 
     _mouseOverHandler: function (e) {
@@ -461,20 +467,20 @@ echarts.extendChartView({
 
         var graph = data.graph;
 
-        var focuesNodes = [];
+        var focusNodes = [];
         var node = graph.getNodeByIndex(dataIndex);
-        focuesNodes.push(node);
+        focusNodes.push(node);
         node.edges.forEach(function (edge) {
             if (edge.dataIndex < 0) {
                 return;
             }
-            edge.node1 !== node && focuesNodes.push(edge.node1);
-            edge.node2 !== node && focuesNodes.push(edge.node2);
+            edge.node1 !== node && focusNodes.push(edge.node1);
+            edge.node2 !== node && focusNodes.push(edge.node2);
         }, this);
 
-        this._pointsBuilder.fadeOutAll(0.1);
-        this._fadeOutEdgesAll(0.1);
-        focuesNodes.forEach(function (node) {
+        this._pointsBuilder.fadeOutAll(0.05);
+        this._fadeOutEdgesAll(0.05);
+        focusNodes.forEach(function (node) {
             this._pointsBuilder.highlight(data, node.dataIndex);
         }, this);
         node.edges.forEach(function (edge) {
@@ -482,9 +488,17 @@ echarts.extendChartView({
                 this._setEdgeFade(edge.dataIndex, 1);
             }
         }, this);
+
+        this._focusNodes = focusNodes;
     },
 
     unfocusNodeAdjacency: function (seriesModel, ecModel, api, payload) {
+
+        if (this._focusNodes) {
+            this._focusNodes.forEach(function (node) {
+                this._pointsBuilder.downplay(this._model.getData(), node.dataIndex);
+            }, this);
+        }
         this._pointsBuilder.fadeInAll();
         this._fadeInEdgesAll();
     },

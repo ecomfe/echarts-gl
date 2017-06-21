@@ -187,7 +187,7 @@ var GraphSeries = echarts.extendSeriesModel({
             gravityCenter: null
         },
 
-        focusNodeAdjacency: false,
+        focusNodeAdjacency: true,
 
         left: 'center',
         top: 'center',

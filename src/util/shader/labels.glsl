@@ -1,4 +1,4 @@
-@export ecgl.labels3D.vertex
+@export ecgl.labels.vertex
 
 // https://mattdesl.svbtle.com/drawing-lines-is-hard
 attribute vec3 position: POSITION;
@@ -34,7 +34,7 @@ void main()
 @end
 
 
-@export ecgl.labels3D.fragment
+@export ecgl.labels.fragment
 
 uniform vec3 color : [1.0, 1.0, 1.0];
 uniform float alpha : 1.0;
