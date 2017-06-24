@@ -121,6 +121,7 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
             return;
         }
 
+        // TODO Background.
         var textEl = new echarts.graphic.Text({
             style: {
                 text: text,
@@ -134,6 +135,9 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
             }
         });
         var rect = textEl.getBoundingRect();
+        // PENDING Use rect element
+        var lineHeight = 1.2;
+        rect.height *= lineHeight;
 
         var coords = this._labelTextureSurface.add(textEl);
 
