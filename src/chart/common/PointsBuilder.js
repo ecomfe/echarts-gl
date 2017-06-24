@@ -36,6 +36,11 @@ PointsBuilder.prototype = {
 
     constructor: PointsBuilder,
 
+    /**
+     * If highlight on over
+     */
+    highlightOnMouseover: true,
+
     update: function (seriesModel, ecModel, api) {
         // Swap barMesh
         var tmp = this._prevMesh;
@@ -241,13 +246,15 @@ PointsBuilder.prototype = {
 
         pointsMesh.off('mousemove');
         pointsMesh.off('mouseout');
+
         pointsMesh.on('mousemove', function (e) {
             var dataIndex = e.vertexIndex;
-            this.highlight(data, dataIndex);
             if (dataIndex !== lastDataIndex) {
-                this.downplay(data, lastDataIndex);
-                this.highlight(data, dataIndex);
-                this._labelsBuilder.updateLabels([dataIndex]);
+                if (this.highlightOnMouseover) {
+                    this.downplay(data, lastDataIndex);
+                    this.highlight(data, dataIndex);
+                    this._labelsBuilder.updateLabels([dataIndex]);
+                }
 
                 if (isCartesian3D) {
                     api.dispatchAction({
@@ -262,8 +269,10 @@ PointsBuilder.prototype = {
             lastDataIndex = dataIndex;
         }, this);
         pointsMesh.on('mouseout', function (e) {
-            this.downplay(data, e.vertexIndex);
-            this._labelsBuilder.updateLabels();
+            if (this.highlightOnMouseover) {
+                this.downplay(data, e.vertexIndex);
+                this._labelsBuilder.updateLabels();
+            }
             lastDataIndex = -1;
             pointsMesh.dataIndex = -1;
 

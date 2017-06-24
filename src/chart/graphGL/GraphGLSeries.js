@@ -200,6 +200,8 @@ var GraphSeries = echarts.extendSeriesModel({
 
         focusNodeAdjacency: true,
 
+        focusNodeAdjacencyOn: 'mouseover',
+
         left: 'center',
         top: 'center',
         // right: null,

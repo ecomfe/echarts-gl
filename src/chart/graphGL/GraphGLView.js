@@ -75,6 +75,9 @@ echarts.extendChartView({
         });
         this._control.setTarget(this.groupGL);
         this._control.init();
+
+
+        this._clickHandler = this._clickHandler.bind(this);
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -95,30 +98,48 @@ echarts.extendChartView({
 
         this._control.off('update');
         this._control.on('update', function () {
-                api.dispatchAction({
-                    type: 'graphGLRoam',
-                    seriesId: seriesModel.id,
-                    zoom: this._control.getZoom(),
-                    offset: this._control.getOffset()
-                });
+            api.dispatchAction({
+                type: 'graphGLRoam',
+                seriesId: seriesModel.id,
+                zoom: this._control.getZoom(),
+                offset: this._control.getOffset()
+            });
 
-                this._pointsBuilder.updateView(this.viewGL.camera);
-            }, this);
+            this._pointsBuilder.updateView(this.viewGL.camera);
+        }, this);
 
         this._control.setZoom(retrieve.firstNotNull(seriesModel.get('zoom'), 1));
         this._control.setOffset(seriesModel.get('offset') || [0, 0]);
 
         var mesh = this._pointsBuilder.getPointsMesh();
-        mesh.off('mouseover', this._mouseOverHandler);
-        mesh.off('mosueout', this._mouseOutHandler);
+        mesh.off('mousemove', this._mousemoveHandler);
+        mesh.on('mouseout', this._mouseOutHandler, this);
+        api.getZr().off('click', this._clickHandler);
 
+        this._pointsBuilder.highlightOnMouseover = true;
         if (seriesModel.get('focusNodeAdjacency')) {
-            mesh.on('mouseover', this._mouseOverHandler, this);
-            mesh.on('mouseout', this._mouseOutHandler, this);
+            var focusNodeAdjacencyOn = seriesModel.get('focusNodeAdjacencyOn');
+            if (focusNodeAdjacencyOn === 'click') {
+                api.getZr().on('click', this._clickHandler);
+            }
+            else if (focusNodeAdjacencyOn === 'mouseover') {
+                mesh.on('mousemove', this._mousemoveHandler, this);
+                mesh.on('mouseout', this._mouseOutHandler, this);
+
+                this._pointsBuilder.highlightOnMouseover = false;
+            }
+            else {
+                if (__DEV__) {
+                    console.warn('Unkown focusNodeAdjacencyOn value \s' + focusNodeAdjacencyOn);
+                }
+            }
         }
+
+        // Reset
+        this._lastMouseOverDataIndex = -1;
     },
 
-    _mouseOverHandler: function (e) {
+    _clickHandler: function (e) {
         if (this._layouting) {
             return;
         }
@@ -130,6 +151,33 @@ echarts.extendChartView({
                 dataIndex: dataIndex
             });
         }
+        else {
+            this._api.dispatchAction({
+                type: 'graphGLUnfocusNodeAdjacency',
+                seriesId: this._model.id
+            });
+        }
+    },
+
+    _mousemoveHandler: function (e) {
+        if (this._layouting) {
+            return;
+        }
+        var dataIndex = this._pointsBuilder.getPointsMesh().dataIndex;
+        if (dataIndex >= 0) {
+            if (dataIndex !== this._lastMouseOverDataIndex) {
+                this._api.dispatchAction({
+                    type: 'graphGLFocusNodeAdjacency',
+                    seriesId: this._model.id,
+                    dataIndex: dataIndex
+                });
+            }
+        }
+        else {
+            this._mouseOutHandler(e);
+        }
+
+        this._lastMouseOverDataIndex = dataIndex;
     },
 
     _mouseOutHandler: function (e) {
@@ -142,6 +190,7 @@ echarts.extendChartView({
             seriesId: this._model.id
         });
 
+        this._lastMouseOverDataIndex = -1;
     },
 
     _updateForceEdgesGeometry: function (edges, seriesModel) {
@@ -296,7 +345,7 @@ echarts.extendChartView({
                     }
                 }
                 nodes.push({
-                    x: x, y: y, mass: mass
+                    x: x, y: y, mass: mass, size: nodeData.getItemVisual(dataIndex, 'symbolSize')
                 });
             });
             nodeData.setLayout('points', layoutPoints);
@@ -464,11 +513,7 @@ echarts.extendChartView({
 
         var data = this._model.getData();
 
-        if (this._focusNodes) {
-            this._focusNodes.forEach(function (node) {
-                this._pointsBuilder.downplay(data, node.dataIndex);
-            }, this);
-        }
+        this._downplayAll();
         
         var dataIndex = payload.dataIndex;
 
@@ -496,38 +541,70 @@ echarts.extendChartView({
             return node.dataIndex;
         }));
 
+        var focusEdges = [];
         node.edges.forEach(function (edge) {
             if (edge.dataIndex >= 0) {
-                this._setEdgeFade(edge.dataIndex, 1);
+                this._highlightEdge(edge.dataIndex);
+                focusEdges.push(edge);
             }
         }, this);
 
         this._focusNodes = focusNodes;
+        this._focusEdges = focusEdges;
     },
 
     unfocusNodeAdjacency: function (seriesModel, ecModel, api, payload) {
 
-        if (this._focusNodes) {
-            this._focusNodes.forEach(function (node) {
-                this._pointsBuilder.downplay(this._model.getData(), node.dataIndex);
-            }, this);
-        }
+        this._downplayAll();
+
         this._pointsBuilder.fadeInAll();
         this._fadeInEdgesAll();
 
         this._pointsBuilder.updateLabels();
     },
 
+    _highlightEdge: function (dataIndex) {
+        var itemModel = this._model.getEdgeData().getItemModel(dataIndex);
+        var emphasisColor =  graphicGL.parseColor(itemModel.get('emphasis.lineStyle.color') || itemModel.get('lineStyle.color'));
+        var emphasisOpacity = retrieve.firstNotNull(itemModel.get('emphasis.lineStyle.opacity'), itemModel.get('lineStyle.opacity'), 1);
+        emphasisColor[3] *= emphasisOpacity;
+        
+        this._edgesMesh.geometry.setItemColor(this._edgeIndicesMap[dataIndex], emphasisColor);
+    },
+
+    _downplayAll: function () {
+        if (this._focusNodes) {
+            this._focusNodes.forEach(function (node) {
+                this._pointsBuilder.downplay(this._model.getData(), node.dataIndex);
+            }, this);
+        }
+        if (this._focusEdges) {
+            this._focusEdges.forEach(function (edge) {
+                this._downplayEdge(edge.dataIndex);
+            }, this);
+        }
+    },
+
+    _downplayEdge: function (dataIndex) {
+        var color = this._getColor(dataIndex, []);
+        this._edgesMesh.geometry.setItemColor(this._edgeIndicesMap[dataIndex], color);
+    },
+
     _setEdgeFade: (function () {
         var color = [];
         return function (dataIndex, percent) {
-            for (var i = 0; i < 4; i++) {
-                color[i] = this._originalEdgeColors[dataIndex * 4 + i];
-            }
+            this._getColor(dataIndex, color);
             color[3] *= percent;
             this._edgesMesh.geometry.setItemColor(this._edgeIndicesMap[dataIndex], color);
         };
     })(),
+
+    _getColor: function (dataIndex, out) {
+        for (var i = 0; i < 4; i++) {
+            out[i] = this._originalEdgeColors[dataIndex * 4 + i];
+        }
+        return out;
+    },
 
     _fadeOutEdgesAll: function (percent) {
         var graph = this._model.getData().graph;
