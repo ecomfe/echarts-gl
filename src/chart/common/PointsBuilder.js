@@ -312,6 +312,8 @@ PointsBuilder.prototype = {
             }
         }
         this._mesh.geometry.dirty();
+
+        api.getZr().refresh();
     },
 
     highlight: function (data, dataIndex) {
@@ -392,6 +394,14 @@ PointsBuilder.prototype = {
 
     updateLabels: function (highlightDataIndices) {
         this._labelsBuilder.updateLabels(highlightDataIndices);
+    },
+
+    hideLabels: function () {
+        this.rootNode.remove(this._labelsBuilder.getMesh());
+    },
+
+    showLabels: function () {
+        this.rootNode.add(this._labelsBuilder.getMesh());
     },
 
     _getSymbolInfo: function (data) {

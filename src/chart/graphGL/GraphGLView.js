@@ -435,6 +435,7 @@ echarts.extendChartView({
         }
 
         this._updateForceNodesGeometry(seriesModel.getData());
+        this._pointsBuilder.hideLabels();
 
         var self = this;
         var layoutId = this._layoutId = globalLayoutId++;
@@ -503,6 +504,10 @@ echarts.extendChartView({
         this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
 
         this._pointsBuilder.updateView(this.viewGL.camera);
+
+        this._pointsBuilder.updateLabels();
+
+        this._pointsBuilder.showLabels();
 
         this._api.getZr().refresh();
 
