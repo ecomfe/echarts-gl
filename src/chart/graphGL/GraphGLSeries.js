@@ -152,6 +152,18 @@ var GraphSeries = echarts.extendSeriesModel({
         }
     },
 
+    setNodePosition: function (points) {
+        // PENDING
+        for (var i = 0; i < points.length / 2; i++) {
+            var x = points[i * 2];
+            var y = points[i * 2 + 1];
+
+            var opt = this.getData().getRawDataItem(i);
+            opt.x = x;
+            opt.y = y;
+        }
+    },
+
     isAnimationEnabled: function () {
         return GraphSeries.superCall(this, 'isAnimationEnabled')
             // Not enable animation when do force layout
@@ -233,7 +245,10 @@ var GraphSeries = echarts.extendSeriesModel({
             show: false,
             formatter: '{b}',
             position: 'right',
-            distance: 5
+            distance: 5,
+            textStyle: {
+                fontSize: 14
+            }
         },
 
         itemStyle: {},

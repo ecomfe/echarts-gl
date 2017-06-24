@@ -504,6 +504,8 @@ echarts.extendChartView({
         var points = this._forceLayoutInstance.getNodePosition(this.viewGL.layer.renderer);
         seriesModel.getData().setLayout('points', points);
 
+        seriesModel.setNodePosition(points);
+
         this._updateAfterLayout(seriesModel, ecModel, api);
 
         this._api.getZr().refresh();
