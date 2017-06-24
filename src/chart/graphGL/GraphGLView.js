@@ -120,6 +120,7 @@ echarts.extendChartView({
         if (seriesModel.get('focusNodeAdjacency')) {
             var focusNodeAdjacencyOn = seriesModel.get('focusNodeAdjacencyOn');
             if (focusNodeAdjacencyOn === 'click') {
+                // Remove default emphasis effect
                 api.getZr().on('click', this._clickHandler);
             }
             else if (focusNodeAdjacencyOn === 'mouseover') {
@@ -134,7 +135,7 @@ echarts.extendChartView({
                 }
             }
         }
-
+        
         // Reset
         this._lastMouseOverDataIndex = -1;
     },
@@ -290,7 +291,9 @@ echarts.extendChartView({
             layout = 'forceAtlas2';
         }
         // Stop previous layout
-        this.stopLayout(seriesModel, ecModel, api);
+        this.stopLayout(seriesModel, ecModel, api, {
+            beforeLayout: true
+        });
 
         var nodeData = seriesModel.getData();
         var edgeData = seriesModel.getData();
@@ -449,6 +452,8 @@ echarts.extendChartView({
         var layoutId = this._layoutId = globalLayoutId++;
         var stopThreshold = layoutModel.getShallow('stopThreshold');
         var steps = layoutModel.getShallow('steps');
+        var stepsCount = 0;
+        var syncStepCount = Math.max(steps * 2, 20);
         var doLayout = function (layoutId) {
             if (layoutId !== self._layoutId) {
                 return;
@@ -464,10 +469,15 @@ echarts.extendChartView({
                 return;
             }
 
-            // console.time('layout');
             layoutInstance.update(viewGL.layer.renderer, steps, function () {
-            // console.timeEnd('layout');
                 self._updatePositionTexture();
+                // PENDING Performance.
+                stepsCount += steps;
+                // Sync posiiton every 20 steps.
+                if (stepsCount >= syncStepCount) {
+                    self._syncNodePosition(seriesModel);
+                    stepsCount = 0;
+                }
                 // Position texture will been swapped. set every time.
                 api.getZr().refresh();
 
@@ -501,16 +511,21 @@ echarts.extendChartView({
             return;
         }
 
-        var points = this._forceLayoutInstance.getNodePosition(this.viewGL.layer.renderer);
-        seriesModel.getData().setLayout('points', points);
-
-        seriesModel.setNodePosition(points);
-
-        this._updateAfterLayout(seriesModel, ecModel, api);
+        if (!(payload && payload.beforeLayout)) {
+            this._syncNodePosition(seriesModel);
+            this._updateAfterLayout(seriesModel, ecModel, api);
+        }
 
         this._api.getZr().refresh();
 
         this._layouting = false;
+    },
+
+    _syncNodePosition: function (seriesModel) {
+        var points = this._forceLayoutInstance.getNodePosition(this.viewGL.layer.renderer);
+        seriesModel.getData().setLayout('points', points);
+
+        seriesModel.setNodePosition(points);
     },
 
     _updateAfterLayout: function (seriesModel, ecModel, api) {
@@ -652,16 +667,17 @@ echarts.extendChartView({
             vec2.max(max, max, pt);
         }
         // Scale a bit
-        var width = max[0] - min[0];
-        var height = max[1] - min[1];
+        var width = Math.max(max[0] - min[0], 10);
+        // Keep aspect
+        var height = width / api.getWidth() * api.getHeight();
+        var cy = (max[1] + min[1]) / 2;
         width *= 1.4;
         height *= 1.4;
         min[0] -= width * 0.2;
-        min[1] -= height * 0.2;
 
         camera.left = min[0];
-        camera.top = min[1];
-        camera.bottom = height + min[1];
+        camera.top = cy - height / 2;
+        camera.bottom = cy + height / 2;
         camera.right = width + min[0];
         camera.near = 0;
         camera.far = 100;

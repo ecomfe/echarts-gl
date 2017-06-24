@@ -153,7 +153,6 @@ var GraphSeries = echarts.extendSeriesModel({
     },
 
     setNodePosition: function (points) {
-        // PENDING
         for (var i = 0; i < points.length / 2; i++) {
             var x = points[i * 2];
             var y = points[i * 2 + 1];
