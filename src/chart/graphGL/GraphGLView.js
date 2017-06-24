@@ -27,6 +27,7 @@ echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
         this.viewGL = new ViewGL('orthographic');
+        this.viewGL.camera.left = this.viewGL.camera.right = 0;
 
         this.viewGL.add(this.groupGL);
 
@@ -666,11 +667,20 @@ echarts.extendChartView({
             vec2.min(min, min, pt);
             vec2.max(max, max, pt);
         }
+        var cy = (max[1] + min[1]) / 2;
+        var cx = (max[0] + min[0]) / 2;
+        // Only fit the camera when graph is not in the center.
+        // PENDING
+        if (cx > camera.left && cx < camera.right
+            && cy < camera.bottom && cy > camera.top
+        ) {
+            return;   
+        }
+
         // Scale a bit
         var width = Math.max(max[0] - min[0], 10);
         // Keep aspect
         var height = width / api.getWidth() * api.getHeight();
-        var cy = (max[1] + min[1]) / 2;
         width *= 1.4;
         height *= 1.4;
         min[0] -= width * 0.2;
