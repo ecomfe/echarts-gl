@@ -220,15 +220,15 @@ echarts.extendChartView({
         geometry.dirty();
     },
 
-    _updateEdgesGeometry: function (edges) {
-
+    _updateMeshLinesGeometry: function () {
+        var edgeData = this._model.getEdgeData();
         var geometry = this._edgesMesh.geometry;
         var edgeData = this._model.getEdgeData();
         var points = this._model.getData().getLayout('points');
 
         geometry.resetOffset();
-        geometry.setVertexCount(edges.length * geometry.getLineVertexCount());
-        geometry.setTriangleCount(edges.length * geometry.getLineTriangleCount());
+        geometry.setVertexCount(edgeData.count() * geometry.getLineVertexCount());
+        geometry.setTriangleCount(edgeData.count() * geometry.getLineTriangleCount());
 
         var p0 = [];
         var p1 = [];
@@ -237,10 +237,10 @@ echarts.extendChartView({
 
         this._originalEdgeColors = new Float32Array(edgeData.count() * 4);
         this._edgeIndicesMap = new Float32Array(edgeData.count());
-        for (var i = 0; i < edges.length; i++) {
-            var edge = edges[i];
-            var idx1 = edge.node1 * 2;
-            var idx2 = edge.node2 * 2;
+        edgeData.each(function (idx) {
+            var edge = edgeData.graph.getEdgeByIndex(idx);
+            var idx1 = edge.node1.dataIndex * 2;
+            var idx2 = edge.node2.dataIndex * 2;
             p0[0] = points[idx1];
             p0[1] = points[idx1 + 1];
             p1[0] = points[idx2];
@@ -248,8 +248,8 @@ echarts.extendChartView({
 
             var color = edgeData.getItemVisual(edge.dataIndex, 'color');
             var colorArr = graphicGL.parseColor(color);
-            colorArr[3] *= retrieve.firstNotNull(edgeData.getItemVisual(edge.dataIndexi, 'opacity'), 1);
-            var itemModel = edgeData.getItemModel(edge.dataIndexi);
+            colorArr[3] *= retrieve.firstNotNull(edgeData.getItemVisual(edge.dataIndex, 'opacity'), 1);
+            var itemModel = edgeData.getItemModel(edge.dataIndex);
             var lineWidth = retrieve.firstNotNull(itemModel.get(lineWidthQuery), 1) * this._api.getDevicePixelRatio();
 
             geometry.addLine(p0, p1, colorArr, lineWidth);
@@ -257,8 +257,8 @@ echarts.extendChartView({
             for (var k = 0; k < 4; k++) {
                 this._originalEdgeColors[edge.dataIndex * 4 + k] = colorArr[k];
             }
-            this._edgeIndicesMap[edge.dataIndex] = i;
-        }
+            this._edgeIndicesMap[edge.dataIndex] = idx;
+        }, false, this);
 
         geometry.dirty();
     },
@@ -396,6 +396,7 @@ echarts.extendChartView({
         }
         else {
             var layoutPoints = new Float32Array(nodeData.count() * 2);
+            var offset = 0;
             graph.eachNode(function (node) {
                 var dataIndex = node.dataIndex;
                 var x;
@@ -405,12 +406,12 @@ echarts.extendChartView({
                     x = itemModel.get('x');
                     y = itemModel.get('y');
                 }
-                layoutPoints[offset * 2] = x;
-                layoutPoints[offset * 2 + 1] = y;
+                layoutPoints[offset++] = x;
+                layoutPoints[offset++] = y;
             });
             nodeData.setLayout('points', layoutPoints);
 
-            // TODO
+            this._updateAfterLayout(seriesModel, ecModel, api);
         }
     },
 
@@ -426,6 +427,13 @@ echarts.extendChartView({
         var layoutInstance = this._forceLayoutInstance;
         var data = this._model.getData();
         var layoutModel = this._model.getModel('forceAtlas2');
+        
+        if (!layoutInstance) {
+            if (__DEV__) {
+                console.error('None layout don\'t have startLayout action');
+            }
+            return;
+        }
 
         this.groupGL.remove(this._edgesMesh);
         this.groupGL.add(this._forceEdgesMesh);
@@ -494,10 +502,17 @@ echarts.extendChartView({
         }
 
         var points = this._forceLayoutInstance.getNodePosition(this.viewGL.layer.renderer);
+        seriesModel.getData().setLayout('points', points);
 
-        this._model.getData().setLayout('points', points);
+        this._updateAfterLayout(seriesModel, ecModel, api);
 
-        this._updateEdgesGeometry(this._forceLayoutInstance.getEdges());
+        this._api.getZr().refresh();
+
+        this._layouting = false;
+    },
+
+    _updateAfterLayout: function (seriesModel, ecModel, api) {
+        this._updateMeshLinesGeometry();
 
         this._pointsBuilder.removePositionTexture();
 
@@ -509,9 +524,6 @@ echarts.extendChartView({
 
         this._pointsBuilder.showLabels();
 
-        this._api.getZr().refresh();
-
-        this._layouting = false;
     },
 
     focusNodeAdjacency: function (seriesModel, ecModel, api, payload) {

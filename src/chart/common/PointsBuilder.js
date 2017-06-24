@@ -286,6 +286,10 @@ PointsBuilder.prototype = {
     },
 
     updateView: function (camera) {
+        if (!this._mesh) {
+            return;
+        }
+        
         var worldViewProjection = new Matrix4();
         Matrix4.mul(worldViewProjection, camera.viewMatrix, this._mesh.worldTransform);
         Matrix4.mul(worldViewProjection, camera.projectionMatrix, worldViewProjection);
@@ -295,6 +299,10 @@ PointsBuilder.prototype = {
 
     updateLayout: function (seriesModel, ecModel, api) {
         var data = seriesModel.getData();
+        if (!this._mesh) {
+            return;
+        }
+
         var positionArr = this._mesh.geometry.attributes.position.value;
         var points = data.getLayout('points');
         if (this.is2D) {
@@ -376,7 +384,9 @@ PointsBuilder.prototype = {
 
     removePositionTexture: function () {
         this._positionTexture = null;
-        this._setPositionTextureToMesh(this._mesh, null);
+        if (this._mesh) {
+            this._setPositionTextureToMesh(this._mesh, null);
+        }
     },
 
     _setPositionTextureToMesh: function (mesh, texture) {

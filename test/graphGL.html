@@ -10,39 +10,42 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="lib/echarts-graph-modularity.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
-            var chart = echarts.init(document.getElementById('main'), null, {
-                devicePixelRatio: 1
-            });
+            var chart = echarts.init(document.getElementById('main'));
 
             $.getJSON('data/eurosis.json', function (graph) {
                 var edges = graph.links.map(function (edge) {
                     return {
-                        source: edge.source,
-                        target: edge.target,
+                        source: 'gl' + edge.source,
+                        target: 'gl' + edge.target,
                         value: 2
                     }
                 });
                 var nodes = graph.nodes.map(function (node) {
                     return {
-                        // x: node[0],
-                        // y: node[1],
+                        x: node.x,
+                        y: node.y,
+                        id: 'gl' + node.id,
                         symbolSize: node.symbolSize * 10,
-                        value: 1,
-                        itemStyle: {
-                            color: node.itemStyle.normal.color
-                        }
+                        value: 1
                     }
                 });
 
 
                 chart.setOption({
                     series: [{
+                        color: ["rgb(203,239,15)", "rgb(73,15,239)","rgb(15,217,239)","rgb(30,15,239)","rgb(15,174,239)","rgb(116,239,15)","rgb(239,15,58)","rgb(15,239,174)","rgb(239,102,15)","rgb(239,15,15)","rgb(15,44,239)","rgb(239,145,15)","rgb(30,239,15)","rgb(239,188,15)","rgb(159,239,15)","rgb(159,15,239)","rgb(15,239,44)","rgb(15,239,87)","rgb(15,239,217)","rgb(203,15,239)","rgb(239,15,188)","rgb(239,15,102)","rgb(239,58,15)","rgb(239,15,145)","rgb(116,15,239)","rgb(15,131,239)","rgb(73,239,15)","rgb(15,239,131)","rgb(15,87,239)","rgb(239,15,231)"],
                         type: 'graphGL',
+                        // layout: 'none',
                         nodes: nodes,
                         edges: edges,
+                        modularity: {
+                            resolution: 2,
+                            sort: true
+                        },
                         lineStyle: {
                             color: 'rgba(255,255,255,0.2)'
                         },
@@ -50,12 +53,13 @@
                             opacity: 1
                         },
                         forceAtlas2: {
-                            steps: 10,
+                            steps: 100,
                             stopThreshold: 10,
                             jitterTolerence: 10,
-                            edgeWeight: [0.2, 1],
-                            gravity: 0,
-                            edgeWeightInfluence: 1
+                            edgeWeight: 10,
+                            gravity: 10,
+                            edgeWeightInfluence: 1,
+                            scaling: 0.8
                         }
                     }]
                 });
