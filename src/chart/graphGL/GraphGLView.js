@@ -113,7 +113,7 @@ echarts.extendChartView({
 
         var mesh = this._pointsBuilder.getPointsMesh();
         mesh.off('mousemove', this._mousemoveHandler);
-        mesh.on('mouseout', this._mouseOutHandler, this);
+        mesh.off('mouseout', this._mouseOutHandler, this);
         api.getZr().off('click', this._clickHandler);
 
         this._pointsBuilder.highlightOnMouseover = true;

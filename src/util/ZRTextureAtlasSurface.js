@@ -217,6 +217,8 @@ function ZRTextureAtlasSurface (opt) {
 
     this._nodeWidth = opt.width;
     this._nodeHeight = opt.height;
+
+    this._currentNodeIdx = 0;
 }
 
 ZRTextureAtlasSurface.prototype = {
@@ -229,6 +231,8 @@ ZRTextureAtlasSurface.prototype = {
         for (var i = 0; i < this._textureAtlasNodes.length; i++) {
             this._textureAtlasNodes[i].clear();
         }
+
+        this._currentNodeIdx = 0;
 
         this._zr.clear();
         this._coords = {};
@@ -267,10 +271,16 @@ ZRTextureAtlasSurface.prototype = {
     },
 
     _getCurrentNode: function () {
-        return this._textureAtlasNodes[this._textureAtlasNodes.length - 1];
+        return this._textureAtlasNodes[this._currentNodeIdx];
     },
 
     _expand: function () {
+        this._currentNodeIdx++;
+        if (this._textureAtlasNodes[this._currentNodeIdx]) {
+            // Use the node created previously.
+            return this._textureAtlasNodes[this._currentNodeIdx];
+        }
+
         var maxSize = 4096 / this._dpr;
         var textureAtlasNodes = this._textureAtlasNodes;
         var nodeLen = textureAtlasNodes.length;
