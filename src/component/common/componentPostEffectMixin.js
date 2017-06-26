@@ -17,7 +17,7 @@ module.exports = {
                 quality: 'medium'
             },
 
-            screenSpaceAmbientOcculusion: {
+            screenSpaceAmbientOcclusion: {
                 enable: false,
                 radius: 2,
                 // low, medium, high, ultra
