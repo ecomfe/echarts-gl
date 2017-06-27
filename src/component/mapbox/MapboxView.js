@@ -51,9 +51,14 @@ module.exports = echarts.extendComponentView({
     render: function (mapboxModel, ecModel, api) {
         var mapbox = this._zrLayer.getMapbox();
         var styleDesc = mapboxModel.get('style');
-        if (styleDesc) {
-            mapbox.setStyle(styleDesc);
+
+        var styleStr = JSON.stringify(styleDesc);
+        if (styleStr !== this._oldStyleStr) {
+            if (styleDesc) {
+                mapbox.setStyle(styleDesc);
+            }
         }
+        this._oldStyleStr = styleStr;
 
         mapbox.setCenter(mapboxModel.get('center'));
         mapbox.setZoom(mapboxModel.get('zoom'));
