@@ -1,0 +1,105 @@
+<!--
+https://web1.capetown.gov.za/web1/opendataportal/AllDatasets
+https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Taxi%20routes
+https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Building%20footprints
+-->
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Map3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src='lib/mapbox-gl.js'></script>
+        <link href='lib/mapbox-gl.css' rel='stylesheet' />
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            mapboxgl.accessToken = window.location.search.slice(1);
+            var chart = echarts.init(document.getElementById('main'));
+
+            var ENCODE_SCALE = 1e6;
+            function decodeLine(line) {
+
+                var result = [];
+                var prevX = line[0];
+                var prevY = line[1];
+
+                for (var i = 0; i < line[2].length; i += 2) {
+                    var x = line[2].charCodeAt(i) - 64;
+                    var y = line[2].charCodeAt(i + 1) - 64;
+                    // ZigZag decoding
+                    x = (x >> 1) ^ (-(x & 1));
+                    y = (y >> 1) ^ (-(y & 1));
+                    // Delta deocding
+                    x += prevX;
+                    y += prevY;
+
+                    prevX = x;
+                    prevY = y;
+                    // Dequantize
+                    result.push([x / ENCODE_SCALE, y / ENCODE_SCALE, 10]);
+                }
+
+                return result;
+            }
+
+            $.getJSON('data/taxi-routes-capetown.json', function (data) {
+                var lines = data.map(function (track) {
+                    return {
+                        coords: decodeLine(track)
+                    };
+                });
+
+                chart.setOption({
+                    mapbox: {
+                        center: [18.579, -33.972],
+                        zoom: 11,
+                        pitch: 50,
+                        bearing: -10,
+                        altitudeScale: 2,
+                        style: 'mapbox://styles/mapbox/dark-v9',
+                        postEffect: {
+                            enable: true
+                        }
+                    },
+                    series: [{
+                        type: 'lines3D',
+
+                        coordinateSystem: 'mapbox',
+
+                        effect: {
+                            show: true,
+                            constantSpeed: 20,
+                            trailWidth: 2,
+                            trailLength: 0.8,
+                            trailOpacity: 1
+                        },
+
+                        blendMode: 'lighter',
+
+                        polyline: true,
+
+                        lineStyle: {
+                            width: 1,
+                            color: 'rgb(50, 50, 150)',
+                            opacity: 0.5
+                        },
+
+                        data: lines
+                    }]
+                });
+            });
+
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+        </script>
+    </body>
+</html>
