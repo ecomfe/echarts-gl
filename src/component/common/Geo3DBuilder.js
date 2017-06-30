@@ -146,7 +146,7 @@ Geo3DBuilder.prototype = {
         var hasTranparentRegion = false;
 
         var nameIndicesMap = {};
-        data.each(function (item, idx) {
+        data.each(function (idx) {
             nameIndicesMap[data.getName(idx)] = idx;
         });
 
@@ -787,7 +787,11 @@ Geo3DBuilder.prototype = {
         var itemModel = data.getItemModel(dataIndex);
         var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
         var emphasisColor = emphasisItemStyleModel.get('areaColor');
-        var emphasisOpacity = emphasisItemStyleModel.get('opacity');
+        var emphasisOpacity = retrieve.firstNotNull(
+            emphasisItemStyleModel.get('opacity'),
+            data.getItemVisual(dataIndex, 'opacity'),
+            1
+        );
         if (emphasisColor == null) {
             var color = data.getItemVisual(dataIndex, 'color');
             emphasisColor = echarts.color.lift(color, -0.4);
@@ -815,7 +819,7 @@ Geo3DBuilder.prototype = {
         }
 
         var color = data.getItemVisual(dataIndex, 'color');
-        var opacity = data.getItemVisual(dataIndex, 'opacity');
+        var opacity = retrieve.firstNotNull(data.getItemVisual(dataIndex, 'opacity'), 1);
 
         var colorArr = graphicGL.parseColor(color);
         colorArr[3] *= opacity;
