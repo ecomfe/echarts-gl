@@ -91,9 +91,7 @@ function updateCartesian3D(ecModel, api) {
         }, this);
     }, this);
 
-    ecModel.eachComponent('grid3D', function (grid3DModel) {
-        grid3DModel.coordinateSystem.resize(grid3DModel, api);
-    });
+    this.resize(this.model, api);
 }
 
 var grid3DCreator = {
