@@ -145,8 +145,16 @@ Geo3DBuilder.prototype = {
         }
         var hasTranparentRegion = false;
 
+        var nameIndicesMap = {};
+        data.each(function (item, idx) {
+            nameIndicesMap[data.getName(idx)] = idx;
+        });
+
         geo3D.regions.forEach(function (region) {
-            var dataIndex = data.indexOfName(region.name);
+            var dataIndex = nameIndicesMap[region.name];
+            if (dataIndex == null) {
+                dataIndex = -1;
+            }
 
             var polygonMesh = instancing ? this._polygonMesh : this._polygonMeshesMap[region.name];
             var linesMesh = instancing ? this._linesMesh : this._linesMeshesMap[region.name];
