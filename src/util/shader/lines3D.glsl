@@ -56,10 +56,10 @@ vec4 clipNear(vec4 p1, vec4 p2) {
 #endif
 
     if (currProj.w < 0.0) {
-        if (prevProj.w < 0.0) {
+        if (nextProj.w > 0.0) {
             currProj = clipNear(currProj, nextProj);
         }
-        else {
+        else if (prevProj.w > 0.0) {
             currProj = clipNear(currProj, prevProj);
         }
     }
