@@ -2,14 +2,25 @@ var echarts = require('echarts/lib/echarts');
 
 module.exports = {
 
-    getFilledRegions: function (regions, map) {
+    getFilledRegions: function (regions, mapData) {
         var regionsArr = (regions || []).slice();
 
-        var map = echarts.getMap(map);
-        var geoJson = map && map.geoJson;
+        var geoJson;
+        if (typeof mapData === 'string') {
+            mapData = echarts.getMap(mapData);
+            geoJson = mapData && mapData.geoJson;
+        }
+        else {
+            if (mapData && mapData.features) {
+                geoJson = mapData;
+            }
+        }
         if (!geoJson) {
             if (__DEV__) {
-                console.error('Map ' + map + ' not exists. You can download map file on http://echarts.baidu.com/download-map.html');
+                console.error('Map ' + mapData + ' not exists. You can download map file on http://echarts.baidu.com/download-map.html');
+                if (!geoJson.features) {
+                    console.error('Invalid GeoJSON for map3D');
+                }
             }
             return [];
         }

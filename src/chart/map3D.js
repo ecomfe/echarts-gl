@@ -4,7 +4,7 @@ var Geo3D = require('../coord/geo3D/Geo3D');
 require('./map3D/Map3DSeries');
 require('./map3D/Map3DView');
 
-require('../coord/geo3DCreator');
+var geo3DCreator = require('../coord/geo3DCreator');
 
 echarts.registerVisual(echarts.util.curry(
     require('./common/opacityVisual'), 'map3D'
@@ -21,31 +21,6 @@ echarts.registerAction({
         componentModel.setView(payload);
     });
 });
-
-if (__DEV__) {
-    var mapNotExistsError = function (name) {
-        console.error('Map ' + name + ' not exists. You can download map file on http://echarts.baidu.com/download-map.html');
-    };
-}
-
-function createGeo3D(seriesModel) {
-    if (!echarts.getMap) {
-        throw new Error('geo3D component depends on geo component');
-    }
-    var name = seriesModel.get('map');
-    var mapData = echarts.getMap(name);
-    
-    if (__DEV__) {
-        if (!mapData) {
-            mapNotExistsError(name);
-        }
-    }
-    return new Geo3D(
-        name, name,
-        mapData && mapData.geoJson, mapData && mapData.specialAreas,
-        seriesModel.get('nameMap')
-    );
-}
 
 function transformPolygon(poly, mapboxCoordSys) {
     var newPoly = [];
@@ -78,7 +53,7 @@ echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('map3D', function (seriesModel) {
         var coordSys = seriesModel.get('coordinateSystem');
         if (coordSys === 'mapbox') {
-            var geo3D = createGeo3D(seriesModel);
+            var geo3D = geo3DCreator.createGeo3D(seriesModel);
             geo3D.extrudeY = false;
             transformGeo3DOnMapbox(geo3D, seriesModel.coordinateSystem);
 

@@ -95,6 +95,9 @@ if (__DEV__) {
     };
 }
 
+
+var idStart = 0;
+
 var geo3DCreator = {
 
     dimensions: Geo3D.prototype.dimensions,
@@ -108,22 +111,12 @@ var geo3DCreator = {
         }
 
         function createGeo3D(componentModel, idx) {
-            var name = componentModel.get('map');
-            var mapData = echarts.getMap(name);
-            if (__DEV__) {
-                if (!mapData) {
-                    mapNotExistsError(name);
-                }
-            }
+
+            var geo3D = createGeo3D(componentModel);
 
             // FIXME
             componentModel.__viewGL = componentModel.__viewGL || new ViewGL();
 
-            var geo3D = new Geo3D(
-                name + idx, name,
-                mapData && mapData.geoJson, mapData && mapData.specialAreas,
-                componentModel.get('nameMap')
-            );
             geo3D.viewGL = componentModel.__viewGL;
 
             componentModel.coordinateSystem = geo3D;
@@ -175,6 +168,40 @@ var geo3DCreator = {
         });
 
         return geo3DList;
+    },
+
+    createGeo3D: function (componentModel) {
+        
+        var mapData = componentModel.get('map');
+        var name;
+        if (typeof mapData === 'string') {
+            name = mapData;
+            mapData = echarts.getMap(mapData);
+        }
+        else {
+            if (mapData && mapData.features) {
+                mapData = {
+                    geoJson: mapData
+                };
+            }
+        }
+        if (__DEV__) {
+            if (!mapData) {
+                mapNotExistsError(mapData);
+            }
+            if (!mapData.geoJson.features) {
+                throw new Error('Invalid GeoJSON for map3D');
+            }
+        }
+        if (name == null) {
+            name = 'GEO_ANONYMOUS_' + idStart++;
+        }
+
+        return new Geo3D(
+            name + idStart++, name,
+            mapData && mapData.geoJson, mapData && mapData.specialAreas,
+            componentModel.get('nameMap')
+        );
     }
 };
 

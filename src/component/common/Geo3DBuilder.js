@@ -88,6 +88,7 @@ Geo3DBuilder.prototype = {
         if (enableInstancing) {
             this._prepareInstancingMesh(componentModel, geo3D, shader, api);
         }
+        
         this._updateRegionMesh(componentModel, geo3D, shader, api, enableInstancing);
 
         this._updateGroundPlane(componentModel, geo3D, api);
@@ -488,13 +489,13 @@ Geo3DBuilder.prototype = {
                 vec3.max(maxAll, maxAll, max);
                 polygons.push({
                     points: points3,
-                    minAll: minAll,
-                    maxAll: maxAll,
                     indices: triangles
                 });
             }
             this._triangulationResults[region.name] = polygons;
         }, this);
+
+        this._geoBoundingBox = [minAll, maxAll];
     },
 
     /**
@@ -555,8 +556,8 @@ Geo3DBuilder.prototype = {
                 : new Uint16Array(geoInfo.triangleCount * 3);
         }
 
-        var min = polygons[0].minAll;
-        var max = polygons[0].maxAll;
+        var min = this._geoBoundingBox[0];
+        var max = this._geoBoundingBox[1];
         var maxDimSize = Math.max(max[0] - min[0], max[sideCoordIndex] - min[sideCoordIndex]);
 
         function addVertices(polygon, y, insideOffset) {
