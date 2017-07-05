@@ -88,6 +88,8 @@ Geo3DBuilder.prototype = {
         if (enableInstancing) {
             this._prepareInstancingMesh(componentModel, geo3D, shader, api);
         }
+
+        this.rootNode.updateWorldTransform();
         
         this._updateRegionMesh(componentModel, geo3D, shader, api, enableInstancing);
 
@@ -556,9 +558,15 @@ Geo3DBuilder.prototype = {
                 : new Uint16Array(geoInfo.triangleCount * 3);
         }
 
-        var min = this._geoBoundingBox[0];
-        var max = this._geoBoundingBox[1];
-        var maxDimSize = Math.max(max[0] - min[0], max[sideCoordIndex] - min[sideCoordIndex]);
+        var scale = [
+            this.rootNode.worldTransform.x.len(),
+            this.rootNode.worldTransform.y.len(),
+            this.rootNode.worldTransform.z.len() 
+        ];
+
+        var min = vec3.mul([], this._geoBoundingBox[0], scale);
+        var max = vec3.mul([], this._geoBoundingBox[1], scale);
+        var maxDimSize = Math.max(max[0] - min[0], max[2] - min[2]);
 
         function addVertices(polygon, y, insideOffset) {
             var points = polygon.points;
@@ -572,8 +580,8 @@ Geo3DBuilder.prototype = {
                 currentPosition[extrudeCoordIndex] = y;
                 currentPosition[sideCoordIndex] = points[k + 2];
 
-                uv[0] = (points[k] - min[0]) / maxDimSize;
-                uv[1] = (points[k + 2] - min[2]) / maxDimSize;
+                uv[0] = (points[k] * scale[0] - min[0]) / maxDimSize;
+                uv[1] = (points[k + 2] * scale[sideCoordIndex] - min[2]) / maxDimSize;
 
                 positionAttr.set(vertexOffset, currentPosition);
                 if (hasColor) {
@@ -622,8 +630,8 @@ Geo3DBuilder.prototype = {
             for (var v = 0; v < ringVertexCount; v++) {
                 var next = (v + 1) % ringVertexCount;
 
-                var dx = polygon.points[next * 3] - polygon.points[v * 3];
-                var dy = polygon.points[next * 3 + 2] - polygon.points[v * 3 + 2];
+                var dx = (polygon.points[next * 3] - polygon.points[v * 3]) * scale[0];
+                var dy = (polygon.points[next * 3 + 2] - polygon.points[v * 3 + 2]) * scale[sideCoordIndex];
                 var sideLen = Math.sqrt(dx * dx + dy * dy);
 
                 // 0----1
@@ -638,12 +646,12 @@ Geo3DBuilder.prototype = {
                     positionAttr.set(vertexOffset + k, quadPos[k]);
 
                     if (projectUVOnGround) {
-                        uv[0] = (polygon.points[idx3] - min[0]) / maxDimSize;
-                        uv[1] = (polygon.points[idx3 + 2] - min[sideCoordIndex]) / maxDimSize;
+                        uv[0] = (polygon.points[idx3] * scale[0] - min[0]) / maxDimSize;
+                        uv[1] = (polygon.points[idx3 + 2] * scale[sideCoordIndex] - min[sideCoordIndex]) / maxDimSize;
                     }
                     else {
                         uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
-                        uv[1] = (quadPos[k][extrudeCoordIndex] - min[extrudeCoordIndex]) / maxDimSize;
+                        uv[1] = (quadPos[k][extrudeCoordIndex] * scale[extrudeCoordIndex] - min[extrudeCoordIndex])  / maxDimSize;
                     }
                     texcoordAttr.set(vertexOffset + k, uv);
                 }
