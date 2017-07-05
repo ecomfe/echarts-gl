@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Map3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="https://rawgit.com/ecomfe/echarts/master/dist/echarts.min.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src='lib/mapbox-gl.js'></script>
+        <link href='lib/mapbox-gl.css' rel='stylesheet' />
+        <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
+        <script src="lib/LRU.js"></script>
+        <script src="https://unpkg.com/sphericalmercator"></script>
+        <script>
+            mapboxgl.accessToken = window.location.search.slice(1);
+            var chart = echarts.init(document.getElementById('main'));
+            var cache = new LRUCache(100);
+
+            chart.setOption({
+                mapbox: {
+                    // 北京
+                    // center: [116.39157, 39.90673],
+                    // 纽约
+                    // center: [-74.02158343200102, 40.6143657735403],
+                    // 上海
+                    // center: [121.4978, 31.2398],
+                    // 伦敦
+                    center: [-0.118092, 51.509865],
+                    zoom: 15,
+                    pitch: 50,
+                    bearing: -10,
+                    style: 'mapbox://styles/mapbox/dark-v9',
+                    postEffect: {
+                        enable: true,
+                        screenSpaceAmbientOcclusion: {
+                            enable: true,
+                            intensity: 1.2,
+                            quality: 'high',
+                            radius: 10
+                        },
+                        screenSpaceReflection: {
+                            enable: false
+                        },
+                        edge: {
+                            enable: false,
+                            color: [2, 8, 16]
+                        }
+                    },
+                    light: {
+                        main: {
+                            intensity: 1,
+                            alpha: -30,
+                            shadow: true,
+                            shadowQuality: 'high'
+                        },
+                        ambient: {
+                            intensity: 0.
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/pisa.hdr',
+                            exposure: 1,
+                            diffuseIntensity: 0.5,
+                            specularIntensity: 1
+                        }
+                    }
+                }
+            });
+
+            function updateBuildings(geoJSONList) {
+                chart.hideLoading();
+                var features = [];
+                var offset = 0;
+                for (var i = 0; i < geoJSONList.length; i++) {
+                    geoJSONList[i].features.forEach(function (feature) {
+                        feature.properties.name = 'building' + offset++;
+                    });
+                    features = features.concat(geoJSONList[i].features.filter(function (feature) {
+                        return feature.geometry.type === 'Polygon'
+                            || feature.geometry.type === 'MultiPolygon'
+                    }));
+                }
+
+                var regionsData = features.map(function (feature) {
+                    return {
+                        name: feature.properties.name,
+                        value: Math.random(),
+                        height: +feature.properties.height || 5
+                    };
+                });
+
+                chart.setOption({
+                    series: [{
+                        type: 'map3D',
+                        coordinateSystem: 'mapbox',
+                        map: {
+                            __ec_primitive__: true,
+                            features: features
+                        },
+                        data: regionsData,
+                        shading: 'realistic',
+                        instancing: true,
+                        silent: true,
+                        itemStyle: {
+                            borderColor: [0, 2, 10],
+                            borderWidth: 1
+                        },
+                        realisticMaterial: {
+                            metalness: 1,
+                            roughness: 0.4,
+                            // detailTexture: 'asset/iron-rusted4/iron-rusted4-basecolor.jpg',
+                            // metalness: 'asset/iron-rusted4/iron-rusted4-metalness.jpg',
+                            // roughness: 'asset/iron-rusted4/iron-rusted4-roughness.jpg',
+                            // normalTexture: 'asset/iron-rusted4/iron-rusted4-normal.jpg',
+                            textureTiling: [10, 10]
+                        }
+                    }]
+                });
+            }
+
+            function loadBuildings() {
+                var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
+                var coordBounds = mapbox.getBounds();
+                var merc = new SphericalMercator({
+                    size: 512
+                });
+                var tileBounds = merc.xyz(
+                    [coordBounds.getWest(), coordBounds.getSouth(), coordBounds.getEast(), coordBounds.getNorth()],
+                    15
+                );
+
+                var geoJSONList = [];
+                var z = 15;
+                var loadingCount = 0;
+
+                function load(url) {
+                    var geoJSON = cache.get(url);
+                    if (geoJSON) {
+                        geoJSONList.push(geoJSON);
+                    }
+                    else {
+                        loadingCount++;
+                        $.getJSON(url).done(function (geoJSON) {
+                            loadingCount--;
+                            cache.put(url, geoJSON);
+                            geoJSONList.push(geoJSON);
+
+                            if (loadingCount === 0) {
+                                updateBuildings(geoJSONList);
+                            }
+                        });
+                    }
+                }
+                for (var x = tileBounds.minX; x <= tileBounds.maxX; x++) {
+                    for (var y = tileBounds.minY; y <=tileBounds.maxY; y++) {
+                        load(`https://tile.mapzen.com/mapzen/vector/v1/512/buildings/${z}/${x}/${y}.json?api_key=mapzen-NYCwhQi`);
+                    }
+                }
+
+                if (loadingCount === 0) {
+                    updateBuildings(geoJSONList);
+                }
+
+            };
+
+
+            var gui = new dat.GUI();
+            var config = {
+                roughness: 0.4
+            }
+            gui.add(config, 'roughness', 0.1, 0.9).onFinishChange(function () {
+                chart.setOption({
+                    series: [{
+                        realisticMaterial: {
+                            roughness: config.roughness
+                        }
+                    }]
+                });
+            });
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+
+            chart.showLoading();
+
+            loadBuildings();
+
+
+            var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
+            mapbox.on('dragend', loadBuildings);
+        </script>
+    </body>
+</html>
