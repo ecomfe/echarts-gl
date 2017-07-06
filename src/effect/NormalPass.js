@@ -52,6 +52,8 @@ function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRough
         var bumpMap = material.get('bumpMap');
         var uvRepeat = material.get('uvRepeat');
         var uvOffset = material.get('uvOffset');
+        var detailUvRepeat = material.get('detailUvRepeat');
+        var detailUvOffset = material.get('detailUvOffset');
 
         var useBumpMap = !!bumpMap && material.shader.isTextureEnabled('bumpMap');
         var useRoughnessMap = !!roughnessMap && material.shader.isTextureEnabled('roughnessMap');
@@ -67,8 +69,10 @@ function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRough
             normalMaterial.set('useBumpMap', useBumpMap);
             normalMaterial.set('useRoughnessMap', useRoughnessMap);
             normalMaterial.set('doubleSide', doubleSide);
-            normalMaterial.set('uvRepeat', uvRepeat);
-            normalMaterial.set('uvOffset', uvOffset);
+            uvRepeat != null && normalMaterial.set('uvRepeat', uvRepeat);
+            uvOffset != null && normalMaterial.set('uvOffset', uvOffset);
+            detailUvRepeat != null && normalMaterial.set('detailUvRepeat', detailUvRepeat);
+            detailUvOffset != null && normalMaterial.set('detailUvOffset', detailUvOffset);
 
             normalMaterial.set('roughness', roughness);
         }
@@ -89,6 +93,12 @@ function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRough
             }
             if (uvOffset != null) {
                 normalMaterial.shader.setUniform(gl, '2f', 'uvOffset', uvOffset);
+            }
+            if (detailUvRepeat != null) {
+                normalMaterial.shader.setUniform(gl, '2f', 'detailUvRepeat', detailUvRepeat);
+            }
+            if (detailUvOffset != null) {
+                normalMaterial.shader.setUniform(gl, '2f', 'detailUvOffset', detailUvOffset);
             }
             normalMaterial.shader.setUniform(gl, '1i', 'useBumpMap', +useBumpMap);
             normalMaterial.shader.setUniform(gl, '1i', 'useRoughnessMap', +useRoughnessMap);

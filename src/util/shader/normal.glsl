@@ -58,6 +58,16 @@ uniform sampler2D roughnessMap;
 void main()
 {
     vec3 N = v_Normal;
+    
+    bool flipNormal = false;
+    if (doubleSide) {
+        vec3 eyePos = viewInverse[3].xyz;
+        vec3 V = normalize(eyePos - v_WorldPosition);
+
+        if (dot(N, V) < 0.0) {
+            flipNormal = true;
+        }
+    }
 
     @import ecgl.common.normalMap.fragmentMain
 
@@ -73,13 +83,8 @@ void main()
         g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);
     }
 
-    if (doubleSide) {
-        vec3 eyePos = viewInverse[3].xyz;
-        vec3 V = normalize(eyePos - v_WorldPosition);
-
-        if (dot(N, V) < 0.0) {
-            N = -N;
-        }
+    if (flipNormal) {
+        N = -N;
     }
 
     gl_FragColor.rgb = (N.xyz + 1.0) * 0.5;
