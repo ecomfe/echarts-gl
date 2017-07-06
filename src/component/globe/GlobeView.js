@@ -106,6 +106,12 @@ module.exports = echarts.extendComponentView({
         graphicGL.setMaterialFromModel(
             shading, earthMesh.material, globeModel, api
         );
+        ['roughnessMap', 'metalnessMap', 'detailMap', 'normalMap'].forEach(function (texName) {
+            var texture = earthMesh.material.get(texName);
+            if (texture) {
+                texture.flipY = false;
+            }
+        })
 
         earthMesh.material.set('color', graphicGL.parseColor(
             globeModel.get('baseColor')
