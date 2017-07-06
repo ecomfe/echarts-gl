@@ -112,7 +112,7 @@ var geo3DCreator = {
 
         function createGeo3D(componentModel, idx) {
 
-            var geo3D = createGeo3D(componentModel);
+            var geo3D = geo3DCreator.createGeo3D(componentModel);
 
             // FIXME
             componentModel.__viewGL = componentModel.__viewGL || new ViewGL();
