@@ -527,7 +527,7 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
         var normalTexture = material.get('normalMap');
         if (normalTexture) {
             // PENDING
-            normalTexture.format = Texture.SRGB;
+            // normalTexture.format = Texture.SRGB;
         }
     }
     else if (shading === 'lambert') {
