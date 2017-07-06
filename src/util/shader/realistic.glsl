@@ -109,11 +109,7 @@ uniform mat4 viewInverse : VIEWINVERSE;
 @import qtek.header.directional_light
 #endif
 
-#ifdef NORMALMAP_ENABLED
-varying vec3 v_Tangent;
-varying vec3 v_Bitangent;
-uniform sampler2D normalMap;
-#endif
+@import ecgl.common.normalMap.fragmentHeader
 
 @import ecgl.common.ssaoMap.header
 
@@ -195,17 +191,8 @@ void main()
     ambientFactor = dot(v_Normal, N);
 #endif
 
-#ifdef NORMALMAP_ENABLED
-    if (dot(v_Tangent, v_Tangent) > 0.0) {
-        vec3 normalTexel = texture2D(normalMap, v_DetailTexcoord).xyz;
-        if (dot(normalTexel, normalTexel) > 0.0) { // Valid normal map
-            N = normalTexel * 2.0 - 1.0;
-            mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);
-            // FIXME Why need to normalize again?
-            N = normalize(tbn * N);
-        }
-    }
-#endif
+@import ecgl.common.normalMap.fragmentMain
+
     vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);
 
     vec3 diffuseTerm = vec3(0.0);
