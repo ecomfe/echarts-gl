@@ -191,7 +191,7 @@ varying vec3 v_Bitangent;
 @export ecgl.common.normalMap.fragmentMain
 #ifdef NORMALMAP_ENABLED
     if (dot(v_Tangent, v_Tangent) > 0.0) {
-        vec3 normalTexel = texture2D(normalMap, v_Texcoord).xyz;
+        vec3 normalTexel = texture2D(normalMap, v_DetailTexcoord).xyz;
         if (dot(normalTexel, normalTexel) > 0.0) { // Valid normal map
             N = normalTexel * 2.0 - 1.0;
             mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);
