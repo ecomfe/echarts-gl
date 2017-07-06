@@ -477,7 +477,7 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     var materialModel = model.getModel(shading + 'Material');
     var detailTexture = materialModel.get('detailTexture');
     var uvRepeat = retrieve.firstNotNull(materialModel.get('textureTiling'), 1.0);
-    var uvOffset = retrieve.firstNotNull(materialModel.get('textureOffset'), 1.0);
+    var uvOffset = retrieve.firstNotNull(materialModel.get('textureOffset'), 0.0);
     if (typeof uvRepeat === 'number') {
         uvRepeat = [uvRepeat, uvRepeat];
     }
@@ -515,15 +515,20 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
             // Default roughness.
             roughness = 0.5;
         }
-        var normalTexture = materialModel.get('normalTexture');
+        var normalTextureVal = materialModel.get('normalTexture');
         material.setTextureImage('detailMap', detailTexture, api, textureOpt);
-        material.setTextureImage('normalMap', normalTexture, api, textureOpt);
+        material.setTextureImage('normalMap', normalTextureVal, api, textureOpt);
         material.set({
             roughness: roughness,
             metalness: metalness,
             detailUvRepeat: uvRepeat,
             detailUvOffset: uvOffset
         });
+        var normalTexture = material.get('normalMap');
+        if (normalTexture) {
+            // PENDING
+            normalTexture.format = Texture.SRGB;
+        }
     }
     else if (shading === 'lambert') {
         material.setTextureImage('detailMap', detailTexture, api, textureOpt);
