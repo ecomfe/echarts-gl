@@ -4457,7 +4457,7 @@ var Renderer = __webpack_require__(51);
 var Texture2D = __webpack_require__(6);
 var Texture = __webpack_require__(5);
 var Shader = __webpack_require__(7);
-var Material = __webpack_require__(18);
+var Material = __webpack_require__(19);
 var Node3D = __webpack_require__(34);
 var StaticGeometry = __webpack_require__(15);
 var echarts = __webpack_require__(0);
@@ -4931,7 +4931,7 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     var materialModel = model.getModel(shading + 'Material');
     var detailTexture = materialModel.get('detailTexture');
     var uvRepeat = retrieve.firstNotNull(materialModel.get('textureTiling'), 1.0);
-    var uvOffset = retrieve.firstNotNull(materialModel.get('textureOffset'), 1.0);
+    var uvOffset = retrieve.firstNotNull(materialModel.get('textureOffset'), 0.0);
     if (typeof uvRepeat === 'number') {
         uvRepeat = [uvRepeat, uvRepeat];
     }
@@ -4969,15 +4969,20 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
             // Default roughness.
             roughness = 0.5;
         }
-        var normalTexture = materialModel.get('normalTexture');
+        var normalTextureVal = materialModel.get('normalTexture');
         material.setTextureImage('detailMap', detailTexture, api, textureOpt);
-        material.setTextureImage('normalMap', normalTexture, api, textureOpt);
+        material.setTextureImage('normalMap', normalTextureVal, api, textureOpt);
         material.set({
             roughness: roughness,
             metalness: metalness,
             detailUvRepeat: uvRepeat,
             detailUvOffset: uvOffset
         });
+        // var normalTexture = material.get('normalMap');
+        // if (normalTexture) {
+            // PENDING
+            // normalTexture.format = Texture.SRGB;
+        // }
     }
     else if (shading === 'lambert') {
         material.setTextureImage('detailMap', detailTexture, api, textureOpt);
@@ -6086,6 +6091,7 @@ module.exports = retrieve;
     var Base = __webpack_require__(8);
     var glenum = __webpack_require__(10);
     var Cache = __webpack_require__(45);
+    var glinfo = __webpack_require__(16);
 
     /**
      * @constructor qtek.Texture
@@ -6203,15 +6209,15 @@ module.exports = retrieve;
         update: function (_gl) {},
 
         // Update the common parameters of texture
-        beforeUpdate: function (_gl) {
+        updateCommon: function (_gl) {
             _gl.pixelStorei(_gl.UNPACK_FLIP_Y_WEBGL, this.flipY);
             _gl.pixelStorei(_gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
             _gl.pixelStorei(_gl.UNPACK_ALIGNMENT, this.unpackAlignment);
 
-            this.fallBack();
+            this._fallBack(_gl);
         },
 
-        fallBack: function () {
+        _fallBack: function (_gl) {
             // Use of none-power of two texture
             // http://www.khronos.org/webgl/wiki/WebGL_and_OpenGL_Differences
 
@@ -6219,6 +6225,15 @@ module.exports = retrieve;
 
             if (this.format === glenum.DEPTH_COMPONENT) {
                 this.useMipmap = false;
+            }
+
+            var sRGBExt = glinfo.getExtension(_gl, 'EXT_sRGB');
+            // Fallback
+            if (this.format === Texture.SRGB && !sRGBExt) {
+                this.format = Texture.RGB;
+            }
+            if (this.format === Texture.SRGB_ALPHA && !sRGBExt) {
+                this.format = Texture.RGBA;
             }
 
             if (!isPowerOfTwo || !this.useMipmap) {
@@ -6332,6 +6347,10 @@ module.exports = retrieve;
     Texture.LUMINANCE = glenum.LUMINANCE;
     Texture.LUMINANCE_ALPHA = glenum.LUMINANCE_ALPHA;
 
+    // https://www.khronos.org/registry/webgl/extensions/EXT_sRGB/
+    Texture.SRGB = 0x8C40;
+    Texture.SRGB_ALPHA = 0x8C42;
+
     /* Compressed Texture */
     Texture.COMPRESSED_RGB_S3TC_DXT1_EXT = 0x83F0;
     Texture.COMPRESSED_RGBA_S3TC_DXT1_EXT = 0x83F1;
@@ -6370,7 +6389,7 @@ module.exports = retrieve;
 
 
     var Texture = __webpack_require__(5);
-    var glinfo = __webpack_require__(19);
+    var glinfo = __webpack_require__(16);
     var glenum = __webpack_require__(10);
     var mathUtil = __webpack_require__(79);
     var isPowerOfTwo = mathUtil.isPowerOfTwo;
@@ -6423,7 +6442,7 @@ module.exports = retrieve;
 
             _gl.bindTexture(_gl.TEXTURE_2D, this._cache.get('webgl_texture'));
 
-            this.beforeUpdate( _gl);
+            this.updateCommon( _gl);
 
             var glFormat = this.format;
             var glType = this.type;
@@ -6615,7 +6634,7 @@ module.exports = retrieve;
     var Cache = __webpack_require__(45);
     var vendor = __webpack_require__(20);
     var glMatrix = __webpack_require__(1);
-    var glInfo = __webpack_require__(19);
+    var glInfo = __webpack_require__(16);
     var mat2 = glMatrix.mat2;
     var mat3 = glMatrix.mat3;
     var mat4 = glMatrix.mat4;
@@ -8659,7 +8678,7 @@ module.exports = {
     DEPTH_BUFFER_BIT               : 0x00000100,
     STENCIL_BUFFER_BIT             : 0x00000400,
     COLOR_BUFFER_BIT               : 0x00004000,
-    
+
     /* BeginMode */
     POINTS                         : 0x0000,
     LINES                          : 0x0001,
@@ -8668,7 +8687,7 @@ module.exports = {
     TRIANGLES                      : 0x0004,
     TRIANGLE_STRIP                 : 0x0005,
     TRIANGLE_FAN                   : 0x0006,
-    
+
     /* AlphaFunction (not supported in ES20) */
     /*      NEVER */
     /*      LESS */
@@ -8678,7 +8697,7 @@ module.exports = {
     /*      NOTEQUAL */
     /*      GEQUAL */
     /*      ALWAYS */
-    
+
     /* BlendingFactorDest */
     ZERO                           : 0,
     ONE                            : 1,
@@ -8688,7 +8707,7 @@ module.exports = {
     ONE_MINUS_SRC_ALPHA            : 0x0303,
     DST_ALPHA                      : 0x0304,
     ONE_MINUS_DST_ALPHA            : 0x0305,
-    
+
     /* BlendingFactorSrc */
     /*      ZERO */
     /*      ONE */
@@ -8699,17 +8718,17 @@ module.exports = {
     /*      ONE_MINUS_SRC_ALPHA */
     /*      DST_ALPHA */
     /*      ONE_MINUS_DST_ALPHA */
-    
+
     /* BlendEquationSeparate */
     FUNC_ADD                       : 0x8006,
     BLEND_EQUATION                 : 0x8009,
     BLEND_EQUATION_RGB             : 0x8009, /* same as BLEND_EQUATION */
     BLEND_EQUATION_ALPHA           : 0x883D,
-    
+
     /* BlendSubtract */
     FUNC_SUBTRACT                  : 0x800A,
     FUNC_REVERSE_SUBTRACT          : 0x800B,
-    
+
     /* Separate Blend Functions */
     BLEND_DST_RGB                  : 0x80C8,
     BLEND_SRC_RGB                  : 0x80C9,
@@ -8720,27 +8739,27 @@ module.exports = {
     CONSTANT_ALPHA                 : 0x8003,
     ONE_MINUS_CONSTANT_ALPHA       : 0x8004,
     BLEND_COLOR                    : 0x8005,
-    
+
     /* Buffer Objects */
     ARRAY_BUFFER                   : 0x8892,
     ELEMENT_ARRAY_BUFFER           : 0x8893,
     ARRAY_BUFFER_BINDING           : 0x8894,
     ELEMENT_ARRAY_BUFFER_BINDING   : 0x8895,
-    
+
     STREAM_DRAW                    : 0x88E0,
     STATIC_DRAW                    : 0x88E4,
     DYNAMIC_DRAW                   : 0x88E8,
-    
+
     BUFFER_SIZE                    : 0x8764,
     BUFFER_USAGE                   : 0x8765,
-    
+
     CURRENT_VERTEX_ATTRIB          : 0x8626,
-    
+
     /* CullFaceMode */
     FRONT                          : 0x0404,
     BACK                           : 0x0405,
     FRONT_AND_BACK                 : 0x0408,
-    
+
     /* DepthFunction */
     /*      NEVER */
     /*      LESS */
@@ -8750,7 +8769,7 @@ module.exports = {
     /*      NOTEQUAL */
     /*      GEQUAL */
     /*      ALWAYS */
-    
+
     /* EnableCap */
     /* TEXTURE_2D */
     CULL_FACE                      : 0x0B44,
@@ -8762,18 +8781,18 @@ module.exports = {
     POLYGON_OFFSET_FILL            : 0x8037,
     SAMPLE_ALPHA_TO_COVERAGE       : 0x809E,
     SAMPLE_COVERAGE                : 0x80A0,
-    
+
     /* ErrorCode */
     NO_ERROR                       : 0,
     INVALID_ENUM                   : 0x0500,
     INVALID_VALUE                  : 0x0501,
     INVALID_OPERATION              : 0x0502,
     OUT_OF_MEMORY                  : 0x0505,
-    
+
     /* FrontFaceDirection */
     CW                             : 0x0900,
     CCW                            : 0x0901,
-    
+
     /* GetPName */
     LINE_WIDTH                     : 0x0B21,
     ALIASED_POINT_SIZE_RANGE       : 0x846D,
@@ -8823,23 +8842,23 @@ module.exports = {
     SAMPLES                        : 0x80A9,
     SAMPLE_COVERAGE_VALUE          : 0x80AA,
     SAMPLE_COVERAGE_INVERT         : 0x80AB,
-    
+
     /* GetTextureParameter */
     /*      TEXTURE_MAG_FILTER */
     /*      TEXTURE_MIN_FILTER */
     /*      TEXTURE_WRAP_S */
     /*      TEXTURE_WRAP_T */
-    
+
     COMPRESSED_TEXTURE_FORMATS     : 0x86A3,
-    
+
     /* HintMode */
     DONT_CARE                      : 0x1100,
     FASTEST                        : 0x1101,
     NICEST                         : 0x1102,
-    
+
     /* HintTarget */
     GENERATE_MIPMAP_HINT            : 0x8192,
-    
+
     /* DataType */
     BYTE                           : 0x1400,
     UNSIGNED_BYTE                  : 0x1401,
@@ -8848,7 +8867,7 @@ module.exports = {
     INT                            : 0x1404,
     UNSIGNED_INT                   : 0x1405,
     FLOAT                          : 0x1406,
-    
+
     /* PixelFormat */
     DEPTH_COMPONENT                : 0x1902,
     ALPHA                          : 0x1906,
@@ -8856,13 +8875,13 @@ module.exports = {
     RGBA                           : 0x1908,
     LUMINANCE                      : 0x1909,
     LUMINANCE_ALPHA                : 0x190A,
-    
+
     /* PixelType */
     /*      UNSIGNED_BYTE */
     UNSIGNED_SHORT_4_4_4_4         : 0x8033,
     UNSIGNED_SHORT_5_5_5_1         : 0x8034,
     UNSIGNED_SHORT_5_6_5           : 0x8363,
-    
+
     /* Shaders */
     FRAGMENT_SHADER                  : 0x8B30,
     VERTEX_SHADER                    : 0x8B31,
@@ -8882,7 +8901,7 @@ module.exports = {
     ACTIVE_ATTRIBUTES                : 0x8B89,
     SHADING_LANGUAGE_VERSION         : 0x8B8C,
     CURRENT_PROGRAM                  : 0x8B8D,
-    
+
     /* StencilFunction */
     NEVER                          : 0x0200,
     LESS                           : 0x0201,
@@ -8892,7 +8911,7 @@ module.exports = {
     NOTEQUAL                       : 0x0205,
     GEQUAL                         : 0x0206,
     ALWAYS                         : 0x0207,
-    
+
     /* StencilOp */
     /*      ZERO */
     KEEP                           : 0x1E00,
@@ -8902,16 +8921,16 @@ module.exports = {
     INVERT                         : 0x150A,
     INCR_WRAP                      : 0x8507,
     DECR_WRAP                      : 0x8508,
-    
+
     /* StringName */
     VENDOR                         : 0x1F00,
     RENDERER                       : 0x1F01,
     VERSION                        : 0x1F02,
-    
+
     /* TextureMagFilter */
     NEAREST                        : 0x2600,
     LINEAR                         : 0x2601,
-    
+
     /* TextureMinFilter */
     /*      NEAREST */
     /*      LINEAR */
@@ -8919,17 +8938,17 @@ module.exports = {
     LINEAR_MIPMAP_NEAREST          : 0x2701,
     NEAREST_MIPMAP_LINEAR          : 0x2702,
     LINEAR_MIPMAP_LINEAR           : 0x2703,
-    
+
     /* TextureParameterName */
     TEXTURE_MAG_FILTER             : 0x2800,
     TEXTURE_MIN_FILTER             : 0x2801,
     TEXTURE_WRAP_S                 : 0x2802,
     TEXTURE_WRAP_T                 : 0x2803,
-    
+
     /* TextureTarget */
     TEXTURE_2D                     : 0x0DE1,
     TEXTURE                        : 0x1702,
-    
+
     TEXTURE_CUBE_MAP               : 0x8513,
     TEXTURE_BINDING_CUBE_MAP       : 0x8514,
     TEXTURE_CUBE_MAP_POSITIVE_X    : 0x8515,
@@ -8939,7 +8958,7 @@ module.exports = {
     TEXTURE_CUBE_MAP_POSITIVE_Z    : 0x8519,
     TEXTURE_CUBE_MAP_NEGATIVE_Z    : 0x851A,
     MAX_CUBE_MAP_TEXTURE_SIZE      : 0x851C,
-    
+
     /* TextureUnit */
     TEXTURE0                       : 0x84C0,
     TEXTURE1                       : 0x84C1,
@@ -8974,12 +8993,12 @@ module.exports = {
     TEXTURE30                      : 0x84DE,
     TEXTURE31                      : 0x84DF,
     ACTIVE_TEXTURE                 : 0x84E0,
-    
+
     /* TextureWrapMode */
     REPEAT                         : 0x2901,
     CLAMP_TO_EDGE                  : 0x812F,
     MIRRORED_REPEAT                : 0x8370,
-    
+
     /* Uniform Types */
     FLOAT_VEC2                     : 0x8B50,
     FLOAT_VEC3                     : 0x8B51,
@@ -8996,7 +9015,7 @@ module.exports = {
     FLOAT_MAT4                     : 0x8B5C,
     SAMPLER_2D                     : 0x8B5E,
     SAMPLER_CUBE                   : 0x8B60,
-    
+
     /* Vertex Arrays */
     VERTEX_ATTRIB_ARRAY_ENABLED        : 0x8622,
     VERTEX_ATTRIB_ARRAY_SIZE           : 0x8623,
@@ -9005,10 +9024,10 @@ module.exports = {
     VERTEX_ATTRIB_ARRAY_NORMALIZED     : 0x886A,
     VERTEX_ATTRIB_ARRAY_POINTER        : 0x8645,
     VERTEX_ATTRIB_ARRAY_BUFFER_BINDING : 0x889F,
-    
+
     /* Shader Source */
     COMPILE_STATUS                 : 0x8B81,
-    
+
     /* Shader Precision-Specified Types */
     LOW_FLOAT                      : 0x8DF0,
     MEDIUM_FLOAT                   : 0x8DF1,
@@ -9016,11 +9035,11 @@ module.exports = {
     LOW_INT                        : 0x8DF3,
     MEDIUM_INT                     : 0x8DF4,
     HIGH_INT                       : 0x8DF5,
-    
+
     /* Framebuffer Object. */
     FRAMEBUFFER                    : 0x8D40,
     RENDERBUFFER                   : 0x8D41,
-    
+
     RGBA4                          : 0x8056,
     RGB5_A1                        : 0x8057,
     RGB565                         : 0x8D62,
@@ -9028,7 +9047,7 @@ module.exports = {
     STENCIL_INDEX                  : 0x1901,
     STENCIL_INDEX8                 : 0x8D48,
     DEPTH_STENCIL                  : 0x84F9,
-    
+
     RENDERBUFFER_WIDTH             : 0x8D42,
     RENDERBUFFER_HEIGHT            : 0x8D43,
     RENDERBUFFER_INTERNAL_FORMAT   : 0x8D44,
@@ -9038,31 +9057,31 @@ module.exports = {
     RENDERBUFFER_ALPHA_SIZE        : 0x8D53,
     RENDERBUFFER_DEPTH_SIZE        : 0x8D54,
     RENDERBUFFER_STENCIL_SIZE      : 0x8D55,
-    
+
     FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE           : 0x8CD0,
     FRAMEBUFFER_ATTACHMENT_OBJECT_NAME           : 0x8CD1,
     FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL         : 0x8CD2,
     FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE : 0x8CD3,
-    
+
     COLOR_ATTACHMENT0              : 0x8CE0,
     DEPTH_ATTACHMENT               : 0x8D00,
     STENCIL_ATTACHMENT             : 0x8D20,
     DEPTH_STENCIL_ATTACHMENT       : 0x821A,
-    
+
     NONE                           : 0,
-    
+
     FRAMEBUFFER_COMPLETE                      : 0x8CD5,
     FRAMEBUFFER_INCOMPLETE_ATTACHMENT         : 0x8CD6,
     FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT : 0x8CD7,
     FRAMEBUFFER_INCOMPLETE_DIMENSIONS         : 0x8CD9,
     FRAMEBUFFER_UNSUPPORTED                   : 0x8CDD,
-    
+
     FRAMEBUFFER_BINDING            : 0x8CA6,
     RENDERBUFFER_BINDING           : 0x8CA7,
     MAX_RENDERBUFFER_SIZE          : 0x84E8,
-    
+
     INVALID_FRAMEBUFFER_OPERATION  : 0x0506,
-    
+
     /* WebGL-specific enums */
     UNPACK_FLIP_Y_WEBGL            : 0x9240,
     UNPACK_PREMULTIPLY_ALPHA_WEBGL : 0x9241,
@@ -9083,7 +9102,7 @@ module.exports = {
     var Base = __webpack_require__(8);
     var Texture = __webpack_require__(5);
     var TextureCube = __webpack_require__(22);
-    var glinfo = __webpack_require__(19);
+    var glinfo = __webpack_require__(16);
     var glenum = __webpack_require__(10);
     var Cache = __webpack_require__(45);
 
@@ -9487,9 +9506,9 @@ module.exports = {
     var OrthoCamera = __webpack_require__(43);
     var Plane = __webpack_require__(53);
     var Shader = __webpack_require__(7);
-    var Material = __webpack_require__(18);
+    var Material = __webpack_require__(19);
     var Mesh = __webpack_require__(33);
-    var glinfo = __webpack_require__(19);
+    var glinfo = __webpack_require__(16);
     var glenum = __webpack_require__(10);
 
     Shader['import'](__webpack_require__(217));
@@ -11272,6 +11291,125 @@ module.exports = {
 
 /***/ }),
 /* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+/**
+ * @namespace qtek.core.glinfo
+ * @see http://www.khronos.org/registry/webgl/extensions/
+ */
+
+
+    var EXTENSION_LIST = [
+        'OES_texture_float',
+        'OES_texture_half_float',
+        'OES_texture_float_linear',
+        'OES_texture_half_float_linear',
+        'OES_standard_derivatives',
+        'OES_vertex_array_object',
+        'OES_element_index_uint',
+        'WEBGL_compressed_texture_s3tc',
+        'WEBGL_depth_texture',
+        'EXT_texture_filter_anisotropic',
+        'EXT_shader_texture_lod',
+        'WEBGL_draw_buffers',
+        'EXT_frag_depth',
+        'EXT_sRGB'
+    ];
+
+    var PARAMETER_NAMES = [
+        'MAX_TEXTURE_SIZE',
+        'MAX_CUBE_MAP_TEXTURE_SIZE'
+    ];
+
+    var extensions = {};
+    var parameters = {};
+
+    var glinfo = {
+        /**
+         * Initialize all extensions and parameters in context
+         * @param  {WebGLRenderingContext} _gl
+         * @memberOf qtek.core.glinfo
+         */
+        initialize: function (_gl) {
+            var glid = _gl.__GLID__;
+            if (extensions[glid]) {
+                return;
+            }
+            extensions[glid] = {};
+            parameters[glid] = {};
+            // Get webgl extension
+            for (var i = 0; i < EXTENSION_LIST.length; i++) {
+                var extName = EXTENSION_LIST[i];
+
+                this._createExtension(_gl, extName);
+            }
+            // Get parameters
+            for (var i = 0; i < PARAMETER_NAMES.length; i++) {
+                var name = PARAMETER_NAMES[i];
+                parameters[glid][name] = _gl.getParameter(_gl[name]);
+            }
+        },
+
+        /**
+         * Get extension
+         * @param  {WebGLRenderingContext} _gl
+         * @param {string} name - Extension name, vendorless
+         * @return {WebGLExtension}
+         * @memberOf qtek.core.glinfo
+         */
+        getExtension: function (_gl, name) {
+            var glid = _gl.__GLID__;
+            if (extensions[glid]) {
+                if (typeof(extensions[glid][name]) == 'undefined') {
+                    this._createExtension(_gl, name);
+                }
+                return extensions[glid][name];
+            }
+        },
+
+        /**
+         * Get parameter
+         * @param {WebGLRenderingContext} _gl
+         * @param {string} name Parameter name
+         * @return {*}
+         */
+        getParameter: function (_gl, name) {
+            var glid = _gl.__GLID__;
+            if (parameters[glid]) {
+                return parameters[glid][name];
+            }
+        },
+
+        /**
+         * Dispose context
+         * @param  {WebGLRenderingContext} _gl
+         * @memberOf qtek.core.glinfo
+         */
+        dispose: function (_gl) {
+            delete extensions[_gl.__GLID__];
+            delete parameters[_gl.__GLID__];
+        },
+
+        _createExtension: function (_gl, name) {
+            var ext = _gl.getExtension(name);
+            if (!ext) {
+                ext = _gl.getExtension('MOZ_' + name);
+            }
+            if (!ext) {
+                ext = _gl.getExtension('WEBKIT_' + name);
+            }
+
+            extensions[_gl.__GLID__][name] = ext;
+        }
+    };
+
+    module.exports = glinfo;
+
+
+/***/ }),
+/* 17 */
 /***/ (function(module, exports) {
 
 module.exports = function (seriesType, ecModel, api) {
@@ -11297,7 +11435,7 @@ module.exports = function (seriesType, ecModel, api) {
 };
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11374,7 +11512,7 @@ module.exports = function (seriesType, ecModel, api) {
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11730,124 +11868,6 @@ module.exports = function (seriesType, ecModel, api) {
     });
 
     module.exports = Material;
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-/**
- * @namespace qtek.core.glinfo
- * @see http://www.khronos.org/registry/webgl/extensions/
- */
-
-
-    var EXTENSION_LIST = [
-        'OES_texture_float',
-        'OES_texture_half_float',
-        'OES_texture_float_linear',
-        'OES_texture_half_float_linear',
-        'OES_standard_derivatives',
-        'OES_vertex_array_object',
-        'OES_element_index_uint',
-        'WEBGL_compressed_texture_s3tc',
-        'WEBGL_depth_texture',
-        'EXT_texture_filter_anisotropic',
-        'EXT_shader_texture_lod',
-        'WEBGL_draw_buffers',
-        'EXT_frag_depth'
-    ];
-
-    var PARAMETER_NAMES = [
-        'MAX_TEXTURE_SIZE',
-        'MAX_CUBE_MAP_TEXTURE_SIZE'
-    ];
-
-    var extensions = {};
-    var parameters = {};
-
-    var glinfo = {
-        /**
-         * Initialize all extensions and parameters in context
-         * @param  {WebGLRenderingContext} _gl
-         * @memberOf qtek.core.glinfo
-         */
-        initialize: function (_gl) {
-            var glid = _gl.__GLID__;
-            if (extensions[glid]) {
-                return;
-            }
-            extensions[glid] = {};
-            parameters[glid] = {};
-            // Get webgl extension
-            for (var i = 0; i < EXTENSION_LIST.length; i++) {
-                var extName = EXTENSION_LIST[i];
-
-                this._createExtension(_gl, extName);
-            }
-            // Get parameters
-            for (var i = 0; i < PARAMETER_NAMES.length; i++) {
-                var name = PARAMETER_NAMES[i];
-                parameters[glid][name] = _gl.getParameter(_gl[name]);
-            }
-        },
-
-        /**
-         * Get extension
-         * @param  {WebGLRenderingContext} _gl
-         * @param {string} name - Extension name, vendorless
-         * @return {WebGLExtension}
-         * @memberOf qtek.core.glinfo
-         */
-        getExtension: function (_gl, name) {
-            var glid = _gl.__GLID__;
-            if (extensions[glid]) {
-                if (typeof(extensions[glid][name]) == 'undefined') {
-                    this._createExtension(_gl, name);
-                }
-                return extensions[glid][name];
-            }
-        },
-
-        /**
-         * Get parameter
-         * @param {WebGLRenderingContext} _gl
-         * @param {string} name Parameter name
-         * @return {*}
-         */
-        getParameter: function (_gl, name) {
-            var glid = _gl.__GLID__;
-            if (parameters[glid]) {
-                return parameters[glid][name];
-            }
-        },
-
-        /**
-         * Dispose context
-         * @param  {WebGLRenderingContext} _gl
-         * @memberOf qtek.core.glinfo
-         */
-        dispose: function (_gl) {
-            delete extensions[_gl.__GLID__];
-            delete parameters[_gl.__GLID__];
-        },
-
-        _createExtension: function (_gl, name) {
-            var ext = _gl.getExtension(name);
-            if (!ext) {
-                ext = _gl.getExtension('MOZ_' + name);
-            }
-            if (!ext) {
-                ext = _gl.getExtension('WEBKIT_' + name);
-            }
-
-            extensions[_gl.__GLID__][name] = ext;
-        }
-    };
-
-    module.exports = glinfo;
 
 
 /***/ }),
@@ -12340,7 +12360,7 @@ module.exports = LinesGeometry;
 
 
     var Texture = __webpack_require__(5);
-    var glinfo = __webpack_require__(19);
+    var glinfo = __webpack_require__(16);
     var glenum = __webpack_require__(10);
     var util = __webpack_require__(25);
     var mathUtil = __webpack_require__(79);
@@ -12422,7 +12442,7 @@ module.exports = LinesGeometry;
 
             _gl.bindTexture(_gl.TEXTURE_CUBE_MAP, this._cache.get('webgl_texture'));
 
-            this.beforeUpdate(_gl);
+            this.updateCommon(_gl);
 
             var glFormat = this.format;
             var glType = this.type;
@@ -15227,7 +15247,7 @@ module.exports = {
 
 
     var Node = __webpack_require__(34);
-    var Light = __webpack_require__(17);
+    var Light = __webpack_require__(18);
     var BoundingBox = __webpack_require__(13);
 
     /**
@@ -18535,13 +18555,13 @@ module.exports = graphicGL.Mesh.extend(function () {
 
 
     var Base = __webpack_require__(8);
-    var glinfo = __webpack_require__(19);
+    var glinfo = __webpack_require__(16);
     var glenum = __webpack_require__(10);
     var vendor = __webpack_require__(20);
     var BoundingBox = __webpack_require__(13);
     var Matrix4 = __webpack_require__(9);
     var shaderLibrary = __webpack_require__(80);
-    var Material = __webpack_require__(18);
+    var Material = __webpack_require__(19);
     var Vector2 = __webpack_require__(26);
 
     // Light header
@@ -21137,7 +21157,7 @@ module.exports = graphicGL.Mesh.extend(function () {
     var Mesh = __webpack_require__(33);
     var CubeGeometry = __webpack_require__(73);
     var Shader = __webpack_require__(7);
-    var Material = __webpack_require__(18);
+    var Material = __webpack_require__(19);
 
 
     Shader.import(__webpack_require__(221));
@@ -21260,7 +21280,7 @@ module.exports = graphicGL.Mesh.extend(function () {
     var Mesh = __webpack_require__(33);
     var SphereGeometry = __webpack_require__(74);
     var Shader = __webpack_require__(7);
-    var Material = __webpack_require__(18);
+    var Material = __webpack_require__(19);
 
     Shader.import(__webpack_require__(207));
     /**
@@ -21610,6 +21630,9 @@ Geo3DBuilder.prototype = {
         if (enableInstancing) {
             this._prepareInstancingMesh(componentModel, geo3D, shader, api);
         }
+
+        this.rootNode.updateWorldTransform();
+        
         this._updateRegionMesh(componentModel, geo3D, shader, api, enableInstancing);
 
         this._updateGroundPlane(componentModel, geo3D, api);
@@ -22010,13 +22033,13 @@ Geo3DBuilder.prototype = {
                 vec3.max(maxAll, maxAll, max);
                 polygons.push({
                     points: points3,
-                    minAll: minAll,
-                    maxAll: maxAll,
                     indices: triangles
                 });
             }
             this._triangulationResults[region.name] = polygons;
         }, this);
+
+        this._geoBoundingBox = [minAll, maxAll];
     },
 
     /**
@@ -22077,9 +22100,15 @@ Geo3DBuilder.prototype = {
                 : new Uint16Array(geoInfo.triangleCount * 3);
         }
 
-        var min = polygons[0].minAll;
-        var max = polygons[0].maxAll;
-        var maxDimSize = Math.max(max[0] - min[0], max[sideCoordIndex] - min[sideCoordIndex]);
+        var scale = [
+            this.rootNode.worldTransform.x.len(),
+            this.rootNode.worldTransform.y.len(),
+            this.rootNode.worldTransform.z.len() 
+        ];
+
+        var min = vec3.mul([], this._geoBoundingBox[0], scale);
+        var max = vec3.mul([], this._geoBoundingBox[1], scale);
+        var maxDimSize = Math.max(max[0] - min[0], max[2] - min[2]);
 
         function addVertices(polygon, y, insideOffset) {
             var points = polygon.points;
@@ -22093,8 +22122,8 @@ Geo3DBuilder.prototype = {
                 currentPosition[extrudeCoordIndex] = y;
                 currentPosition[sideCoordIndex] = points[k + 2];
 
-                uv[0] = (points[k] - min[0]) / maxDimSize;
-                uv[1] = (points[k + 2] - min[2]) / maxDimSize;
+                uv[0] = (points[k] * scale[0] - min[0]) / maxDimSize;
+                uv[1] = (points[k + 2] * scale[sideCoordIndex] - min[2]) / maxDimSize;
 
                 positionAttr.set(vertexOffset, currentPosition);
                 if (hasColor) {
@@ -22143,8 +22172,8 @@ Geo3DBuilder.prototype = {
             for (var v = 0; v < ringVertexCount; v++) {
                 var next = (v + 1) % ringVertexCount;
 
-                var dx = polygon.points[next * 3] - polygon.points[v * 3];
-                var dy = polygon.points[next * 3 + 2] - polygon.points[v * 3 + 2];
+                var dx = (polygon.points[next * 3] - polygon.points[v * 3]) * scale[0];
+                var dy = (polygon.points[next * 3 + 2] - polygon.points[v * 3 + 2]) * scale[sideCoordIndex];
                 var sideLen = Math.sqrt(dx * dx + dy * dy);
 
                 // 0----1
@@ -22159,12 +22188,12 @@ Geo3DBuilder.prototype = {
                     positionAttr.set(vertexOffset + k, quadPos[k]);
 
                     if (projectUVOnGround) {
-                        uv[0] = (polygon.points[idx3] - min[0]) / maxDimSize;
-                        uv[1] = (polygon.points[idx3 + 2] - min[sideCoordIndex]) / maxDimSize;
+                        uv[0] = (polygon.points[idx3] * scale[0] - min[0]) / maxDimSize;
+                        uv[1] = (polygon.points[idx3 + 2] * scale[sideCoordIndex] - min[sideCoordIndex]) / maxDimSize;
                     }
                     else {
                         uv[0] = (isCurrent ? len : (len + sideLen)) / maxDimSize;
-                        uv[1] = (quadPos[k][extrudeCoordIndex] - min[extrudeCoordIndex]) / maxDimSize;
+                        uv[1] = (quadPos[k][extrudeCoordIndex] * scale[extrudeCoordIndex] - min[extrudeCoordIndex])  / maxDimSize;
                     }
                     texcoordAttr.set(vertexOffset + k, uv);
                 }
@@ -22573,14 +22602,25 @@ var echarts = __webpack_require__(0);
 
 module.exports = {
 
-    getFilledRegions: function (regions, map) {
+    getFilledRegions: function (regions, mapData) {
         var regionsArr = (regions || []).slice();
 
-        var map = echarts.getMap(map);
-        var geoJson = map && map.geoJson;
+        var geoJson;
+        if (typeof mapData === 'string') {
+            mapData = echarts.getMap(mapData);
+            geoJson = mapData && mapData.geoJson;
+        }
+        else {
+            if (mapData && mapData.features) {
+                geoJson = mapData;
+            }
+        }
         if (!geoJson) {
             if (true) {
-                console.error('Map ' + map + ' not exists. You can download map file on http://echarts.baidu.com/download-map.html');
+                console.error('Map ' + mapData + ' not exists. You can download map file on http://echarts.baidu.com/download-map.html');
+                if (!geoJson.features) {
+                    console.error('Invalid GeoJSON for map3D');
+                }
             }
             return [];
         }
@@ -22799,6 +22839,9 @@ if (true) {
     };
 }
 
+
+var idStart = 0;
+
 var geo3DCreator = {
 
     dimensions: Geo3D.prototype.dimensions,
@@ -22812,22 +22855,12 @@ var geo3DCreator = {
         }
 
         function createGeo3D(componentModel, idx) {
-            var name = componentModel.get('map');
-            var mapData = echarts.getMap(name);
-            if (true) {
-                if (!mapData) {
-                    mapNotExistsError(name);
-                }
-            }
+
+            var geo3D = geo3DCreator.createGeo3D(componentModel);
 
             // FIXME
             componentModel.__viewGL = componentModel.__viewGL || new ViewGL();
 
-            var geo3D = new Geo3D(
-                name + idx, name,
-                mapData && mapData.geoJson, mapData && mapData.specialAreas,
-                componentModel.get('nameMap')
-            );
             geo3D.viewGL = componentModel.__viewGL;
 
             componentModel.coordinateSystem = geo3D;
@@ -22879,6 +22912,40 @@ var geo3DCreator = {
         });
 
         return geo3DList;
+    },
+
+    createGeo3D: function (componentModel) {
+        
+        var mapData = componentModel.get('map');
+        var name;
+        if (typeof mapData === 'string') {
+            name = mapData;
+            mapData = echarts.getMap(mapData);
+        }
+        else {
+            if (mapData && mapData.features) {
+                mapData = {
+                    geoJson: mapData
+                };
+            }
+        }
+        if (true) {
+            if (!mapData) {
+                mapNotExistsError(mapData);
+            }
+            if (!mapData.geoJson.features) {
+                throw new Error('Invalid GeoJSON for map3D');
+            }
+        }
+        if (name == null) {
+            name = 'GEO_ANONYMOUS_' + idStart++;
+        }
+
+        return new Geo3D(
+            name + idStart++, name,
+            mapData && mapData.geoJson, mapData && mapData.specialAreas,
+            componentModel.get('nameMap')
+        );
     }
 };
 
@@ -24001,7 +24068,7 @@ module.exports = ZRTextureAtlasSurface;
 
     var Node = __webpack_require__(34);
     var glenum = __webpack_require__(10);
-    var glinfo = __webpack_require__(19);
+    var glinfo = __webpack_require__(16);
 
     // Cache
     var prevDrawID = 0;
@@ -24951,7 +25018,7 @@ module.exports = ZRTextureAtlasSurface;
 
 
 
-    var Light = __webpack_require__(17);
+    var Light = __webpack_require__(18);
     var Vector3 = __webpack_require__(3);
 
     /**
@@ -25035,7 +25102,7 @@ module.exports = ZRTextureAtlasSurface;
 
 
 
-    var Light = __webpack_require__(17);
+    var Light = __webpack_require__(18);
 
     /**
      * @constructor qtek.light.Point
@@ -25101,7 +25168,7 @@ module.exports = ZRTextureAtlasSurface;
 
 
 
-    var Light = __webpack_require__(17);
+    var Light = __webpack_require__(18);
     var Vector3 = __webpack_require__(3);
 
     /**
@@ -26009,7 +26076,7 @@ __webpack_require__(100);
 __webpack_require__(99);
 
 echarts.registerVisual(echarts.util.curry(
-    __webpack_require__(16), 'bar3D'
+    __webpack_require__(17), 'bar3D'
 ));
 
 echarts.registerProcessor(function (ecModel, api) {
@@ -26035,7 +26102,7 @@ echarts.registerVisual(echarts.util.curry(
 ));
 
 echarts.registerVisual(echarts.util.curry(
-    __webpack_require__(16), 'graphGL'
+    __webpack_require__(17), 'graphGL'
 ));
 
 echarts.registerVisual(function (ecModel) {
@@ -26162,7 +26229,7 @@ echarts.registerVisual(echarts.util.curry(
 ));
 
 echarts.registerVisual(echarts.util.curry(
-    __webpack_require__(16), 'line3D'
+    __webpack_require__(17), 'line3D'
 ));
 
 echarts.registerLayout(function (ecModel, api) {
@@ -26216,7 +26283,7 @@ __webpack_require__(116);
 __webpack_require__(115);
 
 echarts.registerVisual(echarts.util.curry(
-    __webpack_require__(16), 'lines3D'
+    __webpack_require__(17), 'lines3D'
 ));
 
 
@@ -26248,10 +26315,10 @@ var Geo3D = __webpack_require__(62);
 __webpack_require__(120);
 __webpack_require__(121);
 
-__webpack_require__(64);
+var geo3DCreator = __webpack_require__(64);
 
 echarts.registerVisual(echarts.util.curry(
-    __webpack_require__(16), 'map3D'
+    __webpack_require__(17), 'map3D'
 ));
 
 echarts.registerAction({
@@ -26265,31 +26332,6 @@ echarts.registerAction({
         componentModel.setView(payload);
     });
 });
-
-if (true) {
-    var mapNotExistsError = function (name) {
-        console.error('Map ' + name + ' not exists. You can download map file on http://echarts.baidu.com/download-map.html');
-    };
-}
-
-function createGeo3D(seriesModel) {
-    if (!echarts.getMap) {
-        throw new Error('geo3D component depends on geo component');
-    }
-    var name = seriesModel.get('map');
-    var mapData = echarts.getMap(name);
-    
-    if (true) {
-        if (!mapData) {
-            mapNotExistsError(name);
-        }
-    }
-    return new Geo3D(
-        name, name,
-        mapData && mapData.geoJson, mapData && mapData.specialAreas,
-        seriesModel.get('nameMap')
-    );
-}
 
 function transformPolygon(poly, mapboxCoordSys) {
     var newPoly = [];
@@ -26322,7 +26364,7 @@ echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('map3D', function (seriesModel) {
         var coordSys = seriesModel.get('coordinateSystem');
         if (coordSys === 'mapbox') {
-            var geo3D = createGeo3D(seriesModel);
+            var geo3D = geo3DCreator.createGeo3D(seriesModel);
             geo3D.extrudeY = false;
             transformGeo3DOnMapbox(geo3D, seriesModel.coordinateSystem);
 
@@ -26345,7 +26387,7 @@ echarts.registerVisual(echarts.util.curry(
 ));
 
 echarts.registerVisual(echarts.util.curry(
-    __webpack_require__(16), 'scatter3D'
+    __webpack_require__(17), 'scatter3D'
 ));
 
 echarts.registerLayout(function (ecModel, api) {
@@ -26400,7 +26442,7 @@ echarts.registerVisual(echarts.util.curry(
 ));
 
 echarts.registerVisual(echarts.util.curry(
-    __webpack_require__(16), 'scatterGL'
+    __webpack_require__(17), 'scatterGL'
 ));
 
 echarts.registerLayout(function (ecModel, api) {
@@ -26446,7 +26488,7 @@ __webpack_require__(127);
 __webpack_require__(128);
 
 echarts.registerVisual(echarts.util.curry(
-    __webpack_require__(16), 'surface'
+    __webpack_require__(17), 'surface'
 ));
 
 
@@ -26605,10 +26647,10 @@ echarts.registerAction({
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.0-beta.1',
+    version: '1.0.0-beta.2',
     dependencies: {
         echarts: '3.6.2',
-        qtek: '0.3.9'
+        qtek: '0.4.0'
     }
 };
 var echarts = __webpack_require__(0);
@@ -32857,6 +32899,12 @@ module.exports = echarts.extendComponentView({
         graphicGL.setMaterialFromModel(
             shading, earthMesh.material, globeModel, api
         );
+        ['roughnessMap', 'metalnessMap', 'detailMap', 'normalMap'].forEach(function (texName) {
+            var texture = earthMesh.material.get(texName);
+            if (texture) {
+                texture.flipY = false;
+            }
+        })
 
         earthMesh.material.set('color', graphicGL.parseColor(
             globeModel.get('baseColor')
@@ -35467,6 +35515,8 @@ function Mapbox() {
     this.height = 0;
 
     this.altitudeScale = 1;
+
+    // TODO Change boxHeight won't have animation.
     this.boxHeight = 'auto';
 
     // Set by mapbox creator
@@ -35681,9 +35731,8 @@ function updateMapbox(ecModel, api) {
             );
         }
     }, this);
-    // Create altitude axis
     if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
-        this.altitudeExtent = altitudeDataExtent[idx];
+        this.altitudeExtent = altitudeDataExtent;
     }
 }
 
@@ -35716,9 +35765,10 @@ var mapboxCreator = {
             mapboxCoordSys.setCameraOption(
                 mapboxModel.getMapboxCameraOption()
             );
+
+            mapboxCoordSys.update = updateMapbox;
         });
 
-        var altitudeDataExtent = [];
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'mapbox') {
                 var mapboxModel = seriesModel.getReferringComponents('mapbox')[0];
@@ -36958,7 +37008,7 @@ var Texture2D = __webpack_require__(6);
 var Texture = __webpack_require__(5);
 var Shader = __webpack_require__(7);
 var FrameBuffer = __webpack_require__(11);
-var Material = __webpack_require__(18);
+var Material = __webpack_require__(19);
 var Shader = __webpack_require__(7);
 var Pass = __webpack_require__(12);
 var textureUtil = __webpack_require__(46);
@@ -37005,6 +37055,8 @@ function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRough
         var bumpMap = material.get('bumpMap');
         var uvRepeat = material.get('uvRepeat');
         var uvOffset = material.get('uvOffset');
+        var detailUvRepeat = material.get('detailUvRepeat');
+        var detailUvOffset = material.get('detailUvOffset');
 
         var useBumpMap = !!bumpMap && material.shader.isTextureEnabled('bumpMap');
         var useRoughnessMap = !!roughnessMap && material.shader.isTextureEnabled('roughnessMap');
@@ -37020,8 +37072,10 @@ function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRough
             normalMaterial.set('useBumpMap', useBumpMap);
             normalMaterial.set('useRoughnessMap', useRoughnessMap);
             normalMaterial.set('doubleSide', doubleSide);
-            normalMaterial.set('uvRepeat', uvRepeat);
-            normalMaterial.set('uvOffset', uvOffset);
+            uvRepeat != null && normalMaterial.set('uvRepeat', uvRepeat);
+            uvOffset != null && normalMaterial.set('uvOffset', uvOffset);
+            detailUvRepeat != null && normalMaterial.set('detailUvRepeat', detailUvRepeat);
+            detailUvOffset != null && normalMaterial.set('detailUvOffset', detailUvOffset);
 
             normalMaterial.set('roughness', roughness);
         }
@@ -37042,6 +37096,12 @@ function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRough
             }
             if (uvOffset != null) {
                 normalMaterial.shader.setUniform(gl, '2f', 'uvOffset', uvOffset);
+            }
+            if (detailUvRepeat != null) {
+                normalMaterial.shader.setUniform(gl, '2f', 'detailUvRepeat', detailUvRepeat);
+            }
+            if (detailUvOffset != null) {
+                normalMaterial.shader.setUniform(gl, '2f', 'detailUvOffset', detailUvOffset);
             }
             normalMaterial.shader.setUniform(gl, '1i', 'useBumpMap', +useBumpMap);
             normalMaterial.shader.setUniform(gl, '1i', 'useRoughnessMap', +useRoughnessMap);
@@ -40630,7 +40690,7 @@ module.exports = "@export ecgl.color.vertex\n\nuniform mat4 worldViewProjection 
 /* 174 */
 /***/ (function(module, exports) {
 
-module.exports = "\n@export ecgl.common.transformUniforms\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n@end\n\n@export ecgl.common.attributes\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n@end\n\n@export ecgl.common.uv.header\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\nuniform vec2 detailUvRepeat : [1.0, 1.0];\nuniform vec2 detailUvOffset : [0.0, 0.0];\n\nvarying vec2 v_Texcoord;\nvarying vec2 v_DetailTexcoord;\n@end\n\n@export ecgl.common.uv.main\nv_Texcoord = texcoord * uvRepeat + uvOffset;\nv_DetailTexcoord = texcoord * detailUvRepeat + detailUvOffset;\n@end\n\n@export ecgl.common.uv.fragmentHeader\nvarying vec2 v_Texcoord;\nvarying vec2 v_DetailTexcoord;\n@end\n\n\n@export ecgl.common.albedo.main\n\n vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n albedoTexel = texture2D(diffuseMap, v_Texcoord);\n #ifdef SRGB_DECODE\n albedoTexel = sRGBToLinear(albedoTexel);\n #endif\n#endif\n\n#ifdef DETAILMAP_ENABLED\n vec4 detailTexel = texture2D(detailMap, v_DetailTexcoord);\n #ifdef SRGB_DECODE\n detailTexel = sRGBToLinear(detailTexel);\n #endif\n albedoTexel.rgb = mix(albedoTexel.rgb, detailTexel.rgb, detailTexel.a);\n albedoTexel.a = detailTexel.a + (1.0 - detailTexel.a) * albedoTexel.a;\n#endif\n\n@end\n\n@export ecgl.common.wireframe.vertexHeader\n\n#ifdef WIREFRAME_QUAD\nattribute vec4 barycentric;\nvarying vec4 v_Barycentric;\n#elif defined(WIREFRAME_TRIANGLE)\nattribute vec3 barycentric;\nvarying vec3 v_Barycentric;\n#endif\n\n@end\n\n@export ecgl.common.wireframe.vertexMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n v_Barycentric = barycentric;\n#endif\n\n@end\n\n\n@export ecgl.common.wireframe.fragmentHeader\n\nuniform float wireframeLineWidth : 1;\nuniform vec4 wireframeLineColor: [0, 0, 0, 0.5];\n\n#ifdef WIREFRAME_QUAD\nvarying vec4 v_Barycentric;\nfloat edgeFactor () {\n vec4 d = fwidth(v_Barycentric);\n vec4 a4 = smoothstep(vec4(0.0), d * wireframeLineWidth, v_Barycentric);\n return min(min(min(a4.x, a4.y), a4.z), a4.w);\n}\n#elif defined(WIREFRAME_TRIANGLE)\nvarying vec3 v_Barycentric;\nfloat edgeFactor () {\n vec3 d = fwidth(v_Barycentric);\n vec3 a3 = smoothstep(vec3(0.0), d * wireframeLineWidth, v_Barycentric);\n return min(min(a3.x, a3.y), a3.z);\n}\n#endif\n\n@end\n\n\n@export ecgl.common.wireframe.fragmentMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n if (wireframeLineWidth > 0.) {\n vec4 lineColor = wireframeLineColor;\n#ifdef SRGB_DECODE\n lineColor = sRGBToLinear(lineColor);\n#endif\n\n gl_FragColor.rgb = mix(gl_FragColor.rgb, lineColor.rgb, (1.0 - edgeFactor()) * lineColor.a);\n }\n#endif\n@end\n\n\n\n\n@export ecgl.common.bumpMap.header\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n\n\nvec3 bumpNormal(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n vec2 dSTdx = dFdx(v_Texcoord);\n vec2 dSTdy = dFdy(v_Texcoord);\n\n float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n vec3 vSigmaX = dFdx(surfPos);\n vec3 vSigmaY = dFdy(surfPos);\n vec3 vN = surfNormal;\n\n vec3 R1 = cross(vSigmaY, vN);\n vec3 R2 = cross(vN, vSigmaX);\n\n float fDet = dot(vSigmaX, R1);\n\n vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\n@end\n\n@export ecgl.common.normalMap.vertexHeader\n\n#ifdef NORMALMAP_ENABLED\nattribute vec4 tangent : TANGENT;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@end\n\n@export ecgl.common.normalMap.vertexMain\n\n#ifdef NORMALMAP_ENABLED\n if (dot(tangent, tangent) > 0.0) {\n v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);\n v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);\n }\n#endif\n\n@end\n\n\n@export ecgl.common.normalMap.fragmentHeader\n\n#ifdef NORMALMAP_ENABLED\nuniform sampler2D normalMap;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@end\n\n@export ecgl.common.normalMap.fragmentMain\n#ifdef NORMALMAP_ENABLED\n if (dot(v_Tangent, v_Tangent) > 0.0) {\n vec3 normalTexel = texture2D(normalMap, v_Texcoord).xyz;\n if (dot(normalTexel, normalTexel) > 0.0) { N = normalTexel * 2.0 - 1.0;\n mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);\n N = normalize(tbn * N);\n }\n }\n#endif\n@end\n\n\n\n@export ecgl.common.vertexAnimation.header\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nattribute vec3 prevNormal;\nuniform float percent;\n#endif\n\n@end\n\n@export ecgl.common.vertexAnimation.main\n\n#ifdef VERTEX_ANIMATION\n vec3 pos = mix(prevPosition, position, percent);\n vec3 norm = mix(prevNormal, normal, percent);\n#else\n vec3 pos = position;\n vec3 norm = normal;\n#endif\n\n@end\n\n\n@export ecgl.common.ssaoMap.header\n#ifdef SSAOMAP_ENABLED\nuniform sampler2D ssaoMap;\nuniform vec4 viewport : VIEWPORT;\n#endif\n@end\n\n@export ecgl.common.ssaoMap.main\n float ao = 1.0;\n#ifdef SSAOMAP_ENABLED\n ao = texture2D(ssaoMap, (gl_FragCoord.xy - viewport.xy) / viewport.zw).r;\n#endif\n@end\n\n\n\n\n@export ecgl.common.diffuseLayer.header\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n@end\n\n@export ecgl.common.emissiveLayer.header\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\n@end\n\n@export ecgl.common.layers.header\n@import ecgl.common.diffuseLayer.header\n@import ecgl.common.emissiveLayer.header\n@end\n\n@export ecgl.common.diffuseLayer.main\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n float intensity = layerDiffuseIntensity[_idx_];\n vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n #ifdef SRGB_DECODE\n texel2 = sRGBToLinear(texel2);\n #endif\n albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n }}\n#endif\n\n@end\n\n@export ecgl.common.emissiveLayer.main\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)\n {{\n vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n #ifdef SRGB_DECODE\n texel2 = sRGBToLinear(texel2);\n #endif\n float intensity = layerEmissionIntensity[_idx_];\n gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n }}\n#endif\n\n@end\n";
+module.exports = "\n@export ecgl.common.transformUniforms\nuniform mat4 worldViewProjection : WORLDVIEWPROJECTION;\nuniform mat4 worldInverseTranspose : WORLDINVERSETRANSPOSE;\nuniform mat4 world : WORLD;\n@end\n\n@export ecgl.common.attributes\nattribute vec3 position : POSITION;\nattribute vec2 texcoord : TEXCOORD_0;\nattribute vec3 normal : NORMAL;\n@end\n\n@export ecgl.common.uv.header\nuniform vec2 uvRepeat : [1.0, 1.0];\nuniform vec2 uvOffset : [0.0, 0.0];\nuniform vec2 detailUvRepeat : [1.0, 1.0];\nuniform vec2 detailUvOffset : [0.0, 0.0];\n\nvarying vec2 v_Texcoord;\nvarying vec2 v_DetailTexcoord;\n@end\n\n@export ecgl.common.uv.main\nv_Texcoord = texcoord * uvRepeat + uvOffset;\nv_DetailTexcoord = texcoord * detailUvRepeat + detailUvOffset;\n@end\n\n@export ecgl.common.uv.fragmentHeader\nvarying vec2 v_Texcoord;\nvarying vec2 v_DetailTexcoord;\n@end\n\n\n@export ecgl.common.albedo.main\n\n vec4 albedoTexel = vec4(1.0);\n#ifdef DIFFUSEMAP_ENABLED\n albedoTexel = texture2D(diffuseMap, v_Texcoord);\n #ifdef SRGB_DECODE\n albedoTexel = sRGBToLinear(albedoTexel);\n #endif\n#endif\n\n#ifdef DETAILMAP_ENABLED\n vec4 detailTexel = texture2D(detailMap, v_DetailTexcoord);\n #ifdef SRGB_DECODE\n detailTexel = sRGBToLinear(detailTexel);\n #endif\n albedoTexel.rgb = mix(albedoTexel.rgb, detailTexel.rgb, detailTexel.a);\n albedoTexel.a = detailTexel.a + (1.0 - detailTexel.a) * albedoTexel.a;\n#endif\n\n@end\n\n@export ecgl.common.wireframe.vertexHeader\n\n#ifdef WIREFRAME_QUAD\nattribute vec4 barycentric;\nvarying vec4 v_Barycentric;\n#elif defined(WIREFRAME_TRIANGLE)\nattribute vec3 barycentric;\nvarying vec3 v_Barycentric;\n#endif\n\n@end\n\n@export ecgl.common.wireframe.vertexMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n v_Barycentric = barycentric;\n#endif\n\n@end\n\n\n@export ecgl.common.wireframe.fragmentHeader\n\nuniform float wireframeLineWidth : 1;\nuniform vec4 wireframeLineColor: [0, 0, 0, 0.5];\n\n#ifdef WIREFRAME_QUAD\nvarying vec4 v_Barycentric;\nfloat edgeFactor () {\n vec4 d = fwidth(v_Barycentric);\n vec4 a4 = smoothstep(vec4(0.0), d * wireframeLineWidth, v_Barycentric);\n return min(min(min(a4.x, a4.y), a4.z), a4.w);\n}\n#elif defined(WIREFRAME_TRIANGLE)\nvarying vec3 v_Barycentric;\nfloat edgeFactor () {\n vec3 d = fwidth(v_Barycentric);\n vec3 a3 = smoothstep(vec3(0.0), d * wireframeLineWidth, v_Barycentric);\n return min(min(a3.x, a3.y), a3.z);\n}\n#endif\n\n@end\n\n\n@export ecgl.common.wireframe.fragmentMain\n\n#if defined(WIREFRAME_QUAD) || defined(WIREFRAME_TRIANGLE)\n if (wireframeLineWidth > 0.) {\n vec4 lineColor = wireframeLineColor;\n#ifdef SRGB_DECODE\n lineColor = sRGBToLinear(lineColor);\n#endif\n\n gl_FragColor.rgb = mix(gl_FragColor.rgb, lineColor.rgb, (1.0 - edgeFactor()) * lineColor.a);\n }\n#endif\n@end\n\n\n\n\n@export ecgl.common.bumpMap.header\n\n#ifdef BUMPMAP_ENABLED\nuniform sampler2D bumpMap;\nuniform float bumpScale : 1.0;\n\n\nvec3 bumpNormal(vec3 surfPos, vec3 surfNormal, vec3 baseNormal)\n{\n vec2 dSTdx = dFdx(v_Texcoord);\n vec2 dSTdy = dFdy(v_Texcoord);\n\n float Hll = bumpScale * texture2D(bumpMap, v_Texcoord).x;\n float dHx = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdx).x - Hll;\n float dHy = bumpScale * texture2D(bumpMap, v_Texcoord + dSTdy).x - Hll;\n\n vec3 vSigmaX = dFdx(surfPos);\n vec3 vSigmaY = dFdy(surfPos);\n vec3 vN = surfNormal;\n\n vec3 R1 = cross(vSigmaY, vN);\n vec3 R2 = cross(vN, vSigmaX);\n\n float fDet = dot(vSigmaX, R1);\n\n vec3 vGrad = sign(fDet) * (dHx * R1 + dHy * R2);\n return normalize(abs(fDet) * baseNormal - vGrad);\n\n}\n#endif\n\n@end\n\n@export ecgl.common.normalMap.vertexHeader\n\n#ifdef NORMALMAP_ENABLED\nattribute vec4 tangent : TANGENT;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@end\n\n@export ecgl.common.normalMap.vertexMain\n\n#ifdef NORMALMAP_ENABLED\n if (dot(tangent, tangent) > 0.0) {\n v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);\n v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);\n }\n#endif\n\n@end\n\n\n@export ecgl.common.normalMap.fragmentHeader\n\n#ifdef NORMALMAP_ENABLED\nuniform sampler2D normalMap;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@end\n\n@export ecgl.common.normalMap.fragmentMain\n#ifdef NORMALMAP_ENABLED\n if (dot(v_Tangent, v_Tangent) > 0.0) {\n vec3 normalTexel = texture2D(normalMap, v_DetailTexcoord).xyz;\n if (dot(normalTexel, normalTexel) > 0.0) { N = normalTexel * 2.0 - 1.0;\n mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);\n N = normalize(tbn * N);\n }\n }\n#endif\n@end\n\n\n\n@export ecgl.common.vertexAnimation.header\n\n#ifdef VERTEX_ANIMATION\nattribute vec3 prevPosition;\nattribute vec3 prevNormal;\nuniform float percent;\n#endif\n\n@end\n\n@export ecgl.common.vertexAnimation.main\n\n#ifdef VERTEX_ANIMATION\n vec3 pos = mix(prevPosition, position, percent);\n vec3 norm = mix(prevNormal, normal, percent);\n#else\n vec3 pos = position;\n vec3 norm = normal;\n#endif\n\n@end\n\n\n@export ecgl.common.ssaoMap.header\n#ifdef SSAOMAP_ENABLED\nuniform sampler2D ssaoMap;\nuniform vec4 viewport : VIEWPORT;\n#endif\n@end\n\n@export ecgl.common.ssaoMap.main\n float ao = 1.0;\n#ifdef SSAOMAP_ENABLED\n ao = texture2D(ssaoMap, (gl_FragCoord.xy - viewport.xy) / viewport.zw).r;\n#endif\n@end\n\n\n\n\n@export ecgl.common.diffuseLayer.header\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\nuniform float layerDiffuseIntensity[LAYER_DIFFUSEMAP_COUNT];\nuniform sampler2D layerDiffuseMap[LAYER_DIFFUSEMAP_COUNT];\n#endif\n\n@end\n\n@export ecgl.common.emissiveLayer.header\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\nuniform float layerEmissionIntensity[LAYER_EMISSIVEMAP_COUNT];\nuniform sampler2D layerEmissiveMap[LAYER_EMISSIVEMAP_COUNT];\n#endif\n\n@end\n\n@export ecgl.common.layers.header\n@import ecgl.common.diffuseLayer.header\n@import ecgl.common.emissiveLayer.header\n@end\n\n@export ecgl.common.diffuseLayer.main\n\n#if (LAYER_DIFFUSEMAP_COUNT > 0)\n for (int _idx_ = 0; _idx_ < LAYER_DIFFUSEMAP_COUNT; _idx_++) {{\n float intensity = layerDiffuseIntensity[_idx_];\n vec4 texel2 = texture2D(layerDiffuseMap[_idx_], v_Texcoord);\n #ifdef SRGB_DECODE\n texel2 = sRGBToLinear(texel2);\n #endif\n albedoTexel.rgb = mix(albedoTexel.rgb, texel2.rgb * intensity, texel2.a);\n albedoTexel.a = texel2.a + (1.0 - texel2.a) * albedoTexel.a;\n }}\n#endif\n\n@end\n\n@export ecgl.common.emissiveLayer.main\n\n#if (LAYER_EMISSIVEMAP_COUNT > 0)\n for (int _idx_ = 0; _idx_ < LAYER_EMISSIVEMAP_COUNT; _idx_++)\n {{\n vec4 texel2 = texture2D(layerEmissiveMap[_idx_], v_Texcoord) * layerEmissionIntensity[_idx_];\n #ifdef SRGB_DECODE\n texel2 = sRGBToLinear(texel2);\n #endif\n float intensity = layerEmissionIntensity[_idx_];\n gl_FragColor.rgb += texel2.rgb * texel2.a * intensity;\n }}\n#endif\n\n@end\n";
 
 
 /***/ }),
@@ -40672,14 +40732,14 @@ module.exports = "@export ecgl.lines2D.vertex\n\nuniform mat4 worldViewProjectio
 /* 180 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.normal.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uv.header\n\n@import ecgl.common.attributes\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n@import ecgl.common.normalMap.vertexHeader\n\n@import ecgl.common.vertexAnimation.header\n\nvoid main()\n{\n\n @import ecgl.common.vertexAnimation.main\n\n @import ecgl.common.uv.main\n\n v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n @import ecgl.common.normalMap.vertexMain\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n}\n\n\n@end\n\n\n@export ecgl.normal.fragment\n\n#define ROUGHNESS_CHANEL 0\n\nuniform bool useBumpMap;\nuniform bool useRoughnessMap;\nuniform bool doubleSide;\nuniform float roughness;\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n@import ecgl.common.normalMap.fragmentHeader\n@import ecgl.common.bumpMap.header\n\nuniform sampler2D roughnessMap;\n\nvoid main()\n{\n vec3 N = v_Normal;\n\n @import ecgl.common.normalMap.fragmentMain\n\n if (useBumpMap) {\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n }\n\n float g = 1.0 - roughness;\n\n if (useRoughnessMap) {\n float g2 = 1.0 - texture2D(roughnessMap, v_DetailTexcoord)[ROUGHNESS_CHANEL];\n g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);\n }\n\n if (doubleSide) {\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n }\n\n gl_FragColor.rgb = (N.xyz + 1.0) * 0.5;\n gl_FragColor.a = g;\n}\n@end";
+module.exports = "@export ecgl.normal.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uv.header\n\n@import ecgl.common.attributes\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\n@import ecgl.common.normalMap.vertexHeader\n\n@import ecgl.common.vertexAnimation.header\n\nvoid main()\n{\n\n @import ecgl.common.vertexAnimation.main\n\n @import ecgl.common.uv.main\n\n v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n @import ecgl.common.normalMap.vertexMain\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n}\n\n\n@end\n\n\n@export ecgl.normal.fragment\n\n#define ROUGHNESS_CHANEL 0\n\nuniform bool useBumpMap;\nuniform bool useRoughnessMap;\nuniform bool doubleSide;\nuniform float roughness;\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n@import ecgl.common.normalMap.fragmentHeader\n@import ecgl.common.bumpMap.header\n\nuniform sampler2D roughnessMap;\n\nvoid main()\n{\n vec3 N = v_Normal;\n \n bool flipNormal = false;\n if (doubleSide) {\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n\n if (dot(N, V) < 0.0) {\n flipNormal = true;\n }\n }\n\n @import ecgl.common.normalMap.fragmentMain\n\n if (useBumpMap) {\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n }\n\n float g = 1.0 - roughness;\n\n if (useRoughnessMap) {\n float g2 = 1.0 - texture2D(roughnessMap, v_DetailTexcoord)[ROUGHNESS_CHANEL];\n g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);\n }\n\n if (flipNormal) {\n N = -N;\n }\n\n gl_FragColor.rgb = (N.xyz + 1.0) * 0.5;\n gl_FragColor.a = g;\n}\n@end";
 
 
 /***/ }),
 /* 181 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.realistic.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uv.header\n\n@import ecgl.common.attributes\n\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef NORMALMAP_ENABLED\nattribute vec4 tangent : TANGENT;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@import ecgl.common.vertexAnimation.header\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n\n @import ecgl.common.uv.main\n\n @import ecgl.common.vertexAnimation.main\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n v_Color = a_Color;\n#endif\n\n#ifdef NORMALMAP_ENABLED\n v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);\n v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);\n#endif\n\n @import ecgl.common.wireframe.vertexMain\n\n}\n\n@end\n\n\n\n@export ecgl.realistic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n#define ROUGHNESS_CHANEL 0\n#define METALNESS_CHANEL 1\n\n#define NORMAL_UP_AXIS 1\n#define NORMAL_FRONT_AXIS 2\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform sampler2D diffuseMap;\n\nuniform sampler2D detailMap;\nuniform sampler2D metalnessMap;\nuniform sampler2D roughnessMap;\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n#ifdef NORMALMAP_ENABLED\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\nuniform sampler2D normalMap;\n#endif\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvec3 F_Schlick(float ndv, vec3 spec) {\n return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n float a = pow(8192.0, g);\n return (a + 2.0) / 8.0 * pow(ndh, a);\n}\n\nvoid main()\n{\n vec4 albedoColor = color;\n\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n #ifdef SRGB_DECODE\n albedoColor *= sRGBToLinear(v_Color);\n #else\n albedoColor *= v_Color;\n #endif\n#endif\n\n @import ecgl.common.albedo.main\n\n @import ecgl.common.diffuseLayer.main\n\n albedoColor *= albedoTexel;\n\n float m = metalness;\n\n#ifdef METALNESSMAP_ENABLED\n float m2 = texture2D(metalnessMap, v_DetailTexcoord)[METALNESS_CHANEL];\n m = clamp(m2 + (m - 0.5) * 2.0, 0.0, 1.0);\n#endif\n\n vec3 baseColor = albedoColor.rgb;\n albedoColor.rgb = baseColor * (1.0 - m);\n vec3 specFactor = mix(vec3(0.04), baseColor, m);\n\n float g = 1.0 - roughness;\n\n#ifdef ROUGHNESSMAP_ENABLED\n float g2 = 1.0 - texture2D(roughnessMap, v_DetailTexcoord)[ROUGHNESS_CHANEL];\n g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);\n#endif\n\n vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n#endif\n\n float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n ambientFactor = dot(v_Normal, N);\n#endif\n\n#ifdef NORMALMAP_ENABLED\n if (dot(v_Tangent, v_Tangent) > 0.0) {\n vec3 normalTexel = texture2D(normalMap, v_DetailTexcoord).xyz;\n if (dot(normalTexel, normalTexel) > 0.0) { N = normalTexel * 2.0 - 1.0;\n mat3 tbn = mat3(v_Tangent, v_Bitangent, v_Normal);\n N = normalize(tbn * N);\n }\n }\n#endif\n vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);\n\n vec3 diffuseTerm = vec3(0.0);\n vec3 specularTerm = vec3(0.0);\n\n float ndv = clamp(dot(N, V), 0.0, 1.0);\n vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n {{\n diffuseTerm += ambientLightColor[_idx_] * ambientFactor * ao;\n }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n {{\n diffuseTerm += calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_] * ao;\n }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n#endif\n for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n {{\n vec3 L = -directionalLightDirection[_idx_];\n vec3 lc = directionalLightColor[_idx_];\n\n vec3 H = normalize(L + V);\n float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n if (shadowEnabled)\n {\n shadowContrib = shadowContribsDir[_idx_];\n }\n#endif\n\n vec3 li = lc * ndl * shadowContrib;\n\n diffuseTerm += li;\n specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n vec3 L = reflect(-V, N);\n L = vec3(L.x, L[NORMAL_UP_AXIS], L[NORMAL_FRONT_AXIS]);\n float rough2 = clamp(1.0 - g, 0.0, 1.0);\n float bias2 = rough2 * 5.0;\n vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n vec3 envTexel2;\n for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n {{\n envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2 * ao;\n }}\n#endif\n\n gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n gl_FragColor.a = albedoColor.a;\n\n#ifdef SRGB_ENCODE\n gl_FragColor = linearTosRGB(gl_FragColor);\n#endif\n\n @import ecgl.common.emissiveLayer.main\n\n @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
+module.exports = "@export ecgl.realistic.vertex\n\n@import ecgl.common.transformUniforms\n\n@import ecgl.common.uv.header\n\n@import ecgl.common.attributes\n\n\n@import ecgl.common.wireframe.vertexHeader\n\n#ifdef VERTEX_COLOR\nattribute vec4 a_Color : COLOR;\nvarying vec4 v_Color;\n#endif\n\n#ifdef NORMALMAP_ENABLED\nattribute vec4 tangent : TANGENT;\nvarying vec3 v_Tangent;\nvarying vec3 v_Bitangent;\n#endif\n\n@import ecgl.common.vertexAnimation.header\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nvoid main()\n{\n\n @import ecgl.common.uv.main\n\n @import ecgl.common.vertexAnimation.main\n\n gl_Position = worldViewProjection * vec4(pos, 1.0);\n\n v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);\n v_WorldPosition = (world * vec4(pos, 1.0)).xyz;\n\n#ifdef VERTEX_COLOR\n v_Color = a_Color;\n#endif\n\n#ifdef NORMALMAP_ENABLED\n v_Tangent = normalize((worldInverseTranspose * vec4(tangent.xyz, 0.0)).xyz);\n v_Bitangent = normalize(cross(v_Normal, v_Tangent) * tangent.w);\n#endif\n\n @import ecgl.common.wireframe.vertexMain\n\n}\n\n@end\n\n\n\n@export ecgl.realistic.fragment\n\n#define LAYER_DIFFUSEMAP_COUNT 0\n#define LAYER_EMISSIVEMAP_COUNT 0\n#define PI 3.14159265358979\n#define ROUGHNESS_CHANEL 0\n#define METALNESS_CHANEL 1\n\n#define NORMAL_UP_AXIS 1\n#define NORMAL_FRONT_AXIS 2\n\n#ifdef VERTEX_COLOR\nvarying vec4 v_Color;\n#endif\n\n@import ecgl.common.uv.fragmentHeader\n\nvarying vec3 v_Normal;\nvarying vec3 v_WorldPosition;\n\nuniform sampler2D diffuseMap;\n\nuniform sampler2D detailMap;\nuniform sampler2D metalnessMap;\nuniform sampler2D roughnessMap;\n\n@import ecgl.common.layers.header\n\nuniform float emissionIntensity: 1.0;\n\nuniform vec4 color : [1.0, 1.0, 1.0, 1.0];\n\nuniform float metalness : 0.0;\nuniform float roughness : 0.5;\n\nuniform mat4 viewInverse : VIEWINVERSE;\n\n#ifdef AMBIENT_LIGHT_COUNT\n@import qtek.header.ambient_light\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n@import qtek.header.ambient_sh_light\n#endif\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n@import qtek.header.ambient_cubemap_light\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n@import qtek.header.directional_light\n#endif\n\n@import ecgl.common.normalMap.fragmentHeader\n\n@import ecgl.common.ssaoMap.header\n\n@import ecgl.common.bumpMap.header\n\n@import qtek.util.srgb\n\n@import qtek.util.rgbm\n\n@import ecgl.common.wireframe.fragmentHeader\n\n@import qtek.plugin.compute_shadow_map\n\nvec3 F_Schlick(float ndv, vec3 spec) {\n return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);\n}\n\nfloat D_Phong(float g, float ndh) {\n float a = pow(8192.0, g);\n return (a + 2.0) / 8.0 * pow(ndh, a);\n}\n\nvoid main()\n{\n vec4 albedoColor = color;\n\n vec3 eyePos = viewInverse[3].xyz;\n vec3 V = normalize(eyePos - v_WorldPosition);\n#ifdef VERTEX_COLOR\n #ifdef SRGB_DECODE\n albedoColor *= sRGBToLinear(v_Color);\n #else\n albedoColor *= v_Color;\n #endif\n#endif\n\n @import ecgl.common.albedo.main\n\n @import ecgl.common.diffuseLayer.main\n\n albedoColor *= albedoTexel;\n\n float m = metalness;\n\n#ifdef METALNESSMAP_ENABLED\n float m2 = texture2D(metalnessMap, v_DetailTexcoord)[METALNESS_CHANEL];\n m = clamp(m2 + (m - 0.5) * 2.0, 0.0, 1.0);\n#endif\n\n vec3 baseColor = albedoColor.rgb;\n albedoColor.rgb = baseColor * (1.0 - m);\n vec3 specFactor = mix(vec3(0.04), baseColor, m);\n\n float g = 1.0 - roughness;\n\n#ifdef ROUGHNESSMAP_ENABLED\n float g2 = 1.0 - texture2D(roughnessMap, v_DetailTexcoord)[ROUGHNESS_CHANEL];\n g = clamp(g2 + (g - 0.5) * 2.0, 0.0, 1.0);\n#endif\n\n vec3 N = v_Normal;\n\n#ifdef DOUBLE_SIDE\n if (dot(N, V) < 0.0) {\n N = -N;\n }\n#endif\n\n float ambientFactor = 1.0;\n\n#ifdef BUMPMAP_ENABLED\n N = bumpNormal(v_WorldPosition, v_Normal, N);\n ambientFactor = dot(v_Normal, N);\n#endif\n\n@import ecgl.common.normalMap.fragmentMain\n\n vec3 N2 = vec3(N.x, N[NORMAL_UP_AXIS], N[NORMAL_FRONT_AXIS]);\n\n vec3 diffuseTerm = vec3(0.0);\n vec3 specularTerm = vec3(0.0);\n\n float ndv = clamp(dot(N, V), 0.0, 1.0);\n vec3 fresnelTerm = F_Schlick(ndv, specFactor);\n\n @import ecgl.common.ssaoMap.main\n\n#ifdef AMBIENT_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_LIGHT_COUNT; _idx_++)\n {{\n diffuseTerm += ambientLightColor[_idx_] * ambientFactor * ao;\n }}\n#endif\n\n#ifdef AMBIENT_SH_LIGHT_COUNT\n for(int _idx_ = 0; _idx_ < AMBIENT_SH_LIGHT_COUNT; _idx_++)\n {{\n diffuseTerm += calcAmbientSHLight(_idx_, N2) * ambientSHLightColor[_idx_] * ao;\n }}\n#endif\n\n#ifdef DIRECTIONAL_LIGHT_COUNT\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n float shadowContribsDir[DIRECTIONAL_LIGHT_COUNT];\n if(shadowEnabled)\n {\n computeShadowOfDirectionalLights(v_WorldPosition, shadowContribsDir);\n }\n#endif\n for(int _idx_ = 0; _idx_ < DIRECTIONAL_LIGHT_COUNT; _idx_++)\n {{\n vec3 L = -directionalLightDirection[_idx_];\n vec3 lc = directionalLightColor[_idx_];\n\n vec3 H = normalize(L + V);\n float ndl = clamp(dot(N, normalize(L)), 0.0, 1.0);\n float ndh = clamp(dot(N, H), 0.0, 1.0);\n\n float shadowContrib = 1.0;\n#if defined(DIRECTIONAL_LIGHT_SHADOWMAP_COUNT)\n if (shadowEnabled)\n {\n shadowContrib = shadowContribsDir[_idx_];\n }\n#endif\n\n vec3 li = lc * ndl * shadowContrib;\n\n diffuseTerm += li;\n specularTerm += li * fresnelTerm * D_Phong(g, ndh);\n }}\n#endif\n\n\n#ifdef AMBIENT_CUBEMAP_LIGHT_COUNT\n vec3 L = reflect(-V, N);\n L = vec3(L.x, L[NORMAL_UP_AXIS], L[NORMAL_FRONT_AXIS]);\n float rough2 = clamp(1.0 - g, 0.0, 1.0);\n float bias2 = rough2 * 5.0;\n vec2 brdfParam2 = texture2D(ambientCubemapLightBRDFLookup[0], vec2(rough2, ndv)).xy;\n vec3 envWeight2 = specFactor * brdfParam2.x + brdfParam2.y;\n vec3 envTexel2;\n for(int _idx_ = 0; _idx_ < AMBIENT_CUBEMAP_LIGHT_COUNT; _idx_++)\n {{\n envTexel2 = RGBMDecode(textureCubeLodEXT(ambientCubemapLightCubemap[_idx_], L, bias2), 51.5);\n specularTerm += ambientCubemapLightColor[_idx_] * envTexel2 * envWeight2 * ao;\n }}\n#endif\n\n gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;\n gl_FragColor.a = albedoColor.a;\n\n#ifdef SRGB_ENCODE\n gl_FragColor = linearTosRGB(gl_FragColor);\n#endif\n\n @import ecgl.common.emissiveLayer.main\n\n @import ecgl.common.wireframe.fragmentMain\n}\n\n@end";
 
 
 /***/ }),
@@ -42904,7 +42964,7 @@ module.exports = SunCalc;
 
 
     var Node = __webpack_require__(36);
-    var glinfo = __webpack_require__(19);
+    var glinfo = __webpack_require__(16);
     var glenum = __webpack_require__(10);
     var FrameBuffer = __webpack_require__(11);
 
@@ -43166,7 +43226,7 @@ module.exports = SunCalc;
 
 
 
-    var Light = __webpack_require__(17);
+    var Light = __webpack_require__(18);
 
     /**
      * @constructor qtek.light.Ambient
@@ -43210,7 +43270,7 @@ module.exports = SunCalc;
 // https://docs.unrealengine.com/latest/INT/Engine/Rendering/LightingAndShadows/AmbientCubemap/define(function(require) {
 
 
-    var Light = __webpack_require__(17);
+    var Light = __webpack_require__(18);
     var cubemapUtil = __webpack_require__(223);
 
     /**
@@ -43302,7 +43362,7 @@ module.exports = SunCalc;
 
 
 
-    var Light = __webpack_require__(17);
+    var Light = __webpack_require__(18);
     var vendor = __webpack_require__(20);
 
     /**
@@ -45698,13 +45758,13 @@ module.exports = SunCalc;
     var Matrix4 = __webpack_require__(9);
     var Renderer = __webpack_require__(51);
     var Shader = __webpack_require__(7);
-    var Light = __webpack_require__(17);
+    var Light = __webpack_require__(18);
     var Mesh = __webpack_require__(33);
     var SpotLight = __webpack_require__(77);
     var DirectionalLight = __webpack_require__(75);
     var PointLight = __webpack_require__(76);
     var shaderLibrary = __webpack_require__(80);
-    var Material = __webpack_require__(18);
+    var Material = __webpack_require__(19);
     var FrameBuffer = __webpack_require__(11);
     var Texture = __webpack_require__(5);
     var Texture2D = __webpack_require__(6);
@@ -46741,7 +46801,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n const 
     var Texture = __webpack_require__(5);
     var FrameBuffer = __webpack_require__(11);
     var Pass = __webpack_require__(12);
-    var Material = __webpack_require__(18);
+    var Material = __webpack_require__(19);
     var Shader = __webpack_require__(7);
     var Skybox = __webpack_require__(57);
     var Scene = __webpack_require__(35);
@@ -47613,7 +47673,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 /***/ (function(module, exports) {
 
 
-    module.exports = '0.3.9';
+    module.exports = '0.4.0';
 
 
 /***/ }),

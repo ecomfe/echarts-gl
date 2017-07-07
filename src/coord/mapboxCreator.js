@@ -85,7 +85,6 @@ var mapboxCreator = {
             mapboxCoordSys.update = updateMapbox;
         });
 
-        var altitudeDataExtent = [];
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'mapbox') {
                 var mapboxModel = seriesModel.getReferringComponents('mapbox')[0];

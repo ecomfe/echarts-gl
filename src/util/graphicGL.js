@@ -524,11 +524,11 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
             detailUvRepeat: uvRepeat,
             detailUvOffset: uvOffset
         });
-        var normalTexture = material.get('normalMap');
-        if (normalTexture) {
+        // var normalTexture = material.get('normalMap');
+        // if (normalTexture) {
             // PENDING
             // normalTexture.format = Texture.SRGB;
-        }
+        // }
     }
     else if (shading === 'lambert') {
         material.setTextureImage('detailMap', detailTexture, api, textureOpt);

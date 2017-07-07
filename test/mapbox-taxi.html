@@ -7,7 +7,7 @@ https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Build
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Map3D - ECHARTS-GL</title>
+        <title>Taxi routes in capetown - ECHARTS-GL</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
         <link rel="stylesheet" href="./common.css">
@@ -18,7 +18,9 @@ https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Build
         <script src="../dist/echarts-gl.js"></script>
         <script src='lib/mapbox-gl.js'></script>
         <link href='lib/mapbox-gl.css' rel='stylesheet' />
+        <script src="https://unpkg.com/shapefile@0.6"></script>
         <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
         <script>
             mapboxgl.accessToken = window.location.search.slice(1);
             var chart = echarts.init(document.getElementById('main'));
@@ -43,62 +45,169 @@ https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Build
                     prevX = x;
                     prevY = y;
                     // Dequantize
-                    result.push([x / ENCODE_SCALE, y / ENCODE_SCALE, 10]);
+                    result.push([x / ENCODE_SCALE, y / ENCODE_SCALE]);
                 }
 
                 return result;
             }
 
-            $.getJSON('data/taxi-routes-capetown.json', function (data) {
-                var lines = data.map(function (track) {
-                    return {
-                        coords: decodeLine(track)
-                    };
+            var geoJSON = {
+                features: []
+            };
+            var regions = [];
+            var readShp = new Promise(function (resolve, reject) {
+                shapefile.open('data/buildings-capetown.shp', 'data/buildings-capetown.dbf')
+                    .then(source => source.read()
+                        .then(function append(result) {
+                            if (result.done) {
+                                resolve();
+                                return;
+                            }
+                            var feature = result.value;
+                            feature.properties.name = geoJSON.features.length + '';
+                            regions.push({
+                                name: geoJSON.features.length + '',
+                                value: 1,
+                                height: feature.properties.SHAPE_leng * 10000
+                            })
+                            geoJSON.features.push(feature);
+                            return source.read().then(append);
+                        })
+                    );
+            });
+
+            Promise.all([$.getJSON('data/taxi-routes-capetown.json'), readShp])
+                .then(function ([data, lastFeature]) {
+
+                    var lines = data.map(function (track) {
+                        return {
+                            coords: decodeLine(track)
+                        };
+                    });
+
+                    echarts.registerMap('buildings', geoJSON);
+
+                    console.profile('setOption');
+                    chart.setOption({
+                        mapbox: {
+                            center: [18.424552361777955, -33.92188144682616],
+                            zoom: 14,
+                            pitch: 50,
+                            bearing: -10,
+                            altitudeScale: 2,
+                            style: 'mapbox://styles/mapbox/dark-v9',
+                            postEffect: {
+                                enable: true,
+                                screenSpaceAmbientOcclusion: {
+                                    enable: true,
+                                    intensity: 1.2,
+                                    radius: 6,
+                                    quality: 'high'
+                                },
+                                screenSpaceReflection: {
+                                    enable: true
+                                },
+                                depthOfField: {
+                                    enable: false,
+                                    focalDistance: 80,
+                                    blurRadius: 5
+                                }
+                            },
+                            light: {
+                                main: {
+                                    intensity: 1,
+                                    shadow: true,
+                                    shadowQuality: 'high'
+                                },
+                                ambient: {
+                                    intensity: 0.
+                                },
+                                ambientCubemap: {
+                                    texture: 'asset/pisa.hdr',
+                                    exposure: 1,
+                                    diffuseIntensity: 0.5,
+                                    specularIntensity: 2
+                                }
+                            }
+                        },
+                        series: [{
+                            type: 'lines3D',
+
+                            coordinateSystem: 'mapbox',
+
+                            effect: {
+                                show: true,
+                                constantSpeed: 5,
+                                trailWidth: 2,
+                                trailLength: 0.8,
+                                trailOpacity: 1,
+                                spotIntensity: 10
+                            },
+
+                            blendMode: 'lighter',
+
+                            polyline: true,
+
+                            lineStyle: {
+                                width: 0.1,
+                                color: 'rgb(200, 40, 0)',
+                                opacity: 0.
+                            },
+
+                            data: {
+                                count: function () {
+                                    return lines.length;
+                                },
+                                getItem: function (idx) {
+                                    return lines[idx]
+                                }
+                            }
+                        }, {
+                            type: 'map3D',
+                            map: 'buildings',
+
+                            coordinateSystem: 'mapbox',
+                            shading: 'realistic',
+                            silent: true,
+
+                            instancing: true,
+
+                            data: regions,
+
+                            realisticMaterial: {
+                                metalness: 1,
+                                roughness: 0.2,
+                            }
+                        }]
+                    });
+
+                    console.profileEnd('setOption');
                 });
-
-                chart.setOption({
-                    mapbox: {
-                        center: [18.579, -33.972],
-                        zoom: 11,
-                        pitch: 50,
-                        bearing: -10,
-                        altitudeScale: 2,
-                        style: 'mapbox://styles/mapbox/dark-v9',
-                        postEffect: {
-                            enable: true
-                        }
-                    },
-                    series: [{
-                        type: 'lines3D',
-
-                        coordinateSystem: 'mapbox',
-
-                        effect: {
-                            show: true,
-                            constantSpeed: 20,
-                            trailWidth: 2,
-                            trailLength: 0.8,
-                            trailOpacity: 1
-                        },
-
-                        blendMode: 'lighter',
-
-                        polyline: true,
-
-                        lineStyle: {
-                            width: 1,
-                            color: 'rgb(50, 50, 150)',
-                            opacity: 0.5
-                        },
-
-                        data: lines
-                    }]
+                
+            window.addEventListener('keydown', function () {
+                chart.dispatchAction({
+                    type: 'lines3DToggleEffect',
+                    seriesIndex: 0
                 });
             });
 
             window.addEventListener('resize', function () {
                 chart.resize();
             });
+
+            var gui = new dat.GUI();
+            var config = {
+                color: 'rgb(200, 40, 0)'
+            };
+            gui.addColor(config, 'color').onFinishChange(function () {
+                chart.setOption({
+                    series: [{
+                        lineStyle: {
+                            color: config.color
+                        }
+                    }]
+                });
+            })
 
         </script>
     </body>

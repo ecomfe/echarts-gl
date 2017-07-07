@@ -22,6 +22,8 @@ function Mapbox() {
     this.height = 0;
 
     this.altitudeScale = 1;
+
+    // TODO Change boxHeight won't have animation.
     this.boxHeight = 'auto';
 
     // Set by mapbox creator
