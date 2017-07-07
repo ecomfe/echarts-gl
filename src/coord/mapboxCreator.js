@@ -47,9 +47,8 @@ function updateMapbox(ecModel, api) {
             );
         }
     }, this);
-    // Create altitude axis
     if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
-        this.altitudeExtent = altitudeDataExtent[idx];
+        this.altitudeExtent = altitudeDataExtent;
     }
 }
 
@@ -82,6 +81,8 @@ var mapboxCreator = {
             mapboxCoordSys.setCameraOption(
                 mapboxModel.getMapboxCameraOption()
             );
+
+            mapboxCoordSys.update = updateMapbox;
         });
 
         var altitudeDataExtent = [];
