@@ -38,7 +38,7 @@ module.exports = {
             // Only available when camera is orthographic
             orthographicSize: 150,
             maxOrthographicSize: 400,
-            minOrthographicSize: 40,
+            minOrthographicSize: 20,
 
             // Center view point
             center: [0, 0, 0],

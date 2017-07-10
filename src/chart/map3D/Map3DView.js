@@ -51,6 +51,7 @@ module.exports = echarts.extendChartView({
                 this._control.init();
             }
             var viewControlModel = map3DModel.getModel('viewControl');
+            control.setViewGL(coordSys.viewGL);
             control.setFromViewControlModel(viewControlModel, 0);
 
             control.off('update');
