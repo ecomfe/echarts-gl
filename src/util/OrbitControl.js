@@ -43,6 +43,7 @@ var OrbitControl = Base.extend(function () {
 
         /**
          * Minimum distance to the center
+         * Only available when camera is perspective.
          * @type {number}
          * @default 0.5
          */
@@ -50,10 +51,21 @@ var OrbitControl = Base.extend(function () {
 
         /**
          * Maximum distance to the center
+         * Only available when camera is perspective.
          * @type {number}
          * @default 2
          */
         maxDistance: 1.5,
+
+        /**
+         * Only available when camera is orthographic
+         */
+        maxOrthographicSize: 300,
+
+        /**
+         * Only available when camera is orthographic
+         */
+        minOrthographicSize: 30,
 
         /**
          * Minimum alpha rotation
@@ -214,6 +226,23 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
+     * Get size of orthographic viewing volume
+     * @return {number}
+     */
+    getOrthographicSize: function () {
+        return this._orthoSize;
+    },
+
+    /**
+     * Set size of orthographic viewing volume
+     * @param {number} size
+     */
+    setOrthographicSize: function (size) {
+        this._orthoSize = size;
+        this._needsUpdate = true;
+    },
+
+    /**
      * Get alpha rotation
      * Alpha angle for top-down rotation. Positive to rotate to top.
      *
@@ -272,16 +301,6 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
-     * @param {qtek.Camera} camera
-     */
-    setCamera: function (camera) {
-        this._camera = camera;
-        // this._decomposeTransform();
-
-        this._needsUpdate = true;
-    },
-
-    /**
      * @param {module:echarts-gl/core/ViewGL} viewGL
      */
     setViewGL: function (viewGL) {
@@ -292,17 +311,26 @@ var OrbitControl = Base.extend(function () {
      * @return {qtek.Camera}
      */
     getCamera: function () {
-        return this._camera;
+        return this.viewGL.camera;
     },
 
     setFromViewControlModel: function (viewControlModel, extraOpts) {
         extraOpts = extraOpts || {};
         var baseDistance = extraOpts.baseDistance || 0;
+        var baseOrthoSize = extraOpts.baseOrthoSize || 1;
 
-        this.minDistance = viewControlModel.get('minDistance') + baseDistance;
-        this.maxDistance = viewControlModel.get('maxDistance') + baseDistance;
+        var projection = viewControlModel.get('projection');
+        if (projection !== 'perspective' && projection !== 'orthographic' && projection !== 'isometric') {
+            if (__DEV__) {
+                console.error('Unkown projection type %s, use perspective projection instead.', projection);
+            }
+            projection = 'perspective';
+        }
+        this._projection = projection;
+        this.viewGL.setProjection(projection);
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
+        var targetOrthographicSize = viewControlModel.get('orthographicSize') + baseOrthoSize;
 
         [
             ['damping', 0.8],
@@ -310,6 +338,10 @@ var OrbitControl = Base.extend(function () {
             ['autoRotateAfterStill', 3],
             ['autoRotateDirection', 'cw'],
             ['autoRotateSpeed', 10],
+            ['minDistance', 30],
+            ['maxDistance', 400],
+            ['minOrthographicSize', 30],
+            ['maxOrthographicSize', 300],
             ['minAlpha', -90],
             ['maxAlpha', 90],
             ['minBeta', -Infinity],
@@ -318,10 +350,15 @@ var OrbitControl = Base.extend(function () {
             ['zoomSensitivity', 1],
             ['panSensitivity', 1],
             ['panMouseButton', 'left'],
-            ['rotateMouseButton', 'middle']
+            ['rotateMouseButton', 'middle'],
         ].forEach(function (prop) {
             this[prop[0]] = firstNotNull(viewControlModel.get(prop[0]), prop[1]);
         }, this);
+
+        this.minDistance += baseDistance;
+        this.maxDistance += baseDistance;
+        this.minOrthographicSize += baseOrthoSize,
+        this.maxOrthographicSize += baseOrthoSize;
         
         var ecModel = viewControlModel.ecModel;
 
@@ -341,6 +378,7 @@ var OrbitControl = Base.extend(function () {
                 beta: beta,
                 center: center,
                 distance: targetDistance,
+                targetOrthographicSize: targetOrthographicSize,
                 easing: animationOpts.animationEasingUpdate,
                 duration: animationOpts.animationDurationUpdate
             });
@@ -350,6 +388,7 @@ var OrbitControl = Base.extend(function () {
             this.setAlpha(alpha);
             this.setBeta(beta);
             this.setCenter(center);
+            this.setOrthographicSize(targetOrthographicSize);
         }
 
         this._notFirst = true;
@@ -376,6 +415,7 @@ var OrbitControl = Base.extend(function () {
      * @param {number} opts.distance
      * @param {number} opts.alpha
      * @param {number} opts.beta
+     * @param {number} opts.orthographicSize
      * @param {number} [opts.duration=1000]
      * @param {number} [opts.easing='linear']
      */
@@ -385,9 +425,14 @@ var OrbitControl = Base.extend(function () {
 
         var obj = {};
         var target = {};
+
         if (opts.distance != null) {
             obj.distance = this.getDistance();
             target.distance = opts.distance;
+        }
+        if (opts.orthographicSize != null) {
+            obj.orthographicSize = this.getOrthographicSize();
+            target.orthographicSize = opts.orthographicSize;
         }
         if (opts.alpha != null) {
             obj.alpha = this.getAlpha();
@@ -417,6 +462,9 @@ var OrbitControl = Base.extend(function () {
                     }
                     if (obj.center != null) {
                         self.setCenter(obj.center);
+                    }
+                    if (obj.orthographicSize != null) {
+                        self.setOrthographicSize(obj.orthographicSize);
                     }
                     self._needsUpdate = true;
                 })
@@ -460,15 +508,17 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        // Fixed deltaTime
-        this._updateDistance(Math.min(deltaTime, 50));
-        this._updatePan(Math.min(deltaTime, 50));
+        deltaTime = Math.min(deltaTime, 50);
 
-        this._updateRotate(Math.min(deltaTime, 50));
+        this._updateDistanceOrSize(deltaTime);
+
+        this._updatePan(deltaTime);
+
+        this._updateRotate(deltaTime);
 
         this._updateTransform();
 
-        this._camera.update();
+        this.getCamera().update();
 
         this.zr && this.zr.refresh();
 
@@ -488,13 +538,31 @@ var OrbitControl = Base.extend(function () {
         this._vectorDamping(velocity, Math.pow(this.damping, deltaTime / 16));
     },
 
-    _updateDistance: function (deltaTime) {
-        this._setDistance(this._distance + this._zoomSpeed * deltaTime / 20);
+    _updateDistanceOrSize: function (deltaTime) {
+        if (this._projection === 'perspective') {
+            this._setDistance(this._distance + this._zoomSpeed * deltaTime / 20);
+        }
+        else {
+            this._setOrthoSize(this._orthoSize + this._zoomSpeed * deltaTime / 20);
+        }
+
         this._zoomSpeed *= Math.pow(this.damping, deltaTime / 16);
     },
 
+
     _setDistance: function (distance) {
         this._distance = Math.max(Math.min(distance, this.maxDistance), this.minDistance);
+    },
+
+    _setOrthoSize: function (size) {
+        this._orthoSize = Math.max(Math.min(size, this.maxOrthographicSize), this.minOrthographicSize);
+        var camera = this.getCamera();
+        var cameraHeight = this._orthoSize;
+        var cameraWidth = cameraHeight / this.viewGL.viewport.height * this.viewGL.viewport.width;
+        camera.left = -cameraWidth / 2;
+        camera.right = cameraWidth / 2;
+        camera.top = cameraHeight / 2;
+        camera.bottom = -cameraHeight / 2;
     },
 
     _updatePan: function (deltaTime) {
@@ -502,7 +570,7 @@ var OrbitControl = Base.extend(function () {
         var velocity = this._panVelocity;
         var len = this._distance;
 
-        var target = this._camera;
+        var target = this.getCamera();
         var yAxis = target.worldTransform.y;
         var xAxis = target.worldTransform.x;
 
@@ -515,7 +583,7 @@ var OrbitControl = Base.extend(function () {
     },
 
     _updateTransform: function () {
-        var camera = this._camera;
+        var camera = this.getCamera();
 
         var dir = new Vector3();
         var theta = this._theta + Math.PI / 2;
@@ -555,7 +623,7 @@ var OrbitControl = Base.extend(function () {
     },
 
     _decomposeTransform: function () {
-        if (!this._camera) {
+        if (!this.getCamera()) {
             return;
         }
 
@@ -563,7 +631,7 @@ var OrbitControl = Base.extend(function () {
         // FIXME alpha is not certain when beta is 90 or -90
         var euler = new Vector3();
         euler.eulerFromQuat(
-            this._camera.rotation.normalize(), 'ZYX'
+            this.getCamera().rotation.normalize(), 'ZYX'
         );
 
         this._theta = -euler.x;
@@ -572,7 +640,13 @@ var OrbitControl = Base.extend(function () {
         this.setBeta(this.getBeta());
         this.setAlpha(this.getAlpha());
 
-        this._setDistance(this._camera.position.dist(this._center));
+        // Is perspective
+        if (this.getCamera().aspect) {
+            this._setDistance(this.getCamera().position.dist(this._center));
+        }
+        else {
+            this._setOrthoSize(this.getCamera().top - this.getCamera().bottom);
+        }
     },
 
     _mouseDownHandler: function (e) {
@@ -676,11 +750,20 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        var distance = Math.max(Math.min(
-            this._distance - this.minDistance,
-            this.maxDistance - this._distance
-        ));
-        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20, 0.5) * this.zoomSensitivity;
+        var speed;
+        if (this._projection === 'perspective') {
+            speed = Math.max(Math.max(Math.min(
+                this._distance - this.minDistance,
+                this.maxDistance - this._distance
+            )) / 20, 0.5);
+        }
+        else {
+            speed = Math.max(Math.max(Math.min(
+                this._orthoSize - this.minOrthographicSize,
+                this.maxOrthographicSize - this._orthoSize
+            )) / 20, 0.5);
+        }
+        this._zoomSpeed = (delta > 0 ? -1 : 1) * speed * this.zoomSensitivity;
 
         this._rotating = false;
 

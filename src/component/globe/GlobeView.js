@@ -297,7 +297,6 @@ module.exports = echarts.extendComponentView({
 
         // Update control
         var control = this._control;
-        control.setCamera(camera);
         control.setViewGL(coordSys.viewGL);
 
         var coord = viewControlModel.get('targetCoord');

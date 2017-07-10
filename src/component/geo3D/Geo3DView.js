@@ -46,7 +46,6 @@ module.exports = echarts.extendComponentView({
         }
 
         var control = this._control;
-        control.setCamera(geo3D.viewGL.camera);
         control.setViewGL(geo3D.viewGL);
 
         var viewControlModel = geo3DModel.getModel('viewControl');

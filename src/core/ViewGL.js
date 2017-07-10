@@ -22,11 +22,11 @@ var halton = require('../effect/halton');
 /**
  * @constructor
  * @alias module:echarts-gl/core/ViewGL
- * @param {string} [cameraType='perspective']
+ * @param {string} [projection='perspective']
  */
-function ViewGL(cameraType) {
+function ViewGL(projection) {
 
-    cameraType = cameraType || 'perspective';
+    projection = projection || 'perspective';
 
     /**
      * @type {module:echarts-gl/core/LayerGL}
@@ -46,7 +46,7 @@ function ViewGL(cameraType) {
         x: 0, y: 0, width: 0, height: 0
     };
 
-    this.setCameraType(cameraType);
+    this.setProjection(projection);
 
     this._compositor = new EffectCompositor();
 
@@ -78,10 +78,10 @@ function ViewGL(cameraType) {
  * Set camera type of group
  * @param {string} cameraType 'perspective' | 'orthographic'
  */
-ViewGL.prototype.setCameraType = function (cameraType) {
+ViewGL.prototype.setProjection = function (projection) {
     var oldCamera = this.camera;
     oldCamera && oldCamera.update();
-    if (cameraType === 'perspective') {
+    if (projection === 'perspective') {
         if (!(this.camera instanceof PerspectiveCamera)) {
             this.camera = new PerspectiveCamera();
             if (oldCamera) {
@@ -97,6 +97,9 @@ ViewGL.prototype.setCameraType = function (cameraType) {
             }
         }
     }
+    // PENDING
+    this.camera.near = 0.1;
+    this.camera.far = 2000;
 };
 
 /**

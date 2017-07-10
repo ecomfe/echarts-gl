@@ -50,7 +50,6 @@ module.exports = echarts.extendChartView({
                 });
                 this._control.init();
             }
-            control.setCamera(coordSys.viewGL.camera);
             var viewControlModel = map3DModel.getModel('viewControl');
             control.setFromViewControlModel(viewControlModel, 0);
 

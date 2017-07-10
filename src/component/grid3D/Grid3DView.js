@@ -140,7 +140,6 @@ module.exports = echarts.extendComponentView({
         // cartesian.viewGL.setCameraType(grid3DModel.get('viewControl.projection'));
 
         var control = this._control;
-        control.setCamera(cartesian.viewGL.camera);
         control.setViewGL(cartesian.viewGL);
 
         var viewControlModel = grid3DModel.getModel('viewControl');
@@ -252,6 +251,9 @@ module.exports = echarts.extendComponentView({
             }
 
             var point = ray.intersectPlane(face.plane);
+            if (!point) {
+                continue;
+            }
             var axis0 = cartesian.getAxis(face.faceInfo[0]);
             var axis1 = cartesian.getAxis(face.faceInfo[1]);
             var idx0 = dimIndicesMap[face.faceInfo[0]];

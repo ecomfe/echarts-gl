@@ -2,6 +2,9 @@ module.exports = {
     defaultOption: {
 
         viewControl: {
+            // perspective, orthographic.
+            // TODO Isometric
+            projection: 'perspective',
             // If rotate on on init
             autoRotate: false,
             // cw or ccw
@@ -24,11 +27,18 @@ module.exports = {
             rotateMouseButton: 'left',
 
             // Distance to the target
+            // Only available when camera is perspective.
             distance: 150,
             // Min distance mouse can zoom in
             minDistance: 40,
             // Max distance mouse can zoom out
             maxDistance: 400,
+
+            // Size of viewing volume.
+            // Only available when camera is orthographic
+            orthographicSize: 150,
+            maxOrthographicSize: 400,
+            minOrthographicSize: 40,
 
             // Center view point
             center: [0, 0, 0],
