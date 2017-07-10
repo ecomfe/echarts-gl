@@ -86,6 +86,7 @@ module.exports = {
             alpha: 40,
             beta: 0,
             distance: 100,
+            orthographicSize: 60,
 
             minAlpha: 5,
             minBeta: -80,

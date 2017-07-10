@@ -44,7 +44,15 @@ float fetchDepth(sampler2D depthTexture, vec2 uv)
 
 float linearDepth(float depth)
 {
-    return projection[3][2] / (depth * projection[2][3] - projection[2][2]);
+    if (projection[3][3] == 0.0) {
+        // Perspective
+        return projection[3][2] / (depth * projection[2][3] - projection[2][2]);
+    }
+    else {
+        // Symmetrical orthographic
+        // PENDING
+        return (depth - projection[3][2]) / projection[2][2];
+    }
 }
 
 bool rayIntersectDepth(float rayZNear, float rayZFar, vec2 hitPixel)

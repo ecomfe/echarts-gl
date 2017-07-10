@@ -45,8 +45,19 @@ float ssaoEstimator(in vec3 originPos, in mat3 kernelBasis) {
         vec4 depthTexel = texture2D(depthTex, texCoord.xy * 0.5 + 0.5);
 
         float sampleDepth = depthTexel.r * 2.0 - 1.0;
-
-        sampleDepth = projection[3][2] / (sampleDepth * projection[2][3] - projection[2][2]);
+        if (projection[3][3] == 0.0) {
+            // Perspective
+            sampleDepth = projection[3][2] / (sampleDepth * projection[2][3] - projection[2][2]);
+        }
+        else {
+            // Symmetrical orthographic
+            // PENDING
+            sampleDepth = (sampleDepth - projection[3][2]) / projection[2][2];
+        }
+        // Consider orthographic projection
+        // vec4 projectedPos = vec4(texCoord.xy, sampleDepth, 1.0);
+        // vec4 p4 = projectionInv * projectedPos;
+        // sampleDepth = p4.z / p4.w;
 
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(originPos.z - sampleDepth));
         occlusion += rangeCheck * step(samplePos.z, sampleDepth - bias);

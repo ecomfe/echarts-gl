@@ -5,6 +5,7 @@ var FrameBuffer = require('qtek/lib/FrameBuffer');
 var Texture2D = require('qtek/lib/Texture2D');
 var Shader = require('qtek/lib/Shader');
 var Matrix4 = require('qtek/lib/math/Matrix4');
+var Vector3 = require('qtek/lib/math/Vector3');
 
 function TemporalSuperSampling () {
     var haltonSequence = [];
@@ -68,8 +69,15 @@ TemporalSuperSampling.prototype = {
         var height = viewport.height * dpr;
 
         var offset = this._haltonSequence[this._frame];
-        camera.projectionMatrix._array[8] += (offset[0] * 2.0 - 1.0) / width;
-        camera.projectionMatrix._array[9] += (offset[1] * 2.0 - 1.0) / height;
+
+        var translationMat = new Matrix4();
+        translationMat._array[12] = (offset[0] * 2.0 - 1.0) / width;
+        translationMat._array[13] = (offset[1] * 2.0 - 1.0) / height;
+
+        Matrix4.mul(camera.projectionMatrix, translationMat, camera.projectionMatrix);
+        
+        // camera.projectionMatrix._array[8] += (offset[0] * 2.0 - 1.0) / width;
+        // camera.projectionMatrix._array[9] += (offset[1] * 2.0 - 1.0) / height;
 
         Matrix4.invert(camera.invProjectionMatrix, camera.projectionMatrix);
     },

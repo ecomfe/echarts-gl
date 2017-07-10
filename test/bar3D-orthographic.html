@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Orthographic Camera - ECHARTS-GL</title>
+        <title>Bar3D Simplex Noise - ECHARTS-GL</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
         <link rel="stylesheet" href="./common.css">
@@ -14,9 +14,13 @@
         <script src="lib/jquery.min.js"></script>
         <script src="lib/simplex.js"></script>
         <script>
-            var chart = echarts.init(document.getElementById('main'));
+            var chart = echarts.init(document.getElementById('main'), null, {
+                devicePixelRatio: 1
+            });
 
             var noise = new SimplexNoise(Math.random);
+            var xData = [];
+            var yData = [];
             function generateData() {
                 var data = [];
                 for (var i = 0; i <= 50; i++) {
@@ -55,6 +59,19 @@
                     min: 0
                 },
                 grid3D: {
+                    show: false,
+                    postEffect: {
+                        enable: true,
+                        SSAO: {
+                            enable: true,
+                            radius: 2,
+                            intensity: 1.0,
+                            quality: 'medium'
+                        },
+                        depthOfField: {
+                            // enable: true
+                        }
+                    },
                     axisLine: {
                         lineStyle: { color: '#fff' }
                     },
@@ -68,8 +85,15 @@
                     light: {
                         main: {
                             shadow: true,
-                            quality: 'ultra',
-                            intensity: 1.5
+                            intensity: 1
+                        },
+                        ambient: {
+                            intensity: 0
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/canyon.hdr',
+                            exposure: 2,
+                            diffuseIntensity: 1
                         }
                     }
                 },
@@ -77,11 +101,7 @@
                     type: 'bar3D',
                     data: data,
                     shading: 'lambert',
-                    label: {
-                        formatter: function (param) {
-                            return param.value[2].toFixed(1);
-                        }
-                    }
+                    silent: true
                 }]
             });
 
