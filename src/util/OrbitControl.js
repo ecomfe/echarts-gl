@@ -20,6 +20,13 @@ var MOUSE_BUTTON_KEY_MAP = {
     right: 2  
 };
 
+function convertToArray(val) {
+    if (!(val instanceof Array)) {
+        val = [val, val];
+    }
+    return val;
+}
+
 /**
  * @alias module:echarts-x/util/OrbitControl
  */
@@ -696,7 +703,6 @@ var OrbitControl = Base.extend(function () {
     },
 
     _mouseMoveHandler: function (e) {
-        // FIXME
         if (e.target && e.target.__isGLToZRProxy) {
             return;
         }
@@ -705,13 +711,16 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
+        var panSensitivity = convertToArray(this.panSensitivity);
+        var rotateSensitivity = convertToArray(this.rotateSensitivity);
+        
         if (this._mode === 'rotate') {
-            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * this.rotateSensitivity;
-            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * this.rotateSensitivity;
+            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * rotateSensitivity[0];
+            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * rotateSensitivity[1];
         }
         else if (this._mode === 'pan') {
-            this._panVelocity.x = (e.offsetX - this._mouseX) / this.zr.getWidth() * this.panSensitivity * 400;
-            this._panVelocity.y = (-e.offsetY + this._mouseY) / this.zr.getHeight() * this.panSensitivity * 400;
+            this._panVelocity.x = (e.offsetX - this._mouseX) / this.zr.getWidth() * panSensitivity[0] * 400;
+            this._panVelocity.y = (-e.offsetY + this._mouseY) / this.zr.getHeight() * panSensitivity[1] * 400;
         }
 
 

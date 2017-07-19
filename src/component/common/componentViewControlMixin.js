@@ -19,8 +19,10 @@ module.exports = {
             // Rotate, zoom damping.
             damping: 0.8,
             // Sensitivities for operations.
+            // Can be array to set x,y respectively
             rotateSensitivity: 1,
             zoomSensitivity: 1,
+            // Can be array to set x,y respectively
             panSensitivity: 1,
             // Which mouse button do rotate or pan
             panMouseButton: 'middle',

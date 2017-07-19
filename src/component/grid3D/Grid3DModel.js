@@ -41,6 +41,7 @@ var Grid3DModel = echarts.extendComponentModel({
                 // (dimValue: number, value: Array) => string
                 formatter: null,
 
+                // TODO, Consider boxWidth
                 margin: 8,
                 // backgroundColor: '#ffbd67',
                 // borderColor: '#000',

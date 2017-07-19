@@ -1,0 +1,212 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Bar3D Isometric - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <div id="image-upload">Drop files here or click to upload</div>
+        <style>
+            #image-upload {
+                width: 300px;
+                height: 100px;
+                line-height: 100px;
+                text-align: center;
+                cursor: pointer;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 4px;
+                border: 2px dashed #999;
+                position: absolute;
+                right: 10px;
+                bottom: 10px;
+                z-index: 10;
+                color: #fff;
+            }
+        </style>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'), null, {
+                devicePixelRatio: 1
+            });
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+
+            var config = {
+                scale: 0.25
+            };
+
+            var imgData;
+
+            chart.setOption({
+                tooltip: {},
+                backgroundColor: '#000',
+                xAxis3D: {
+                    type: 'value'
+                },
+                yAxis3D: {
+                    type: 'value'
+                },
+                zAxis3D: {
+                    type: 'value',
+                    min: 0,
+                    max: 100
+                },
+                grid3D: {
+                    show: false,
+                    viewControl: {
+                        projection: 'orthographic',
+                        alpha: 45,
+                        beta: -45,
+                        rotateSensitivity: [1, 0],
+                        damping: 0.9,
+                        panSensitivity: 0,
+                        orthographicSize: 120
+                    },
+                    postEffect: {
+                        enable: true,
+                        bloom: {
+                            intensity: 0.2
+                        },
+                        screenSpaceAmbientOcclusion: {
+                            enable: true,
+                            intensity: 2,
+                            radius: 4
+                        }
+                        // depthOfField: {
+                        //     enable: true,
+                        //     blurRadius: 4,
+                        //     fstop: 10
+                        // }
+                    },
+                    boxDepth: 100,
+                    boxHeight: 20,
+                    environment: 'none',
+                    light: {
+                        main: {
+                            shadow: true,
+                            intensity: 2
+                        },
+                        ambientCubemap: {
+                            texture: 'asset/canyon.hdr',
+                            exposure: 2,
+                            diffuseIntensity: 0.2
+                        }
+                    }
+                }
+            })
+
+            function updateData(data, width, height) {
+                console.time('update');
+                var dataItem = [];
+                var dataProvider = {
+                    getItem: function (i) {
+                        var r = data[i * 4];
+                        var g = data[i * 4 + 1];
+                        var b = data[i * 4 + 2];
+
+                        var lum = (0.2125 * r + 0.7154 * g + 0.0721 * b);
+                        lum = (lum - 125) * config.scale + 50;
+                        dataItem[0] = i % width;
+                        dataItem[1] = height - Math.floor(i / width);
+                        dataItem[2] = lum;
+                        return dataItem;
+                    },
+                    count: function () {
+                        return data.length / 4;
+                    }
+                }
+
+                chart.setOption({
+                    grid3D: {
+                        boxWidth: 100 / height * width
+                    },
+                    series: [{
+                        type: 'bar3D',
+                        shading: 'realistic',
+                        realisticMaterial: {
+                            roughness: 1
+                        },
+                        barSize: 0.4,
+                        silent: true,
+                        itemStyle: {
+                            color: function (params) {
+                                var i = params.dataIndex;
+                                var r = data[i * 4] / 255;
+                                var g = data[i * 4 + 1] / 255;
+                                var b = data[i * 4 + 2] / 255;
+                                var lum = (0.2125 * r + 0.7154 * g + 0.0721 * b);
+                                // r *= lum * 2;
+                                // g *= lum * 2;
+                                // b *= lum * 2;
+                                return [r, g, b, 1];
+                            }
+                        },
+                        data: dataProvider
+                    }]
+                });
+
+                console.timeEnd('update');
+            }
+
+            function loadImage(img) {
+                var height = canvas.height = Math.min(256, img.height);
+                var aspect = img.width / img.height;
+                var width = canvas.width = Math.round(height * aspect);
+
+                ctx.drawImage(img, 0, 0, width, height);
+
+                imgData = ctx.getImageData(0, 0, width, height);
+
+                updateData(imgData.data, width, height);
+            }
+
+            var img = new Image();
+            img.onload = function () {
+                loadImage(img);
+            }
+            img.src = 'asset/sample.jpg';
+
+            var gui = new dat.GUI();
+            gui.add(config, 'scale', 0, 1).onFinishChange(function () {
+                if (imgData) {
+                    updateData(imgData.data, imgData.width, imgData.height);
+                }
+            });
+
+            $('#image-upload').on('dragover', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            });
+            $('#image-upload')[0].addEventListener('drop', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                var files = e.dataTransfer.files;
+                var file = files[0];
+                
+                if (!file || !file.type.match(/image/)) {
+                    return;
+                }
+
+                var fileReader = new FileReader();
+                fileReader.onload = function (e) {
+                    img = new Image();
+                    img.onload = function () {
+                        loadImage(img);
+                    };
+                    img.src = e.target.result;
+                }
+                fileReader.readAsDataURL(file);
+            });
+
+            window.onresize = chart.resize;
+        </script>
+    </body>
+</html>
