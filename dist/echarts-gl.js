@@ -4452,16 +4452,16 @@ if(typeof(exports) !== 'undefined') {
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Mesh = __webpack_require__(33);
+var Mesh = __webpack_require__(32);
 var Renderer = __webpack_require__(51);
 var Texture2D = __webpack_require__(6);
 var Texture = __webpack_require__(5);
 var Shader = __webpack_require__(7);
 var Material = __webpack_require__(19);
-var Node3D = __webpack_require__(34);
+var Node3D = __webpack_require__(33);
 var StaticGeometry = __webpack_require__(15);
 var echarts = __webpack_require__(0);
-var Scene = __webpack_require__(35);
+var Scene = __webpack_require__(34);
 var LRUCache = __webpack_require__(84);
 var textureUtil = __webpack_require__(46);
 var EChartsSurface = __webpack_require__(164);
@@ -9507,7 +9507,7 @@ module.exports = {
     var Plane = __webpack_require__(53);
     var Shader = __webpack_require__(7);
     var Material = __webpack_require__(19);
-    var Mesh = __webpack_require__(33);
+    var Mesh = __webpack_require__(32);
     var glinfo = __webpack_require__(16);
     var glenum = __webpack_require__(10);
 
@@ -10185,7 +10185,7 @@ module.exports = {
     /**
      * @param {*} target
      * @param {*} source
-     * @param {boolen} [overlay=false]
+     * @param {boolean} [overlay=false]
      * @memberOf module:zrender/core/util
      */
     function defaults(target, source, overlay) {
@@ -10342,7 +10342,7 @@ module.exports = {
         if (!(obj && cb)) {
             return;
         }
-        if (obj.reduce && obj.reduce === nativeReduce) {
+        if (obj.reduce && obj.reduce === nativeReduce) {            
             return obj.reduce(cb, memo, context);
         }
         else {
@@ -11442,7 +11442,7 @@ module.exports = function (seriesType, ecModel, api) {
 
 
 
-    var Node = __webpack_require__(34);
+    var Node = __webpack_require__(33);
 
     /**
      * @constructor qtek.Light
@@ -11932,7 +11932,7 @@ module.exports = function (seriesType, ecModel, api) {
 var StaticGeometry = __webpack_require__(15);
 var vec3 = __webpack_require__(1).vec3;
 var echarts = __webpack_require__(0);
-var dynamicConvertMixin = __webpack_require__(32);
+var dynamicConvertMixin = __webpack_require__(31);
 
 // var CURVE_RECURSION_LIMIT = 8;
 // var CURVE_COLLINEAR_EPSILON = 40;
@@ -12631,7 +12631,7 @@ module.exports = LinesGeometry;
 
 var echarts = __webpack_require__(0);
 
-var Scene = __webpack_require__(35);
+var Scene = __webpack_require__(34);
 var ShadowMapPass = __webpack_require__(206);
 var PerspectiveCamera = __webpack_require__(44);
 var OrthographicCamera = __webpack_require__(43);
@@ -12648,11 +12648,11 @@ var halton = __webpack_require__(38);
 /**
  * @constructor
  * @alias module:echarts-gl/core/ViewGL
- * @param {string} [cameraType='perspective']
+ * @param {string} [projection='perspective']
  */
-function ViewGL(cameraType) {
+function ViewGL(projection) {
 
-    cameraType = cameraType || 'perspective';
+    projection = projection || 'perspective';
 
     /**
      * @type {module:echarts-gl/core/LayerGL}
@@ -12672,7 +12672,7 @@ function ViewGL(cameraType) {
         x: 0, y: 0, width: 0, height: 0
     };
 
-    this.setCameraType(cameraType);
+    this.setProjection(projection);
 
     this._compositor = new EffectCompositor();
 
@@ -12704,10 +12704,10 @@ function ViewGL(cameraType) {
  * Set camera type of group
  * @param {string} cameraType 'perspective' | 'orthographic'
  */
-ViewGL.prototype.setCameraType = function (cameraType) {
+ViewGL.prototype.setProjection = function (projection) {
     var oldCamera = this.camera;
     oldCamera && oldCamera.update();
-    if (cameraType === 'perspective') {
+    if (projection === 'perspective') {
         if (!(this.camera instanceof PerspectiveCamera)) {
             this.camera = new PerspectiveCamera();
             if (oldCamera) {
@@ -12723,6 +12723,9 @@ ViewGL.prototype.setCameraType = function (cameraType) {
             }
         }
     }
+    // PENDING
+    this.camera.near = 0.1;
+    this.camera.far = 2000;
 };
 
 /**
@@ -14054,71 +14057,6 @@ module.exports = formatUtil;
 /* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var echarts = __webpack_require__(0);
-
-module.exports = function (seriesModel, dataIndex) {
-    function formatArrayValue(value) {
-        var data = seriesModel.getData();
-        var result = [];
-        var coordSys = seriesModel.coordinateSystem;
-        var customDimensions = seriesModel.get('dimensions') || [];
-        var coordSysDimensions = (coordSys && coordSys.dimensions) || [];
-        var dataDimensions = data.dimensions;
-
-        echarts.util.each(value, function (val, idx) {
-            var dimInfo = data.getDimensionInfo(idx);
-            var dimType = dimInfo && dimInfo.type;
-            var dimName = customDimensions[idx] || coordSysDimensions[idx] || dataDimensions[idx];
-            var valStr;
-
-            if (dimType === 'ordinal') {
-                valStr = val + '';
-            }
-            else if (dimType === 'time') {
-                valStr = echarts.format.formatTime('yyyy/MM/dd hh:mm:ss', val);
-            }
-            else {
-                valStr = echarts.format.addCommas(val);
-            }
-
-            valStr && result.push(echarts.format.encodeHTML(dimName + ': ' + valStr));
-        });
-
-        return result.join('<br />');
-    }
-
-    var data = seriesModel.getData();
-
-    var value = seriesModel.getRawValue(dataIndex);
-    var formattedValue = echarts.util.isArray(value)
-        ? formatArrayValue(value)
-        : echarts.format.encodeHTML(echarts.format.addCommas(value));
-    var name = data.getName(dataIndex);
-
-    var color = data.getItemVisual(dataIndex, 'color');
-    if (echarts.util.isObject(color) && color.colorStops) {
-        color = (color.colorStops[0] || {}).color;
-    }
-    color = color || 'transparent';
-
-    var colorEl = '<span style="display:inline-block;margin-right:5px;'
-        + 'border-radius:10px;width:9px;height:9px;background-color:' + echarts.format.encodeHTML(color) + '"></span>';
-
-    var seriesName = seriesModel.name;
-    // FIXME
-    if (seriesName === '\0-') {
-        // Not show '-'
-        seriesName = '';
-    }
-    return (seriesName && (colorEl + echarts.format.encodeHTML(seriesName) + '<br />'))
-            + (name && (name + '<br />'))
-            + formattedValue;
-};
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
 var graphicGL = __webpack_require__(2);
 var Skybox = __webpack_require__(57);
 var Skydome = __webpack_require__(58);
@@ -14318,7 +14256,7 @@ SceneHelper.prototype = {
 module.exports = SceneHelper;
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -14357,7 +14295,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -14425,7 +14363,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -14463,7 +14401,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -14507,7 +14445,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14571,7 +14509,7 @@ module.exports = {
 
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15136,7 +15074,6 @@ module.exports = {
                     else {
                         out.union(tmpBBox);
                     }
-
                 }
 
                 return out;
@@ -15239,14 +15176,14 @@ module.exports = {
 
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 
-    var Node = __webpack_require__(34);
+    var Node = __webpack_require__(33);
     var Light = __webpack_require__(18);
     var BoundingBox = __webpack_require__(13);
 
@@ -15593,7 +15530,7 @@ module.exports = {
 
 
 /***/ }),
-/* 36 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15850,6 +15787,71 @@ module.exports = {
 
 
 /***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var echarts = __webpack_require__(0);
+
+module.exports = function (seriesModel, dataIndex) {
+    function formatArrayValue(value) {
+        var data = seriesModel.getData();
+        var result = [];
+        var coordSys = seriesModel.coordinateSystem;
+        var customDimensions = seriesModel.get('dimensions') || [];
+        var coordSysDimensions = (coordSys && coordSys.dimensions) || [];
+        var dataDimensions = data.dimensions;
+
+        echarts.util.each(value, function (val, idx) {
+            var dimInfo = data.getDimensionInfo(idx);
+            var dimType = dimInfo && dimInfo.type;
+            var dimName = customDimensions[idx] || coordSysDimensions[idx] || dataDimensions[idx];
+            var valStr;
+
+            if (dimType === 'ordinal') {
+                valStr = val + '';
+            }
+            else if (dimType === 'time') {
+                valStr = echarts.format.formatTime('yyyy/MM/dd hh:mm:ss', val);
+            }
+            else {
+                valStr = echarts.format.addCommas(val);
+            }
+
+            valStr && result.push(echarts.format.encodeHTML(dimName + ': ' + valStr));
+        });
+
+        return result.join('<br />');
+    }
+
+    var data = seriesModel.getData();
+
+    var value = seriesModel.getRawValue(dataIndex);
+    var formattedValue = echarts.util.isArray(value)
+        ? formatArrayValue(value)
+        : echarts.format.encodeHTML(echarts.format.addCommas(value));
+    var name = data.getName(dataIndex);
+
+    var color = data.getItemVisual(dataIndex, 'color');
+    if (echarts.util.isObject(color) && color.colorStops) {
+        color = (color.colorStops[0] || {}).color;
+    }
+    color = color || 'transparent';
+
+    var colorEl = '<span style="display:inline-block;margin-right:5px;'
+        + 'border-radius:10px;width:9px;height:9px;background-color:' + echarts.format.encodeHTML(color) + '"></span>';
+
+    var seriesName = seriesModel.name;
+    // FIXME
+    if (seriesName === '\0-') {
+        // Not show '-'
+        seriesName = '';
+    }
+    return (seriesName && (colorEl + echarts.format.encodeHTML(seriesName) + '<br />'))
+            + (name && (name + '<br />'))
+            + formattedValue;
+};
+
+/***/ }),
 /* 37 */
 /***/ (function(module, exports) {
 
@@ -15857,6 +15859,9 @@ module.exports = {
     defaultOption: {
 
         viewControl: {
+            // perspective, orthographic.
+            // TODO Isometric
+            projection: 'perspective',
             // If rotate on on init
             autoRotate: false,
             // cw or ccw
@@ -15871,19 +15876,28 @@ module.exports = {
             // Rotate, zoom damping.
             damping: 0.8,
             // Sensitivities for operations.
+            // Can be array to set x,y respectively
             rotateSensitivity: 1,
             zoomSensitivity: 1,
+            // Can be array to set x,y respectively
             panSensitivity: 1,
             // Which mouse button do rotate or pan
             panMouseButton: 'middle',
             rotateMouseButton: 'left',
 
             // Distance to the target
+            // Only available when camera is perspective.
             distance: 150,
             // Min distance mouse can zoom in
             minDistance: 40,
             // Max distance mouse can zoom out
             maxDistance: 400,
+
+            // Size of viewing volume.
+            // Only available when camera is orthographic
+            orthographicSize: 150,
+            maxOrthographicSize: 400,
+            minOrthographicSize: 20,
 
             // Center view point
             center: [0, 0, 0],
@@ -15969,6 +15983,13 @@ var MOUSE_BUTTON_KEY_MAP = {
     right: 2  
 };
 
+function convertToArray(val) {
+    if (!(val instanceof Array)) {
+        val = [val, val];
+    }
+    return val;
+}
+
 /**
  * @alias module:echarts-x/util/OrbitControl
  */
@@ -15992,6 +16013,7 @@ var OrbitControl = Base.extend(function () {
 
         /**
          * Minimum distance to the center
+         * Only available when camera is perspective.
          * @type {number}
          * @default 0.5
          */
@@ -15999,10 +16021,21 @@ var OrbitControl = Base.extend(function () {
 
         /**
          * Maximum distance to the center
+         * Only available when camera is perspective.
          * @type {number}
          * @default 2
          */
         maxDistance: 1.5,
+
+        /**
+         * Only available when camera is orthographic
+         */
+        maxOrthographicSize: 300,
+
+        /**
+         * Only available when camera is orthographic
+         */
+        minOrthographicSize: 30,
 
         /**
          * Minimum alpha rotation
@@ -16163,6 +16196,23 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
+     * Get size of orthographic viewing volume
+     * @return {number}
+     */
+    getOrthographicSize: function () {
+        return this._orthoSize;
+    },
+
+    /**
+     * Set size of orthographic viewing volume
+     * @param {number} size
+     */
+    setOrthographicSize: function (size) {
+        this._orthoSize = size;
+        this._needsUpdate = true;
+    },
+
+    /**
      * Get alpha rotation
      * Alpha angle for top-down rotation. Positive to rotate to top.
      *
@@ -16221,16 +16271,6 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
-     * @param {qtek.Camera} camera
-     */
-    setCamera: function (camera) {
-        this._camera = camera;
-        // this._decomposeTransform();
-
-        this._needsUpdate = true;
-    },
-
-    /**
      * @param {module:echarts-gl/core/ViewGL} viewGL
      */
     setViewGL: function (viewGL) {
@@ -16241,17 +16281,26 @@ var OrbitControl = Base.extend(function () {
      * @return {qtek.Camera}
      */
     getCamera: function () {
-        return this._camera;
+        return this.viewGL.camera;
     },
 
     setFromViewControlModel: function (viewControlModel, extraOpts) {
         extraOpts = extraOpts || {};
         var baseDistance = extraOpts.baseDistance || 0;
+        var baseOrthoSize = extraOpts.baseOrthoSize || 1;
 
-        this.minDistance = viewControlModel.get('minDistance') + baseDistance;
-        this.maxDistance = viewControlModel.get('maxDistance') + baseDistance;
+        var projection = viewControlModel.get('projection');
+        if (projection !== 'perspective' && projection !== 'orthographic' && projection !== 'isometric') {
+            if (true) {
+                console.error('Unkown projection type %s, use perspective projection instead.', projection);
+            }
+            projection = 'perspective';
+        }
+        this._projection = projection;
+        this.viewGL.setProjection(projection);
 
         var targetDistance = viewControlModel.get('distance') + baseDistance;
+        var targetOrthographicSize = viewControlModel.get('orthographicSize') + baseOrthoSize;
 
         [
             ['damping', 0.8],
@@ -16259,6 +16308,10 @@ var OrbitControl = Base.extend(function () {
             ['autoRotateAfterStill', 3],
             ['autoRotateDirection', 'cw'],
             ['autoRotateSpeed', 10],
+            ['minDistance', 30],
+            ['maxDistance', 400],
+            ['minOrthographicSize', 30],
+            ['maxOrthographicSize', 300],
             ['minAlpha', -90],
             ['maxAlpha', 90],
             ['minBeta', -Infinity],
@@ -16267,10 +16320,15 @@ var OrbitControl = Base.extend(function () {
             ['zoomSensitivity', 1],
             ['panSensitivity', 1],
             ['panMouseButton', 'left'],
-            ['rotateMouseButton', 'middle']
+            ['rotateMouseButton', 'middle'],
         ].forEach(function (prop) {
             this[prop[0]] = firstNotNull(viewControlModel.get(prop[0]), prop[1]);
         }, this);
+
+        this.minDistance += baseDistance;
+        this.maxDistance += baseDistance;
+        this.minOrthographicSize += baseOrthoSize,
+        this.maxOrthographicSize += baseOrthoSize;
         
         var ecModel = viewControlModel.ecModel;
 
@@ -16290,6 +16348,7 @@ var OrbitControl = Base.extend(function () {
                 beta: beta,
                 center: center,
                 distance: targetDistance,
+                targetOrthographicSize: targetOrthographicSize,
                 easing: animationOpts.animationEasingUpdate,
                 duration: animationOpts.animationDurationUpdate
             });
@@ -16299,6 +16358,7 @@ var OrbitControl = Base.extend(function () {
             this.setAlpha(alpha);
             this.setBeta(beta);
             this.setCenter(center);
+            this.setOrthographicSize(targetOrthographicSize);
         }
 
         this._notFirst = true;
@@ -16325,6 +16385,7 @@ var OrbitControl = Base.extend(function () {
      * @param {number} opts.distance
      * @param {number} opts.alpha
      * @param {number} opts.beta
+     * @param {number} opts.orthographicSize
      * @param {number} [opts.duration=1000]
      * @param {number} [opts.easing='linear']
      */
@@ -16334,9 +16395,14 @@ var OrbitControl = Base.extend(function () {
 
         var obj = {};
         var target = {};
+
         if (opts.distance != null) {
             obj.distance = this.getDistance();
             target.distance = opts.distance;
+        }
+        if (opts.orthographicSize != null) {
+            obj.orthographicSize = this.getOrthographicSize();
+            target.orthographicSize = opts.orthographicSize;
         }
         if (opts.alpha != null) {
             obj.alpha = this.getAlpha();
@@ -16366,6 +16432,9 @@ var OrbitControl = Base.extend(function () {
                     }
                     if (obj.center != null) {
                         self.setCenter(obj.center);
+                    }
+                    if (obj.orthographicSize != null) {
+                        self.setOrthographicSize(obj.orthographicSize);
                     }
                     self._needsUpdate = true;
                 })
@@ -16409,15 +16478,17 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        // Fixed deltaTime
-        this._updateDistance(Math.min(deltaTime, 50));
-        this._updatePan(Math.min(deltaTime, 50));
+        deltaTime = Math.min(deltaTime, 50);
 
-        this._updateRotate(Math.min(deltaTime, 50));
+        this._updateDistanceOrSize(deltaTime);
+
+        this._updatePan(deltaTime);
+
+        this._updateRotate(deltaTime);
 
         this._updateTransform();
 
-        this._camera.update();
+        this.getCamera().update();
 
         this.zr && this.zr.refresh();
 
@@ -16437,13 +16508,31 @@ var OrbitControl = Base.extend(function () {
         this._vectorDamping(velocity, Math.pow(this.damping, deltaTime / 16));
     },
 
-    _updateDistance: function (deltaTime) {
-        this._setDistance(this._distance + this._zoomSpeed * deltaTime / 20);
+    _updateDistanceOrSize: function (deltaTime) {
+        if (this._projection === 'perspective') {
+            this._setDistance(this._distance + this._zoomSpeed * deltaTime / 20);
+        }
+        else {
+            this._setOrthoSize(this._orthoSize + this._zoomSpeed * deltaTime / 20);
+        }
+
         this._zoomSpeed *= Math.pow(this.damping, deltaTime / 16);
     },
 
+
     _setDistance: function (distance) {
         this._distance = Math.max(Math.min(distance, this.maxDistance), this.minDistance);
+    },
+
+    _setOrthoSize: function (size) {
+        this._orthoSize = Math.max(Math.min(size, this.maxOrthographicSize), this.minOrthographicSize);
+        var camera = this.getCamera();
+        var cameraHeight = this._orthoSize;
+        var cameraWidth = cameraHeight / this.viewGL.viewport.height * this.viewGL.viewport.width;
+        camera.left = -cameraWidth / 2;
+        camera.right = cameraWidth / 2;
+        camera.top = cameraHeight / 2;
+        camera.bottom = -cameraHeight / 2;
     },
 
     _updatePan: function (deltaTime) {
@@ -16451,7 +16540,7 @@ var OrbitControl = Base.extend(function () {
         var velocity = this._panVelocity;
         var len = this._distance;
 
-        var target = this._camera;
+        var target = this.getCamera();
         var yAxis = target.worldTransform.y;
         var xAxis = target.worldTransform.x;
 
@@ -16464,7 +16553,7 @@ var OrbitControl = Base.extend(function () {
     },
 
     _updateTransform: function () {
-        var camera = this._camera;
+        var camera = this.getCamera();
 
         var dir = new Vector3();
         var theta = this._theta + Math.PI / 2;
@@ -16504,7 +16593,7 @@ var OrbitControl = Base.extend(function () {
     },
 
     _decomposeTransform: function () {
-        if (!this._camera) {
+        if (!this.getCamera()) {
             return;
         }
 
@@ -16512,7 +16601,7 @@ var OrbitControl = Base.extend(function () {
         // FIXME alpha is not certain when beta is 90 or -90
         var euler = new Vector3();
         euler.eulerFromQuat(
-            this._camera.rotation.normalize(), 'ZYX'
+            this.getCamera().rotation.normalize(), 'ZYX'
         );
 
         this._theta = -euler.x;
@@ -16521,7 +16610,13 @@ var OrbitControl = Base.extend(function () {
         this.setBeta(this.getBeta());
         this.setAlpha(this.getAlpha());
 
-        this._setDistance(this._camera.position.dist(this._center));
+        // Is perspective
+        if (this.getCamera().aspect) {
+            this._setDistance(this.getCamera().position.dist(this._center));
+        }
+        else {
+            this._setOrthoSize(this.getCamera().top - this.getCamera().bottom);
+        }
     },
 
     _mouseDownHandler: function (e) {
@@ -16571,7 +16666,6 @@ var OrbitControl = Base.extend(function () {
     },
 
     _mouseMoveHandler: function (e) {
-        // FIXME
         if (e.target && e.target.__isGLToZRProxy) {
             return;
         }
@@ -16580,13 +16674,16 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
+        var panSensitivity = convertToArray(this.panSensitivity);
+        var rotateSensitivity = convertToArray(this.rotateSensitivity);
+        
         if (this._mode === 'rotate') {
-            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * this.rotateSensitivity;
-            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * this.rotateSensitivity;
+            this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * rotateSensitivity[0];
+            this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * rotateSensitivity[1];
         }
         else if (this._mode === 'pan') {
-            this._panVelocity.x = (e.offsetX - this._mouseX) / this.zr.getWidth() * this.panSensitivity * 400;
-            this._panVelocity.y = (-e.offsetY + this._mouseY) / this.zr.getHeight() * this.panSensitivity * 400;
+            this._panVelocity.x = (e.offsetX - this._mouseX) / this.zr.getWidth() * panSensitivity[0] * 400;
+            this._panVelocity.y = (-e.offsetY + this._mouseY) / this.zr.getHeight() * panSensitivity[1] * 400;
         }
 
 
@@ -16625,11 +16722,20 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        var distance = Math.max(Math.min(
-            this._distance - this.minDistance,
-            this.maxDistance - this._distance
-        ));
-        this._zoomSpeed = (delta > 0 ? -1 : 1) * Math.max(distance / 20, 0.5) * this.zoomSensitivity;
+        var speed;
+        if (this._projection === 'perspective') {
+            speed = Math.max(Math.max(Math.min(
+                this._distance - this.minDistance,
+                this.maxDistance - this._distance
+            )) / 20, 0.5);
+        }
+        else {
+            speed = Math.max(Math.max(Math.min(
+                this._orthoSize - this.minOrthographicSize,
+                this.maxOrthographicSize - this._orthoSize
+            )) / 20, 0.5);
+        }
+        this._zoomSpeed = (delta > 0 ? -1 : 1) * speed * this.zoomSensitivity;
 
         this._rotating = false;
 
@@ -17510,7 +17616,7 @@ module.exports = "@export ecgl.lines3D.vertex\n\nuniform mat4 worldViewProjectio
     var request = __webpack_require__(72);
     var EnvironmentMapPass = __webpack_require__(59);
     var Skydome = __webpack_require__(58);
-    var Scene = __webpack_require__(35);
+    var Scene = __webpack_require__(34);
 
     var dds = __webpack_require__(224);
     var hdr = __webpack_require__(225);
@@ -21154,7 +21260,7 @@ module.exports = graphicGL.Mesh.extend(function () {
 // TODO Should not derived from mesh?
 
 
-    var Mesh = __webpack_require__(33);
+    var Mesh = __webpack_require__(32);
     var CubeGeometry = __webpack_require__(73);
     var Shader = __webpack_require__(7);
     var Material = __webpack_require__(19);
@@ -21277,7 +21383,7 @@ module.exports = graphicGL.Mesh.extend(function () {
 
 
 
-    var Mesh = __webpack_require__(33);
+    var Mesh = __webpack_require__(32);
     var SphereGeometry = __webpack_require__(74);
     var Shader = __webpack_require__(7);
     var Material = __webpack_require__(19);
@@ -22686,6 +22792,7 @@ module.exports = {
             alpha: 40,
             beta: 0,
             distance: 100,
+            orthographicSize: 60,
 
             minAlpha: 5,
             minBeta: -80,
@@ -23933,7 +24040,7 @@ module.exports = ZRTextureAtlasSurface;
 
 
 
-    var Node = __webpack_require__(34);
+    var Node = __webpack_require__(33);
     var Matrix4 = __webpack_require__(9);
     var Frustum = __webpack_require__(54);
     var Ray = __webpack_require__(56);
@@ -24066,7 +24173,7 @@ module.exports = ZRTextureAtlasSurface;
 
 
 
-    var Node = __webpack_require__(34);
+    var Node = __webpack_require__(33);
     var glenum = __webpack_require__(10);
     var glinfo = __webpack_require__(16);
 
@@ -26647,10 +26754,10 @@ echarts.registerAction({
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.0-beta.2',
+    version: '1.0.0-beta.3',
     dependencies: {
         echarts: '3.6.2',
-        qtek: '0.4.0'
+        qtek: '0.4.1'
     }
 };
 var echarts = __webpack_require__(0);
@@ -26907,9 +27014,9 @@ __webpack_require__(86);
 /***/ (function(module, exports, __webpack_require__) {
 
 var echarts = __webpack_require__(0);
-var componentShadingMixin = __webpack_require__(31);
+var componentShadingMixin = __webpack_require__(30);
 var formatUtil = __webpack_require__(24);
-var formatTooltip = __webpack_require__(27);
+var formatTooltip = __webpack_require__(36);
 
 var Bar3DSeries = echarts.extendSeriesModel({
 
@@ -30232,7 +30339,7 @@ module.exports = forceAtlas2Worker;
 /***/ (function(module, exports, __webpack_require__) {
 
 var echarts = __webpack_require__(0);
-var formatTooltip = __webpack_require__(27);
+var formatTooltip = __webpack_require__(36);
 
 var Line3DSeries = echarts.extendSeriesModel({
 
@@ -31170,12 +31277,12 @@ module.exports = "@export ecgl.trail2.vertex\nattribute vec3 position: POSITION;
 
 var echarts = __webpack_require__(0);
 var componentViewControlMixin = __webpack_require__(37);
-var componentPostEffectMixin = __webpack_require__(30);
-var componentLightMixin = __webpack_require__(29);
-var componentShadingMixin = __webpack_require__(31);
+var componentPostEffectMixin = __webpack_require__(29);
+var componentLightMixin = __webpack_require__(28);
+var componentShadingMixin = __webpack_require__(30);
 var geo3DModelMixin = __webpack_require__(63);
 var formatUtil = __webpack_require__(24);
-var formatTooltip = __webpack_require__(27);
+var formatTooltip = __webpack_require__(36);
 
 var Map3DModel = echarts.extendSeriesModel({
 
@@ -31289,7 +31396,7 @@ var echarts = __webpack_require__(0);
 
 var graphicGL = __webpack_require__(2);
 var OrbitControl = __webpack_require__(39);
-var SceneHelper = __webpack_require__(28);
+var SceneHelper = __webpack_require__(27);
 var Geo3DBuilder = __webpack_require__(60);
 
 module.exports = echarts.extendChartView({
@@ -31337,8 +31444,8 @@ module.exports = echarts.extendChartView({
                 });
                 this._control.init();
             }
-            control.setCamera(coordSys.viewGL.camera);
             var viewControlModel = map3DModel.getModel('viewControl');
+            control.setViewGL(coordSys.viewGL);
             control.setFromViewControlModel(viewControlModel, 0);
 
             control.off('update');
@@ -31402,7 +31509,7 @@ module.exports = echarts.extendChartView({
 
 var echarts = __webpack_require__(0);
 var formatUtil = __webpack_require__(24);
-var formatTooltip = __webpack_require__(27);
+var formatTooltip = __webpack_require__(36);
 
 var Scatter3DSeries = echarts.extendSeriesModel({
 
@@ -31676,8 +31783,8 @@ echarts.extendChartView({
 /***/ (function(module, exports, __webpack_require__) {
 
 var echarts = __webpack_require__(0);
-var componentShadingMixin = __webpack_require__(31);
-var formatTooltip = __webpack_require__(27);
+var componentShadingMixin = __webpack_require__(30);
+var formatTooltip = __webpack_require__(36);
 
 var SurfaceSeries = echarts.extendSeriesModel({
 
@@ -32396,9 +32503,9 @@ echarts.registerLayout(function (ecModel, api) {
 
 var echarts = __webpack_require__(0);
 var componentViewControlMixin = __webpack_require__(37);
-var componentPostEffectMixin = __webpack_require__(30);
-var componentLightMixin = __webpack_require__(29);
-var componentShadingMixin = __webpack_require__(31);
+var componentPostEffectMixin = __webpack_require__(29);
+var componentLightMixin = __webpack_require__(28);
+var componentShadingMixin = __webpack_require__(30);
 var geo3DModelMixin = __webpack_require__(63);
 
 var Geo3DModel = echarts.extendComponentModel({
@@ -32498,7 +32605,7 @@ var echarts = __webpack_require__(0);
 
 var graphicGL = __webpack_require__(2);
 var OrbitControl = __webpack_require__(39);
-var SceneHelper = __webpack_require__(28);
+var SceneHelper = __webpack_require__(27);
 
 module.exports = echarts.extendComponentView({
 
@@ -32541,7 +32648,6 @@ module.exports = echarts.extendComponentView({
         }
 
         var control = this._control;
-        control.setCamera(geo3D.viewGL.camera);
         control.setViewGL(geo3D.viewGL);
 
         var viewControlModel = geo3DModel.getModel('viewControl');
@@ -32595,9 +32701,9 @@ module.exports = echarts.extendComponentView({
 
 var echarts = __webpack_require__(0);
 var componentViewControlMixin = __webpack_require__(37);
-var componentPostEffectMixin = __webpack_require__(30);
-var componentLightMixin = __webpack_require__(29);
-var componentShadingMixin = __webpack_require__(31);
+var componentPostEffectMixin = __webpack_require__(29);
+var componentLightMixin = __webpack_require__(28);
+var componentShadingMixin = __webpack_require__(30);
 
 
 function defaultId(option, idx) {
@@ -32795,7 +32901,7 @@ var echarts = __webpack_require__(0);
 
 var graphicGL = __webpack_require__(2);
 var OrbitControl = __webpack_require__(39);
-var SceneHelper = __webpack_require__(28);
+var SceneHelper = __webpack_require__(27);
 
 var sunCalc = __webpack_require__(184);
 var retrieve = __webpack_require__(4);
@@ -33090,7 +33196,6 @@ module.exports = echarts.extendComponentView({
 
         // Update control
         var control = this._control;
-        control.setCamera(camera);
         control.setViewGL(coordSys.viewGL);
 
         var coord = viewControlModel.get('targetCoord');
@@ -33721,8 +33826,8 @@ module.exports = Grid3DFace;
 
 var echarts = __webpack_require__(0);
 var componentViewControlMixin = __webpack_require__(37);
-var componentPostEffectMixin = __webpack_require__(30);
-var componentLightMixin = __webpack_require__(29);
+var componentPostEffectMixin = __webpack_require__(29);
+var componentLightMixin = __webpack_require__(28);
 
 var Grid3DModel = echarts.extendComponentModel({
 
@@ -33762,6 +33867,7 @@ var Grid3DModel = echarts.extendComponentModel({
                 // (dimValue: number, value: Array) => string
                 formatter: null,
 
+                // TODO, Consider boxWidth
                 margin: 8,
                 // backgroundColor: '#ffbd67',
                 // borderColor: '#000',
@@ -33878,7 +33984,7 @@ var Lines3DGeometry = __webpack_require__(21);
 var retrieve = __webpack_require__(4);
 var firstNotNull = retrieve.firstNotNull;
 var ZRTextureAtlasSurface = __webpack_require__(66);
-var SceneHelper = __webpack_require__(28);
+var SceneHelper = __webpack_require__(27);
 var Grid3DFace = __webpack_require__(135);
 var Grid3DAxis = __webpack_require__(134);
 var LabelsMesh = __webpack_require__(50);
@@ -34011,7 +34117,6 @@ module.exports = echarts.extendComponentView({
         // cartesian.viewGL.setCameraType(grid3DModel.get('viewControl.projection'));
 
         var control = this._control;
-        control.setCamera(cartesian.viewGL.camera);
         control.setViewGL(cartesian.viewGL);
 
         var viewControlModel = grid3DModel.getModel('viewControl');
@@ -34123,6 +34228,9 @@ module.exports = echarts.extendComponentView({
             }
 
             var point = ray.intersectPlane(face.plane);
+            if (!point) {
+                continue;
+            }
             var axis0 = cartesian.getAxis(face.faceInfo[0]);
             var axis1 = cartesian.getAxis(face.faceInfo[1]);
             var idx0 = dimIndicesMap[face.faceInfo[0]];
@@ -34711,8 +34819,8 @@ module.exports = MapboxLayer;
 
 var echarts = __webpack_require__(0);
 
-var componentPostEffectMixin = __webpack_require__(30);
-var componentLightMixin = __webpack_require__(29);
+var componentPostEffectMixin = __webpack_require__(29);
+var componentLightMixin = __webpack_require__(28);
 
 var MAPBOX_CAMERA_OPTION = ['zoom', 'center', 'pitch', 'bearing'];
 
@@ -34790,7 +34898,7 @@ module.exports = MapboxModel;
 
 var echarts = __webpack_require__(0);
 var MapboxLayer = __webpack_require__(140);
-var SceneHelper = __webpack_require__(28);
+var SceneHelper = __webpack_require__(27);
 var graphicGL = __webpack_require__(2);
 
 graphicGL.Shader.import(__webpack_require__(175));
@@ -37209,7 +37317,7 @@ module.exports = NormalPass;
 /* 155 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.ssao.estimate\n\nuniform sampler2D depthTex;\n\nuniform sampler2D normalTex;\n\nuniform sampler2D noiseTex;\n\nuniform vec2 depthTexSize;\n\nuniform vec2 noiseTexSize;\n\nuniform mat4 projection;\n\nuniform mat4 projectionInv;\n\nuniform mat4 viewInverseTranspose;\n\nuniform vec3 kernel[KERNEL_SIZE];\n\nuniform float radius : 1;\n\nuniform float power : 1;\n\nuniform float bias: 1e-2;\n\nuniform float intensity: 1.0;\n\nvarying vec2 v_Texcoord;\n\nfloat ssaoEstimator(in vec3 originPos, in mat3 kernelBasis) {\n float occlusion = 0.0;\n\n for (int i = 0; i < KERNEL_SIZE; i++) {\n vec3 samplePos = kernel[i];\n#ifdef NORMALTEX_ENABLED\n samplePos = kernelBasis * samplePos;\n#endif\n samplePos = samplePos * radius + originPos;\n\n vec4 texCoord = projection * vec4(samplePos, 1.0);\n texCoord.xy /= texCoord.w;\n\n vec4 depthTexel = texture2D(depthTex, texCoord.xy * 0.5 + 0.5);\n\n float sampleDepth = depthTexel.r * 2.0 - 1.0;\n\n sampleDepth = projection[3][2] / (sampleDepth * projection[2][3] - projection[2][2]);\n\n float rangeCheck = smoothstep(0.0, 1.0, radius / abs(originPos.z - sampleDepth));\n occlusion += rangeCheck * step(samplePos.z, sampleDepth - bias);\n }\n#ifdef NORMALTEX_ENABLED\n occlusion = 1.0 - occlusion / float(KERNEL_SIZE);\n#else\n occlusion = 1.0 - clamp((occlusion / float(KERNEL_SIZE) - 0.6) * 2.5, 0.0, 1.0);\n#endif\n return pow(occlusion, power);\n}\n\nvoid main()\n{\n\n vec4 depthTexel = texture2D(depthTex, v_Texcoord);\n\n#ifdef NORMALTEX_ENABLED\n vec4 tex = texture2D(normalTex, v_Texcoord);\n if (dot(tex.rgb, tex.rgb) == 0.0) {\n gl_FragColor = vec4(1.0);\n return;\n }\n vec3 N = tex.rgb * 2.0 - 1.0;\n N = (viewInverseTranspose * vec4(N, 0.0)).xyz;\n\n vec2 noiseTexCoord = depthTexSize / vec2(noiseTexSize) * v_Texcoord;\n vec3 rvec = texture2D(noiseTex, noiseTexCoord).rgb * 2.0 - 1.0;\n vec3 T = normalize(rvec - N * dot(rvec, N));\n vec3 BT = normalize(cross(N, T));\n mat3 kernelBasis = mat3(T, BT, N);\n#else\n if (depthTexel.r > 0.99999) {\n gl_FragColor = vec4(1.0);\n return;\n }\n mat3 kernelBasis;\n#endif\n\n float z = depthTexel.r * 2.0 - 1.0;\n\n vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, z, 1.0);\n vec4 p4 = projectionInv * projectedPos;\n\n vec3 position = p4.xyz / p4.w;\n\n float ao = ssaoEstimator(position, kernelBasis);\n ao = clamp(1.0 - (1.0 - ao) * intensity, 0.0, 1.0);\n gl_FragColor = vec4(vec3(ao), 1.0);\n}\n\n@end\n\n\n@export ecgl.ssao.blur\n\nuniform sampler2D ssaoTexture;\n\nuniform vec2 textureSize;\n\nvarying vec2 v_Texcoord;\n\nvoid main ()\n{\n\n vec2 texelSize = 1.0 / textureSize;\n\n float ao = 0.0;\n vec2 hlim = vec2(float(-BLUR_SIZE) * 0.5 + 0.5);\n float centerAo = texture2D(ssaoTexture, v_Texcoord).r;\n float weightAll = 0.0;\n float boxWeight = 1.0 / float(BLUR_SIZE) * float(BLUR_SIZE);\n for (int x = 0; x < BLUR_SIZE; x++) {\n for (int y = 0; y < BLUR_SIZE; y++) {\n vec2 coord = (vec2(float(x), float(y)) + hlim) * texelSize + v_Texcoord;\n float sampleAo = texture2D(ssaoTexture, coord).r;\n float closeness = 1.0 - distance(sampleAo, centerAo) / sqrt(3.0);\n float weight = boxWeight * closeness;\n ao += weight * sampleAo;\n weightAll += weight;\n }\n }\n\n gl_FragColor = vec4(vec3(clamp(ao / weightAll, 0.0, 1.0)), 1.0);\n}\n@end";
+module.exports = "@export ecgl.ssao.estimate\n\nuniform sampler2D depthTex;\n\nuniform sampler2D normalTex;\n\nuniform sampler2D noiseTex;\n\nuniform vec2 depthTexSize;\n\nuniform vec2 noiseTexSize;\n\nuniform mat4 projection;\n\nuniform mat4 projectionInv;\n\nuniform mat4 viewInverseTranspose;\n\nuniform vec3 kernel[KERNEL_SIZE];\n\nuniform float radius : 1;\n\nuniform float power : 1;\n\nuniform float bias: 1e-2;\n\nuniform float intensity: 1.0;\n\nvarying vec2 v_Texcoord;\n\nfloat ssaoEstimator(in vec3 originPos, in mat3 kernelBasis) {\n float occlusion = 0.0;\n\n for (int i = 0; i < KERNEL_SIZE; i++) {\n vec3 samplePos = kernel[i];\n#ifdef NORMALTEX_ENABLED\n samplePos = kernelBasis * samplePos;\n#endif\n samplePos = samplePos * radius + originPos;\n\n vec4 texCoord = projection * vec4(samplePos, 1.0);\n texCoord.xy /= texCoord.w;\n\n vec4 depthTexel = texture2D(depthTex, texCoord.xy * 0.5 + 0.5);\n\n float sampleDepth = depthTexel.r * 2.0 - 1.0;\n if (projection[3][3] == 0.0) {\n sampleDepth = projection[3][2] / (sampleDepth * projection[2][3] - projection[2][2]);\n }\n else {\n sampleDepth = (sampleDepth - projection[3][2]) / projection[2][2];\n }\n \n float rangeCheck = smoothstep(0.0, 1.0, radius / abs(originPos.z - sampleDepth));\n occlusion += rangeCheck * step(samplePos.z, sampleDepth - bias);\n }\n#ifdef NORMALTEX_ENABLED\n occlusion = 1.0 - occlusion / float(KERNEL_SIZE);\n#else\n occlusion = 1.0 - clamp((occlusion / float(KERNEL_SIZE) - 0.6) * 2.5, 0.0, 1.0);\n#endif\n return pow(occlusion, power);\n}\n\nvoid main()\n{\n\n vec4 depthTexel = texture2D(depthTex, v_Texcoord);\n\n#ifdef NORMALTEX_ENABLED\n vec4 tex = texture2D(normalTex, v_Texcoord);\n if (dot(tex.rgb, tex.rgb) == 0.0) {\n gl_FragColor = vec4(1.0);\n return;\n }\n vec3 N = tex.rgb * 2.0 - 1.0;\n N = (viewInverseTranspose * vec4(N, 0.0)).xyz;\n\n vec2 noiseTexCoord = depthTexSize / vec2(noiseTexSize) * v_Texcoord;\n vec3 rvec = texture2D(noiseTex, noiseTexCoord).rgb * 2.0 - 1.0;\n vec3 T = normalize(rvec - N * dot(rvec, N));\n vec3 BT = normalize(cross(N, T));\n mat3 kernelBasis = mat3(T, BT, N);\n#else\n if (depthTexel.r > 0.99999) {\n gl_FragColor = vec4(1.0);\n return;\n }\n mat3 kernelBasis;\n#endif\n\n float z = depthTexel.r * 2.0 - 1.0;\n\n vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, z, 1.0);\n vec4 p4 = projectionInv * projectedPos;\n\n vec3 position = p4.xyz / p4.w;\n\n float ao = ssaoEstimator(position, kernelBasis);\n ao = clamp(1.0 - (1.0 - ao) * intensity, 0.0, 1.0);\n gl_FragColor = vec4(vec3(ao), 1.0);\n}\n\n@end\n\n\n@export ecgl.ssao.blur\n\nuniform sampler2D ssaoTexture;\n\nuniform vec2 textureSize;\n\nvarying vec2 v_Texcoord;\n\nvoid main ()\n{\n\n vec2 texelSize = 1.0 / textureSize;\n\n float ao = 0.0;\n vec2 hlim = vec2(float(-BLUR_SIZE) * 0.5 + 0.5);\n float centerAo = texture2D(ssaoTexture, v_Texcoord).r;\n float weightAll = 0.0;\n float boxWeight = 1.0 / float(BLUR_SIZE) * float(BLUR_SIZE);\n for (int x = 0; x < BLUR_SIZE; x++) {\n for (int y = 0; y < BLUR_SIZE; y++) {\n vec2 coord = (vec2(float(x), float(y)) + hlim) * texelSize + v_Texcoord;\n float sampleAo = texture2D(ssaoTexture, coord).r;\n float closeness = 1.0 - distance(sampleAo, centerAo) / sqrt(3.0);\n float weight = boxWeight * closeness;\n ao += weight * sampleAo;\n weightAll += weight;\n }\n }\n\n gl_FragColor = vec4(vec3(clamp(ao / weightAll, 0.0, 1.0)), 1.0);\n}\n@end";
 
 
 /***/ }),
@@ -37430,7 +37538,7 @@ module.exports = SSAOPass;
 /* 157 */
 /***/ (function(module, exports) {
 
-module.exports = "@export ecgl.ssr.main\n\n#define MAX_ITERATION 20;\n\nuniform sampler2D sourceTexture;\nuniform sampler2D gBufferTexture1;\nuniform sampler2D gBufferTexture2;\n\nuniform mat4 projection;\nuniform mat4 projectionInv;\nuniform mat4 viewInverseTranspose;\n\nuniform float maxRayDistance: 50;\n\nuniform float pixelStride: 16;\nuniform float pixelStrideZCutoff: 50; \nuniform float screenEdgeFadeStart: 0.9; \nuniform float eyeFadeStart : 0.2; uniform float eyeFadeEnd: 0.8; \nuniform float minGlossiness: 0.2; uniform float zThicknessThreshold: 10;\n\nuniform float nearZ;\nuniform vec2 viewportSize : VIEWPORT_SIZE;\n\nuniform float jitterOffset: 0;\n\nvarying vec2 v_Texcoord;\n\n#ifdef DEPTH_DECODE\n@import qtek.util.decode_float\n#endif\n\nfloat fetchDepth(sampler2D depthTexture, vec2 uv)\n{\n vec4 depthTexel = texture2D(depthTexture, uv);\n return depthTexel.r * 2.0 - 1.0;\n}\n\nfloat linearDepth(float depth)\n{\n return projection[3][2] / (depth * projection[2][3] - projection[2][2]);\n}\n\nbool rayIntersectDepth(float rayZNear, float rayZFar, vec2 hitPixel)\n{\n if (rayZFar > rayZNear)\n {\n float t = rayZFar; rayZFar = rayZNear; rayZNear = t;\n }\n float cameraZ = linearDepth(fetchDepth(gBufferTexture2, hitPixel));\n return rayZFar <= cameraZ && rayZNear >= cameraZ - zThicknessThreshold;\n}\n\n\nbool traceScreenSpaceRay(\n vec3 rayOrigin, vec3 rayDir, float jitter,\n out vec2 hitPixel, out vec3 hitPoint, out float iterationCount\n)\n{\n float rayLength = ((rayOrigin.z + rayDir.z * maxRayDistance) > -nearZ)\n ? (-nearZ - rayOrigin.z) / rayDir.z : maxRayDistance;\n\n vec3 rayEnd = rayOrigin + rayDir * rayLength;\n\n vec4 H0 = projection * vec4(rayOrigin, 1.0);\n vec4 H1 = projection * vec4(rayEnd, 1.0);\n\n float k0 = 1.0 / H0.w, k1 = 1.0 / H1.w;\n\n vec3 Q0 = rayOrigin * k0, Q1 = rayEnd * k1;\n\n vec2 P0 = (H0.xy * k0 * 0.5 + 0.5) * viewportSize;\n vec2 P1 = (H1.xy * k1 * 0.5 + 0.5) * viewportSize;\n\n P1 += dot(P1 - P0, P1 - P0) < 0.0001 ? 0.01 : 0.0;\n vec2 delta = P1 - P0;\n\n bool permute = false;\n if (abs(delta.x) < abs(delta.y)) {\n permute = true;\n delta = delta.yx;\n P0 = P0.yx;\n P1 = P1.yx;\n }\n float stepDir = sign(delta.x);\n float invdx = stepDir / delta.x;\n\n vec3 dQ = (Q1 - Q0) * invdx;\n float dk = (k1 - k0) * invdx;\n\n vec2 dP = vec2(stepDir, delta.y * invdx);\n\n float strideScaler = 1.0 - min(1.0, -rayOrigin.z / pixelStrideZCutoff);\n float pixStride = 1.0 + strideScaler * pixelStride;\n\n dP *= pixStride; dQ *= pixStride; dk *= pixStride;\n\n vec4 pqk = vec4(P0, Q0.z, k0);\n vec4 dPQK = vec4(dP, dQ.z, dk);\n\n pqk += dPQK * jitter;\n float rayZFar = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);\n float rayZNear;\n\n bool intersect = false;\n\n vec2 texelSize = 1.0 / viewportSize;\n\n iterationCount = 0.0;\n\n for (int i = 0; i < MAX_ITERATION; i++)\n {\n pqk += dPQK;\n\n rayZNear = rayZFar;\n rayZFar = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);\n\n hitPixel = permute ? pqk.yx : pqk.xy;\n hitPixel *= texelSize;\n\n intersect = rayIntersectDepth(rayZNear, rayZFar, hitPixel);\n\n iterationCount += 1.0;\n\n if (intersect) {\n break;\n }\n }\n\n\n Q0.xy += dQ.xy * iterationCount;\n Q0.z = pqk.z;\n hitPoint = Q0 / pqk.w;\n\n return intersect;\n}\n\nfloat calculateAlpha(\n float iterationCount, float reflectivity,\n vec2 hitPixel, vec3 hitPoint, float dist, vec3 rayDir\n)\n{\n float alpha = clamp(reflectivity, 0.0, 1.0);\n alpha *= 1.0 - (iterationCount / float(MAX_ITERATION));\n vec2 hitPixelNDC = hitPixel * 2.0 - 1.0;\n float maxDimension = min(1.0, max(abs(hitPixelNDC.x), abs(hitPixelNDC.y)));\n alpha *= 1.0 - max(0.0, maxDimension - screenEdgeFadeStart) / (1.0 - screenEdgeFadeStart);\n\n float _eyeFadeStart = eyeFadeStart;\n float _eyeFadeEnd = eyeFadeEnd;\n if (_eyeFadeStart > _eyeFadeEnd) {\n float tmp = _eyeFadeEnd;\n _eyeFadeEnd = _eyeFadeStart;\n _eyeFadeStart = tmp;\n }\n\n float eyeDir = clamp(rayDir.z, _eyeFadeStart, _eyeFadeEnd);\n alpha *= 1.0 - (eyeDir - _eyeFadeStart) / (_eyeFadeEnd - _eyeFadeStart);\n\n alpha *= 1.0 - clamp(dist / maxRayDistance, 0.0, 1.0);\n\n return alpha;\n}\n\n@import qtek.util.rand\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n vec4 normalAndGloss = texture2D(gBufferTexture1, v_Texcoord);\n\n if (dot(normalAndGloss.rgb, vec3(1.0)) == 0.0) {\n discard;\n }\n\n float g = normalAndGloss.a;\n if (g <= minGlossiness) {\n discard;\n }\n\n float reflectivity = (g - minGlossiness) / (1.0 - minGlossiness);\n\n vec3 N = normalAndGloss.rgb * 2.0 - 1.0;\n N = normalize((viewInverseTranspose * vec4(N, 0.0)).xyz);\n\n vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, fetchDepth(gBufferTexture2, v_Texcoord), 1.0);\n vec4 pos = projectionInv * projectedPos;\n vec3 rayOrigin = pos.xyz / pos.w;\n\n vec3 rayDir = normalize(reflect(normalize(rayOrigin), N));\n vec2 hitPixel;\n vec3 hitPoint;\n float iterationCount;\n\n vec2 uv2 = v_Texcoord * viewportSize;\n float jitter = rand(fract(v_Texcoord + jitterOffset));\n\n bool intersect = traceScreenSpaceRay(rayOrigin, rayDir, jitter, hitPixel, hitPoint, iterationCount);\n\n float dist = distance(rayOrigin, hitPoint);\n\n float alpha = calculateAlpha(iterationCount, reflectivity, hitPixel, hitPoint, dist, rayDir) * float(intersect);\n\n vec3 hitNormal = texture2D(gBufferTexture1, hitPixel).rgb * 2.0 - 1.0;\n hitNormal = normalize((viewInverseTranspose * vec4(hitNormal, 0.0)).xyz);\n\n if (dot(hitNormal, rayDir) >= 0.0) {\n discard;\n }\n\n \n if (!intersect) {\n discard;\n }\n vec4 color = decodeHDR(texture2D(sourceTexture, hitPixel));\n gl_FragColor = encodeHDR(vec4(color.rgb * alpha, color.a));\n}\n@end\n\n@export ecgl.ssr.blur\n\nuniform sampler2D texture;\nuniform sampler2D gBufferTexture1;\n\nvarying vec2 v_Texcoord;\n\nuniform vec2 textureSize;\nuniform float blurSize : 4.0;\n\n#ifdef BLEND\nuniform sampler2D sourceTexture;\n#endif\n\n@import qtek.util.rgbm\n\n\nvoid main()\n{\n @import qtek.compositor.kernel.gaussian_13\n\n vec4 centerNTexel = texture2D(gBufferTexture1, v_Texcoord);\n float g = centerNTexel.a;\n float maxBlurSize = clamp(1.0 - g + 0.1, 0.0, 1.0) * blurSize;\n#ifdef VERTICAL\n vec2 off = vec2(0.0, maxBlurSize / textureSize.y);\n#else\n vec2 off = vec2(maxBlurSize / textureSize.x, 0.0);\n#endif\n\n vec2 coord = v_Texcoord;\n\n vec4 sum = vec4(0.0);\n float weightAll = 0.0;\n\n vec3 cN = centerNTexel.rgb * 2.0 - 1.0;\n for (int i = 0; i < 13; i++) {\n vec2 coord = clamp((float(i) - 6.0) * off + v_Texcoord, vec2(0.0), vec2(1.0));\n float w = gaussianKernel[i] * clamp(dot(cN, texture2D(gBufferTexture1, coord).rgb * 2.0 - 1.0), 0.0, 1.0);\n weightAll += w;\n sum += decodeHDR(texture2D(texture, coord)) * w;\n }\n\n#ifdef BLEND\n gl_FragColor = encodeHDR(\n sum / weightAll + decodeHDR(texture2D(sourceTexture, v_Texcoord))\n );\n#else\n gl_FragColor = encodeHDR(sum / weightAll);\n#endif\n}\n\n@end";
+module.exports = "@export ecgl.ssr.main\n\n#define MAX_ITERATION 20;\n\nuniform sampler2D sourceTexture;\nuniform sampler2D gBufferTexture1;\nuniform sampler2D gBufferTexture2;\n\nuniform mat4 projection;\nuniform mat4 projectionInv;\nuniform mat4 viewInverseTranspose;\n\nuniform float maxRayDistance: 50;\n\nuniform float pixelStride: 16;\nuniform float pixelStrideZCutoff: 50; \nuniform float screenEdgeFadeStart: 0.9; \nuniform float eyeFadeStart : 0.2; uniform float eyeFadeEnd: 0.8; \nuniform float minGlossiness: 0.2; uniform float zThicknessThreshold: 10;\n\nuniform float nearZ;\nuniform vec2 viewportSize : VIEWPORT_SIZE;\n\nuniform float jitterOffset: 0;\n\nvarying vec2 v_Texcoord;\n\n#ifdef DEPTH_DECODE\n@import qtek.util.decode_float\n#endif\n\nfloat fetchDepth(sampler2D depthTexture, vec2 uv)\n{\n vec4 depthTexel = texture2D(depthTexture, uv);\n return depthTexel.r * 2.0 - 1.0;\n}\n\nfloat linearDepth(float depth)\n{\n if (projection[3][3] == 0.0) {\n return projection[3][2] / (depth * projection[2][3] - projection[2][2]);\n }\n else {\n return (depth - projection[3][2]) / projection[2][2];\n }\n}\n\nbool rayIntersectDepth(float rayZNear, float rayZFar, vec2 hitPixel)\n{\n if (rayZFar > rayZNear)\n {\n float t = rayZFar; rayZFar = rayZNear; rayZNear = t;\n }\n float cameraZ = linearDepth(fetchDepth(gBufferTexture2, hitPixel));\n return rayZFar <= cameraZ && rayZNear >= cameraZ - zThicknessThreshold;\n}\n\n\nbool traceScreenSpaceRay(\n vec3 rayOrigin, vec3 rayDir, float jitter,\n out vec2 hitPixel, out vec3 hitPoint, out float iterationCount\n)\n{\n float rayLength = ((rayOrigin.z + rayDir.z * maxRayDistance) > -nearZ)\n ? (-nearZ - rayOrigin.z) / rayDir.z : maxRayDistance;\n\n vec3 rayEnd = rayOrigin + rayDir * rayLength;\n\n vec4 H0 = projection * vec4(rayOrigin, 1.0);\n vec4 H1 = projection * vec4(rayEnd, 1.0);\n\n float k0 = 1.0 / H0.w, k1 = 1.0 / H1.w;\n\n vec3 Q0 = rayOrigin * k0, Q1 = rayEnd * k1;\n\n vec2 P0 = (H0.xy * k0 * 0.5 + 0.5) * viewportSize;\n vec2 P1 = (H1.xy * k1 * 0.5 + 0.5) * viewportSize;\n\n P1 += dot(P1 - P0, P1 - P0) < 0.0001 ? 0.01 : 0.0;\n vec2 delta = P1 - P0;\n\n bool permute = false;\n if (abs(delta.x) < abs(delta.y)) {\n permute = true;\n delta = delta.yx;\n P0 = P0.yx;\n P1 = P1.yx;\n }\n float stepDir = sign(delta.x);\n float invdx = stepDir / delta.x;\n\n vec3 dQ = (Q1 - Q0) * invdx;\n float dk = (k1 - k0) * invdx;\n\n vec2 dP = vec2(stepDir, delta.y * invdx);\n\n float strideScaler = 1.0 - min(1.0, -rayOrigin.z / pixelStrideZCutoff);\n float pixStride = 1.0 + strideScaler * pixelStride;\n\n dP *= pixStride; dQ *= pixStride; dk *= pixStride;\n\n vec4 pqk = vec4(P0, Q0.z, k0);\n vec4 dPQK = vec4(dP, dQ.z, dk);\n\n pqk += dPQK * jitter;\n float rayZFar = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);\n float rayZNear;\n\n bool intersect = false;\n\n vec2 texelSize = 1.0 / viewportSize;\n\n iterationCount = 0.0;\n\n for (int i = 0; i < MAX_ITERATION; i++)\n {\n pqk += dPQK;\n\n rayZNear = rayZFar;\n rayZFar = (dPQK.z * 0.5 + pqk.z) / (dPQK.w * 0.5 + pqk.w);\n\n hitPixel = permute ? pqk.yx : pqk.xy;\n hitPixel *= texelSize;\n\n intersect = rayIntersectDepth(rayZNear, rayZFar, hitPixel);\n\n iterationCount += 1.0;\n\n if (intersect) {\n break;\n }\n }\n\n\n Q0.xy += dQ.xy * iterationCount;\n Q0.z = pqk.z;\n hitPoint = Q0 / pqk.w;\n\n return intersect;\n}\n\nfloat calculateAlpha(\n float iterationCount, float reflectivity,\n vec2 hitPixel, vec3 hitPoint, float dist, vec3 rayDir\n)\n{\n float alpha = clamp(reflectivity, 0.0, 1.0);\n alpha *= 1.0 - (iterationCount / float(MAX_ITERATION));\n vec2 hitPixelNDC = hitPixel * 2.0 - 1.0;\n float maxDimension = min(1.0, max(abs(hitPixelNDC.x), abs(hitPixelNDC.y)));\n alpha *= 1.0 - max(0.0, maxDimension - screenEdgeFadeStart) / (1.0 - screenEdgeFadeStart);\n\n float _eyeFadeStart = eyeFadeStart;\n float _eyeFadeEnd = eyeFadeEnd;\n if (_eyeFadeStart > _eyeFadeEnd) {\n float tmp = _eyeFadeEnd;\n _eyeFadeEnd = _eyeFadeStart;\n _eyeFadeStart = tmp;\n }\n\n float eyeDir = clamp(rayDir.z, _eyeFadeStart, _eyeFadeEnd);\n alpha *= 1.0 - (eyeDir - _eyeFadeStart) / (_eyeFadeEnd - _eyeFadeStart);\n\n alpha *= 1.0 - clamp(dist / maxRayDistance, 0.0, 1.0);\n\n return alpha;\n}\n\n@import qtek.util.rand\n\n@import qtek.util.rgbm\n\nvoid main()\n{\n vec4 normalAndGloss = texture2D(gBufferTexture1, v_Texcoord);\n\n if (dot(normalAndGloss.rgb, vec3(1.0)) == 0.0) {\n discard;\n }\n\n float g = normalAndGloss.a;\n if (g <= minGlossiness) {\n discard;\n }\n\n float reflectivity = (g - minGlossiness) / (1.0 - minGlossiness);\n\n vec3 N = normalAndGloss.rgb * 2.0 - 1.0;\n N = normalize((viewInverseTranspose * vec4(N, 0.0)).xyz);\n\n vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, fetchDepth(gBufferTexture2, v_Texcoord), 1.0);\n vec4 pos = projectionInv * projectedPos;\n vec3 rayOrigin = pos.xyz / pos.w;\n\n vec3 rayDir = normalize(reflect(normalize(rayOrigin), N));\n vec2 hitPixel;\n vec3 hitPoint;\n float iterationCount;\n\n vec2 uv2 = v_Texcoord * viewportSize;\n float jitter = rand(fract(v_Texcoord + jitterOffset));\n\n bool intersect = traceScreenSpaceRay(rayOrigin, rayDir, jitter, hitPixel, hitPoint, iterationCount);\n\n float dist = distance(rayOrigin, hitPoint);\n\n float alpha = calculateAlpha(iterationCount, reflectivity, hitPixel, hitPoint, dist, rayDir) * float(intersect);\n\n vec3 hitNormal = texture2D(gBufferTexture1, hitPixel).rgb * 2.0 - 1.0;\n hitNormal = normalize((viewInverseTranspose * vec4(hitNormal, 0.0)).xyz);\n\n if (dot(hitNormal, rayDir) >= 0.0) {\n discard;\n }\n\n \n if (!intersect) {\n discard;\n }\n vec4 color = decodeHDR(texture2D(sourceTexture, hitPixel));\n gl_FragColor = encodeHDR(vec4(color.rgb * alpha, color.a));\n}\n@end\n\n@export ecgl.ssr.blur\n\nuniform sampler2D texture;\nuniform sampler2D gBufferTexture1;\n\nvarying vec2 v_Texcoord;\n\nuniform vec2 textureSize;\nuniform float blurSize : 4.0;\n\n#ifdef BLEND\nuniform sampler2D sourceTexture;\n#endif\n\n@import qtek.util.rgbm\n\n\nvoid main()\n{\n @import qtek.compositor.kernel.gaussian_13\n\n vec4 centerNTexel = texture2D(gBufferTexture1, v_Texcoord);\n float g = centerNTexel.a;\n float maxBlurSize = clamp(1.0 - g + 0.1, 0.0, 1.0) * blurSize;\n#ifdef VERTICAL\n vec2 off = vec2(0.0, maxBlurSize / textureSize.y);\n#else\n vec2 off = vec2(maxBlurSize / textureSize.x, 0.0);\n#endif\n\n vec2 coord = v_Texcoord;\n\n vec4 sum = vec4(0.0);\n float weightAll = 0.0;\n\n vec3 cN = centerNTexel.rgb * 2.0 - 1.0;\n for (int i = 0; i < 13; i++) {\n vec2 coord = clamp((float(i) - 6.0) * off + v_Texcoord, vec2(0.0), vec2(1.0));\n float w = gaussianKernel[i] * clamp(dot(cN, texture2D(gBufferTexture1, coord).rgb * 2.0 - 1.0), 0.0, 1.0);\n weightAll += w;\n sum += decodeHDR(texture2D(texture, coord)) * w;\n }\n\n#ifdef BLEND\n gl_FragColor = encodeHDR(\n sum / weightAll + decodeHDR(texture2D(sourceTexture, v_Texcoord))\n );\n#else\n gl_FragColor = encodeHDR(sum / weightAll);\n#endif\n}\n\n@end";
 
 
 /***/ }),
@@ -37558,6 +37666,7 @@ var FrameBuffer = __webpack_require__(11);
 var Texture2D = __webpack_require__(6);
 var Shader = __webpack_require__(7);
 var Matrix4 = __webpack_require__(9);
+var Vector3 = __webpack_require__(3);
 
 function TemporalSuperSampling () {
     var haltonSequence = [];
@@ -37621,8 +37730,15 @@ TemporalSuperSampling.prototype = {
         var height = viewport.height * dpr;
 
         var offset = this._haltonSequence[this._frame];
-        camera.projectionMatrix._array[8] += (offset[0] * 2.0 - 1.0) / width;
-        camera.projectionMatrix._array[9] += (offset[1] * 2.0 - 1.0) / height;
+
+        var translationMat = new Matrix4();
+        translationMat._array[12] = (offset[0] * 2.0 - 1.0) / width;
+        translationMat._array[13] = (offset[1] * 2.0 - 1.0) / height;
+
+        Matrix4.mul(camera.projectionMatrix, translationMat, camera.projectionMatrix);
+        
+        // camera.projectionMatrix._array[8] += (offset[0] * 2.0 - 1.0) / width;
+        // camera.projectionMatrix._array[9] += (offset[1] * 2.0 - 1.0) / height;
 
         Matrix4.invert(camera.invProjectionMatrix, camera.projectionMatrix);
     },
@@ -39495,7 +39611,7 @@ function signedArea(data, start, end, dim) {
  */
 
 var echarts = __webpack_require__(0);
-var dynamicConvertMixin = __webpack_require__(32);
+var dynamicConvertMixin = __webpack_require__(31);
 var trianglesSortMixin = __webpack_require__(49);
 var StaticGeometry = __webpack_require__(15);
 
@@ -39896,7 +40012,7 @@ module.exports = BarsGeometry;
 var StaticGeometry = __webpack_require__(15);
 var vec2 = __webpack_require__(1).vec2;
 var echarts = __webpack_require__(0);
-var dynamicConvertMixin = __webpack_require__(32);
+var dynamicConvertMixin = __webpack_require__(31);
 
 // var CURVE_RECURSION_LIMIT = 8;
 // var CURVE_COLLINEAR_EPSILON = 40;
@@ -40328,7 +40444,7 @@ module.exports = LinesGeometry;
 var StaticGeometry = __webpack_require__(15);
 var vec3 = __webpack_require__(1).vec3;
 var echarts = __webpack_require__(0);
-var dynamicConvertMixin = __webpack_require__(32);
+var dynamicConvertMixin = __webpack_require__(31);
 
 /**
  * @constructor
@@ -40440,7 +40556,7 @@ module.exports = QuadsGeometry;
  */
 var echarts = __webpack_require__(0);
 var StaticGeometry = __webpack_require__(15);
-var dynamicConvertMixin = __webpack_require__(32);
+var dynamicConvertMixin = __webpack_require__(31);
 
 var squareTriangles = [
     0, 1, 2, 0, 2, 3
@@ -42441,7 +42557,7 @@ module.exports = SunCalc;
 
 
     var Pass = __webpack_require__(12);
-    var Node = __webpack_require__(36);
+    var Node = __webpack_require__(35);
 
     // TODO curlnoise demo wrong
 
@@ -42814,7 +42930,7 @@ module.exports = SunCalc;
 
 
     var Base = __webpack_require__(8);
-    var GraphNode = __webpack_require__(36);
+    var GraphNode = __webpack_require__(35);
 
     /**
      * @constructor qtek.compositor.Graph
@@ -42963,7 +43079,7 @@ module.exports = SunCalc;
 
 
 
-    var Node = __webpack_require__(36);
+    var Node = __webpack_require__(35);
     var glinfo = __webpack_require__(16);
     var glenum = __webpack_require__(10);
     var FrameBuffer = __webpack_require__(11);
@@ -43069,7 +43185,7 @@ module.exports = SunCalc;
 
 
 
-    var Node = __webpack_require__(36);
+    var Node = __webpack_require__(35);
 
     /**
      * @constructor qtek.compositor.TextureNode
@@ -43431,7 +43547,7 @@ module.exports = SunCalc;
     var request = __webpack_require__(72);
     var util = __webpack_require__(25);
     var Compositor = __webpack_require__(70);
-    var CompoNode = __webpack_require__(36);
+    var CompoNode = __webpack_require__(35);
     var CompoSceneNode = __webpack_require__(194);
     var CompoTextureNode = __webpack_require__(195);
     var CompoFilterNode = __webpack_require__(192);
@@ -45759,7 +45875,7 @@ module.exports = SunCalc;
     var Renderer = __webpack_require__(51);
     var Shader = __webpack_require__(7);
     var Light = __webpack_require__(18);
-    var Mesh = __webpack_require__(33);
+    var Mesh = __webpack_require__(32);
     var SpotLight = __webpack_require__(77);
     var DirectionalLight = __webpack_require__(75);
     var PointLight = __webpack_require__(76);
@@ -46262,8 +46378,7 @@ module.exports = SunCalc;
                 mat4.multiply(lvpMat4Arr, lightProjMatrix._array, lightViewMatrix._array);
 
                 var clipPlanes = [];
-                var rad = sceneCamera.fov / 180 * Math.PI;
-                var aspect = sceneCamera.aspect;
+                var isPerspective = sceneCamera instanceof PerspectiveCamera;
 
                 var scaleZ = (sceneCamera.near + sceneCamera.far) / (sceneCamera.near - sceneCamera.far);
                 var offsetZ = 2 * sceneCamera.near * sceneCamera.far / (sceneCamera.near - sceneCamera.far);
@@ -46288,7 +46403,16 @@ module.exports = SunCalc;
                     // Get the splitted frustum
                     var nearPlane = clipPlanes[i];
                     var farPlane = clipPlanes[i+1];
-                    mat4.perspective(splitProjMatrix._array, rad, aspect, nearPlane, farPlane);
+                    if (isPerspective) {
+                        mat4.perspective(splitProjMatrix._array, sceneCamera.fov / 180 * Math.PI, sceneCamera.aspect, nearPlane, farPlane);
+                    }
+                    else {
+                        mat4.ortho(
+                            splitProjMatrix._array,
+                            sceneCamera.left, sceneCamera.right, sceneCamera.bottom, sceneCamera.top,
+                            nearPlane, farPlane
+                        );
+                    }
                     splitFrustum.setFromProjection(splitProjMatrix);
                     splitFrustum.getTransformedBoundingBox(cropBBox, lightViewMatrix);
                     cropBBox.applyProjection(lightProjMatrix);
@@ -46804,7 +46928,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n const 
     var Material = __webpack_require__(19);
     var Shader = __webpack_require__(7);
     var Skybox = __webpack_require__(57);
-    var Scene = __webpack_require__(35);
+    var Scene = __webpack_require__(34);
     var EnvironmentMapPass = __webpack_require__(59);
     var vendor = __webpack_require__(20);
     var textureUtil = __webpack_require__(46);
@@ -47433,7 +47557,7 @@ module.exports = "\n@export qtek.util.rand\nhighp float rand(vec2 uv) {\n const 
     var Skybox = __webpack_require__(57);
     var Skydome = __webpack_require__(58);
     var EnvironmentMapPass = __webpack_require__(59);
-    var Scene = __webpack_require__(35);
+    var Scene = __webpack_require__(34);
     var glmatrix = __webpack_require__(1);
     var vec3 = glmatrix.vec3;
     var sh = {};
@@ -47673,7 +47797,7 @@ module.exports = "uniform samplerCube environmentMap;\n\nvarying vec2 v_Texcoord
 /***/ (function(module, exports) {
 
 
-    module.exports = '0.4.0';
+    module.exports = '0.4.1';
 
 
 /***/ }),
