@@ -249,7 +249,7 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         var frameBuffer = this._compositor.getSourceFrameBuffer();
         frameBuffer.bind(renderer);
         renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
-        renderer.render(scene, camera, true);
+        renderer.render(scene, camera, true, true);
         frameBuffer.unbind(renderer);
 
         if (this.needsTemporalSS() && accumulating) {
@@ -277,7 +277,7 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         }
         else {
             renderer.setViewport(this.viewport);
-            renderer.render(scene, camera, true);
+            renderer.render(scene, camera, true, true);
         }
     }
 
