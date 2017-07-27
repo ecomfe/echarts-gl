@@ -114,7 +114,7 @@ module.exports = {
             return faceZList[b] - faceZList[a];
         }
         if (useNativeQuickSort) {
-            sortedTriangleIndices.sort(compare);
+            Array.prototype.sort.call(sortedTriangleIndices, compare);
         }
         else {
             ProgressiveQuickSort.sort(sortedTriangleIndices, compare, 0, sortedTriangleIndices.length - 1);

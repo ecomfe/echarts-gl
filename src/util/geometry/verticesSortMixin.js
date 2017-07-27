@@ -83,7 +83,7 @@ module.exports = {
 
         // Otherwise simple quicksort is more effecient than v8 native quick sort when data all different.
         if (useNativeQuickSort) {
-            indices.sort(compare);
+            Array.prototype.sort.call(indices, compare);
         }
         else {
             ProgressiveQuickSort.sort(indices, compare, 0, indices.length - 1);
