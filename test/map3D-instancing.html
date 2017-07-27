@@ -28,13 +28,16 @@
                 var regions = populationData.map(function (item) {
                     return {
                         name: item.name,
+                        value: item.value,
                         height: (Math.log(item.value) - min) / (max - min) * 3
                     };
                 })
 
                 chart.setOption({
                     backgroundColor: '#cdcfd5',
-                    geo3D: {
+                    tooltip: {},
+                    series: [{
+                        type: 'map3D',
                         map: 'world',
                         shading: 'lambert',
                         lambertMaterial: {
@@ -81,19 +84,21 @@
 
                         instancing: true,
 
-                        silent: true,
 
                         regionHeight: 0.5,
 
-                        regions: regions
-                    },
-                    series: []
+                        data: regions
+                    }]
                 });
 
             });
             window.addEventListener('resize', function () {
                 chart.resize();
             });
+
+            chart.on('click', function (e) {
+                console.log(e);
+            })
         </script>
     </body>
 </html>
