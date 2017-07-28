@@ -25,7 +25,7 @@ function globeLayout(seriesModel, coordSys) {
     }
     data.each(dims, function (lng, lat, val, idx) {
         var stackedValue = data.get(dims[2], idx, true);
-        var baseValue = data.stackedOn ? (stackedValue - val) : 0;
+        var baseValue = data.stackedOn ? (stackedValue - val) : coordSys.altitudeAxis.scale.getExtent()[0];
         // TODO Stacked with minHeight.
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, baseValue]);
@@ -61,7 +61,7 @@ function geo3DLayout(seriesModel, coordSys) {
     var dir = [0, 1, 0];
     data.each(dims, function (lng, lat, val, idx) {
         var stackedValue = data.get(dims[2], idx, true);
-        var baseValue = data.stackedOn ? (stackedValue - val) : 0;
+        var baseValue = data.stackedOn ? (stackedValue - val) : coordSys.altitudeAxis.scale.getExtent()[0];
 
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, baseValue]);
