@@ -31,6 +31,9 @@
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script src="lib/dat.gui.js"></script>
+
+        <script src="js/exportGL2OBJ.js"></script>
+        <script src="lib/download.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'), null, {
                 devicePixelRatio: 1
@@ -38,13 +41,31 @@
             var canvas = document.createElement('canvas');
             var ctx = canvas.getContext('2d');
 
-            var config = {
-                scale: 0.25
-            };
-
             var imgData;
 
             chart.setOption({
+                toolbox: {
+                    left: 10,
+                    feature: {
+                        myExportObj: {
+                            title: 'Export OBJ',
+                            icon: 'M4.7,22.9L29.3,45.5L54.7,23.4M4.6,43.6L4.6,58L53.8,58L53.8,43.6M29.2,45.1L29.2,0',
+                            onclick: function () {
+                                var res = echarts.exportGL2OBJ(chart, {
+                                    mainType: 'grid3D',
+                                    index: 0
+                                }, {
+                                    mtllib: 'bar3D'
+                                });
+                                download(res.obj, 'bar3D.obj', 'text/plain');
+                                download(res.mtl, 'bar3D.mtl', 'text/plain');
+                                res.textures.forEach(function (texture) {
+                                    download(texture.data, texture.file, 'image/png');
+                                });
+                            }
+                        }
+                    }
+                },
                 tooltip: {},
                 backgroundColor: '#000',
                 xAxis3D: {
@@ -76,8 +97,12 @@
                         },
                         screenSpaceAmbientOcclusion: {
                             enable: true,
-                            intensity: 2,
-                            radius: 4
+                            intensity: 1.5,
+                            radius: 4,
+                            quality: 'high'
+                        },
+                        screenSpaceReflection: {
+                            enable: true
                         }
                         // depthOfField: {
                         //     enable: true,
@@ -173,24 +198,57 @@
             }
             img.src = 'asset/sample.jpg';
 
+
+            // Configurations
+            var config = {
+                scale: 0.25,
+                roughness: 1,
+                metalness: 0,
+                projection: 'orthographic',
+                depthOfField: false
+            };
+
             var gui = new dat.GUI();
-            gui.add(config, 'scale', 0, 1).onFinishChange(function () {
+            gui.add(config, 'scale', -1, 1).onFinishChange(function () {
                 if (imgData) {
                     updateData(imgData.data, imgData.width, imgData.height);
                 }
             });
-
-            $('#image-upload').on('dragover', function (e) {
-                e.stopPropagation();
-                e.preventDefault();
+            ['roughness', 'metalness'].forEach(function (propName) {
+                gui.add(config, propName, 0, 1).onFinishChange(function () {
+                    chart.setOption({
+                        series: [{
+                            realisticMaterial: {
+                                roughness: config.roughness,
+                                metalness: config.metalness
+                            }
+                        }]
+                    });
+                });
             });
-            $('#image-upload')[0].addEventListener('drop', function (e) {
-                e.stopPropagation();
-                e.preventDefault();
-                
-                var files = e.dataTransfer.files;
-                var file = files[0];
-                
+            gui.add(config, 'projection', ['orthographic', 'perspective']).onChange(function () {
+                chart.setOption({
+                    grid3D: {
+                        viewControl: {
+                            projection: config.projection
+                        }
+                    }
+                });
+            });
+            gui.add(config, 'depthOfField').onChange(function () {
+                chart.setOption({
+                    grid3D: {
+                        postEffect: {
+                            depthOfField: {
+                                enable: config.depthOfField
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Handle file uploads.
+            function readFile(file) {
                 if (!file || !file.type.match(/image/)) {
                     return;
                 }
@@ -204,6 +262,25 @@
                     img.src = e.target.result;
                 }
                 fileReader.readAsDataURL(file);
+            }
+            $('#image-upload').on('dragover', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            });
+            $('#image-upload')[0].addEventListener('drop', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                var files = e.dataTransfer.files;
+                return readFile(files[0]);
+                
+            });
+            $('#image-upload').on('click', function () {
+                var $file = $('<input type="file" />');
+                $file.on('change', function (e) {
+                    readFile(e.target.files[0]);
+                });
+                $file.click();
             });
 
             window.onresize = chart.resize;

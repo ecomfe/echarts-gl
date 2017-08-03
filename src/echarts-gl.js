@@ -249,7 +249,7 @@ echarts.init = function () {
         findAndDrawOtherLayer(zlevel, Infinity);
 
         return canvas;
-    }
+    };
     return chart;
 };
 
