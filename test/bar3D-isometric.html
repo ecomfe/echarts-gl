@@ -32,7 +32,7 @@
         <script src="lib/jquery.min.js"></script>
         <script src="lib/dat.gui.js"></script>
 
-        <script src="js/exportGL2OBJ.js"></script>
+        <script src="js/exportGL2PLY.js"></script>
         <script src="lib/download.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'), null, {
@@ -51,17 +51,11 @@
                             title: 'Export OBJ',
                             icon: 'M4.7,22.9L29.3,45.5L54.7,23.4M4.6,43.6L4.6,58L53.8,58L53.8,43.6M29.2,45.1L29.2,0',
                             onclick: function () {
-                                var res = echarts.exportGL2OBJ(chart, {
+                                var res = echarts.exportGL2PLY(chart, {
                                     mainType: 'grid3D',
                                     index: 0
-                                }, {
-                                    mtllib: 'bar3D'
                                 });
-                                download(res.obj, 'bar3D.obj', 'text/plain');
-                                download(res.mtl, 'bar3D.mtl', 'text/plain');
-                                res.textures.forEach(function (texture) {
-                                    download(texture.data, texture.file, 'image/png');
-                                });
+                                download(res, 'bar3D.ply', 'text/plain');
                             }
                         }
                     }

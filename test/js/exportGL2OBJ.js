@@ -36,6 +36,7 @@
             }
         }
 
+        // FIXME
         for (var i = 0; i < geometry.vertexCount; i++) {
             colorAttr.get(i, col);
             if (col[3] == null) {
@@ -270,7 +271,7 @@
         ];
         for (var matName in materialLib) {
             var material = materialLib[matName];
-            mtlStr.push('newmtl ' + matName + '\n');
+            mtlStr.push('newmtl ' + matName);
             for (var key in material) {
                 var val = material[key];
                 mtlStr.push(key + ' ' + val);
