@@ -32,18 +32,18 @@
                 var y = Math.floor(i / width);
                 texcoordsArr[i * 2] = x / (width - 1);
                 // Flip y
-                texcoordsArr[i * 2 + 1] = 1 - y / (height - 1);
+                texcoordsArr[i * 2 + 1] = y / (height - 1);
             }
         }
 
         for (var i = 0; i < geometry.vertexCount; i++) {
             colorAttr.get(i, col);
-            
-            uv[0] = texcoordsArr[i * 2];
-            uv[1] = texcoordsArr[i * 2 + 1];
+            if (col[3] == null) {
+                col[3] = 1;
+            }
 
             var x = Math.round(uv[0] * (width - 1));
-            var y = Math.round(uv[1] * (height - 1));
+            var y = height - 1 - Math.round(uv[1] * (height - 1));
 
             var idx4 = (y * width + x) * 4;
             for (var k = 0; k < 4; k++) {
@@ -135,7 +135,7 @@
      */
     echarts.exportGL2OBJ = function (chartInstance, componentQuery, opts) {
         opts = opts || {};
-        opts.storeVertexColorInTexture = opts.storeVertexColorInTexture == null ? true : opts.storeVertexColorInTexture;
+        opts.storeVertexColorInTexture = opts.storeVertexColorInTexture || false;
         opts.mtllib = opts.mtllib || 'material';
 
         var componentModel = chartInstance.getModel().queryComponents(componentQuery)[0];
@@ -158,11 +158,11 @@
         var materialLib = {};
         var matCount = 0;
         var textureLib = {};
+        var indexStart = 1;
         viewGL.scene.traverse(function (mesh) {
             if (mesh.geometry && mesh.geometry.vertexCount) {
                 var materialName = 'mat_' + matCount++;
                 objStr += 'o ' + mesh.name + '\n';
-                objStr += 'usemtl ' + materialName + '\n';
 
                 materialLib[materialName] = getMaterialParameters(mesh.material, textureLib);
 
@@ -176,6 +176,7 @@
                 var normalAttr = geometry.attributes.normal;
                 var texcoordAttr = geometry.attributes.texcoord0;
 
+                mesh.updateWorldTransform();
                 var normalMat = mesh.worldTransform.clone().invert().transpose();
 
                 var pos = new echarts.graphicGL.Vector3();
@@ -238,12 +239,15 @@
                     geometry.getTriangleIndices(i, indices);
                     // Start from 1
                     for (var k = 0; k < 3; k++) {
-                        indices[k] += 1;
+                        indices[k] += indexStart;
                         var idx = indices[k];
                         if (hasTexcoord) {
                             indices[k] += '/' + idx;
                         }
                         if (hasNormal) {
+                            if (!hasTexcoord) {
+                                indices[k] += '/';
+                            }
                             indices[k] += '/' + idx;
                         }
                     }
@@ -254,7 +258,10 @@
                 objStr += vStr.join('\n') + '\n'
                     + vnStr.join('\n') + '\n'
                     + vtStr.join('\n') + '\n'
+                    + 'usemtl ' + materialName + '\n'
                     + fStr.join('\n') + '\n';
+
+                indexStart += geometry.vertexCount;
             }
         });
 
