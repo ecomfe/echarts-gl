@@ -25,7 +25,7 @@ function Geo3DBuilder(api) {
 
     this._shadersMap = graphicGL.COMMON_SHADERS.reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
-        obj[shaderName].define('fragment', 'DOUBLE_SIDE');
+        obj[shaderName].define('fragment', 'DOUBLE_SIDED');
         // obj[shaderName].define('both', 'WIREFRAME_TRIANGLE');
         return obj;
     }, {});

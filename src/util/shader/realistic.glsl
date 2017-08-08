@@ -177,7 +177,7 @@ void main()
 
     vec3 N = v_Normal;
 
-#ifdef DOUBLE_SIDE
+#ifdef DOUBLE_SIDED
     if (dot(N, V) < 0.0) {
         N = -N;
     }

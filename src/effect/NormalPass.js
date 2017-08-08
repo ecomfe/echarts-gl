@@ -57,7 +57,7 @@ function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRough
 
         var useBumpMap = !!bumpMap && material.shader.isTextureEnabled('bumpMap');
         var useRoughnessMap = !!roughnessMap && material.shader.isTextureEnabled('roughnessMap');
-        var doubleSide = material.shader.isDefined('fragment', 'DOUBLE_SIDE');
+        var doubleSide = material.shader.isDefined('fragment', 'DOUBLE_SIDED');
 
         bumpMap = bumpMap || defaultBumpMap;
         roughnessMap = roughnessMap || defaultRoughnessMap;

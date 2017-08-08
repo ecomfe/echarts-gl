@@ -61,7 +61,7 @@ module.exports = echarts.extendComponentView({
             depthMask: false,
             transparent: true
         });
-        quadsMaterial.shader.define('fragment', 'DOUBLE_SIDE');
+        quadsMaterial.shader.define('fragment', 'DOUBLE_SIDED');
         quadsMaterial.shader.define('both', 'VERTEX_COLOR');
 
         this.groupGL = new graphicGL.Node();

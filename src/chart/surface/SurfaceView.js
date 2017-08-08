@@ -24,7 +24,7 @@ echarts.extendChartView({
                 shader: graphicGL.createShader('ecgl.' + shading)
             });
             materials[shading].shader.define('both', 'VERTEX_COLOR');
-            materials[shading].shader.define('fragment', 'DOUBLE_SIDE');
+            materials[shading].shader.define('fragment', 'DOUBLE_SIDED');
         });
 
         this._materials = materials;

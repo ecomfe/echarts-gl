@@ -104,7 +104,7 @@ void main()
 #endif
 
     vec3 N = v_Normal;
-#ifdef DOUBLE_SIDE
+#ifdef DOUBLE_SIDED
     vec3 eyePos = viewInverse[3].xyz;
     vec3 V = normalize(eyePos - v_WorldPosition);
 
