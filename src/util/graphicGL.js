@@ -80,10 +80,6 @@ Scene.prototype.removeFromScene = function (node) {
  * @param {Object} [textureOpts]
  */
 Material.prototype.setTextureImage = function (textureName, imgValue, api, textureOpts) {
-    if (api == null) {
-        api = textureOpts;
-    }
-
     if (!this.shader) {
         return;
     }
