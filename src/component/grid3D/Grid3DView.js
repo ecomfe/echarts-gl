@@ -571,20 +571,12 @@ module.exports = echarts.extendComponentView({
 
             var textStyleModel = labelModel.getModel('textStyle');
             var labelColor = textStyleModel.get('color');
-            var opacity = firstNotNull(textStyleModel.get('opacity'), 1.0);
-            var strokeColor = textStyleModel.get('borderColor');
-            var lineWidth = textStyleModel.get('borderWidth');
-            var textEl = new echarts.graphic.Text({
-                style: {
-                    text: text,
-                    textFont: textStyleModel.getFont(),
-                    fill: labelColor || lineColor,
-                    stroke: strokeColor,
-                    lineWidth: lineWidth,
-                    opacity: opacity,
-                    textAlign: 'left',
-                    textVerticalAlign: 'top'
-                }
+            var textEl = new echarts.graphic.Text();
+            echarts.graphic.setTextStyle(textEl.style, textStyleModel, {
+                text: text,
+                textFill: labelColor || lineColor,
+                textAlign: 'left',
+                textVerticalAlign: 'top'
             });
             var coords = axisPointerLabelsSurface.add(textEl);
             var rect = textEl.getBoundingRect();

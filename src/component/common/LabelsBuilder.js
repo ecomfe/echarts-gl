@@ -1,6 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
 var LabelsMesh = require('../../util/mesh/LabelsMesh');
+var retrieve = require('../../util/retrieve');
 
 var LABEL_NORMAL_SHOW_BIT = 1;
 var LABEL_EMPHASIS_SHOW_BIT = 2;
@@ -122,20 +123,15 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
         }
 
         // TODO Background.
-        var textEl = new echarts.graphic.Text({
-            style: {
-                text: text,
-                font: textStyleModel.getFont(),
-                fill: textStyleModel.get('color') || data.getItemVisual(dataIndex, 'color') || '#000',
-                opacity: textStyleModel.get('opacity'),
-                stroke: textStyleModel.get('borderColor'),
-                lineWidth: textStyleModel.get('borderWidth') * 2,
-                textAlign: 'left',
-                textVerticalAlign: 'top'
-            }
+        var textEl = new echarts.graphic.Text();
+        echarts.graphic.setTextStyle(textEl.style, textStyleModel, {
+            text: text,
+            textFill: textStyleModel.get('color') || data.getItemVisual(dataIndex, 'color') || '#000',
+            textAlign: 'left',
+            textVerticalAlign: 'top',
+            opacity: retrieve.firstNotNull(textStyleModel.get('opacity'), data.getItemVisual(dataIndex, 'opacity'), 1)
         });
         var rect = textEl.getBoundingRect();
-        // PENDING Use rect element
         var lineHeight = 1.2;
         rect.height *= lineHeight;
 

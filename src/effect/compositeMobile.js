@@ -331,43 +331,26 @@ module.exports = {
 
         {
             'name': 'coc',
-            'shader': '#source(qtek.compositor.dof.coc)',
+            'shader': '#source(ecgl.dof.coc)',
             'outputs': {
                 'color': {
                     'parameters': {
                         'minFilter': 'NEAREST',
                         'magFilter': 'NEAREST',
-                        'width': 'expr(width)',
-                        'height': 'expr(height)'
-                    }
-                }
-            }
-        },
-
-        {
-            'name': 'coc_half',
-            'shader': '#source(qtek.compositor.dof.min_coc)',
-            'inputs': {
-                'coc': 'coc'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'minFilter': 'NEAREST',
-                        'magFilter': 'NEAREST',
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)'
+                        'width': 'expr(width * 1.0)',
+                        'height': 'expr(height * 1.0)'
                     }
                 }
             },
             'parameters': {
-                'textureSize': 'expr( [width * dpr, height * dpr] )'
+                'focalDist': 50,
+                'focalRange': 30
             }
         },
 
         {
-            'name': 'dof_source_half',
-            'shader': '#source(qtek.compositor.dof.downsample)',
+            'name': 'dof_far_blur',
+            'shader': '#source(ecgl.dof.diskBlur)',
             'inputs': {
                 'texture': 'source',
                 'coc': 'coc'
@@ -375,144 +358,34 @@ module.exports = {
             'outputs': {
                 'color': {
                     'parameters': {
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)',
+                        'width': 'expr(width * 1.0)',
+                        'height': 'expr(height * 1.0)',
                         'type': 'HALF_FLOAT'
                     }
                 }
             },
             'parameters': {
-                'textureSize': 'expr( [width * dpr, height * dpr] )'
+                'textureSize': 'expr( [width * 1.0, height * 1.0] )'
             }
         },
-
         {
-            'name': 'dof_far_blur_hexangonal_1',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_1)',
+            'name': 'dof_near_blur',
+            'shader': '#source(ecgl.dof.diskBlur)',
             'inputs': {
-                'texture': 'dof_source_half',
+                'texture': 'source',
                 'coc': 'coc'
             },
             'outputs': {
                 'color': {
                     'parameters': {
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)',
+                        'width': 'expr(width * 1.0)',
+                        'height': 'expr(height * 1.0)',
                         'type': 'HALF_FLOAT'
                     }
                 }
             },
             'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            }
-        },
-        {
-            'name': 'dof_far_blur_hexangonal_2',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_2)',
-            'inputs': {
-                'texture': 'dof_source_half',
-                'coc': 'coc'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            }
-        },
-        {
-            'name': 'dof_far_blur_hexangonal_3',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_3)',
-            'inputs': {
-                'texture1': 'dof_far_blur_hexangonal_1',
-                'texture2': 'dof_far_blur_hexangonal_2',
-                'coc': 'coc'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            }
-        },
-
-        {
-            'name': 'dof_near_blur_hexangonal_1',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_1)',
-            'inputs': {
-                'texture': 'dof_source_half',
-                'coc': 'coc'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            },
-            'defines': {
-                'BLUR_NEARFIELD': null
-            }
-        },
-        {
-            'name': 'dof_near_blur_hexangonal_2',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_2)',
-            'inputs': {
-                'texture': 'dof_source_half',
-                'coc': 'coc'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            },
-            'defines': {
-                'BLUR_NEARFIELD': null
-            }
-        },
-        {
-            'name': 'dof_near_blur_hexangonal_3',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_3)',
-            'inputs': {
-                'texture1': 'dof_near_blur_hexangonal_1',
-                'texture2': 'dof_near_blur_hexangonal_2',
-                'coc': 'coc'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
+                'textureSize': 'expr( [width * 1.0, height * 1.0] )'
             },
             'defines': {
                 'BLUR_NEARFIELD': null
@@ -521,154 +394,44 @@ module.exports = {
 
 
         {
-            'name': 'dof_coc_blur_hexangonal_1',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_1)',
+            'name': 'dof_coc_blur',
+            'shader': '#source(ecgl.dof.diskBlur)',
             'inputs': {
-                'texture': 'coc_half'
+                'texture': 'coc'
             },
             'outputs': {
                 'color': {
                     'parameters': {
                         'minFilter': 'NEAREST',
                         'magFilter': 'NEAREST',
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)'
+                        'width': 'expr(width * 1.0)',
+                        'height': 'expr(height * 1.0)'
                     }
                 }
             },
             'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
+                'textureSize': 'expr( [width * 1.0, height * 1.0] )'
             },
             'defines': {
                 'BLUR_COC': null
-            }
-        },
-        {
-            'name': 'dof_coc_blur_hexangonal_2',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_2)',
-            'inputs': {
-                'texture': 'coc_half'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'minFilter': 'NEAREST',
-                        'magFilter': 'NEAREST',
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            },
-            'defines': {
-                'BLUR_COC': null
-            }
-        },
-        {
-            'name': 'dof_coc_blur_hexangonal_3',
-            'shader': '#source(qtek.compositor.dof.hexagonal_blur_3)',
-            'inputs': {
-                'texture1': 'dof_coc_blur_hexangonal_1',
-                'texture2': 'dof_coc_blur_hexangonal_2'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'minFilter': 'NEAREST',
-                        'magFilter': 'NEAREST',
-                        'width': 'expr(width * dpr / 2)',
-                        'height': 'expr(height * dpr / 2)'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            },
-            'defines': {
-                'BLUR_COC': null
-            }
-        },
-
-        {
-            'name': 'dof_far_blur_upsample',
-            'shader': '#source(qtek.compositor.dof.upsample)',
-            'inputs': {
-                'texture': 'dof_far_blur_hexangonal_3',
-                'coc': 'coc'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'width': 'expr(width)',
-                        'height': 'expr(height)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            }
-        },
-
-        {
-            'name': 'dof_near_blur_upsample',
-            'shader': '#source(qtek.compositor.dof.upsample)',
-            'inputs': {
-                'texture': 'dof_near_blur_hexangonal_3',
-                'coc': 'coc'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'width': 'expr(width)',
-                        'height': 'expr(height)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
-            }
-        },
-
-        {
-            'name': 'dof_coc_blur_upsample',
-            'shader': '#source(qtek.compositor.dof.coc_upsample)',
-            'inputs': {
-                'coc': 'dof_coc_blur_hexangonal_3'
-            },
-            'outputs': {
-                'color': {
-                    'parameters': {
-                        'minFilter': 'NEAREST',
-                        'magFilter': 'NEAREST',
-                        'width': 'expr(width)',
-                        'height': 'expr(height)'
-                    }
-                }
-            },
-            'parameters': {
-                'textureSize': 'expr( [width * dpr / 2, height * dpr / 2] )'
             }
         },
 
         {
             'name': 'dof_composite',
-            'shader': '#source(qtek.compositor.dof.composite)',
+            'shader': '#source(ecgl.dof.composite)',
             'inputs': {
                 'original': 'source',
-                'blurred': 'dof_far_blur_upsample',
-                'nearfield': 'dof_near_blur_upsample',
+                'blurred': 'dof_far_blur',
+                'nearfield': 'dof_near_blur',
                 'coc': 'coc',
-                'nearcoc': 'dof_coc_blur_upsample'
+                'nearcoc': 'dof_coc_blur'
             },
             'outputs': {
                 'color': {
                     'parameters': {
-                        'width': 'expr(width)',
-                        'height': 'expr(height)',
+                        'width': 'expr(width * 1.0)',
+                        'height': 'expr(height * 1.0)',
                         'type': 'HALF_FLOAT'
                     }
                 }
@@ -676,74 +439,11 @@ module.exports = {
         },
 
         {
-            'name' : 'lensflare',
-            'shader' : '#source(qtek.compositor.lensflare)',
-            'inputs' : {
-                'texture' : 'bright2'
-            },
-            'outputs' : {
-                'color' : {
-                    'parameters' : {
-                        'width' : 'expr(width * dpr / 4)',
-                        'height' : 'expr(height * dpr / 4)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters' : {
-                'textureSize' : 'expr([width * dpr / 4, height * dpr / 4])',
-                'lensColor' : '#lenscolor'
-            }
-        },
-        {
-            'name' : 'lensflare_blur_h',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
-            'inputs' : {
-                'texture' : 'lensflare'
-            },
-            'outputs' : {
-                'color' : {
-                    'parameters' : {
-                        'width' : 'expr(width * dpr / 4)',
-                        'height' : 'expr(height * dpr / 4)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters' : {
-                'blurSize' : 1,
-                'blurDir': 0.0,
-                'textureSize' : 'expr([width * dpr / 4, height * dpr / 4])'
-            }
-        },
-        {
-            'name' : 'lensflare_blur_v',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
-            'inputs' : {
-                'texture' : 'lensflare_blur_h'
-            },
-            'outputs' : {
-                'color' : {
-                    'parameters' : {
-                        'width' : 'expr(width * dpr / 4)',
-                        'height' : 'expr(height * dpr / 4)',
-                        'type': 'HALF_FLOAT'
-                    }
-                }
-            },
-            'parameters' : {
-                'blurSize' : 1,
-                'blurDir': 1.0,
-                'textureSize' : 'expr([width * dpr / 4, height * dpr / 4])'
-            }
-        },
-        {
             'name' : 'composite',
             'shader' : '#source(qtek.compositor.hdr.composite)',
             'inputs' : {
                 'texture' : 'source',
-                'bloom' : 'bloom_composite',
-                'lensflare' : 'lensflare_blur_v'
+                'bloom' : 'bloom_composite'
             },
             'outputs' : {
                 'color' : {

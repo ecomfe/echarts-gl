@@ -59,8 +59,9 @@ var Scatter3DSeries = echarts.extendSeriesModel({
             textStyle: {
                 fontSize: 14,
                 color: '#000',
-                borderColor: '#fff',
-                borderWidth: 1
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                padding: 3,
+                borderRadius: 3
             }
         },
 

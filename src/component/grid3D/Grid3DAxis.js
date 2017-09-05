@@ -115,8 +115,6 @@ Grid3DAxis.prototype.update = function (
     if (axisLabelModel.get('show')) {
         var labelsCoords = axis.getLabelsCoords();
         var categoryData = axisModel.get('data');
-        // TODO color callback.
-        var textStyleModel = axisLabelModel.getModel('textStyle');
         // TODO Automatic interval
         var intervalFunc = labelIntervalFunc;
 
@@ -137,39 +135,32 @@ Grid3DAxis.prototype.update = function (
             p[idx] = p[idx] = tickCoord;
             p[otherIdx] = labelMargin;
 
-            var itemTextStyleModel = textStyleModel;
+            var itemTextStyleModel = axisLabelModel;
             if (categoryData && categoryData[ticks[i]] && categoryData[ticks[i]].textStyle) {
                 itemTextStyleModel = new echarts.Model(
-                    categoryData[ticks[i]].textStyle, textStyleModel, axisModel.ecModel
+                    categoryData[ticks[i]].textStyle, axisLabelModel, axisModel.ecModel
                 );
             }
             var textColor = firstNotNull(itemTextStyleModel.get('color'), axisLineColor);
-            var opacity = firstNotNull(itemTextStyleModel.get('opacity'), 1.0);
-            var strokeColor = itemTextStyleModel.get('borderColor');
-            var lineWidth = itemTextStyleModel.get('borderWidth');
 
-            var textEl = new echarts.graphic.Text({
-                style: {
-                    text: labels[i],
-                    fill: typeof textColor === 'function'
-                        ? textColor(
-                            // (1) In category axis with data zoom, tick is not the original
-                            // index of axis.data. So tick should not be exposed to user
-                            // in category axis.
-                            // (2) Compatible with previous version, which always returns labelStr.
-                            // But in interval scale labelStr is like '223,445', which maked
-                            // user repalce ','. So we modify it to return original val but remain
-                            // it as 'string' to avoid error in replacing.
-                            axis.type === 'category' ? labels[i] : axis.type === 'value' ? ticks[i] + '' : ticks[i],
-                            i
-                        )
-                        : textColor,
-                    stroke: strokeColor,
-                    lineWidth: lineWidth,
-                    font: itemTextStyleModel.getFont(),
-                    textVerticalAlign: 'top',
-                    textAlign: 'left'
-                }
+            var textEl = new echarts.graphic.Text();
+            echarts.graphic.setTextStyle(textEl.style, itemTextStyleModel, {
+                text: labels[i],
+                textFill: typeof textColor === 'function'
+                    ? textColor(
+                        // (1) In category axis with data zoom, tick is not the original
+                        // index of axis.data. So tick should not be exposed to user
+                        // in category axis.
+                        // (2) Compatible with previous version, which always returns labelStr.
+                        // But in interval scale labelStr is like '223,445', which maked
+                        // user repalce ','. So we modify it to return original val but remain
+                        // it as 'string' to avoid error in replacing.
+                        axis.type === 'category' ? labels[i] : axis.type === 'value' ? ticks[i] + '' : ticks[i],
+                        i
+                    )
+                    : textColor,
+                textVerticalAlign: 'top',
+                textAlign: 'left'
             });
             var coords = axisLabelSurface.add(textEl);
             var rect = textEl.getBoundingRect();
@@ -185,24 +176,18 @@ Grid3DAxis.prototype.update = function (
         var idx = dimIndicesMap[axis.dim];
         var otherIdx = dimIndicesMap[otherDim[axis.dim]];
         var labelColor = firstNotNull(nameTextStyleModel.get('color'), axisLineColor);
-        var opacity = firstNotNull(nameTextStyleModel.get('opacity'), 1.0);
         var strokeColor = nameTextStyleModel.get('borderColor');
         var lineWidth = nameTextStyleModel.get('borderWidth');
         // TODO start and end
         p[idx] = p[idx] = (extent[0] + extent[1]) / 2;
         p[otherIdx] = axisModel.get('nameGap');
 
-        var textEl = new echarts.graphic.Text({
-            style: {
-                text: axisModel.get('name'),
-                fill: labelColor,
-                stroke: strokeColor,
-                lineWidth: lineWidth,
-                font: nameTextStyleModel.getFont(),
-                textVerticalAlign: 'top',
-                textAlign: 'left',
-                opacity: opacity
-            }
+        var textEl = new echarts.graphic.Text();
+        echarts.graphic.setTextStyle(textEl.style, nameTextStyleModel, {
+            text: axisModel.get('name'),
+            textFill: labelColor,
+            textStroke: strokeColor,
+            lineWidth: lineWidth
         });
         var coords = axisLabelSurface.add(textEl);
         var rect = textEl.getBoundingRect();

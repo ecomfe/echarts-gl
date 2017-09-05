@@ -24,12 +24,33 @@ function convertNormalEmphasisForEach(option) {
     convertNormalEmphasis(option, 'label');
 }
 
+function removeTextStyleInAxis(axesOpt) {
+    if (!axesOpt) {
+        return;
+    }
+    if (!(axesOpt instanceof Array)) {
+        axesOpt = [axesOpt];
+    }
+    echarts.util.each(axesOpt, function (axisOpt) {
+        if (axisOpt.axisLabel) {
+            var labelOpt = axisOpt.axisLabel;
+            echarts.util.extend(labelOpt, labelOpt.textStyle);
+            labelOpt.textStyle = null;
+        }
+    });
+}
+
 module.exports = function (option) {
     echarts.util.each(option.series, function (series) {
         if (echarts.util.indexOf(GL_SERIES, series.type) >= 0) {
             convertNormalEmphasisForEach(series);
         }
     });
+
+    removeTextStyleInAxis(option.xAxis3D);
+    removeTextStyleInAxis(option.yAxis3D);
+    removeTextStyleInAxis(option.zAxis3D);
+    removeTextStyleInAxis(option.grid3D);
 
     convertNormalEmphasis(option.geo3D);
 };

@@ -48,11 +48,11 @@ var Grid3DModel = echarts.extendComponentModel({
                 // borderWidth: 0,
 
                 textStyle: {
-                    // borderColor: '#fff',
-                    // borderWidth: 3,
-                    fontSize: 16
-                    // Default with lineStyle.color
-                    // color: '#000'
+                    fontSize: 14,
+                    color: '#fff',
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    padding: 3,
+                    borderRadius: 3
                 }
             }
         },
