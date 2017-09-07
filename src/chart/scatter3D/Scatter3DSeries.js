@@ -2,7 +2,7 @@ var echarts = require('echarts/lib/echarts');
 var formatUtil = require('../../util/format');
 var formatTooltip = require('../common/formatTooltip');
 
-var Scatter3DSeries = echarts.extendSeriesModel({
+echarts.extendSeriesModel({
 
     type: 'series.scatter3D',
 

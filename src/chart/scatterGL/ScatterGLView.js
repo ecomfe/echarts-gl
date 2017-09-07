@@ -35,6 +35,7 @@ echarts.extendChartView({
     },
 
     _updateCamera: function (width, height, dpr) {
+        // TODO, left, top, right, bottom
         this.viewGL.setViewport(0, 0, width, height, dpr);
         var camera = this.viewGL.camera;
         camera.left = camera.top = 0;

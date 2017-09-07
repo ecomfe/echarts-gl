@@ -54,7 +54,7 @@ void main()
         gl_Position = vec4(100000.0, 100000.0, 100000.0, 1.0);
     }
 
-    gl_PointSize = sizeScaling * p.z;
+    gl_PointSize = sizeScaling;
 }
 
 @end
