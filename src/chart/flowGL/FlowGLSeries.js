@@ -27,6 +27,14 @@ echarts.extendSeriesModel({
 
     defaultOption: {
         coordinateSystem: 'cartesian2d',
-        zlevel: 10
+        zlevel: 10,
+
+        // 128x128 particles
+        particleDensity: 128,
+
+        itemStyle: {
+            color: '#fff',
+            opacity: 0.8
+        }
     }
 });

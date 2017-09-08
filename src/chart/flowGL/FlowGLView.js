@@ -24,7 +24,10 @@ echarts.extendChartView({
                 shader: new graphicGL.Shader({
                     vertex: graphicGL.Shader.source('ecgl.color.vertex'),
                     fragment: graphicGL.Shader.source('ecgl.color.fragment')
-                })
+                }),
+                // Must enable blending and multiply alpha.
+                // Or premultipliedAlpha will let the alpha useless.
+                transparent: true
             })
         });
         planeMesh.material.shader.enableTexture('diffuseMap');
@@ -40,7 +43,9 @@ echarts.extendChartView({
         
         this._updateData(seriesModel, api);
         this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
-        particleSurface.setParticleDensity(128, 128);
+
+        var particleDensity = retrieve.firstNotNull(seriesModel.get('particleDensity'), 128);
+        particleSurface.setParticleDensity(particleDensity, particleDensity);
         
         var planeMesh = this._planeMesh;
         
@@ -63,6 +68,10 @@ echarts.extendChartView({
             })
             .start();
 
+        var itemStyleModel = seriesModel.getModel('itemStyle');
+        var color = graphicGL.parseColor(itemStyleModel.get('color'));
+        color[3] *= retrieve.firstNotNull(itemStyleModel.get('opacity'), 1);
+        planeMesh.material.set('color', color);
     },
 
     updateLayout: function (seriesModel, ecModel, api) {

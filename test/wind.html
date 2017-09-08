@@ -19,20 +19,27 @@
             $.getJSON('data/winds.json', function (windData) {
                 var data = [];
                 var p = 0;
+                var maxMag = 0;
+                var minMag = Infinity;
                 for (var j = 0; j < windData.ny; j++) {
                     for (var i = 0; i < windData.nx; i++, p++) {
+                        var vx = windData.data[p][0];
+                        var vy = windData.data[p][1];
                         data.push([
                             i / windData.nx * 360 - 180, j / windData.ny * 180 - 90,
-                            windData.data[p][0], windData.data[p][1]
+                            vx, vy
                         ]);
+                        var mag = Math.sqrt(vx * vx + vy * vy);
+                        maxMag = Math.max(mag, maxMag);
+                        minMag = Math.min(mag, minMag);
                     }
                 }
                 chart.setOption(option = {
                     visualMap: {
-                        min: 0,
-                        max: 10,
+                        min: minMag,
+                        max: maxMag,
                         inRange: {
-                            color: ['green', 'red']
+                            color: ['green', 'green', 'red', 'red']
                         }
                     },
                     geo: {
@@ -57,7 +64,11 @@
                     series: [{
                         type: 'flowGL',
                         coordinateSystem: 'geo',
-                        data: data
+                        data: data,
+                        particleDensity: 256,
+                        itemStyle: {
+                            opacity: 0.5
+                        }
                     }]
                 });
             });

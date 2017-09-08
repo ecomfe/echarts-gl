@@ -49,7 +49,8 @@ void main()
 {
     vec4 p = texture2D(particleTexture, texcoord);
 
-    if (p.w > 0.0) {
+    // PENDING If ignore 0 length vector
+    if (p.w > 0.0 && p.z > 1e-5) {
         gl_Position = worldViewProjection * vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
     }
     else {
