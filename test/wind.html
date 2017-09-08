@@ -10,7 +10,8 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
-        <script src="../node_modules/echarts/map/js/world.js"></script>
+        <script src="../node_modules/echarts/dist/extension/bmap.js"></script>
+        <script src="http://api.map.baidu.com/api?v=2.0&ak=ZUONbpqGBsYGXNIYHicvbAbM"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
@@ -25,9 +26,13 @@
                     for (var i = 0; i < windData.nx; i++, p++) {
                         var vx = windData.data[p][0];
                         var vy = windData.data[p][1];
+                        // 数据是一个一维数组
+                        // [ [经度, 维度，向量经度方向的值，向量维度方向的值] ]
                         data.push([
-                            i / windData.nx * 360 - 180, j / windData.ny * 180 - 90,
-                            vx, vy
+                            i / windData.nx * 360 - 180,
+                            j / windData.ny * 180 - 90,
+                            vx,
+                            vy
                         ]);
                         var mag = Math.sqrt(vx * vx + vy * vy);
                         maxMag = Math.max(mag, maxMag);
@@ -40,34 +45,166 @@
                         max: maxMag,
                         inRange: {
                             color: ['green', 'green', 'red', 'red']
-                        }
-                    },
-                    geo: {
-                        map: 'world',
-                        roam: true,
-                        label: {
-                            emphasis: {
-                                show: false
-                            }
                         },
-                        silent: true,
-                        itemStyle: {
-                            normal: {
-                                areaColor: '#323c48',
-                                borderColor: '#111'
-                            },
-                            emphasis: {
-                                areaColor: '#2a333d'
+                        realtime: false,
+                        calculable: true
+                    },
+                    bmap: {
+                        center: [0, 0],
+                        zoom: 1,
+                        roam: true,
+                        mapStyle: {
+                        'styleJson': [
+                            {
+                            'featureType': 'water',
+                            'elementType': 'all',
+                            'stylers': {
+                                'color': '#031628'
                             }
+                            },
+                            {
+                            'featureType': 'land',
+                            'elementType': 'geometry',
+                            'stylers': {
+                                'color': '#000102'
+                            }
+                            },
+                            {
+                            'featureType': 'highway',
+                            'elementType': 'all',
+                            'stylers': {
+                                'visibility': 'off'
+                            }
+                            },
+                            {
+                            'featureType': 'arterial',
+                            'elementType': 'geometry.fill',
+                            'stylers': {
+                                'color': '#000000'
+                            }
+                            },
+                            {
+                            'featureType': 'arterial',
+                            'elementType': 'geometry.stroke',
+                            'stylers': {
+                                'color': '#0b3d51'
+                            }
+                            },
+                            {
+                            'featureType': 'local',
+                            'elementType': 'geometry',
+                            'stylers': {
+                                'color': '#000000'
+                            }
+                            },
+                            {
+                            'featureType': 'railway',
+                            'elementType': 'geometry.fill',
+                            'stylers': {
+                                'color': '#000000'
+                            }
+                            },
+                            {
+                            'featureType': 'railway',
+                            'elementType': 'geometry.stroke',
+                            'stylers': {
+                                'color': '#08304b'
+                            }
+                            },
+                            {
+                            'featureType': 'subway',
+                            'elementType': 'geometry',
+                            'stylers': {
+                                'lightness': -70
+                            }
+                            },
+                            {
+                            'featureType': 'building',
+                            'elementType': 'geometry.fill',
+                            'stylers': {
+                                'color': '#000000'
+                            }
+                            },
+                            {
+                            'featureType': 'all',
+                            'elementType': 'labels.text.fill',
+                            'stylers': {
+                                'color': '#857f7f'
+                            }
+                            },
+                            {
+                            'featureType': 'all',
+                            'elementType': 'labels.text.stroke',
+                            'stylers': {
+                                'color': '#000000'
+                            }
+                            },
+                            {
+                            'featureType': 'building',
+                            'elementType': 'geometry',
+                            'stylers': {
+                                'color': '#022338'
+                            }
+                            },
+                            {
+                            'featureType': 'green',
+                            'elementType': 'geometry',
+                            'stylers': {
+                                'color': '#062032'
+                            }
+                            },
+                            {
+                            'featureType': 'boundary',
+                            'elementType': 'all',
+                            'stylers': {
+                                'color': '#465b6c'
+                            }
+                            },
+                            {
+                            'featureType': 'manmade',
+                            'elementType': 'all',
+                            'stylers': {
+                                'color': '#022338'
+                            }
+                            },
+                            {
+                            'featureType': 'label',
+                            'elementType': 'all',
+                            'stylers': {
+                                'visibility': 'off'
+                            }
+                            }
+                        ]
                         }
                     },
+                    // geo: {
+                    //     map: 'world',
+                    //     roam: true,
+                    //     label: {
+                    //         emphasis: {
+                    //             show: false
+                    //         }
+                    //     },
+                    //     silent: true,
+                    //     itemStyle: {
+                    //         normal: {
+                    //             areaColor: '#323c48',
+                    //             borderColor: '#111'
+                    //         },
+                    //         emphasis: {
+                    //             areaColor: '#2a333d'
+                    //         }
+                    //     }
+                    // },
                     series: [{
                         type: 'flowGL',
-                        coordinateSystem: 'geo',
+                        coordinateSystem: 'bmap',
                         data: data,
                         particleDensity: 256,
+                        gridWidth: windData.nx,
+                        gridHeight: windData.ny,
                         itemStyle: {
-                            opacity: 0.5
+                            opacity: 1
                         }
                     }]
                 });

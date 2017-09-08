@@ -64,6 +64,7 @@ echarts.extendChartView({
                 if (self._renderer) {
                     particleSurface.update(self._renderer, dTime / 1000);
                     planeMesh.material.set('diffuseMap', particleSurface.getSurfaceTexture());
+                    // planeMesh.material.set('diffuseMap', self._particleSurface.vectorFieldTexture);
                 }
             })
             .start();
@@ -93,12 +94,18 @@ echarts.extendChartView({
         var xExtent = data.getDataExtent(dims[0]);
         var yExtent = data.getDataExtent(dims[1]);
 
-        var aspect = (xExtent[1] - xExtent[0]) / (yExtent[1] - yExtent[0]);
-        var width = Math.round(Math.sqrt(aspect * data.count()));
-        var height = Math.ceil(data.count() / width);
+        var gridWidth = seriesModel.get('gridWidth');
+        var gridHeight = seriesModel.get('gridHeight');
+        if (gridWidth == null || gridWidth === 'auto') {
+            var aspect = (xExtent[1] - xExtent[0]) / (yExtent[1] - yExtent[0]);
+            gridWidth = Math.round(Math.sqrt(aspect * data.count()));
+        }
+        if (gridHeight == null || gridHeight === 'auto') {
+            gridHeight = Math.ceil(data.count() / gridWidth);
+        }
 
         // Half Float needs Uint16Array
-        var pixels = new Float32Array(width * height * 4);
+        var pixels = new Float32Array(gridWidth * gridHeight * 4);
 
         var maxMag = 0;
         var minMag = Infinity;
@@ -109,21 +116,22 @@ echarts.extendChartView({
         });
 
         data.each([dims[0], dims[1], 'vx', 'vy'], function (x, y, vx, vy) {
-            var xPix = Math.round((x - xExtent[0]) / (xExtent[1] - xExtent[0]) * (width - 1));
-            var yPix = Math.round((y - yExtent[0]) / (yExtent[1] - yExtent[0]) * (height - 1));
+            var xPix = Math.round((x - xExtent[0]) / (xExtent[1] - xExtent[0]) * (gridWidth - 1));
+            var yPix = Math.round((y - yExtent[0]) / (yExtent[1] - yExtent[0]) * (gridHeight - 1));
 
-            var idx = yPix * width + xPix;
+            var idx = yPix * gridWidth + xPix;
             vx /= maxMag;
             vy /= maxMag;
             pixels[idx * 4] = (vx * 0.5 + 0.5);
             pixels[idx * 4 + 1] = (vy * 0.5 + 0.5);
+            pixels[idx * 4 + 3] = 1;
         });
 
         var vectorFieldTexture = this._particleSurface.vectorFieldTexture;
 
         vectorFieldTexture.pixels = pixels;
-        vectorFieldTexture.width = width;
-        vectorFieldTexture.height = height;
+        vectorFieldTexture.width = gridWidth;
+        vectorFieldTexture.height = gridHeight;
         vectorFieldTexture.dirty();
 
         this._updatePlanePosition(seriesModel, api);

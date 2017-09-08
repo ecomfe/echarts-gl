@@ -32,6 +32,9 @@ echarts.extendSeriesModel({
         // 128x128 particles
         particleDensity: 128,
 
+        gridWidth: 'auto',
+        gridHeight: 'auto',
+
         itemStyle: {
             color: '#fff',
             opacity: 0.8
