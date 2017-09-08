@@ -28,6 +28,13 @@
                     }
                 }
                 chart.setOption(option = {
+                    visualMap: {
+                        min: 0,
+                        max: 10,
+                        inRange: {
+                            color: ['green', 'red']
+                        }
+                    },
                     geo: {
                         map: 'world',
                         roam: true,

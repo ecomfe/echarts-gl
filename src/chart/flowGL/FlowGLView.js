@@ -92,8 +92,11 @@ echarts.extendChartView({
         var pixels = new Float32Array(width * height * 4);
 
         var maxMag = 0;
+        var minMag = Infinity;
         data.each(['vx', 'vy'], function (vx, vy) {
-            maxMag = Math.max(maxMag, Math.sqrt(vx * vx + vy * vy));
+            var mag = Math.sqrt(vx * vx + vy * vy);
+            maxMag = Math.max(maxMag, mag);
+            minMag = Math.min(minMag, mag);
         });
 
         data.each([dims[0], dims[1], 'vx', 'vy'], function (x, y, vx, vy) {
@@ -115,6 +118,41 @@ echarts.extendChartView({
         vectorFieldTexture.dirty();
 
         this._updatePlanePosition(seriesModel, api);
+        this._updateGradientTexture(data.getVisual('visualMeta'), [minMag, maxMag]);
+    },
+
+    _updateGradientTexture: function (visualMeta, magExtent) {
+        if (!visualMeta || !visualMeta.length) {
+            this._particleSurface.setGradientTexture(null);
+            return;
+        }
+        // TODO Different dimensions
+        this._gradientTexture = this._gradientTexture || new graphicGL.Texture2D({
+            image: document.createElement('canvas')
+        });
+        var gradientTexture = this._gradientTexture;
+        var canvas = gradientTexture.image;
+        canvas.width = 200;
+        canvas.height = 1;
+        var ctx = canvas.getContext('2d');
+        var gradient = ctx.createLinearGradient(0, 0.5, canvas.width, 0.5);
+        visualMeta[0].stops.forEach(function (stop) {
+            var offset;
+            if (magExtent[1] === magExtent[0]) {
+                offset = 0;
+            }
+            else {
+                offset = (stop.value - magExtent[0]) / (magExtent[1] - magExtent[0]);
+                offset = Math.min(Math.max(offset, 0), 1);
+            }
+
+            gradient.addColorStop(offset, stop.color);
+        });
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, 1);
+        gradientTexture.dirty();
+
+        this._particleSurface.setGradientTexture(this._gradientTexture);
     },
 
     _updatePlanePosition: function (seriesModel, api) {

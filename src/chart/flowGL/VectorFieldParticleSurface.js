@@ -234,6 +234,12 @@ VectorFieldParticleSurface.prototype = {
         this._thisFrameTexture.height = height;
     },
 
+    setGradientTexture: function (gradientTexture) {
+        var material = this._particleMesh.material;
+        material.shader[gradientTexture ? 'enableTexture' : 'disableTexture']('gradientTexture');
+        material.setUniform('gradientTexture', gradientTexture);
+    },
+
     _swapTexture: function () {
         var tmp = this._particleTexture0;
         this._particleTexture0 = this._particleTexture1;

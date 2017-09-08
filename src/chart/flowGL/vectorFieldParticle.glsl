@@ -43,16 +43,20 @@ uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 
 uniform float sizeScaling : 1.0;
 
+varying float v_Mag;
+
 void main()
 {
     vec4 p = texture2D(particleTexture, texcoord);
 
-    if (p.w > 0.0 && p.z > 1e-5) {
+    if (p.w > 0.0) {
         gl_Position = worldViewProjection * vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
     }
     else {
         gl_Position = vec4(100000.0, 100000.0, 100000.0, 1.0);
     }
+
+    v_Mag = p.z;
 
     gl_PointSize = sizeScaling;
 }
@@ -62,10 +66,16 @@ void main()
 @export ecgl.vfParticle.renderPoints.fragment
 
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
+uniform sampler2D gradientTexture;
+
+varying float v_Mag;
 
 void main()
 {
     gl_FragColor = color;
+#ifdef GRADIENTTEXTURE_ENABLED
+    gl_FragColor *= texture2D(gradientTexture, vec2(v_Mag, 0.5));
+#endif
 }
 
 @end
