@@ -19,7 +19,7 @@ var VectorFieldParticleSurface = function () {
     /**
      * @type {number}
      */
-    this.motionBlurFactor = 0.9;
+    this.motionBlurFactor = 0.99;
     /**
      * Vector field lookup image
      * @type {qtek.Texture2D}
@@ -54,11 +54,6 @@ var VectorFieldParticleSurface = function () {
      * @type {qtek.Texture2D}
      */
     this._surfaceTexture = null;
-
-    /**
-     * @type {qtek.Mesh}
-     */
-    this.surfaceMesh = null;
 
     this._particlePass = null;
     this._spawnTexture = null;
@@ -141,8 +136,7 @@ VectorFieldParticleSurface.prototype = {
         if (!this._surfaceTexture) {
             this._surfaceTexture = new Texture2D({
                 width: 1024,
-                height: 1024,
-                flipY: false
+                height: 1024
             });
         }
 
@@ -212,6 +206,8 @@ VectorFieldParticleSurface.prototype = {
 
         frameBuffer.attach(this._thisFrameTexture);
         frameBuffer.bind(renderer);
+        renderer.saveClear();
+        renderer.clearBit = renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT;
         renderer.render(this._scene, this._camera);
         frameBuffer.unbind(renderer);
 
@@ -221,10 +217,6 @@ VectorFieldParticleSurface.prototype = {
         motionBlurPass.render(renderer, frameBuffer);
 
         this._swapTexture();
-
-        if (this.surfaceMesh) {
-            this.surfaceMesh.material.set('diffuseMap', this._surfaceTexture);
-        }
 
         this._elapsedTime += deltaTime;
     },

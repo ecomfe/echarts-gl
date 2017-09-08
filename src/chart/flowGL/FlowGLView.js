@@ -151,7 +151,10 @@ echarts.extendChartView({
         var height = rightBottom[1] - leftTop[1];
         this._planeMesh.scale.set(width / 2, height / 2, 1);
 
-        this._particleSurface.resize(width, height);
+        this._particleSurface.resize(
+            Math.min(width, 4096),
+            Math.min(height, 4096)
+        );
     },
 
     _updateCamera: function (width, height, dpr) {

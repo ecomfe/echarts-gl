@@ -47,7 +47,7 @@ void main()
 {
     vec4 p = texture2D(particleTexture, texcoord);
 
-    if (p.w > 0.0) {
+    if (p.w > 0.0 && p.z > 1e-5) {
         gl_Position = worldViewProjection * vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
     }
     else {
@@ -61,12 +61,11 @@ void main()
 
 @export ecgl.vfParticle.renderPoints.fragment
 
-uniform sampler2D spriteTexture;
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 void main()
 {
-    gl_FragColor = color * texture2D(spriteTexture, gl_PointCoord);
+    gl_FragColor = color;
 }
 
 @end
