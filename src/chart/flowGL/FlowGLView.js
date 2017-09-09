@@ -96,7 +96,9 @@ echarts.extendChartView({
 
         var gridWidth = seriesModel.get('gridWidth');
         var gridHeight = seriesModel.get('gridHeight');
+
         if (gridWidth == null || gridWidth === 'auto') {
+            // TODO not accurate.
             var aspect = (xExtent[1] - xExtent[0]) / (yExtent[1] - yExtent[0]);
             gridWidth = Math.round(Math.sqrt(aspect * data.count()));
         }
@@ -197,19 +199,54 @@ echarts.extendChartView({
             Math.max.apply(null, corners.map(function (a) { return a[1]; } ))
         ];
 
+        var limitedResult = this._limitInViewport(leftTop, rightBottom, api);
+        leftTop = limitedResult.leftTop;
+        rightBottom = limitedResult.rightBottom;
+        this._particleSurface.setRegion(limitedResult.region);
+
         this._planeMesh.position.set(
             (leftTop[0] + rightBottom[0]) / 2,
             api.getHeight() - (leftTop[1] + rightBottom[1]) / 2,
             0
         );
+
         var width = rightBottom[0] - leftTop[0];
         var height = rightBottom[1] - leftTop[1];
         this._planeMesh.scale.set(width / 2, height / 2, 1);
 
         this._particleSurface.resize(
-            Math.min(width, 4096),
-            Math.min(height, 4096)
+            Math.min(width, 2048),
+            Math.min(height, 2048)
         );
+    },
+
+    _limitInViewport: function (leftTop, rightBottom, api) {
+        var newLeftTop = [
+            Math.max(leftTop[0], 0),
+            Math.max(leftTop[1], 0)
+        ];
+        var newRightBottom = [
+            Math.min(rightBottom[0], api.getWidth()),
+            Math.min(rightBottom[1], api.getHeight())
+        ];
+
+        var width = rightBottom[0] - leftTop[0];
+        var height = rightBottom[1] - leftTop[1];
+        var newWidth = newRightBottom[0] - newLeftTop[0];
+        var newHeight = newRightBottom[1] - newLeftTop[1];
+
+        var region = [
+            (newLeftTop[0] - leftTop[0]) / width,
+            1.0 - newHeight / height - (newLeftTop[1] - leftTop[1]) / height,
+            newWidth / width,
+            newHeight / height
+        ];
+
+        return {
+            leftTop: newLeftTop,
+            rightBottom: newRightBottom,
+            region: region    
+        };
     },
 
     _updateCamera: function (width, height, dpr) {

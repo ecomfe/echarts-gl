@@ -225,6 +225,11 @@ VectorFieldParticleSurface.prototype = {
         return this._surfaceTexture;
     },
 
+    setRegion: function (region) {
+        console.log(region);
+        this._particlePass.setUniform('region', region);
+    },
+
     resize: function (width, height) {
         this._surfaceTexture.width = width;
         this._surfaceTexture.height = height;

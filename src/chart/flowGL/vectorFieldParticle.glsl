@@ -9,13 +9,15 @@ uniform float elapsedTime;
 
 uniform float speedScaling : 1.0;
 
+uniform vec4 region : [0, 0, 1, 1];
+
 varying vec2 v_Texcoord;
 
 void main()
 {
     vec4 p = texture2D(particleTexture, v_Texcoord);
     if (p.w > 0.0) {
-        vec4 vTex = texture2D(velocityTexture, p.xy);
+        vec4 vTex = texture2D(velocityTexture, p.xy * region.zw + region.xy);
         vec2 v = vTex.xy;
         v = (v - 0.5) * 2.0;
         p.z = length(v);
