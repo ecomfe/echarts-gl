@@ -34,6 +34,8 @@ echarts.extendSeriesModel({
         particleSize: 1,
         particleSpeed: 1,
 
+        particleTrail: 2,
+
         colorTexture: null,
 
         gridWidth: 'auto',

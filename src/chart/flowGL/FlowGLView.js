@@ -79,6 +79,7 @@ echarts.extendChartView({
         this._particleSurface.setColorTextureImage(seriesModel.get('colorTexture'), api);
         this._particleSurface.particleSize = seriesModel.get('particleSize');
         this._particleSurface.particleSpeedScaling = seriesModel.get('particleSpeed');
+        this._particleSurface.motionBlurFactor = 1.0 - Math.pow(0.1, seriesModel.get('particleTrail'));
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
