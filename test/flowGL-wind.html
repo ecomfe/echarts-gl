@@ -41,18 +41,22 @@
                 }
                 chart.setOption(option = {
                     visualMap: {
+                        left: 'right',
                         min: minMag,
                         max: maxMag,
                         inRange: {
-                            color: ['green', 'green', 'red', 'red']
+                            color: ['green', 'yellow', 'red']
                         },
                         realtime: false,
-                        calculable: true
+                        calculable: true,
+                        textStyle: {
+                            color: '#fff'
+                        }
                     },
                     bmap: {
                         center: [0, 0],
                         zoom: 1,
-                        roam: true,
+                        roam: false,
                         mapStyle: {
                         'styleJson': [
                             {
@@ -200,11 +204,11 @@
                         type: 'flowGL',
                         coordinateSystem: 'bmap',
                         data: data,
-                        particleDensity: 256,
+                        particleDensity: 350,
                         gridWidth: windData.nx,
                         gridHeight: windData.ny,
                         itemStyle: {
-                            opacity: 1
+                            opacity: 0.7
                         }
                     }]
                 });

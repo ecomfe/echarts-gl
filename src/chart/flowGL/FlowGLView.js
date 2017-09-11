@@ -161,14 +161,14 @@ echarts.extendChartView({
                 offset = 0;
             }
             else {
-                offset = (stop.value - magExtent[0]) / (magExtent[1] - magExtent[0]);
+                offset = stop.value / magExtent[1];
                 offset = Math.min(Math.max(offset, 0), 1);
             }
 
             gradient.addColorStop(offset, stop.color);
         });
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, 1);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         gradientTexture.dirty();
 
         this._particleSurface.setGradientTexture(this._gradientTexture);

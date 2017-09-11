@@ -7,6 +7,7 @@ var Texture2D = require('qtek/lib/Texture2D');
 var Texture = require('qtek/lib/Texture');
 var OrthoCamera = require('qtek/lib/camera/Orthographic');
 var Scene = require('qtek/lib/Scene');
+var PlaneGeometry = require('qtek/lib/geometry/Plane');
 
 var FrameBuffer = require('qtek/lib/FrameBuffer');
 
@@ -53,7 +54,7 @@ var VectorFieldParticleSurface = function () {
     /**
      * @type {qtek.Texture2D}
      */
-    this._surfaceTexture = null;
+    this._thisFrameTexture = null;
 
     this._particlePass = null;
     this._spawnTexture = null;
@@ -69,8 +70,6 @@ var VectorFieldParticleSurface = function () {
     this._scene = null;
     this._camera = null;
 
-    this._motionBlurPass = null;
-    this._thisFrameTexture = null;
     this._lastFrameTexture = null;
 
     this.init();
@@ -81,9 +80,6 @@ VectorFieldParticleSurface.prototype = {
     constructor: VectorFieldParticleSurface,
 
     init: function () {
-        var geometry = new StaticGeometry({
-            mainAttribute: 'texcoord0'
-        });
         var parameters = {
             type: Texture.FLOAT,
             minFilter: Texture.NEAREST,
@@ -106,15 +102,9 @@ VectorFieldParticleSurface.prototype = {
         this._particlePass.setUniform('velocityTexture', this.vectorFieldTexture);
         this._particlePass.setUniform('spawnTexture', this._spawnTexture);
 
-        this._motionBlurPass = new Pass({
-            fragment: Shader.source('qtek.compositor.blend')
-        });
-        this._motionBlurPass.material.shader.disableTexturesAll();
-        this._motionBlurPass.material.shader.enableTexture(['texture1', 'texture2']);
-        this._motionBlurPass.setUniform('weight1', this.motionBlurFactor);
-        this._motionBlurPass.setUniform('weight2', 1);
-
         var particleMesh = new Mesh({
+            // Render after last frame full quad
+            renderOrder: 10,
             material: new Material({
                 shader: new Shader({
                     vertex: Shader.source('ecgl.vfParticle.renderPoints.vertex'),
@@ -122,31 +112,41 @@ VectorFieldParticleSurface.prototype = {
                 })
             }),
             mode: Mesh.POINTS,
-            geometry: geometry
+            geometry: new StaticGeometry({
+                mainAttribute: 'texcoord0'
+            })
         });
-        // particleMesh.material.set('spriteTexture', new Texture2D({
-        //     image: spriteUtil.makeSimpleSprite(128)
-        // }));
+        var lastFrameFullQuad = new Mesh({
+            material: new Material({
+                shader: new Shader({
+                    vertex: Shader.source('ecgl.color.vertex'),
+                    fragment: Shader.source('ecgl.color.fragment')
+                })
+                // DO NOT BLEND Blend will multiply alpha
+                // transparent: true
+            }),
+            geometry: new PlaneGeometry()
+        });
+        lastFrameFullQuad.material.shader.enableTexture('diffuseMap');
 
         this._particleMesh = particleMesh;
+        this._lastFrameFullQuadMesh = lastFrameFullQuad;
 
         this._scene = new Scene();
         this._scene.add(this._particleMesh);
+        this._scene.add(lastFrameFullQuad);
+        
         this._camera = new OrthoCamera();
-        if (!this._surfaceTexture) {
-            this._surfaceTexture = new Texture2D({
+        if (!this._thisFrameTexture) {
+            this._thisFrameTexture = new Texture2D({
                 width: 1024,
                 height: 1024
             });
         }
 
-        var surfaceWidth = this._surfaceTexture.width;
-        var surfaceHeight = this._surfaceTexture.height;
+        var surfaceWidth = this._thisFrameTexture.width;
+        var surfaceHeight = this._thisFrameTexture.height;
         this._lastFrameTexture = new Texture2D({
-            width: surfaceWidth,
-            height: surfaceHeight
-        });
-        this._thisFrameTexture = new Texture2D({
             width: surfaceWidth,
             height: surfaceHeight
         });
@@ -189,7 +189,6 @@ VectorFieldParticleSurface.prototype = {
         var particleMesh = this._particleMesh;
         var frameBuffer = this._frameBuffer;
         var particlePass = this._particlePass;
-        var motionBlurPass = this._motionBlurPass;
 
         particleMesh.material.set(
             'size', this.particleSize * renderer.getDevicePixelRatio()
@@ -208,13 +207,10 @@ VectorFieldParticleSurface.prototype = {
         frameBuffer.bind(renderer);
         renderer.saveClear();
         renderer.clearBit = renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT;
+        this._lastFrameFullQuadMesh.material.set('diffuseMap', this._lastFrameTexture);
+        this._lastFrameFullQuadMesh.material.set('color', [1, 1, 1, this.motionBlurFactor]);
         renderer.render(this._scene, this._camera);
         frameBuffer.unbind(renderer);
-
-        frameBuffer.attach(this._surfaceTexture);
-        motionBlurPass.setUniform('texture1', this._lastFrameTexture);
-        motionBlurPass.setUniform('texture2', this._thisFrameTexture);
-        motionBlurPass.render(renderer, frameBuffer);
 
         this._swapTexture();
 
@@ -222,17 +218,15 @@ VectorFieldParticleSurface.prototype = {
     },
 
     getSurfaceTexture: function () {
-        return this._surfaceTexture;
+        // Texture already been swapped
+        return this._lastFrameTexture;
     },
 
     setRegion: function (region) {
-        console.log(region);
         this._particlePass.setUniform('region', region);
     },
 
     resize: function (width, height) {
-        this._surfaceTexture.width = width;
-        this._surfaceTexture.height = height;
         this._lastFrameTexture.width = width;
         this._lastFrameTexture.height = height;
         this._thisFrameTexture.width = width;
@@ -250,8 +244,8 @@ VectorFieldParticleSurface.prototype = {
         this._particleTexture0 = this._particleTexture1;
         this._particleTexture1 = tmp;
 
-        var tmp = this._surfaceTexture;
-        this._surfaceTexture = this._lastFrameTexture;
+        var tmp = this._thisFrameTexture;
+        this._thisFrameTexture = this._lastFrameTexture;
         this._lastFrameTexture = tmp;
     },
 
