@@ -75,6 +75,10 @@ echarts.extendChartView({
         var color = graphicGL.parseColor(itemStyleModel.get('color'));
         color[3] *= retrieve.firstNotNull(itemStyleModel.get('opacity'), 1);
         planeMesh.material.set('color', color);
+
+        this._particleSurface.setColorTextureImage(seriesModel.get('colorTexture'), api);
+        this._particleSurface.particleSize = seriesModel.get('particleSize');
+        this._particleSurface.particleSpeedScaling = seriesModel.get('particleSpeed');
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
@@ -164,6 +168,7 @@ echarts.extendChartView({
 
         this._updatePlanePosition(bbox[0], bbox[1], api);
         this._updateGradientTexture(data.getVisual('visualMeta'), [minMag, maxMag]);
+
     },
     // PENDING Use grid mesh ? or delaunay triangulation?
     _fillEmptyPixels: function (texture) {

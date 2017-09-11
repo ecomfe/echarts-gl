@@ -21,7 +21,7 @@ void main()
         vec2 v = vTex.xy;
         v = (v - 0.5) * 2.0;
         p.z = length(v);
-        p.xy += v * deltaTime / 50.0 * speedScaling;
+        p.xy += v * deltaTime / 10.0 * speedScaling;
         // Make the particle surface seamless
         p.xy = fract(p.xy);
         p.w -= deltaTime;
@@ -43,9 +43,10 @@ attribute vec2 texcoord : TEXCOORD_0;
 uniform sampler2D particleTexture;
 uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 
-uniform float sizeScaling : 1.0;
+uniform float size : 1.0;
 
 varying float v_Mag;
+varying vec2 v_Uv;
 
 void main()
 {
@@ -60,8 +61,9 @@ void main()
     }
 
     v_Mag = p.z;
+    v_Uv = p.xy;
 
-    gl_PointSize = sizeScaling;
+    gl_PointSize = size;
 }
 
 @end
@@ -70,14 +72,19 @@ void main()
 
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 uniform sampler2D gradientTexture;
+uniform sampler2D colorTexture;
 
 varying float v_Mag;
+varying vec2 v_Uv;
 
 void main()
 {
     gl_FragColor = color;
 #ifdef GRADIENTTEXTURE_ENABLED
     gl_FragColor *= texture2D(gradientTexture, vec2(v_Mag, 0.5));
+#endif
+#ifdef COLORTEXTURE_ENABLED
+    gl_FragColor *= texture2D(colorTexture, v_Uv);
 #endif
 }
 

@@ -34,7 +34,7 @@ var VectorFieldParticleSurface = function () {
      * Particle life range
      * @type {Array.<number>}
      */
-    this.particleLife = [10, 20];
+    this.particleLife = [5, 20];
 
     /**
      * @type {number}
@@ -236,6 +236,13 @@ VectorFieldParticleSurface.prototype = {
         var material = this._particleMesh.material;
         material.shader[gradientTexture ? 'enableTexture' : 'disableTexture']('gradientTexture');
         material.setUniform('gradientTexture', gradientTexture);
+    },
+
+    setColorTextureImage: function (colorTextureImg, api) {
+        var material = this._particleMesh.material;
+        material.setTextureImage('colorTexture', colorTextureImg, api, {
+            flipY: true
+        });
     },
 
     clearFrame: function (renderer) {

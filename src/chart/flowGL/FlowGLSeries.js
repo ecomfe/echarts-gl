@@ -31,6 +31,10 @@ echarts.extendSeriesModel({
 
         // 128x128 particles
         particleDensity: 128,
+        particleSize: 1,
+        particleSpeed: 1,
+
+        colorTexture: null,
 
         gridWidth: 'auto',
         gridHeight: 'auto',
