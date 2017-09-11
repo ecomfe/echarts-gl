@@ -5,6 +5,8 @@ var ViewGL = require('../../core/ViewGL');
 
 var VectorFieldParticleSurface = require('./VectorFieldParticleSurface');
 
+
+// TODO 百度地图不是 linear 的
 echarts.extendChartView({
 
     type: 'flowGL',
@@ -76,7 +78,7 @@ echarts.extendChartView({
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
-        this._updatePlanePosition(seriesModel, api);
+        this._updateData(seriesModel, api);
     },
 
     afterRender: function (globeModel, ecModel, api, layerGL) {
@@ -106,38 +108,114 @@ echarts.extendChartView({
             gridHeight = Math.ceil(data.count() / gridWidth);
         }
 
+        var vectorFieldTexture = this._particleSurface.vectorFieldTexture;
+        
         // Half Float needs Uint16Array
-        var pixels = new Float32Array(gridWidth * gridHeight * 4);
+        var pixels = vectorFieldTexture.pixels;
+        if (!pixels || pixels.length !== gridHeight * gridWidth * 4) {
+            pixels = vectorFieldTexture.pixels = new Float32Array(gridWidth * gridHeight * 4);
+        }
+        else {
+            for (var i = 0; i < pixels.length; i++) {
+                pixels[i] = 0;
+            }
+        }
 
         var maxMag = 0;
         var minMag = Infinity;
-        data.each(['vx', 'vy'], function (vx, vy) {
+
+        var points = new Float32Array(data.count() * 2);
+        var offset = 0;
+        var bbox = [[Infinity, Infinity], [-Infinity, -Infinity]];
+
+        data.each([dims[0], dims[1], 'vx', 'vy'], function (x, y, vx, vy) {
+            var pt = coordSys.dataToPoint([x, y]);
+            points[offset++] = pt[0];
+            points[offset++] = pt[1];
+            bbox[0][0] = Math.min(pt[0], bbox[0][0]);
+            bbox[0][1] = Math.min(pt[1], bbox[0][1]);
+            bbox[1][0] = Math.max(pt[0], bbox[1][0]);
+            bbox[1][1] = Math.max(pt[1], bbox[1][1]);
+
             var mag = Math.sqrt(vx * vx + vy * vy);
             maxMag = Math.max(maxMag, mag);
             minMag = Math.min(minMag, mag);
         });
 
-        data.each([dims[0], dims[1], 'vx', 'vy'], function (x, y, vx, vy) {
-            var xPix = Math.round((x - xExtent[0]) / (xExtent[1] - xExtent[0]) * (gridWidth - 1));
-            var yPix = Math.round((y - yExtent[0]) / (yExtent[1] - yExtent[0]) * (gridHeight - 1));
+        data.each(['vx', 'vy'], function (vx, vy, i) {
+            var xPix = Math.round((points[i * 2] - bbox[0][0]) / (bbox[1][0] - bbox[0][0]) * (gridWidth - 1));
+            var yPix = gridHeight - 1 - Math.round((points[i * 2 + 1] - bbox[0][1]) / (bbox[1][1] - bbox[0][1]) * (gridHeight - 1));
 
-            var idx = yPix * gridWidth + xPix;
-            vx /= maxMag;
-            vy /= maxMag;
-            pixels[idx * 4] = (vx * 0.5 + 0.5);
-            pixels[idx * 4 + 1] = (vy * 0.5 + 0.5);
-            pixels[idx * 4 + 3] = 1;
+            var idx = (yPix * gridWidth + xPix) * 4;
+
+            pixels[idx] = (vx / maxMag * 0.5 + 0.5);
+            pixels[idx + 1] = (vy / maxMag * 0.5 + 0.5);
+            pixels[idx + 3] = 1;
         });
 
-        var vectorFieldTexture = this._particleSurface.vectorFieldTexture;
-
-        vectorFieldTexture.pixels = pixels;
         vectorFieldTexture.width = gridWidth;
         vectorFieldTexture.height = gridHeight;
+
+        if (seriesModel.get('coordinateSystem') === 'bmap') {
+            this._fillEmptyPixels(vectorFieldTexture);
+        }
+
         vectorFieldTexture.dirty();
 
-        this._updatePlanePosition(seriesModel, api);
+        this._updatePlanePosition(bbox[0], bbox[1], api);
         this._updateGradientTexture(data.getVisual('visualMeta'), [minMag, maxMag]);
+    },
+    // PENDING Use grid mesh ? or delaunay triangulation?
+    _fillEmptyPixels: function (texture) {
+        var pixels = texture.pixels;
+        var width = texture.width;
+        var height = texture.height;
+
+        function fetchPixel(x, y, rg) {
+            x = Math.max(Math.min(x, width - 1), 0);
+            y = Math.max(Math.min(y, height - 1), 0);
+            var idx = (y * (width - 1) + x) * 4;
+            if (pixels[idx + 3] === 0) {
+                return false;
+            }
+            rg[0] = pixels[idx];
+            rg[1] = pixels[idx + 1];
+            return true;
+        }
+
+        function addPixel(a, b, out) {
+            out[0] = a[0] + b[0];
+            out[1] = a[1] + b[1];
+        }
+
+        var center = [], left = [], right = [], top = [], bottom = [];
+        var weight = 0;
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                var idx = (y * (width - 1) + x) * 4;
+                if (pixels[idx + 3] === 0) {
+                    weight = center[0] = center[1] = 0;
+                    if (fetchPixel(x - 1, y, left)) {
+                        weight++; addPixel(left, center, center);
+                    }
+                    if (fetchPixel(x + 1, y, right)) {
+                        weight++; addPixel(right, center, center);
+                    }
+                    if (fetchPixel(x, y - 1, top)) {
+                        weight++; addPixel(top, center, center);
+                    }
+                    if (fetchPixel(x, y + 1, bottom)) {
+                        weight++; addPixel(bottom, center, center);
+                    }
+                    center[0] /= weight;
+                    center[1] /= weight;
+                    // PENDING If overwrite. bilinear interpolation.
+                    pixels[idx] = center[0];
+                    pixels[idx + 1] = center[1];
+                }
+                pixels[idx + 3] = 1;
+            }
+        }
     },
 
     _updateGradientTexture: function (visualMeta, magExtent) {
@@ -174,31 +252,7 @@ echarts.extendChartView({
         this._particleSurface.setGradientTexture(this._gradientTexture);
     },
 
-    _updatePlanePosition: function (seriesModel, api) {
-        var data = seriesModel.getData();
-        var coordSys = seriesModel.coordinateSystem;
-        var dims = coordSys.dimensions.map(function (coordDim) {
-            return seriesModel.coordDimToDataDim(coordDim)[0];
-        });
-        var xExtent = data.getDataExtent(dims[0]);
-        var yExtent = data.getDataExtent(dims[1]);
-
-        var corners = [
-            coordSys.dataToPoint([xExtent[0], yExtent[0]]),
-            coordSys.dataToPoint([xExtent[1], yExtent[0]]),
-            coordSys.dataToPoint([xExtent[0], yExtent[1]]),
-            coordSys.dataToPoint([xExtent[1], yExtent[1]])
-        ];
-
-        var leftTop = [
-            Math.min.apply(null, corners.map(function (a) { return a[0]; } )),
-            Math.min.apply(null, corners.map(function (a) { return a[1]; } ))
-        ];
-        var rightBottom = [
-            Math.max.apply(null, corners.map(function (a) { return a[0]; } )),
-            Math.max.apply(null, corners.map(function (a) { return a[1]; } ))
-        ];
-
+    _updatePlanePosition: function (leftTop, rightBottom, api) {
         var limitedResult = this._limitInViewport(leftTop, rightBottom, api);
         leftTop = limitedResult.leftTop;
         rightBottom = limitedResult.rightBottom;
