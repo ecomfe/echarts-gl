@@ -218,6 +218,10 @@ echarts.extendChartView({
             Math.min(width, 2048),
             Math.min(height, 2048)
         );
+
+        if (this._renderer) {
+            this._particleSurface.clearFrame(this._renderer);
+        }
     },
 
     _limitInViewport: function (leftTop, rightBottom, api) {

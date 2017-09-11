@@ -205,8 +205,7 @@ VectorFieldParticleSurface.prototype = {
 
         frameBuffer.attach(this._thisFrameTexture);
         frameBuffer.bind(renderer);
-        renderer.saveClear();
-        renderer.clearBit = renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT;
+        renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
         this._lastFrameFullQuadMesh.material.set('diffuseMap', this._lastFrameTexture);
         this._lastFrameFullQuadMesh.material.set('color', [1, 1, 1, this.motionBlurFactor]);
         renderer.render(this._scene, this._camera);
@@ -237,6 +236,14 @@ VectorFieldParticleSurface.prototype = {
         var material = this._particleMesh.material;
         material.shader[gradientTexture ? 'enableTexture' : 'disableTexture']('gradientTexture');
         material.setUniform('gradientTexture', gradientTexture);
+    },
+
+    clearFrame: function (renderer) {
+        var frameBuffer = this._frameBuffer;
+        frameBuffer.attach(this._lastFrameTexture);
+        frameBuffer.bind(renderer);
+        renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
+        frameBuffer.unbind(renderer);
     },
 
     _swapTexture: function () {
