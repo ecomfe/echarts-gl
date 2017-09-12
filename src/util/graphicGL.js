@@ -574,6 +574,7 @@ graphicGL.updateVertexAnimation = function (
     && previousMesh.geometry.vertexCount === currentMesh.geometry.vertexCount
     ) {
         currentMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
+        currentMesh.ignorePreZ = true;
         if (shadowDepthMaterial) {
             shadowDepthMaterial.shader.define('vertex', 'VERTEX_ANIMATION');
         }
@@ -596,6 +597,7 @@ graphicGL.updateVertexAnimation = function (
                 }
             })
             .done(function () {
+                currentMesh.ignorePreZ = false;
                 currentMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
                 if (shadowDepthMaterial) {
                     shadowDepthMaterial.shader.undefine('vertex', 'VERTEX_ANIMATION');

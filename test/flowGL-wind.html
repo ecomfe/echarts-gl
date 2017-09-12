@@ -26,15 +26,16 @@
                     for (var i = 0; i < windData.nx; i++, p++) {
                         var vx = windData.data[p][0];
                         var vy = windData.data[p][1];
+                        var mag = Math.sqrt(vx * vx + vy * vy);
                         // 数据是一个一维数组
                         // [ [经度, 维度，向量经度方向的值，向量维度方向的值] ]
                         data.push([
                             i / windData.nx * 360 - 180,
                             j / windData.ny * 180 - 90,
                             vx,
-                            vy
+                            vy,
+                            mag
                         ]);
-                        var mag = Math.sqrt(vx * vx + vy * vy);
                         maxMag = Math.max(mag, maxMag);
                         minMag = Math.min(mag, minMag);
                     }
@@ -44,8 +45,10 @@
                         left: 'right',
                         min: minMag,
                         max: maxMag,
+                        dimension: 4,
                         inRange: {
-                            color: ['green', 'yellow', 'red']
+                            // color: ['green', 'yellow', 'red']
+                            color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
                         },
                         realtime: false,
                         calculable: true,
@@ -56,7 +59,7 @@
                     bmap: {
                         center: [0, 0],
                         zoom: 1,
-                        roam: false,
+                        roam: true,
                         mapStyle: {
                         'styleJson': [
                             {
@@ -204,9 +207,10 @@
                         type: 'flowGL',
                         coordinateSystem: 'bmap',
                         data: data,
-                        particleDensity: 350,
-                        gridWidth: windData.nx,
-                        gridHeight: windData.ny,
+                        particleDensity: 512,
+                        particleSpeed: 1,
+                        // gridWidth: windData.nx,
+                        // gridHeight: windData.ny,
                         itemStyle: {
                             opacity: 0.7
                         }

@@ -12,17 +12,42 @@
         <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
+        <script src="js/exportGL2OBJ.js"></script>
+        <script src="lib/download.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
             // http://visibleearth.nasa.gov/view_cat.php?categoryID=1484
             chart.setOption({
+                toolbox: {
+                    feature: {
+                        myExportObj: {
+                            title: 'Export OBJ',
+                            icon: 'M4.7,22.9L29.3,45.5L54.7,23.4M4.6,43.6L4.6,58L53.8,58L53.8,43.6M29.2,45.1L29.2,0',
+                            onclick: function () {
+                                var res = echarts.exportGL2OBJ(chart, {
+                                    mainType: 'globe',
+                                    index: 0
+                                }, {
+                                    mtllib: 'globe'
+                                });
+                                download(res.obj, 'globe.obj', 'text/plain');
+                                download(res.mtl, 'globe.mtl', 'text/plain');
+                                res.textures.forEach(function (texture) {
+                                    download(texture.data, texture.file, 'image/png');
+                                });
+                            }
+                        }
+                    }
+                },
                 globe: {
 
                     baseTexture: 'asset/world.topo.bathy.200401.jpg',
                     heightTexture: 'asset/elev_bump_4k.jpg',
+                    // heightTexture: 'asset/bathymetry_bw_composite_4k.jpg',
 
-                    displacementScale: 0.1,
+                    displacementScale: 0.05,
+                    displacementQuality: 'high',
 
                     shading: 'realistic',
                     realisticMaterial: {
