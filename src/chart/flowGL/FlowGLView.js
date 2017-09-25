@@ -77,7 +77,7 @@ echarts.extendChartView({
         planeMesh.material.set('color', color);
 
         this._particleSurface.setColorTextureImage(seriesModel.get('colorTexture'), api);
-        this._particleSurface.particleSize = seriesModel.get('particleSize');
+        this._particleSurface.setParticleSize(seriesModel.get('particleSize'));
         this._particleSurface.particleSpeedScaling = seriesModel.get('particleSpeed');
         this._particleSurface.motionBlurFactor = 1.0 - Math.pow(0.1, seriesModel.get('particleTrail'));
     },
@@ -167,7 +167,7 @@ echarts.extendChartView({
 
         vectorFieldTexture.dirty();
 
-        this._updatePlanePosition(bbox[0], bbox[1], api);
+        this._updatePlanePosition(bbox[0], bbox[1], seriesModel,api);
         this._updateGradientTexture(data.getVisual('visualMeta'), [minMag, maxMag]);
 
     },
@@ -258,8 +258,8 @@ echarts.extendChartView({
         this._particleSurface.setGradientTexture(this._gradientTexture);
     },
 
-    _updatePlanePosition: function (leftTop, rightBottom, api) {
-        var limitedResult = this._limitInViewport(leftTop, rightBottom, api);
+    _updatePlanePosition: function (leftTop, rightBottom, seriesModel, api) {
+        var limitedResult = this._limitInViewportAndFullFill(leftTop, rightBottom, seriesModel, api);
         leftTop = limitedResult.leftTop;
         rightBottom = limitedResult.rightBottom;
         this._particleSurface.setRegion(limitedResult.region);
@@ -275,8 +275,8 @@ echarts.extendChartView({
         this._planeMesh.scale.set(width / 2, height / 2, 1);
 
         this._particleSurface.resize(
-            Math.min(width, 2048),
-            Math.min(height, 2048)
+            Math.max(Math.min(width, 2048), 1),
+            Math.max(Math.min(height, 2048), 1)
         );
 
         if (this._renderer) {
@@ -284,7 +284,7 @@ echarts.extendChartView({
         }
     },
 
-    _limitInViewport: function (leftTop, rightBottom, api) {
+    _limitInViewportAndFullFill: function (leftTop, rightBottom, seriesModel, api) {
         var newLeftTop = [
             Math.max(leftTop[0], 0),
             Math.max(leftTop[1], 0)
@@ -293,6 +293,20 @@ echarts.extendChartView({
             Math.min(rightBottom[0], api.getWidth()),
             Math.min(rightBottom[1], api.getHeight())
         ];
+        // Tiliing in lng orientation.
+        if (seriesModel.get('coordinateSystem') === 'bmap') {
+            var lngRange = seriesModel.getData().getDataExtent(seriesModel.coordDimToDataDim('lng')[0]);
+            // PENDING
+            var isContinuous = Math.floor(lngRange[1] - lngRange[0]) >= 360;
+            if (isContinuous) {
+                if (newLeftTop[0] > 0) {
+                    newLeftTop[0] = 0;
+                }
+                if (newRightBottom[0] < api.getWidth()) {
+                    newRightBottom[0] = api.getWidth();
+                }
+            }
+        }
 
         var width = rightBottom[0] - leftTop[0];
         var height = rightBottom[1] - leftTop[1];

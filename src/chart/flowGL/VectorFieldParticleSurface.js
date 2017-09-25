@@ -12,6 +12,17 @@ var PlaneGeometry = require('qtek/lib/geometry/Plane');
 var FrameBuffer = require('qtek/lib/FrameBuffer');
 
 Shader['import'](require('./vectorFieldParticle.glsl.js'));
+Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
+
+function createSpriteCanvas(size) {
+    var canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+    return canvas;
+}
 
 // var spriteUtil = require('../../util/sprite');
 
@@ -39,7 +50,7 @@ var VectorFieldParticleSurface = function () {
     /**
      * @type {number}
      */
-    this.particleSize = 1;
+    this._particleSize = 1;
 
     /**
      * @type {Array.<number>}
@@ -71,6 +82,8 @@ var VectorFieldParticleSurface = function () {
     this._camera = null;
 
     this._lastFrameTexture = null;
+
+    this._antialisedTexture = null;
 
     this.init();
 };
@@ -137,18 +150,12 @@ VectorFieldParticleSurface.prototype = {
         this._scene.add(lastFrameFullQuad);
         
         this._camera = new OrthoCamera();
-        if (!this._thisFrameTexture) {
-            this._thisFrameTexture = new Texture2D({
-                width: 1024,
-                height: 1024
-            });
-        }
+        this._thisFrameTexture = new Texture2D();
+        this._lastFrameTexture = new Texture2D();
+        this._antialisedTexture = new Texture2D();
 
-        var surfaceWidth = this._thisFrameTexture.width;
-        var surfaceHeight = this._thisFrameTexture.height;
-        this._lastFrameTexture = new Texture2D({
-            width: surfaceWidth,
-            height: surfaceHeight
+        this._fxaaPass = new Pass({
+            fragment: Shader.source('qtek.compositor.fxaa')
         });
     },
 
@@ -189,9 +196,10 @@ VectorFieldParticleSurface.prototype = {
         var particleMesh = this._particleMesh;
         var frameBuffer = this._frameBuffer;
         var particlePass = this._particlePass;
+        var fxaaPass = this._fxaaPass;
 
         particleMesh.material.set(
-            'size', this.particleSize * renderer.getDevicePixelRatio()
+            'size', this._particleSize * renderer.getDevicePixelRatio()
         );
         particleMesh.material.set('color', this.particleColor);
         particlePass.setUniform('speedScaling', this.particleSpeedScaling);
@@ -211,14 +219,17 @@ VectorFieldParticleSurface.prototype = {
         renderer.render(this._scene, this._camera);
         frameBuffer.unbind(renderer);
 
+        frameBuffer.attach(this._antialisedTexture);
+        fxaaPass.setUniform('texture', this._thisFrameTexture);
+        fxaaPass.render(renderer, frameBuffer);
+
         this._swapTexture();
 
         this._elapsedTime += deltaTime;
     },
 
     getSurfaceTexture: function () {
-        // Texture already been swapped
-        return this._lastFrameTexture;
+        return this._antialisedTexture;
     },
 
     setRegion: function (region) {
@@ -230,6 +241,29 @@ VectorFieldParticleSurface.prototype = {
         this._lastFrameTexture.height = height;
         this._thisFrameTexture.width = width;
         this._thisFrameTexture.height = height;
+        this._antialisedTexture.width = width;
+        this._antialisedTexture.height = height;
+    },
+
+    setParticleSize: function (size) {
+        var particleMesh = this._particleMesh;
+        if (size <= 2) {
+            particleMesh.material.shader.disableTexture('spriteTexture');
+            particleMesh.material.transparent = false;
+            return;
+        }
+        if (!this._spriteTexture) {
+            this._spriteTexture = new Texture2D();
+        }
+        if (!this._spriteTexture.image || this._spriteTexture.image.width !== size) {
+            this._spriteTexture.image = createSpriteCanvas(size);
+            this._spriteTexture.dirty();
+        }
+        particleMesh.material.transparent = true;
+        particleMesh.material.shader.enableTexture('spriteTexture');
+        particleMesh.material.set('spriteTexture', this._spriteTexture);
+
+        this._particleSize = size;
     },
 
     setGradientTexture: function (gradientTexture) {
@@ -272,6 +306,11 @@ VectorFieldParticleSurface.prototype = {
         renderer.disposeTexture(this._particleTexture1);
         renderer.disposeTexture(this._thisFrameTexture);
         renderer.disposeTexture(this._lastFrameTexture);
+        renderer.disposeTexture(this._antialisedTexture);
+
+        if (this._spriteTexture) {
+            renderer.disposeTexture(this._spriteTexture);
+        }
 
         renderer.disposeScene(this._scene);
     }

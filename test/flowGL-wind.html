@@ -23,7 +23,9 @@
                 var maxMag = 0;
                 var minMag = Infinity;
                 for (var j = 0; j < windData.ny; j++) {
-                    for (var i = 0; i < windData.nx; i++, p++) {
+                    for (var i = 0; i <= windData.nx; i++) {
+                        // Continuous data.
+                        var p = (i % windData.nx) + j * windData.nx;
                         var vx = windData.data[p][0];
                         var vy = windData.data[p][1];
                         var mag = Math.sqrt(vx * vx + vy * vy);

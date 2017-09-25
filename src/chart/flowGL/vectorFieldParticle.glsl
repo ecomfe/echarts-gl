@@ -17,7 +17,7 @@ void main()
 {
     vec4 p = texture2D(particleTexture, v_Texcoord);
     if (p.w > 0.0) {
-        vec4 vTex = texture2D(velocityTexture, p.xy * region.zw + region.xy);
+        vec4 vTex = texture2D(velocityTexture, fract(p.xy * region.zw + region.xy));
         vec2 v = vTex.xy;
         v = (v - 0.5) * 2.0;
         p.z = length(v);
@@ -73,6 +73,7 @@ void main()
 uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 uniform sampler2D gradientTexture;
 uniform sampler2D colorTexture;
+uniform sampler2D spriteTexture;
 
 varying float v_Mag;
 varying vec2 v_Uv;
@@ -80,6 +81,12 @@ varying vec2 v_Uv;
 void main()
 {
     gl_FragColor = color;
+#ifdef SPRITETEXTURE_ENABLED
+    gl_FragColor *= texture2D(spriteTexture, gl_PointCoord);
+    if (color.a == 0.0) {
+        discard;
+    }
+#endif
 #ifdef GRADIENTTEXTURE_ENABLED
     gl_FragColor *= texture2D(gradientTexture, vec2(v_Mag, 0.5));
 #endif
