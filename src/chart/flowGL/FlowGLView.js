@@ -296,8 +296,8 @@ echarts.extendChartView({
         // Tiliing in lng orientation.
         if (seriesModel.get('coordinateSystem') === 'bmap') {
             var lngRange = seriesModel.getData().getDataExtent(seriesModel.coordDimToDataDim('lng')[0]);
-            // PENDING
-            var isContinuous = Math.floor(lngRange[1] - lngRange[0]) >= 360;
+            // PENDING, consider grid density
+            var isContinuous = Math.floor(lngRange[1] - lngRange[0]) >= 359;
             if (isContinuous) {
                 if (newLeftTop[0] > 0) {
                     newLeftTop[0] = 0;

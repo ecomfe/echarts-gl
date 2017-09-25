@@ -38,6 +38,8 @@ var VectorFieldParticleSurface = function () {
      */
     this.vectorFieldTexture = new Texture2D({
         type: Texture.FLOAT,
+        minFilter: Texture.NEAREST,
+        magFilter: Texture.NEAREST,
         flipY: false
     });
 
@@ -190,6 +192,8 @@ VectorFieldParticleSurface.prototype = {
 
         this._particleTexture0.width = this._particleTexture1.width = width;
         this._particleTexture0.height = this._particleTexture1.height = height;
+
+        this._particlePass.setUniform('textureSize', [width, height]);
     },
 
     update: function (renderer, deltaTime) {
