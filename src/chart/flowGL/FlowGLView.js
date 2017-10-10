@@ -53,6 +53,7 @@ echarts.extendChartView({
         
         var time = +(new Date());
         var self = this;
+        var firstFrame = true;
         planeMesh.__percent = 0;
         planeMesh.stopAnimation();
         planeMesh.animate('', { loop: true })
@@ -64,10 +65,11 @@ echarts.extendChartView({
                 var dTime = timeNow - time;
                 time = timeNow;
                 if (self._renderer) {
-                    particleSurface.update(self._renderer, dTime / 1000);
+                    particleSurface.update(self._renderer, dTime / 1000, firstFrame);
                     planeMesh.material.set('diffuseMap', particleSurface.getSurfaceTexture());
                     // planeMesh.material.set('diffuseMap', self._particleSurface.vectorFieldTexture);
                 }
+                firstFrame = false;
             })
             .start();
 

@@ -128,6 +128,7 @@ VectorFieldParticleSurface.prototype = {
             }),
             mode: Mesh.POINTS,
             geometry: new StaticGeometry({
+                dynamic: true,
                 mainAttribute: 'texcoord0'
             })
         });
@@ -185,6 +186,7 @@ VectorFieldParticleSurface.prototype = {
                 spawnTextureData[off * 4 + 3] = life;
             }
         }
+        geometry.dirty();
 
         this._spawnTexture.width = width;
         this._spawnTexture.height = height;
@@ -196,7 +198,7 @@ VectorFieldParticleSurface.prototype = {
         this._particlePass.setUniform('textureSize', [width, height]);
     },
 
-    update: function (renderer, deltaTime) {
+    update: function (renderer, deltaTime, firstFrame) {
         var particleMesh = this._particleMesh;
         var frameBuffer = this._frameBuffer;
         var particlePass = this._particlePass;
@@ -209,6 +211,7 @@ VectorFieldParticleSurface.prototype = {
         particlePass.setUniform('speedScaling', this.particleSpeedScaling);
 
         frameBuffer.attach(this._particleTexture1);
+        particlePass.setUniform('firstFrameTime', firstFrame ? (this.particleLife[1] + this.particleLife[0]) / 2 : 0);
         particlePass.setUniform('particleTexture', this._particleTexture0);
         particlePass.setUniform('deltaTime', deltaTime);
         particlePass.setUniform('elapsedTime', this._elapsedTime);

@@ -11,6 +11,7 @@ uniform float speedScaling : 1.0;
 
 uniform vec2 textureSize;
 uniform vec4 region : [0, 0, 1, 1];
+uniform float firstFrameTime;
 
 varying vec2 v_Texcoord;
 
@@ -29,21 +30,20 @@ vec2 bilinearFetch(vec2 uv)
 void main()
 {
     vec4 p = texture2D(particleTexture, v_Texcoord);
-    if (p.w > 0.0) {
-        // vec2 v = texture2D(velocityTexture, fract(p.xy * region.zw + region.xy)).xy;
-        // https://blog.mapbox.com/how-i-built-a-wind-map-with-webgl-b63022b5537f
-        vec2 v = bilinearFetch(fract(p.xy * region.zw + region.xy));
-        v = (v - 0.5) * 2.0;
-        p.z = length(v);
-        p.xy += v * deltaTime / 10.0 * speedScaling;
-        // Make the particle surface seamless
-        p.xy = fract(p.xy);
-        p.w -= deltaTime;
-    }
-    else {
+    if (p.w <= 0.0) {
         p = texture2D(spawnTexture, fract(v_Texcoord + elapsedTime / 10.0));
-        p.z = 0.0;
+        p.w -= firstFrameTime;
     }
+    // vec2 v = texture2D(velocityTexture, fract(p.xy * region.zw + region.xy)).xy;
+    // https://blog.mapbox.com/how-i-built-a-wind-map-with-webgl-b63022b5537f
+    vec2 v = bilinearFetch(fract(p.xy * region.zw + region.xy));
+    v = (v - 0.5) * 2.0;
+    p.z = length(v);
+    p.xy += v * deltaTime / 10.0 * speedScaling;
+    // Make the particle surface seamless
+    p.xy = fract(p.xy);
+    p.w -= deltaTime;
+
     gl_FragColor = p;
 }
 @end
