@@ -5,7 +5,7 @@
 // http://www.cosy.sbg.ac.at/~held/projects/triang/triang.html
 // Z Order Hash ?
 
-var LinkedList = require('qtek/lib/core/LinkedList');
+var LinkedList = require('qtek/src/core/LinkedList');
 
 // From x,y point cast a ray to right. and intersect with edge x0, y0, x1, y1;
 // Return x value of intersect point

@@ -1,11 +1,11 @@
 // Temporal Super Sample for static Scene
 var halton = require('./halton');
-var Pass = require('qtek/lib/compositor/Pass');
-var FrameBuffer = require('qtek/lib/FrameBuffer');
-var Texture2D = require('qtek/lib/Texture2D');
-var Shader = require('qtek/lib/Shader');
-var Matrix4 = require('qtek/lib/math/Matrix4');
-var Vector3 = require('qtek/lib/math/Vector3');
+var Pass = require('qtek/src/compositor/Pass');
+var FrameBuffer = require('qtek/src/FrameBuffer');
+var Texture2D = require('qtek/src/Texture2D');
+var Shader = require('qtek/src/Shader');
+var Matrix4 = require('qtek/src/math/Matrix4');
+var Vector3 = require('qtek/src/math/Vector3');
 
 function TemporalSuperSampling () {
     var haltonSequence = [];

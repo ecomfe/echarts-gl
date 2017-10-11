@@ -1,28 +1,28 @@
-var Compositor = require('qtek/lib/compositor/Compositor');
-var Shader = require('qtek/lib/Shader');
-var Texture2D = require('qtek/lib/Texture2D');
-var Texture = require('qtek/lib/Texture');
-var FrameBuffer = require('qtek/lib/FrameBuffer');
-var FXLoader = require('qtek/lib/loader/FX');
+var Compositor = require('qtek/src/compositor/Compositor');
+var Shader = require('qtek/src/Shader');
+var Texture2D = require('qtek/src/Texture2D');
+var Texture = require('qtek/src/Texture');
+var FrameBuffer = require('qtek/src/FrameBuffer');
+var FXLoader = require('qtek/src/loader/FX');
 var SSAOPass = require('./SSAOPass');
 var SSRPass = require('./SSRPass');
 var poissonKernel = require('./poissonKernel');
 var graphicGL = require('../util/graphicGL');
 var NormalPass = require('./NormalPass');
 var EdgePass = require('./EdgePass');
-var Matrix4 = require('qtek/lib/math/Matrix4');
+var Matrix4 = require('qtek/src/math/Matrix4');
 
 var effectJson = require('./composite.js');
 
-Shader['import'](require('qtek/lib/shader/source/compositor/blur.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/lut.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/output.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/bright.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/downsample.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/upsample.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/hdr.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/blend.essl'));
-Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
+Shader['import'](require('qtek/src/shader/source/compositor/blur.glsl.js'));
+Shader['import'](require('qtek/src/shader/source/compositor/lut.glsl.js'));
+Shader['import'](require('qtek/src/shader/source/compositor/output.glsl.js'));
+Shader['import'](require('qtek/src/shader/source/compositor/bright.glsl.js'));
+Shader['import'](require('qtek/src/shader/source/compositor/downsample.glsl.js'));
+Shader['import'](require('qtek/src/shader/source/compositor/upsample.glsl.js'));
+Shader['import'](require('qtek/src/shader/source/compositor/hdr.glsl.js'));
+Shader['import'](require('qtek/src/shader/source/compositor/blend.glsl.js'));
+Shader['import'](require('qtek/src/shader/source/compositor/fxaa.glsl.js'));
 Shader['import'](require('./DOF.glsl.js'));
 Shader['import'](require('./edge.glsl.js'));
 

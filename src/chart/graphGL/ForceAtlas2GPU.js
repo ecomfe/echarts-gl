@@ -1,7 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
-var Pass = require('qtek/lib/compositor/Pass');
-var FrameBuffer = require('qtek/lib/FrameBuffer');
+var Pass = require('qtek/src/compositor/Pass');
+var FrameBuffer = require('qtek/src/FrameBuffer');
 
 graphicGL.Shader.import(require('./forceAtlas2.glsl.js'));
 

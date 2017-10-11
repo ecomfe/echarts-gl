@@ -1,4 +1,4 @@
-var glmatrix = require('qtek/lib/dep/glmatrix');
+var glmatrix = require('qtek/src/dep/glmatrix');
 var vec3 = glmatrix.vec3;
 
 

@@ -1,5 +1,5 @@
 
-var Base = require('qtek/lib/core/Base');
+var Base = require('qtek/src/core/Base');
 var retrieve = require('./retrieve');
 
 /**

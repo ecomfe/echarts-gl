@@ -6,10 +6,10 @@
  */
 
 // TODO Remove magic numbers on sensitivity
-var Base = require('qtek/lib/core/Base');
-var Vector2 = require('qtek/lib/math/Vector2');
-var Vector3 = require('qtek/lib/math/Vector3');
-var Quaternion = require('qtek/lib/math/Quaternion');
+var Base = require('qtek/src/core/Base');
+var Vector2 = require('qtek/src/math/Vector2');
+var Vector3 = require('qtek/src/math/Vector3');
+var Quaternion = require('qtek/src/math/Quaternion');
 var retrieve = require('./retrieve');
 var firstNotNull = retrieve.firstNotNull;
 

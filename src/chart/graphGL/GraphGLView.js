@@ -7,7 +7,7 @@ var retrieve = require('../../util/retrieve');
 var ForceAtlas2GPU = require('./ForceAtlas2GPU');
 var ForceAtlas2 = require('./ForceAtlas2');
 var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
-var vec2 = require('qtek/lib/dep/glmatrix').vec2;
+var vec2 = require('qtek/src/dep/glmatrix').vec2;
 
 var Roam2DControl = require('../../util/Roam2DControl');
 

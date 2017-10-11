@@ -6,9 +6,9 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var Texture2D = require('qtek/lib/Texture2D');
-var Vector3 = require('qtek/lib/math/Vector3');
-var Vector2 = require('qtek/lib/math/Vector2');
+var Texture2D = require('qtek/src/Texture2D');
+var Vector3 = require('qtek/src/math/Vector3');
+var Vector2 = require('qtek/src/math/Vector2');
 
 var events = ['mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout', 'click', 'dblclick', 'contextmenu'];
 

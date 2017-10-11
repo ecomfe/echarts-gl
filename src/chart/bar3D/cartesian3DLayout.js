@@ -1,5 +1,5 @@
 var echarts = require('echarts/lib/echarts');
-var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var vec3 = require('qtek/src/dep/glmatrix').vec3;
 
 function ifCrossZero(extent) {
     var min = extent[0];

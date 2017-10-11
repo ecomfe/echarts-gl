@@ -1,14 +1,14 @@
 // NormalPass will generate normal and depth data.
 
 // TODO Animation
-var Texture2D = require('qtek/lib/Texture2D');
-var Texture = require('qtek/lib/Texture');
-var Shader = require('qtek/lib/Shader');
-var FrameBuffer = require('qtek/lib/FrameBuffer');
-var Material = require('qtek/lib/Material');
-var Shader = require('qtek/lib/Shader');
-var Pass = require('qtek/lib/compositor/Pass');
-var textureUtil = require('qtek/lib/util/texture');
+var Texture2D = require('qtek/src/Texture2D');
+var Texture = require('qtek/src/Texture');
+var Shader = require('qtek/src/Shader');
+var FrameBuffer = require('qtek/src/FrameBuffer');
+var Material = require('qtek/src/Material');
+var Shader = require('qtek/src/Shader');
+var Pass = require('qtek/src/compositor/Pass');
+var textureUtil = require('qtek/src/util/texture');
 
 Shader.import(require('../util/shader/normal.glsl.js'));
 

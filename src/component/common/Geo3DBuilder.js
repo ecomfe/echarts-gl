@@ -4,7 +4,7 @@ var graphicGL = require('../../util/graphicGL');
 var earcut = require('../../util/earcut');
 var LinesGeo = require('../../util/geometry/Lines3D');
 var retrieve = require('../../util/retrieve');
-var glmatrix = require('qtek/lib/dep/glmatrix');
+var glmatrix = require('qtek/src/dep/glmatrix');
 var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
 var LabelsBuilder = require('./LabelsBuilder');
 

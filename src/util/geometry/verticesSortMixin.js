@@ -1,4 +1,4 @@
-var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var vec3 = require('qtek/src/dep/glmatrix').vec3;
 var ProgressiveQuickSort = require('../ProgressiveQuickSort');
 
 module.exports = {

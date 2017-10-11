@@ -1,18 +1,18 @@
-var Pass = require('qtek/lib/compositor/Pass');
-var StaticGeometry = require('qtek/lib/StaticGeometry');
-var Mesh = require('qtek/lib/Mesh');
-var Material = require('qtek/lib/Material');
-var Shader = require('qtek/lib/Shader');
-var Texture2D = require('qtek/lib/Texture2D');
-var Texture = require('qtek/lib/Texture');
-var OrthoCamera = require('qtek/lib/camera/Orthographic');
-var Scene = require('qtek/lib/Scene');
-var PlaneGeometry = require('qtek/lib/geometry/Plane');
+var Pass = require('qtek/src/compositor/Pass');
+var StaticGeometry = require('qtek/src/StaticGeometry');
+var Mesh = require('qtek/src/Mesh');
+var Material = require('qtek/src/Material');
+var Shader = require('qtek/src/Shader');
+var Texture2D = require('qtek/src/Texture2D');
+var Texture = require('qtek/src/Texture');
+var OrthoCamera = require('qtek/src/camera/Orthographic');
+var Scene = require('qtek/src/Scene');
+var PlaneGeometry = require('qtek/src/geometry/Plane');
 
-var FrameBuffer = require('qtek/lib/FrameBuffer');
+var FrameBuffer = require('qtek/src/FrameBuffer');
 
 Shader['import'](require('./vectorFieldParticle.glsl.js'));
-Shader['import'](require('qtek/lib/shader/source/compositor/fxaa.essl'));
+Shader['import'](require('qtek/src/shader/source/compositor/fxaa.glsl.js'));
 
 function createSpriteCanvas(size) {
     var canvas = document.createElement('canvas');

@@ -1,7 +1,7 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
-var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var vec3 = require('qtek/src/dep/glmatrix').vec3;
 var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
 
 function isPointsNaN(pt) {

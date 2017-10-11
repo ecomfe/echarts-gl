@@ -6,7 +6,7 @@
 
 // TODO Expand.
 var echarts = require('echarts/lib/echarts');
-var Texture2D = require('qtek/lib/Texture2D');
+var Texture2D = require('qtek/src/Texture2D');
 
 function ZRTextureAtlasSurfaceNode(zr, offsetX, offsetY, width, height, gap, dpr) {
     this._zr = zr;

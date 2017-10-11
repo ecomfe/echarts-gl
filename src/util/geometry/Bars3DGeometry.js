@@ -8,9 +8,9 @@
 var echarts = require('echarts/lib/echarts');
 var dynamicConvertMixin = require('./dynamicConvertMixin');
 var trianglesSortMixin = require('./trianglesSortMixin');
-var StaticGeometry = require('qtek/lib/StaticGeometry');
+var StaticGeometry = require('qtek/src/StaticGeometry');
 
-var glMatrix = require('qtek/lib/dep/glmatrix');
+var glMatrix = require('qtek/src/dep/glmatrix');
 var vec3 = glMatrix.vec3;
 var mat3 = glMatrix.mat3;
 

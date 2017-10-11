@@ -6,8 +6,8 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var StaticGeometry = require('qtek/lib/StaticGeometry');
-var vec2 = require('qtek/lib/dep/glmatrix').vec2;
+var StaticGeometry = require('qtek/src/StaticGeometry');
+var vec2 = require('qtek/src/dep/glmatrix').vec2;
 var echarts = require('echarts/lib/echarts');
 var dynamicConvertMixin = require('./dynamicConvertMixin');
 

@@ -1,5 +1,5 @@
-var Texture2D = require('qtek/lib/Texture2D');
-var Texture = require('qtek/lib/Texture');
+var Texture2D = require('qtek/src/Texture2D');
+var Texture = require('qtek/src/Texture');
 var workerFunc = require('./forceAtlas2Worker.js');
 var workerUrl = workerFunc.toString();
 workerUrl = workerUrl.slice(workerUrl.indexOf('{') + 1, workerUrl.lastIndexOf('}'));

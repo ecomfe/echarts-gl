@@ -41,7 +41,7 @@ var echartsGl = {
     }
 };
 var echarts = require('echarts/lib/echarts');
-var qtekVersion = require('qtek/lib/version');
+var qtekVersion = require('qtek/src/version');
 var LayerGL = require('./core/LayerGL');
 
 // Version checking

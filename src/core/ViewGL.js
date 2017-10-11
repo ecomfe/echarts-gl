@@ -5,15 +5,15 @@
 
 var echarts = require('echarts/lib/echarts');
 
-var Scene = require('qtek/lib/Scene');
-var ShadowMapPass = require('qtek/lib/prePass/ShadowMap');
-var PerspectiveCamera = require('qtek/lib/camera/Perspective');
-var OrthographicCamera = require('qtek/lib/camera/Orthographic');
-var Matrix4 = require('qtek/lib/math/Matrix4');
-var Vector3 = require('qtek/lib/math/Vector3');
-var Vector2 = require('qtek/lib/math/Vector2');
+var Scene = require('qtek/src/Scene');
+var ShadowMapPass = require('qtek/src/prePass/ShadowMap');
+var PerspectiveCamera = require('qtek/src/camera/Perspective');
+var OrthographicCamera = require('qtek/src/camera/Orthographic');
+var Matrix4 = require('qtek/src/math/Matrix4');
+var Vector3 = require('qtek/src/math/Vector3');
+var Vector2 = require('qtek/src/math/Vector2');
 
-var notifier = require('qtek/lib/core/mixin/notifier');
+var notifier = require('qtek/src/core/mixin/notifier');
 
 var EffectCompositor = require('../effect/EffectCompositor');
 var TemporalSuperSampling = require('../effect/TemporalSuperSampling');

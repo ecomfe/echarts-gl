@@ -1,6 +1,6 @@
 var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
-var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var vec3 = require('qtek/src/dep/glmatrix').vec3;
 
 var Lines3DGeometry = require('../../util/geometry/Lines3D');
 

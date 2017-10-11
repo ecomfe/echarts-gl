@@ -1,6 +1,6 @@
 var graphicGL = require('../../util/graphicGL');
-var Skybox = require('qtek/lib/plugin/Skybox');
-var Skydome = require('qtek/lib/plugin/Skydome');
+var Skybox = require('qtek/src/plugin/Skybox');
+var Skydome = require('qtek/src/plugin/Skydome');
 var echarts = require('echarts/lib/echarts');
 
 function SceneHelper() {

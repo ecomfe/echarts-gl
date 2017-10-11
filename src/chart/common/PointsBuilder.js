@@ -3,7 +3,7 @@ var graphicGL = require('../../util/graphicGL');
 var spriteUtil = require('../../util/sprite');
 var PointsMesh = require('./PointsMesh');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
-var Matrix4 = require('qtek/lib/math/Matrix4');
+var Matrix4 = require('qtek/src/math/Matrix4');
 
 var SDF_RANGE = 20;
 

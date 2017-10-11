@@ -1,6 +1,6 @@
 var echarts = require('echarts/lib/echarts');
-var Vector3 = require('qtek/lib/math/Vector3');
-var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var Vector3 = require('qtek/src/math/Vector3');
+var vec3 = require('qtek/src/dep/glmatrix').vec3;
 var cartesian3DLayout = require('./cartesian3DLayout');
 var evaluateBarSparseness = require('./evaluateBarSparseness');
 

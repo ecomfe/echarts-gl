@@ -1,7 +1,7 @@
 var echarts = require('echarts/lib/echarts');
-var glmatrix = require('qtek/lib/dep/glmatrix');
-var Vector3 = require('qtek/lib/math/Vector3');
-var Matrix4 = require('qtek/lib/math/Matrix4');
+var glmatrix = require('qtek/src/dep/glmatrix');
+var Vector3 = require('qtek/src/math/Vector3');
+var Matrix4 = require('qtek/src/math/Matrix4');
 var vec3 = glmatrix.vec3;
 var mat4 = glmatrix.mat4;
 

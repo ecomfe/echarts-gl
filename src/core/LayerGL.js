@@ -15,12 +15,12 @@
  */
 
 var echarts = require('echarts/lib/echarts');
-var Renderer = require('qtek/lib/Renderer');
-var RayPicking = require('qtek/lib/picking/RayPicking');
-var Texture = require('qtek/lib/Texture');
+var Renderer = require('qtek/src/Renderer');
+var RayPicking = require('qtek/src/picking/RayPicking');
+var Texture = require('qtek/src/Texture');
 
 // PENDING, qtek notifier is same with zrender Eventful
-var notifier = require('qtek/lib/core/mixin/notifier');
+var notifier = require('qtek/src/core/mixin/notifier');
 var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
 
 // configs for Auto GC for GPU resources

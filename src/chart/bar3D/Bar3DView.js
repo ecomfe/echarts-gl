@@ -4,7 +4,7 @@ var retrieve = require('../../util/retrieve');
 var format = require('../../util/format');
 var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
 var LabelsBuilder = require('../../component/common/LabelsBuilder');
-var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var vec3 = require('qtek/src/dep/glmatrix').vec3;
 
 function getShader(shading) {
     var shader = graphicGL.createShader('ecgl.' + shading);

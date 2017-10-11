@@ -1,7 +1,7 @@
 var graphicGL = require('../../util/graphicGL');
 var verticesSortMixin = require('../../util/geometry/verticesSortMixin');
 var echarts = require('echarts/lib/echarts');
-var glmatrix = require('qtek/lib/dep/glmatrix');
+var glmatrix = require('qtek/src/dep/glmatrix');
 var vec4 = glmatrix.vec4;
 
 graphicGL.Shader.import(require('./sdfSprite.glsl.js'));

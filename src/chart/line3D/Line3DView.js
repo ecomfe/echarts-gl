@@ -2,9 +2,9 @@ var echarts = require('echarts/lib/echarts');
 var graphicGL = require('../../util/graphicGL');
 var retrieve = require('../../util/retrieve');
 var Lines3DGeometry = require('../../util/geometry/Lines3D');
-var Matrix4 = require('qtek/lib/math/Matrix4');
-var Vector3 = require('qtek/lib/math/Vector3');
-var vec3 = require('qtek/lib/dep/glmatrix').vec3;
+var Matrix4 = require('qtek/src/math/Matrix4');
+var Vector3 = require('qtek/src/math/Vector3');
+var vec3 = require('qtek/src/dep/glmatrix').vec3;
 var lineContain = require('zrender/lib/contain/line');
 
 graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));

@@ -5,7 +5,7 @@
  * @author Yi Shen(https://github.com/pissang)
  */
 var echarts = require('echarts/lib/echarts');
-var StaticGeometry = require('qtek/lib/StaticGeometry');
+var StaticGeometry = require('qtek/src/StaticGeometry');
 var dynamicConvertMixin = require('./dynamicConvertMixin');
 
 var squareTriangles = [

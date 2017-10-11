@@ -1,27 +1,27 @@
-var Mesh = require('qtek/lib/Mesh');
-var Renderer = require('qtek/lib/Renderer');
-var Texture2D = require('qtek/lib/Texture2D');
-var Texture = require('qtek/lib/Texture');
-var Shader = require('qtek/lib/Shader');
-var Material = require('qtek/lib/Material');
-var Node3D = require('qtek/lib/Node');
-var StaticGeometry = require('qtek/lib/StaticGeometry');
+var Mesh = require('qtek/src/Mesh');
+var Renderer = require('qtek/src/Renderer');
+var Texture2D = require('qtek/src/Texture2D');
+var Texture = require('qtek/src/Texture');
+var Shader = require('qtek/src/Shader');
+var Material = require('qtek/src/Material');
+var Node3D = require('qtek/src/Node');
+var StaticGeometry = require('qtek/src/StaticGeometry');
 var echarts = require('echarts/lib/echarts');
-var Scene = require('qtek/lib/Scene');
+var Scene = require('qtek/src/Scene');
 var LRUCache = require('zrender/lib/core/LRU');
-var textureUtil = require('qtek/lib/util/texture');
+var textureUtil = require('qtek/src/util/texture');
 var EChartsSurface = require('./EChartsSurface');
-var AmbientCubemapLight = require('qtek/lib/light/AmbientCubemap');
-var AmbientSHLight = require('qtek/lib/light/AmbientSH');
-var shUtil = require('qtek/lib/util/sh');
+var AmbientCubemapLight = require('qtek/src/light/AmbientCubemap');
+var AmbientSHLight = require('qtek/src/light/AmbientSH');
+var shUtil = require('qtek/src/util/sh');
 var retrieve = require('./retrieve');
 
 var animatableMixin = require('./animatableMixin');
 echarts.util.extend(Node3D.prototype, animatableMixin);
 
 // Some common shaders
-Shader.import(require('qtek/lib/shader/source/util.essl'));
-Shader.import(require('qtek/lib/shader/source/prez.essl'));
+Shader.import(require('qtek/src/shader/source/util.glsl.js'));
+Shader.import(require('qtek/src/shader/source/prez.glsl.js'));
 Shader.import(require('./shader/common.glsl.js'));
 Shader.import(require('./shader/color.glsl.js'));
 Shader.import(require('./shader/lambert.glsl.js'));
@@ -120,38 +120,38 @@ graphicGL.Texture2D = Texture2D;
 // Geometries
 graphicGL.Geometry = StaticGeometry;
 
-graphicGL.SphereGeometry = require('qtek/lib/geometry/Sphere');
+graphicGL.SphereGeometry = require('qtek/src/geometry/Sphere');
 
-graphicGL.PlaneGeometry = require('qtek/lib/geometry/Plane');
+graphicGL.PlaneGeometry = require('qtek/src/geometry/Plane');
 
-graphicGL.CubeGeometry = require('qtek/lib/geometry/Cube');
+graphicGL.CubeGeometry = require('qtek/src/geometry/Cube');
 
 // Lights
-graphicGL.AmbientLight = require('qtek/lib/light/Ambient');
-graphicGL.DirectionalLight = require('qtek/lib/light/Directional');
-graphicGL.PointLight = require('qtek/lib/light/Point');
-graphicGL.SpotLight = require('qtek/lib/light/Spot');
+graphicGL.AmbientLight = require('qtek/src/light/Ambient');
+graphicGL.DirectionalLight = require('qtek/src/light/Directional');
+graphicGL.PointLight = require('qtek/src/light/Point');
+graphicGL.SpotLight = require('qtek/src/light/Spot');
 
 // Cameras
-graphicGL.PerspectiveCamera = require('qtek/lib/camera/Perspective');
-graphicGL.OrthographicCamera = require('qtek/lib/camera/Orthographic');
+graphicGL.PerspectiveCamera = require('qtek/src/camera/Perspective');
+graphicGL.OrthographicCamera = require('qtek/src/camera/Orthographic');
 
 // Math
-graphicGL.Vector2 = require('qtek/lib/math/Vector2');
-graphicGL.Vector3 = require('qtek/lib/math/Vector3');
-graphicGL.Vector4 = require('qtek/lib/math/Vector4');
+graphicGL.Vector2 = require('qtek/src/math/Vector2');
+graphicGL.Vector3 = require('qtek/src/math/Vector3');
+graphicGL.Vector4 = require('qtek/src/math/Vector4');
 
-graphicGL.Quaternion = require('qtek/lib/math/Quaternion');
+graphicGL.Quaternion = require('qtek/src/math/Quaternion');
 
-graphicGL.Matrix2 = require('qtek/lib/math/Matrix2');
-graphicGL.Matrix2d = require('qtek/lib/math/Matrix2d');
-graphicGL.Matrix3 = require('qtek/lib/math/Matrix3');
-graphicGL.Matrix4 = require('qtek/lib/math/Matrix4');
+graphicGL.Matrix2 = require('qtek/src/math/Matrix2');
+graphicGL.Matrix2d = require('qtek/src/math/Matrix2d');
+graphicGL.Matrix3 = require('qtek/src/math/Matrix3');
+graphicGL.Matrix4 = require('qtek/src/math/Matrix4');
 
-graphicGL.Plane = require('qtek/lib/math/Plane');
-graphicGL.Ray = require('qtek/lib/math/Ray');
-graphicGL.BoundingBox = require('qtek/lib/math/BoundingBox');
-graphicGL.Frustum = require('qtek/lib/math/Frustum');
+graphicGL.Plane = require('qtek/src/math/Plane');
+graphicGL.Ray = require('qtek/src/math/Ray');
+graphicGL.BoundingBox = require('qtek/src/math/BoundingBox');
+graphicGL.Frustum = require('qtek/src/math/Frustum');
 
 // Texture utilities
 
