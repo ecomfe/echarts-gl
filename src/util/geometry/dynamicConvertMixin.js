@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     convertToDynamicArray: function (clear) {
         if (clear) {
             this.resetOffset();

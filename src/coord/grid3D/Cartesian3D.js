@@ -1,5 +1,5 @@
-var echarts = require('echarts/lib/echarts');
-var Cartesian = require('echarts/lib/coord/cartesian/Cartesian');
+import echarts from 'echarts/lib/echarts';
+import Cartesian from 'echarts/lib/coord/cartesian/Cartesian';
 
 function Cartesian3D(name) {
 
@@ -49,4 +49,4 @@ Cartesian3D.prototype = {
 
 echarts.util.inherits(Cartesian3D, Cartesian);
 
-module.exports = Cartesian3D;
+export default Cartesian3D;

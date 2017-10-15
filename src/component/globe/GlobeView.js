@@ -1,13 +1,13 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-var graphicGL = require('../../util/graphicGL');
-var OrbitControl = require('../../util/OrbitControl');
-var SceneHelper = require('../common/SceneHelper');
+import graphicGL from '../../util/graphicGL';
+import OrbitControl from '../../util/OrbitControl';
+import SceneHelper from '../common/SceneHelper';
 
-var sunCalc = require('../../util/sunCalc');
-var retrieve = require('../../util/retrieve');
+import sunCalc from '../../util/sunCalc';
+import retrieve from '../../util/retrieve';
 
-module.exports = echarts.extendComponentView({
+export default echarts.extendComponentView({
 
     type: 'globe',
 

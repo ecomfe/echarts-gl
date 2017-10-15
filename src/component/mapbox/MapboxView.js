@@ -1,13 +1,15 @@
-var echarts = require('echarts/lib/echarts');
-var MapboxLayer = require('./MapboxLayer');
-var SceneHelper = require('../common/SceneHelper');
-var graphicGL = require('../../util/graphicGL');
+import echarts from 'echarts/lib/echarts';
+import MapboxLayer from './MapboxLayer';
+import SceneHelper from '../common/SceneHelper';
+import graphicGL from '../../util/graphicGL';
 
-graphicGL.Shader.import(require('../../util/shader/displayShadow.glsl.js'));
+import displayShadowGLSL from '../../util/shader/displayShadow.glsl.js';
+
+graphicGL.Shader.import(displayShadowGLSL);
 
 var TILE_SIZE = 512;
 
-module.exports = echarts.extendComponentView({
+export default echarts.extendComponentView({
 
     type: 'mapbox',
 

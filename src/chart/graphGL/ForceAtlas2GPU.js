@@ -1,9 +1,10 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var Pass = require('qtek/src/compositor/Pass');
-var FrameBuffer = require('qtek/src/FrameBuffer');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import Pass from 'qtek/src/compositor/Pass';
+import FrameBuffer from 'qtek/src/FrameBuffer';
 
-graphicGL.Shader.import(require('./forceAtlas2.glsl.js'));
+import forceAtlas2Code from './forceAtlas2.glsl.js';
+graphicGL.Shader.import(forceAtlas2Code);
 
 var defaultConfigs = {
     repulsionByDegree: true,
@@ -473,4 +474,4 @@ ForceAtlas2GPU.prototype.dispose = function (renderer) {
 
 echarts.ForceAtlas2GPU = ForceAtlas2GPU;
 
-module.exports = ForceAtlas2GPU;
+export default ForceAtlas2GPU;

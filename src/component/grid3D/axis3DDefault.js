@@ -1,4 +1,4 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
 var defaultOption = {
     show: true,
@@ -83,7 +83,7 @@ var logAxis = echarts.util.defaults({
 }, valueAxis);
 logAxis.scale = true;
 
-module.exports = {
+export default {
     categoryAxis: categoryAxis,
     valueAxis: valueAxis,
     timeAxis: timeAxis,

@@ -1,15 +1,13 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./scatter3D/Scatter3DSeries');
-require('./scatter3D/Scatter3DView');
+import './scatter3D/Scatter3DSeries';
+import './scatter3D/Scatter3DView';
 
-echarts.registerVisual(echarts.util.curry(
-    require('echarts/lib/visual/symbol'), 'scatter3D', 'circle', null
-));
+import symbolVisual from 'echarts/lib/visual/symbol';
+import opacityVisual from './common/opacityVisual';
+echarts.registerVisual(echarts.util.curry(symbolVisual, 'scatter3D', 'circle', null));
 
-echarts.registerVisual(echarts.util.curry(
-    require('./common/opacityVisual'), 'scatter3D'
-));
+echarts.registerVisual(echarts.util.curry(opacityVisual, 'scatter3D'));
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('scatter3D', function (seriesModel) {

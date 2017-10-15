@@ -1,4 +1,4 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./flowGL/FlowGLView');
-require('./flowGL/FlowGLSeries');
+import './flowGL/FlowGLView';
+import './flowGL/FlowGLSeries';

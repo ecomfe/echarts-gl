@@ -1,4 +1,4 @@
-module.exports = function (data, dimX, dimY) {
+export default function (data, dimX, dimY) {
     var xExtent = data.getDataExtent(dimX);
     var yExtent = data.getDataExtent(dimY);
 

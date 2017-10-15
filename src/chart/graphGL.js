@@ -1,15 +1,13 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./graphGL/GraphGLSeries');
-require('./graphGL/GraphGLView');
+import './graphGL/GraphGLSeries';
+import './graphGL/GraphGLView';
+import symbolVisual from 'echarts/lib/visual/symbol';
+import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(
-    require('echarts/lib/visual/symbol'), 'graphGL', 'circle', null
-));
+echarts.registerVisual(echarts.util.curry(symbolVisual, 'graphGL', 'circle', null));
 
-echarts.registerVisual(echarts.util.curry(
-    require('./common/opacityVisual'), 'graphGL'
-));
+echarts.registerVisual(echarts.util.curry(opacityVisual, 'graphGL'));
 
 echarts.registerVisual(function (ecModel) {
     var paletteScope = {};

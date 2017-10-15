@@ -1,12 +1,13 @@
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
-var ProgressiveQuickSort = require('../ProgressiveQuickSort');
+import ProgressiveQuickSort from '../ProgressiveQuickSort';
+import glmatrix from 'qtek/src/dep/glmatrix';
+var vec3 = glmatrix.vec3;
 
 var p0 = vec3.create();
 var p1 = vec3.create();
 var p2 = vec3.create();
 // var cp = vec3.create();
 
-module.exports = {
+export default {
 
     needsSortTriangles: function () {
         return this.indices && this.sortTriangles;

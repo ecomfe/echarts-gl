@@ -1,10 +1,10 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var retrieve = require('../../util/retrieve');
-var Lines3DGeometry = require('../../util/geometry/Lines3D');
-var QuadsGeometry = require('../../util/geometry/Quads');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import retrieve from '../../util/retrieve';
+import Lines3DGeometry from '../../util/geometry/Lines3D';
+import QuadsGeometry from '../../util/geometry/Quads';
 var firstNotNull = retrieve.firstNotNull;
-var ifIgnoreOnTick = require('./ifIgnoreOnTick');
+import ifIgnoreOnTick from './ifIgnoreOnTick';
 
 var dimIndicesMap = {
     // Left to right
@@ -198,4 +198,4 @@ Grid3DFace.prototype._udpateSplitAreas = function (geometry, axes, grid3DModel, 
     });
 };
 
-module.exports = Grid3DFace;
+export default Grid3DFace;

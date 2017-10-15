@@ -1,9 +1,10 @@
-var graphicGL = require('../graphicGL');
-var SpritesGeometry = require('../geometry/Sprites');
+import graphicGL from '../graphicGL';
+import SpritesGeometry from '../geometry/Sprites';
 
-graphicGL.Shader.import(require('../shader/labels.glsl.js'));
+import labelsGLSL from '../shader/labels.glsl.js';
+graphicGL.Shader.import(labelsGLSL);
 
-module.exports = graphicGL.Mesh.extend(function () {
+export default graphicGL.Mesh.extend(function () {
     var geometry = new SpritesGeometry({
         dynamic: true
     });

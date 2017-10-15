@@ -1,6 +1,6 @@
-var echarts = require('echarts/lib/echarts');
-var componentShadingMixin = require('../../component/common/componentShadingMixin');
-var formatTooltip = require('../common/formatTooltip');
+import echarts from 'echarts/lib/echarts';
+import componentShadingMixin from '../../component/common/componentShadingMixin';
+import formatTooltip from '../common/formatTooltip';
 
 var SurfaceSeries = echarts.extendSeriesModel({
 
@@ -182,4 +182,4 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
 echarts.util.merge(SurfaceSeries.prototype, componentShadingMixin);
 
-module.exports = SurfaceSeries;
+export default SurfaceSeries;

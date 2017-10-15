@@ -1,8 +1,10 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var retrieve = require('../../util/retrieve');
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
-var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import retrieve from '../../util/retrieve';
+import glmatrix from 'qtek/src/dep/glmatrix';
+import trianglesSortMixin from '../../util/geometry/trianglesSortMixin';
+
+var vec3 = glmatrix.vec3;
 
 function isPointsNaN(pt) {
     return isNaN(pt[0]) || isNaN(pt[1]) || isNaN(pt[2]);

@@ -1,4 +1,4 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
 function makeSprite(size, canvas, draw) {
     // http://simonsarris.com/blog/346-how-you-clear-your-canvas-matters
@@ -176,4 +176,4 @@ var spriteUtil = {
     }
 };
 
-module.exports = spriteUtil;
+export default spriteUtil;

@@ -1,4 +1,4 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
 var retrieve = {
 
@@ -37,4 +37,4 @@ var retrieve = {
     }
 };
 
-module.exports = retrieve;
+export default retrieve;

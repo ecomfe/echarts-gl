@@ -4,9 +4,9 @@
  * @module echarts-gl/util/geometry/Sprites
  * @author Yi Shen(https://github.com/pissang)
  */
-var echarts = require('echarts/lib/echarts');
-var StaticGeometry = require('qtek/src/StaticGeometry');
-var dynamicConvertMixin = require('./dynamicConvertMixin');
+import echarts from 'echarts/lib/echarts';
+import StaticGeometry from 'qtek/src/StaticGeometry';
+import dynamicConvertMixin from './dynamicConvertMixin';
 
 var squareTriangles = [
     0, 1, 2, 0, 2, 3
@@ -135,4 +135,4 @@ var SpritesGeometry = StaticGeometry.extend(function () {
 
 echarts.util.defaults(SpritesGeometry.prototype, dynamicConvertMixin);
 
-module.exports = SpritesGeometry;
+export default SpritesGeometry;

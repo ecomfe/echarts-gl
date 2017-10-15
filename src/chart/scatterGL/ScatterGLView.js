@@ -1,8 +1,8 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var ViewGL = require('../../core/ViewGL');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import ViewGL from '../../core/ViewGL';
 
-var PointsBuilder = require('../common/PointsBuilder');
+import PointsBuilder from '../common/PointsBuilder';
 
 echarts.extendChartView({
 

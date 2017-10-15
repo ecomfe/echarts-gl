@@ -1,7 +1,7 @@
-var echarts = require('echarts/lib/echarts');
-var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
-var LabelsMesh = require('../../util/mesh/LabelsMesh');
-var retrieve = require('../../util/retrieve');
+import echarts from 'echarts/lib/echarts';
+import ZRTextureAtlasSurface from '../../util/ZRTextureAtlasSurface';
+import LabelsMesh from '../../util/mesh/LabelsMesh';
+import retrieve from '../../util/retrieve';
 
 var LABEL_NORMAL_SHOW_BIT = 1;
 var LABEL_EMPHASIS_SHOW_BIT = 2;
@@ -160,4 +160,4 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
     this._labelsMesh.geometry.dirty();
 };
 
-module.exports = LabelsBuilder;
+export default LabelsBuilder;

@@ -1,7 +1,7 @@
-var echarts = require('echarts/lib/echarts');
-var glmatrix = require('qtek/src/dep/glmatrix');
-var Vector3 = require('qtek/src/math/Vector3');
-var Matrix4 = require('qtek/src/math/Matrix4');
+import echarts from 'echarts/lib/echarts';
+import glmatrix from 'qtek/src/dep/glmatrix';
+import Vector3 from 'qtek/src/math/Vector3';
+import Matrix4 from 'qtek/src/math/Matrix4';
 var vec3 = glmatrix.vec3;
 var mat4 = glmatrix.mat4;
 
@@ -183,4 +183,4 @@ Mapbox.prototype = {
     }
 };
 
-module.exports = Mapbox;
+export default Mapbox;

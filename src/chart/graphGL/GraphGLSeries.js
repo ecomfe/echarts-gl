@@ -1,6 +1,6 @@
-var echarts = require('echarts/lib/echarts');
-var createGraphFromNodeEdge = require('./createGraphFromNodeEdge');
-var formatUtil = require('../../util/format');
+import echarts from 'echarts/lib/echarts';
+import createGraphFromNodeEdge from './createGraphFromNodeEdge';
+import formatUtil from '../../util/format';
 
 var GraphSeries = echarts.extendSeriesModel({
 
@@ -268,4 +268,4 @@ var GraphSeries = echarts.extendSeriesModel({
     }
 });
 
-module.exports = GraphSeries;
+export default GraphSeries;

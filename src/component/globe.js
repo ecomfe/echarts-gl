@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./globe/GlobeModel');
-require('./globe/GlobeView');
+import './globe/GlobeModel';
+import './globe/GlobeView';
 
-require('../coord/globeCreator');
+import '../coord/globeCreator';
 
 echarts.registerAction({
     type: 'globeChangeCamera',

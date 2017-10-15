@@ -1,6 +1,6 @@
 // Based on https://bl.ocks.org/mbostock/19168c663618b707158
 
-module.exports = [
+export default [
 0.0, 0.0,
 -0.321585265978, -0.154972575841,
 0.458126042375, 0.188473391593,

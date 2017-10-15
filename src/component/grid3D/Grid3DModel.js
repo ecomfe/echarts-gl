@@ -1,7 +1,7 @@
-var echarts = require('echarts/lib/echarts');
-var componentViewControlMixin = require('../common/componentViewControlMixin');
-var componentPostEffectMixin = require('../common/componentPostEffectMixin');
-var componentLightMixin = require('../common/componentLightMixin');
+import echarts from 'echarts/lib/echarts';
+import componentViewControlMixin from '../common/componentViewControlMixin';
+import componentPostEffectMixin from '../common/componentPostEffectMixin';
+import componentLightMixin from '../common/componentLightMixin';
 
 var Grid3DModel = echarts.extendComponentModel({
 
@@ -141,5 +141,5 @@ echarts.util.merge(Grid3DModel.prototype, componentViewControlMixin);
 echarts.util.merge(Grid3DModel.prototype, componentPostEffectMixin);
 echarts.util.merge(Grid3DModel.prototype, componentLightMixin);
 
-module.exports = Grid3DModel;
+export default Grid3DModel;
 

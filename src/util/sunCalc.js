@@ -82,4 +82,4 @@ SunCalc.getPosition = function (date, lat, lng) {
     };
 };
 
-module.exports = SunCalc;
+export default SunCalc;

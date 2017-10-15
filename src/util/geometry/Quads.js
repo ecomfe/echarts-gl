@@ -3,10 +3,11 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var StaticGeometry = require('qtek/src/StaticGeometry');
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
-var echarts = require('echarts/lib/echarts');
-var dynamicConvertMixin = require('./dynamicConvertMixin');
+import StaticGeometry from 'qtek/src/StaticGeometry';
+import echarts from 'echarts/lib/echarts';
+import dynamicConvertMixin from './dynamicConvertMixin';
+import glmatrix from 'qtek/src/dep/glmatrix';
+var vec3 = glmatrix.vec3;
 
 /**
  * @constructor
@@ -104,4 +105,4 @@ var QuadsGeometry = StaticGeometry.extend(function () {
 
 echarts.util.defaults(QuadsGeometry.prototype, dynamicConvertMixin);
 
-module.exports = QuadsGeometry;
+export default QuadsGeometry;

@@ -1,4 +1,4 @@
-module.exports = function (seriesType, ecModel, api) {
+export default function (seriesType, ecModel, api) {
     ecModel.eachSeriesByType(seriesType, function (seriesModel) {
         var data = seriesModel.getData();
         var opacityAccessPath = seriesModel.visualColorAccessPath.split('.');

@@ -1,10 +1,11 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var LinesGeometry = require('../../util/geometry/Lines3D');
-// var TrailMesh = require('./TrailMesh');
-var TrailMesh2 = require('./TrailMesh2');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import LinesGeometry from '../../util/geometry/Lines3D';
+// import TrailMesh from './TrailMesh';
+import TrailMesh2 from './TrailMesh2';
 
-graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
+import lines3DGLSL from '../../util/shader/lines3D.glsl.js';
+graphicGL.Shader.import(lines3DGLSL);
 
 function getCoordSysSize(coordSys) {
     if (coordSys.radius != null) {
@@ -18,7 +19,7 @@ function getCoordSysSize(coordSys) {
     }
 }
 
-module.exports = echarts.extendChartView({
+export default echarts.extendChartView({
 
     type: 'lines3D',
 

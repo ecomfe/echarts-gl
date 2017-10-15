@@ -1,5 +1,5 @@
-var echarts = require('echarts/lib/echarts');
-var formatTooltip = require('../common/formatTooltip');
+import echarts from 'echarts/lib/echarts';
+import formatTooltip from '../common/formatTooltip';
 
 var Line3DSeries = echarts.extendSeriesModel({
 
@@ -38,4 +38,4 @@ var Line3DSeries = echarts.extendSeriesModel({
     }
 });
 
-module.exports = Line3DSeries;
+export default Line3DSeries;

@@ -1,9 +1,10 @@
-var echarts = require('echarts/lib/echarts');
-var Vector3 = require('qtek/src/math/Vector3');
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
-var cartesian3DLayout = require('./cartesian3DLayout');
-var evaluateBarSparseness = require('./evaluateBarSparseness');
+import echarts from 'echarts/lib/echarts';
+import Vector3 from 'qtek/src/math/Vector3';
+import glmatrix from 'qtek/src/dep/glmatrix';
+import cartesian3DLayout from './cartesian3DLayout';
+import evaluateBarSparseness from './evaluateBarSparseness';
 
+var vec3 = glmatrix.vec3;
 
 function globeLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();

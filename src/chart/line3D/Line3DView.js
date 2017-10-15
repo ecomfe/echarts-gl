@@ -1,15 +1,19 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var retrieve = require('../../util/retrieve');
-var Lines3DGeometry = require('../../util/geometry/Lines3D');
-var Matrix4 = require('qtek/src/math/Matrix4');
-var Vector3 = require('qtek/src/math/Vector3');
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
-var lineContain = require('zrender/lib/contain/line');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import retrieve from '../../util/retrieve';
+import Lines3DGeometry from '../../util/geometry/Lines3D';
+import Matrix4 from 'qtek/src/math/Matrix4';
+import Vector3 from 'qtek/src/math/Vector3';
+import lineContain from 'zrender/lib/contain/line';
+import glmatrix from 'qtek/src/dep/glmatrix';
 
-graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
+import lines3DGLSL from '../../util/shader/lines3D.glsl.js';
 
-module.exports = echarts.extendChartView({
+var vec3 = glmatrix.vec3;
+
+graphicGL.Shader.import(lines3DGLSL);
+
+export default echarts.extendChartView({
 
     type: 'line3D',
 

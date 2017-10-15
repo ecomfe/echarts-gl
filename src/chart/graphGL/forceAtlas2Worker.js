@@ -659,4 +659,4 @@ function forceAtlas2Worker() {
     }
 }
 
-module.exports = forceAtlas2Worker;
+export default forceAtlas2Worker;

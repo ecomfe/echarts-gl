@@ -1,4 +1,4 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
 function Axis3D(dim, scale, extent) {
 
@@ -21,4 +21,4 @@ Axis3D.prototype = {
 
 echarts.util.inherits(Axis3D, echarts.Axis);
 
-module.exports = Axis3D;
+export default Axis3D;

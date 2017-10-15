@@ -40,9 +40,11 @@ var echartsGl = {
         qtek: '0.4.3'
     }
 };
-var echarts = require('echarts/lib/echarts');
-var qtekVersion = require('qtek/src/version');
-var LayerGL = require('./core/LayerGL');
+import echarts from 'echarts/lib/echarts';
+import qtekVersion from 'qtek/src/version';
+import LayerGL from './core/LayerGL';
+import backwardCompat from './preprocessor/backwardCompat';
+import graphicGL from './util/graphicGL';
 
 // Version checking
 var deps = echartsGl.dependencies;
@@ -262,8 +264,8 @@ echarts.registerPostUpdate(function (ecModel, api) {
     egl.update(ecModel, api);
 });
 
-echarts.registerPreprocessor(require('./preprocessor/backwardCompat'));
+echarts.registerPreprocessor(backwardCompat);
 
-echarts.graphicGL = require('./util/graphicGL');
+echarts.graphicGL = graphicGL;
 
-module.exports = EChartsGL;
+export default EChartsGL;

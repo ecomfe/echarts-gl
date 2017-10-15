@@ -1,11 +1,11 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-var graphicGL = require('../../util/graphicGL');
-var OrbitControl = require('../../util/OrbitControl');
-var SceneHelper = require('../../component/common/SceneHelper');
-var Geo3DBuilder = require('../../component/common/Geo3DBuilder');
+import graphicGL from '../../util/graphicGL';
+import OrbitControl from '../../util/OrbitControl';
+import SceneHelper from '../../component/common/SceneHelper';
+import Geo3DBuilder from '../../component/common/Geo3DBuilder';
 
-module.exports = echarts.extendChartView({
+export default echarts.extendChartView({
 
     type: 'map3D',
 

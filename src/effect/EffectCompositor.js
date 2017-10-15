@@ -1,30 +1,42 @@
-var Compositor = require('qtek/src/compositor/Compositor');
-var Shader = require('qtek/src/Shader');
-var Texture2D = require('qtek/src/Texture2D');
-var Texture = require('qtek/src/Texture');
-var FrameBuffer = require('qtek/src/FrameBuffer');
-var FXLoader = require('qtek/src/loader/FX');
-var SSAOPass = require('./SSAOPass');
-var SSRPass = require('./SSRPass');
-var poissonKernel = require('./poissonKernel');
-var graphicGL = require('../util/graphicGL');
-var NormalPass = require('./NormalPass');
-var EdgePass = require('./EdgePass');
-var Matrix4 = require('qtek/src/math/Matrix4');
+import Compositor from 'qtek/src/compositor/Compositor';
+import Shader from 'qtek/src/Shader';
+import Texture2D from 'qtek/src/Texture2D';
+import Texture from 'qtek/src/Texture';
+import FrameBuffer from 'qtek/src/FrameBuffer';
+import FXLoader from 'qtek/src/loader/FX';
+import SSAOPass from './SSAOPass';
+import SSRPass from './SSRPass';
+import poissonKernel from './poissonKernel';
+import graphicGL from '../util/graphicGL';
+import NormalPass from './NormalPass';
+import EdgePass from './EdgePass';
+import Matrix4 from 'qtek/src/math/Matrix4';
 
-var effectJson = require('./composite.js');
+import effectJson from './composite.js';
 
-Shader['import'](require('qtek/src/shader/source/compositor/blur.glsl.js'));
-Shader['import'](require('qtek/src/shader/source/compositor/lut.glsl.js'));
-Shader['import'](require('qtek/src/shader/source/compositor/output.glsl.js'));
-Shader['import'](require('qtek/src/shader/source/compositor/bright.glsl.js'));
-Shader['import'](require('qtek/src/shader/source/compositor/downsample.glsl.js'));
-Shader['import'](require('qtek/src/shader/source/compositor/upsample.glsl.js'));
-Shader['import'](require('qtek/src/shader/source/compositor/hdr.glsl.js'));
-Shader['import'](require('qtek/src/shader/source/compositor/blend.glsl.js'));
-Shader['import'](require('qtek/src/shader/source/compositor/fxaa.glsl.js'));
-Shader['import'](require('./DOF.glsl.js'));
-Shader['import'](require('./edge.glsl.js'));
+import blurCode from 'qtek/src/shader/source/compositor/blur.glsl.js';
+import lutCode from 'qtek/src/shader/source/compositor/lut.glsl.js';
+import outputCode from 'qtek/src/shader/source/compositor/output.glsl.js';
+import brightCode from 'qtek/src/shader/source/compositor/bright.glsl.js';
+import downsampleCode from 'qtek/src/shader/source/compositor/downsample.glsl.js';
+import upsampleCode from 'qtek/src/shader/source/compositor/upsample.glsl.js';
+import hdrCode from 'qtek/src/shader/source/compositor/hdr.glsl.js';
+import blendCode from 'qtek/src/shader/source/compositor/blend.glsl.js';
+import fxaaCode from 'qtek/src/shader/source/compositor/fxaa.glsl.js';
+import DOFCode from './DOF.glsl.js';
+import edgeCode from './edge.glsl.js';
+
+Shader['import'](blurCode);
+Shader['import'](lutCode);
+Shader['import'](outputCode);
+Shader['import'](brightCode);
+Shader['import'](downsampleCode);
+Shader['import'](upsampleCode);
+Shader['import'](hdrCode);
+Shader['import'](blendCode);
+Shader['import'](fxaaCode);
+Shader['import'](DOFCode);
+Shader['import'](edgeCode);
 
 
 var commonOutputs = {
@@ -457,4 +469,4 @@ EffectCompositor.prototype.dispose = function (gl) {
     this._ssaoPass.dispose(gl);
 };
 
-module.exports = EffectCompositor;
+export default EffectCompositor;

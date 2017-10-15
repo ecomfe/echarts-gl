@@ -1,10 +1,11 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var retrieve = require('../../util/retrieve');
-var format = require('../../util/format');
-var BarsGeometry = require('../../util/geometry/Bars3DGeometry');
-var LabelsBuilder = require('../../component/common/LabelsBuilder');
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import retrieve from '../../util/retrieve';
+import format from '../../util/format';
+import BarsGeometry from '../../util/geometry/Bars3DGeometry';
+import LabelsBuilder from '../../component/common/LabelsBuilder';
+import glmatrix from 'qtek/src/dep/glmatrix';
+var vec3 = glmatrix.vec3;
 
 function getShader(shading) {
     var shader = graphicGL.createShader('ecgl.' + shading);
@@ -12,7 +13,7 @@ function getShader(shading) {
     return shader;
 }
 
-module.exports = echarts.extendChartView({
+export default echarts.extendChartView({
 
     type: 'bar3D',
 

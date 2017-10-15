@@ -1,4 +1,4 @@
-var Animator = require('zrender/lib/animation/Animator');
+import Animator from 'zrender/lib/animation/Animator';
 
 var animatableMixin = {
 
@@ -90,4 +90,4 @@ var animatableMixin = {
     }
 };
 
-module.exports = animatableMixin;
+export default animatableMixin;

@@ -1,4 +1,4 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
 var formatUtil = {};
 formatUtil.getFormattedLabel = function (seriesModel, dataIndex, status, dataType, dimIndex) {
@@ -39,4 +39,4 @@ formatUtil.normalizeToArray = function (value) {
         : [value];
 };
 
-module.exports = formatUtil;
+export default formatUtil;

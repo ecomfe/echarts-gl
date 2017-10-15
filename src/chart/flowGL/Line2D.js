@@ -6,8 +6,8 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var StaticGeometry = require('qtek/src/StaticGeometry');
-var echarts = require('echarts/lib/echarts');
+import StaticGeometry from 'qtek/src/StaticGeometry';
+import echarts from 'echarts/lib/echarts';
 
 /**
  * @constructor
@@ -84,4 +84,4 @@ var LinesGeometry = StaticGeometry.extend(function () {
     }
 });
 
-module.exports = LinesGeometry;
+export default LinesGeometry;

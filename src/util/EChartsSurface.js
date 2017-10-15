@@ -6,9 +6,9 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var Texture2D = require('qtek/src/Texture2D');
-var Vector3 = require('qtek/src/math/Vector3');
-var Vector2 = require('qtek/src/math/Vector2');
+import Texture2D from 'qtek/src/Texture2D';
+import Vector3 from 'qtek/src/math/Vector3';
+import Vector2 from 'qtek/src/math/Vector2';
 
 var events = ['mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout', 'click', 'dblclick', 'contextmenu'];
 
@@ -174,4 +174,4 @@ EChartsSurface.prototype = {
     }
 };
 
-module.exports = EChartsSurface;
+export default EChartsSurface;

@@ -1,8 +1,8 @@
-var echarts = require('echarts/lib/echarts');
-var componentViewControlMixin = require('../common/componentViewControlMixin');
-var componentPostEffectMixin = require('../common/componentPostEffectMixin');
-var componentLightMixin = require('../common/componentLightMixin');
-var componentShadingMixin = require('../common/componentShadingMixin');
+import echarts from 'echarts/lib/echarts';
+import componentViewControlMixin from '../common/componentViewControlMixin';
+import componentPostEffectMixin from '../common/componentPostEffectMixin';
+import componentLightMixin from '../common/componentLightMixin';
+import componentShadingMixin from '../common/componentShadingMixin';
 
 
 function defaultId(option, idx) {
@@ -190,4 +190,4 @@ echarts.util.merge(GlobeModel.prototype, componentPostEffectMixin);
 echarts.util.merge(GlobeModel.prototype, componentLightMixin);
 echarts.util.merge(GlobeModel.prototype, componentShadingMixin);
 
-module.exports = GlobeModel;
+export default GlobeModel;

@@ -1,5 +1,5 @@
 
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 /**
  * @constructor
  * @alias module:echarts-gl/component/mapbox/MapboxLayer
@@ -75,4 +75,4 @@ MapboxLayer.prototype.dispose = function () {
     }, this);
 };
 
-module.exports = MapboxLayer;
+export default MapboxLayer;

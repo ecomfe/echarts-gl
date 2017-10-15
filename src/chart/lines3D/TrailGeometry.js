@@ -6,8 +6,9 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var StaticGeometry = require('qtek/src/StaticGeometry');
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
+import StaticGeometry from 'qtek/src/StaticGeometry';
+import glmatrix from 'qtek/src/dep/glmatrix';
+var vec3 = glmatrix.vec3;
 
 /**
  * @constructor
@@ -160,4 +161,4 @@ var CurveTrailGeometry = StaticGeometry.derive(function () {
     }
 });
 
-module.exports = CurveTrailGeometry;
+export default CurveTrailGeometry;

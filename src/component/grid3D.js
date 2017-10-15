@@ -1,10 +1,10 @@
-require('./grid3D/Axis3DModel');
-require('./grid3D/Grid3DModel');
-require('./grid3D/Grid3DView');
+import './grid3D/Axis3DModel';
+import './grid3D/Grid3DModel';
+import './grid3D/Grid3DView';
 
-require('../coord/grid3DCreator');
+import '../coord/grid3DCreator';
 
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 echarts.registerAction({
     type: 'grid3DChangeCamera',
     event: 'grid3dcamerachanged',

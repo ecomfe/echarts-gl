@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var retrieve = require('../../util/retrieve');
-var format = require('../../util/format');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import retrieve from '../../util/retrieve';
+import format from '../../util/format';
 
-var PointsBuilder = require('../common/PointsBuilder');
+import PointsBuilder from '../common/PointsBuilder';
 
 echarts.extendChartView({
 

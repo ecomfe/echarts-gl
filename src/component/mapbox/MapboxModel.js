@@ -1,7 +1,7 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-var componentPostEffectMixin = require('../common/componentPostEffectMixin');
-var componentLightMixin = require('../common/componentLightMixin');
+import componentPostEffectMixin from '../common/componentPostEffectMixin';
+import componentLightMixin from '../common/componentLightMixin';
 
 var MAPBOX_CAMERA_OPTION = ['zoom', 'center', 'pitch', 'bearing'];
 
@@ -71,4 +71,4 @@ var MapboxModel = echarts.extendComponentModel({
 echarts.util.merge(MapboxModel.prototype, componentPostEffectMixin);
 echarts.util.merge(MapboxModel.prototype, componentLightMixin);
 
-module.exports = MapboxModel;
+export default MapboxModel;

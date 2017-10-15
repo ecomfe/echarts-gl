@@ -1,7 +1,7 @@
-var graphicGL = require('../../util/graphicGL');
-var Skybox = require('qtek/src/plugin/Skybox');
-var Skydome = require('qtek/src/plugin/Skydome');
-var echarts = require('echarts/lib/echarts');
+import graphicGL from '../../util/graphicGL';
+import Skybox from 'qtek/src/plugin/Skybox';
+import Skydome from 'qtek/src/plugin/Skydome';
+import echarts from 'echarts/lib/echarts';
 
 function SceneHelper() {
 }
@@ -194,4 +194,4 @@ SceneHelper.prototype = {
     }
 };
 
-module.exports = SceneHelper;
+export default SceneHelper;

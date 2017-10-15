@@ -1,6 +1,6 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-module.exports = {
+export default {
 
     getFilledRegions: function (regions, mapData) {
         var regionsArr = (regions || []).slice();

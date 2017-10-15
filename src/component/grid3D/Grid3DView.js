@@ -1,18 +1,19 @@
 // TODO orthographic camera
 
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var OrbitControl = require('../../util/OrbitControl');
-var Lines3DGeometry = require('../../util/geometry/Lines3D');
-var retrieve = require('../../util/retrieve');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import OrbitControl from '../../util/OrbitControl';
+import Lines3DGeometry from '../../util/geometry/Lines3D';
+import retrieve from '../../util/retrieve';
 var firstNotNull = retrieve.firstNotNull;
-var ZRTextureAtlasSurface = require('../../util/ZRTextureAtlasSurface');
-var SceneHelper = require('../common/SceneHelper');
-var Grid3DFace = require('./Grid3DFace');
-var Grid3DAxis = require('./Grid3DAxis');
-var LabelsMesh = require('../../util/mesh/LabelsMesh');
+import ZRTextureAtlasSurface from '../../util/ZRTextureAtlasSurface';
+import SceneHelper from '../common/SceneHelper';
+import Grid3DFace from './Grid3DFace';
+import Grid3DAxis from './Grid3DAxis';
+import LabelsMesh from '../../util/mesh/LabelsMesh';
 
-graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
+import lines3DGLSL from '../../util/shader/lines3D.glsl.js';
+graphicGL.Shader.import(lines3DGLSL);
 
 ['x', 'y', 'z'].forEach(function (dim) {
     echarts.extendComponentView({
@@ -29,7 +30,7 @@ var dimIndicesMap = {
     z: 1
 };
 
-module.exports = echarts.extendComponentView({
+export default echarts.extendComponentView({
 
     type: 'grid3D',
 

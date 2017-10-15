@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('../coord/mapboxCreator');
+import '../coord/mapboxCreator';
 
-require('./mapbox/MapboxModel');
-require('./mapbox/MapboxView');
+import './mapbox/MapboxModel';
+import './mapbox/MapboxView';
 
 
 echarts.registerAction({

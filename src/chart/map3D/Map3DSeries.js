@@ -1,11 +1,11 @@
-var echarts = require('echarts/lib/echarts');
-var componentViewControlMixin = require('../../component/common/componentViewControlMixin');
-var componentPostEffectMixin = require('../../component/common/componentPostEffectMixin');
-var componentLightMixin = require('../../component/common/componentLightMixin');
-var componentShadingMixin = require('../../component/common/componentShadingMixin');
-var geo3DModelMixin = require('../../coord/geo3D/geo3DModelMixin');
-var formatUtil = require('../../util/format');
-var formatTooltip = require('../common/formatTooltip');
+import echarts from 'echarts/lib/echarts';
+import componentViewControlMixin from '../../component/common/componentViewControlMixin';
+import componentPostEffectMixin from '../../component/common/componentPostEffectMixin';
+import componentLightMixin from '../../component/common/componentLightMixin';
+import componentShadingMixin from '../../component/common/componentShadingMixin';
+import geo3DModelMixin from '../../coord/geo3D/geo3DModelMixin';
+import formatUtil from '../../util/format';
+import formatTooltip from '../common/formatTooltip';
 
 var Map3DModel = echarts.extendSeriesModel({
 
@@ -109,4 +109,4 @@ echarts.util.merge(Map3DModel.prototype, componentPostEffectMixin);
 echarts.util.merge(Map3DModel.prototype, componentLightMixin);
 echarts.util.merge(Map3DModel.prototype, componentShadingMixin);
 
-module.exports = Map3DModel;
+export default Map3DModel;

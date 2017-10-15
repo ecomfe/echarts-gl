@@ -1,16 +1,17 @@
 // NormalPass will generate normal and depth data.
 
 // TODO Animation
-var Texture2D = require('qtek/src/Texture2D');
-var Texture = require('qtek/src/Texture');
-var Shader = require('qtek/src/Shader');
-var FrameBuffer = require('qtek/src/FrameBuffer');
-var Material = require('qtek/src/Material');
-var Shader = require('qtek/src/Shader');
-var Pass = require('qtek/src/compositor/Pass');
-var textureUtil = require('qtek/src/util/texture');
+import Texture2D from 'qtek/src/Texture2D';
+import Texture from 'qtek/src/Texture';
+import Shader from 'qtek/src/Shader';
+import FrameBuffer from 'qtek/src/FrameBuffer';
+import Material from 'qtek/src/Material';
+import Shader from 'qtek/src/Shader';
+import Pass from 'qtek/src/compositor/Pass';
+import textureUtil from 'qtek/src/util/texture';
 
-Shader.import(require('../util/shader/normal.glsl.js'));
+import normalGLSL from '../util/shader/normal.glsl.js';
+Shader.import(normalGLSL);
 
 function attachTextureToSlot(gl, shader, symbol, texture, slot) {
     shader.setUniform(gl, '1i', symbol, slot);
@@ -200,4 +201,4 @@ NormalPass.prototype.dispose = function (gl) {
     this._normalTex.dispose(gl);
 }
 
-module.exports = NormalPass;
+export default NormalPass;

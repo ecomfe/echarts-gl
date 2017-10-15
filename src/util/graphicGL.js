@@ -1,33 +1,72 @@
-var Mesh = require('qtek/src/Mesh');
-var Renderer = require('qtek/src/Renderer');
-var Texture2D = require('qtek/src/Texture2D');
-var Texture = require('qtek/src/Texture');
-var Shader = require('qtek/src/Shader');
-var Material = require('qtek/src/Material');
-var Node3D = require('qtek/src/Node');
-var StaticGeometry = require('qtek/src/StaticGeometry');
-var echarts = require('echarts/lib/echarts');
-var Scene = require('qtek/src/Scene');
-var LRUCache = require('zrender/lib/core/LRU');
-var textureUtil = require('qtek/src/util/texture');
-var EChartsSurface = require('./EChartsSurface');
-var AmbientCubemapLight = require('qtek/src/light/AmbientCubemap');
-var AmbientSHLight = require('qtek/src/light/AmbientSH');
-var shUtil = require('qtek/src/util/sh');
-var retrieve = require('./retrieve');
+import Mesh from 'qtek/src/Mesh';
+import Renderer from 'qtek/src/Renderer';
+import Texture2D from 'qtek/src/Texture2D';
+import Texture from 'qtek/src/Texture';
+import Shader from 'qtek/src/Shader';
+import Material from 'qtek/src/Material';
+import Node3D from 'qtek/src/Node';
+import StaticGeometry from 'qtek/src/StaticGeometry';
+import echarts from 'echarts/lib/echarts';
+import Scene from 'qtek/src/Scene';
+import LRUCache from 'zrender/lib/core/LRU';
+import textureUtil from 'qtek/src/util/texture';
+import EChartsSurface from './EChartsSurface';
+import AmbientCubemapLight from 'qtek/src/light/AmbientCubemap';
+import AmbientSHLight from 'qtek/src/light/AmbientSH';
+import shUtil from 'qtek/src/util/sh';
+import retrieve from './retrieve';
 
-var animatableMixin = require('./animatableMixin');
+import SphereGeometry from 'qtek/src/geometry/Sphere';
+import PlaneGeometry from 'qtek/src/geometry/Plane';
+import CubeGeometry from 'qtek/src/geometry/Cube';
+
+import AmbientLight from 'qtek/src/light/Ambient';
+import DirectionalLight from 'qtek/src/light/Directional';
+import PointLight from 'qtek/src/light/Point';
+import SpotLight from 'qtek/src/light/Spot';
+
+import PerspectiveCamera from 'qtek/src/camera/Perspective';
+import OrthographicCamera from 'qtek/src/camera/Orthographic';
+
+// Math
+import Vector2 from 'qtek/src/math/Vector2';
+import Vector3 from 'qtek/src/math/Vector3';
+import Vector4 from 'qtek/src/math/Vector4';
+
+import Quaternion from 'qtek/src/math/Quaternion';
+
+import Matrix2 from 'qtek/src/math/Matrix2';
+import Matrix2d from 'qtek/src/math/Matrix2d';
+import Matrix3 from 'qtek/src/math/Matrix3';
+import Matrix4 from 'qtek/src/math/Matrix4';
+
+import Plane from 'qtek/src/math/Plane';
+import Ray from 'qtek/src/math/Ray';
+import BoundingBox from 'qtek/src/math/BoundingBox';
+import Frustum from 'qtek/src/math/Frustum';
+
+import animatableMixin from './animatableMixin';
+// Some common shaders
+
+import utilGLSL from 'qtek/src/shader/source/util.glsl.js';
+import prezGLSL from 'qtek/src/shader/source/prez.glsl.js';
+import commonGLSL from './shader/common.glsl.js';
+import colorGLSL from './shader/color.glsl.js';
+import lambertGLSL from './shader/lambert.glsl.js';
+import realisticGLSL from './shader/realistic.glsl.js';
+import hatchingGLSL from './shader/hatching.glsl.js';
+import shadowGLSL from './shader/shadow.glsl.js';
+
 echarts.util.extend(Node3D.prototype, animatableMixin);
 
-// Some common shaders
-Shader.import(require('qtek/src/shader/source/util.glsl.js'));
-Shader.import(require('qtek/src/shader/source/prez.glsl.js'));
-Shader.import(require('./shader/common.glsl.js'));
-Shader.import(require('./shader/color.glsl.js'));
-Shader.import(require('./shader/lambert.glsl.js'));
-Shader.import(require('./shader/realistic.glsl.js'));
-Shader.import(require('./shader/hatching.glsl.js'));
-Shader.import(require('./shader/shadow.glsl.js'));
+Shader.import(utilGLSL);
+Shader.import(prezGLSL);
+Shader.import(commonGLSL);
+Shader.import(colorGLSL);
+Shader.import(lambertGLSL);
+Shader.import(realisticGLSL);
+Shader.import(hatchingGLSL);
+Shader.import(shadowGLSL);
 
 function isValueNone(value) {
     return !value || value === 'none';
@@ -119,39 +158,36 @@ graphicGL.Texture2D = Texture2D;
 
 // Geometries
 graphicGL.Geometry = StaticGeometry;
-
-graphicGL.SphereGeometry = require('qtek/src/geometry/Sphere');
-
-graphicGL.PlaneGeometry = require('qtek/src/geometry/Plane');
-
-graphicGL.CubeGeometry = require('qtek/src/geometry/Cube');
+graphicGL.SphereGeometry = SphereGeometry;
+graphicGL.PlaneGeometry = PlaneGeometry;
+graphicGL.CubeGeometry = CubeGeometry;
 
 // Lights
-graphicGL.AmbientLight = require('qtek/src/light/Ambient');
-graphicGL.DirectionalLight = require('qtek/src/light/Directional');
-graphicGL.PointLight = require('qtek/src/light/Point');
-graphicGL.SpotLight = require('qtek/src/light/Spot');
+graphicGL.AmbientLight = AmbientLight;
+graphicGL.DirectionalLight = DirectionalLight;
+graphicGL.PointLight = PointLight;
+graphicGL.SpotLight = SpotLight;
 
 // Cameras
-graphicGL.PerspectiveCamera = require('qtek/src/camera/Perspective');
-graphicGL.OrthographicCamera = require('qtek/src/camera/Orthographic');
+graphicGL.PerspectiveCamera = PerspectiveCamera;
+graphicGL.OrthographicCamera = OrthographicCamera;
 
 // Math
-graphicGL.Vector2 = require('qtek/src/math/Vector2');
-graphicGL.Vector3 = require('qtek/src/math/Vector3');
-graphicGL.Vector4 = require('qtek/src/math/Vector4');
+graphicGL.Vector2 = Vector2;
+graphicGL.Vector3 = Vector3;
+graphicGL.Vector4 = Vector4;
 
-graphicGL.Quaternion = require('qtek/src/math/Quaternion');
+graphicGL.Quaternion = Quaternion;
 
-graphicGL.Matrix2 = require('qtek/src/math/Matrix2');
-graphicGL.Matrix2d = require('qtek/src/math/Matrix2d');
-graphicGL.Matrix3 = require('qtek/src/math/Matrix3');
-graphicGL.Matrix4 = require('qtek/src/math/Matrix4');
+graphicGL.Matrix2 = Matrix2;
+graphicGL.Matrix2d = Matrix2d;
+graphicGL.Matrix3 = Matrix3;
+graphicGL.Matrix4 = Matrix4;
 
-graphicGL.Plane = require('qtek/src/math/Plane');
-graphicGL.Ray = require('qtek/src/math/Ray');
-graphicGL.BoundingBox = require('qtek/src/math/BoundingBox');
-graphicGL.Frustum = require('qtek/src/math/Frustum');
+graphicGL.Plane = Plane;
+graphicGL.Ray = Ray;
+graphicGL.BoundingBox = BoundingBox;
+graphicGL.Frustum = Frustum;
 
 // Texture utilities
 
@@ -613,4 +649,4 @@ graphicGL.updateVertexAnimation = function (
     }
 };
 
-module.exports = graphicGL;
+export default graphicGL;

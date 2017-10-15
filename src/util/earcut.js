@@ -1,7 +1,6 @@
 // https://github.com/mapbox/earcut/blob/master/src/earcut.js
-'use strict';
 
-module.exports = earcut;
+export default earcut;
 
 function earcut(data, holeIndices, dim) {
 

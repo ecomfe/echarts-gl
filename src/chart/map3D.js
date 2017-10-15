@@ -1,14 +1,14 @@
-var echarts = require('echarts/lib/echarts');
-var Geo3D = require('../coord/geo3D/Geo3D');
+import echarts from 'echarts/lib/echarts';
+import Geo3D from '../coord/geo3D/Geo3D';
 
-require('./map3D/Map3DSeries');
-require('./map3D/Map3DView');
+import './map3D/Map3DSeries';
+import './map3D/Map3DView';
 
-var geo3DCreator = require('../coord/geo3DCreator');
+import geo3DCreator from '../coord/geo3DCreator';
 
-echarts.registerVisual(echarts.util.curry(
-    require('./common/opacityVisual'), 'map3D'
-));
+import opacityVisual from './common/opacityVisual';
+
+echarts.registerVisual(echarts.util.curry(opacityVisual, 'map3D'));
 
 echarts.registerAction({
     type: 'map3DChangeCamera',

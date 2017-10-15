@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
-var componentViewControlMixin = require('../common/componentViewControlMixin');
-var componentPostEffectMixin = require('../common/componentPostEffectMixin');
-var componentLightMixin = require('../common/componentLightMixin');
-var componentShadingMixin = require('../common/componentShadingMixin');
-var geo3DModelMixin = require('../../coord/geo3D/geo3DModelMixin');
+import echarts from 'echarts/lib/echarts';
+import componentViewControlMixin from '../common/componentViewControlMixin';
+import componentPostEffectMixin from '../common/componentPostEffectMixin';
+import componentLightMixin from '../common/componentLightMixin';
+import componentShadingMixin from '../common/componentShadingMixin';
+import geo3DModelMixin from '../../coord/geo3D/geo3DModelMixin';
 
 var Geo3DModel = echarts.extendComponentModel({
 
@@ -91,4 +91,4 @@ echarts.util.merge(Geo3DModel.prototype, componentPostEffectMixin);
 echarts.util.merge(Geo3DModel.prototype, componentLightMixin);
 echarts.util.merge(Geo3DModel.prototype, componentShadingMixin);
 
-module.exports = Geo3DModel;
+export default Geo3DModel;

@@ -1,11 +1,12 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
 
-var TrailGeometry = require('./TrailGeometry');
+import TrailGeometry from './TrailGeometry';
 
-graphicGL.Shader.import(require('./shader/trail.glsl.js'));
+import trailGLSL from './shader/trail.glsl.js';
+graphicGL.Shader.import(trailGLSL);
 
-module.exports = graphicGL.Mesh.extend(function () {
+export default graphicGL.Mesh.extend(function () {
 
     var material = new graphicGL.Material({
         shader: new graphicGL.Shader({

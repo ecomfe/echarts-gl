@@ -1,7 +1,7 @@
-var echarts = require('echarts/lib/echarts');
-var componentShadingMixin = require('../../component/common/componentShadingMixin');
-var formatUtil = require('../../util/format');
-var formatTooltip = require('../common/formatTooltip');
+import echarts from 'echarts/lib/echarts';
+import componentShadingMixin from '../../component/common/componentShadingMixin';
+import formatUtil from '../../util/format';
+import formatTooltip from '../common/formatTooltip';
 
 var Bar3DSeries = echarts.extendSeriesModel({
 
@@ -94,4 +94,4 @@ var Bar3DSeries = echarts.extendSeriesModel({
 
 echarts.util.merge(Bar3DSeries.prototype, componentShadingMixin);
 
-module.exports = Bar3DSeries;
+export default Bar3DSeries;

@@ -3,21 +3,21 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-var Scene = require('qtek/src/Scene');
-var ShadowMapPass = require('qtek/src/prePass/ShadowMap');
-var PerspectiveCamera = require('qtek/src/camera/Perspective');
-var OrthographicCamera = require('qtek/src/camera/Orthographic');
-var Matrix4 = require('qtek/src/math/Matrix4');
-var Vector3 = require('qtek/src/math/Vector3');
-var Vector2 = require('qtek/src/math/Vector2');
+import Scene from 'qtek/src/Scene';
+import ShadowMapPass from 'qtek/src/prePass/ShadowMap';
+import PerspectiveCamera from 'qtek/src/camera/Perspective';
+import OrthographicCamera from 'qtek/src/camera/Orthographic';
+import Matrix4 from 'qtek/src/math/Matrix4';
+import Vector3 from 'qtek/src/math/Vector3';
+import Vector2 from 'qtek/src/math/Vector2';
 
-var notifier = require('qtek/src/core/mixin/notifier');
+import notifier from 'qtek/src/core/mixin/notifier';
 
-var EffectCompositor = require('../effect/EffectCompositor');
-var TemporalSuperSampling = require('../effect/TemporalSuperSampling');
-var halton = require('../effect/halton');
+import EffectCompositor from '../effect/EffectCompositor';
+import TemporalSuperSampling from '../effect/TemporalSuperSampling';
+import halton from '../effect/halton';
 
 /**
  * @constructor
@@ -432,4 +432,4 @@ ViewGL.prototype.removeAll = function (node3D) {
 
 echarts.util.extend(ViewGL.prototype, notifier);
 
-module.exports = ViewGL;
+export default ViewGL;

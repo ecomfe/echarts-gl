@@ -1,15 +1,14 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./line3D/Line3DSeries');
-require('./line3D/Line3DView');
+import './line3D/Line3DSeries';
+import './line3D/Line3DView';
 
-echarts.registerVisual(echarts.util.curry(
-    require('echarts/lib/visual/symbol'), 'line3D', 'circle', null
-));
+import symbolVisual from 'echarts/lib/visual/symbol';
+import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(
-    require('./common/opacityVisual'), 'line3D'
-));
+echarts.registerVisual(echarts.util.curry(symbolVisual, 'line3D', 'circle', null));
+
+echarts.registerVisual(echarts.util.curry(opacityVisual, 'line3D'));
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('line3D', function (seriesModel) {

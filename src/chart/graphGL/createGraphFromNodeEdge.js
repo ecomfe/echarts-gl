@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
-var Graph = require('echarts/lib/data/Graph');
-var linkList = require('echarts/lib/data/helper/linkList');
-var retrieve = require('../../util/retrieve');
+import echarts from 'echarts/lib/echarts';
+import Graph from 'echarts/lib/data/Graph';
+import linkList from 'echarts/lib/data/helper/linkList';
+import retrieve from '../../util/retrieve';
 
-module.exports = function (nodes, edges, hostModel, directed, beforeLink) {
+export default function (nodes, edges, hostModel, directed, beforeLink) {
     var graph = new Graph(directed);
     for (var i = 0; i < nodes.length; i++) {
         graph.addNode(retrieve.firstNotNull(

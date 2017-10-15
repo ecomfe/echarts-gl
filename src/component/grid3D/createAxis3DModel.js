@@ -1,5 +1,5 @@
-var echarts = require('echarts/lib/echarts');
-var axisDefault = require('./axis3DDefault');
+import echarts from 'echarts/lib/echarts';
+import axisDefault from './axis3DDefault';
 
 var AXIS_TYPES = ['value', 'category', 'time', 'log'];
 /**
@@ -9,7 +9,7 @@ var AXIS_TYPES = ['value', 'category', 'time', 'log'];
  * @param {Function} axisTypeDefaulter
  * @param {Object} [extraDefaultOption]
  */
-module.exports = function (dim, BaseAxisModelClass, axisTypeDefaulter, extraDefaultOption) {
+export default function (dim, BaseAxisModelClass, axisTypeDefaulter, extraDefaultOption) {
 
     echarts.util.each(AXIS_TYPES, function (axisType) {
 

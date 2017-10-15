@@ -6,10 +6,11 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var StaticGeometry = require('qtek/src/StaticGeometry');
-var vec2 = require('qtek/src/dep/glmatrix').vec2;
-var echarts = require('echarts/lib/echarts');
-var dynamicConvertMixin = require('./dynamicConvertMixin');
+import StaticGeometry from 'qtek/src/StaticGeometry';
+import echarts from 'echarts/lib/echarts';
+import dynamicConvertMixin from './dynamicConvertMixin';
+import glmatrix from 'qtek/src/dep/glmatrix';
+var vec2 = glmatrix.vec2;
 
 // var CURVE_RECURSION_LIMIT = 8;
 // var CURVE_COLLINEAR_EPSILON = 40;
@@ -427,4 +428,4 @@ var LinesGeometry = StaticGeometry.extend(function () {
 
 echarts.util.defaults(LinesGeometry.prototype, dynamicConvertMixin);
 
-module.exports = LinesGeometry;
+export default LinesGeometry;

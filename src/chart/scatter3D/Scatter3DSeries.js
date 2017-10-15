@@ -1,6 +1,6 @@
-var echarts = require('echarts/lib/echarts');
-var formatUtil = require('../../util/format');
-var formatTooltip = require('../common/formatTooltip');
+import echarts from 'echarts/lib/echarts';
+import formatUtil from '../../util/format';
+import formatTooltip from '../common/formatTooltip';
 
 echarts.extendSeriesModel({
 

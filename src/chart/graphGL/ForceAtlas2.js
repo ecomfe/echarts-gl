@@ -1,6 +1,6 @@
-var Texture2D = require('qtek/src/Texture2D');
-var Texture = require('qtek/src/Texture');
-var workerFunc = require('./forceAtlas2Worker.js');
+import Texture2D from 'qtek/src/Texture2D';
+import Texture from 'qtek/src/Texture';
+import workerFunc from './forceAtlas2Worker.js';
 var workerUrl = workerFunc.toString();
 workerUrl = workerUrl.slice(workerUrl.indexOf('{') + 1, workerUrl.lastIndexOf('}'));
 
@@ -278,4 +278,4 @@ ForceAtlas2.prototype.dispose = function (renderer) {
     this._worker = null;
 };
 
-module.exports = ForceAtlas2;
+export default ForceAtlas2;

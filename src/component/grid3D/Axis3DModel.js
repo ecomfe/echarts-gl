@@ -1,5 +1,5 @@
-var echarts = require('echarts/lib/echarts');
-var createAxis3DModel = require('./createAxis3DModel');
+import echarts from 'echarts/lib/echarts';
+import createAxis3DModel from './createAxis3DModel';
 
 var Axis3DModel = echarts.extendComponentModel({
 

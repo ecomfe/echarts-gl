@@ -6,11 +6,11 @@
  */
 
 // TODO Remove magic numbers on sensitivity
-var Base = require('qtek/src/core/Base');
-var Vector2 = require('qtek/src/math/Vector2');
-var Vector3 = require('qtek/src/math/Vector3');
-var Quaternion = require('qtek/src/math/Quaternion');
-var retrieve = require('./retrieve');
+import Base from 'qtek/src/core/Base';
+import Vector2 from 'qtek/src/math/Vector2';
+import Vector3 from 'qtek/src/math/Vector3';
+import Quaternion from 'qtek/src/math/Quaternion';
+import retrieve from './retrieve';
 var firstNotNull = retrieve.firstNotNull;
 
 
@@ -828,4 +828,4 @@ Object.defineProperty(OrbitControl.prototype, 'autoRotate', {
 });
 
 
-module.exports = OrbitControl;
+export default OrbitControl;

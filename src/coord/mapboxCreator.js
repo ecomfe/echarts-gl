@@ -1,8 +1,8 @@
-var Mapbox = require('./mapbox/Mapbox');
-var echarts = require('echarts/lib/echarts');
-var retrieve = require('../util/retrieve');
-var graphicGL = require('../util/graphicGL');
-var ViewGL = require('../core/ViewGL');
+import Mapbox from './mapbox/Mapbox';
+import echarts from 'echarts/lib/echarts';
+import retrieve from '../util/retrieve';
+import graphicGL from '../util/graphicGL';
+import ViewGL from '../core/ViewGL';
 
 function resizeMapbox(mapboxModel, api) {
     var width = api.getWidth();
@@ -111,4 +111,4 @@ var mapboxCreator = {
 
 echarts.registerCoordinateSystem('mapbox', mapboxCreator);
 
-module.exports = mapboxCreator;
+export default mapboxCreator;

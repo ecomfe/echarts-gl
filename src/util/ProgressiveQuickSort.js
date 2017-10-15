@@ -126,4 +126,4 @@ ProgressiveQuickSort.prototype.step = function (arr, compare, frame) {
 
 ProgressiveQuickSort.sort = quickSort;
 
-module.exports = ProgressiveQuickSort;
+export default ProgressiveQuickSort;

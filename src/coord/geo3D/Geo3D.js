@@ -1,13 +1,12 @@
-var echarts = require('echarts/lib/echarts');
-var glmatrix = require('qtek/src/dep/glmatrix');
+import echarts from 'echarts/lib/echarts';
+import glmatrix from 'qtek/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 var mat4 = glmatrix.mat4;
 
+import textCoord from 'echarts/lib/coord/geo/fix/textCoord';
+import geoCoord from 'echarts/lib/coord/geo/fix/geoCoord';
 // Geo fix functions
-var geoFixFuncs = [
-    require('echarts/lib/coord/geo/fix/textCoord'),
-    require('echarts/lib/coord/geo/fix/geoCoord')
-];
+var geoFixFuncs = [textCoord, geoCoord];
 
 function Geo3D(name, map, geoJson, specialAreas, nameMap) {
 
@@ -181,4 +180,4 @@ Geo3D.prototype = {
     }
 };
 
-module.exports = Geo3D;
+export default Geo3D;

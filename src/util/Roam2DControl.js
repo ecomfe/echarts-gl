@@ -1,6 +1,6 @@
 
-var Base = require('qtek/src/core/Base');
-var retrieve = require('./retrieve');
+import Base from 'qtek/src/core/Base';
+import retrieve from './retrieve';
 
 /**
  * @alias module:echarts-gl/util/Roam2DControl
@@ -194,4 +194,4 @@ var Roam2DControl = Base.extend(function () {
     }
 });
 
-module.exports = Roam2DControl;
+export default Roam2DControl;

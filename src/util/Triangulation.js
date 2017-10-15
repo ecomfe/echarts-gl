@@ -5,7 +5,7 @@
 // http://www.cosy.sbg.ac.at/~held/projects/triang/triang.html
 // Z Order Hash ?
 
-var LinkedList = require('qtek/src/core/LinkedList');
+import LinkedList from 'qtek/src/core/LinkedList';
 
 // From x,y point cast a ray to right. and intersect with edge x0, y0, x1, y1;
 // Return x value of intersect point
@@ -615,4 +615,4 @@ TriangulationContext.prototype.triangleArea = function (p0, p1, p2) {
     return (x1 - x0) * (y2 - y1) - (y1 - y0) * (x2 - x1);
 };
 
-module.exports = TriangulationContext;
+export default TriangulationContext;

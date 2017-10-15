@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./geo3D/Geo3DModel');
-require('./geo3D/Geo3DView');
+import './geo3D/Geo3DModel';
+import './geo3D/Geo3DView';
 
-require('../coord/geo3DCreator');
+import '../coord/geo3DCreator';
 
 echarts.registerAction({
     type: 'geo3DChangeCamera',

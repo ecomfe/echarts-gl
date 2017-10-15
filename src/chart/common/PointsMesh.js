@@ -1,10 +1,11 @@
-var graphicGL = require('../../util/graphicGL');
-var verticesSortMixin = require('../../util/geometry/verticesSortMixin');
-var echarts = require('echarts/lib/echarts');
-var glmatrix = require('qtek/src/dep/glmatrix');
+import graphicGL from '../../util/graphicGL';
+import verticesSortMixin from '../../util/geometry/verticesSortMixin';
+import echarts from 'echarts/lib/echarts';
+import glmatrix from 'qtek/src/dep/glmatrix';
 var vec4 = glmatrix.vec4;
 
-graphicGL.Shader.import(require('./sdfSprite.glsl.js'));
+import sdfSpriteGLSL from './sdfSprite.glsl.js';
+graphicGL.Shader.import(sdfSpriteGLSL);
 
 var PointsMesh = graphicGL.Mesh.extend(function () {
     var geometry = new graphicGL.Geometry({
@@ -110,4 +111,4 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
     }
 });
 
-module.exports = PointsMesh;
+export default PointsMesh;

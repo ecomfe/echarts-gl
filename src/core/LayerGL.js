@@ -14,14 +14,14 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var echarts = require('echarts/lib/echarts');
-var Renderer = require('qtek/src/Renderer');
-var RayPicking = require('qtek/src/picking/RayPicking');
-var Texture = require('qtek/src/Texture');
+import echarts from 'echarts/lib/echarts';
+import Renderer from 'qtek/src/Renderer';
+import RayPicking from 'qtek/src/picking/RayPicking';
+import Texture from 'qtek/src/Texture';
 
 // PENDING, qtek notifier is same with zrender Eventful
-var notifier = require('qtek/src/core/mixin/notifier');
-var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
+import notifier from 'qtek/src/core/mixin/notifier';
+import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
 
 // configs for Auto GC for GPU resources
 // PENDING
@@ -663,4 +663,4 @@ LayerGL.prototype._dispatchToView = function (eventName, e) {
 
 echarts.util.extend(LayerGL.prototype, notifier);
 
-module.exports = LayerGL;
+export default LayerGL;

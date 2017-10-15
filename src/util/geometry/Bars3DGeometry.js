@@ -5,12 +5,12 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-var echarts = require('echarts/lib/echarts');
-var dynamicConvertMixin = require('./dynamicConvertMixin');
-var trianglesSortMixin = require('./trianglesSortMixin');
-var StaticGeometry = require('qtek/src/StaticGeometry');
+import echarts from 'echarts/lib/echarts';
+import dynamicConvertMixin from './dynamicConvertMixin';
+import trianglesSortMixin from './trianglesSortMixin';
+import StaticGeometry from 'qtek/src/StaticGeometry';
 
-var glMatrix = require('qtek/src/dep/glmatrix');
+import glMatrix from 'qtek/src/dep/glmatrix';
 var vec3 = glMatrix.vec3;
 var mat3 = glMatrix.mat3;
 
@@ -390,4 +390,4 @@ var BarsGeometry = StaticGeometry.extend(function () {
 echarts.util.defaults(BarsGeometry.prototype, dynamicConvertMixin);
 echarts.util.defaults(BarsGeometry.prototype, trianglesSortMixin);
 
-module.exports = BarsGeometry;
+export default BarsGeometry;

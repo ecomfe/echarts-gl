@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./surface/SurfaceSeries');
-require('./surface/SurfaceView');
-require('./surface/surfaceLayout');
+import './surface/SurfaceSeries';
+import './surface/SurfaceView';
+import './surface/surfaceLayout';
 
-echarts.registerVisual(echarts.util.curry(
-    require('./common/opacityVisual'), 'surface'
-));
+import opacityVisual from './common/opacityVisual';
+
+echarts.registerVisual(echarts.util.curry(opacityVisual, 'surface'));

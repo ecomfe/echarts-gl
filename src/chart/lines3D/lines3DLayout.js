@@ -1,5 +1,5 @@
-var echarts = require('echarts/lib/echarts');
-var glmatrix = require('qtek/src/dep/glmatrix');
+import echarts from 'echarts/lib/echarts';
+import glmatrix from 'qtek/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 var vec2 = glmatrix.vec2;
 var normalize = vec3.normalize;

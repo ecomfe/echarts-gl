@@ -1,16 +1,19 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import glmatrix from 'qtek/src/dep/glmatrix';
 
-var Lines3DGeometry = require('../../util/geometry/Lines3D');
+import Lines3DGeometry from '../../util/geometry/Lines3D';
+import trail2GLSL from './shader/trail2.glsl.js';
+
+var vec3 = glmatrix.vec3;
 
 function sign(a) {
     return a > 0 ? 1 : -1;
 }
 
-graphicGL.Shader.import(require('./shader/trail2.glsl.js'));
+graphicGL.Shader.import(trail2GLSL);
 
-module.exports = graphicGL.Mesh.extend(function () {
+export default graphicGL.Mesh.extend(function () {
 
     var material = new graphicGL.Material({
         shader: new graphicGL.Shader({

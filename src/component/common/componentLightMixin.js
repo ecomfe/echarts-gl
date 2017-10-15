@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     defaultOption: {
         // Light is available when material.shading is not color
         light: {

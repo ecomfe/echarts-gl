@@ -1,13 +1,13 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./lines3D/lines3DLayout');
+import './lines3D/lines3DLayout';
 
-require('./lines3D/Lines3DView');
-require('./lines3D/Lines3DSeries');
+import './lines3D/Lines3DView';
+import './lines3D/Lines3DSeries';
 
-echarts.registerVisual(echarts.util.curry(
-    require('./common/opacityVisual'), 'lines3D'
-));
+import opacityVisual from './common/opacityVisual';
+
+echarts.registerVisual(echarts.util.curry(opacityVisual, 'lines3D'));
 
 
 echarts.registerAction({

@@ -1,15 +1,14 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
-require('./scatterGL/ScatterGLSeries');
-require('./scatterGL/ScatterGLView');
+import './scatterGL/ScatterGLSeries';
+import './scatterGL/ScatterGLView';
 
-echarts.registerVisual(echarts.util.curry(
-    require('echarts/lib/visual/symbol'), 'scatterGL', 'circle', null
-));
+import symbolVisual from 'echarts/lib/visual/symbol';
+import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(
-    require('./common/opacityVisual'), 'scatterGL'
-));
+echarts.registerVisual(echarts.util.curry(symbolVisual, 'scatterGL', 'circle', null));
+
+echarts.registerVisual(echarts.util.curry(opacityVisual, 'scatterGL'));
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('scatterGL', function (seriesModel) {

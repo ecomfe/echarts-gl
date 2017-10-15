@@ -1,9 +1,9 @@
-var Globe = require('./globe/Globe');
-var echarts = require('echarts/lib/echarts');
-var layoutUtil = require('echarts/lib/util/layout');
-var ViewGL = require('../core/ViewGL');
-var retrieve = require('../util/retrieve');
-var graphicGL = require('../util/graphicGL');
+import Globe from './globe/Globe';
+import echarts from 'echarts/lib/echarts';
+import layoutUtil from 'echarts/lib/util/layout';
+import ViewGL from '../core/ViewGL';
+import retrieve from '../util/retrieve';
+import graphicGL from '../util/graphicGL';
 
 function getDisplacementData(img, displacementScale) {
     var canvas = document.createElement('canvas');
@@ -171,4 +171,4 @@ var globeCreator = {
 
 echarts.registerCoordinateSystem('globe', globeCreator);
 
-module.exports = globeCreator;
+export default globeCreator;

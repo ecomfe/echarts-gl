@@ -1,10 +1,10 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var Lines3DGeometry = require('../../util/geometry/Lines3D');
-var retrieve = require('../../util/retrieve');
-var LabelsMesh = require('../../util/mesh/LabelsMesh');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import Lines3DGeometry from '../../util/geometry/Lines3D';
+import retrieve from '../../util/retrieve';
+import LabelsMesh from '../../util/mesh/LabelsMesh';
 var firstNotNull = retrieve.firstNotNull;
-var ifIgnoreOnTick = require('./ifIgnoreOnTick');
+import ifIgnoreOnTick from './ifIgnoreOnTick';
 
 var dimIndicesMap = {
     // Left to right
@@ -225,4 +225,4 @@ Grid3DAxis.prototype.setSpriteAlign = function (textAlign, textVerticalAlign, ap
     this.textVerticalAlign = textVerticalAlign;
 };
 
-module.exports = Grid3DAxis;
+export default Grid3DAxis;

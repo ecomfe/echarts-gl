@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var spriteUtil = require('../../util/sprite');
-var PointsMesh = require('./PointsMesh');
-var LabelsBuilder = require('../../component/common/LabelsBuilder');
-var Matrix4 = require('qtek/src/math/Matrix4');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import spriteUtil from '../../util/sprite';
+import PointsMesh from './PointsMesh';
+import LabelsBuilder from '../../component/common/LabelsBuilder';
+import Matrix4 from 'qtek/src/math/Matrix4';
 
 var SDF_RANGE = 20;
 
@@ -467,4 +467,4 @@ PointsBuilder.prototype = {
     }
 };
 
-module.exports = PointsBuilder;
+export default PointsBuilder;

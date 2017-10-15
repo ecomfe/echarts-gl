@@ -1,8 +1,8 @@
-var Geo3D = require('./geo3D/Geo3D');
-var echarts = require('echarts/lib/echarts');
-var layoutUtil = require('echarts/lib/util/layout');
-var ViewGL = require('../core/ViewGL');
-var retrieve = require('../util/retrieve');
+import Geo3D from './geo3D/Geo3D';
+import echarts from 'echarts/lib/echarts';
+import layoutUtil from 'echarts/lib/util/layout';
+import ViewGL from '../core/ViewGL';
+import retrieve from '../util/retrieve';
 
 function resizeGeo3D(geo3DModel, api) {
     // Use left/top/width/height
@@ -207,4 +207,4 @@ var geo3DCreator = {
 
 echarts.registerCoordinateSystem('geo3D', geo3DCreator);
 
-module.exports = geo3DCreator;
+export default geo3DCreator;

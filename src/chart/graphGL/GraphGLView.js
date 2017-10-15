@@ -1,19 +1,22 @@
-var echarts = require('echarts/lib/echarts');
-var layoutUtil = require('echarts/lib/util/layout');
-var graphicGL = require('../../util/graphicGL');
-var ViewGL = require('../../core/ViewGL');
-var Lines2DGeometry = require('../../util/geometry/Lines2D');
-var retrieve = require('../../util/retrieve');
-var ForceAtlas2GPU = require('./ForceAtlas2GPU');
-var ForceAtlas2 = require('./ForceAtlas2');
-var requestAnimationFrame = require('zrender/lib/animation/requestAnimationFrame');
-var vec2 = require('qtek/src/dep/glmatrix').vec2;
+import echarts from 'echarts/lib/echarts';
+import layoutUtil from 'echarts/lib/util/layout';
+import graphicGL from '../../util/graphicGL';
+import ViewGL from '../../core/ViewGL';
+import Lines2DGeometry from '../../util/geometry/Lines2D';
+import retrieve from '../../util/retrieve';
+import ForceAtlas2GPU from './ForceAtlas2GPU';
+import ForceAtlas2 from './ForceAtlas2';
+import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
+import glmatrix from 'qtek/src/dep/glmatrix';
 
-var Roam2DControl = require('../../util/Roam2DControl');
+var vec2 = glmatrix.vec2;
 
-var PointsBuilder = require('../common/PointsBuilder');
+import Roam2DControl from '../../util/Roam2DControl';
 
-graphicGL.Shader.import(require('../../util/shader/lines2D.glsl.js'));
+import PointsBuilder from '../common/PointsBuilder';
+
+import lines2DGLSL from '../../util/shader/lines2D.glsl.js';
+graphicGL.Shader.import(lines2DGLSL);
 
 var globalLayoutId = 1;
 

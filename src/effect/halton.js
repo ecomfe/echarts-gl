@@ -15,4 +15,4 @@ function halton(index, base) {
 }
 
 
-module.exports = halton;
+export default halton;

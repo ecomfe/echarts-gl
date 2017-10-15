@@ -1,5 +1,6 @@
-var echarts = require('echarts/lib/echarts');
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
+import echarts from 'echarts/lib/echarts';
+import glmatrix from 'qtek/src/dep/glmatrix';
+var vec3 = glmatrix.vec3;
 
 function ifCrossZero(extent) {
     var min = extent[0];
@@ -69,4 +70,4 @@ function cartesian3DLayout(seriesModel, coordSys) {
     data.setLayout('orient', [1, 0, 0]);
 }
 
-module.exports = cartesian3DLayout;
+export default cartesian3DLayout;

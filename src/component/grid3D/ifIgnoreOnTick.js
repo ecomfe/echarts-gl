@@ -1,4 +1,4 @@
-module.exports = function ifIgnoreOnTick(axis, i, interval) {
+export default function ifIgnoreOnTick(axis, i, interval) {
     var rawTick;
     var scale = axis.scale;
     return scale.type === 'ordinal'

@@ -1,7 +1,8 @@
-var vec3 = require('qtek/src/dep/glmatrix').vec3;
-var ProgressiveQuickSort = require('../ProgressiveQuickSort');
+import ProgressiveQuickSort from '../ProgressiveQuickSort';
+import glmatrix from 'qtek/src/dep/glmatrix';
+var vec3 = glmatrix.vec3;
 
-module.exports = {
+export default {
 
     needsSortVertices: function () {
         return this.sortVertices;

@@ -14,7 +14,7 @@ glob(ROOT + '**/*.glsl', function (err, files) {
         // var baseName = path.basename(filePath, '.essl');
         fs.writeFileSync(
             filePath + '.js',
-               'module.exports = ' + JSON.stringify(esslCode) + ';\n',
+               'export default ' + JSON.stringify(esslCode) + ';\n',
             'utf-8'
         );
     });

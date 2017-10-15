@@ -1,4 +1,4 @@
-var echarts = require('echarts/lib/echarts');
+import echarts from 'echarts/lib/echarts';
 
 function otherDimToDataDim (data, otherDim) {
     var dataDim = [];
@@ -13,7 +13,7 @@ function otherDimToDataDim (data, otherDim) {
     return dataDim;
 }
 
-module.exports = function (seriesModel, dataIndex, multipleSeries) {
+export default function (seriesModel, dataIndex, multipleSeries) {
     function formatArrayValue(value) {
         var vertially = true;
 

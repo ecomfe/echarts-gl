@@ -1,4 +1,4 @@
-var glmatrix = require('qtek/src/dep/glmatrix');
+import glmatrix from 'qtek/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 
@@ -99,4 +99,4 @@ Globe.prototype = {
     }
 };
 
-module.exports = Globe;
+export default Globe;

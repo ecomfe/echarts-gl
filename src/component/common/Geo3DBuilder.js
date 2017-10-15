@@ -1,16 +1,17 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-// var Triangulation = require('../../util/Triangulation');
-var earcut = require('../../util/earcut');
-var LinesGeo = require('../../util/geometry/Lines3D');
-var retrieve = require('../../util/retrieve');
-var glmatrix = require('qtek/src/dep/glmatrix');
-var trianglesSortMixin = require('../../util/geometry/trianglesSortMixin');
-var LabelsBuilder = require('./LabelsBuilder');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+// import Triangulation from '../../util/Triangulation';
+import earcut from '../../util/earcut';
+import LinesGeo from '../../util/geometry/Lines3D';
+import retrieve from '../../util/retrieve';
+import glmatrix from 'qtek/src/dep/glmatrix';
+import trianglesSortMixin from '../../util/geometry/trianglesSortMixin';
+import LabelsBuilder from './LabelsBuilder';
+import lines3DGLSL from '../../util/shader/lines3D.glsl.js';
 
 var vec3 = glmatrix.vec3;
 
-graphicGL.Shader.import(require('../../util/shader/lines3D.glsl.js'));
+graphicGL.Shader.import(lines3DGLSL);
 
 function Geo3DBuilder(api) {
 
@@ -886,4 +887,4 @@ Geo3DBuilder.prototype = {
     }
 };
 
-module.exports = Geo3DBuilder;
+export default Geo3DBuilder;

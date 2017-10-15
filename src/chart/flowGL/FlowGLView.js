@@ -1,9 +1,9 @@
-var echarts = require('echarts/lib/echarts');
-var graphicGL = require('../../util/graphicGL');
-var retrieve = require('../../util/retrieve');
-var ViewGL = require('../../core/ViewGL');
+import echarts from 'echarts/lib/echarts';
+import graphicGL from '../../util/graphicGL';
+import retrieve from '../../util/retrieve';
+import ViewGL from '../../core/ViewGL';
 
-var VectorFieldParticleSurface = require('./VectorFieldParticleSurface');
+import VectorFieldParticleSurface from './VectorFieldParticleSurface';
 
 
 // TODO 百度地图不是 linear 的

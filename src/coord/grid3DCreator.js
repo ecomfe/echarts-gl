@@ -1,9 +1,9 @@
-var Cartesian3D = require('./grid3D/Cartesian3D');
-var Axis3D = require('./grid3D/Axis3D');
-var echarts = require('echarts/lib/echarts');
-var layoutUtil = require('echarts/lib/util/layout');
-var ViewGL = require('../core/ViewGL');
-var retrieve = require('../util/retrieve');
+import Cartesian3D from './grid3D/Cartesian3D';
+import Axis3D from './grid3D/Axis3D';
+import echarts from 'echarts/lib/echarts';
+import layoutUtil from 'echarts/lib/util/layout';
+import ViewGL from '../core/ViewGL';
+import retrieve from '../util/retrieve';
 
 function resizeCartesian3D(grid3DModel, api) {
     // Use left/top/width/height
@@ -177,4 +177,4 @@ var grid3DCreator = {
 
 echarts.registerCoordinateSystem('grid3D', grid3DCreator);
 
-module.exports = grid3DCreator;
+export default grid3DCreator;
