@@ -10,6 +10,7 @@ var Scene = require('qtek/src/Scene');
 var PlaneGeometry = require('qtek/src/geometry/Plane');
 
 var FrameBuffer = require('qtek/src/FrameBuffer');
+var Line2DGeometry = require('./Line2D');
 
 Shader['import'](require('./vectorFieldParticle.glsl.js'));
 Shader['import'](require('qtek/src/shader/source/compositor/fxaa.glsl.js'));
@@ -120,17 +121,25 @@ VectorFieldParticleSurface.prototype = {
         var particleMesh = new Mesh({
             // Render after last frame full quad
             renderOrder: 10,
+            // material: new Material({
+            //     shader: new Shader({
+            //         vertex: Shader.source('ecgl.vfParticle.renderPoints.vertex'),
+            //         fragment: Shader.source('ecgl.vfParticle.renderPoints.fragment')
+            //     })
+            // }),
+            // mode: Mesh.POINTS,
+            // geometry: new StaticGeometry({
+            //     dynamic: true,
+            //     mainAttribute: 'texcoord0'
+            // })
             material: new Material({
                 shader: new Shader({
                     vertex: Shader.source('ecgl.vfParticle.renderPoints.vertex'),
                     fragment: Shader.source('ecgl.vfParticle.renderPoints.fragment')
                 })
             }),
-            mode: Mesh.POINTS,
-            geometry: new StaticGeometry({
-                dynamic: true,
-                mainAttribute: 'texcoord0'
-            })
+            geometry: new Line2DGeometry(),
+            culling: false
         });
         var lastFrameFullQuad = new Mesh({
             material: new Material({
@@ -163,18 +172,13 @@ VectorFieldParticleSurface.prototype = {
     },
 
     setParticleDensity: function (width, height) {
-        var geometry = this._particleMesh.geometry;
         var nVertex = width * height;
-        var attributes = geometry.attributes;
-        attributes.texcoord0.init(nVertex);
 
         var spawnTextureData = new Float32Array(nVertex * 4);
         var off = 0;
         var lifeRange = this.particleLife;
         for (var i = 0; i < width; i++) {
             for (var j = 0; j < height; j++, off++) {
-                attributes.texcoord0.value[off * 2] = i / width;
-                attributes.texcoord0.value[off * 2 + 1] = j / height;
                 // x position, range [0 - 1]
                 spawnTextureData[off * 4] = Math.random();
                 // y position, range [0 - 1]
@@ -186,7 +190,6 @@ VectorFieldParticleSurface.prototype = {
                 spawnTextureData[off * 4 + 3] = life;
             }
         }
-        geometry.dirty();
 
         this._spawnTexture.width = width;
         this._spawnTexture.height = height;
@@ -196,6 +199,34 @@ VectorFieldParticleSurface.prototype = {
         this._particleTexture0.height = this._particleTexture1.height = height;
 
         this._particlePass.setUniform('textureSize', [width, height]);
+    },
+
+    _setPointsGeometry: function (width, height) {
+        var nVertex = width * height;
+        var geometry = this._particleMesh.geometry;
+        var attributes = geometry.attributes;
+        attributes.texcoord0.init(nVertex);
+
+        var off = 0;
+        for (var i = 0; i < width; i++) {
+            for (var j = 0; j < height; j++, off++) {
+                attributes.texcoord0.value[off * 2] = i / width;
+                attributes.texcoord0.value[off * 2 + 1] = j / height;
+            }
+        }
+        geometry.dirty();
+    },
+
+    _setLineGeometry: function (width, height) {
+        var nLine = width * height;
+        var geometry = this._particleMesh.geometry;
+        geometry.setLineCount(nLine);
+        for (var i = 0; i < width; i++) {
+            for (var j = 0; j < height; j++) {
+                geometry.addLine([i / width, j / height]);
+            }
+        }
+        geometry.dirty();
     },
 
     update: function (renderer, deltaTime, firstFrame) {
@@ -216,7 +247,9 @@ VectorFieldParticleSurface.prototype = {
         particlePass.setUniform('deltaTime', deltaTime);
         particlePass.setUniform('elapsedTime', this._elapsedTime);
         particlePass.render(renderer, frameBuffer);
+
         particleMesh.material.set('particleTexture', this._particleTexture1);
+        particleMesh.material.set('prevParticleTexture', this._particleTexture0);
 
         frameBuffer.attach(this._thisFrameTexture);
         frameBuffer.bind(renderer);

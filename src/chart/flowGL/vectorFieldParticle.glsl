@@ -110,3 +110,72 @@ void main()
 }
 
 @end
+
+@export ecgl.vfParticle.renderLines.vertex
+
+#define PI 3.1415926
+
+attribute vec3 position : POSITION;
+
+uniform sampler2D particleTexture;
+uniform sampler2D prevParticleTexture;
+uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
+
+uniform float size : 1.0;
+
+varying float v_Mag;
+varying vec2 v_Uv;
+
+void main()
+{
+    vec4 p = texture2D(particleTexture, position.xy);
+    vec4 p2 = texture2D(prevParticleTexture, position.xy);
+
+    p.xy = p.xy * 2.0 - 1.0;
+    p2.xy = p2.xy * 2.0 - 1.0;
+
+    // PENDING If ignore 0 length vector
+    if (p.w > 0.0 && p.z > 1e-5) {
+        vec2 dir = normalize(p.xy - p2.xy);
+        vec2 norm = vec2(dir.x, -dir.y) * sign(position.z) * size;
+        if (abs(position.z) == 2.0) {
+            gl_Position = worldViewProjection * vec4(p2 + norm, 0.0, 1.0);
+            v_Uv = p2.xy;
+            v_Mag = p2.z;
+        }
+        else {
+            gl_Position = worldViewProjection * vec4(p + norm, 0.0, 1.0);
+            v_Mag = p.z;
+            v_Uv = p.xy;
+        }
+    }
+    else {
+        gl_Position = vec4(100000.0, 100000.0, 100000.0, 1.0);
+    }
+
+    gl_PointSize = size;
+}
+
+@end
+
+@export ecgl.vfParticle.renderLines.fragment
+
+uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
+uniform sampler2D gradientTexture;
+uniform sampler2D colorTexture;
+
+varying float v_Mag;
+varying vec2 v_Uv;
+
+void main()
+{
+    gl_FragColor = color;
+#ifdef GRADIENTTEXTURE_ENABLED
+    gl_FragColor *= texture2D(gradientTexture, vec2(v_Mag, 0.5));
+#endif
+#ifdef COLORTEXTURE_ENABLED
+    gl_FragColor *= texture2D(colorTexture, v_Uv);
+#endif
+}
+
+@end
