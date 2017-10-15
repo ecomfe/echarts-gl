@@ -45,12 +45,6 @@ var LinesGeometry = StaticGeometry.extend(function () {
         var nTriangle = 2 * nLine; 
         if (this.vertexCount !== nVertex) {
             attributes.position.init(nVertex);
-            attributes.color.init(nVertex);
-
-            if (!this.useNativeLine) {
-                attributes.offset.init(nVertex);
-                attributes.normal.init(nVertex);
-            }
         }
         if (this.triangleCount !== nTriangle) {
             if (nTriangle === 0) {
@@ -76,7 +70,7 @@ var LinesGeometry = StaticGeometry.extend(function () {
         );
         this.setTriangleIndices(
             this._faceOffset++, [
-                vertexOffset, vertexOffset + 2, vertexOffset + 3
+                vertexOffset + 1, vertexOffset + 2, vertexOffset + 3
             ]
         );
 

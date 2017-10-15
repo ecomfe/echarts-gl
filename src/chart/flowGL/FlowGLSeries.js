@@ -30,6 +30,8 @@ echarts.extendSeriesModel({
         zlevel: 10,
 
         // 128x128 particles
+        particleType: 'point',
+        
         particleDensity: 128,
         particleSize: 1,
         particleSpeed: 1,

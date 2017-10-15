@@ -30,9 +30,11 @@ vec2 bilinearFetch(vec2 uv)
 void main()
 {
     vec4 p = texture2D(particleTexture, v_Texcoord);
+    bool spawn = false;
     if (p.w <= 0.0) {
         p = texture2D(spawnTexture, fract(v_Texcoord + elapsedTime / 10.0));
         p.w -= firstFrameTime;
+        spawn = true;
     }
     // vec2 v = texture2D(velocityTexture, fract(p.xy * region.zw + region.xy)).xy;
     // https://blog.mapbox.com/how-i-built-a-wind-map-with-webgl-b63022b5537f
@@ -40,9 +42,14 @@ void main()
     v = (v - 0.5) * 2.0;
     p.z = length(v);
     p.xy += v * deltaTime / 10.0 * speedScaling;
+    p.w -= deltaTime;
+
+    // TODO Not show just spawned particle or crossed particle.
+    if (spawn || p.xy != fract(p.xy)) {
+        p.z = 0.0;
+    }
     // Make the particle surface seamless
     p.xy = fract(p.xy);
-    p.w -= deltaTime;
 
     gl_FragColor = p;
 }
@@ -119,9 +126,9 @@ attribute vec3 position : POSITION;
 
 uniform sampler2D particleTexture;
 uniform sampler2D prevParticleTexture;
-uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 
 uniform float size : 1.0;
+uniform vec4 vp: VIEWPORT;
 
 varying float v_Mag;
 varying vec2 v_Uv;
@@ -137,23 +144,21 @@ void main()
     // PENDING If ignore 0 length vector
     if (p.w > 0.0 && p.z > 1e-5) {
         vec2 dir = normalize(p.xy - p2.xy);
-        vec2 norm = vec2(dir.x, -dir.y) * sign(position.z) * size;
+        vec2 norm = vec2(dir.y / vp.z, -dir.x / vp.w) * sign(position.z) * size / 2.0;
         if (abs(position.z) == 2.0) {
-            gl_Position = worldViewProjection * vec4(p2 + norm, 0.0, 1.0);
-            v_Uv = p2.xy;
-            v_Mag = p2.z;
+            gl_Position = vec4(p.xy + norm, 0.0, 1.0);
+            v_Uv = p.xy;
+            v_Mag = p.z;
         }
         else {
-            gl_Position = worldViewProjection * vec4(p + norm, 0.0, 1.0);
-            v_Mag = p.z;
-            v_Uv = p.xy;
+            gl_Position = vec4(p2.xy + norm, 0.0, 1.0);
+            v_Mag = p2.z;
+            v_Uv = p2.xy;
         }
     }
     else {
         gl_Position = vec4(100000.0, 100000.0, 100000.0, 1.0);
     }
-
-    gl_PointSize = size;
 }
 
 @end

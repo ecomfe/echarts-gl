@@ -52,6 +52,8 @@ var VectorFieldParticleSurface = function () {
      * @type {Array.<number>}
      */
     this.particleLife = [5, 20];
+    
+    this._particleType = 'point';
 
     /**
      * @type {number}
@@ -78,7 +80,7 @@ var VectorFieldParticleSurface = function () {
     this._particleTexture0 = null;
     this._particleTexture1 = null;
 
-    this._particleMesh = null;
+    this._particlePointsMesh = null;
 
     this._surfaceFrameBuffer = null;
 
@@ -103,8 +105,6 @@ VectorFieldParticleSurface.prototype = {
             type: Texture.FLOAT,
             minFilter: Texture.NEAREST,
             magFilter: Texture.NEAREST,
-            wrapS: Texture.REPEAT,
-            wrapT: Texture.REPEAT,
             useMipmap: false
         };
         this._spawnTexture = new Texture2D(parameters);
@@ -121,24 +121,28 @@ VectorFieldParticleSurface.prototype = {
         this._particlePass.setUniform('velocityTexture', this.vectorFieldTexture);
         this._particlePass.setUniform('spawnTexture', this._spawnTexture);
 
-        var particleMesh = new Mesh({
+        var particlePointsMesh = new Mesh({
             // Render after last frame full quad
             renderOrder: 10,
-            // material: new Material({
-            //     shader: new Shader({
-            //         vertex: Shader.source('ecgl.vfParticle.renderPoints.vertex'),
-            //         fragment: Shader.source('ecgl.vfParticle.renderPoints.fragment')
-            //     })
-            // }),
-            // mode: Mesh.POINTS,
-            // geometry: new StaticGeometry({
-            //     dynamic: true,
-            //     mainAttribute: 'texcoord0'
-            // })
             material: new Material({
                 shader: new Shader({
                     vertex: Shader.source('ecgl.vfParticle.renderPoints.vertex'),
                     fragment: Shader.source('ecgl.vfParticle.renderPoints.fragment')
+                })
+            }),
+            mode: Mesh.POINTS,
+            geometry: new StaticGeometry({
+                dynamic: true,
+                mainAttribute: 'texcoord0'
+            })
+        });
+        var particleLinesMesh = new Mesh({
+            // Render after last frame full quad
+            renderOrder: 10,
+            material: new Material({
+                shader: new Shader({
+                    vertex: Shader.source('ecgl.vfParticle.renderLines.vertex'),
+                    fragment: Shader.source('ecgl.vfParticle.renderLines.fragment')
                 })
             }),
             geometry: new Line2DGeometry(),
@@ -157,11 +161,12 @@ VectorFieldParticleSurface.prototype = {
         });
         lastFrameFullQuad.material.shader.enableTexture('diffuseMap');
 
-        this._particleMesh = particleMesh;
+        this._particlePointsMesh = particlePointsMesh;
+        this._particleLinesMesh = particleLinesMesh;
         this._lastFrameFullQuadMesh = lastFrameFullQuad;
 
         this._scene = new Scene();
-        this._scene.add(this._particleMesh);
+        this._scene.add(this._particlePointsMesh);
         this._scene.add(lastFrameFullQuad);
         
         this._camera = new OrthoCamera();
@@ -194,6 +199,13 @@ VectorFieldParticleSurface.prototype = {
             }
         }
 
+        if (this._particleType === 'line') {
+            this._setLineGeometry(width, height);
+        }
+        else {
+            this._setPointsGeometry(width, height);
+        }
+
         this._spawnTexture.width = width;
         this._spawnTexture.height = height;
         this._spawnTexture.pixels = spawnTextureData;
@@ -206,7 +218,7 @@ VectorFieldParticleSurface.prototype = {
 
     _setPointsGeometry: function (width, height) {
         var nVertex = width * height;
-        var geometry = this._particleMesh.geometry;
+        var geometry = this._particlePointsMesh.geometry;
         var attributes = geometry.attributes;
         attributes.texcoord0.init(nVertex);
 
@@ -222,8 +234,9 @@ VectorFieldParticleSurface.prototype = {
 
     _setLineGeometry: function (width, height) {
         var nLine = width * height;
-        var geometry = this._particleMesh.geometry;
+        var geometry = this._getParticleMesh().geometry;
         geometry.setLineCount(nLine);
+        geometry.resetOffset();
         for (var i = 0; i < width; i++) {
             for (var j = 0; j < height; j++) {
                 geometry.addLine([i / width, j / height]);
@@ -232,8 +245,12 @@ VectorFieldParticleSurface.prototype = {
         geometry.dirty();
     },
 
+    _getParticleMesh: function () {
+        return this._particleType === 'line' ? this._particleLinesMesh : this._particlePointsMesh;
+    },
+
     update: function (renderer, deltaTime, firstFrame) {
-        var particleMesh = this._particleMesh;
+        var particleMesh = this._getParticleMesh();
         var frameBuffer = this._frameBuffer;
         var particlePass = this._particlePass;
         var fxaaPass = this._fxaaPass;
@@ -289,7 +306,7 @@ VectorFieldParticleSurface.prototype = {
     },
 
     setParticleSize: function (size) {
-        var particleMesh = this._particleMesh;
+        var particleMesh = this._getParticleMesh();
         if (size <= 2) {
             particleMesh.material.shader.disableTexture('spriteTexture');
             particleMesh.material.transparent = false;
@@ -310,16 +327,28 @@ VectorFieldParticleSurface.prototype = {
     },
 
     setGradientTexture: function (gradientTexture) {
-        var material = this._particleMesh.material;
+        var material = this._getParticleMesh().material;
         material.shader[gradientTexture ? 'enableTexture' : 'disableTexture']('gradientTexture');
         material.setUniform('gradientTexture', gradientTexture);
     },
 
     setColorTextureImage: function (colorTextureImg, api) {
-        var material = this._particleMesh.material;
+        var material = this._getParticleMesh().material;
         material.setTextureImage('colorTexture', colorTextureImg, api, {
             flipY: true
         });
+    },
+
+    setParticleType: function (type) {
+        this._particleType = type;
+        if (type === 'line') {
+            this._scene.add(this._particleLinesMesh);
+            this._scene.remove(this._particlePointsMesh);
+        }
+        else {
+            this._scene.remove(this._particleLinesMesh);
+            this._scene.add(this._particlePointsMesh);
+        }
     },
 
     clearFrame: function (renderer) {
@@ -350,6 +379,9 @@ VectorFieldParticleSurface.prototype = {
         renderer.disposeTexture(this._thisFrameTexture);
         renderer.disposeTexture(this._lastFrameTexture);
         renderer.disposeTexture(this._antialisedTexture);
+
+        renderer.disposeGeometry(this._particleLinesMesh.geometry);
+        renderer.disposeGeometry(this._particlePointsMesh.geometry);
 
         if (this._spriteTexture) {
             renderer.disposeTexture(this._spriteTexture);

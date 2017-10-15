@@ -42,7 +42,9 @@ echarts.extendChartView({
     
     render: function (seriesModel, ecModel, api) {
         var particleSurface = this._particleSurface;
-        
+        // Set particleType before set others.
+        particleSurface.setParticleType(seriesModel.get('particleType'));
+
         this._updateData(seriesModel, api);
         this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
 
