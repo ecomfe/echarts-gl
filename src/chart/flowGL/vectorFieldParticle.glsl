@@ -15,17 +15,17 @@ uniform float firstFrameTime;
 
 varying vec2 v_Texcoord;
 
-vec2 bilinearFetch(vec2 uv)
-{
-    vec2 off = 1.0 / textureSize;
-    vec2 sc = (floor(uv * textureSize)) * off;
-    vec2 f = fract(uv * textureSize);
-    vec2 tl = texture2D(velocityTexture, sc).xy;
-    vec2 tr = texture2D(velocityTexture, sc + vec2(off.x, 0)).xy;
-    vec2 bl = texture2D(velocityTexture, sc + vec2(0, off.y)).xy;
-    vec2 br = texture2D(velocityTexture, sc + off).xy;
-    return mix(mix(tl, tr, f.x), mix(bl, br, f.x), f.y);
-}
+// vec2 bilinearFetch(vec2 uv)
+// {
+//     vec2 off = 1.0 / textureSize;
+//     vec2 sc = (floor(uv * textureSize)) * off;
+//     vec2 f = fract(uv * textureSize);
+//     vec2 tl = texture2D(velocityTexture, sc).xy;
+//     vec2 tr = texture2D(velocityTexture, sc + vec2(off.x, 0)).xy;
+//     vec2 bl = texture2D(velocityTexture, sc + vec2(0, off.y)).xy;
+//     vec2 br = texture2D(velocityTexture, sc + off).xy;
+//     return mix(mix(tl, tr, f.x), mix(bl, br, f.x), f.y);
+// }
 
 void main()
 {
@@ -36,9 +36,9 @@ void main()
         p.w -= firstFrameTime;
         spawn = true;
     }
-    // vec2 v = texture2D(velocityTexture, fract(p.xy * region.zw + region.xy)).xy;
+    vec2 v = texture2D(velocityTexture, fract(p.xy * region.zw + region.xy)).xy;
     // https://blog.mapbox.com/how-i-built-a-wind-map-with-webgl-b63022b5537f
-    vec2 v = bilinearFetch(fract(p.xy * region.zw + region.xy));
+    // vec2 v = bilinearFetch(fract(p.xy * region.zw + region.xy));
     v = (v - 0.5) * 2.0;
     p.z = length(v);
     p.xy += v * deltaTime / 10.0 * speedScaling;
@@ -179,6 +179,7 @@ varying vec2 v_Uv;
 void main()
 {
     gl_FragColor = color;
+    // gl_FragColor = mix(vec4(1.0,0.0,0.0,1.0), vec4(0.0,0.0,1.0,1.0), 1.0 - v_Mag);
 #ifdef GRADIENTTEXTURE_ENABLED
     gl_FragColor *= texture2D(gradientTexture, vec2(v_Mag, 0.5));
 #endif

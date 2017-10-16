@@ -40,8 +40,8 @@ var VectorFieldParticleSurface = function () {
      */
     this.vectorFieldTexture = new Texture2D({
         type: Texture.FLOAT,
-        minFilter: Texture.NEAREST,
-        magFilter: Texture.NEAREST,
+        // minFilter: Texture.NEAREST,
+        // magFilter: Texture.NEAREST,
         flipY: false
     });
 
