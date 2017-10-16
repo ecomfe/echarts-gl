@@ -91,9 +91,11 @@ var VectorFieldParticleSurface = function () {
 
     // this._temporalSS = new TemporalSS(50);
 
-    this._antialising = false;
+    // this._antialising = false;
 
     this._supersampling = 1;
+
+    this._downsampleTextures = [];
 
     this._width = 512;
     this._height = 512;
@@ -125,6 +127,10 @@ VectorFieldParticleSurface.prototype = {
         });
         this._particlePass.setUniform('velocityTexture', this.vectorFieldTexture);
         this._particlePass.setUniform('spawnTexture', this._spawnTexture);
+
+        this._downsamplePass = new Pass({
+            fragment: Shader.source('qtek.compositor.downsample')
+        });
 
         var particlePointsMesh = new Mesh({
             // Render after last frame full quad
@@ -245,14 +251,14 @@ VectorFieldParticleSurface.prototype = {
         return this._particleType === 'line' ? this._particleLinesMesh : this._particlePointsMesh;
     },
 
-    update: function (renderer, deltaTime, firstFrame) {
+    update: function (renderer, api, deltaTime, firstFrame) {
         var particleMesh = this._getParticleMesh();
         var frameBuffer = this._frameBuffer;
         var particlePass = this._particlePass;
 
-        // if (firstFrame) {
-            // this._temporalSS.resetFrame();
-        // }
+        if (firstFrame) {
+            this._updateDownsampleTextures(renderer, api);
+        }
 
         particleMesh.material.set('size', this._particleSize * this._supersampling);
         particleMesh.material.set('color', this.particleColor);
@@ -279,26 +285,38 @@ VectorFieldParticleSurface.prototype = {
         renderer.renderQueue([lastFrameFullQuad, particleMesh], this._camera);
         frameBuffer.unbind(renderer);
 
-        // Antialising
-        // if (this._antialising) {
-        //     this._temporalSS.getSourceFrameBuffer().bind(renderer);
-        //     lastFrameFullQuad.material.set('diffuseMap', this._thisFrameTexture);
-        //     lastFrameFullQuad.material.set('color', [1, 1, 1, 1]);
-        //     this._temporalSS.jitterProjection(renderer, this._camera);
-        //     renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
-        //     renderer.renderQueue([lastFrameFullQuad], this._camera);
-        //     this._temporalSS.getSourceFrameBuffer().unbind(renderer);
-        //     this._temporalSS.render(renderer, null, true);
-        // }
+        this._downsample(renderer);
 
         this._swapTexture();
 
         this._elapsedTime += deltaTime;
     },
 
+    _downsample: function (renderer) {
+        var downsampleTextures = this._downsampleTextures;
+        if (downsampleTextures.length === 0) {
+            return;
+        }
+        var current = 0;
+        var sourceTexture = this._thisFrameTexture;
+        var targetTexture = downsampleTextures[current];
+
+        while (targetTexture) {
+            this._frameBuffer.attach(targetTexture);
+            this._downsamplePass.setUniform('texture', sourceTexture);
+            this._downsamplePass.setUniform('textureSize', [sourceTexture.width, sourceTexture.height]);
+            this._downsamplePass.render(renderer, this._frameBuffer);
+
+            sourceTexture = targetTexture;
+            targetTexture = downsampleTextures[++current];
+        }
+    },
+
     getSurfaceTexture: function () {
-        // return this._antialising ? this._temporalSS.getOutputTexture() : this._thisFrameTexture;
-        return this._thisFrameTexture;
+        var downsampleTextures = this._downsampleTextures;
+        return downsampleTextures.length > 0
+            ? downsampleTextures[downsampleTextures.length - 1]
+            : this._thisFrameTexture;
     },
 
     setRegion: function (region) {
@@ -366,6 +384,24 @@ VectorFieldParticleSurface.prototype = {
     setSupersampling: function (supersampling) {
         this._supersampling = supersampling;
         this.resize(this._width, this._height);
+    },
+
+    _updateDownsampleTextures: function (renderer, api) {
+        var downsampleTextures = this._downsampleTextures;
+        var upScale = Math.floor(Math.log(this._supersampling / api.getDevicePixelRatio()) / Math.log(2));
+        var scale = 2;
+        var width = this._width * this._supersampling;
+        var height = this._height * this._supersampling;
+        for (var i = 0; i < upScale; i++) {
+            downsampleTextures[i] = downsampleTextures[i] || new Texture2D();
+            downsampleTextures[i].width = width / scale;
+            downsampleTextures[i].height = height / scale;
+            scale *= 2;
+        }
+        for (;i < downsampleTextures.length; i++) {
+            downsampleTextures[i].dispose(renderer);
+        }
+        downsampleTextures.length = upScale;
     },
 
     _swapTexture: function () {

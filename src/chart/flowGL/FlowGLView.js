@@ -68,7 +68,7 @@ echarts.extendChartView({
                 var dTime = Math.min(timeNow - time, 20);
                 time = time + dTime;
                 if (self._renderer) {
-                    particleSurface.update(self._renderer, dTime / 1000, firstFrame);
+                    particleSurface.update(self._renderer, api, dTime / 1000, firstFrame);
                     planeMesh.material.set('diffuseMap', particleSurface.getSurfaceTexture());
                     // planeMesh.material.set('diffuseMap', self._particleSurface.vectorFieldTexture);
                 }
