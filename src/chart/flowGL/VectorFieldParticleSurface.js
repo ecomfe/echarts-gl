@@ -10,7 +10,7 @@ import PlaneGeometry from 'qtek/src/geometry/Plane';
 
 import FrameBuffer from 'qtek/src/FrameBuffer';
 import Line2DGeometry from './Line2D';
-import TemporalSS from '../../effect/TemporalSuperSampling';
+// import TemporalSS from '../../effect/TemporalSuperSampling';
 
 import vectorFieldParticleGLSL from './vectorFieldParticle.glsl.js';
 
@@ -89,9 +89,14 @@ var VectorFieldParticleSurface = function () {
 
     this._lastFrameTexture = null;
 
-    this._temporalSS = new TemporalSS(50);
+    // this._temporalSS = new TemporalSS(50);
 
     this._antialising = false;
+
+    this._supersampling = 1;
+
+    this._width = 512;
+    this._height = 512;
     
     this.init();
 };
@@ -245,11 +250,11 @@ VectorFieldParticleSurface.prototype = {
         var frameBuffer = this._frameBuffer;
         var particlePass = this._particlePass;
 
-        if (firstFrame) {
-            this._temporalSS.resetFrame();
-        }
+        // if (firstFrame) {
+            // this._temporalSS.resetFrame();
+        // }
 
-        particleMesh.material.set('size', this._particleSize);
+        particleMesh.material.set('size', this._particleSize * this._supersampling);
         particleMesh.material.set('color', this.particleColor);
         particlePass.setUniform('speedScaling', this.particleSpeedScaling);
 
@@ -275,16 +280,16 @@ VectorFieldParticleSurface.prototype = {
         frameBuffer.unbind(renderer);
 
         // Antialising
-        if (this._antialising) {
-            this._temporalSS.getSourceFrameBuffer().bind(renderer);
-            lastFrameFullQuad.material.set('diffuseMap', this._thisFrameTexture);
-            lastFrameFullQuad.material.set('color', [1, 1, 1, 1]);
-            this._temporalSS.jitterProjection(renderer, this._camera);
-            renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
-            renderer.renderQueue([lastFrameFullQuad], this._camera);
-            this._temporalSS.getSourceFrameBuffer().unbind(renderer);
-            this._temporalSS.render(renderer, null, true);
-        }
+        // if (this._antialising) {
+        //     this._temporalSS.getSourceFrameBuffer().bind(renderer);
+        //     lastFrameFullQuad.material.set('diffuseMap', this._thisFrameTexture);
+        //     lastFrameFullQuad.material.set('color', [1, 1, 1, 1]);
+        //     this._temporalSS.jitterProjection(renderer, this._camera);
+        //     renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
+        //     renderer.renderQueue([lastFrameFullQuad], this._camera);
+        //     this._temporalSS.getSourceFrameBuffer().unbind(renderer);
+        //     this._temporalSS.render(renderer, null, true);
+        // }
 
         this._swapTexture();
 
@@ -292,7 +297,8 @@ VectorFieldParticleSurface.prototype = {
     },
 
     getSurfaceTexture: function () {
-        return this._antialising ? this._temporalSS.getOutputTexture() : this._thisFrameTexture;
+        // return this._antialising ? this._temporalSS.getOutputTexture() : this._thisFrameTexture;
+        return this._thisFrameTexture;
     },
 
     setRegion: function (region) {
@@ -300,12 +306,15 @@ VectorFieldParticleSurface.prototype = {
     },
 
     resize: function (width, height) {
-        this._lastFrameTexture.width = width;
-        this._lastFrameTexture.height = height;
-        this._thisFrameTexture.width = width;
-        this._thisFrameTexture.height = height;
+        this._lastFrameTexture.width = width * this._supersampling;
+        this._lastFrameTexture.height = height * this._supersampling;
+        this._thisFrameTexture.width = width * this._supersampling;
+        this._thisFrameTexture.height = height * this._supersampling;
 
-        this._temporalSS.resize(width, height);
+        this._width = width;
+        this._height = height;
+
+        // this._temporalSS.resize(width, height);
     },
 
     setParticleSize: function (size) {
@@ -354,8 +363,9 @@ VectorFieldParticleSurface.prototype = {
         frameBuffer.unbind(renderer);
     },
 
-    setAntialising: function (antialising) {
-        this._antialising = antialising;
+    setSupersampling: function (supersampling) {
+        this._supersampling = supersampling;
+        this.resize(this._width, this._height);
     },
 
     _swapTexture: function () {
@@ -390,7 +400,7 @@ VectorFieldParticleSurface.prototype = {
             renderer.disposeTexture(this._spriteTexture);
         }
 
-        this._temporalSS.dispose(renderer);
+        // this._temporalSS.dispose(renderer);
     }
 };
 

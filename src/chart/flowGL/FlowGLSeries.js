@@ -29,7 +29,7 @@ echarts.extendSeriesModel({
         coordinateSystem: 'cartesian2d',
         zlevel: 10,
 
-        antialising: false,
+        supersampling: 1,
         // 128x128 particles
         particleType: 'point',
         

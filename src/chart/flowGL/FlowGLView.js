@@ -44,6 +44,7 @@ echarts.extendChartView({
         var particleSurface = this._particleSurface;
         // Set particleType before set others.
         particleSurface.setParticleType(seriesModel.get('particleType'));
+        particleSurface.setSupersampling(seriesModel.get('supersampling'));
 
         this._updateData(seriesModel, api);
         this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
@@ -80,12 +81,10 @@ echarts.extendChartView({
         color[3] *= retrieve.firstNotNull(itemStyleModel.get('opacity'), 1);
         planeMesh.material.set('color', color);
 
-        this._particleSurface.setColorTextureImage(seriesModel.get('colorTexture'), api);
-        this._particleSurface.setParticleSize(seriesModel.get('particleSize'));
-        this._particleSurface.particleSpeedScaling = seriesModel.get('particleSpeed');
-        this._particleSurface.motionBlurFactor = 1.0 - Math.pow(0.1, seriesModel.get('particleTrail'));
-
-        this._particleSurface.setAntialising(seriesModel.get('antialising'));
+        particleSurface.setColorTextureImage(seriesModel.get('colorTexture'), api);
+        particleSurface.setParticleSize(seriesModel.get('particleSize'));
+        particleSurface.particleSpeedScaling = seriesModel.get('particleSpeed');
+        particleSurface.motionBlurFactor = 1.0 - Math.pow(0.1, seriesModel.get('particleTrail'));
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
