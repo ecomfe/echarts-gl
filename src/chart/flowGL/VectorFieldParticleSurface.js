@@ -331,8 +331,6 @@ VectorFieldParticleSurface.prototype = {
 
         this._width = width;
         this._height = height;
-
-        // this._temporalSS.resize(width, height);
     },
 
     setParticleSize: function (size) {
@@ -436,7 +434,12 @@ VectorFieldParticleSurface.prototype = {
             renderer.disposeTexture(this._spriteTexture);
         }
 
-        // this._temporalSS.dispose(renderer);
+        this._particlePass.dispose(renderer);
+        this._downsamplePass.dispose(renderer);
+
+        this._downsampleTextures.forEach(function (texture) {
+            texture.dispose(renderer);
+        });
     }
 };
 
