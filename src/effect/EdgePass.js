@@ -49,9 +49,9 @@ EdgePass.prototype.setParameter = function (name, val) {
     this._edgePass.setUniform(name, val);
 };
 
-EdgePass.prototype.dispose = function (gl) {
-    this._targetTexture.dispose(gl);
-    this._frameBuffer.dispose(gl);
+EdgePass.prototype.dispose = function (renderer) {
+    this._targetTexture.dispose(renderer);
+    this._frameBuffer.dispose(renderer);
 };
 
 export default EdgePass;

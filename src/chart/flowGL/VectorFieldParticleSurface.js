@@ -6,17 +6,15 @@ import Shader from 'qtek/src/Shader';
 import Texture2D from 'qtek/src/Texture2D';
 import Texture from 'qtek/src/Texture';
 import OrthoCamera from 'qtek/src/camera/Orthographic';
-import Scene from 'qtek/src/Scene';
 import PlaneGeometry from 'qtek/src/geometry/Plane';
 
 import FrameBuffer from 'qtek/src/FrameBuffer';
 import Line2DGeometry from './Line2D';
+import TemporalSS from '../../effect/TemporalSuperSampling';
 
 import vectorFieldParticleGLSL from './vectorFieldParticle.glsl.js';
-import fxaaGLSL from 'qtek/src/shader/source/compositor/fxaa.glsl.js';
 
 Shader['import'](vectorFieldParticleGLSL);
-Shader['import'](fxaaGLSL);
 
 function createSpriteCanvas(size) {
     var canvas = document.createElement('canvas');
@@ -91,8 +89,10 @@ var VectorFieldParticleSurface = function () {
 
     this._lastFrameTexture = null;
 
-    this._antialisedTexture = null;
+    this._temporalSS = new TemporalSS(50);
 
+    this._antialising = false;
+    
     this.init();
 };
 
@@ -164,19 +164,10 @@ VectorFieldParticleSurface.prototype = {
         this._particlePointsMesh = particlePointsMesh;
         this._particleLinesMesh = particleLinesMesh;
         this._lastFrameFullQuadMesh = lastFrameFullQuad;
-
-        this._scene = new Scene();
-        this._scene.add(this._particlePointsMesh);
-        this._scene.add(lastFrameFullQuad);
         
         this._camera = new OrthoCamera();
         this._thisFrameTexture = new Texture2D();
         this._lastFrameTexture = new Texture2D();
-        this._antialisedTexture = new Texture2D();
-
-        this._fxaaPass = new Pass({
-            fragment: Shader.source('qtek.compositor.fxaa')
-        });
     },
 
     setParticleDensity: function (width, height) {
@@ -253,11 +244,12 @@ VectorFieldParticleSurface.prototype = {
         var particleMesh = this._getParticleMesh();
         var frameBuffer = this._frameBuffer;
         var particlePass = this._particlePass;
-        var fxaaPass = this._fxaaPass;
 
-        particleMesh.material.set(
-            'size', this._particleSize * renderer.getDevicePixelRatio()
-        );
+        if (firstFrame) {
+            this._temporalSS.resetFrame();
+        }
+
+        particleMesh.material.set('size', this._particleSize);
         particleMesh.material.set('color', this.particleColor);
         particlePass.setUniform('speedScaling', this.particleSpeedScaling);
 
@@ -274,14 +266,25 @@ VectorFieldParticleSurface.prototype = {
         frameBuffer.attach(this._thisFrameTexture);
         frameBuffer.bind(renderer);
         renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
-        this._lastFrameFullQuadMesh.material.set('diffuseMap', this._lastFrameTexture);
-        this._lastFrameFullQuadMesh.material.set('color', [1, 1, 1, this.motionBlurFactor]);
-        renderer.render(this._scene, this._camera);
+        var lastFrameFullQuad = this._lastFrameFullQuadMesh;
+        lastFrameFullQuad.material.set('diffuseMap', this._lastFrameTexture);
+        lastFrameFullQuad.material.set('color', [1, 1, 1, this.motionBlurFactor]);
+
+        this._camera.update(true);
+        renderer.renderQueue([lastFrameFullQuad, particleMesh], this._camera);
         frameBuffer.unbind(renderer);
 
-        frameBuffer.attach(this._antialisedTexture);
-        fxaaPass.setUniform('texture', this._thisFrameTexture);
-        fxaaPass.render(renderer, frameBuffer);
+        // Antialising
+        if (this._antialising) {
+            this._temporalSS.getSourceFrameBuffer().bind(renderer);
+            lastFrameFullQuad.material.set('diffuseMap', this._thisFrameTexture);
+            lastFrameFullQuad.material.set('color', [1, 1, 1, 1]);
+            this._temporalSS.jitterProjection(renderer, this._camera);
+            renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
+            renderer.renderQueue([lastFrameFullQuad], this._camera);
+            this._temporalSS.getSourceFrameBuffer().unbind(renderer);
+            this._temporalSS.render(renderer, null, true);
+        }
 
         this._swapTexture();
 
@@ -289,7 +292,7 @@ VectorFieldParticleSurface.prototype = {
     },
 
     getSurfaceTexture: function () {
-        return this._antialisedTexture;
+        return this._antialising ? this._temporalSS.getOutputTexture() : this._thisFrameTexture;
     },
 
     setRegion: function (region) {
@@ -301,8 +304,8 @@ VectorFieldParticleSurface.prototype = {
         this._lastFrameTexture.height = height;
         this._thisFrameTexture.width = width;
         this._thisFrameTexture.height = height;
-        this._antialisedTexture.width = width;
-        this._antialisedTexture.height = height;
+
+        this._temporalSS.resize(width, height);
     },
 
     setParticleSize: function (size) {
@@ -341,14 +344,6 @@ VectorFieldParticleSurface.prototype = {
 
     setParticleType: function (type) {
         this._particleType = type;
-        if (type === 'line') {
-            this._scene.add(this._particleLinesMesh);
-            this._scene.remove(this._particlePointsMesh);
-        }
-        else {
-            this._scene.remove(this._particleLinesMesh);
-            this._scene.add(this._particlePointsMesh);
-        }
     },
 
     clearFrame: function (renderer) {
@@ -357,6 +352,10 @@ VectorFieldParticleSurface.prototype = {
         frameBuffer.bind(renderer);
         renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT);
         frameBuffer.unbind(renderer);
+    },
+
+    setAntialising: function (antialising) {
+        this._antialising = antialising;
     },
 
     _swapTexture: function () {
@@ -378,16 +377,20 @@ VectorFieldParticleSurface.prototype = {
         renderer.disposeTexture(this._particleTexture1);
         renderer.disposeTexture(this._thisFrameTexture);
         renderer.disposeTexture(this._lastFrameTexture);
-        renderer.disposeTexture(this._antialisedTexture);
 
         renderer.disposeGeometry(this._particleLinesMesh.geometry);
         renderer.disposeGeometry(this._particlePointsMesh.geometry);
+        renderer.disposeGeometry(this._lastFrameFullQuadMesh.geometry);
+
+        renderer.disposeShader(this._particleLinesMesh.material.shader);
+        renderer.disposeShader(this._particlePointsMesh.material.shader);
+        renderer.disposeShader(this._lastFrameFullQuadMesh.material.shader);
 
         if (this._spriteTexture) {
             renderer.disposeTexture(this._spriteTexture);
         }
 
-        renderer.disposeScene(this._scene);
+        this._temporalSS.dispose(renderer);
     }
 };
 

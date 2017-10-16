@@ -327,7 +327,7 @@ function getId(resource) {
     return resource.__GUID__;
 }
 
-function checkAndDispose(gl, resourceMap, maxCount) {
+function checkAndDispose(renderer, resourceMap, maxCount) {
     var count = 0;
     // FIXME not allocate array.
     var unused = [];
@@ -340,7 +340,7 @@ function checkAndDispose(gl, resourceMap, maxCount) {
         }
     }
     for (var i = 0; i < Math.min(count - maxCount, unused.length); i++) {
-        unused[i].dispose(gl);
+        unused[i].dispose(renderer);
     }
 }
 
@@ -405,11 +405,9 @@ LayerGL.prototype._trackAndClean = function () {
         }
     }
     // Dispose those unsed resources
-    var gl = this.renderer.gl;
-
-    checkAndDispose(gl, shadersMap, MAX_SHADER_COUNT);
-    checkAndDispose(gl, texturesMap, MAX_TEXTURE_COUNT);
-    checkAndDispose(gl, geometriesMap, MAX_GEOMETRY_COUNT);
+    checkAndDispose(this.renderer, shadersMap, MAX_SHADER_COUNT);
+    checkAndDispose(this.renderer, texturesMap, MAX_TEXTURE_COUNT);
+    checkAndDispose(this.renderer, geometriesMap, MAX_GEOMETRY_COUNT);
 };
 
 /**

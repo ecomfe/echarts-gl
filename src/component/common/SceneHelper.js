@@ -103,7 +103,7 @@ SceneHelper.prototype = {
         function getSkybox() {
             if (!(self._skybox instanceof Skybox)) {
                 if (self._skybox) {
-                    self._skybox.dispose(renderer.gl);
+                    self._skybox.dispose(renderer);
                 }
                 self._skybox = new Skybox();
             }
@@ -112,7 +112,7 @@ SceneHelper.prototype = {
         function getSkydome() {
             if (!(self._skybox instanceof Skydome)) {
                 if (self._skybox) {
-                    self._skybox.dispose(renderer.gl);
+                    self._skybox.dispose(renderer);
                 }
                 self._skybox = new Skydome();
             }

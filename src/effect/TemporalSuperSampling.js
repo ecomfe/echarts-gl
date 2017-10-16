@@ -7,13 +7,11 @@ import Shader from 'qtek/src/Shader';
 import Matrix4 from 'qtek/src/math/Matrix4';
 import Vector3 from 'qtek/src/math/Vector3';
 
-function TemporalSuperSampling () {
+function TemporalSuperSampling (frames) {
     var haltonSequence = [];
 
     for (var i = 0; i < 30; i++) {
-        haltonSequence.push([
-            halton(i, 2), halton(i, 3)
-        ]);
+        haltonSequence.push([halton(i, 2), halton(i, 3)]);
     }
 
     this._haltonSequence = haltonSequence;
@@ -68,16 +66,13 @@ TemporalSuperSampling.prototype = {
         var width = viewport.width * dpr;
         var height = viewport.height * dpr;
 
-        var offset = this._haltonSequence[this._frame];
+        var offset = this._haltonSequence[this._frame % this._haltonSequence.length];
 
         var translationMat = new Matrix4();
         translationMat._array[12] = (offset[0] * 2.0 - 1.0) / width;
         translationMat._array[13] = (offset[1] * 2.0 - 1.0) / height;
 
         Matrix4.mul(camera.projectionMatrix, translationMat, camera.projectionMatrix);
-        
-        // camera.projectionMatrix._array[8] += (offset[0] * 2.0 - 1.0) / width;
-        // camera.projectionMatrix._array[9] += (offset[1] * 2.0 - 1.0) / height;
 
         Matrix4.invert(camera.invProjectionMatrix, camera.projectionMatrix);
     },
@@ -103,29 +98,30 @@ TemporalSuperSampling.prototype = {
         return this._sourceFb;
     },
 
+    getOutputTexture: function () {
+        return this._outputTex;
+    },
+
     resize: function (width, height) {
-        if (this._sourceTex.width !== width || this._sourceTex.height !== height) {
+        this._prevFrameTex.width = width;
+        this._prevFrameTex.height = height;
 
-            this._prevFrameTex.width = width;
-            this._prevFrameTex.height = height;
+        this._outputTex.width = width;
+        this._outputTex.height = height;
 
-            this._outputTex.width = width;
-            this._outputTex.height = height;
+        this._sourceTex.width = width;
+        this._sourceTex.height = height;
 
-            this._sourceTex.width = width;
-            this._sourceTex.height = height;
-
-            this._prevFrameTex.dirty();
-            this._outputTex.dirty();
-            this._sourceTex.dirty();
-        }
+        this._prevFrameTex.dirty();
+        this._outputTex.dirty();
+        this._sourceTex.dirty();
     },
 
     isFinished: function () {
         return this._frame >= this._haltonSequence.length;
     },
 
-    render: function (renderer) {
+    render: function (renderer, sourceTex, notOutput) {
         var blendPass = this._blendPass;
         if (this._frame === 0) {
             // Direct output
@@ -137,15 +133,17 @@ TemporalSuperSampling.prototype = {
             blendPass.setUniform('weight2', 0.1);
         }
         blendPass.setUniform('texture1', this._prevFrameTex);
-        blendPass.setUniform('texture2', this._sourceTex);
+        blendPass.setUniform('texture2', sourceTex || this._sourceTex);
 
         this._blendFb.attach(this._outputTex);
         this._blendFb.bind(renderer);
         blendPass.render(renderer);
         this._blendFb.unbind(renderer);
 
-        this._outputPass.setUniform('texture', this._outputTex);
-        this._outputPass.render(renderer);
+        if (!notOutput) {
+            this._outputPass.setUniform('texture', this._outputTex);
+            this._outputPass.render(renderer);
+        }
 
         // Swap texture
         var tmp = this._prevFrameTex;
@@ -155,14 +153,14 @@ TemporalSuperSampling.prototype = {
         this._frame++;
     },
 
-    dispose: function (gl) {
-        this._sourceFb.dispose(gl);
-        this._blendFb.dispose(gl);
-        this._prevFrameTex.dispose(gl);
-        this._outputTex.dispose(gl);
-        this._sourceTex.dispose(gl);
-        this._outputPass.dispose(gl);
-        this._blendPass.dispose(gl);
+    dispose: function (renderer) {
+        this._sourceFb.dispose(renderer);
+        this._blendFb.dispose(renderer);
+        this._prevFrameTex.dispose(renderer);
+        this._outputTex.dispose(renderer);
+        this._sourceTex.dispose(renderer);
+        this._outputPass.dispose(renderer);
+        this._blendPass.dispose(renderer);
     }
 };
 

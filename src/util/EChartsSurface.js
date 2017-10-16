@@ -28,9 +28,9 @@ var EChartsSurface = function (chart) {
 
         surface: this,
 
-        dispose: function (gl) {
+        dispose: function (renderer) {
             self.dispose();
-            Texture2D.prototype.dispose.call(this, gl);
+            Texture2D.prototype.dispose.call(this, renderer);
         }
     });
 

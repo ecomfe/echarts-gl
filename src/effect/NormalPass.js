@@ -196,9 +196,9 @@ NormalPass.prototype.renderDebug = function (renderer) {
     this._debugPass.render(renderer);
 };
 
-NormalPass.prototype.dispose = function (gl) {
-    this._depthTex.dispose(gl);
-    this._normalTex.dispose(gl);
+NormalPass.prototype.dispose = function (renderer) {
+    this._depthTex.dispose(renderer);
+    this._normalTex.dispose(renderer);
 }
 
 export default NormalPass;

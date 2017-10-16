@@ -202,9 +202,9 @@ SSAOPass.prototype.setNoiseSize = function (size) {
     this._ssaoPass.setUniform('noiseTexSize', [size, size]);
 };
 
-SSAOPass.prototype.dispose = function (gl) {
-    this._targetTexture.dispose(gl);
-    this._ssaoTexture.dispose(gl);
+SSAOPass.prototype.dispose = function (renderer) {
+    this._targetTexture.dispose(renderer);
+    this._ssaoTexture.dispose(renderer);
 };
 
 export default SSAOPass;

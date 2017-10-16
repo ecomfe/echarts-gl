@@ -459,14 +459,14 @@ EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, 
     this._compositor.render(renderer, framebuffer);
 };
 
-EffectCompositor.prototype.dispose = function (gl) {
-    this._sourceTexture.dispose(gl);
-    this._depthTexture.dispose(gl);
-    this._framebuffer.dispose(gl);
-    this._compositor.dispose(gl);
+EffectCompositor.prototype.dispose = function (renderer) {
+    this._sourceTexture.dispose(renderer);
+    this._depthTexture.dispose(renderer);
+    this._framebuffer.dispose(renderer);
+    this._compositor.dispose(renderer);
 
-    this._normalPass.dispose(gl);
-    this._ssaoPass.dispose(gl);
+    this._normalPass.dispose(renderer);
+    this._ssaoPass.dispose(renderer);
 };
 
 export default EffectCompositor;

@@ -101,10 +101,10 @@ SSRPass.prototype.setParameter = function (name, val) {
     }
 };
 
-SSRPass.prototype.dispose = function (gl) {
-    this._texture1.dispose(gl);
-    this._texture2.dispose(gl);
-    this._frameBuffer.dispose(gl);
+SSRPass.prototype.dispose = function (renderer) {
+    this._texture1.dispose(renderer);
+    this._texture2.dispose(renderer);
+    this._frameBuffer.dispose(renderer);
 };
 
 export default SSRPass;

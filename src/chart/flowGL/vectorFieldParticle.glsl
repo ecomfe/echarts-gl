@@ -129,9 +129,12 @@ uniform sampler2D prevParticleTexture;
 
 uniform float size : 1.0;
 uniform vec4 vp: VIEWPORT;
+uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 
 varying float v_Mag;
 varying vec2 v_Uv;
+
+@import qtek.util.rand
 
 void main()
 {
@@ -144,7 +147,7 @@ void main()
     // PENDING If ignore 0 length vector
     if (p.w > 0.0 && p.z > 1e-5) {
         vec2 dir = normalize(p.xy - p2.xy);
-        vec2 norm = vec2(dir.y / vp.z, -dir.x / vp.w) * sign(position.z) * size / 2.0;
+        vec2 norm = vec2(dir.y / vp.z, -dir.x / vp.w) * sign(position.z) * size;
         if (abs(position.z) == 2.0) {
             gl_Position = vec4(p.xy + norm, 0.0, 1.0);
             v_Uv = p.xy;
@@ -155,6 +158,7 @@ void main()
             v_Mag = p2.z;
             v_Uv = p2.xy;
         }
+        gl_Position = worldViewProjection * gl_Position;
     }
     else {
         gl_Position = vec4(100000.0, 100000.0, 100000.0, 1.0);

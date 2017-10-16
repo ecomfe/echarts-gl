@@ -64,8 +64,8 @@ echarts.extendChartView({
             })
             .during(function () {
                 var timeNow = + (new Date());
-                var dTime = timeNow - time;
-                time = timeNow;
+                var dTime = Math.min(timeNow - time, 20);
+                time = time + dTime;
                 if (self._renderer) {
                     particleSurface.update(self._renderer, dTime / 1000, firstFrame);
                     planeMesh.material.set('diffuseMap', particleSurface.getSurfaceTexture());
@@ -84,6 +84,8 @@ echarts.extendChartView({
         this._particleSurface.setParticleSize(seriesModel.get('particleSize'));
         this._particleSurface.particleSpeedScaling = seriesModel.get('particleSpeed');
         this._particleSurface.motionBlurFactor = 1.0 - Math.pow(0.1, seriesModel.get('particleTrail'));
+
+        this._particleSurface.setAntialising(seriesModel.get('antialising'));
     },
 
     updateLayout: function (seriesModel, ecModel, api) {

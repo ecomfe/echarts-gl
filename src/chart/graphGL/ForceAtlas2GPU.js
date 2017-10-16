@@ -449,27 +449,26 @@ ForceAtlas2GPU.prototype._resize = function (width, height) {
 };
 
 ForceAtlas2GPU.prototype.dispose = function (renderer) {
-    var gl = renderer.gl;
-    this._framebuffer.dispose(gl);
+    this._framebuffer.dispose(renderer);
 
-    this._copyPass.dispose(gl);
-    this._nodeRepulsionPass.dispose(gl);
-    this._positionPass.disable(gl);
-    this._globalSpeedPass.dispose(gl);
+    this._copyPass.dispose(renderer);
+    this._nodeRepulsionPass.dispose(renderer);
+    this._positionPass.disable(renderer);
+    this._globalSpeedPass.dispose(renderer);
 
-    this._edgeForceMesh.material.shader.dispose(gl);
-    this._edgeForceMesh.geometry.dispose(gl);
-    this._weightedSumMesh.material.shader.dispose(gl);
-    this._weightedSumMesh.geometry.dispose(gl);
+    this._edgeForceMesh.material.shader.dispose(renderer);
+    this._edgeForceMesh.geometry.dispose(renderer);
+    this._weightedSumMesh.material.shader.dispose(renderer);
+    this._weightedSumMesh.geometry.dispose(renderer);
 
-    this._positionSourceTex.dispose(gl);
-    this._positionTex.dispose(gl);
-    this._positionPrevTex.dispose(gl);
-    this._forceTex.dispose(gl);
-    this._forcePrevTex.dispose(gl);
-    this._weightedSumTex.dispose(gl);
-    this._globalSpeedTex.disable(gl);
-    this._globalSpeedPrevTex.disable(gl);
+    this._positionSourceTex.dispose(renderer);
+    this._positionTex.dispose(renderer);
+    this._positionPrevTex.dispose(renderer);
+    this._forceTex.dispose(renderer);
+    this._forcePrevTex.dispose(renderer);
+    this._weightedSumTex.dispose(renderer);
+    this._globalSpeedTex.disable(renderer);
+    this._globalSpeedPrevTex.disable(renderer);
 };
 
 echarts.ForceAtlas2GPU = ForceAtlas2GPU;
