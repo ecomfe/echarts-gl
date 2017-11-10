@@ -1,5 +1,3 @@
-
-import echarts from 'echarts/lib/echarts';
 /**
  * @constructor
  * @alias module:echarts-gl/component/mapbox/MapboxLayer
@@ -13,8 +11,9 @@ function MapboxLayer (id, zr) {
     this.dom = document.createElement('div');
     this.dom.style.cssText = 'position:absolute;left:0;right:0;top:0;bottom:0;';
     
+    // FIXME If in module environment.
     if (!mapboxgl) {
-        throw new Error('Mapbox GL library must be included. See https://www.mapbox.com/mapbox-gl-js/api/')
+        throw new Error('Mapbox GL library must be included. See https://www.mapbox.com/mapbox-gl-js/api/');
     }
 
     this._mapbox = new mapboxgl.Map({

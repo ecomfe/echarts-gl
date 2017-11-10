@@ -282,6 +282,7 @@ export default echarts.extendComponentView({
         var viewControlModel = globeModel.getModel('viewControl');
 
         var camera = coordSys.viewGL.camera;
+        var self = this;
 
         function makeAction() {
             return {
@@ -290,7 +291,7 @@ export default echarts.extendComponentView({
                 beta: control.getBeta(),
                 distance: control.getDistance() - coordSys.radius,
                 center: control.getCenter(),
-                from: this.uid,
+                from: self.uid,
                 globeId: globeModel.id
             };
         }
