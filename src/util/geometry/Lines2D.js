@@ -6,7 +6,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 import echarts from 'echarts/lib/echarts';
 import dynamicConvertMixin from './dynamicConvertMixin';
 import glmatrix from 'qtek/src/dep/glmatrix';
@@ -19,10 +19,10 @@ var sampleLinePoints = [[0, 0], [1, 1]];
 /**
  * @constructor
  * @alias module:echarts-gl/util/geometry/LinesGeometry
- * @extends qtek.StaticGeometry
+ * @extends qtek.Geometry
  */
 
-var LinesGeometry = StaticGeometry.extend(function () {
+var LinesGeometry = Geometry.extend(function () {
     return {
 
         segmentScale: 4,
@@ -34,10 +34,10 @@ var LinesGeometry = StaticGeometry.extend(function () {
         useNativeLine: true,
 
         attributes: {
-            position: new StaticGeometry.Attribute('position', 'float', 2, 'POSITION'),
-            normal: new StaticGeometry.Attribute('normal', 'float', 2),
-            offset: new StaticGeometry.Attribute('offset', 'float', 1),
-            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+            position: new Geometry.Attribute('position', 'float', 2, 'POSITION'),
+            normal: new Geometry.Attribute('normal', 'float', 2),
+            offset: new Geometry.Attribute('offset', 'float', 1),
+            color: new Geometry.Attribute('color', 'float', 4, 'COLOR')
         }
     };
 },

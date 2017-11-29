@@ -6,25 +6,25 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 import glmatrix from 'qtek/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 /**
  * @constructor
  * @alias module:echarts-gl/chart/lines3D/CurveTrailGeometry
- * @extends qtek.StaticGeometry
+ * @extends qtek.Geometry
  */
-var CurveTrailGeometry = StaticGeometry.derive(function () {
+var CurveTrailGeometry = Geometry.derive(function () {
     return {
         attributes: {
-            uv: new StaticGeometry.Attribute('offset', 'float', 2),
-            currT: new StaticGeometry.Attribute('offset', 'float', 1),
-            start: new StaticGeometry.Attribute('offset', 'float', 1),
-            prevT: new StaticGeometry.Attribute('offset', 'float', 1),
-            nextT: new StaticGeometry.Attribute('offset', 'float', 1),
-            offset: new StaticGeometry.Attribute('offset', 'float', 1),
-            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+            uv: new Geometry.Attribute('offset', 'float', 2),
+            currT: new Geometry.Attribute('offset', 'float', 1),
+            start: new Geometry.Attribute('offset', 'float', 1),
+            prevT: new Geometry.Attribute('offset', 'float', 1),
+            nextT: new Geometry.Attribute('offset', 'float', 1),
+            offset: new Geometry.Attribute('offset', 'float', 1),
+            color: new Geometry.Attribute('color', 'float', 4, 'COLOR')
         },
         mainAttribute: 'uv',
 

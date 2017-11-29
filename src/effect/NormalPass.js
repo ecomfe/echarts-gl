@@ -6,34 +6,35 @@ import Texture from 'qtek/src/Texture';
 import Shader from 'qtek/src/Shader';
 import FrameBuffer from 'qtek/src/FrameBuffer';
 import Material from 'qtek/src/Material';
-import Shader from 'qtek/src/Shader';
 import Pass from 'qtek/src/compositor/Pass';
 import textureUtil from 'qtek/src/util/texture';
 
 import normalGLSL from '../util/shader/normal.glsl.js';
 Shader.import(normalGLSL);
 
-function attachTextureToSlot(gl, shader, symbol, texture, slot) {
+function attachTextureToSlot(renderer, shader, symbol, texture, slot) {
+    var gl = renderer.gl
     shader.setUniform(gl, '1i', symbol, slot);
 
     gl.activeTexture(gl.TEXTURE0 + slot);
     // Maybe texture is not loaded yet;
     if (texture.isRenderable()) {
-        texture.bind(gl);
+        texture.bind(renderer);
     }
     else {
         // Bind texture to null
-        texture.unbind(gl);
+        texture.unbind(renderer);
     }
 }
 
 // TODO Use globalShader insteadof globalMaterial?
-function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRoughnessMap, normalMaterial) {
+function getBeforeRenderHook (renderer, defaultNormalMap, defaultBumpMap, defaultRoughnessMap, normalMaterial) {
 
     var previousNormalMap;
     var previousBumpMap;
     var previousRoughnessMap;
     var previousRenderable;
+    var gl = renderer.gl;
 
     return function (renderable, prevMaterial, prevShader) {
         // Material not change
@@ -81,13 +82,13 @@ function getBeforeRenderHook (gl, defaultNormalMap, defaultBumpMap, defaultRough
             normalMaterial.shader.setUniform(gl, '1f', 'roughness', roughness);
 
             if (previousNormalMap !== normalMap) {
-                attachTextureToSlot(gl, normalMaterial.shader, 'normalMap', normalMap, 0);
+                attachTextureToSlot(renderer, normalMaterial.shader, 'normalMap', normalMap, 0);
             }
             if (previousBumpMap !== bumpMap && bumpMap) {
-                attachTextureToSlot(gl, normalMaterial.shader, 'bumpMap', bumpMap, 1);
+                attachTextureToSlot(renderer, normalMaterial.shader, 'bumpMap', bumpMap, 1);
             }
             if (previousRoughnessMap !== roughnessMap && roughnessMap) {
-                attachTextureToSlot(gl, normalMaterial.shader, 'roughnessMap', roughnessMap, 2);
+                attachTextureToSlot(renderer, normalMaterial.shader, 'roughnessMap', roughnessMap, 2);
             }
             if (uvRepeat != null) {
                 normalMaterial.shader.setUniform(gl, '2f', 'uvRepeat', uvRepeat);
@@ -179,7 +180,7 @@ NormalPass.prototype.update = function (renderer, scene, camera) {
     };
 
     renderer.beforeRenderObject = getBeforeRenderHook(
-        renderer.gl, this._defaultNormalMap, this._defaultBumpMap, this._defaultRoughessMap, this._normalMaterial
+        renderer, this._defaultNormalMap, this._defaultBumpMap, this._defaultRoughessMap, this._normalMaterial
     );
     this._framebuffer.bind(renderer);
     renderer.gl.clearColor(0, 0, 0, 0);

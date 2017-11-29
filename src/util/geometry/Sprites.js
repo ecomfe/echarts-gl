@@ -5,20 +5,20 @@
  * @author Yi Shen(https://github.com/pissang)
  */
 import echarts from 'echarts/lib/echarts';
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 import dynamicConvertMixin from './dynamicConvertMixin';
 
 var squareTriangles = [
     0, 1, 2, 0, 2, 3
 ];
 
-var SpritesGeometry = StaticGeometry.extend(function () {
+var SpritesGeometry = Geometry.extend(function () {
     return {
         attributes: {
-            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
-            texcoord: new StaticGeometry.Attribute('texcoord', 'float', 2, 'TEXCOORD_0'),
-            offset: new StaticGeometry.Attribute('offset', 'float', 2),
-            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+            position: new Geometry.Attribute('position', 'float', 3, 'POSITION'),
+            texcoord: new Geometry.Attribute('texcoord', 'float', 2, 'TEXCOORD_0'),
+            offset: new Geometry.Attribute('offset', 'float', 2),
+            color: new Geometry.Attribute('color', 'float', 4, 'COLOR')
         }
     };
 }, {

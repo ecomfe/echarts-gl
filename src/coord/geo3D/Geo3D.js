@@ -43,8 +43,9 @@ Geo3D.prototype = {
     containPoint: function () {},
 
     loadGeoJson: function (geoJson, specialAreas, nameMap) {
+        var parseGeoJSON = echarts.parseGeoJSON || echarts.parseGeoJson;
         try {
-            this.regions = geoJson ? echarts.parseGeoJSON(geoJson) : [];
+            this.regions = geoJson ? parseGeoJSON(geoJson) : [];
         }
         catch (e) {
             throw 'Invalid geoJson format\n' + e;

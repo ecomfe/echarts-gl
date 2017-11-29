@@ -5,7 +5,7 @@ import Texture from 'qtek/src/Texture';
 import Shader from 'qtek/src/Shader';
 import Material from 'qtek/src/Material';
 import Node3D from 'qtek/src/Node';
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 import echarts from 'echarts/lib/echarts';
 import Scene from 'qtek/src/Scene';
 import LRUCache from 'zrender/lib/core/LRU';
@@ -157,7 +157,7 @@ graphicGL.Texture = Texture;
 graphicGL.Texture2D = Texture2D;
 
 // Geometries
-graphicGL.Geometry = StaticGeometry;
+graphicGL.Geometry = Geometry;
 graphicGL.SphereGeometry = SphereGeometry;
 graphicGL.PlaneGeometry = PlaneGeometry;
 graphicGL.CubeGeometry = CubeGeometry;

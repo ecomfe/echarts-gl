@@ -8,7 +8,7 @@
 import echarts from 'echarts/lib/echarts';
 import dynamicConvertMixin from './dynamicConvertMixin';
 import trianglesSortMixin from './trianglesSortMixin';
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 
 import glMatrix from 'qtek/src/dep/glmatrix';
 var vec3 = glMatrix.vec3;
@@ -17,18 +17,18 @@ var mat3 = glMatrix.mat3;
 /**
  * @constructor
  * @alias module:echarts-gl/chart/bars/BarsGeometry
- * @extends qtek.StaticGeometry
+ * @extends qtek.Geometry
  */
-var BarsGeometry = StaticGeometry.extend(function () {
+var BarsGeometry = Geometry.extend(function () {
     return {
 
         attributes: {
-            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
-            normal: new StaticGeometry.Attribute('normal', 'float', 3, 'NORMAL'),
-            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR'),
+            position: new Geometry.Attribute('position', 'float', 3, 'POSITION'),
+            normal: new Geometry.Attribute('normal', 'float', 3, 'NORMAL'),
+            color: new Geometry.Attribute('color', 'float', 4, 'COLOR'),
 
-            prevPosition: new StaticGeometry.Attribute('prevPosition', 'float', 3),
-            prevNormal: new StaticGeometry.Attribute('prevNormal', 'float', 3)
+            prevPosition: new Geometry.Attribute('prevPosition', 'float', 3),
+            prevNormal: new Geometry.Attribute('prevNormal', 'float', 3)
         },
 
         dynamic: true,

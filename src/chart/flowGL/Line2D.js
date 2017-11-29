@@ -6,22 +6,22 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 import echarts from 'echarts/lib/echarts';
 
 /**
  * @constructor
  * @alias module:echarts-gl/chart/flowGL/Line2D
- * @extends qtek.StaticGeometry
+ * @extends qtek.Geometry
  */
 
-var LinesGeometry = StaticGeometry.extend(function () {
+var LinesGeometry = Geometry.extend(function () {
     return {
 
         dynamic: true,
 
         attributes: {
-            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION')
+            position: new Geometry.Attribute('position', 'float', 3, 'POSITION')
         }
     };
 },

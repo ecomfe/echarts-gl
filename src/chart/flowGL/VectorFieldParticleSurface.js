@@ -1,5 +1,5 @@
 import Pass from 'qtek/src/compositor/Pass';
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 import Mesh from 'qtek/src/Mesh';
 import Material from 'qtek/src/Material';
 import Shader from 'qtek/src/Shader';
@@ -142,7 +142,7 @@ VectorFieldParticleSurface.prototype = {
                 })
             }),
             mode: Mesh.POINTS,
-            geometry: new StaticGeometry({
+            geometry: new Geometry({
                 dynamic: true,
                 mainAttribute: 'texcoord0'
             })
@@ -386,7 +386,7 @@ VectorFieldParticleSurface.prototype = {
 
     _updateDownsampleTextures: function (renderer, api) {
         var downsampleTextures = this._downsampleTextures;
-        var upScale = Math.floor(Math.log(this._supersampling / api.getDevicePixelRatio()) / Math.log(2));
+        var upScale = Math.max(Math.floor(Math.log(this._supersampling / api.getDevicePixelRatio()) / Math.log(2)), 0);
         var scale = 2;
         var width = this._width * this._supersampling;
         var height = this._height * this._supersampling;

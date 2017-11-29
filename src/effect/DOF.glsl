@@ -42,7 +42,7 @@ void main()
         // Clamp on the near focus plane and far focus plane
         // PENDING
         // Float value can only be [0.0 - 1.0)
-        coc = clamp(coc, 0.0, 0.4) / 0.4000001;
+        coc = clamp(coc, 0.0, 2.0) / 2.00001;
 
         // Near field
         if (dist < lower) {

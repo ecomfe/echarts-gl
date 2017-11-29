@@ -3,7 +3,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 import echarts from 'echarts/lib/echarts';
 import dynamicConvertMixin from './dynamicConvertMixin';
 import glmatrix from 'qtek/src/dep/glmatrix';
@@ -12,10 +12,10 @@ var vec3 = glmatrix.vec3;
 /**
  * @constructor
  * @alias module:echarts-gl/util/geometry/QuadsGeometry
- * @extends qtek.StaticGeometry
+ * @extends qtek.Geometry
  */
 
-var QuadsGeometry = StaticGeometry.extend(function () {
+var QuadsGeometry = Geometry.extend(function () {
     return {
 
         segmentScale: 1,
@@ -26,9 +26,9 @@ var QuadsGeometry = StaticGeometry.extend(function () {
         useNativeLine: true,
 
         attributes: {
-            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
-            normal: new StaticGeometry.Attribute('normal', 'float', 3, 'NORMAL'),
-            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+            position: new Geometry.Attribute('position', 'float', 3, 'POSITION'),
+            normal: new Geometry.Attribute('normal', 'float', 3, 'NORMAL'),
+            color: new Geometry.Attribute('color', 'float', 4, 'COLOR')
         }
     };
 },

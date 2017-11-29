@@ -6,7 +6,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import StaticGeometry from 'qtek/src/StaticGeometry';
+import Geometry from 'qtek/src/Geometry';
 import echarts from 'echarts/lib/echarts';
 import dynamicConvertMixin from './dynamicConvertMixin';
 import glmatrix from 'qtek/src/dep/glmatrix';
@@ -19,10 +19,10 @@ var sampleLinePoints = [[0, 0], [1, 1]];
 /**
  * @constructor
  * @alias module:echarts-gl/util/geometry/LinesGeometry
- * @extends qtek.StaticGeometry
+ * @extends qtek.Geometry
  */
 
-var LinesGeometry = StaticGeometry.extend(function () {
+var LinesGeometry = Geometry.extend(function () {
     return {
 
         segmentScale: 1,
@@ -34,14 +34,14 @@ var LinesGeometry = StaticGeometry.extend(function () {
         useNativeLine: true,
 
         attributes: {
-            position: new StaticGeometry.Attribute('position', 'float', 3, 'POSITION'),
-            positionPrev: new StaticGeometry.Attribute('positionPrev', 'float', 3),
-            positionNext: new StaticGeometry.Attribute('positionNext', 'float', 3),
-            prevPositionPrev: new StaticGeometry.Attribute('prevPositionPrev', 'float', 3),
-            prevPosition: new StaticGeometry.Attribute('prevPosition', 'float', 3),
-            prevPositionNext: new StaticGeometry.Attribute('prevPositionNext', 'float', 3),
-            offset: new StaticGeometry.Attribute('offset', 'float', 1),
-            color: new StaticGeometry.Attribute('color', 'float', 4, 'COLOR')
+            position: new Geometry.Attribute('position', 'float', 3, 'POSITION'),
+            positionPrev: new Geometry.Attribute('positionPrev', 'float', 3),
+            positionNext: new Geometry.Attribute('positionNext', 'float', 3),
+            prevPositionPrev: new Geometry.Attribute('prevPositionPrev', 'float', 3),
+            prevPosition: new Geometry.Attribute('prevPosition', 'float', 3),
+            prevPositionNext: new Geometry.Attribute('prevPositionNext', 'float', 3),
+            offset: new Geometry.Attribute('offset', 'float', 1),
+            color: new Geometry.Attribute('color', 'float', 4, 'COLOR')
         }
     };
 },
