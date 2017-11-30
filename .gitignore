@@ -173,5 +173,5 @@ doc/static
 doc/example/data/raw
 todo
 tmp
-lib
+/lib
 package-lock.json
