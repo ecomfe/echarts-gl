@@ -403,12 +403,8 @@ ForceAtlas2GPU.prototype.getTextureSize = function () {
     };
 };
 
-ForceAtlas2GPU.prototype.isFinished = function (renderer, threshold) {
-    // TODO Safari not support float texture reading
-    var globalSpeedData = this.getTextureData(renderer, 'globalSpeed');
-    // console.log(globalSpeedData[0]);
-    // PENDING
-    return this._inited && globalSpeedData[0] < threshold && this._frame > 10;
+ForceAtlas2GPU.prototype.isFinished = function (maxSteps) {
+    return this._frame > maxSteps;
 };
 
 ForceAtlas2GPU.prototype._swapTexture = function () {

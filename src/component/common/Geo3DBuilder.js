@@ -1,6 +1,5 @@
 import echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
-// import Triangulation from '../../util/Triangulation';
 import earcut from '../../util/earcut';
 import LinesGeo from '../../util/geometry/Lines3D';
 import retrieve from '../../util/retrieve';
@@ -22,12 +21,9 @@ function Geo3DBuilder(api) {
     // Cache triangulation result
     this._triangulationResults = {};
 
-    // this._triangulator = new Triangulation();
-
     this._shadersMap = graphicGL.COMMON_SHADERS.reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
         obj[shaderName].define('fragment', 'DOUBLE_SIDED');
-        // obj[shaderName].define('both', 'WIREFRAME_TRIANGLE');
         return obj;
     }, {});
 

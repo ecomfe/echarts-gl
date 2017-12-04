@@ -398,7 +398,8 @@ echarts.extendChartView({
             this._updatePositionTexture();
 
             api.dispatchAction({
-                type: 'graphGLStartLayout'
+                type: 'graphGLStartLayout',
+                from: this.uid
             });
         }
         else {
@@ -429,6 +430,10 @@ echarts.extendChartView({
     },
 
     startLayout: function (seriesModel, ecModel, api, payload) {
+        if (payload && payload.from != null && payload.from !== this.uid) {
+            return;
+        }
+
         var viewGL = this.viewGL;
         var api = this._api;
         var layoutInstance = this._forceLayoutInstance;
@@ -454,7 +459,7 @@ echarts.extendChartView({
 
         var self = this;
         var layoutId = this._layoutId = globalLayoutId++;
-        var stopThreshold = layoutModel.getShallow('stopThreshold');
+        var maxSteps = layoutModel.getShallow('maxSteps');
         var steps = layoutModel.getShallow('steps');
         var stepsCount = 0;
         var syncStepCount = Math.max(steps * 2, 20);
@@ -462,13 +467,15 @@ echarts.extendChartView({
             if (layoutId !== self._layoutId) {
                 return;
             }
-            if (layoutInstance.isFinished(viewGL.layer.renderer, stopThreshold)) {
+            if (layoutInstance.isFinished(maxSteps)) {
                 api.dispatchAction({
-                    type: 'graphGLStopLayout'
+                    type: 'graphGLStopLayout',
+                    from: self.uid
                 });
                 api.dispatchAction({
                     type: 'graphGLFinishLayout',
-                    points: data.getLayout('points')
+                    points: data.getLayout('points'),
+                    from: self.uid
                 });
                 return;
             }
@@ -503,6 +510,10 @@ echarts.extendChartView({
     },
 
     stopLayout: function (seriesModel, ecModel, api, payload) {
+        if (payload && payload.from != null && payload.from !== this.uid) {
+            return;
+        }
+
         this._layoutId = 0;
         this.groupGL.remove(this._forceEdgesMesh);
         this.groupGL.add(this._edgesMesh);

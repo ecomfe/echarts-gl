@@ -245,8 +245,8 @@ ForceAtlas2.prototype.getNodes = function () {
 ForceAtlas2.prototype.getEdges = function () {
     return this._edges;
 };
-ForceAtlas2.prototype.isFinished = function (threshold) {
-    return this._globalSpeed < threshold && this._frame > 10;
+ForceAtlas2.prototype.isFinished = function (maxSteps) {
+    return this._frame > maxSteps;
 };
 
 ForceAtlas2.prototype.getNodePosition = function (renderer, out) {

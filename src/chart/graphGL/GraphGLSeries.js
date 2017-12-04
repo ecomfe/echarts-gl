@@ -188,8 +188,8 @@ var GraphSeries = echarts.extendSeriesModel({
 
             // barnesHutOptimize
 
-            // Stop threshold, 0 never stop.
-            stopThreshold: 1,
+            // Maxp layout steps.
+            maxSteps: 1000,
 
             repulsionByDegree: true,
             linLogMode: false,
