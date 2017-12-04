@@ -279,6 +279,9 @@ void main()
 
 uniform sampler2D texture;
 uniform sampler2D gBufferTexture1;
+uniform sampler2D gBufferTexture2;
+uniform mat4 projection;
+uniform float depthRange : 0.05;
 
 varying vec2 v_Texcoord;
 
@@ -286,9 +289,17 @@ uniform vec2 textureSize;
 uniform float blurSize : 4.0;
 
 #ifdef BLEND
-// uniform sampler2D ssaoTex;
+    #ifdef SSAOTEX_ENABLED
+uniform sampler2D ssaoTex;
+    #endif
 uniform sampler2D sourceTexture;
 #endif
+
+float getLinearDepth(vec2 coord)
+{
+    float depth = texture2D(gBufferTexture2, coord).r * 2.0 - 1.0;
+    return projection[3][2] / (depth * projection[2][3] - projection[2][2]);
+}
 
 @import qtek.util.rgbm
 
@@ -312,17 +323,25 @@ void main()
     float weightAll = 0.0;
 
     vec3 cN = centerNTexel.rgb * 2.0 - 1.0;
+    float cD = getLinearDepth(v_Texcoord);
     for (int i = 0; i < 13; i++) {
         vec2 coord = clamp((float(i) - 6.0) * off + v_Texcoord, vec2(0.0), vec2(1.0));
-        float w = gaussianKernel[i] * clamp(dot(cN, texture2D(gBufferTexture1, coord).rgb * 2.0 - 1.0), 0.0, 1.0);
+        float w = gaussianKernel[i]
+            * clamp(dot(cN, texture2D(gBufferTexture1, coord).rgb * 2.0 - 1.0), 0.0, 1.0);
+        float d = getLinearDepth(coord);
+        w *= (1.0 - smoothstep(abs(cD - d) / depthRange, 0.0, 1.0));
+
         weightAll += w;
         sum += decodeHDR(texture2D(texture, coord)) * w;
     }
 
 #ifdef BLEND
+    float aoFactor = 1.0;
+    #ifdef SSAOTEX_ENABLED
+    aoFactor = texture2D(ssaoTex, v_Texcoord).r;
+    #endif
     gl_FragColor = encodeHDR(
-        sum / weightAll + decodeHDR(texture2D(sourceTexture, v_Texcoord))
-        // sum / weightAll
+        sum / weightAll * aoFactor + decodeHDR(texture2D(sourceTexture, v_Texcoord))
     );
 #else
     gl_FragColor = encodeHDR(sum / weightAll);

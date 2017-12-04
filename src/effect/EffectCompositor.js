@@ -97,7 +97,7 @@ function EffectCompositor() {
         depthTexture: this._normalPass.getDepthTexture()
     };
     this._ssaoPass = new SSAOPass(gBufferObj);
-    this._ssrPass = new SSRPass(gBufferObj)
+    this._ssrPass = new SSRPass(gBufferObj);
     this._edgePass = new EdgePass(gBufferObj);
 }
 
@@ -434,6 +434,10 @@ EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, 
     if (this._enableSSR) {
         this._ssrPass.update(renderer, camera, sourceTexture, frame);
         targetTexture = this._ssrPass.getTargetTexture();
+
+        this._ssrPass.setSSAOTexture(
+            this._enableSSAO ? this._ssaoPass.getTargetTexture() : null
+        );
     }
     this._sourceNode.texture = targetTexture;
 

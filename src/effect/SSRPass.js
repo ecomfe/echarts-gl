@@ -30,7 +30,10 @@ function SSRPass(opt) {
     this._ssrPass.setUniform('gBufferTexture2', opt.depthTexture);
 
     this._blurPass1.setUniform('gBufferTexture1', opt.normalTexture);
+    this._blurPass1.setUniform('gBufferTexture2', opt.depthTexture);
+    
     this._blurPass2.setUniform('gBufferTexture1', opt.normalTexture);
+    this._blurPass2.setUniform('gBufferTexture2', opt.depthTexture);
 
     this._blurPass2.material.shader.define('fragment', 'VERTICAL');
     this._blurPass2.material.shader.define('fragment', 'BLEND');
@@ -74,6 +77,9 @@ SSRPass.prototype.update = function (renderer, camera, sourceTexture, frame) {
     blurPass2.setUniform('textureSize', textureSize);
     blurPass2.setUniform('sourceTexture', sourceTexture);
 
+    blurPass1.setUniform('projection', camera.projectionMatrix._array);
+    blurPass2.setUniform('projection', camera.projectionMatrix._array);
+
     frameBuffer.attach(texture2);
     frameBuffer.bind(renderer);
     ssrPass.render(renderer);
@@ -98,6 +104,17 @@ SSRPass.prototype.setParameter = function (name, val) {
     }
     else {
         this._ssrPass.setUniform(name, val);
+    }
+};
+
+SSRPass.prototype.setSSAOTexture = function (texture) {
+    var blendPass = this._blurPass2;
+    if (texture) {
+        blendPass.material.shader.enableTexture('ssaoTex');
+        blendPass.material.set('ssaoTex', texture);
+    }
+    else {
+        blendPass.material.shader.disableTexture('ssaoTex');
     }
 };
 
