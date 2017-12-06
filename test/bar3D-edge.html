@@ -14,9 +14,7 @@
         <script src="lib/jquery.min.js"></script>
         <script src="lib/simplex.js"></script>
         <script>
-            var chart = echarts.init(document.getElementById('main'), null, {
-                devicePixelRatio: 1
-            });
+            var chart = echarts.init(document.getElementById('main'));
 
             var noise = new SimplexNoise(Math.random);
             var xData = [];

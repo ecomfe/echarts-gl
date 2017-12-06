@@ -70,9 +70,6 @@ export default {
             color: '#aaa'
         },
 
-        // If enable instancing if it's too much
-        instancing: false,
-
         shading: 'lambert',
 
         light: {
