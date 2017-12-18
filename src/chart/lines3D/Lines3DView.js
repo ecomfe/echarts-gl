@@ -57,8 +57,8 @@ export default echarts.extendChartView({
             this._updateLines(seriesModel, ecModel, api);
 
             var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
-            this._linesMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
-            this._trailMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            this._linesMesh.material[methodName]('fragment', 'SRGB_DECODE');
+            this._trailMesh.material[methodName]('fragment', 'SRGB_DECODE');
         }
 
         var trailMesh = this._trailMesh;

@@ -139,7 +139,7 @@ echarts.extendChartView({
                 }
             }
         }
-        
+
         // Reset
         this._lastMouseOverDataIndex = -1;
     },
@@ -258,7 +258,7 @@ echarts.extendChartView({
             var lineWidth = retrieve.firstNotNull(itemModel.get(lineWidthQuery), 1) * this._api.getDevicePixelRatio();
 
             geometry.addLine(p0, p1, colorArr, lineWidth);
-            
+
             for (var k = 0; k < 4; k++) {
                 this._originalEdgeColors[edge.dataIndex * 4 + k] = colorArr[k];
             }
@@ -439,7 +439,7 @@ echarts.extendChartView({
         var layoutInstance = this._forceLayoutInstance;
         var data = this._model.getData();
         var layoutModel = this._model.getModel('forceAtlas2');
-        
+
         if (!layoutInstance) {
             if (__DEV__) {
                 console.error('None layout don\'t have startLayout action');
@@ -563,7 +563,7 @@ echarts.extendChartView({
         var data = this._model.getData();
 
         this._downplayAll();
-        
+
         var dataIndex = payload.dataIndex;
 
         var graph = data.graph;
@@ -617,7 +617,7 @@ echarts.extendChartView({
         var emphasisColor =  graphicGL.parseColor(itemModel.get('emphasis.lineStyle.color') || itemModel.get('lineStyle.color'));
         var emphasisOpacity = retrieve.firstNotNull(itemModel.get('emphasis.lineStyle.opacity'), itemModel.get('lineStyle.opacity'), 1);
         emphasisColor[3] *= emphasisOpacity;
-        
+
         this._edgesMesh.geometry.setItemColor(this._edgeIndicesMap[dataIndex], emphasisColor);
     },
 
@@ -688,7 +688,7 @@ echarts.extendChartView({
         if (cx > camera.left && cx < camera.right
             && cy < camera.bottom && cy > camera.top
         ) {
-            return;   
+            return;
         }
 
         // Scale a bit

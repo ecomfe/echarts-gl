@@ -261,7 +261,7 @@ export default echarts.extendComponentView({
             earthMaterial.set('wireframeLineColor', color);
         }
         else {
-            earthMaterial.shader.undefine('both', 'WIREFRAME_TRIANGLE');
+            earthMaterial.undefine('both', 'WIREFRAME_TRIANGLE');
         }
     },
 

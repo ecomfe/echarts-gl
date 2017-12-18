@@ -23,7 +23,7 @@ export default echarts.extendChartView({
         if (!coordSys || !coordSys.viewGL) {
             return;
         }
-        
+
         this.groupGL.add(this._geo3DBuilder.rootNode);
         coordSys.viewGL.add(this.groupGL);
 
@@ -78,18 +78,18 @@ export default echarts.extendChartView({
                 this._sceneHelper = null;
             }
             geo3D = map3DModel.getData().getLayout('geo3D');
-            
+
             this._geo3DBuilder.extrudeY = false;
         }
 
         this._geo3DBuilder.update(map3DModel, geo3D, ecModel, api);
-        
+
 
         // Must update after geo3D.viewGL.setPostEffect to determine linear space
         var srgbDefineMethod = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
         this._geo3DBuilder.rootNode.traverse(function (mesh) {
             if (mesh.material) {
-                mesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+                mesh.material[srgbDefineMethod]('fragment', 'SRGB_DECODE');
             }
         });
     },

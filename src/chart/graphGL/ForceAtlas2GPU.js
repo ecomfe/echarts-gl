@@ -452,9 +452,7 @@ ForceAtlas2GPU.prototype.dispose = function (renderer) {
     this._positionPass.disable(renderer);
     this._globalSpeedPass.dispose(renderer);
 
-    this._edgeForceMesh.material.shader.dispose(renderer);
     this._edgeForceMesh.geometry.dispose(renderer);
-    this._weightedSumMesh.material.shader.dispose(renderer);
     this._weightedSumMesh.geometry.dispose(renderer);
 
     this._positionSourceTex.dispose(renderer);

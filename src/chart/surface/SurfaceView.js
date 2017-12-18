@@ -50,7 +50,7 @@ echarts.extendChartView({
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
             var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
-            this._surfaceMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            this._surfaceMesh.material[methodName]('fragment', 'SRGB_DECODE');
         }
 
         var isParametric = seriesModel.get('parametric');
