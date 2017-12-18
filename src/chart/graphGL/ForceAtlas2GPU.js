@@ -251,7 +251,7 @@ ForceAtlas2GPU.prototype.initData = function (nodes, edges) {
     edgeGeometry.dirty();
     weigtedSumGeo.dirty();
 
-    this._nodeRepulsionPass.material.shader.define('fragment', 'NODE_COUNT', nodes.length);
+    this._nodeRepulsionPass.material.define('fragment', 'NODE_COUNT', nodes.length);
     this._nodeRepulsionPass.material.setUniform('textureSize', [textureWidth, textureHeight]);
 
     this._inited = false;
@@ -293,7 +293,7 @@ ForceAtlas2GPU.prototype.step = function (renderer) {
     edgeForceMesh.material.set('preventOverlap', this.preventOverlap);
     edgeForceMesh.material.set('positionTex', this._positionPrevTex);
     renderer.gl.enable(renderer.gl.BLEND);
-    renderer.renderQueue([edgeForceMesh], this._dummyCamera);
+    renderer.renderPass([edgeForceMesh], this._dummyCamera);
 
     // Calc weighted sum.
     this._framebuffer.attach(this._weightedSumTex);
@@ -304,7 +304,7 @@ ForceAtlas2GPU.prototype.step = function (renderer) {
     weightedSumMesh.material.set('positionTex', this._positionPrevTex);
     weightedSumMesh.material.set('forceTex', this._forceTex);
     weightedSumMesh.material.set('forcePrevTex', this._forcePrevTex);
-    renderer.renderQueue([weightedSumMesh], this._dummyCamera);
+    renderer.renderPass([weightedSumMesh], this._dummyCamera);
 
     // Calc global speed.
     this._framebuffer.attach(this._globalSpeedTex);

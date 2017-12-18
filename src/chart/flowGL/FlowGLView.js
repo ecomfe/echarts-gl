@@ -32,14 +32,14 @@ echarts.extendChartView({
                 transparent: true
             })
         });
-        planeMesh.material.shader.enableTexture('diffuseMap');
+        planeMesh.material.enableTexture('diffuseMap');
 
         this.groupGL.add(planeMesh);
 
         this._planeMesh = planeMesh;
-        
+
     },
-    
+
     render: function (seriesModel, ecModel, api) {
         var particleSurface = this._particleSurface;
         // Set particleType before set others.
@@ -51,9 +51,9 @@ echarts.extendChartView({
 
         var particleDensity = retrieve.firstNotNull(seriesModel.get('particleDensity'), 128);
         particleSurface.setParticleDensity(particleDensity, particleDensity);
-        
+
         var planeMesh = this._planeMesh;
-        
+
         var time = +(new Date());
         var self = this;
         var firstFrame = true;
@@ -119,7 +119,7 @@ echarts.extendChartView({
         }
 
         var vectorFieldTexture = this._particleSurface.vectorFieldTexture;
-        
+
         // Half Float needs Uint16Array
         var pixels = vectorFieldTexture.pixels;
         if (!pixels || pixels.length !== gridHeight * gridWidth * 4) {
@@ -328,7 +328,7 @@ echarts.extendChartView({
         return {
             leftTop: newLeftTop,
             rightBottom: newRightBottom,
-            region: region    
+            region: region
         };
     },
 

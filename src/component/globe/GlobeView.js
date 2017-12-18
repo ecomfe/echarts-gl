@@ -18,15 +18,6 @@ export default echarts.extendComponentView({
     init: function (ecModel, api) {
         this.groupGL = new graphicGL.Node();
 
-        var materials = {};
-        graphicGL.COMMON_SHADERS.forEach(function (shading) {
-            materials[shading] = new graphicGL.Material({
-                shader: graphicGL.createShader('ecgl.' + shading)
-            });
-        });
-
-        this._materials = materials;
-
         /**
          * @type {qtek.geometry.Sphere}
          * @private
@@ -93,14 +84,9 @@ export default echarts.extendComponentView({
 
         earthMesh.geometry = this._sphereGeometry;
 
-        if (this._materials[shading]) {
-            earthMesh.material = this._materials[shading];
-        }
-        else {
-            if (__DEV__) {
-                console.warn('Unkown shading ' + shading);
-            }
-            earthMesh.material = this._materials.lambert;
+        var shadingPrefix = 'ecgl.' + shading;
+        if (!earthMesh.material || earthMesh.material.shader.name !== shadingPrefix) {
+            earthMesh.material = graphicGL.createMaterial(shadingPrefix);
         }
 
         graphicGL.setMaterialFromModel(
@@ -138,7 +124,7 @@ export default echarts.extendComponentView({
             bumpTexture.surface.attachToMesh(earthMesh);
         }
 
-        earthMesh.material.shader[globeModel.get('postEffect.enable') ? 'define' : 'undefine']('fragment', 'SRGB_DECODE');
+        earthMesh.material[globeModel.get('postEffect.enable') ? 'define' : 'undefine']('fragment', 'SRGB_DECODE');
 
         this._updateLight(globeModel, api);
 
@@ -205,8 +191,10 @@ export default echarts.extendComponentView({
                     });
                 }
                 var shading = layerModel.get('shading');
+
                 if (shading === 'lambert') {
                     overlayMesh.material = overlayMesh.__lambertMaterial || new graphicGL.Material({
+                        autoUpdateTextureStatus: false,
                         shader: graphicGL.createShader('ecgl.lambert'),
                         transparent: true,
                         depthMask: false
@@ -215,14 +203,15 @@ export default echarts.extendComponentView({
                 }
                 else { // color
                     overlayMesh.material = overlayMesh.__colorMaterial || new graphicGL.Material({
+                        autoUpdateTextureStatus: false,
                         shader: graphicGL.createShader('ecgl.color'),
                         transparent: true,
                         depthMask: false
                     });
                     overlayMesh.__colorMaterial = overlayMesh.material;
                 }
-                // overlay should be transparet if texture is not loaded yet.
-                overlayMesh.material.shader.enableTexture('diffuseMap');
+                // overlay should be transparent if texture is not loaded yet.
+                overlayMesh.material.enableTexture('diffuseMap');
 
                 var distance = layerModel.get('distance');
                 // Based on distance of last layer
@@ -251,8 +240,8 @@ export default echarts.extendComponentView({
         }, this);
 
         var earthMaterial = this._earthMesh.material;
-        earthMaterial.shader.define('fragment', 'LAYER_DIFFUSEMAP_COUNT', layerDiffuseTextures.length);
-        earthMaterial.shader.define('fragment', 'LAYER_EMISSIVEMAP_COUNT', layerEmissiveTextures.length);
+        earthMaterial.define('fragment', 'LAYER_DIFFUSEMAP_COUNT', layerDiffuseTextures.length);
+        earthMaterial.define('fragment', 'LAYER_EMISSIVEMAP_COUNT', layerEmissiveTextures.length);
 
         earthMaterial.set('layerDiffuseMap', layerDiffuseTextures);
         earthMaterial.set('layerDiffuseIntensity', layerDiffuseIntensity);
@@ -261,7 +250,7 @@ export default echarts.extendComponentView({
 
         var debugWireframeModel = globeModel.getModel('debug.wireframe');
         if (debugWireframeModel.get('show')) {
-            earthMaterial.shader.define('both', 'WIREFRAME_TRIANGLE');
+            earthMaterial.define('both', 'WIREFRAME_TRIANGLE');
             var color = graphicGL.parseColor(
                 debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
             );
@@ -348,9 +337,9 @@ export default echarts.extendComponentView({
             geometry.heightSegments = heightSegments;
             geometry.build();
         }
-        
+
         this._doDisplaceVertices(geometry, globe);
-        
+
         if (showDebugWireframe) {
             geometry.generateBarycentric();
         }

@@ -76,7 +76,7 @@ export default echarts.extendComponentView({
         coordSys.viewGL.add(this._groundMesh);
 
         this._updateGroundMesh();
-        
+
         // Update lights
         this._sceneHelper.setScene(coordSys.viewGL.scene);
         this._sceneHelper.updateLight(mapboxModel);
@@ -96,8 +96,8 @@ export default echarts.extendComponentView({
         // FIXME If other series changes coordinate system.
         mapboxModel.coordinateSystem.viewGL.scene.traverse(function (mesh) {
             if (mesh.material) {
-                mesh.material.shader.define('fragment', 'NORMAL_UP_AXIS', 2);
-                mesh.material.shader.define('fragment', 'NORMAL_FRONT_AXIS', 1);
+                mesh.material.define('fragment', 'NORMAL_UP_AXIS', 2);
+                mesh.material.define('fragment', 'NORMAL_FRONT_AXIS', 1);
             }
         });
     },

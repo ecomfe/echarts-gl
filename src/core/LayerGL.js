@@ -25,7 +25,6 @@ import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
 
 // configs for Auto GC for GPU resources
 // PENDING
-var MAX_SHADER_COUNT = 60;
 var MAX_GEOMETRY_COUNT = 20;
 var MAX_TEXTURE_COUNT = 20;
 
@@ -352,13 +351,9 @@ function addToMap(map, target) {
     map[id].count++;
 }
 LayerGL.prototype._trackAndClean = function () {
-    var shadersMap = this._shadersMap = this._shadersMap || {};
     var texturesMap = this._texturesMap = this._texturesMap || {};
     var geometriesMap = this._geometriesMap = this._geometriesMap || {};
 
-    for (var id in shadersMap) {
-        shadersMap[id].count = 0;
-    }
     for (var id in texturesMap) {
         texturesMap[id].count = 0;
     }
@@ -371,9 +366,7 @@ LayerGL.prototype._trackAndClean = function () {
             var renderable = queue[i];
             var geometry = renderable.geometry;
             var material = renderable.material;
-            var shader = material.shader;
             addToMap(geometriesMap, geometry);
-            addToMap(shadersMap, shader);
 
             for (var name in material.uniforms) {
                 var val = material.uniforms[name].value;
@@ -394,8 +387,8 @@ LayerGL.prototype._trackAndClean = function () {
         var viewGL = this.views[i];
         var scene = viewGL.scene;
 
-        trackQueue(scene.opaqueQueue);
-        trackQueue(scene.transparentQueue);
+        trackQueue(scene.opaqueList);
+        trackQueue(scene.transparentList);
 
         for (var k = 0; k < scene.lights.length; k++) {
             // Track AmbientCubemap
@@ -405,7 +398,6 @@ LayerGL.prototype._trackAndClean = function () {
         }
     }
     // Dispose those unsed resources
-    checkAndDispose(this.renderer, shadersMap, MAX_SHADER_COUNT);
     checkAndDispose(this.renderer, texturesMap, MAX_TEXTURE_COUNT);
     checkAndDispose(this.renderer, geometriesMap, MAX_GEOMETRY_COUNT);
 };

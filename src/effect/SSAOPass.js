@@ -76,7 +76,7 @@ function SSAOPass(opt) {
         fragment: Shader.source('ecgl.ssao.blur')
     });
     this._framebuffer = new FrameBuffer();
-    
+
     this._ssaoTexture = new Texture2D();
     this._blurTexture = new Texture2D();
 
@@ -93,11 +93,11 @@ function SSAOPass(opt) {
     }
 
     if (!this._normalTex) {
-        this._ssaoPass.material.shader.disableTexture('normalTex');
-        this._blurPass.material.shader.disableTexture('normalTex');
+        this._ssaoPass.material.disableTexture('normalTex');
+        this._blurPass.material.disableTexture('normalTex');
     }
     if (!this._depthTex) {
-        this._blurPass.material.shader.disableTexture('depthTex');
+        this._blurPass.material.disableTexture('depthTex');
     }
 
     this._blurPass.material.setUniform('normalTex', this._normalTex);
@@ -110,7 +110,7 @@ SSAOPass.prototype.setDepthTexture = function (depthTex) {
 
 SSAOPass.prototype.setNormalTexture = function (normalTex) {
     this._normalTex = normalTex;
-    this._ssaoPass.material.shader[normalTex ? 'enableTexture' : 'disableTexture']('normalTex');
+    this._ssaoPass.material[normalTex ? 'enableTexture' : 'disableTexture']('normalTex');
     // Switch between hemisphere and shere kernel.
     this.setKernelSize(this._kernelSize);
 };
@@ -190,7 +190,7 @@ SSAOPass.prototype.setParameter = function (name, val) {
 
 SSAOPass.prototype.setKernelSize = function (size) {
     this._kernelSize = size;
-    this._ssaoPass.material.shader.define('fragment', 'KERNEL_SIZE', size);
+    this._ssaoPass.material.define('fragment', 'KERNEL_SIZE', size);
     this._kernels = this._kernels || [];
     for (var i = 0; i < 30; i++) {
         this._kernels[i] = generateKernel(size, i * size, !!this._normalTex);

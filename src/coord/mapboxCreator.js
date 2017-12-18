@@ -25,14 +25,14 @@ function updateMapbox(ecModel, api) {
     if (this.model.get('boxHeight') === 'auto') {
         return;
     }
-    
+
     var altitudeDataExtent = [Infinity, -Infinity]
 
     ecModel.eachSeries(function (seriesModel) {
         if (seriesModel.coordinateSystem !== this) {
             return;
         }
-        
+
         // Get altitude data extent.
         var data = seriesModel.getData();
         var altDim = seriesModel.coordDimToDataDim('alt')[0];
@@ -78,9 +78,7 @@ var mapboxCreator = {
             mapboxModel.coordinateSystem = mapboxCoordSys;
             mapboxCoordSys.model = mapboxModel;
 
-            mapboxCoordSys.setCameraOption(
-                mapboxModel.getMapboxCameraOption()
-            );
+            mapboxCoordSys.setCameraOption(mapboxModel.getMapboxCameraOption());
 
             mapboxCoordSys.update = updateMapbox;
         });

@@ -50,7 +50,7 @@ var VectorFieldParticleSurface = function () {
      * @type {Array.<number>}
      */
     this.particleLife = [5, 20];
-    
+
     this._particleType = 'point';
 
     /**
@@ -99,7 +99,7 @@ var VectorFieldParticleSurface = function () {
 
     this._width = 512;
     this._height = 512;
-    
+
     this.init();
 };
 
@@ -136,10 +136,10 @@ VectorFieldParticleSurface.prototype = {
             // Render after last frame full quad
             renderOrder: 10,
             material: new Material({
-                shader: new Shader({
-                    vertex: Shader.source('ecgl.vfParticle.renderPoints.vertex'),
-                    fragment: Shader.source('ecgl.vfParticle.renderPoints.fragment')
-                })
+                shader: new Shader(
+                    Shader.source('ecgl.vfParticle.renderPoints.vertex'),
+                    Shader.source('ecgl.vfParticle.renderPoints.fragment')
+                )
             }),
             mode: Mesh.POINTS,
             geometry: new Geometry({
@@ -151,31 +151,31 @@ VectorFieldParticleSurface.prototype = {
             // Render after last frame full quad
             renderOrder: 10,
             material: new Material({
-                shader: new Shader({
-                    vertex: Shader.source('ecgl.vfParticle.renderLines.vertex'),
-                    fragment: Shader.source('ecgl.vfParticle.renderLines.fragment')
-                })
+                shader: new Shader(
+                    Shader.source('ecgl.vfParticle.renderLines.vertex'),
+                    Shader.source('ecgl.vfParticle.renderLines.fragment')
+                )
             }),
             geometry: new Line2DGeometry(),
             culling: false
         });
         var lastFrameFullQuad = new Mesh({
             material: new Material({
-                shader: new Shader({
-                    vertex: Shader.source('ecgl.color.vertex'),
-                    fragment: Shader.source('ecgl.color.fragment')
-                })
+                shader: new Shader(
+                    Shader.source('ecgl.color.vertex'),
+                    Shader.source('ecgl.color.fragment')
+                )
                 // DO NOT BLEND Blend will multiply alpha
                 // transparent: true
             }),
             geometry: new PlaneGeometry()
         });
-        lastFrameFullQuad.material.shader.enableTexture('diffuseMap');
+        lastFrameFullQuad.material.enableTexture('diffuseMap');
 
         this._particlePointsMesh = particlePointsMesh;
         this._particleLinesMesh = particleLinesMesh;
         this._lastFrameFullQuadMesh = lastFrameFullQuad;
-        
+
         this._camera = new OrthoCamera();
         this._thisFrameTexture = new Texture2D();
         this._lastFrameTexture = new Texture2D();
@@ -282,7 +282,7 @@ VectorFieldParticleSurface.prototype = {
         lastFrameFullQuad.material.set('color', [1, 1, 1, this.motionBlurFactor]);
 
         this._camera.update(true);
-        renderer.renderQueue([lastFrameFullQuad, particleMesh], this._camera);
+        renderer.renderPass([lastFrameFullQuad, particleMesh], this._camera);
         frameBuffer.unbind(renderer);
 
         this._downsample(renderer);
@@ -336,7 +336,7 @@ VectorFieldParticleSurface.prototype = {
     setParticleSize: function (size) {
         var particleMesh = this._getParticleMesh();
         if (size <= 2) {
-            particleMesh.material.shader.disableTexture('spriteTexture');
+            particleMesh.material.disableTexture('spriteTexture');
             particleMesh.material.transparent = false;
             return;
         }
@@ -348,7 +348,7 @@ VectorFieldParticleSurface.prototype = {
             this._spriteTexture.dirty();
         }
         particleMesh.material.transparent = true;
-        particleMesh.material.shader.enableTexture('spriteTexture');
+        particleMesh.material.enableTexture('spriteTexture');
         particleMesh.material.set('spriteTexture', this._spriteTexture);
 
         this._particleSize = size;
@@ -356,7 +356,7 @@ VectorFieldParticleSurface.prototype = {
 
     setGradientTexture: function (gradientTexture) {
         var material = this._getParticleMesh().material;
-        material.shader[gradientTexture ? 'enableTexture' : 'disableTexture']('gradientTexture');
+        material[gradientTexture ? 'enableTexture' : 'disableTexture']('gradientTexture');
         material.setUniform('gradientTexture', gradientTexture);
     },
 

@@ -23,7 +23,6 @@ function Geo3DBuilder(api) {
 
     this._shadersMap = graphicGL.COMMON_SHADERS.reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
-        obj[shaderName].define('fragment', 'DOUBLE_SIDED');
         return obj;
     }, {});
 
@@ -79,7 +78,7 @@ Geo3DBuilder.prototype = {
         this._prepareMesh(componentModel, geo3D, shader, api);
 
         this.rootNode.updateWorldTransform();
-        
+
         this._updateRegionMesh(componentModel, geo3D, shader, api);
 
         this._updateGroundPlane(componentModel, geo3D, api);
@@ -192,7 +191,7 @@ Geo3DBuilder.prototype = {
             borderColor[3] *= opacity;
 
             var isTransparent = color[3] < 0.99;
-            
+
             polygonMesh.material.set('color', [1,1,1,1]);
             hasTranparentRegion = hasTranparentRegion || isTransparent;
 
@@ -257,7 +256,7 @@ Geo3DBuilder.prototype = {
 
             var setWireframe = function (mesh) {
                 mesh.geometry.generateBarycentric();
-                mesh.material.shader.define('both', 'WIREFRAME_TRIANGLE');
+                mesh.material.define('both', 'WIREFRAME_TRIANGLE');
                 mesh.material.set('wireframeLineColor', color);
                 mesh.material.set('wireframeLineWidth', width);
             }
@@ -280,7 +279,7 @@ Geo3DBuilder.prototype = {
         if (dataIndex !== this._lastHoverDataIndex) {
             this.downplay(this._lastHoverDataIndex);
             this.highlight(dataIndex);
-            
+
         }
         this._lastHoverDataIndex = dataIndex;
         this._polygonMesh.dataIndex = dataIndex;
@@ -356,7 +355,7 @@ Geo3DBuilder.prototype = {
         }
 
         var polygonMesh = createPolygonMesh();
-        
+
         var linesMesh = new graphicGL.Mesh({
             material: new graphicGL.Material({
                 shader: this._linesShader
@@ -371,7 +370,8 @@ Geo3DBuilder.prototype = {
         this.rootNode.add(polygonMesh);
         this.rootNode.add(linesMesh);
 
-        polygonMesh.material.shader.define('both', 'VERTEX_COLOR');
+        polygonMesh.material.define('both', 'VERTEX_COLOR');
+        polygonMesh.material.define('fragment', 'DOUBLE_SIDED');
 
         this._polygonMesh = polygonMesh;
         this._linesMesh = linesMesh;

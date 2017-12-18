@@ -182,10 +182,10 @@ SceneHelper.prototype = {
                 && !(environmentUrl.match && environmentUrl.match(/.hdr$/))
             ) {
                 var srgbDefineMethod = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
-                this._skybox.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+                this._skybox.material[srgbDefineMethod]('fragment', 'SRGB_DECODE');
             }
             else {
-                this._skybox.material.shader.undefine('fragment', 'SRGB_DECODE');
+                this._skybox.material.undefine('fragment', 'SRGB_DECODE');
             }
             // var ambientCubemapUrl = environmentUrl === 'auto'
             //     ? componentModel.get('light.ambientCubemap.texture')

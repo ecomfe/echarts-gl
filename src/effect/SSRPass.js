@@ -31,12 +31,12 @@ function SSRPass(opt) {
 
     this._blurPass1.setUniform('gBufferTexture1', opt.normalTexture);
     this._blurPass1.setUniform('gBufferTexture2', opt.depthTexture);
-    
+
     this._blurPass2.setUniform('gBufferTexture1', opt.normalTexture);
     this._blurPass2.setUniform('gBufferTexture2', opt.depthTexture);
 
-    this._blurPass2.material.shader.define('fragment', 'VERTICAL');
-    this._blurPass2.material.shader.define('fragment', 'BLEND');
+    this._blurPass2.material.define('fragment', 'VERTICAL');
+    this._blurPass2.material.define('fragment', 'BLEND');
 
     this._texture1 = new Texture2D({
         type: Texture.HALF_FLOAT
@@ -100,7 +100,7 @@ SSRPass.prototype.getTargetTexture = function () {
 
 SSRPass.prototype.setParameter = function (name, val) {
     if (name === 'maxIteration') {
-        this._ssrPass.material.shader.define('fragment', 'MAX_ITERATION', val);
+        this._ssrPass.material.define('fragment', 'MAX_ITERATION', val);
     }
     else {
         this._ssrPass.setUniform(name, val);
@@ -110,11 +110,11 @@ SSRPass.prototype.setParameter = function (name, val) {
 SSRPass.prototype.setSSAOTexture = function (texture) {
     var blendPass = this._blurPass2;
     if (texture) {
-        blendPass.material.shader.enableTexture('ssaoTex');
+        blendPass.material.enableTexture('ssaoTex');
         blendPass.material.set('ssaoTex', texture);
     }
     else {
-        blendPass.material.shader.disableTexture('ssaoTex');
+        blendPass.material.disableTexture('ssaoTex');
     }
 };
 

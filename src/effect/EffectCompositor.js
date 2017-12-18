@@ -283,14 +283,14 @@ EffectCompositor.prototype.disableDOF = function () {
  * Enable color correction
  */
 EffectCompositor.prototype.enableColorCorrection = function () {
-    this._compositeNode.shaderDefine('COLOR_CORRECTION');
+    this._compositeNode.define('COLOR_CORRECTION');
     this._enableColorCorrection = true;
 };
 /**
  * Disable color correction
  */
 EffectCompositor.prototype.disableColorCorrection = function () {
-    this._compositeNode.shaderUndefine('COLOR_CORRECTION');
+    this._compositeNode.undefine('COLOR_CORRECTION');
     this._enableColorCorrection = false;
 };
 
@@ -360,7 +360,7 @@ EffectCompositor.prototype.setDOFParameter = function (name, value) {
             })[value] || 8;
             this._dofBlurKernelSize = kernelSize;
             for (var i = 0; i < this._dofBlurNodes.length; i++) {
-                this._dofBlurNodes[i].shaderDefine('POISSON_KERNEL_SIZE', kernelSize);
+                this._dofBlurNodes[i].pass.material.define('POISSON_KERNEL_SIZE', kernelSize);
             }
             this._dofBlurKernel = new Float32Array(kernelSize * 2);
             break;

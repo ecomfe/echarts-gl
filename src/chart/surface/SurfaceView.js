@@ -19,17 +19,6 @@ echarts.extendChartView({
     init: function (ecModel, api) {
 
         this.groupGL = new graphicGL.Node();
-
-        var materials = {};
-        graphicGL.COMMON_SHADERS.forEach(function (shading) {
-            materials[shading] = new graphicGL.Material({
-                shader: graphicGL.createShader('ecgl.' + shading)
-            });
-            materials[shading].shader.define('both', 'VERTEX_COLOR');
-            materials[shading].shader.define('fragment', 'DOUBLE_SIDED');
-        });
-
-        this._materials = materials;
     },
 
     render: function (seriesModel, ecModel, api) {
@@ -49,14 +38,9 @@ echarts.extendChartView({
         var shading = seriesModel.get('shading');
         var data = seriesModel.getData();
 
-        if (this._materials[shading]) {
-            this._surfaceMesh.material = this._materials[shading];
-        }
-        else {
-            if (__DEV__) {
-                console.error('Unkown shading %s', shading);
-            }
-            this._surfaceMesh.material = this._materials.lambert;
+        var shadingPrefix = 'ecgl.' + shading;
+        if (!this._surfaceMesh.material || this._surfaceMesh.material.shader.name !== shadingPrefix) {
+            this._surfaceMesh.material = graphicGL.createMaterial(shadingPrefix, ['VERTEX_COLOR', 'DOUBLE_SIDED']);
         }
 
         graphicGL.setMaterialFromModel(
@@ -80,12 +64,12 @@ echarts.extendChartView({
 
         var material = this._surfaceMesh.material;
         if (showWireframe) {
-            material.shader.define('WIREFRAME_QUAD');
+            material.define('WIREFRAME_QUAD');
             material.set('wireframeLineWidth', wireframeLineWidth);
             material.set('wireframeLineColor', graphicGL.parseColor(wireframeModel.get('lineStyle.color')));
         }
         else {
-            material.shader.undefine('WIREFRAME_QUAD');
+            material.undefine('WIREFRAME_QUAD');
         }
 
         this._initHandler(seriesModel, api);
@@ -110,10 +94,7 @@ echarts.extendChartView({
                 sortTriangles: true
             }),
             shadowDepthMaterial: new graphicGL.Material({
-                shader: new graphicGL.Shader({
-                    vertex: graphicGL.Shader.source('ecgl.sm.depth.vertex'),
-                    fragment: graphicGL.Shader.source('ecgl.sm.depth.fragment')
-                })
+                shader: new graphicGL.Shader(graphicGL.Shader.source('ecgl.sm.depth.vertex'), graphicGL.Shader.source('ecgl.sm.depth.fragment'))
             }),
             culling: false,
             // Render after axes

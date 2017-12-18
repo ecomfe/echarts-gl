@@ -260,7 +260,6 @@ function forceAtlas2Worker() {
         this.barnesHutTheta = 1.5;
 
         // Force Atlas2 Configs
-        // http://webatlas.fr/tempshare/ForceAtlas2_Paper.pdf
         this.repulsionByDegree = true;
 
         this.linLogMode = false;

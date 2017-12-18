@@ -96,7 +96,7 @@ PointsBuilder.prototype = {
                 shadowColor: 'transparent',
                 minMargin: Math.min(symbolSize[0] / 2, 10)
             }, this._spriteImageCanvas);
-            
+
 
             spriteUtil.createSDFFromCanvas(
                 this._spriteImageCanvas, Math.min(this._spriteImageCanvas.width, 32), SDF_RANGE,
@@ -196,7 +196,7 @@ PointsBuilder.prototype = {
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
             var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
-            this._mesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            this._mesh.material[methodName]('fragment', 'SRGB_DECODE');
         }
 
         this._updateHandler(seriesModel, ecModel, api);
@@ -207,7 +207,7 @@ PointsBuilder.prototype = {
             var idx3 = dataIndex * 3;
             return [positionArr[idx3], positionArr[idx3 + 1], positionArr[idx3 + 2]];
         };
-            
+
         this._labelsBuilder.getLabelDistance = function (dataIndex, positionDesc, distance) {
             var size = geometry.attributes.size.get(dataIndex) / pointSizeScale;
             return size / 2 + distance;
@@ -289,7 +289,7 @@ PointsBuilder.prototype = {
         if (!this._mesh) {
             return;
         }
-        
+
         var worldViewProjection = new Matrix4();
         Matrix4.mul(worldViewProjection, camera.viewMatrix, this._mesh.worldTransform);
         Matrix4.mul(worldViewProjection, camera.projectionMatrix, worldViewProjection);
@@ -393,7 +393,7 @@ PointsBuilder.prototype = {
         if (texture) {
             mesh.material.set('positionTexture', texture);
         }
-        mesh.material.shader[
+        mesh.material[
             texture ? 'enableTexture' : 'disableTexture'
         ]('positionTexture');
     },

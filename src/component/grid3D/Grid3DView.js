@@ -62,8 +62,8 @@ export default echarts.extendComponentView({
             depthMask: false,
             transparent: true
         });
-        quadsMaterial.shader.define('fragment', 'DOUBLE_SIDED');
-        quadsMaterial.shader.define('both', 'VERTEX_COLOR');
+        quadsMaterial.define('fragment', 'DOUBLE_SIDED');
+        quadsMaterial.define('both', 'VERTEX_COLOR');
 
         this.groupGL = new graphicGL.Node();
 
@@ -101,7 +101,8 @@ export default echarts.extendComponentView({
             material: linesMaterial,
             castShadow: false,
             // PENDING
-            ignorePicking: true, renderOrder: 3
+            ignorePicking: true,
+            renderOrder: 3
         });
         this.groupGL.add(this._axisPointerLineMesh);
 

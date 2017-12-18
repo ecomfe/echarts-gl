@@ -54,7 +54,7 @@ export default echarts.extendChartView({
             coordSys.viewGL.add(this.groupGL);
             // TODO
             var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
-            this._line3DMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            this._line3DMesh.material[methodName]('fragment', 'SRGB_DECODE');
         }
         this._doRender(seriesModel, api);
 
@@ -127,7 +127,7 @@ export default echarts.extendChartView({
         if (debugWireframeModel.get('show')) {
             lineMesh.geometry.createAttribute('barycentric', 'float', 3);
             lineMesh.geometry.generateBarycentric();
-            lineMesh.material.shader.define('both', 'WIREFRAME_TRIANGLE');
+            lineMesh.material('both', 'WIREFRAME_TRIANGLE');
             lineMesh.material.set(
                 'wireframeLineColor', graphicGL.parseColor(
                     debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
@@ -140,7 +140,7 @@ export default echarts.extendChartView({
             );
         }
         else {
-            lineMesh.material.shader.undefine('both', 'WIREFRAME_TRIANGLE');
+            lineMesh.material('both', 'WIREFRAME_TRIANGLE');
         }
 
         this._points = points;

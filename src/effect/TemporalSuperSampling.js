@@ -29,8 +29,8 @@ function TemporalSuperSampling (frames) {
     var blendPass = this._blendPass = new Pass({
         fragment: Shader.source('qtek.compositor.blend')
     });
-    blendPass.material.shader.disableTexturesAll();
-    blendPass.material.shader.enableTexture(['texture1', 'texture2']);
+    blendPass.material.disableTexturesAll();
+    blendPass.material.enableTexture(['texture1', 'texture2']);
 
     this._blendFb = new FrameBuffer({
         depthBuffer: false
@@ -41,7 +41,7 @@ function TemporalSuperSampling (frames) {
         // TODO, alpha is premultiplied?
         blendWithPrevious: true
     });
-    this._outputPass.material.shader.define('fragment', 'OUTPUT_ALPHA');
+    this._outputPass.material.define('fragment', 'OUTPUT_ALPHA');
     this._outputPass.material.blend = function (_gl) {
         // FIXME.
         // Output is premultiplied alpha when BLEND is enabled ?

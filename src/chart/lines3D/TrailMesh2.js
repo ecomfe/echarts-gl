@@ -16,10 +16,10 @@ graphicGL.Shader.import(trail2GLSL);
 export default graphicGL.Mesh.extend(function () {
 
     var material = new graphicGL.Material({
-        shader: new graphicGL.Shader({
-            vertex: graphicGL.Shader.source('ecgl.trail2.vertex'),
-            fragment: graphicGL.Shader.source('ecgl.trail2.fragment')
-        }),
+        shader: new graphicGL.Shader(
+            graphicGL.Shader.source('ecgl.trail2.vertex'),
+            graphicGL.Shader.source('ecgl.trail2.fragment')
+        ),
         transparent: true,
         depthMask: false
     });
@@ -61,7 +61,7 @@ export default graphicGL.Mesh.extend(function () {
             ? this.material.set('speed', speed / 1000)
             : this.material.set('period', period);
 
-        this.material.shader[useConstantSpeed ? 'define' : 'undefine']('vertex', 'CONSTANT_SPEED');
+        this.material[useConstantSpeed ? 'define' : 'undefine']('vertex', 'CONSTANT_SPEED');
 
         var isPolyline = seriesModel.get('polyline');
 
@@ -95,7 +95,7 @@ export default graphicGL.Mesh.extend(function () {
         var vertexOffset = 0;
 
         var maxDistance = 0;
-        
+
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
             var opacity = hasEffectOpacity ? effectOpacity : data.getItemVisual(idx, 'opacity');

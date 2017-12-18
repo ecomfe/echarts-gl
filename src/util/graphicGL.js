@@ -127,10 +127,10 @@ Material.prototype.setTextureImage = function (textureName, imgValue, api, textu
     var material = this;
     var texture;
     // disableTexture first
-    material.shader.disableTexture(textureName);
+    material.disableTexture(textureName);
     if (!isValueNone(imgValue)) {
         texture = graphicGL.loadTexture(imgValue, api, textureOpts, function (texture) {
-            material.shader.enableTexture(textureName);
+            material.enableTexture(textureName);
             zr && zr.refresh();
         });
         // Set texture immediately for other code to verify if have this texture.
@@ -493,11 +493,25 @@ graphicGL.createShader = function (prefix) {
     if (!fragmentShaderStr) {
         console.error('Fragment shader of \'%s\' not exits', prefix);
     }
-    return new Shader({
-        name: prefix,
-        vertex: vertexShaderStr,
-        fragment: fragmentShaderStr
+    var shader = new Shader(vertexShaderStr, fragmentShaderStr);
+    shader.name = prefix;
+    return shader;
+};
+
+graphicGL.createMaterial = function (prefix, defines) {
+    if (!(defines instanceof Array)) {
+        defines = [defines];
+    }
+    var shader = graphicGL.createShader(prefix);
+    var material = new Material({
+        shader: shader
     });
+    defines.forEach(function (defineName) {
+        if (typeof defineName === 'string') {
+            material.define(defineName);
+        }
+    });
+    return material;
 };
 /**
  * Set material from model.
@@ -506,6 +520,8 @@ graphicGL.createShader = function (prefix) {
  * @param {module:echarts/ExtensionAPI} api
  */
 graphicGL.setMaterialFromModel = function (shading, material, model, api) {
+    material.autoUpdateTextureStatus = false;
+
     var materialModel = model.getModel(shading + 'Material');
     var detailTexture = materialModel.get('detailTexture');
     var uvRepeat = retrieve.firstNotNull(materialModel.get('textureTiling'), 1.0);
@@ -609,10 +625,10 @@ graphicGL.updateVertexAnimation = function (
     // Only animate when bar count are not changed
     && previousMesh.geometry.vertexCount === currentMesh.geometry.vertexCount
     ) {
-        currentMesh.material.shader.define('vertex', 'VERTEX_ANIMATION');
+        currentMesh.material.define('vertex', 'VERTEX_ANIMATION');
         currentMesh.ignorePreZ = true;
         if (shadowDepthMaterial) {
-            shadowDepthMaterial.shader.define('vertex', 'VERTEX_ANIMATION');
+            shadowDepthMaterial.define('vertex', 'VERTEX_ANIMATION');
         }
         for (var i = 0; i < mappingAttributes.length; i++) {
             currentMesh.geometry.attributes[mappingAttributes[i][0]].value =
@@ -634,17 +650,17 @@ graphicGL.updateVertexAnimation = function (
             })
             .done(function () {
                 currentMesh.ignorePreZ = false;
-                currentMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
+                currentMesh.material.undefine('vertex', 'VERTEX_ANIMATION');
                 if (shadowDepthMaterial) {
-                    shadowDepthMaterial.shader.undefine('vertex', 'VERTEX_ANIMATION');
+                    shadowDepthMaterial.undefine('vertex', 'VERTEX_ANIMATION');
                 }
             })
             .start(easing);
     }
     else {
-        currentMesh.material.shader.undefine('vertex', 'VERTEX_ANIMATION');
+        currentMesh.material.undefine('vertex', 'VERTEX_ANIMATION');
         if (shadowDepthMaterial) {
-            shadowDepthMaterial.shader.undefine('vertex', 'VERTEX_ANIMATION');
+            shadowDepthMaterial.undefine('vertex', 'VERTEX_ANIMATION');
         }
     }
 };

@@ -63,7 +63,7 @@ export default echarts.extendComponentView({
         var srgbDefineMethod = geo3D.viewGL.isLinearSpace() ? 'define' : 'undefine';
         this._geo3DBuilder.rootNode.traverse(function (mesh) {
             if (mesh.material) {
-                mesh.material.shader[srgbDefineMethod]('fragment', 'SRGB_DECODE');
+                mesh.material[srgbDefineMethod]('fragment', 'SRGB_DECODE');
             }
         });
 

@@ -172,8 +172,8 @@ ViewGL.prototype.prepareRender = function () {
 
     this._needsSortProgressively = false;
     // If has any transparent mesh needs sort triangles progressively.
-    for (var i = 0; i < this.scene.transparentQueue.length; i++) {
-        var renderable = this.scene.transparentQueue[i];
+    for (var i = 0; i < this.scene.transparentList.length; i++) {
+        var renderable = this.scene.transparentList[i];
         var geometry = renderable.geometry;
         if (geometry.needsSortVerticesProgressively && geometry.needsSortVerticesProgressively()) {
             this._needsSortProgressively = true;
@@ -292,8 +292,8 @@ ViewGL.prototype._updateTransparent = function (renderer, scene, camera, frame) 
     var cameraWorldPosition = camera.getWorldPosition();
 
     // Sort transparent object.
-    for (var i = 0; i < scene.transparentQueue.length; i++) {
-        var renderable = scene.transparentQueue[i];
+    for (var i = 0; i < scene.transparentList.length; i++) {
+        var renderable = scene.transparentList[i];
         var geometry = renderable.geometry;
         Matrix4.invert(invWorldTransform, renderable.worldTransform);
         Vector3.transformMat4(v3, cameraWorldPosition, invWorldTransform);
@@ -312,11 +312,11 @@ ViewGL.prototype._updateSSAO = function (renderer, scene, camera, frame) {
         this._compositor.updateSSAO(renderer, scene, camera, this._temporalSS.getFrame());
     }
 
-    for (var i = 0; i < scene.opaqueQueue.length; i++) {
-        var renderable = scene.opaqueQueue[i];
+    for (var i = 0; i < scene.opaqueList.length; i++) {
+        var renderable = scene.opaqueList[i];
         // PENDING
         if (renderable.renderNormal) {
-            renderable.material.shader[ifEnableSSAO ? 'enableTexture' : 'disableTexture']('ssaoMap');
+            renderable.material[ifEnableSSAO ? 'enableTexture' : 'disableTexture']('ssaoMap');
         }
         if (ifEnableSSAO) {
             renderable.material.set('ssaoMap', this._compositor.getSSAOTexture());
@@ -326,11 +326,11 @@ ViewGL.prototype._updateSSAO = function (renderer, scene, camera, frame) {
 
 ViewGL.prototype._updateShadowPCFKernel = function (frame) {
     var pcfKernel = this._pcfKernels[frame % this._pcfKernels.length];
-    var opaqueQueue = this.scene.opaqueQueue;
-    for (var i = 0; i < opaqueQueue.length; i++) {
-        if (opaqueQueue[i].receiveShadow) {
-            opaqueQueue[i].material.set('pcfKernel', pcfKernel);
-            opaqueQueue[i].material.shader.define('fragment', 'PCF_KERNEL_SIZE', pcfKernel.length / 2);
+    var opaqueList = this.scene.opaqueList;
+    for (var i = 0; i < opaqueList.length; i++) {
+        if (opaqueList[i].receiveShadow) {
+            opaqueList[i].material.set('pcfKernel', pcfKernel);
+            opaqueList[i].material.define('fragment', 'PCF_KERNEL_SIZE', pcfKernel.length / 2);
         }
     }
 };
@@ -382,7 +382,7 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     ['brightness', 'contrast', 'saturation'].forEach(function (name) {
         compositor.setColorCorrection(name, colorCorrModel.get(name));
     });
-    
+
 };
 
 ViewGL.prototype.setDOFFocusOnPoint = function (depth) {

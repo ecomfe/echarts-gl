@@ -7,12 +7,6 @@ import LabelsBuilder from '../../component/common/LabelsBuilder';
 import glmatrix from 'qtek/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
-function getShader(shading) {
-    var shader = graphicGL.createShader('ecgl.' + shading);
-    shader.define('both', 'VERTEX_COLOR');
-    return shader;
-}
-
 export default echarts.extendChartView({
 
     type: 'bar3D',
@@ -22,15 +16,6 @@ export default echarts.extendChartView({
     init: function (ecModel, api) {
 
         this.groupGL = new graphicGL.Node();
-
-        var materials = {};
-        graphicGL.COMMON_SHADERS.forEach(function (shading) {
-            materials[shading] = new graphicGL.Material({
-                shader: getShader(shading)
-            });
-        });
-
-        this._materials = materials;
 
         this._api = api;
 
@@ -64,10 +49,10 @@ export default echarts.extendChartView({
             this._barMesh = new graphicGL.Mesh({
                 geometry: new BarsGeometry(),
                 shadowDepthMaterial: new graphicGL.Material({
-                    shader: new graphicGL.Shader({
-                        vertex: graphicGL.Shader.source('ecgl.sm.depth.vertex'),
-                        fragment: graphicGL.Shader.source('ecgl.sm.depth.fragment')
-                    })
+                    shader: new graphicGL.Shader(
+                        graphicGL.Shader.source('ecgl.sm.depth.vertex'),
+                        graphicGL.Shader.source('ecgl.sm.depth.fragment')
+                    )
                 }),
                 // Only cartesian3D enable culling
                 // FIXME Performance
@@ -89,7 +74,7 @@ export default echarts.extendChartView({
             coordSys.viewGL.add(this.groupGL);
 
             var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
-            this._barMesh.material.shader[methodName]('fragment', 'SRGB_DECODE');
+            this._barMesh.material[methodName]('fragment', 'SRGB_DECODE');
         }
 
         this._data = seriesModel.getData();
@@ -118,15 +103,11 @@ export default echarts.extendChartView({
         var self = this;
         var barMesh = this._barMesh;
 
-        if (this._materials[shading]) {
-            barMesh.material = this._materials[shading];
+        var shadingPrefix = 'ecgl.' + shading;
+        if (!barMesh.material || barMesh.material.shader.name !== shadingPrefix) {
+            barMesh.material = graphicGL.createMaterial(shadingPrefix, ['VERTEX_COLOR']);
         }
-        else {
-            if (__DEV__) {
-                console.warn('Unkown shading ' + shading);
-            }
-            barMesh.material = this._materials.lambert;
-        }
+
         graphicGL.setMaterialFromModel(
             shading, barMesh.material, seriesModel, api
         );
