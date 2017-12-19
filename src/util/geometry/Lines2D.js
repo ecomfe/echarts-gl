@@ -155,15 +155,37 @@ var LinesGeometry = Geometry.extend(function () {
         return this.getPolylineTriangleCount(sampleLinePoints);
     },
 
+    /**
+     * Get how many vertices will polyline take.
+     * @type {number|Array} points Can be a 1d/2d list of points, or a number of points amount.
+     * @return {number}
+     */
     getPolylineVertexCount: function (points) {
-        var is2DArray = typeof points[0] !== 'number';
-        var pointsLen = is2DArray ? points.length : (points.length / 2);
+        var pointsLen;
+        if (typeof points === 'number') {
+            pointsLen = points;
+        }
+        else {
+            var is2DArray = typeof points[0] !== 'number';
+            pointsLen = is2DArray ? points.length : (points.length / 2);
+        }
         return !this.useNativeLine ? ((pointsLen - 1) * 2 + 2) : (pointsLen - 1) * 2;
     },
 
+    /**
+     * Get how many triangles will polyline take.
+     * @type {number|Array} points Can be a 1d/2d list of points, or a number of points amount.
+     * @return {number}
+     */
     getPolylineTriangleCount: function (points) {
-        var is2DArray = typeof points[0] !== 'number';
-        var pointsLen = is2DArray ? points.length : (points.length / 2);
+        var pointsLen;
+        if (typeof points === 'number') {
+            pointsLen = points;
+        }
+        else {
+            var is2DArray = typeof points[0] !== 'number';
+            pointsLen = is2DArray ? points.length : (points.length / 2);
+        }
         return !this.useNativeLine ? (pointsLen - 1) * 2 : 0;
     },
 
@@ -238,7 +260,7 @@ var LinesGeometry = Geometry.extend(function () {
             }
         }
 
-        this.addPolyline(points, color, lineWidth, false);
+        this.addPolyline(points, color, lineWidth);
     },
 
     /**
@@ -249,7 +271,7 @@ var LinesGeometry = Geometry.extend(function () {
      * @param {number} [lineWidth=1]
      */
     addLine: function (p0, p1, color, lineWidth) {
-        this.addPolyline([p0, p1], color, lineWidth, false);
+        this.addPolyline([p0, p1], color, lineWidth);
     },
 
     /**
@@ -257,53 +279,64 @@ var LinesGeometry = Geometry.extend(function () {
      * @param {Array.<Array> | Array.<number>} points
      * @param {Array.<number> | Array.<Array>} color
      * @param {number} [lineWidth=1]
-     * @param {boolean} [notSharingColor=false]
+     * @param {number} [arrayOffset=0]
+     * @param {number} [pointsCount] Default to be amount of points in the first argument
      */
-    addPolyline: function (points, color, lineWidth, notSharingColor) {
+    addPolyline: function (points, color, lineWidth, arrayOffset, pointsCount) {
         if (!points.length) {
             return;
+        }
+        var is2DArray = typeof points[0] !== 'number';
+        if (pointsCount == null) {
+            pointsCount = is2DArray ? points.length : points.length / 2;
+        }
+        if (pointsCount < 2) {
+            return;
+        }
+        if (arrayOffset == null) {
+            arrayOffset = 0;
+        }
+        if (lineWidth == null) {
+            lineWidth = 1;
         }
 
         this._itemVertexOffsets.push(this._vertexOffset);
 
-        var is2DArray = typeof points[0] !== 'number';
+        var notSharingColor = is2DArray
+            ? typeof color[0] !== 'number'
+            : color.length / 4 === pointsCount;
+
         var positionAttr = this.attributes.position;
         var colorAttr = this.attributes.color;
         var offsetAttr = this.attributes.offset;
         var normalAttr = this.attributes.normal;
         var indices = this.indices;
 
-        if (lineWidth == null) {
-            lineWidth = 1;
-        }
-
         var vertexOffset = this._vertexOffset;
-        var pointCount = is2DArray ? points.length : points.length / 2;
-        var iterCount = pointCount;
         var point = [], nextPoint = [], prevPoint = [];
         var pointColor;
         var dirA = vec2.create();
         var dirB = vec2.create();
         var normal = vec2.create();
         var tangent = vec2.create();
-        for (var k = 0; k < iterCount; k++) {
+        for (var k = 0; k < pointsCount; k++) {
             if (is2DArray) {
-                point = points[k];
+                point = points[k + arrayOffset];
                 if (notSharingColor) {
-                    pointColor = color[k];
+                    pointColor = color[k + arrayOffset];
                 }
                 else {
                     pointColor = color;
                 }
             }
             else {
-                var k2 = k * 2;
+                var k2 = k * 2 + arrayOffset;
                 point = point || [];
                 point[0] = points[k2];
                 point[1] = points[k2 + 1];
 
                 if (notSharingColor) {
-                    var k4 = k * 4;
+                    var k4 = k * 4 + arrayOffset;
                     pointColor = pointColor || [];
                     pointColor[0] = color[k4];
                     pointColor[1] = color[k4 + 1];
@@ -316,12 +349,12 @@ var LinesGeometry = Geometry.extend(function () {
             }
             if (!this.useNativeLine) {
                 var offset;
-                if (k < iterCount - 1) {
+                if (k < pointsCount - 1) {
                     if (is2DArray) {
                         vec2.copy(nextPoint, points[k + 1]);
                     }
                     else {
-                        var k2 = (k + 1) * 2;
+                        var k2 = (k + 1) * 2 + arrayOffset;
                         nextPoint = nextPoint || [];
                         nextPoint[0] = points[k2];
                         nextPoint[1] = points[k2 + 1];
@@ -418,7 +451,7 @@ var LinesGeometry = Geometry.extend(function () {
     setItemColor: function (idx, color) {
         var startOffset = this._itemVertexOffsets[idx];
         var endOffset = idx < this._itemVertexOffsets.length - 1 ? this._itemVertexOffsets[idx + 1] : this._vertexOffset;
-        
+
         for (var i = startOffset; i < endOffset; i++) {
             this.attributes.color.set(i, color);
         }

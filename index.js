@@ -15,3 +15,4 @@ import './src/chart/map3D';
 import './src/chart/scatterGL';
 import './src/chart/graphGL';
 import './src/chart/flowGL';
+import './src/chart/linesGL';

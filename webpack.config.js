@@ -4,7 +4,7 @@ var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
 module.exports = {
     plugins: [
-        new webpack.optimize.ModuleConcatenationPlugin(),
+        // new webpack.optimize.ModuleConcatenationPlugin(),
         new CaseSensitivePathsPlugin({}),
         new webpack.DefinePlugin({
             'typeof __DEV__': JSON.stringify('boolean'),

@@ -112,8 +112,7 @@ export default echarts.extendChartView({
 
         lineMesh.geometry.addPolyline(
             points, vertexColors,
-            retrieve.firstNotNull(seriesModel.get('lineStyle.width'), 1),
-            true
+            retrieve.firstNotNull(seriesModel.get('lineStyle.width'), 1)
         );
 
         lineMesh.geometry.dirty();

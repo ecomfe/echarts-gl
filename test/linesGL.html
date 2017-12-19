@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Airline - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../node_modules/echarts/theme/dark.js"></script>
+        <script src="../node_modules/echarts/map/js/world.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'), 'dark');
+
+            $.getJSON('data/flights.json', function (data) {
+                // Airport: [name, city, country, longitude, latitude]
+                function getAirportCoord(idx) {
+                    return [data.airports[idx][3], data.airports[idx][4]];
+                }
+
+                var routes = data.routes.map(function (airline) {
+                    return [
+                        getAirportCoord(airline[1]),
+                        getAirportCoord(airline[2])
+                    ];
+                });
+
+                chart.setOption({
+                    backgroundColor: '#003',
+                    geo: {
+                        map: 'world',
+                        left: 0,
+                        right: 0,
+                        silent: true,
+                        itemStyle: {
+                            normal: {
+                                borderColor: '#003',
+                                color: '#005'
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'linesGL',
+
+                        coordinateSystem: 'geo',
+
+                        blendMode: 'lighter',
+
+                        data: routes,
+
+                        lineStyle: {
+                            curveness: 0.3,
+                            opacity: 0.05
+                        }
+                    }]
+                });
+
+                window.onresize = chart.resize;
+
+            });
+        </script>
+    </body>
+</html>
