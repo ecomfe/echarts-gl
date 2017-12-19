@@ -7,7 +7,7 @@ import './lines3D/Lines3DSeries';
 
 import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(opacityVisual, 'lines3D'));
+echarts.registerVisual(opacityVisual('lines3D'));
 
 
 echarts.registerAction({

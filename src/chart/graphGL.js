@@ -5,9 +5,9 @@ import './graphGL/GraphGLView';
 import symbolVisual from 'echarts/lib/visual/symbol';
 import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(symbolVisual, 'graphGL', 'circle', null));
+echarts.registerVisual(symbolVisual('graphGL', 'circle', null));
 
-echarts.registerVisual(echarts.util.curry(opacityVisual, 'graphGL'));
+echarts.registerVisual(opacityVisual('graphGL'));
 
 echarts.registerVisual(function (ecModel) {
     var paletteScope = {};

@@ -7,7 +7,7 @@ import './bar3D/Bar3DSeries';
 
 import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(opacityVisual, 'bar3D'));
+echarts.registerVisual(opacityVisual('bar3D'));
 
 echarts.registerProcessor(function (ecModel, api) {
     ecModel.eachSeriesByType('bar3d', function (seriesModel) {

@@ -68,6 +68,7 @@ echarts.extendChartView({
                 useNativeLine: false,
                 dynamic: true
             }),
+            renderOrder: -1,
             culling: false
         });
 
@@ -515,8 +516,8 @@ echarts.extendChartView({
         }
 
         this._layoutId = 0;
-        this.groupGL.remove(this._forceEdgesMesh);
-        this.groupGL.add(this._edgesMesh);
+        // this.groupGL.remove(this._forceEdgesMesh);
+        // this.groupGL.add(this._edgesMesh);
 
         if (!this._forceLayoutInstance) {
             return;

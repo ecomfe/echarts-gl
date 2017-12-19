@@ -8,7 +8,7 @@ import geo3DCreator from '../coord/geo3DCreator';
 
 import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(opacityVisual, 'map3D'));
+echarts.registerVisual(opacityVisual('map3D'));
 
 echarts.registerAction({
     type: 'map3DChangeCamera',

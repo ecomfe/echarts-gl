@@ -6,4 +6,4 @@ import './surface/surfaceLayout';
 
 import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(opacityVisual, 'surface'));
+echarts.registerVisual(opacityVisual('surface'));

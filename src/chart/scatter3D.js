@@ -5,9 +5,9 @@ import './scatter3D/Scatter3DView';
 
 import symbolVisual from 'echarts/lib/visual/symbol';
 import opacityVisual from './common/opacityVisual';
-echarts.registerVisual(echarts.util.curry(symbolVisual, 'scatter3D', 'circle', null));
+echarts.registerVisual(symbolVisual('scatter3D', 'circle', null));
 
-echarts.registerVisual(echarts.util.curry(opacityVisual, 'scatter3D'));
+echarts.registerVisual(opacityVisual('scatter3D'));
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('scatter3D', function (seriesModel) {

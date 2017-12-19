@@ -6,9 +6,9 @@ import './scatterGL/ScatterGLView';
 import symbolVisual from 'echarts/lib/visual/symbol';
 import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(symbolVisual, 'scatterGL', 'circle', null));
+echarts.registerVisual(symbolVisual('scatterGL', 'circle', null));
 
-echarts.registerVisual(echarts.util.curry(opacityVisual, 'scatterGL'));
+echarts.registerVisual(opacityVisual('scatterGL'));
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('scatterGL', function (seriesModel) {

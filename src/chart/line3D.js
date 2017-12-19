@@ -6,9 +6,9 @@ import './line3D/Line3DView';
 import symbolVisual from 'echarts/lib/visual/symbol';
 import opacityVisual from './common/opacityVisual';
 
-echarts.registerVisual(echarts.util.curry(symbolVisual, 'line3D', 'circle', null));
+echarts.registerVisual(symbolVisual('line3D', 'circle', null));
 
-echarts.registerVisual(echarts.util.curry(opacityVisual, 'line3D'));
+echarts.registerVisual(opacityVisual('line3D'));
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('line3D', function (seriesModel) {
@@ -31,7 +31,7 @@ echarts.registerLayout(function (ecModel, api) {
             var dims = coordDims.map(function (coordDim) {
                 return seriesModel.coordDimToDataDim(coordDim)[0];
             });
-            
+
             if (coordSys) {
                 data.each(dims, function (x, y, z, idx) {
                     item[0] = x;
