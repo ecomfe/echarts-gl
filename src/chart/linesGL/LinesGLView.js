@@ -146,9 +146,9 @@ echarts.extendChartView({
         var dataIndex = start;
         var colorArr = [];
         for (var idx = start; idx < end; idx++) {
-            var color = graphicGL.parseColor(data.getItemVisual(dataIndex, 'color'), colorArr);
+            graphicGL.parseColor(data.getItemVisual(dataIndex, 'color'), colorArr);
             var opacity = retrieve.firstNotNull(data.getItemVisual(dataIndex, 'opacity'), 1);
-            color[3] *= opacity;
+            colorArr[3] *= opacity;
 
             var count = seriesModel.getLineCoords(idx, lineCoords);
             for (var k = 0; k < count; k++) {
@@ -156,16 +156,16 @@ echarts.extendChartView({
             }
 
             if (isPolyline) {
-                geometry.addPolyline(lineCoords, color, lineWidth, 0, count);
+                geometry.addPolyline(lineCoords, colorArr, lineWidth, 0, count);
             }
             else if (curveness !== 0) {
                 p0 = lineCoords[0];
                 p3 = lineCoords[1];
                 updateBezierControlPoints();
-                geometry.addCubicCurve(p0, p1, p2, p3, color, lineWidth);
+                geometry.addCubicCurve(p0, p1, p2, p3, colorArr, lineWidth);
             }
             else {
-                geometry.addPolyline(lineCoords, color, lineWidth, 0, 2);
+                geometry.addPolyline(lineCoords, colorArr, lineWidth, 0, 2);
             }
             dataIndex++;
         }

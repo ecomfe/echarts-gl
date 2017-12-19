@@ -10,12 +10,11 @@
     <body>
         <div id="main"></div>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
-        <script src="../node_modules/echarts/theme/dark.js"></script>
         <script src="../node_modules/echarts/map/js/world.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script>
-            var chart = echarts.init(document.getElementById('main'), 'dark');
+            var chart = echarts.init(document.getElementById('main'));
 
             $.getJSON('data/flights.json', function (data) {
                 // Airport: [name, city, country, longitude, latitude]
@@ -54,8 +53,8 @@
                         data: routes,
 
                         lineStyle: {
-                            curveness: 0.3,
-                            opacity: 0.05
+                            curveness: 0.2,
+                            opacity: 0.2
                         }
                     }]
                 });
