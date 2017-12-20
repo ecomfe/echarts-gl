@@ -282,100 +282,112 @@ var LinesGeometry = Geometry.extend(function () {
      * @param {number} [arrayOffset=0]
      * @param {number} [pointsCount] Default to be amount of points in the first argument
      */
-    addPolyline: function (points, color, lineWidth, arrayOffset, pointsCount) {
-        if (!points.length) {
-            return;
-        }
-        var is2DArray = typeof points[0] !== 'number';
-        if (pointsCount == null) {
-            pointsCount = is2DArray ? points.length : points.length / 2;
-        }
-        if (pointsCount < 2) {
-            return;
-        }
-        if (arrayOffset == null) {
-            arrayOffset = 0;
-        }
-        if (lineWidth == null) {
-            lineWidth = 1;
-        }
-
-        this._itemVertexOffsets.push(this._vertexOffset);
-
-        var notSharingColor = is2DArray
-            ? typeof color[0] !== 'number'
-            : color.length / 4 === pointsCount;
-
-        var positionAttr = this.attributes.position;
-        var colorAttr = this.attributes.color;
-        var offsetAttr = this.attributes.offset;
-        var normalAttr = this.attributes.normal;
-        var indices = this.indices;
-
-        var vertexOffset = this._vertexOffset;
-        var point = [], nextPoint = [], prevPoint = [];
-        var pointColor;
+    addPolyline: (function () {
         var dirA = vec2.create();
         var dirB = vec2.create();
         var normal = vec2.create();
         var tangent = vec2.create();
-        for (var k = 0; k < pointsCount; k++) {
-            if (is2DArray) {
-                point = points[k + arrayOffset];
-                if (notSharingColor) {
-                    pointColor = color[k + arrayOffset];
-                }
-                else {
-                    pointColor = color;
-                }
+        var point = [], nextPoint = [], prevPoint = [];
+        return function (points, color, lineWidth, arrayOffset, pointsCount) {
+            if (!points.length) {
+                return;
             }
-            else {
-                var k2 = k * 2 + arrayOffset;
-                point = point || [];
-                point[0] = points[k2];
-                point[1] = points[k2 + 1];
+            var is2DArray = typeof points[0] !== 'number';
+            if (pointsCount == null) {
+                pointsCount = is2DArray ? points.length : points.length / 2;
+            }
+            if (pointsCount < 2) {
+                return;
+            }
+            if (arrayOffset == null) {
+                arrayOffset = 0;
+            }
+            if (lineWidth == null) {
+                lineWidth = 1;
+            }
 
-                if (notSharingColor) {
-                    var k4 = k * 4 + arrayOffset;
-                    pointColor = pointColor || [];
-                    pointColor[0] = color[k4];
-                    pointColor[1] = color[k4 + 1];
-                    pointColor[2] = color[k4 + 2];
-                    pointColor[3] = color[k4 + 3];
-                }
-                else {
-                    pointColor = color;
-                }
-            }
-            if (!this.useNativeLine) {
-                var offset;
-                if (k < pointsCount - 1) {
-                    if (is2DArray) {
-                        vec2.copy(nextPoint, points[k + 1]);
+            this._itemVertexOffsets.push(this._vertexOffset);
+
+            var notSharingColor = is2DArray
+                ? typeof color[0] !== 'number'
+                : color.length / 4 === pointsCount;
+
+            var positionAttr = this.attributes.position;
+            var colorAttr = this.attributes.color;
+            var offsetAttr = this.attributes.offset;
+            var normalAttr = this.attributes.normal;
+            var indices = this.indices;
+
+            var vertexOffset = this._vertexOffset;
+            var pointColor;
+            for (var k = 0; k < pointsCount; k++) {
+                if (is2DArray) {
+                    point = points[k + arrayOffset];
+                    if (notSharingColor) {
+                        pointColor = color[k + arrayOffset];
                     }
                     else {
-                        var k2 = (k + 1) * 2 + arrayOffset;
-                        nextPoint = nextPoint || [];
-                        nextPoint[0] = points[k2];
-                        nextPoint[1] = points[k2 + 1];
+                        pointColor = color;
                     }
-                    // TODO In case dir is (0, 0)
-                    // TODO miterLimit
-                    if (k > 0) {
+                }
+                else {
+                    var k2 = k * 2 + arrayOffset;
+                    point = point || [];
+                    point[0] = points[k2];
+                    point[1] = points[k2 + 1];
+
+                    if (notSharingColor) {
+                        var k4 = k * 4 + arrayOffset;
+                        pointColor = pointColor || [];
+                        pointColor[0] = color[k4];
+                        pointColor[1] = color[k4 + 1];
+                        pointColor[2] = color[k4 + 2];
+                        pointColor[3] = color[k4 + 3];
+                    }
+                    else {
+                        pointColor = color;
+                    }
+                }
+                if (!this.useNativeLine) {
+                    var offset;
+                    if (k < pointsCount - 1) {
+                        if (is2DArray) {
+                            vec2.copy(nextPoint, points[k + 1]);
+                        }
+                        else {
+                            var k2 = (k + 1) * 2 + arrayOffset;
+                            nextPoint = nextPoint || [];
+                            nextPoint[0] = points[k2];
+                            nextPoint[1] = points[k2 + 1];
+                        }
+                        // TODO In case dir is (0, 0)
+                        // TODO miterLimit
+                        if (k > 0) {
+                            vec2.sub(dirA, point, prevPoint);
+                            vec2.sub(dirB, nextPoint, point);
+                            vec2.normalize(dirA, dirA);
+                            vec2.normalize(dirB, dirB);
+                            vec2.add(tangent, dirA, dirB);
+                            vec2.normalize(tangent, tangent);
+                            var miter = lineWidth / 2 * Math.min(1 / vec2.dot(dirA, tangent), 2);
+                            normal[0] = -tangent[1];
+                            normal[1] = tangent[0];
+
+                            offset = miter;
+                        }
+                        else {
+                            vec2.sub(dirA, nextPoint, point);
+                            vec2.normalize(dirA, dirA);
+
+                            normal[0] = -dirA[1];
+                            normal[1] = dirA[0];
+
+                            offset = lineWidth / 2;
+                        }
+
+                    }
+                    else {
                         vec2.sub(dirA, point, prevPoint);
-                        vec2.sub(dirB, nextPoint, point);
-                        vec2.normalize(dirA, dirA);
-                        vec2.normalize(dirB, dirB);
-                        vec2.add(tangent, dirA, dirB);
-                        vec2.normalize(tangent, tangent);
-                        var miter = lineWidth / 2 * Math.min(1 / vec2.dot(dirA, tangent), 2);
-                        normal[0] = -tangent[1];
-                        normal[1] = tangent[0];
-
-                        offset = miter;
-                    }
-                    else {
-                        vec2.sub(dirA, nextPoint, point);
                         vec2.normalize(dirA, dirA);
 
                         normal[0] = -dirA[1];
@@ -383,67 +395,57 @@ var LinesGeometry = Geometry.extend(function () {
 
                         offset = lineWidth / 2;
                     }
+                    normalAttr.set(vertexOffset, normal);
+                    normalAttr.set(vertexOffset + 1, normal);
+                    offsetAttr.set(vertexOffset, offset);
+                    offsetAttr.set(vertexOffset + 1, -offset);
 
+                    vec2.copy(prevPoint, point);
+
+                    positionAttr.set(vertexOffset, point);
+                    positionAttr.set(vertexOffset + 1, point);
+
+                    colorAttr.set(vertexOffset, pointColor);
+                    colorAttr.set(vertexOffset + 1, pointColor);
+
+                    vertexOffset += 2;
                 }
                 else {
-                    vec2.sub(dirA, point, prevPoint);
-                    vec2.normalize(dirA, dirA);
-
-                    normal[0] = -dirA[1];
-                    normal[1] = dirA[0];
-
-                    offset = lineWidth / 2;
+                    if (k > 1) {
+                        positionAttr.copy(vertexOffset, vertexOffset - 1);
+                        colorAttr.copy(vertexOffset, vertexOffset - 1);
+                        vertexOffset++;
+                    }
                 }
-                normalAttr.set(vertexOffset, normal);
-                normalAttr.set(vertexOffset + 1, normal);
-                offsetAttr.set(vertexOffset, offset);
-                offsetAttr.set(vertexOffset + 1, -offset);
 
-                vec2.copy(prevPoint, point);
+                if (!this.useNativeLine) {
+                    if (k > 0) {
+                        var idx3 = this._faceOffset * 3;
+                        var indices = this.indices;
+                        // 0-----2
+                        // 1-----3
+                        // 0->1->2, 1->3->2
+                        indices[idx3] = vertexOffset - 4;
+                        indices[idx3 + 1] = vertexOffset - 3;
+                        indices[idx3 + 2] = vertexOffset - 2;
 
-                positionAttr.set(vertexOffset, point);
-                positionAttr.set(vertexOffset + 1, point);
+                        indices[idx3 + 3] = vertexOffset - 3;
+                        indices[idx3 + 4] = vertexOffset - 1;
+                        indices[idx3 + 5] = vertexOffset - 2;
 
-                colorAttr.set(vertexOffset, pointColor);
-                colorAttr.set(vertexOffset + 1, pointColor);
-
-                vertexOffset += 2;
-            }
-            else {
-                if (k > 1) {
-                    positionAttr.copy(vertexOffset, vertexOffset - 1);
-                    colorAttr.copy(vertexOffset, vertexOffset - 1);
+                        this._faceOffset += 2;
+                    }
+                }
+                else {
+                    colorAttr.set(vertexOffset, pointColor);
+                    positionAttr.set(vertexOffset, point);
                     vertexOffset++;
                 }
             }
 
-            if (!this.useNativeLine) {
-                if (k > 0) {
-                    var idx3 = this._faceOffset * 3;
-                    var indices = this.indices;
-                    // 0-----2
-                    // 1-----3
-                    // 0->1->2, 1->3->2
-                    indices[idx3] = vertexOffset - 4;
-                    indices[idx3 + 1] = vertexOffset - 3;
-                    indices[idx3 + 2] = vertexOffset - 2;
-
-                    indices[idx3 + 3] = vertexOffset - 3;
-                    indices[idx3 + 4] = vertexOffset - 1;
-                    indices[idx3 + 5] = vertexOffset - 2;
-
-                    this._faceOffset += 2;
-                }
-            }
-            else {
-                colorAttr.set(vertexOffset, pointColor);
-                positionAttr.set(vertexOffset, point);
-                vertexOffset++;
-            }
-        }
-
-        this._vertexOffset = vertexOffset;
-    },
+            this._vertexOffset = vertexOffset;
+        };
+    })(),
 
     /**
      * Set color of single line.

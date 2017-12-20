@@ -18,6 +18,9 @@ echarts.extendChartView({
         this.viewGL.add(this.groupGL);
 
         this._coordSysTransform = matrix.create();
+
+        this._nativeLinesShader = graphicGL.createShader('ecgl.lines3D');
+        this._meshLinesShader = graphicGL.createShader('ecgl.meshLines3D');
     },
 
     _reset: function (seriesModel, api) {
@@ -101,16 +104,17 @@ echarts.extendChartView({
         var linesMesh = new graphicGL.Mesh({
             $ignorePicking: true,
             material: new graphicGL.Material({
-                shader: graphicGL.createShader('ecgl.meshLines2D'),
+                shader: graphicGL.createShader('ecgl.lines3D'),
                 transparent: true,
                 depthMask: false,
                 depthTest: false
             }),
             geometry: new Lines2DGeometry({
                 segmentScale: 10,
-                useNativeLine: false,
+                useNativeLine: true,
                 dynamic: false
             }),
+            mode: graphicGL.Mesh.LINES,
             culling: false
         });
 
@@ -126,6 +130,19 @@ echarts.extendChartView({
         var geometry = linesMesh.geometry;
 
         var lineWidth = retrieve.firstNotNull(seriesModel.get('lineStyle.width'), 1);
+
+        if (lineWidth > 1) {
+            if (linesMesh.material.shader !== this._meshLinesShader) {
+                linesMesh.material.attachShader(this._meshLinesShader);
+            }
+            linesMesh.mode = graphicGL.Mesh.TRIANGLES;
+        }
+        else {
+            if (linesMesh.material.shader !== this._nativeLinesShader) {
+                linesMesh.material.attachShader(this._nativeLinesShader);
+            }
+            linesMesh.mode = graphicGL.Mesh.LINES;
+        }
 
         start = start || 0;
         end = end || data.count();
