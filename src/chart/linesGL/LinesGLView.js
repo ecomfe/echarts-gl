@@ -20,14 +20,8 @@ echarts.extendChartView({
         this._coordSysTransform = matrix.create();
     },
 
-    render: function (seriesModel, ecModel, api) {
+    _reset: function (seriesModel, api) {
         this.groupGL.removeAll();
-        if (!this._linesMesh) {
-            this._linesMesh = this._createLinesMesh(seriesModel);
-        }
-        this.groupGL.add(this._linesMesh);
-        this._udpateLinesMesh(seriesModel, this._linesMesh, 0, seriesModel.getData().count());
-
         this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
         this._setCameraTransform(matrix.create());
 
@@ -36,12 +30,37 @@ echarts.extendChartView({
         }
     },
 
-    incrementalPrepareRender: function () {
+    render: function (seriesModel, ecModel, api) {
+        this._reset(seriesModel, api);
 
+        if (!this._linesMesh) {
+            this._linesMesh = this._createLinesMesh(seriesModel);
+        }
+        this.groupGL.add(this._linesMesh);
+        this._udpateLinesMesh(seriesModel, this._linesMesh, 0, seriesModel.getData().count());
+
+        // Remove all incremental meshes.
+        this._incrementalLinesMeshes = [];
     },
 
-    incrementalRender: function () {
+    incrementalPrepareRender: function (seriesModel, ecModel, api) {
+        this._reset(seriesModel, api);
 
+        this._incrementalLinesMeshes = this._incrementalLinesMeshes || [];
+        this._currentFrame = 0;
+    },
+
+    incrementalRender: function (params, seriesModel, ecModel, api) {
+        var linesMesh = this._incrementalLinesMeshes[this._currentFrame];
+        if (!linesMesh) {
+            linesMesh = this._createLinesMesh(seriesModel);
+            this._incrementalLinesMeshes[this._currentFrame] = linesMesh;
+        }
+        this._udpateLinesMesh(seriesModel, linesMesh, params.start, params.end);
+        this.groupGL.add(linesMesh);
+        api.getZr().refresh();
+
+        this._currentFrame++;
     },
 
     updateLayout: function (seriesModel, ecModel, api) {
@@ -49,10 +68,12 @@ echarts.extendChartView({
 
         if (coordinateSystem.transform) {
             var diffTransform = matrix.create();
-            matrix.invert(diffTransform, this._coordSysTransform);
-            matrix.mul(diffTransform, diffTransform, coordinateSystem.transform);
+            matrix.invert(diffTransform, coordinateSystem.transform);
+            matrix.mul(diffTransform, this._coordSysTransform, diffTransform);
 
             this._setCameraTransform(diffTransform);
+
+            api.getZr().refresh();
         }
         else {
             // Can only render again.
@@ -60,15 +81,25 @@ echarts.extendChartView({
         }
     },
 
-    incrementalLayout: function () {
+    incrementalPrepareLayout: function (seriesModel, ecModel, api) {
+        if (seriesModel.coordinateSystem.transform) {
+            this.updateLayout(seriesModel, ecModel, api);
+            return {
+                noProgress: true
+            };
+        }
+        else {
+            this.incrementalPrepareRender(seriesModel, ecModel, api);
+        }
     },
 
-    incrementalPrepareLayout: function () {
-
+    incrementalLayout: function (params, seriesModel, ecModel, api) {
+        this.incrementalRender(params, seriesModel, ecModel, api);
     },
 
     _createLinesMesh: function (seriesModel) {
         var linesMesh = new graphicGL.Mesh({
+            $ignorePicking: true,
             material: new graphicGL.Material({
                 shader: graphicGL.createShader('ecgl.meshLines2D'),
                 transparent: true,
@@ -76,6 +107,7 @@ echarts.extendChartView({
                 depthTest: false
             }),
             geometry: new Lines2DGeometry({
+                segmentScale: 10,
                 useNativeLine: false,
                 dynamic: false
             }),
