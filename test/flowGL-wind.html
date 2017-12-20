@@ -209,7 +209,9 @@
                         type: 'flowGL',
                         coordinateSystem: 'bmap',
                         data: data,
-                        particleDensity: 512,
+                        supersampling: 4,
+                        particleType: 'line',
+                        particleDensity: 128,
                         particleSpeed: 1,
                         // gridWidth: windData.nx,
                         // gridHeight: windData.ny,
@@ -219,6 +221,10 @@
                     }]
                 });
             });
+
+            setTimeout(function () {
+                chart.dispose();
+            }, 5000);
         </script>
     </body>
 </html>
