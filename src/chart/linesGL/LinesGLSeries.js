@@ -1,4 +1,5 @@
 import echarts from 'echarts/lib/echarts';
+import { concatArray } from 'zrender/lib/core/util';
 
 var LinesSeries = echarts.extendSeriesModel({
 
@@ -11,15 +12,42 @@ var LinesSeries = echarts.extendSeriesModel({
     streamEnabled: true,
 
     init: function (option) {
-        this._processFlatCoordsArray(option);
+        var result = this._processFlatCoordsArray(option.data);
+        this._flatCoords = result.flatCoords;
+        this._flatCoordsOffset = result.flatCoordsOffset;
+        if (result.flatCoords) {
+            option.data = new Float32Array(result.count);
+        }
 
         LinesSeries.superApply(this, 'init', arguments);
     },
 
     mergeOption: function (option) {
-        this._processFlatCoordsArray(option);
+        var result = this._processFlatCoordsArray(option.data);
+        this._flatCoords = result.flatCoords;
+        this._flatCoordsOffset = result.flatCoordsOffset;
+        if (result.flatCoords) {
+            option.data = new Float32Array(result.count);
+        }
 
         LinesSeries.superApply(this, 'mergeOption', arguments);
+    },
+
+    appendData: function (params) {
+        var result = this._processFlatCoordsArray(params.data);
+        if (result.flatCoords) {
+            if (!this._flatCoords) {
+                this._flatCoords = result.flatCoords;
+                this._flatCoordsOffset = result.flatCoordsOffset;
+            }
+            else {
+                this._flatCoords = concatArray(this._flatCoords, result.flatCoords);
+                this._flatCoordsOffset = concatArray(this._flatCoordsOffset, result.flatCoordsOffset);
+            }
+            params.data = new Float32Array(result.count);
+        }
+
+        this.getData().appendData(params.data);
     },
 
     _getCoordsFromItemModel: function (idx) {
@@ -66,8 +94,7 @@ var LinesSeries = echarts.extendSeriesModel({
         }
     },
 
-    _processFlatCoordsArray: function (option) {
-        var data = option.data;
+    _processFlatCoordsArray: function (data) {
         // Stored as a typed array. In format
         // Points Count(2) | x | y | x | y | Points Count(3) | x |  y | x | y | x | y |
         if (typeof data[0] === 'number') {
@@ -99,15 +126,18 @@ var LinesSeries = echarts.extendSeriesModel({
                 }
             }
 
-            this._flatCoordsOffset = coordsOffsetAndLenStorage;
-            this._flatCoords = coordsStorage;
+            return {
+                flatCoordsOffset: coordsOffsetAndLenStorage,
+                flatCoords: coordsStorage,
+                count: dataCount
+            };
+        }
 
-            // Fill with zero values.
-            option.data = new Float32Array(dataCount);
-        }
-        else {
-            this._flatCoordsOffset = this._flatCoords = null;
-        }
+        return {
+            flatCoordsOffset: null,
+            flatCoords: null,
+            count: data.length
+        };
     },
 
     getInitialData: function (option, ecModel) {
