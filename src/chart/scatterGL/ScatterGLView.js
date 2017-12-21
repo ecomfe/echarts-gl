@@ -45,6 +45,8 @@ echarts.extendChartView({
 
         this._removeTransformInPoints(seriesModel.getData().getLayout('points'));
         pointsBuilder.update(seriesModel, ecModel, api);
+
+        this.viewGL.setPostEffect(seriesModel.getModel('postEffect'), api);
     },
 
     incrementalPrepareRender: function (seriesModel, ecModel, api) {
@@ -52,6 +54,8 @@ echarts.extendChartView({
         this._glViewHelper.reset(seriesModel, api);
 
         this._currentStep = 0;
+
+        this.viewGL.setPostEffect(seriesModel.getModel('postEffect'), api);
     },
 
     incrementalRender: function (params, seriesModel, ecModel, api) {

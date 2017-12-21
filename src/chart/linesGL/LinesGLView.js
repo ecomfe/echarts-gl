@@ -38,6 +38,8 @@ echarts.extendChartView({
 
         this.groupGL.add(linesMesh);
         this._updateLinesMesh(seriesModel, linesMesh, 0, seriesModel.getData().count());
+
+        this.viewGL.setPostEffect(seriesModel.getModel('postEffect'), api);
     },
 
     incrementalPrepareRender: function (seriesModel, ecModel, api) {
@@ -45,6 +47,8 @@ echarts.extendChartView({
         this._glViewHelper.reset(seriesModel, api);
 
         this._currentStep = 0;
+
+        this.viewGL.setPostEffect(seriesModel.getModel('postEffect'), api);
     },
 
     incrementalRender: function (params, seriesModel, ecModel, api) {

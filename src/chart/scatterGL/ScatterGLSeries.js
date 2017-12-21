@@ -42,6 +42,18 @@ echarts.extendSeriesModel({
 
         itemStyle: {
             opacity: 0.8
+        },
+
+
+        postEffect: {
+            enable: false,
+            colorCorrection: {
+                exposure: 0,
+                brightness: 0,
+                contrast: 1,
+                saturation: 1,
+                enable: true
+            }
         }
 
     }
