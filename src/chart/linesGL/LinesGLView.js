@@ -1,8 +1,8 @@
 import echarts from 'echarts/lib/echarts';
-import matrix from 'zrender/lib/core/matrix';
 import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';
 import Lines2DGeometry from '../../util/geometry/Lines2D';
+import GLViewHelper from '../common/GLViewHelper';
 
 import retrieve from '../../util/retrieve';
 
@@ -17,87 +17,53 @@ echarts.extendChartView({
         this.viewGL = new ViewGL('orthographic');
         this.viewGL.add(this.groupGL);
 
-        this._coordSysTransform = matrix.create();
+        this._glViewHelper = new GLViewHelper(this.viewGL);
 
         this._nativeLinesShader = graphicGL.createShader('ecgl.lines3D');
         this._meshLinesShader = graphicGL.createShader('ecgl.meshLines3D');
-    },
 
-    _reset: function (seriesModel, api) {
-        this.groupGL.removeAll();
-        this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
-        this._setCameraTransform(matrix.create());
-
-        if (seriesModel.coordinateSystem.transform) {
-            matrix.copy(this._coordSysTransform, seriesModel.coordinateSystem.transform);
-        }
+        this._linesMeshes = [];
+        this._currentStep = 0;
     },
 
     render: function (seriesModel, ecModel, api) {
-        this._reset(seriesModel, api);
+        this.groupGL.removeAll();
+        this._glViewHelper.reset(seriesModel, api);
 
-        if (!this._linesMesh) {
-            this._linesMesh = this._createLinesMesh(seriesModel);
+        var linesMesh = this._linesMeshes[0];
+        if (!linesMesh) {
+            linesMesh = this._linesMeshes[0] = this._createLinesMesh(seriesModel);
         }
-        this.groupGL.add(this._linesMesh);
-        this._udpateLinesMesh(seriesModel, this._linesMesh, 0, seriesModel.getData().count());
+        this._linesMeshes.length = 1;
 
-        // Remove all incremental meshes.
-        this._incrementalLinesMeshes = [];
+        this.groupGL.add(linesMesh);
+        this._udpateLinesMesh(seriesModel, linesMesh, 0, seriesModel.getData().count());
     },
 
     incrementalPrepareRender: function (seriesModel, ecModel, api) {
-        this._reset(seriesModel, api);
+        this.groupGL.removeAll();
+        this._glViewHelper.reset(seriesModel, api);
 
-        this._incrementalLinesMeshes = this._incrementalLinesMeshes || [];
-        this._currentFrame = 0;
+        this._currentStep = 0;
     },
 
     incrementalRender: function (params, seriesModel, ecModel, api) {
-        var linesMesh = this._incrementalLinesMeshes[this._currentFrame];
+        var linesMesh = this._linesMeshes[this._currentStep];
         if (!linesMesh) {
             linesMesh = this._createLinesMesh(seriesModel);
-            this._incrementalLinesMeshes[this._currentFrame] = linesMesh;
+            this._linesMeshes[this._currentStep] = linesMesh;
         }
         this._udpateLinesMesh(seriesModel, linesMesh, params.start, params.end);
         this.groupGL.add(linesMesh);
         api.getZr().refresh();
 
-        this._currentFrame++;
+        this._currentStep++;
     },
 
-    updateLayout: function (seriesModel, ecModel, api) {
-        var coordinateSystem = seriesModel.coordinateSystem;
-
-        if (coordinateSystem.transform) {
-            var diffTransform = matrix.create();
-            matrix.invert(diffTransform, coordinateSystem.transform);
-            matrix.mul(diffTransform, this._coordSysTransform, diffTransform);
-
-            this._setCameraTransform(diffTransform);
-
-            api.getZr().refresh();
-        }
-        else {
-            // Can only render again.
-            this.render(seriesModel, ecModel, api);
-        }
-    },
-
-    incrementalPrepareLayout: function (seriesModel, ecModel, api) {
+    updateTransform: function (seriesModel, ecModel, api) {
         if (seriesModel.coordinateSystem.transform) {
-            this.updateLayout(seriesModel, ecModel, api);
-            return {
-                noProgress: true
-            };
+            this._glViewHelper.updateTransform(seriesModel, api);
         }
-        else {
-            this.incrementalPrepareRender(seriesModel, ecModel, api);
-        }
-    },
-
-    incrementalLayout: function (params, seriesModel, ecModel, api) {
-        this.incrementalRender(params, seriesModel, ecModel, api);
     },
 
     _createLinesMesh: function (seriesModel) {
@@ -218,27 +184,6 @@ echarts.extendChartView({
             }
             dataIndex++;
         }
-    },
-
-    _setCameraTransform: function (m) {
-        var camera = this.viewGL.camera;
-        camera.position.set(m[4], m[5], 0);
-        camera.scale.set(
-            Math.sqrt(m[0] * m[0] + m[1] * m[1]),
-            Math.sqrt(m[2] * m[2] + m[3] * m[3]),
-            1
-        );
-    },
-
-    _updateCamera: function (width, height, dpr) {
-        // TODO, left, top, right, bottom
-        this.viewGL.setViewport(0, 0, width, height, dpr);
-        var camera = this.viewGL.camera;
-        camera.left = camera.top = 0;
-        camera.bottom = height;
-        camera.right = width;
-        camera.near = 0;
-        camera.far = 100;
     },
 
     dispose: function () {

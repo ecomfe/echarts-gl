@@ -16,7 +16,7 @@
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
-            $.getJSON('data/flights.json', function (data) {
+            $.getJSON('data/flights2.json', function (data) {
                 // Airport: [name, city, country, longitude, latitude]
                 function getAirportCoord(idx) {
                     return [data.airports[idx][3], data.airports[idx][4]];
@@ -30,12 +30,14 @@
                 });
 
                 chart.setOption({
+                    progressiveStep: 5000,
                     backgroundColor: '#003',
                     geo: {
                         map: 'world',
                         left: 0,
                         right: 0,
                         silent: true,
+                        roam: true,
                         itemStyle: {
                             normal: {
                                 borderColor: '#003',
@@ -54,7 +56,7 @@
 
                         lineStyle: {
                             curveness: 0.2,
-                            opacity: 0.2
+                            opacity: 0.05
                         }
                     }]
                 });
