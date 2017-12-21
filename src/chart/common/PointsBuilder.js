@@ -333,7 +333,11 @@ PointsBuilder.prototype = {
                 if (isCartesian3D) {
                     api.dispatchAction({
                         type: 'grid3DShowAxisPointer',
-                        value: [data.get('x', dataIndex), data.get('y', dataIndex), data.get('z', dataIndex)],
+                        value: [
+                            data.get(seriesModel.coordDimToDataDim('x')[0], dataIndex),
+                            data.get(seriesModel.coordDimToDataDim('y')[0], dataIndex),
+                            data.get(seriesModel.coordDimToDataDim('z')[0], dataIndex)
+                        ],
                         grid3DIndex: grid3DModel.componentIndex
                     });
                 }
