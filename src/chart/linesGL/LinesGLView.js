@@ -37,7 +37,7 @@ echarts.extendChartView({
         this._linesMeshes.length = 1;
 
         this.groupGL.add(linesMesh);
-        this._udpateLinesMesh(seriesModel, linesMesh, 0, seriesModel.getData().count());
+        this._updateLinesMesh(seriesModel, linesMesh, 0, seriesModel.getData().count());
     },
 
     incrementalPrepareRender: function (seriesModel, ecModel, api) {
@@ -53,7 +53,7 @@ echarts.extendChartView({
             linesMesh = this._createLinesMesh(seriesModel);
             this._linesMeshes[this._currentStep] = linesMesh;
         }
-        this._udpateLinesMesh(seriesModel, linesMesh, params.start, params.end);
+        this._updateLinesMesh(seriesModel, linesMesh, params.start, params.end);
         this.groupGL.add(linesMesh);
         api.getZr().refresh();
 
@@ -87,7 +87,7 @@ echarts.extendChartView({
         return linesMesh;
     },
 
-    _udpateLinesMesh: function (seriesModel, linesMesh, start, end) {
+    _updateLinesMesh: function (seriesModel, linesMesh, start, end) {
         var data = seriesModel.getData();
         linesMesh.material.blend = seriesModel.get('blendMode') === 'lighter'
             ? graphicGL.additiveBlend : null;
@@ -136,7 +136,7 @@ echarts.extendChartView({
         if (isPolyline || curveness !== 0) {
             for (var idx = start; idx < end; idx++) {
                 if (isPolyline) {
-                    var count = seriesModel.getLineCoords(idx, lineCoords);
+                    var count = seriesModel.getLineCoordsCount(idx);
                     vertexCount += geometry.getPolylineVertexCount(count);
                     triangleCount += geometry.getPolylineTriangleCount(count);
                 }

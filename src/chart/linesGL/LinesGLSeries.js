@@ -47,7 +47,7 @@ var LinesSeries = echarts.extendSeriesModel({
             params.data = new Float32Array(result.count);
         }
 
-        this.getData().appendData(params.data);
+        this.getRawData().appendData(params.data);
     },
 
     _getCoordsFromItemModel: function (idx) {
@@ -95,6 +95,10 @@ var LinesSeries = echarts.extendSeriesModel({
     },
 
     _processFlatCoordsArray: function (data) {
+        var startOffset = 0;
+        if (this._flatCoords) {
+            startOffset = this._flatCoords.length;
+        }
         // Stored as a typed array. In format
         // Points Count(2) | x | y | x | y | Points Count(3) | x |  y | x | y | x | y |
         if (typeof data[0] === 'number') {
@@ -109,7 +113,7 @@ var LinesSeries = echarts.extendSeriesModel({
                 dataCount++;
                 var count = data[i++];
                 // Offset
-                coordsOffsetAndLenStorage[offsetCursor++] = coordsCursor;
+                coordsOffsetAndLenStorage[offsetCursor++] = coordsCursor + startOffset;
                 // Len
                 coordsOffsetAndLenStorage[offsetCursor++] = count;
                 for (var k = 0; k < count; k++) {
@@ -127,7 +131,7 @@ var LinesSeries = echarts.extendSeriesModel({
             }
 
             return {
-                flatCoordsOffset: coordsOffsetAndLenStorage,
+                flatCoordsOffset: new Uint32Array(coordsOffsetAndLenStorage.buffer, 0, offsetCursor),
                 flatCoords: coordsStorage,
                 count: dataCount
             };
