@@ -58,6 +58,20 @@ GLViewHelper.prototype.removeTransformInPoint = function (pt) {
     return pt;
 };
 
+/**
+ * Return number
+ */
+GLViewHelper.prototype.getZoom = function () {
+    if (this._viewTransform) {
+        var m = this._viewTransform;
+        return 1 / Math.max(
+            Math.sqrt(m[0] * m[0] + m[1] * m[1]),
+            Math.sqrt(m[2] * m[2] + m[3] * m[3])
+        );
+    }
+    return 1;
+};
+
 GLViewHelper.prototype._setCameraTransform = function (m) {
     var camera = this.viewGL.camera;
     camera.position.set(m[4], m[5], 0);

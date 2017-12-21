@@ -4,6 +4,7 @@ import ViewGL from '../../core/ViewGL';
 import PointsBuilder from '../common/PointsBuilder';
 
 import GLViewHelper from '../common/GLViewHelper';
+import retrieve from '../../util/retrieve';
 
 echarts.extendChartView({
 
@@ -20,6 +21,8 @@ echarts.extendChartView({
 
         this._pointsBuilderList = [];
         this._currentStep = 0;
+
+        this._sizeScale = 1;
 
         this._glViewHelper = new GLViewHelper(this.viewGL);
     },
@@ -63,6 +66,8 @@ echarts.extendChartView({
         this.groupGL.add(pointsBuilder.rootNode);
 
         this._removeTransformInPoints(seriesModel.getData().getLayout('points'));
+
+        pointsBuilder.setSizeScale(this._sizeScale);
         pointsBuilder.update(seriesModel, ecModel, api, params.start, params.end);
 
         this._currentStep++;
@@ -71,6 +76,14 @@ echarts.extendChartView({
     updateTransform: function (seriesModel, ecModel, api) {
         if (seriesModel.coordinateSystem.transform) {
             this._glViewHelper.updateTransform(seriesModel, api);
+
+            var zoom = this._glViewHelper.getZoom();
+            var sizeScale = Math.max((seriesModel.get('zoomScale') || 0) * (zoom - 1) + 1, 0);
+            this._sizeScale = sizeScale;
+
+            this._pointsBuilderList.forEach(function (pointsBuilder) {
+                pointsBuilder.setSizeScale(sizeScale);
+            });
         }
     },
 

@@ -34,6 +34,8 @@ function PointsBuilder(is2D, api) {
 
     this._startDataIndex = 0;
     this._end = 0;
+
+    this._sizeScale = 1;
 }
 
 PointsBuilder.prototype = {
@@ -111,7 +113,7 @@ PointsBuilder.prototype = {
 
             material.set({
                 color: rgbaArr,
-                'u_Size': symbolInfo.maxSize
+                'u_Size': symbolInfo.maxSize * this._sizeScale
             });
         }
         else {
@@ -163,7 +165,7 @@ PointsBuilder.prototype = {
                     symbolSize = 0;
                 }
                 // Scale point size because canvas has margin.
-                attributes.size.value[i] = symbolSize * pointSizeScale;
+                attributes.size.value[i] = symbolSize * pointSizeScale * this._sizeScale;
 
                 // Save the original opacity for recover from fadeIn.
                 this._originalOpacity[i] = rgbaArr[3];
@@ -439,6 +441,23 @@ PointsBuilder.prototype = {
         this._positionTexture = null;
         if (this._mesh) {
             this._setPositionTextureToMesh(this._mesh, null);
+        }
+    },
+
+    setSizeScale: function (sizeScale) {
+        if (sizeScale !== this._sizeScale) {
+            if (this._mesh) {
+                var originalSize = this._mesh.material.get('u_Size');
+                this._mesh.material.set('u_Size', originalSize / this._sizeScale * sizeScale);
+
+                var attributes = this._mesh.geometry.attributes;
+                if (attributes.size.value) {
+                    for (var i = 0; i < attributes.size.value.length; i++) {
+                        attributes.size.value[i] = attributes.size.value[i] / this._sizeScale * sizeScale;
+                    }
+                }
+            }
+            this._sizeScale = sizeScale;
         }
     },
 

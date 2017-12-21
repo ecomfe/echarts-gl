@@ -34,6 +34,9 @@ echarts.extendSeriesModel({
         symbol: 'circle',
         symbolSize: 10,
 
+        // symbolSize scale when zooming.
+        zoomScale: 0,
+
         // Support source-over, lighter
         blendMode: 'source-over',
 
