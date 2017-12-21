@@ -30,6 +30,9 @@ function PointsBuilder(is2D, api) {
     this._api = api;
 
     this._spriteImageCanvas = document.createElement('canvas');
+
+    this._startDataIndex = 0;
+    this._end = 0;
 }
 
 PointsBuilder.prototype = {
@@ -41,28 +44,39 @@ PointsBuilder.prototype = {
      */
     highlightOnMouseover: true,
 
-    update: function (seriesModel, ecModel, api) {
+    update: function (seriesModel, ecModel, api, start, end) {
         // Swap barMesh
         var tmp = this._prevMesh;
         this._prevMesh = this._mesh;
         this._mesh = tmp;
 
+        var data = seriesModel.getData();
+
+        if (start == null) {
+            start = 0;
+        }
+        if (end == null) {
+            end = data.count();
+        }
+        this._startDataIndex = start;
+
         if (!this._mesh) {
             var material = this._prevMesh && this._prevMesh.material;
             this._mesh = new PointsMesh({
                 // Render after axes
-                renderOrder: 10
+                renderOrder: 10,
+                // FIXME
+                frustumCulling: false
             });
             if (material) {
                 this._mesh.material = material;
             }
         }
+
         this.rootNode.remove(this._prevMesh);
         this.rootNode.add(this._mesh);
 
         this._setPositionTextureToMesh(this._mesh, this._positionTexture);
-
-        var data = seriesModel.getData();
 
         var symbolInfo = this._getSymbolInfo(data);
         var dpr = api.getDevicePixelRatio();
@@ -86,8 +100,9 @@ PointsBuilder.prototype = {
         symbolSize[0] = symbolSize[0] || 1;
         symbolSize[1] = symbolSize[1] || 1;
 
-        if (this._symbolType !== symbolInfo.type || !isSymbolSizeSame(this._symbolSize, symbolSize)
-        || this._lineWidth !== itemStyle.lineWidth
+        if (this._symbolType !== symbolInfo.type
+            || !isSymbolSizeSame(this._symbolSize, symbolSize)
+            || this._lineWidth !== itemStyle.lineWidth
         ) {
             spriteUtil.createSymbolSprite(symbolInfo.type, symbolSize, {
                 fill: '#fff',
@@ -123,8 +138,8 @@ PointsBuilder.prototype = {
 
         var hasTransparentPoint = false;
 
-        this._originalOpacity = new Float32Array(data.count());
-        for (var i = 0; i < data.count(); i++) {
+        this._originalOpacity = new Float32Array(end - start);
+        for (var i = 0; i < end - start; i++) {
             var i3 = i * 3;
             var i2 = i * 2;
             if (is2D) {
@@ -165,33 +180,11 @@ PointsBuilder.prototype = {
 
         this._mesh.sizeScale = pointSizeScale;
 
+        geometry.updateBoundingBox();
         geometry.dirty();
 
         // Update material.
-        var blendFunc = seriesModel.get('blendMode') === 'lighter'
-            ? graphicGL.additiveBlend : null;
-        var material = this._mesh.material;
-        material.blend = blendFunc;
-
-        material.set('lineWidth', itemStyle.lineWidth / SDF_RANGE);
-
-        var strokeColor = graphicGL.parseColor(itemStyle.stroke);
-        material.set('color', [1, 1, 1, 1]);
-        material.set('strokeColor', strokeColor);
-
-        if (this.is2D) {
-            material.transparent = true;
-            material.depthMask = false;
-            material.depthTest = false;
-            geometry.sortVertices = false;
-        }
-        else {
-            // Because of symbol texture, we always needs it be transparent.
-            material.depthTest = true;
-            material.transparent = true;
-            material.depthMask = false;
-            geometry.sortVertices = true;
-        }
+        this._updateMaterial(seriesModel, itemStyle);
 
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
@@ -204,12 +197,12 @@ PointsBuilder.prototype = {
         this._labelsBuilder.updateData(data);
 
         this._labelsBuilder.getLabelPosition = function (dataIndex, positionDesc, distance) {
-            var idx3 = dataIndex * 3;
+            var idx3 = (dataIndex - start) * 3;
             return [positionArr[idx3], positionArr[idx3 + 1], positionArr[idx3 + 2]];
         };
 
         this._labelsBuilder.getLabelDistance = function (dataIndex, positionDesc, distance) {
-            var size = geometry.attributes.size.get(dataIndex) / pointSizeScale;
+            var size = geometry.attributes.size.get(dataIndex - start) / pointSizeScale;
             return size / 2 + distance;
         };
         this._labelsBuilder.updateLabels();
@@ -217,6 +210,26 @@ PointsBuilder.prototype = {
         this._updateAnimation(seriesModel);
 
         this._api = api;
+    },
+
+    _updateMaterial: function (seriesModel, itemStyle) {
+        var blendFunc = seriesModel.get('blendMode') === 'lighter'
+            ? graphicGL.additiveBlend : null;
+        var material = this._mesh.material;
+        material.blend = blendFunc;
+
+        material.set('lineWidth', itemStyle.lineWidth / SDF_RANGE);
+
+        var strokeColor = graphicGL.parseColor(itemStyle.stroke);
+        material.set('color', [1, 1, 1, 1]);
+        material.set('strokeColor', strokeColor);
+
+        // Because of symbol texture, we always needs it be transparent.
+        material.transparent = true;
+        material.depthMask = false;
+        material.depthTest = !this.is2D;
+        material.sortVertices = !this.is2D;
+
     },
 
     _updateAnimation: function (seriesModel) {
@@ -232,6 +245,7 @@ PointsBuilder.prototype = {
     _updateHandler: function (seriesModel, ecModel, api) {
         var data = seriesModel.getData();
         var pointsMesh = this._mesh;
+        var self = this;
 
         var lastDataIndex = -1;
         var isCartesian3D = seriesModel.coordinateSystem
@@ -248,7 +262,7 @@ PointsBuilder.prototype = {
         pointsMesh.off('mouseout');
 
         pointsMesh.on('mousemove', function (e) {
-            var dataIndex = e.vertexIndex;
+            var dataIndex = e.vertexIndex + self._startDataIndex;
             if (dataIndex !== lastDataIndex) {
                 if (this.highlightOnMouseover) {
                     this.downplay(data, lastDataIndex);
@@ -269,8 +283,9 @@ PointsBuilder.prototype = {
             lastDataIndex = dataIndex;
         }, this);
         pointsMesh.on('mouseout', function (e) {
+            var dataIndex = e.vertexIndex + self._startDataIndex;
             if (this.highlightOnMouseover) {
-                this.downplay(data, e.vertexIndex);
+                this.downplay(data, dataIndex);
                 this._labelsBuilder.updateLabels();
             }
             lastDataIndex = -1;
@@ -295,33 +310,6 @@ PointsBuilder.prototype = {
         Matrix4.mul(worldViewProjection, camera.projectionMatrix, worldViewProjection);
 
         this._mesh.updateNDCPosition(worldViewProjection, this.is2D, this._api);
-    },
-
-    updateLayout: function (seriesModel, ecModel, api) {
-        var data = seriesModel.getData();
-        if (!this._mesh) {
-            return;
-        }
-
-        var positionArr = this._mesh.geometry.attributes.position.value;
-        var points = data.getLayout('points');
-        if (this.is2D) {
-            for (var i = 0; i < points.length / 2; i++) {
-                var i3 = i * 3;
-                var i2 = i * 2;
-                positionArr[i3] = points[i2];
-                positionArr[i3 + 1] = points[i2 + 1];
-                positionArr[i3 + 2] = Z_2D;
-            }
-        }
-        else {
-            for (var i = 0; i < points.length; i++) {
-                positionArr[i] = points[i];
-            }
-        }
-        this._mesh.geometry.dirty();
-
-        api.getZr().refresh();
     },
 
     highlight: function (data, dataIndex) {

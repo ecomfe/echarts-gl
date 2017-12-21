@@ -1,8 +1,9 @@
 import echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';
-
 import PointsBuilder from '../common/PointsBuilder';
+
+import GLViewHelper from '../common/GLViewHelper';
 
 echarts.extendChartView({
 
@@ -17,33 +18,66 @@ echarts.extendChartView({
 
         this.viewGL.add(this.groupGL);
 
-        this._pointsBuilder = new PointsBuilder(true, api);
+        this._pointsBuilderList = [];
+        this._currentStep = 0;
+
+        this._glViewHelper = new GLViewHelper(this.viewGL);
     },
 
     render: function (seriesModel, ecModel, api) {
-        this.groupGL.add(this._pointsBuilder.rootNode);
+        this.groupGL.removeAll();
+        this._glViewHelper.reset(seriesModel, api);
 
-        this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
+        var pointsBuilder = this._pointsBuilderList[0];
+        if (!pointsBuilder) {
+            pointsBuilder = this._pointsBuilderList[0] = new PointsBuilder(true, api);
+        }
+        this._pointsBuilderList.length = 1;
 
-        this._pointsBuilder.update(seriesModel, ecModel, api);
-        this._pointsBuilder.updateView(this.viewGL.camera);
+        this.groupGL.add(pointsBuilder.rootNode);
+
+        this._removeTransformInPoints(seriesModel.getData().getLayout('points'));
+        pointsBuilder.update(seriesModel, ecModel, api);
     },
 
-    updateLayout: function (seriesModel, ecModel, api) {
-        this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
-        this._pointsBuilder.updateView(this.viewGL.camera);
+    incrementalPrepareRender: function (seriesModel, ecModel, api) {
+        this.groupGL.removeAll();
+        this._glViewHelper.reset(seriesModel, api);
+
+        this._currentStep = 0;
     },
 
-    _updateCamera: function (width, height, dpr) {
-        // TODO, left, top, right, bottom
-        this.viewGL.setViewport(0, 0, width, height, dpr);
-        var camera = this.viewGL.camera;
-        camera.left = camera.top = 0;
-        camera.bottom = height;
-        camera.right = width;
-        camera.near = 0;
-        camera.far = 100;
+    incrementalRender: function (params, seriesModel, ecModel, api) {
+        var pointsBuilder = this._pointsBuilderList[this._currentStep];
+        if (!pointsBuilder) {
+            pointsBuilder = new PointsBuilder(true, api);
+            this._pointsBuilderList[this._currentStep] = pointsBuilder;
+        }
+        this.groupGL.add(pointsBuilder.rootNode);
+
+        this._removeTransformInPoints(seriesModel.getData().getLayout('points'));
+        pointsBuilder.update(seriesModel, ecModel, api, params.start, params.end);
+
+        this._currentStep++;
     },
+
+    updateTransform: function (seriesModel, ecModel, api) {
+        if (seriesModel.coordinateSystem.transform) {
+            this._glViewHelper.updateTransform(seriesModel, api);
+        }
+    },
+
+    _removeTransformInPoints: function (points) {
+        var pt = [];
+        for (var i = 0; i < points.length; i += 2) {
+            pt[0] = points[i];
+            pt[1] = points[i + 1];
+            this._glViewHelper.removeTransformInPoint(pt);
+            points[i] = pt[0];
+            points[i + 1] = pt[1];
+        }
+    },
+
 
     dispose: function () {
         this.groupGL.removeAll();

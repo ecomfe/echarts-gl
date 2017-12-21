@@ -16,6 +16,9 @@ echarts.extendSeriesModel({
         coordinateSystem: 'cartesian2d',
         zlevel: 10,
 
+        progressive: 1e5,
+        progressiveThreshold: 1e5,
+
         // Cartesian coordinate system
         // xAxisIndex: 0,
         // yAxisIndex: 0,

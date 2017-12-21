@@ -169,6 +169,9 @@ var LinesSeries = echarts.extendSeriesModel({
         coordinateSystem: 'geo',
         zlevel: 10,
 
+        progressive: 1e4,
+        progressiveThreshold: 5e4,
+
         // Cartesian coordinate system
         // xAxisIndex: 0,
         // yAxisIndex: 0,
