@@ -35,15 +35,21 @@ LabelsBuilder.prototype.getMesh = function () {
     return this._labelsMesh;
 };
 
-LabelsBuilder.prototype.updateData = function (data) {
+LabelsBuilder.prototype.updateData = function (data, start, end) {
+    if (start == null) {
+        start = 0;
+    }
+    if (end == null) {
+        end = data.count();
+    }
 
-    if (!this._labelsVisibilitiesBits || this._labelsVisibilitiesBits.length !== data.count()) {
-        this._labelsVisibilitiesBits = new Uint8Array(data.count());
+    if (!this._labelsVisibilitiesBits || this._labelsVisibilitiesBits.length !== (end - start)) {
+        this._labelsVisibilitiesBits = new Uint8Array(end - start);
     }
     var normalLabelVisibilityQuery = ['label', 'show'];
     var emphasisLabelVisibilityQuery = ['emphasis', 'label', 'show'];
 
-    data.each(function (idx) {
+    for (var idx = start; idx < end; idx++) {
         var itemModel = data.getItemModel(idx);
         var normalVisibility = itemModel.get(normalLabelVisibilityQuery);
         var emphasisVisibility = itemModel.get(emphasisLabelVisibilityQuery);
@@ -52,8 +58,11 @@ LabelsBuilder.prototype.updateData = function (data) {
         }
         var bit = (normalVisibility ? LABEL_NORMAL_SHOW_BIT : 0)
             | (emphasisVisibility ? LABEL_EMPHASIS_SHOW_BIT : 0);
-        this._labelsVisibilitiesBits[idx] = bit;
-    }, false, this);
+        this._labelsVisibilitiesBits[idx - start] = bit;
+    }
+
+    this._start = start;
+    this._end = end;
 
     this._data = data;
 };
@@ -96,12 +105,12 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
         bottom: 'top'
     };
 
-    data.each(function (dataIndex) {
+    for (var dataIndex = this._start; dataIndex < this._end; dataIndex++) {
         var isEmphasis = false;
         if (hasHighlightData && highlightDataIndicesMap[dataIndex]) {
             isEmphasis = true;
         }
-        var ifShow = this._labelsVisibilitiesBits[dataIndex]
+        var ifShow = this._labelsVisibilitiesBits[dataIndex - this._start]
             & (isEmphasis ? LABEL_EMPHASIS_SHOW_BIT : LABEL_NORMAL_SHOW_BIT);
         if (!ifShow) {
             return;
@@ -146,7 +155,7 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
             textAlign, textVerticalAlign,
             this.getLabelDistance(dataIndex, position, distance) * dpr
         );
-    }, false, this);
+    }
 
     this._labelsMesh.material.set('uvScale', this._labelTextureSurface.getCoordsScale());
 

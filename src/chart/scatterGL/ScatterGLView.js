@@ -28,6 +28,10 @@ echarts.extendChartView({
         this.groupGL.removeAll();
         this._glViewHelper.reset(seriesModel, api);
 
+        if (!seriesModel.getData().count()) {
+            return;
+        }
+
         var pointsBuilder = this._pointsBuilderList[0];
         if (!pointsBuilder) {
             pointsBuilder = this._pointsBuilderList[0] = new PointsBuilder(true, api);
@@ -48,6 +52,9 @@ echarts.extendChartView({
     },
 
     incrementalRender: function (params, seriesModel, ecModel, api) {
+        if (params.end <= params.start) {
+            return;
+        }
         var pointsBuilder = this._pointsBuilderList[this._currentStep];
         if (!pointsBuilder) {
             pointsBuilder = new PointsBuilder(true, api);
@@ -68,6 +75,9 @@ echarts.extendChartView({
     },
 
     _removeTransformInPoints: function (points) {
+        if (!points) {
+            return;
+        }
         var pt = [];
         for (var i = 0; i < points.length; i += 2) {
             pt[0] = points[i];

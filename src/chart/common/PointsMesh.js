@@ -27,6 +27,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
     });
     material.enableTexture('sprite');
     material.define('both', 'VERTEX_COLOR');
+    material.define('both', 'VERTEX_SIZE');
 
     var sdfTexture = new graphicGL.Texture2D({
         image: document.createElement('canvas'),

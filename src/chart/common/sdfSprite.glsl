@@ -4,7 +4,12 @@ uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 uniform float elapsedTime : 0;
 
 attribute vec3 position : POSITION;
+
+#ifdef VERTEX_SIZE
 attribute float size;
+#else
+uniform float u_Size;
+#endif
 
 #ifdef VERTEX_COLOR
 attribute vec4 a_FillColor: COLOR;
@@ -40,10 +45,14 @@ void main()
     gl_Position = worldViewProjection * vec4(pos, 1.0);
 #endif
 
+#ifdef VERTEX_SIZE
 #ifdef VERTEX_ANIMATION
     v_Size = mix(prevSize, size, percent);
 #else
     v_Size = size;
+#endif
+#else
+    v_Size = u_Size;
 #endif
 
 #ifdef VERTEX_COLOR

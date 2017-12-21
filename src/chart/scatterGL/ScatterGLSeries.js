@@ -29,6 +29,8 @@ echarts.extendSeriesModel({
         // Geo coordinate system
         // geoIndex: 0,
 
+        large: false,
+
         symbol: 'circle',
         symbolSize: 10,
 
