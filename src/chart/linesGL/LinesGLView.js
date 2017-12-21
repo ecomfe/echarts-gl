@@ -94,6 +94,7 @@ echarts.extendChartView({
         var curveness = seriesModel.get('lineStyle.curveness') || 0;
         var isPolyline = seriesModel.get('polyline');
         var geometry = linesMesh.geometry;
+        var coordSys = seriesModel.coordinateSystem;
 
         var lineWidth = retrieve.firstNotNull(seriesModel.get('lineStyle.width'), 1);
 
@@ -141,8 +142,8 @@ echarts.extendChartView({
                 }
                 else {
                     seriesModel.getLineCoords(idx, lineCoords);
-                    seriesModel.coordinateSystem.dataToPoint(lineCoords[0], p0);
-                    seriesModel.coordinateSystem.dataToPoint(lineCoords[1], p3);
+                    this._glViewHelper.dataToPoint(coordSys, lineCoords[0], p0);
+                    this._glViewHelper.dataToPoint(coordSys, lineCoords[1], p3);
                     updateBezierControlPoints();
 
                     vertexCount += geometry.getCubicCurveVertexCount(p0, p1, p2, p3);
@@ -167,7 +168,7 @@ echarts.extendChartView({
 
             var count = seriesModel.getLineCoords(idx, lineCoords);
             for (var k = 0; k < count; k++) {
-                seriesModel.coordinateSystem.dataToPoint(lineCoords[k], lineCoords[k]);
+                this._glViewHelper.dataToPoint(coordSys, lineCoords[k], lineCoords[k]);
             }
 
             if (isPolyline) {
