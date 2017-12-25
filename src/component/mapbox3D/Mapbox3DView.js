@@ -1,5 +1,5 @@
 import echarts from 'echarts/lib/echarts';
-import MapboxLayer from './MapboxLayer';
+import Mapbox3DLayer from './Mapbox3DLayer';
 import SceneHelper from '../common/SceneHelper';
 import graphicGL from '../../util/graphicGL';
 
@@ -11,13 +11,13 @@ var TILE_SIZE = 512;
 
 export default echarts.extendComponentView({
 
-    type: 'mapbox',
+    type: 'mapbox3D',
 
     __ecgl__: true,
 
     init: function (ecModel, api) {
         var zr = api.getZr();
-        this._zrLayer = new MapboxLayer('mapbox', zr);
+        this._zrLayer = new Mapbox3DLayer('mapbox3D', zr);
         zr.painter.insertLayer(-1000, this._zrLayer);
 
         this._lightRoot = new graphicGL.Node();
@@ -50,9 +50,9 @@ export default echarts.extendComponentView({
         });
     },
 
-    render: function (mapboxModel, ecModel, api) {
+    render: function (mapbox3DModel, ecModel, api) {
         var mapbox = this._zrLayer.getMapbox();
-        var styleDesc = mapboxModel.get('style');
+        var styleDesc = mapbox3DModel.get('style');
 
         var styleStr = JSON.stringify(styleDesc);
         if (styleStr !== this._oldStyleStr) {
@@ -62,14 +62,14 @@ export default echarts.extendComponentView({
         }
         this._oldStyleStr = styleStr;
 
-        mapbox.setCenter(mapboxModel.get('center'));
-        mapbox.setZoom(mapboxModel.get('zoom'));
-        mapbox.setPitch(mapboxModel.get('pitch'));
-        mapbox.setBearing(mapboxModel.get('bearing'));
+        mapbox.setCenter(mapbox3DModel.get('center'));
+        mapbox.setZoom(mapbox3DModel.get('zoom'));
+        mapbox.setPitch(mapbox3DModel.get('pitch'));
+        mapbox.setBearing(mapbox3DModel.get('bearing'));
 
-        mapboxModel.setMapbox(mapbox);
+        mapbox3DModel.setMapbox(mapbox);
 
-        var coordSys = mapboxModel.coordinateSystem;
+        var coordSys = mapbox3DModel.coordinateSystem;
 
         // Not add to rootNode. Or light direction will be stretched by rootNode scale
         coordSys.viewGL.scene.add(this._lightRoot);
@@ -79,22 +79,22 @@ export default echarts.extendComponentView({
 
         // Update lights
         this._sceneHelper.setScene(coordSys.viewGL.scene);
-        this._sceneHelper.updateLight(mapboxModel);
+        this._sceneHelper.updateLight(mapbox3DModel);
 
         // Update post effects
-        coordSys.viewGL.setPostEffect(mapboxModel.getModel('postEffect'), api);
-        coordSys.viewGL.setTemporalSuperSampling(mapboxModel.getModel('temporalSuperSampling'));
+        coordSys.viewGL.setPostEffect(mapbox3DModel.getModel('postEffect'), api);
+        coordSys.viewGL.setTemporalSuperSampling(mapbox3DModel.getModel('temporalSuperSampling'));
 
-        this._mapboxModel = mapboxModel;
+        this._mapbox3DModel = mapbox3DModel;
     },
 
-    afterRender: function (mapboxModel, ecModel, api, layerGL) {
+    afterRender: function (mapbox3DModel, ecModel, api, layerGL) {
         var renderer = layerGL.renderer;
-        this._sceneHelper.updateAmbientCubemap(renderer, mapboxModel, api);
-        this._sceneHelper.updateSkybox(renderer, mapboxModel, api);
+        this._sceneHelper.updateAmbientCubemap(renderer, mapbox3DModel, api);
+        this._sceneHelper.updateSkybox(renderer, mapbox3DModel, api);
 
         // FIXME If other series changes coordinate system.
-        mapboxModel.coordinateSystem.viewGL.scene.traverse(function (mesh) {
+        mapbox3DModel.coordinateSystem.viewGL.scene.traverse(function (mesh) {
             if (mesh.material) {
                 mesh.material.define('fragment', 'NORMAL_UP_AXIS', 2);
                 mesh.material.define('fragment', 'NORMAL_FRONT_AXIS', 1);
@@ -102,28 +102,28 @@ export default echarts.extendComponentView({
         });
     },
 
-    updateCamera: function (mapboxModel, ecModel, api, payload) {
-        mapboxModel.coordinateSystem.setCameraOption(payload);
+    updateCamera: function (mapbox3DModel, ecModel, api, payload) {
+        mapbox3DModel.coordinateSystem.setCameraOption(payload);
 
         this._updateGroundMesh();
 
         api.getZr().refresh();
     },
 
-    _dispatchInteractAction: function (api, mapbox, mapboxModel) {
+    _dispatchInteractAction: function (api, mapbox, mapbox3DModel) {
         api.dispatchAction({
-            type: 'mapboxChangeCamera',
+            type: 'mapbox3DChangeCamera',
             pitch: mapbox.getPitch(),
             zoom: mapbox.getZoom(),
             center: mapbox.getCenter().toArray(),
             bearing: mapbox.getBearing(),
-            mapboxId: this._mapboxModel && this._mapboxModel.id
+            mapbox3DId: this._mapbox3DModel && this._mapbox3DModel.id
         });
     },
 
     _updateGroundMesh: function () {
-        if (this._mapboxModel) {
-            var coordSys = this._mapboxModel.coordinateSystem;
+        if (this._mapbox3DModel) {
+            var coordSys = this._mapbox3DModel.coordinateSystem;
             var pt = coordSys.dataToPoint(coordSys.center);
             this._groundMesh.position.set(pt[0], pt[1], -0.001);
 

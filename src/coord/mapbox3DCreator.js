@@ -1,10 +1,10 @@
-import Mapbox from './mapbox/Mapbox';
+import Mapbox3D from './mapbox3D/Mapbox3D';
 import echarts from 'echarts/lib/echarts';
 import retrieve from '../util/retrieve';
 import graphicGL from '../util/graphicGL';
 import ViewGL from '../core/ViewGL';
 
-function resizeMapbox(mapboxModel, api) {
+function resizeMapbox3D(mapbox3DModel, api) {
     var width = api.getWidth();
     var height = api.getHeight();
     var dpr = api.getDevicePixelRatio();
@@ -13,9 +13,9 @@ function resizeMapbox(mapboxModel, api) {
     this.width = width;
     this.height = height;
 
-    this.altitudeScale = mapboxModel.get('altitudeScale');
+    this.altitudeScale = mapbox3DModel.get('altitudeScale');
 
-    this.boxHeight = mapboxModel.get('boxHeight');
+    this.boxHeight = mapbox3DModel.get('boxHeight');
     // this.updateTransform();
 }
 
@@ -52,61 +52,61 @@ function updateMapbox(ecModel, api) {
     }
 }
 
-var mapboxCreator = {
+var mapbox3DCreator = {
 
 
-    dimensions: Mapbox.prototype.dimensions,
+    dimensions: Mapbox3D.prototype.dimensions,
 
     create: function (ecModel, api) {
-        var mapboxList = [];
+        var mapbox3DList = [];
 
-        ecModel.eachComponent('mapbox', function (mapboxModel) {
-            var viewGL = mapboxModel.__viewGL;
+        ecModel.eachComponent('mapbox3D', function (mapbox3DModel) {
+            var viewGL = mapbox3DModel.__viewGL;
             if (!viewGL) {
-                viewGL = mapboxModel.__viewGL = new ViewGL();
+                viewGL = mapbox3DModel.__viewGL = new ViewGL();
                 viewGL.setRootNode(new graphicGL.Node());
             }
 
-            var mapboxCoordSys = new Mapbox();
-            mapboxCoordSys.viewGL = mapboxModel.__viewGL;
+            var mapbox3DCoordSys = new Mapbox3D();
+            mapbox3DCoordSys.viewGL = mapbox3DModel.__viewGL;
             // Inject resize
-            mapboxCoordSys.resize = resizeMapbox;
-            mapboxCoordSys.resize(mapboxModel, api);
+            mapbox3DCoordSys.resize = resizeMapbox3D;
+            mapbox3DCoordSys.resize(mapbox3DModel, api);
 
-            mapboxList.push(mapboxCoordSys);
+            mapbox3DList.push(mapbox3DCoordSys);
 
-            mapboxModel.coordinateSystem = mapboxCoordSys;
-            mapboxCoordSys.model = mapboxModel;
+            mapbox3DModel.coordinateSystem = mapbox3DCoordSys;
+            mapbox3DCoordSys.model = mapbox3DModel;
 
-            mapboxCoordSys.setCameraOption(mapboxModel.getMapboxCameraOption());
+            mapbox3DCoordSys.setCameraOption(mapbox3DModel.getMapboxCameraOption());
 
-            mapboxCoordSys.update = updateMapbox;
+            mapbox3DCoordSys.update = updateMapbox;
         });
 
         ecModel.eachSeries(function (seriesModel) {
-            if (seriesModel.get('coordinateSystem') === 'mapbox') {
-                var mapboxModel = seriesModel.getReferringComponents('mapbox')[0];
-                if (!mapboxModel) {
-                    mapboxModel = ecModel.getComponent('mapbox');
+            if (seriesModel.get('coordinateSystem') === 'mapbox3D') {
+                var mapbox3DModel = seriesModel.getReferringComponents('mapbox3D')[0];
+                if (!mapbox3DModel) {
+                    mapbox3DModel = ecModel.getComponent('mapbox3D');
                 }
 
-                if (!mapboxModel) {
-                    throw new Error('mapbox "' + retrieve.firstNotNull(
-                        seriesModel.get('mapboxIndex'),
-                        seriesModel.get('mapboxId'),
+                if (!mapbox3DModel) {
+                    throw new Error('mapbox3D "' + retrieve.firstNotNull(
+                        seriesModel.get('mapbox3DIndex'),
+                        seriesModel.get('mapbox3DId'),
                         0
                     ) + '" not found');
                 }
 
-                seriesModel.coordinateSystem = mapboxModel.coordinateSystem;
+                seriesModel.coordinateSystem = mapbox3DModel.coordinateSystem;
             }
         });
 
-        return mapboxList;
+        return mapbox3DList;
     }
 };
 
 
-echarts.registerCoordinateSystem('mapbox', mapboxCreator);
+echarts.registerCoordinateSystem('mapbox3D', mapbox3DCreator);
 
-export default mapboxCreator;
+export default mapbox3DCreator;

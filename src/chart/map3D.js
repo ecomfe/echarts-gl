@@ -22,29 +22,29 @@ echarts.registerAction({
     });
 });
 
-function transformPolygon(poly, mapboxCoordSys) {
+function transformPolygon(poly, mapbox3DCoordSys) {
     var newPoly = [];
     for (var k = 0; k < poly.length; k++) {
-        newPoly.push(mapboxCoordSys.dataToPoint(poly[k]));
+        newPoly.push(mapbox3DCoordSys.dataToPoint(poly[k]));
     }
     return newPoly;
 }
 
-function transformGeo3DOnMapbox(geo3D, mapboxCoordSys) {
+function transformGeo3DOnMapbox(geo3D, mapbox3DCoordSys) {
     for (var i = 0; i < geo3D.regions.length; i++) {
         var region = geo3D.regions[i];
         for (var k = 0; k < region.geometries.length; k++) {
             var geo = region.geometries[k];
             var interiors = geo.interiors;
-            geo.exterior = transformPolygon(geo.exterior, mapboxCoordSys);
+            geo.exterior = transformPolygon(geo.exterior, mapbox3DCoordSys);
             if (interiors && interiors.length) {
                 for (var m = 0; m < interiors.length; m++) {
-                    geo.interiors[m] = transformPolygon(interiors[m], mapboxCoordSys);
+                    geo.interiors[m] = transformPolygon(interiors[m], mapbox3DCoordSys);
                 }
             }
         }
         if (region.center) {
-            region.center = mapboxCoordSys.dataToPoint(region.center);
+            region.center = mapbox3DCoordSys.dataToPoint(region.center);
         }
     }
 }
@@ -52,7 +52,7 @@ function transformGeo3DOnMapbox(geo3D, mapboxCoordSys) {
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('map3D', function (seriesModel) {
         var coordSys = seriesModel.get('coordinateSystem');
-        if (coordSys === 'mapbox') {
+        if (coordSys === 'mapbox3D') {
             var geo3D = geo3DCreator.createGeo3D(seriesModel);
             geo3D.extrudeY = false;
             transformGeo3DOnMapbox(geo3D, seriesModel.coordinateSystem);

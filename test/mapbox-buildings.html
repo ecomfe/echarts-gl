@@ -9,33 +9,33 @@
     </head>
     <body>
         <div id="main"></div>
-        <script src="https://rawgit.com/ecomfe/echarts/master/dist/echarts.min.js"></script>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../dist/echarts-gl.js"></script>
-        <script src='lib/mapbox-gl.js'></script>
-        <link href='lib/mapbox-gl.css' rel='stylesheet' />
-        <script src="lib/jquery.min.js"></script>
-        <script src="lib/dat.gui.js"></script>
+        <script src='./lib/mapbox-gl.js'></script>
+        <link href='./lib/mapbox-gl.css' rel='stylesheet' />
+        <script src="./lib/jquery.min.js"></script>
+        <script src="./lib/dat.gui.js"></script>
         <script>
             mapboxgl.accessToken = window.location.search.slice(1);
             var chart = echarts.init(document.getElementById('main'));
 
             chart.showLoading();
-            $.getJSON('data/buildings.json', function (buildingsGeoJSON) {
+            $.getJSON('./data/buildings.json', function (buildingsGeoJSON) {
                 chart.hideLoading();
                 // buildingsGeoJSON.features = buildingsGeoJSON.features.slice(0, 10);
                 echarts.registerMap('buildings', buildingsGeoJSON);
 
-                var regions = echarts.parseGeoJSON(buildingsGeoJSON);
+                var regions = echarts.parseGeoJson(buildingsGeoJSON);
                 var regionsData = buildingsGeoJSON.features.map(function (feature) {
                     return {
                         name: feature.properties.name,
                         value: Math.random(),
-                        height: +feature.properties.height * 10
+                        height: +feature.properties.height * 10 + 0.1
                     };
                 });
 
                 chart.setOption({
-                    mapbox: {
+                    mapbox3D: {
                         center: [13.409779, 52.520645],
                         zoom: 13,
                         pitch: 50,
@@ -66,7 +66,7 @@
                                 intensity: 0.
                             },
                             ambientCubemap: {
-                                texture: 'asset/pisa.hdr',
+                                texture: './asset/pisa.hdr',
                                 exposure: 1,
                                 diffuseIntensity: 0.5,
                                 specularIntensity: 2
@@ -75,11 +75,10 @@
                     },
                     series: [{
                         type: 'map3D',
-                        coordinateSystem: 'mapbox',
+                        coordinateSystem: 'mapbox3D',
                         map: 'buildings',
                         data: regionsData,
                         shading: 'realistic',
-                        instancing: true,
                         silent: true,
                         itemStyle: {
                             borderColor: [0, 2, 10],
@@ -97,7 +96,7 @@
                     }]
                 });
 
-                var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
+                var mapbox = chart.getModel().getComponent('mapbox3D').getMapbox();
                 var current = 0;
                 function flyToNextPoint() {
                     var randRegion = regions[Math.round(Math.random() * (regions.length - 1))];

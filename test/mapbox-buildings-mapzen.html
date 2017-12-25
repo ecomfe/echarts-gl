@@ -23,11 +23,11 @@
             var cache = new LRUCache(100);
 
             chart.setOption({
-                mapbox: {
+                mapbox3D: {
                     // 北京
-                    center: [116.39157, 39.90673],
+                    // center: [116.39157, 39.90673],
                     // 纽约
-                    // center: [-74.02158343200102, 40.6143657735403],
+                    center: [-74.02158343200102, 40.6143657735403],
                     // 上海
                     // center: [121.4978, 31.2398],
                     // 伦敦
@@ -103,24 +103,23 @@
                 chart.setOption({
                     series: [{
                         type: 'map3D',
-                        coordinateSystem: 'mapbox',
+                        coordinateSystem: 'mapbox3D',
                         map: {
                             __ec_primitive__: true,
                             features: features
                         },
                         data: regionsData,
                         shading: 'realistic',
-                        instancing: true,
                         silent: true,
                         realisticMaterial: {
                             metalness: 0,
                             roughness: 0.8,
-                            detailTexture: 'asset/woods.jpg',
+                            // detailTexture: 'asset/woods.jpg',
                             // detailTexture: 'asset/iron-rusted4/iron-rusted4-basecolor.jpg',
                             // metalness: 'asset/iron-rusted4/iron-rusted4-metalness.jpg',
                             // roughness: 'asset/iron-rusted4/iron-rusted4-roughness.jpg',
                             // normalTexture: 'asset/iron-rusted4/iron-rusted4-normal.jpg',
-                            textureTiling: [4, 4]
+                            // textureTiling: [4, 4]
                         }
                     }]
                 });

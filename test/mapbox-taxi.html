@@ -89,7 +89,7 @@ https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Build
 
                     console.profile('setOption');
                     chart.setOption({
-                        mapbox: {
+                        mapbox3D: {
                             center: [18.424552361777955, -33.92188144682616],
                             zoom: 14,
                             pitch: 50,
@@ -124,8 +124,8 @@ https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Build
                                 },
                                 ambientCubemap: {
                                     texture: 'asset/pisa.hdr',
-                                    exposure: 1,
-                                    diffuseIntensity: 0.5,
+                                    exposure: 2,
+                                    diffuseIntensity: 1,
                                     specularIntensity: 2
                                 }
                             }
@@ -133,7 +133,7 @@ https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Build
                         series: [{
                             type: 'lines3D',
 
-                            coordinateSystem: 'mapbox',
+                            coordinateSystem: 'mapbox3D',
 
                             effect: {
                                 show: true,
@@ -166,13 +166,15 @@ https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Build
                             type: 'map3D',
                             map: 'buildings',
 
-                            coordinateSystem: 'mapbox',
+                            coordinateSystem: 'mapbox3D',
                             shading: 'realistic',
                             silent: true,
 
-                            instancing: true,
-
                             data: regions,
+
+                            itemStyle: {
+                                areaColor: '#444'
+                            },
 
                             realisticMaterial: {
                                 metalness: 1,
@@ -183,7 +185,7 @@ https://web1.capetown.gov.za/web1/opendataportal/DatasetDetail?DatasetName=Build
 
                     console.profileEnd('setOption');
                 });
-                
+
             window.addEventListener('keydown', function () {
                 chart.dispatchAction({
                     type: 'lines3DToggleEffect',

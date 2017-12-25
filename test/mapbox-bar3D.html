@@ -40,7 +40,7 @@
                             colorAlpha: 0
                         }
                     },
-                    mapbox: {
+                    mapbox3D: {
                         center: [104.114129, 37.550339],
                         zoom: 2,
                         pitch: 50,
@@ -73,16 +73,17 @@
                     },
                     series: [{
                         type: 'bar3D',
-                        coordinateSystem: 'mapbox',
+                        coordinateSystem: 'mapbox3D',
                         shading: 'lambert',
                         minHeight: 0.1,
                         barSize: 0.1,
                         data: data,
-                        silent: true
+                        silent: true,
+                        animationEasingUpdate: 2000
                     }]
                 });
 
-                var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
+                var mapbox = chart.getModel().getComponent('mapbox3D').getMapbox();
                 var cities = [
                     'Beijing',
                     'Washington',
@@ -116,6 +117,11 @@
                 window.addEventListener('keydown', function (e) {
                     if (e.keyCode === 32) {
                         flyToNextCity();
+                        // chart.setOption({
+                        //     mapbox: {
+                        //         boxHeight: Math.random() * 100
+                        //     }
+                        // });
                     }
                 })
             });

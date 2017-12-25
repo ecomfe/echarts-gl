@@ -1,8 +1,4 @@
-import echarts from 'echarts/lib/echarts';
 import glmatrix from 'qtek/src/dep/glmatrix';
-import Vector3 from 'qtek/src/math/Vector3';
-import Matrix4 from 'qtek/src/math/Matrix4';
-var vec3 = glmatrix.vec3;
 var mat4 = glmatrix.mat4;
 
 var TILE_SIZE = 512;
@@ -11,7 +7,7 @@ var PI = Math.PI;
 
 var WORLD_SCALE = 1 / 10;
 
-function Mapbox() {
+function Mapbox3D() {
     /**
      * Width of mapbox viewport
      */
@@ -28,7 +24,6 @@ function Mapbox() {
 
     // Set by mapbox creator
     this.altitudeExtent;
-    
 
     this.bearing = 0;
     this.pitch = 0;
@@ -39,11 +34,11 @@ function Mapbox() {
     this._initialZoom;
 }
 
-Mapbox.prototype = {
+Mapbox3D.prototype = {
 
-    constructor: Mapbox,
+    constructor: Mapbox3D,
 
-    type: 'mapbox',
+    type: 'mapbox3D',
 
     dimensions: ['lng', 'lat', 'alt'],
 
@@ -183,4 +178,4 @@ Mapbox.prototype = {
     }
 };
 
-export default Mapbox;
+export default Mapbox3D;

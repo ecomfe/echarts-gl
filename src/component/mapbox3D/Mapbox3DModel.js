@@ -5,9 +5,9 @@ import componentLightMixin from '../common/componentLightMixin';
 
 var MAPBOX_CAMERA_OPTION = ['zoom', 'center', 'pitch', 'bearing'];
 
-var MapboxModel = echarts.extendComponentModel({
+var Mapbox3DModel = echarts.extendComponentModel({
 
-    type: 'mapbox',
+    type: 'mapbox3D',
 
     layoutMode: 'box',
 
@@ -23,7 +23,7 @@ var MapboxModel = echarts.extendComponentModel({
         zoom: 0,
 
         pitch: 0,
-        
+
         bearing: 0,
 
         light: {
@@ -68,7 +68,7 @@ var MapboxModel = echarts.extendComponentModel({
     }
 });
 
-echarts.util.merge(MapboxModel.prototype, componentPostEffectMixin);
-echarts.util.merge(MapboxModel.prototype, componentLightMixin);
+echarts.util.merge(Mapbox3DModel.prototype, componentPostEffectMixin);
+echarts.util.merge(Mapbox3DModel.prototype, componentLightMixin);
 
-export default MapboxModel;
+export default Mapbox3DModel;
