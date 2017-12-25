@@ -426,10 +426,6 @@ VectorFieldParticleSurface.prototype = {
         renderer.disposeGeometry(this._particlePointsMesh.geometry);
         renderer.disposeGeometry(this._lastFrameFullQuadMesh.geometry);
 
-        renderer.disposeShader(this._particleLinesMesh.material.shader);
-        renderer.disposeShader(this._particlePointsMesh.material.shader);
-        renderer.disposeShader(this._lastFrameFullQuadMesh.material.shader);
-
         if (this._spriteTexture) {
             renderer.disposeTexture(this._spriteTexture);
         }

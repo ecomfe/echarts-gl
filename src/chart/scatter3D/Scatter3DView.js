@@ -65,6 +65,7 @@ echarts.extendChartView({
     },
 
     incrementalRender: function (params, seriesModel, ecModel, api) {
+        // TODO Sort transparency.
         if (params.end <= params.start) {
             return;
         }
