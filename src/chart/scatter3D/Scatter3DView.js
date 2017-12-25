@@ -15,21 +15,31 @@ echarts.extendChartView({
 
         this.groupGL = new graphicGL.Node();
 
-        var pointsBuilder = new PointsBuilder(false, api);
-        this._pointsBuilder = pointsBuilder;
+        this._pointsBuilderList = [];
+        this._currentStep = 0;
     },
 
     render: function (seriesModel, ecModel, api) {
-        this.groupGL.add(this._pointsBuilder.rootNode);
+        this.groupGL.removeAll();
+        if (!seriesModel.getData().count()) {
+            return;
+        }
 
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
             coordSys.viewGL.add(this.groupGL);
-
-            this._pointsBuilder.update(seriesModel, ecModel, api);
-            this._pointsBuilder.updateView(coordSys.viewGL.camera);
-
             this._camera = coordSys.viewGL.camera;
+
+            var pointsBuilder = this._pointsBuilderList[0];
+            if (!pointsBuilder) {
+                pointsBuilder = this._pointsBuilderList[0] = new PointsBuilder(false, api);
+            }
+            this._pointsBuilderList.length = 1;
+
+            this.groupGL.add(pointsBuilder.rootNode);
+            pointsBuilder.update(seriesModel, ecModel, api);
+            pointsBuilder.updateView(coordSys.viewGL.camera);
+
         }
         else {
             if (__DEV__) {
@@ -38,13 +48,42 @@ echarts.extendChartView({
         }
     },
 
-    updateLayout: function (seriesModel, ecModel, api) {
-        this._pointsBuilder.updateLayout(seriesModel, ecModel, api);
-        this._pointsBuilder.updateView(this._camera);
+    incrementalPrepareRender: function (seriesModel, ecModel, api) {
+        var coordSys = seriesModel.coordinateSystem;
+        if (coordSys && coordSys.viewGL) {
+            this._camera = coordSys.viewGL.camera;
+        }
+        else {
+            if (__DEV__) {
+                throw new Error('Invalid coordinate system');
+            }
+        }
+
+        this.groupGL.removeAll();
+        this._currentStep = 0;
+    },
+
+    incrementalRender: function (params, seriesModel, ecModel, api) {
+        if (params.end <= params.start) {
+            return;
+        }
+        var pointsBuilder = this._pointsBuilderList[this._currentStep];
+        if (!pointsBuilder) {
+            pointsBuilder = new PointsBuilder(true, api);
+            this._pointsBuilderList[this._currentStep] = pointsBuilder;
+        }
+        this.groupGL.add(pointsBuilder.rootNode);
+
+        pointsBuilder.update(seriesModel, ecModel, api, params.start, params.end);
+        pointsBuilder.updateView(seriesModel.coordinateSystem.viewGL.camera);
+
+        this._currentStep++;
     },
 
     updateCamera: function () {
-        this._pointsBuilder.updateView(this._camera);
+        this._pointsBuilderList.forEach(function (pointsBuilder) {
+            pointsBuilder.updateView(this._camera);
+        }, this);
     },
 
     highlight: function (seriesModel, ecModel, api, payload) {
@@ -59,15 +98,22 @@ echarts.extendChartView({
         var data = seriesModel.getData();
         var dataIndex = retrieve.queryDataIndex(data, payload);
 
-        var pointsBuilder = this._pointsBuilder;
+        var isHighlight = status === 'highlight';
         if (dataIndex != null) {
             echarts.util.each(format.normalizeToArray(dataIndex), function (dataIdx) {
-                status === 'highlight' ? pointsBuilder.highlight(data, dataIdx) : pointsBuilder.downplay(data, dataIdx);
+                for (var i = 0; i < this._pointsBuilderList.length; i++) {
+                    var pointsBuilder = this._pointsBuilderList[i];
+                    isHighlight ? pointsBuilder.highlight(data, dataIdx) : pointsBuilder.downplay(data, dataIdx);
+                }
             }, this);
         }
         else {
+            // PENDING, OPTIMIZE
             data.each(function (dataIdx) {
-                status === 'highlight' ? pointsBuilder.highlight(data, dataIdx) : pointsBuilder.downplay(data, dataIdx);
+                for (var i = 0; i < this._pointsBuilderList.length; i++) {
+                    var pointsBuilder = this._pointsBuilderList[i];
+                    isHighlight ? pointsBuilder.highlight(data, dataIdx) : pointsBuilder.downplay(data, dataIdx);
+                }
             });
         }
     },

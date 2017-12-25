@@ -33,7 +33,7 @@ function PointsBuilder(is2D, api) {
     this._spriteImageCanvas = document.createElement('canvas');
 
     this._startDataIndex = 0;
-    this._end = 0;
+    this._endDataIndex = 0;
 
     this._sizeScale = 1;
 }
@@ -62,6 +62,7 @@ PointsBuilder.prototype = {
             end = data.count();
         }
         this._startDataIndex = start;
+        this._endDataIndex = end - 1;
 
         if (!this._mesh) {
             var material = this._prevMesh && this._prevMesh.material;
@@ -379,6 +380,9 @@ PointsBuilder.prototype = {
     },
 
     highlight: function (data, dataIndex) {
+        if (dataIndex > this._endDataIndex || dataIndex < this._startDataIndex) {
+            return;
+        }
         var itemModel = data.getItemModel(dataIndex);
         var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
         var emphasisColor = emphasisItemStyleModel.get('color');
@@ -393,20 +397,23 @@ PointsBuilder.prototype = {
         var colorArr = graphicGL.parseColor(emphasisColor);
         colorArr[3] *= emphasisOpacity;
 
-        this._mesh.geometry.attributes.color.set(dataIndex, colorArr);
+        this._mesh.geometry.attributes.color.set(dataIndex - this._startDataIndex, colorArr);
         this._mesh.geometry.dirtyAttribute('color');
 
         this._api.getZr().refresh();
     },
 
     downplay: function (data, dataIndex) {
+        if (dataIndex > this._endDataIndex || dataIndex < this._startDataIndex) {
+            return;
+        }
         var color = data.getItemVisual(dataIndex, 'color');
         var opacity = data.getItemVisual(dataIndex, 'opacity');
 
         var colorArr = graphicGL.parseColor(color);
         colorArr[3] *= opacity;
 
-        this._mesh.geometry.attributes.color.set(dataIndex, colorArr);
+        this._mesh.geometry.attributes.color.set(dataIndex - this._startDataIndex, colorArr);
         this._mesh.geometry.dirtyAttribute('color');
 
         this._api.getZr().refresh();

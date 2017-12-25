@@ -39,6 +39,9 @@ echarts.extendSeriesModel({
         coordinateSystem: 'cartesian3D',
         zlevel: -10,
 
+        progressive: 1e5,
+        progressiveThreshold: 1e5,
+
         // Cartesian coordinate system
         grid3DIndex: 0,
 
