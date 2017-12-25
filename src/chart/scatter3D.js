@@ -9,9 +9,9 @@ echarts.registerVisual(symbolVisual('scatter3D', 'circle', null));
 
 echarts.registerVisual(opacityVisual('scatter3D'));
 
-echarts.registerLayout(function (ecModel, api) {
-    ecModel.eachSeriesByType('scatter3D', function (seriesModel) {
-        var data = seriesModel.getData();
+echarts.registerLayout({
+    seriesType: 'scatter3D',
+    reset: function (seriesModel) {
         var coordSys = seriesModel.coordinateSystem;
 
         if (coordSys) {
@@ -26,23 +26,25 @@ echarts.registerLayout(function (ecModel, api) {
                 return seriesModel.coordDimToDataDim(coordDim)[0];
             });
 
-            var points = new Float32Array(data.count() * 3);
-
             var item = [];
             var out = [];
 
-            if (coordSys) {
-                data.each(dims, function (x, y, z, idx) {
-                    item[0] = x;
-                    item[1] = y;
-                    item[2] = z;
-                    coordSys.dataToPoint(item, out);
-                    points[idx * 3] = out[0];
-                    points[idx * 3 + 1] = out[1];
-                    points[idx * 3 + 2] = out[2];
-                });
-            }
-            data.setLayout('points', points);
+            return {
+                progress: function (params, data) {
+                    var points = new Float32Array((params.end - params.start) * 3);
+                    for (var idx = params.start; idx < params.end; idx++) {
+                        var idx3 = (idx - params.start) * 3;
+                        item[0] = data.get(dims[0], idx);
+                        item[1] = data.get(dims[1], idx);
+                        item[2] = data.get(dims[2], idx);
+                        coordSys.dataToPoint(item, out);
+                        points[idx3] = out[0];
+                        points[idx3 + 1] = out[1];
+                        points[idx3 + 2] = out[2];
+                    }
+                    data.setLayout('points', points);
+                }
+            };
         }
-    });
+    }
 });

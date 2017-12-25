@@ -51,6 +51,7 @@ echarts.extendChartView({
     incrementalPrepareRender: function (seriesModel, ecModel, api) {
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys && coordSys.viewGL) {
+            coordSys.viewGL.add(this.groupGL);
             this._camera = coordSys.viewGL.camera;
         }
         else {
@@ -69,7 +70,7 @@ echarts.extendChartView({
         }
         var pointsBuilder = this._pointsBuilderList[this._currentStep];
         if (!pointsBuilder) {
-            pointsBuilder = new PointsBuilder(true, api);
+            pointsBuilder = new PointsBuilder(false, api);
             this._pointsBuilderList[this._currentStep] = pointsBuilder;
         }
         this.groupGL.add(pointsBuilder.rootNode);
