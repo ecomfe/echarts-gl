@@ -39,7 +39,6 @@ echarts.extendChartView({
             this.groupGL.add(pointsBuilder.rootNode);
             pointsBuilder.update(seriesModel, ecModel, api);
             pointsBuilder.updateView(coordSys.viewGL.camera);
-
         }
         else {
             if (__DEV__) {

@@ -16,8 +16,6 @@ function Geo3DBuilder(api) {
 
     this.rootNode = new graphicGL.Node();
 
-    this._currentMap = '';
-
     // Cache triangulation result
     this._triangulationResults = {};
 
@@ -44,11 +42,15 @@ function Geo3DBuilder(api) {
     });
     this._groundMesh.rotation.rotateX(-Math.PI / 2);
 
-    this._labelsBuilder = new LabelsBuilder(1024, 1024, api);
+    this._labelsBuilder = new LabelsBuilder(512, 512, api);
 
     // Give a large render order.
     this._labelsBuilder.getMesh().renderOrder = 100;
     this._labelsBuilder.getMesh().material.depthTest = false;
+
+    this.rootNode.add(this._labelsBuilder.getMesh());
+
+    this._initMeshes();
 
     this._api = api;
 }
@@ -60,63 +62,79 @@ Geo3DBuilder.prototype = {
     // Which dimension to extrude. Y or Z
     extrudeY: true,
 
-    update: function (componentModel, geo3D, ecModel, api) {
-        this._triangulation(geo3D);
-        if (geo3D.map !== this._currentMap) {
-            this._currentMap = geo3D.map;
+    update: function (componentModel, ecModel, api, start, end) {
 
-            // Reset meshes
-            this._initMeshes(componentModel, geo3D);
+        this._startIndex = start;
+        this._endIndex = end - 1;
 
-            this.rootNode.add(this._labelsBuilder.getMesh());
-        }
+        this._triangulation(componentModel, start, end);
 
         var shader = this._getShader(componentModel.get('shading'));
 
         var data = componentModel.getData();
 
-        this._prepareMesh(componentModel, geo3D, shader, api);
+        this._prepareMesh(componentModel, shader, api, start, end);
 
         this.rootNode.updateWorldTransform();
 
-        this._updateRegionMesh(componentModel, geo3D, shader, api);
+        this._updateRegionMesh(componentModel, api, start, end);
 
-        this._updateGroundPlane(componentModel, geo3D, api);
+        var coordSys = componentModel.coordinateSystem;
+        // PENDING
+        if (coordSys.type === 'geo3D') {
+            this._updateGroundPlane(componentModel, coordSys, api);
+        }
 
+        var self = this;
         this._labelsBuilder.updateData(data);
         this._labelsBuilder.getLabelPosition = function (dataIndex, positionDesc, distance) {
             var name = data.getName(dataIndex);
-            var region = geo3D.getRegion(name);
-            var center = region.center;
 
+            var center;
             var height = distance;
-            return geo3D.dataToPoint([center[0], center[1], height]);
+            if (coordSys.type === 'geo3D') {
+                var region = coordSys.getRegion(name);
+                center = region.center;
+                return coordSys.dataToPoint([center[0], center[1], height]);
+            }
+            else {
+                var tmp = self._triangulationResults[dataIndex - self._startIndex];
+                var center = self.extrudeY ? [
+                    (tmp.max[0] + tmp.min[0]) / 2,
+                    tmp.max[1] + height,
+                    (tmp.max[2] + tmp.min[2]) / 2
+                ] : [
+                    (tmp.max[0] + tmp.min[0]) / 2,
+                    (tmp.max[1] + tmp.min[1]) / 2,
+                    tmp.max[2] + height
+                ];
+            }
         };
 
         this._data = data;
 
         this._labelsBuilder.updateLabels();
 
-        this._updateDebugWireframe(componentModel, geo3D);
+        this._updateDebugWireframe(componentModel);
 
         // Reset some state.
         this._lastHoverDataIndex = 0;
     },
 
-    _prepareMesh: function (componentModel, geo3D, shader, api) {
+    _prepareMesh: function (componentModel, shader, api, start, end) {
         var polygonVertexCount = 0;
         var polygonTriangleCount = 0;
         var linesVertexCount = 0;
         var linesTriangleCount = 0;
         // TODO Lines
-        geo3D.regions.forEach(function (region) {
-            var polyInfo = this._getRegionPolygonGeoInfo(region);
-            var lineInfo = this._getRegionLinesGeoInfo(region, componentModel, this._linesMesh.geometry);
+        for (var idx = start; idx < end; idx++) {
+            var polyInfo = this._getRegionPolygonInfo(idx);
+            var lineInfo = this._getRegionLinesInfo(idx, componentModel, this._linesMesh.geometry);
             polygonVertexCount += polyInfo.vertexCount;
             polygonTriangleCount += polyInfo.triangleCount;
             linesVertexCount += lineInfo.vertexCount;
             linesTriangleCount += lineInfo.triangleCount;
-        }, this);
+        }
 
         var polygonMesh = this._polygonMesh;
         var polygonGeo = polygonMesh.geometry;
@@ -128,6 +146,7 @@ Geo3DBuilder.prototype = {
         if (polygonMesh.material.shader !== shader) {
             polygonMesh.material.attachShader(shader, true);
         }
+        graphicGL.setMaterialFromModel(shader.__shading, polygonMesh.material, componentModel, api);
 
         if (linesVertexCount > 0) {
             this._linesMesh.geometry.resetOffset();
@@ -138,10 +157,10 @@ Geo3DBuilder.prototype = {
         // Indexing data index from vertex index.
         this._dataIndexOfVertex = new Uint32Array(polygonVertexCount);
         // Indexing vertex index range from data index
-        this._vertexRangeOfDataIndex = new Uint32Array(geo3D.regions.length * 2);
+        this._vertexRangeOfDataIndex = new Uint32Array((end - start) * 2);
     },
 
-    _updateRegionMesh: function (componentModel, geo3D, shader, api) {
+    _updateRegionMesh: function (componentModel, api, start, end) {
 
         var data = componentModel.getData();
 
@@ -149,28 +168,14 @@ Geo3DBuilder.prototype = {
         var triangleOffset = 0;
 
         // Materials configurations.
-        graphicGL.setMaterialFromModel(shader.__shading, this._polygonMesh.material, componentModel, api);
         var hasTranparentRegion = false;
-
-        var nameIndicesMap = {};
-        data.each(function (idx) {
-            nameIndicesMap[data.getName(idx)] = idx;
-        });
 
         var polygonMesh = this._polygonMesh;
         var linesMesh = this._linesMesh;
-        if (polygonMesh.material.shader !== shader) {
-            polygonMesh.material.attachShader(shader, true);
-        }
 
-        geo3D.regions.forEach(function (region) {
-            var dataIndex = nameIndicesMap[region.name];
-            if (dataIndex == null) {
-                dataIndex = -1;
-            }
-
+        for (var dataIndex = start; dataIndex < end; dataIndex++) {
             // Get bunch of visual properties.
-            var regionModel = componentModel.getRegionModel(region.name);
+            var regionModel = componentModel.getRegionModel(dataIndex);
             var itemStyleModel = regionModel.getModel('itemStyle');
             var color = itemStyleModel.get('areaColor');
             var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
@@ -198,15 +203,15 @@ Geo3DBuilder.prototype = {
             var regionHeight = retrieve.firstNotNull(regionModel.get('height', true), componentModel.get('regionHeight'));
 
             var newOffsets = this._updatePolygonGeometry(
-                componentModel, polygonMesh.geometry, region, regionHeight,
+                componentModel, polygonMesh.geometry, dataIndex, regionHeight,
                 vertexOffset, triangleOffset, color
             );
 
             for (var i = vertexOffset; i < newOffsets.vertexOffset; i++) {
                 this._dataIndexOfVertex[i] = dataIndex;
             }
-            this._vertexRangeOfDataIndex[dataIndex * 2] = vertexOffset;
-            this._vertexRangeOfDataIndex[dataIndex * 2 + 1] = newOffsets.vertexOffset;
+            this._vertexRangeOfDataIndex[(dataIndex - start) * 2] = vertexOffset;
+            this._vertexRangeOfDataIndex[(dataIndex - start) * 2 + 1] = newOffsets.vertexOffset;
 
             vertexOffset = newOffsets.vertexOffset;
             triangleOffset = newOffsets.triangleOffset;
@@ -217,14 +222,15 @@ Geo3DBuilder.prototype = {
             if (hasLine) {
                 lineWidth *= api.getDevicePixelRatio();
                 this._updateLinesGeometry(
-                    linesMesh.geometry, region, regionHeight, lineWidth, geo3D.transform
+                    linesMesh.geometry, componentModel, dataIndex, regionHeight, lineWidth,
+                    componentModel.coordinateSystem.transform
                 );
             }
             linesMesh.invisible = !hasLine;
             linesMesh.material.set({
                 color: borderColor
             });
-        }, this);
+        }
 
         var polygonMesh = this._polygonMesh;
         polygonMesh.material.transparent = hasTranparentRegion;
@@ -242,7 +248,7 @@ Geo3DBuilder.prototype = {
         polygonMesh.on('mouseout', this._onmouseout, this);
     },
 
-    _updateDebugWireframe: function (componentModel, geo3D) {
+    _updateDebugWireframe: function (componentModel) {
         var debugWireframeModel = componentModel.getModel('debug.wireframe');
 
         // TODO Unshow
@@ -254,20 +260,11 @@ Geo3DBuilder.prototype = {
                 debugWireframeModel.get('lineStyle.width'), 1
             );
 
-            var setWireframe = function (mesh) {
-                mesh.geometry.generateBarycentric();
-                mesh.material.define('both', 'WIREFRAME_TRIANGLE');
-                mesh.material.set('wireframeLineColor', color);
-                mesh.material.set('wireframeLineWidth', width);
-            }
-            if (this._polygonMeshesMap) {
-                geo3D.regions.forEach(function (region) {
-                    setWireframe(this._polygonMeshesMap[region.name]);
-                }, this);
-            }
-            else {
-                setWireframe(this._polygonMesh);
-            }
+            var mesh = this._polygonMesh;
+            mesh.geometry.generateBarycentric();
+            mesh.material.define('both', 'WIREFRAME_TRIANGLE');
+            mesh.material.set('wireframeLineColor', color);
+            mesh.material.set('wireframeLineWidth', width);
         }
     },
 
@@ -332,15 +329,14 @@ Geo3DBuilder.prototype = {
         this._groundMesh.scale.set(geo3D.size[0], geo3D.size[2], 1);
     },
 
-    _initMeshes: function (componentModel, geo3D) {
+    _initMeshes: function () {
         this.rootNode.removeAll();
 
-        var shader = this._getShader(componentModel.get('shading'));
-
+        var self = this;
         function createPolygonMesh() {
              var mesh = new graphicGL.Mesh({
                 material: new graphicGL.Material({
-                    shader: shader
+                    shader: self._shadersMap.lambert
                 }),
                 culling: false,
                 geometry: new graphicGL.Geometry({
@@ -392,17 +388,20 @@ Geo3DBuilder.prototype = {
         return shader;
     },
 
-    _triangulation: function (geo3D) {
-        this._triangulationResults = {};
-        // var triangulator = this._triangulator;
+    _triangulation: function (componentModel, start, end) {
+        this._triangulationResults = [];
 
         var minAll = [Infinity, Infinity, Infinity];
         var maxAll = [-Infinity, -Infinity, -Infinity];
-        geo3D.regions.forEach(function (region) {
+
+        var coordSys = componentModel.coordinateSystem;
+
+        for (var idx = start; idx < end; idx++) {
             var polygons = [];
-            for (var i = 0; i < region.geometries.length; i++) {
-                var exterior = region.geometries[i].exterior;
-                var interiors = region.geometries[i].interiors;
+            var polygonCoords = componentModel.getRegionPolygonCoords(idx);
+            for (var i = 0; i < polygonCoords.length; i++) {
+                var exterior = polygonCoords[i].exterior;
+                var interiors = polygonCoords[i].interiors;
                 var points = [];
                 var holes = [];
                 if (exterior.length < 3) {
@@ -416,7 +415,7 @@ Geo3DBuilder.prototype = {
                 }
 
                 for (var j = 0; j < interiors.length; j++) {
-                    if (interiors[j].length.length < 3) {
+                    if (interiors[j].length < 3) {
                         continue;
                     }
                     var startIdx = points.length / 2;
@@ -428,8 +427,6 @@ Geo3DBuilder.prototype = {
 
                     holes.push(startIdx);
                 }
-                // triangulator.triangulate(points, holes);
-                // points = triangulator.points;
                 var triangles = earcut(points, holes);
 
                 var points3 = new Float64Array(points.length / 2 * 3);
@@ -439,7 +436,9 @@ Geo3DBuilder.prototype = {
                 var off3 = 0;
                 for (var j = 0; j < points.length;) {
                     vec3.set(pos, points[j++], 0, points[j++]);
-                    vec3.transformMat4(pos, pos, geo3D.transform);
+                    if (coordSys && coordSys.transform) {
+                        vec3.transformMat4(pos, pos, coordSys.transform);
+                    }
                     vec3.min(min, min, pos);
                     vec3.max(max, max, pos);
                     points3[off3++] = pos[0];
@@ -450,11 +449,13 @@ Geo3DBuilder.prototype = {
                 vec3.max(maxAll, maxAll, max);
                 polygons.push({
                     points: points3,
-                    indices: triangles
+                    indices: triangles,
+                    min: min,
+                    max: max
                 });
             }
-            this._triangulationResults[region.name] = polygons;
-        }, this);
+            this._triangulationResults.push(polygons);
+        }
 
         this._geoBoundingBox = [minAll, maxAll];
     },
@@ -462,9 +463,9 @@ Geo3DBuilder.prototype = {
     /**
      * Get region vertex and triangle count
      */
-    _getRegionPolygonGeoInfo: function (region) {
+    _getRegionPolygonInfo: function (idx) {
 
-        var polygons = this._triangulationResults[region.name];
+        var polygons = this._triangulationResults[idx - this._startIndex];
 
         var sideVertexCount = 0;
         var sideTriangleCount = 0;
@@ -484,7 +485,7 @@ Geo3DBuilder.prototype = {
     },
 
     _updatePolygonGeometry: function (
-        componentModel, geometry, region, regionHeight,
+        componentModel, geometry, dataIndex, regionHeight,
         vertexOffset, triangleOffset, color
     ) {
         // FIXME
@@ -494,7 +495,7 @@ Geo3DBuilder.prototype = {
         var normalAttr = geometry.attributes.normal;
         var texcoordAttr = geometry.attributes.texcoord0;
         var colorAttr = geometry.attributes.color;
-        var polygons = this._triangulationResults[region.name];
+        var polygons = this._triangulationResults[dataIndex - this._startIndex];
 
         var hasColor = colorAttr.value && color;
 
@@ -631,18 +632,19 @@ Geo3DBuilder.prototype = {
         };
     },
 
-    _getRegionLinesGeoInfo: function (region, componentModel, geometry) {
+    _getRegionLinesInfo: function (idx, componentModel, geometry) {
         var vertexCount = 0;
         var triangleCount = 0;
 
-        var regionModel = componentModel.getRegionModel(region.name);
+        var regionModel = componentModel.getRegionModel(idx);
         var itemStyleModel = regionModel.getModel('itemStyle');
 
         var lineWidth = itemStyleModel.get('borderWidth');
         if (lineWidth > 0) {
-            region.geometries.forEach(function (geo) {
-                var exterior = geo.exterior;
-                var interiors = geo.interiors;
+            var polygonCoords = componentModel.getRegionPolygonCoords(idx);
+            polygonCoords.forEach(function (coords) {
+                var exterior = coords.exterior;
+                var interiors = coords.interiors;
                 vertexCount += geometry.getPolylineVertexCount(exterior);
                 triangleCount += geometry.getPolylineTriangleCount(exterior);
                 for (var i = 0; i < interiors.length; i++) {
@@ -659,7 +661,7 @@ Geo3DBuilder.prototype = {
 
     },
 
-    _updateLinesGeometry: function (geometry, region, regionHeight, lineWidth, transform) {
+    _updateLinesGeometry: function (geometry, componentModel, dataIndex, regionHeight, lineWidth, transform) {
         function convertToPoints3(polygon) {
             var points = new Float64Array(polygon.length * 3);
             var offset = 0;
@@ -669,7 +671,10 @@ Geo3DBuilder.prototype = {
                 // Add a offset to avoid z-fighting
                 pos[1] = regionHeight + 0.1;
                 pos[2] = polygon[i][1];
-                vec3.transformMat4(pos, pos, transform);
+
+                if (transform) {
+                    vec3.transformMat4(pos, pos, transform);
+                }
 
                 points[offset++] = pos[0];
                 points[offset++] = pos[1];
@@ -679,7 +684,8 @@ Geo3DBuilder.prototype = {
         }
 
         var whiteColor = [1, 1, 1, 1];
-        region.geometries.forEach(function (geo) {
+        var coords = componentModel.getRegionPolygonCoords(dataIndex);
+        coords.forEach(function (geo) {
             var exterior = geo.exterior;
             var interiors = geo.interiors;
 
@@ -735,10 +741,14 @@ Geo3DBuilder.prototype = {
     },
 
     _setColorOfDataIndex: function (data, dataIndex, colorArr) {
+        if (dataIndex < this._startIndex && dataIndex > this._endIndex) {
+            return;
+        }
+        dataIndex -= this._startIndex;
         for (var i = this._vertexRangeOfDataIndex[dataIndex * 2]; i < this._vertexRangeOfDataIndex[dataIndex * 2 + 1]; i++) {
             this._polygonMesh.geometry.attributes.color.set(i, colorArr);
-            this._polygonMesh.geometry.dirty();
         }
+        this._polygonMesh.geometry.dirty();
         this._api.getZr().refresh();
     }
 };

@@ -41,7 +41,8 @@ var Geo3DModel = echarts.extendComponentModel({
         return this._data;
     },
 
-    getRegionModel: function (name) {
+    getRegionModel: function (idx) {
+        var name = this.getData().getName(idx);
         return this._regionModelMap[name] || new echarts.Model(null, this);
     },
 

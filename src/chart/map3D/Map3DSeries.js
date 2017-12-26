@@ -7,7 +7,7 @@ import geo3DModelMixin from '../../coord/geo3D/geo3DModelMixin';
 import formatUtil from '../../util/format';
 import formatTooltip from '../common/formatTooltip';
 
-var Map3DModel = echarts.extendSeriesModel({
+var Map3DSeries = echarts.extendSeriesModel({
 
     type: 'series.map3D',
 
@@ -74,7 +74,8 @@ var Map3DModel = echarts.extendSeriesModel({
         return formatTooltip(this, dataIndex);
     },
 
-    getRegionModel: function (name) {
+    getRegionModel: function (idx) {
+        var name = this.getData().getName(idx);
         return this._regionModelMap[name] || new echarts.Model(null, this);
     },
 
@@ -102,11 +103,11 @@ var Map3DModel = echarts.extendSeriesModel({
     }
 });
 
-echarts.util.merge(Map3DModel.prototype, geo3DModelMixin);
+echarts.util.merge(Map3DSeries.prototype, geo3DModelMixin);
 
-echarts.util.merge(Map3DModel.prototype, componentViewControlMixin);
-echarts.util.merge(Map3DModel.prototype, componentPostEffectMixin);
-echarts.util.merge(Map3DModel.prototype, componentLightMixin);
-echarts.util.merge(Map3DModel.prototype, componentShadingMixin);
+echarts.util.merge(Map3DSeries.prototype, componentViewControlMixin);
+echarts.util.merge(Map3DSeries.prototype, componentPostEffectMixin);
+echarts.util.merge(Map3DSeries.prototype, componentLightMixin);
+echarts.util.merge(Map3DSeries.prototype, componentShadingMixin);
 
-export default Map3DModel;
+export default Map3DSeries;

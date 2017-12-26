@@ -59,7 +59,7 @@ export default echarts.extendComponentView({
         geo3D.viewGL.setTemporalSuperSampling(geo3DModel.getModel('temporalSuperSampling'));
 
         // Must update after geo3D.viewGL.setPostEffect
-        this._geo3DBuilder.update(geo3DModel, geo3D, ecModel, api);
+        this._geo3DBuilder.update(geo3DModel, ecModel, api, 0, geo3DModel.getData().count());
         var srgbDefineMethod = geo3D.viewGL.isLinearSpace() ? 'define' : 'undefine';
         this._geo3DBuilder.rootNode.traverse(function (mesh) {
             if (mesh.material) {

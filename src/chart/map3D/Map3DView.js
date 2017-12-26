@@ -82,7 +82,7 @@ export default echarts.extendChartView({
             this._geo3DBuilder.extrudeY = false;
         }
 
-        this._geo3DBuilder.update(map3DModel, geo3D, ecModel, api);
+        this._geo3DBuilder.update(map3DModel, ecModel, api, 0, map3DModel.getData().count());
 
 
         // Must update after geo3D.viewGL.setPostEffect to determine linear space
