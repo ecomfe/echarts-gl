@@ -30,7 +30,7 @@ echarts.extendChartView({
             geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D';
             this._geo3DBuilderList[0] = geo3DBuilder;
         }
-        this._updateSRGB(coordSys.viewGL, geo3DBuilder);
+        this._updateShaderDefines(coordSys, geo3DBuilder);
 
         geo3DBuilder.update(seriesModel, ecModel, api);
         this._geo3DBuilderList.length = 1;
@@ -60,16 +60,22 @@ echarts.extendChartView({
         geo3DBuilder.update(seriesModel, ecModel, api, params.start, params.end);
         this.groupGL.add(geo3DBuilder.rootNode);
 
-        this._updateSRGB(coordSys.viewGL, geo3DBuilder);
+        this._updateShaderDefines(coordSys, geo3DBuilder);
 
         this._currentStep++;
     },
 
-    _updateSRGB: function (viewGL, geo3DBuilder) {
-        var methodName = viewGL.isLinearSpace() ? 'define' : 'undefine';
+    _updateShaderDefines: function (coordSys, geo3DBuilder) {
+        var methodName = coordSys.viewGL.isLinearSpace() ? 'define' : 'undefine';
         geo3DBuilder.rootNode.traverse(function (mesh) {
             if (mesh.material) {
                 mesh.material[methodName]('fragment', 'SRGB_DECODE');
+
+                // FIXME
+                if (coordSys.type === 'mapbox3D') {
+                    mesh.material.define('fragment', 'NORMAL_UP_AXIS', 2);
+                    mesh.material.define('fragment', 'NORMAL_FRONT_AXIS', 1);
+                }
             }
         });
     },

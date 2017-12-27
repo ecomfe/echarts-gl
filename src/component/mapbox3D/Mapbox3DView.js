@@ -94,6 +94,7 @@ export default echarts.extendComponentView({
         this._sceneHelper.updateSkybox(renderer, mapbox3DModel, api);
 
         // FIXME If other series changes coordinate system.
+        // FIXME When doing progressive rendering.
         mapbox3DModel.coordinateSystem.viewGL.scene.traverse(function (mesh) {
             if (mesh.material) {
                 mesh.material.define('fragment', 'NORMAL_UP_AXIS', 2);

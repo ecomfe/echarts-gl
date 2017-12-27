@@ -22,13 +22,14 @@
             chart.showLoading();
             $.getJSON('./data/buildings.json', function (buildingsGeoJSON) {
                 chart.hideLoading();
-                // buildingsGeoJSON.features = buildingsGeoJSON.features.slice(0, 10);
-                echarts.registerMap('buildings', buildingsGeoJSON);
 
                 var regions = echarts.parseGeoJson(buildingsGeoJSON);
-                var regionsData = buildingsGeoJSON.features.map(function (feature) {
+                var polygonsData = buildingsGeoJSON.features.map(function (feature, idx) {
+                    var region = regions[idx];
                     return {
-                        name: feature.properties.name,
+                        coords: region.geometries.map(function (geo) {
+                            return [geo.exterior].concat(geo.interiors);
+                        }),
                         value: Math.random(),
                         height: +feature.properties.height * 10 + 0.1
                     };
@@ -46,15 +47,14 @@
                             screenSpaceAmbientOcclusion: {
                                 enable: true,
                                 intensity: 1.2,
-                                radius: 10
+                                radius: 5
                             },
                             screenSpaceReflection: {
-                                enable:true
-                            },
-                            edge: {
-                                enable: false,
-                                color: [2, 8, 16]
+                                enable: true
                             }
+                        },
+                        temporalSuperSampling: {
+                            enable: true
                         },
                         light: {
                             main: {
@@ -74,23 +74,21 @@
                         }
                     },
                     series: [{
-                        type: 'map3D',
+                        type: 'polygons3D',
                         coordinateSystem: 'mapbox3D',
-                        map: 'buildings',
-                        data: regionsData,
+                        data: polygonsData,
                         shading: 'realistic',
                         silent: true,
+                        multiPolygon: true,
+                        progressiveThreshold: 500,
+                        progressive: 500,
                         itemStyle: {
                             borderColor: [0, 2, 10],
-                            borderWidth: 1
+                            borderWidth: 0
                         },
                         realisticMaterial: {
                             metalness: 1,
                             roughness: 0.4,
-                            // detailTexture: 'asset/iron-rusted4/iron-rusted4-basecolor.jpg',
-                            // metalness: 'asset/iron-rusted4/iron-rusted4-metalness.jpg',
-                            // roughness: 'asset/iron-rusted4/iron-rusted4-roughness.jpg',
-                            // normalTexture: 'asset/iron-rusted4/iron-rusted4-normal.jpg',
                             textureTiling: [10, 10]
                         }
                     }]

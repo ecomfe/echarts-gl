@@ -133,7 +133,8 @@ Geo3DBuilder.prototype = {
 
         var self = this;
         function createPolygonMesh() {
-             var mesh = new graphicGL.Mesh({
+            var mesh = new graphicGL.Mesh({
+                name: 'Polygon',
                 material: new graphicGL.Material({
                     shader: self._shadersMap.lambert
                 }),
@@ -142,6 +143,7 @@ Geo3DBuilder.prototype = {
                     sortTriangles: true,
                     dynamic: true
                 }),
+                ignorePicking: true,
                 // Render normal in normal pass
                 renderNormal: true
             });
@@ -156,6 +158,7 @@ Geo3DBuilder.prototype = {
                 shader: this._linesShader
             }),
             castShadow: false,
+            ignorePicking: true,
             $ignorePicking: true,
             geometry: new LinesGeo({
                 useNativeLine: false
