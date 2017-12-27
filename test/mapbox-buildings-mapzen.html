@@ -9,7 +9,7 @@
     </head>
     <body>
         <div id="main"></div>
-        <script src="https://rawgit.com/ecomfe/echarts/master/dist/echarts.min.js"></script>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src='lib/mapbox-gl.js'></script>
         <link href='lib/mapbox-gl.css' rel='stylesheet' />
@@ -32,7 +32,7 @@
                     // center: [121.4978, 31.2398],
                     // 伦敦
                     // center: [-0.118092, 51.509865],
-                    zoom: 15,
+                    zoom: 17,
                     pitch: 10,
                     // bearing: -10,
                     style: 'mapbox://styles/mapbox/light-v9',
@@ -52,10 +52,6 @@
                             enable: false,
                             blurRadius: 5,
                             focalDistance: 80
-                        },
-                        edge: {
-                            enable: false,
-                            color: [10, 2, 1]
                         }
                     },
                     light: {
@@ -75,53 +71,37 @@
                             specularIntensity: 1
                         }
                     }
-                }
+                },
+                series: [{
+                    type: 'polygons3D',
+                    coordinateSystem: 'mapbox3D',
+                    data: [],
+                    shading: 'realistic',
+                    silent: true,
+                    realisticMaterial: {
+                        metalness: 0,
+                        roughness: 0.8
+                    }
+                }]
             });
 
-            function updateBuildings(geoJSONList) {
+            function addBuildings(geoJSON) {
                 chart.hideLoading();
-                var features = [];
-                var offset = 0;
-                for (var i = 0; i < geoJSONList.length; i++) {
-                    geoJSONList[i].features.forEach(function (feature) {
-                        feature.properties.name = 'building' + offset++;
-                    });
-                    features = features.concat(geoJSONList[i].features.filter(function (feature) {
-                        return feature.geometry.type === 'Polygon'
-                            || feature.geometry.type === 'MultiPolygon'
-                    }));
-                }
-
-                var regionsData = features.map(function (feature) {
+                var polygonsData = geoJSON.features.filter(function (feature) {
+                    return feature.geometry.type === 'Polygon'
+                        || feature.geometry.type === 'MultiPolygon'
+                }).map(function (feature) {
                     return {
-                        name: feature.properties.name,
+                        coords: feature.geometry.coordinates,
+                        multiPolygon: feature.geometry.type === 'MultiPolygon',
                         value: Math.random(),
                         height: +feature.properties.height || 5
                     };
                 });
 
-                chart.setOption({
-                    series: [{
-                        type: 'map3D',
-                        coordinateSystem: 'mapbox3D',
-                        map: {
-                            __ec_primitive__: true,
-                            features: features
-                        },
-                        data: regionsData,
-                        shading: 'realistic',
-                        silent: true,
-                        realisticMaterial: {
-                            metalness: 0,
-                            roughness: 0.8,
-                            // detailTexture: 'asset/woods.jpg',
-                            // detailTexture: 'asset/iron-rusted4/iron-rusted4-basecolor.jpg',
-                            // metalness: 'asset/iron-rusted4/iron-rusted4-metalness.jpg',
-                            // roughness: 'asset/iron-rusted4/iron-rusted4-roughness.jpg',
-                            // normalTexture: 'asset/iron-rusted4/iron-rusted4-normal.jpg',
-                            // textureTiling: [4, 4]
-                        }
-                    }]
+                chart.addData({
+                    seriesIndex: 0,
+                    data: polygonsData
                 });
             }
 
@@ -131,7 +111,14 @@
                 chart.hideLoading();
                 chart.showLoading();
 
-                var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
+                chart.setOption({
+                    series: [{
+                        // Clear
+                        data: []
+                    }]
+                });
+
+                var mapbox = chart.getModel().getComponent('mapbox3D').getMapbox();
                 var coordBounds = mapbox.getBounds();
                 var merc = new SphericalMercator({
                     size: 512
@@ -140,9 +127,7 @@
                     [coordBounds.getWest(), coordBounds.getSouth(), coordBounds.getEast(), coordBounds.getNorth()],
                     15
                 );
-                console.log(tileBounds);
 
-                var geoJSONList = [];
                 var z = 15;
                 var loadingCount = 0;
 
@@ -153,18 +138,15 @@
                 function load(url) {
                     var geoJSON = cache.get(url);
                     if (geoJSON) {
-                        geoJSONList.push(geoJSON);
+                        addBuildings(geoJSON);
                     }
                     else {
                         loadingCount++;
                         var request = $.getJSON(url).done(function (geoJSON) {
                             loadingCount--;
                             cache.put(url, geoJSON);
-                            geoJSONList.push(geoJSON);
 
-                            if (loadingCount === 0) {
-                                updateBuildings(geoJSONList);
-                            }
+                            addBuildings(geoJSON);
 
                             requests.splice(requests.indexOf(request), 1);
                         });
@@ -173,14 +155,9 @@
                 }
                 for (var x = tileBounds.minX; x <= tileBounds.maxX; x++) {
                     for (var y = tileBounds.minY; y <=tileBounds.maxY; y++) {
-                        load(`https://tile.mapzen.com/mapzen/vector/v1/512/buildings/${z}/${x}/${y}.json?api_key=mapzen-NYCwhQi`);
+                        load(`https://tile.mapzen.com/mapzen/vector/v1/512/buildings/${z}/${x}/${y}.json?api_key=${MAPZEN_API}`);
                     }
                 }
-
-                if (loadingCount === 0) {
-                    updateBuildings(geoJSONList);
-                }
-
             };
 
 
@@ -205,7 +182,7 @@
             loadBuildings();
 
 
-            var mapbox = chart.getModel().getComponent('mapbox').getMapbox();
+            var mapbox = chart.getModel().getComponent('mapbox3D').getMapbox();
             mapbox.on('dragend', loadBuildings);
         </script>
     </body>
