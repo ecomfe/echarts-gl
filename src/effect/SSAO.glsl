@@ -146,7 +146,12 @@ float getLinearDepth(vec2 coord)
 
 void main()
 {
-    @import qtek.compositor.kernel.gaussian_9
+    float kernel[5];
+    kernel[0] = 0.122581;
+    kernel[1] = 0.233062;
+    kernel[2] = 0.288713;
+    kernel[3] = 0.233062;
+    kernel[4] = 0.122581;
 
     vec2 off = vec2(0.0);
     if (direction == 0) {
@@ -168,10 +173,10 @@ void main()
     float centerDepth = getLinearDepth(v_Texcoord);
 #endif
 
-    for (int i = 0; i < 9; i++) {
-        vec2 coord = clamp(v_Texcoord + vec2(float(i) - 4.0) * off, vec2(0.0), vec2(1.0));
+    for (int i = 0; i < 5; i++) {
+        vec2 coord = clamp(v_Texcoord + vec2(float(i) - 2.0) * off, vec2(0.0), vec2(1.0));
 
-        float w = gaussianKernel[i];
+        float w = kernel[i];
 #ifdef NORMALTEX_ENABLED
         vec3 normal = texture2D(normalTex, coord).rgb * 2.0 - 1.0;
         w *= clamp(dot(normal, centerNormal), 0.0, 1.0);

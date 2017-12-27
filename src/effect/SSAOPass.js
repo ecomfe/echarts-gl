@@ -75,10 +75,13 @@ function SSAOPass(opt) {
     this._blurPass = new Pass({
         fragment: Shader.source('ecgl.ssao.blur')
     });
-    this._framebuffer = new FrameBuffer();
+    this._framebuffer = new FrameBuffer({
+        depthBuffer: false
+    });
 
     this._ssaoTexture = new Texture2D();
     this._blurTexture = new Texture2D();
+    this._blurTexture2 = new Texture2D();
 
     this._depthTex = opt.depthTexture;
     this._normalTex = opt.normalTexture;
@@ -138,11 +141,14 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
 
     var ssaoTexture = this._ssaoTexture;
     var blurTexture = this._blurTexture;
+    var blurTexture2 = this._blurTexture2;
 
-    ssaoTexture.width = width;
-    ssaoTexture.height = height;
+    ssaoTexture.width = width / 2;
+    ssaoTexture.height = height / 2;
     blurTexture.width = width;
     blurTexture.height = height;
+    blurTexture2.width = width;
+    blurTexture2.height = height;
 
     this._framebuffer.attach(ssaoTexture);
     this._framebuffer.bind(renderer);
@@ -150,14 +156,15 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
     ssaoPass.render(renderer);
 
-    blurPass.setUniform('textureSize', [width, height]);
+    blurPass.setUniform('textureSize', [width / 2, height / 2]);
     blurPass.setUniform('projection', camera.projectionMatrix._array);
     this._framebuffer.attach(blurTexture);
     blurPass.setUniform('direction', 0);
     blurPass.setUniform('ssaoTexture', ssaoTexture);
     blurPass.render(renderer);
 
-    this._framebuffer.attach(ssaoTexture);
+    this._framebuffer.attach(blurTexture2);
+    blurPass.setUniform('textureSize', [width, height]);
     blurPass.setUniform('direction', 1);
     blurPass.setUniform('ssaoTexture', blurTexture);
     blurPass.render(renderer);
@@ -170,7 +177,7 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
 };
 
 SSAOPass.prototype.getTargetTexture = function () {
-    return this._ssaoTexture;
+    return this._blurTexture2;
 }
 
 SSAOPass.prototype.setParameter = function (name, val) {
@@ -213,8 +220,9 @@ SSAOPass.prototype.setNoiseSize = function (size) {
 };
 
 SSAOPass.prototype.dispose = function (renderer) {
-    this._targetTexture.dispose(renderer);
+    this._blurTexture.dispose(renderer);
     this._ssaoTexture.dispose(renderer);
+    this._blurTexture2.dispose(renderer);
 };
 
 export default SSAOPass;

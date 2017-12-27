@@ -44,17 +44,28 @@ function SSRPass(opt) {
     this._texture2 = new Texture2D({
         type: Texture.HALF_FLOAT
     });
+    this._texture3 = new Texture2D({
+        type: Texture.HALF_FLOAT
+    });
 
-    this._frameBuffer = new FrameBuffer();
+    this._frameBuffer = new FrameBuffer({
+        depthBuffer: false
+    });
 }
 
 SSRPass.prototype.update = function (renderer, camera, sourceTexture, frame) {
     var width = renderer.getWidth();
     var height = renderer.getHeight();
+    var dpr = renderer.getDevicePixelRatio();
     var texture1 = this._texture1;
     var texture2 = this._texture2;
-    texture1.width = texture2.width = width;
-    texture1.height = texture2.height = height;
+    var texture3 = this._texture3;
+    texture2.width = width / 2;
+    texture2.height = height / 2;
+    texture1.width = width;
+    texture1.height = height;
+    texture3.width = width * dpr;
+    texture3.height = height * dpr;
     var frameBuffer = this._frameBuffer;
 
     var ssrPass = this._ssrPass;
@@ -71,31 +82,29 @@ SSRPass.prototype.update = function (renderer, camera, sourceTexture, frame) {
     ssrPass.setUniform('nearZ', camera.near);
     ssrPass.setUniform('jitterOffset', frame / 30);
 
-    var textureSize = [width, height];
-
-    blurPass1.setUniform('textureSize', textureSize);
-    blurPass2.setUniform('textureSize', textureSize);
+    blurPass1.setUniform('textureSize', [width / 2, height / 2]);
+    blurPass2.setUniform('textureSize', [width, height]);
     blurPass2.setUniform('sourceTexture', sourceTexture);
 
     blurPass1.setUniform('projection', camera.projectionMatrix._array);
     blurPass2.setUniform('projection', camera.projectionMatrix._array);
 
-    frameBuffer.attach(texture2);
+    frameBuffer.attach(texture1);
     frameBuffer.bind(renderer);
     ssrPass.render(renderer);
 
-    frameBuffer.attach(texture1);
-    blurPass1.setUniform('texture', texture2);
+    frameBuffer.attach(texture2);
+    blurPass1.setUniform('texture', texture1);
     blurPass1.render(renderer);
 
-    frameBuffer.attach(texture2);
-    blurPass2.setUniform('texture', texture1);
+    frameBuffer.attach(texture3);
+    blurPass2.setUniform('texture', texture2);
     blurPass2.render(renderer);
     frameBuffer.unbind(renderer);
 };
 
 SSRPass.prototype.getTargetTexture = function () {
-    return this._texture2;
+    return this._texture3;
 };
 
 SSRPass.prototype.setParameter = function (name, val) {
@@ -121,6 +130,7 @@ SSRPass.prototype.setSSAOTexture = function (texture) {
 SSRPass.prototype.dispose = function (renderer) {
     this._texture1.dispose(renderer);
     this._texture2.dispose(renderer);
+    this._texture3.dispose(renderer);
     this._frameBuffer.dispose(renderer);
 };
 

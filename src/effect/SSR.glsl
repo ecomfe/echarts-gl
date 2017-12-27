@@ -306,7 +306,7 @@ float getLinearDepth(vec2 coord)
 
 void main()
 {
-    @import qtek.compositor.kernel.gaussian_13
+    @import qtek.compositor.kernel.gaussian_9
 
     vec4 centerNTexel = texture2D(gBufferTexture1, v_Texcoord);
     float g = centerNTexel.a;
@@ -324,8 +324,8 @@ void main()
 
     vec3 cN = centerNTexel.rgb * 2.0 - 1.0;
     float cD = getLinearDepth(v_Texcoord);
-    for (int i = 0; i < 13; i++) {
-        vec2 coord = clamp((float(i) - 6.0) * off + v_Texcoord, vec2(0.0), vec2(1.0));
+    for (int i = 0; i < 9; i++) {
+        vec2 coord = clamp((float(i) - 4.0) * off + v_Texcoord, vec2(0.0), vec2(1.0));
         float w = gaussianKernel[i]
             * clamp(dot(cN, texture2D(gBufferTexture1, coord).rgb * 2.0 - 1.0), 0.0, 1.0);
         float d = getLinearDepth(coord);

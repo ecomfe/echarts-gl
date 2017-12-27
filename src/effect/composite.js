@@ -168,7 +168,7 @@ export default {
             'parameters' : {
                 'blurSize' : 1,
                 'blurDir': 1.0,
-                'textureSize': 'expr( [width * 1.0 / 32, height * 1.0 / 32] )'
+                'textureSize': 'expr( [width * 1.0 / 16, height * 1.0 / 16] )'
             }
         },
 
@@ -213,7 +213,7 @@ export default {
             'parameters' : {
                 'blurSize' : 1,
                 'blurDir': 1.0,
-                'textureSize': 'expr( [width * 1.0 / 16, height * 1.0 / 16] )'
+                'textureSize': 'expr( [width * 1.0 / 8, height * 1.0 / 8] )'
             }
         },
         {
@@ -278,7 +278,7 @@ export default {
             'parameters' : {
                 'blurSize' : 1,
                 'blurDir': 1.0,
-                'textureSize': 'expr( [width * 1.0 / 8, height * 1.0 / 8] )'
+                'textureSize': 'expr( [width * 1.0 / 4, height * 1.0 / 4] )'
             }
         },
         {
@@ -346,7 +346,7 @@ export default {
             'parameters' : {
                 'blurSize' : 1,
                 'blurDir': 1.0,
-                'textureSize': 'expr( [width * 1.0 / 4, height * 1.0 / 4] )'
+                'textureSize': 'expr( [width * 1.0 / 2, height * 1.0 / 2] )'
             }
         },
         {
@@ -412,7 +412,7 @@ export default {
             'parameters' : {
                 'blurSize' : 1,
                 'blurDir': 1.0,
-                'textureSize': 'expr( [width * 1.0 / 2, height * 1.0 / 2] )'
+                'textureSize': 'expr( [width * 1.0, height * 1.0] )'
             }
         },
         {
