@@ -118,7 +118,7 @@ Mapbox3D.prototype = {
             verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))))
                 * this.altitudeScale * WORLD_SCALE;
         }
-        // Include scale to avoid zoom needs relayout
+        // Include scale to avoid relayout when zooming
         // FIXME Camera scale may have problem in shadow
         this.viewGL.rootNode.scale.set(
             this.getScale() * WORLD_SCALE, this.getScale() * WORLD_SCALE, verticalScale

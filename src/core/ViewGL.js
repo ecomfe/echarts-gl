@@ -268,7 +268,7 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
             frameBuffer.bind(renderer);
             renderer.saveClear();
             renderer.clearBit = renderer.gl.DEPTH_BUFFER_BIT | renderer.gl.COLOR_BUFFER_BIT;
-            renderer.render(scene, camera, true);
+            renderer.render(scene, camera, true, true);
             renderer.restoreClear();
             frameBuffer.unbind(renderer);
 

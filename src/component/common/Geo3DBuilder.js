@@ -64,14 +64,21 @@ Geo3DBuilder.prototype = {
 
     update: function (componentModel, ecModel, api, start, end) {
 
+        var data = componentModel.getData();
+
+        if (start == null) {
+            start = 0;
+        }
+        if (end == null) {
+            end = data.count();
+        }
+
         this._startIndex = start;
         this._endIndex = end - 1;
 
         this._triangulation(componentModel, start, end);
 
         var shader = this._getShader(componentModel.get('shading'));
-
-        var data = componentModel.getData();
 
         this._prepareMesh(componentModel, shader, api, start, end);
 
@@ -86,7 +93,7 @@ Geo3DBuilder.prototype = {
         }
 
         var self = this;
-        this._labelsBuilder.updateData(data);
+        this._labelsBuilder.updateData(data, start, end);
         this._labelsBuilder.getLabelPosition = function (dataIndex, positionDesc, distance) {
             var name = data.getName(dataIndex);
 
@@ -119,6 +126,65 @@ Geo3DBuilder.prototype = {
 
         // Reset some state.
         this._lastHoverDataIndex = 0;
+    },
+
+    _initMeshes: function () {
+        this.rootNode.removeAll();
+
+        var self = this;
+        function createPolygonMesh() {
+             var mesh = new graphicGL.Mesh({
+                material: new graphicGL.Material({
+                    shader: self._shadersMap.lambert
+                }),
+                culling: false,
+                geometry: new graphicGL.Geometry({
+                    sortTriangles: true,
+                    dynamic: true
+                }),
+                // Render normal in normal pass
+                renderNormal: true
+            });
+            echarts.util.extend(mesh.geometry, trianglesSortMixin);
+            return mesh;
+        }
+
+        var polygonMesh = createPolygonMesh();
+
+        var linesMesh = new graphicGL.Mesh({
+            material: new graphicGL.Material({
+                shader: this._linesShader
+            }),
+            castShadow: false,
+            $ignorePicking: true,
+            geometry: new LinesGeo({
+                useNativeLine: false
+            })
+        });
+
+        this.rootNode.add(polygonMesh);
+        this.rootNode.add(linesMesh);
+
+        polygonMesh.material.define('both', 'VERTEX_COLOR');
+        polygonMesh.material.define('fragment', 'DOUBLE_SIDED');
+
+        this._polygonMesh = polygonMesh;
+        this._linesMesh = linesMesh;
+
+        this.rootNode.add(this._groundMesh);
+    },
+
+    _getShader: function (shading) {
+        var shader = this._shadersMap[shading];
+        if (!shader) {
+            if (__DEV__) {
+                console.warn('Unkown shading ' + shading);
+            }
+            // Default use lambert shader.
+            shader = this._shadersMap.lambert;
+        }
+        shader.__shading = shading;
+        return shader;
     },
 
     _prepareMesh: function (componentModel, shader, api, start, end) {
@@ -327,65 +393,6 @@ Geo3DBuilder.prototype = {
         this._groundMesh.material.set('color', graphicGL.parseColor(groundModel.get('color')));
 
         this._groundMesh.scale.set(geo3D.size[0], geo3D.size[2], 1);
-    },
-
-    _initMeshes: function () {
-        this.rootNode.removeAll();
-
-        var self = this;
-        function createPolygonMesh() {
-             var mesh = new graphicGL.Mesh({
-                material: new graphicGL.Material({
-                    shader: self._shadersMap.lambert
-                }),
-                culling: false,
-                geometry: new graphicGL.Geometry({
-                    sortTriangles: true,
-                    dynamic: true
-                }),
-                // Render normal in normal pass
-                renderNormal: true
-            });
-            echarts.util.extend(mesh.geometry, trianglesSortMixin);
-            return mesh;
-        }
-
-        var polygonMesh = createPolygonMesh();
-
-        var linesMesh = new graphicGL.Mesh({
-            material: new graphicGL.Material({
-                shader: this._linesShader
-            }),
-            castShadow: false,
-            $ignorePicking: true,
-            geometry: new LinesGeo({
-                useNativeLine: false
-            })
-        });
-
-        this.rootNode.add(polygonMesh);
-        this.rootNode.add(linesMesh);
-
-        polygonMesh.material.define('both', 'VERTEX_COLOR');
-        polygonMesh.material.define('fragment', 'DOUBLE_SIDED');
-
-        this._polygonMesh = polygonMesh;
-        this._linesMesh = linesMesh;
-
-        this.rootNode.add(this._groundMesh);
-    },
-
-    _getShader: function (shading) {
-        var shader = this._shadersMap[shading];
-        if (!shader) {
-            if (__DEV__) {
-                console.warn('Unkown shading ' + shading);
-            }
-            // Default use lambert shader.
-            shader = this._shadersMap.lambert;
-        }
-        shader.__shading = shading;
-        return shader;
     },
 
     _triangulation: function (componentModel, start, end) {

@@ -78,7 +78,15 @@ EChartsGL.prototype.update = function (ecModel, api) {
     }
 
     function getLayerGL(model) {
-        var zlevel = model.get('zlevel');
+        var zlevel;
+        // Host on coordinate system.
+        if (model.coordinateSystem && model.coordinateSystem.model) {
+            zlevel = model.get('zlevel');
+        }
+        else {
+            zlevel = model.get('zlevel');
+        }
+
         var layers = self._layers;
         var layerGL = layers[zlevel];
         if (!layerGL) {

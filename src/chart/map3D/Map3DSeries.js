@@ -6,6 +6,15 @@ import componentShadingMixin from '../../component/common/componentShadingMixin'
 import geo3DModelMixin from '../../coord/geo3D/geo3DModelMixin';
 import formatUtil from '../../util/format';
 import formatTooltip from '../common/formatTooltip';
+import geo3DCreator from '../../coord/geo3DCreator';
+
+function transformPolygon(mapbox3DCoordSys, poly) {
+    var newPoly = [];
+    for (var k = 0; k < poly.length; k++) {
+        newPoly.push(mapbox3DCoordSys.dataToPoint(poly[k]));
+    }
+    return newPoly;
+}
 
 var Map3DSeries = echarts.extendSeriesModel({
 
@@ -49,6 +58,9 @@ var Map3DSeries = echarts.extendSeriesModel({
             // Force disable groundPlane if map3D has other coordinate systems.
             this.option.groundPlane.show = false;
         }
+
+        // Reset geo.
+        this._geo = null;
     },
 
     getInitialData: function (option) {
@@ -77,6 +89,37 @@ var Map3DSeries = echarts.extendSeriesModel({
     getRegionModel: function (idx) {
         var name = this.getData().getName(idx);
         return this._regionModelMap[name] || new echarts.Model(null, this);
+    },
+
+    getRegionPolygonCoords: function (idx) {
+        var coordSys = this.coordinateSystem;
+        var name = this.getData().getName(idx);
+        if (coordSys.transform) {
+            var region = coordSys.getRegion(name);
+            return region ? region.geometries : [];
+        }
+        else {
+            if (!this._geo) {
+                this._geo = geo3DCreator.createGeo3D(this);
+            }
+            var region = this._geo.getRegion(name);
+            var ret = [];
+            for (var k = 0; k < region.geometries.length; k++) {
+                var geo = region.geometries[k];
+                var interiors = [];
+                var exterior = transformPolygon(coordSys, geo.exterior);
+                if (interiors && interiors.length) {
+                    for (var m = 0; m < geo.interiors.length; m++) {
+                        interiors.push(transformPolygon(coordSys, interiors[m]));
+                    }
+                }
+                ret.push({
+                    interiors: interiors,
+                    exterior: exterior
+                });
+            }
+            return ret;
+        }
     },
 
     /**

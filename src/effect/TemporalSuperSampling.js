@@ -5,7 +5,6 @@ import FrameBuffer from 'qtek/src/FrameBuffer';
 import Texture2D from 'qtek/src/Texture2D';
 import Shader from 'qtek/src/Shader';
 import Matrix4 from 'qtek/src/math/Matrix4';
-import Vector3 from 'qtek/src/math/Vector3';
 
 function TemporalSuperSampling (frames) {
     var haltonSequence = [];
@@ -48,7 +47,7 @@ function TemporalSuperSampling (frames) {
         // http://stackoverflow.com/questions/2171085/opengl-blending-with-previous-contents-of-framebuffer
         _gl.blendEquationSeparate(_gl.FUNC_ADD, _gl.FUNC_ADD);
         _gl.blendFuncSeparate(_gl.ONE, _gl.ONE_MINUS_SRC_ALPHA, _gl.ONE, _gl.ONE_MINUS_SRC_ALPHA);
-    }
+    };
 }
 
 TemporalSuperSampling.prototype = {

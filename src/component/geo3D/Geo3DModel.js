@@ -46,6 +46,13 @@ var Geo3DModel = echarts.extendComponentModel({
         return this._regionModelMap[name] || new echarts.Model(null, this);
     },
 
+    getRegionPolygonCoords: function (idx) {
+        var name = this.getData().getName(idx);
+        var region = this.coordinateSystem.getRegion(name);
+
+        return region ? region.geometries : [];
+    },
+
     /**
      * Format label
      * @param {string} name Region name

@@ -43,13 +43,6 @@ export default {
         return regionsArr;
     },
 
-    getRegionPolygonCoords: function (idx) {
-        var name = this.getData().getName(idx);
-        var region = this.coordinateSystem.getRegion(name);
-
-        return region ? region.geometries : [];
-    },
-
     defaultOption: {
         show: true,
 
