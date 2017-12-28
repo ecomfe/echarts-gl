@@ -87,7 +87,7 @@ echarts.extendChartView({
         particleSurface.motionBlurFactor = 1.0 - Math.pow(0.1, seriesModel.get('particleTrail'));
     },
 
-    updateLayout: function (seriesModel, ecModel, api) {
+    updateTransform: function (seriesModel, ecModel, api) {
         this._updateData(seriesModel, api);
     },
 
