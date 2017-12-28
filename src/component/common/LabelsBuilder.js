@@ -113,7 +113,7 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
         var ifShow = this._labelsVisibilitiesBits[dataIndex - this._start]
             & (isEmphasis ? LABEL_EMPHASIS_SHOW_BIT : LABEL_NORMAL_SHOW_BIT);
         if (!ifShow) {
-            return;
+            continue;
         }
 
         var itemModel = data.getItemModel(dataIndex);

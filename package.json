@@ -8,7 +8,8 @@
     }
   ],
   "scripts": {
-    "build": "node build/glsl2js.js && webpack && webpack -p"
+    "build": "node build/glsl2js.js && webpack && webpack -p",
+    "dev": "webpack -w --devtool eval-cheap-module-source-map"
   },
   "dependencies": {
     "qtek": "^0.6.0",
