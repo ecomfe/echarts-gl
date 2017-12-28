@@ -367,6 +367,33 @@ PointsBuilder.prototype = {
         }, this);
     },
 
+    updateLayout: function (seriesModel, ecModel, api) {
+        var data = seriesModel.getData();
+        if (!this._mesh) {
+            return;
+        }
+
+        var positionArr = this._mesh.geometry.attributes.position.value;
+        var points = data.getLayout('points');
+        if (this.is2D) {
+            for (var i = 0; i < points.length / 2; i++) {
+                var i3 = i * 3;
+                var i2 = i * 2;
+                positionArr[i3] = points[i2];
+                positionArr[i3 + 1] = points[i2 + 1];
+                positionArr[i3 + 2] = Z_2D;
+            }
+        }
+        else {
+            for (var i = 0; i < points.length; i++) {
+                positionArr[i] = points[i];
+            }
+        }
+        this._mesh.geometry.dirty();
+
+        api.getZr().refresh();
+    },
+
     updateView: function (camera) {
         if (!this._mesh) {
             return;

@@ -44,6 +44,7 @@ echarts.extendChartView({
                 depthMask: false,
                 depthTest: false
             }),
+            $ignorePicking: true,
             geometry: new graphicGL.Geometry({
                 attributes: {
                     node: new graphicGL.Geometry.Attribute('node', 'float', 2),
@@ -64,6 +65,7 @@ echarts.extendChartView({
                 depthMask: false,
                 depthTest: false
             }),
+            $ignorePicking: true,
             geometry: new Lines2DGeometry({
                 useNativeLine: false,
                 dynamic: true
@@ -516,8 +518,8 @@ echarts.extendChartView({
         }
 
         this._layoutId = 0;
-        // this.groupGL.remove(this._forceEdgesMesh);
-        // this.groupGL.add(this._edgesMesh);
+        this.groupGL.remove(this._forceEdgesMesh);
+        this.groupGL.add(this._edgesMesh);
 
         if (!this._forceLayoutInstance) {
             return;
