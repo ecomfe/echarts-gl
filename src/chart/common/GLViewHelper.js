@@ -17,7 +17,7 @@ GLViewHelper.prototype.updateTransform = function (seriesModel, api) {
 
     if (coordinateSystem.getRoamTransform) {
 
-        matrix.invert(this._viewTransform, coordinateSystem.getRoamTransform().getLocalTransform());
+        matrix.invert(this._viewTransform, coordinateSystem.getRoamTransform());
 
         this._setCameraTransform(this._viewTransform);
 

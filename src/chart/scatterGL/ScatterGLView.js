@@ -81,7 +81,7 @@ echarts.extendChartView({
     },
 
     updateTransform: function (seriesModel, ecModel, api) {
-        if (seriesModel.coordinateSystem.transform) {
+        if (seriesModel.coordinateSystem.getRoamTransform) {
             this._glViewHelper.updateTransform(seriesModel, api);
 
             var zoom = this._glViewHelper.getZoom();
