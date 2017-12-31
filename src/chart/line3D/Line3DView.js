@@ -126,7 +126,7 @@ export default echarts.extendChartView({
         if (debugWireframeModel.get('show')) {
             lineMesh.geometry.createAttribute('barycentric', 'float', 3);
             lineMesh.geometry.generateBarycentric();
-            lineMesh.material('both', 'WIREFRAME_TRIANGLE');
+            lineMesh.material.set('both', 'WIREFRAME_TRIANGLE');
             lineMesh.material.set(
                 'wireframeLineColor', graphicGL.parseColor(
                     debugWireframeModel.get('lineStyle.color') || 'rgba(0,0,0,0.5)'
@@ -139,7 +139,7 @@ export default echarts.extendChartView({
             );
         }
         else {
-            lineMesh.material('both', 'WIREFRAME_TRIANGLE');
+            lineMesh.material.set('both', 'WIREFRAME_TRIANGLE');
         }
 
         this._points = points;

@@ -4,35 +4,22 @@ import vector from 'zrender/lib/core/vector';
 
 function GLViewHelper(viewGL) {
     this.viewGL = viewGL;
-
-    // Transform before pan and zoom
-    this._coordSysTransform = matrix.create();
-
-    // View transform of pan and zoom.
-    this._viewTransform = null;
 }
 
 GLViewHelper.prototype.reset = function (seriesModel, api) {
     this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
-    this._setCameraTransform(matrix.create());
-
-    if (seriesModel.coordinateSystem.transform) {
-        matrix.copy(this._coordSysTransform, seriesModel.coordinateSystem.transform);
-    }
+    this._viewTransform = matrix.create();
+    this.updateTransform(seriesModel, api);
 };
 
 GLViewHelper.prototype.updateTransform = function (seriesModel, api) {
     var coordinateSystem = seriesModel.coordinateSystem;
 
-    if (coordinateSystem.transform) {
-        var viewTransform = this._viewTransform;
-        if (!viewTransform) {
-            viewTransform = this._viewTransform = matrix.create();
-        }
-        matrix.invert(viewTransform, coordinateSystem.transform);
-        matrix.mul(viewTransform, this._coordSysTransform, viewTransform);
+    if (coordinateSystem.getRoamTransform) {
 
-        this._setCameraTransform(viewTransform);
+        matrix.invert(this._viewTransform, coordinateSystem.getRoamTransform().getLocalTransform());
+
+        this._setCameraTransform(this._viewTransform);
 
         api.getZr().refresh();
     }
@@ -41,7 +28,7 @@ GLViewHelper.prototype.updateTransform = function (seriesModel, api) {
 // Reimplement the dataToPoint of coordinate system.
 // Remove the effect of pan/zoom transform
 GLViewHelper.prototype.dataToPoint = function (coordSys, data, pt) {
-    pt = coordSys.dataToPoint(data, pt);
+    pt = coordSys.dataToPoint(data, null, pt);
     var viewTransform = this._viewTransform;
     if (viewTransform) {
         vector.applyTransform(pt, pt, viewTransform);
