@@ -62,6 +62,7 @@ echarts.extendChartView({
         if (params.end <= params.start) {
             return;
         }
+
         var pointsBuilder = this._pointsBuilderList[this._currentStep];
         if (!pointsBuilder) {
             pointsBuilder = new PointsBuilder(true, api);
@@ -73,6 +74,8 @@ echarts.extendChartView({
 
         pointsBuilder.setSizeScale(this._sizeScale);
         pointsBuilder.update(seriesModel, ecModel, api, params.start, params.end);
+
+        api.getZr().refresh();
 
         this._currentStep++;
     },
