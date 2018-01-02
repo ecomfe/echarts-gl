@@ -135,7 +135,7 @@ uniform int direction: 0.0;
 #ifdef DEPTHTEX_ENABLED
 uniform sampler2D depthTex;
 uniform mat4 projection;
-uniform float depthRange : 0.05;
+uniform float depthRange : 0.5;
 
 float getLinearDepth(vec2 coord)
 {
