@@ -323,7 +323,7 @@ LayerGL.prototype._startAccumulating = function (immediate) {
 };
 
 function getId(resource) {
-    return resource.__GUID__;
+    return resource.__uid__;
 }
 
 function checkAndDispose(renderer, resourceMap, maxCount) {

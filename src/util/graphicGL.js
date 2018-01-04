@@ -250,7 +250,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
             for (var i = 0; i < keys.length; i++) {
                 textureObj.texture[keys[i]] = textureOpts[keys[i]];
             }
-            id = imgValue.__textureid__ || '__ecgl_ec__' + textureObj.texture.__GUID__;
+            id = imgValue.__textureid__ || '__ecgl_ec__' + textureObj.texture.__uid__;
             imgValue.__textureid__ = id;
             textureCache.put(prefix + id, textureObj);
             cb && cb(textureObj.texture);
@@ -274,7 +274,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
             for (var i = 0; i < keys.length; i++) {
                 textureObj.texture[keys[i]] = textureOpts[keys[i]];
             }
-            id = imgValue.__textureid__ || '__ecgl_image__' + textureObj.texture.__GUID__;
+            id = imgValue.__textureid__ || '__ecgl_image__' + textureObj.texture.__uid__;
             imgValue.__textureid__ = id;
             textureCache.put(prefix + id, textureObj);
 
