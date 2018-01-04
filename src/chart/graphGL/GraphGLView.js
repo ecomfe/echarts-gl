@@ -717,7 +717,8 @@ echarts.extendChartView({
         }
         this.groupGL.removeAll();
 
-        this.stopLayout();
+        // Stop layout.
+        this._layoutId = -1;
     },
 
     remove: function () {

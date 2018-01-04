@@ -449,7 +449,7 @@ ForceAtlas2GPU.prototype.dispose = function (renderer) {
 
     this._copyPass.dispose(renderer);
     this._nodeRepulsionPass.dispose(renderer);
-    this._positionPass.disable(renderer);
+    this._positionPass.dispose(renderer);
     this._globalSpeedPass.dispose(renderer);
 
     this._edgeForceMesh.geometry.dispose(renderer);
@@ -461,8 +461,8 @@ ForceAtlas2GPU.prototype.dispose = function (renderer) {
     this._forceTex.dispose(renderer);
     this._forcePrevTex.dispose(renderer);
     this._weightedSumTex.dispose(renderer);
-    this._globalSpeedTex.disable(renderer);
-    this._globalSpeedPrevTex.disable(renderer);
+    this._globalSpeedTex.dispose(renderer);
+    this._globalSpeedPrevTex.dispose(renderer);
 };
 
 echarts.ForceAtlas2GPU = ForceAtlas2GPU;
