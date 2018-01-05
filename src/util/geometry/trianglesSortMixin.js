@@ -1,5 +1,5 @@
 import ProgressiveQuickSort from '../ProgressiveQuickSort';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 var p0 = vec3.create();

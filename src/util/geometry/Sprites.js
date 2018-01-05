@@ -5,7 +5,7 @@
  * @author Yi Shen(https://github.com/pissang)
  */
 import echarts from 'echarts/lib/echarts';
-import Geometry from 'qtek/src/Geometry';
+import Geometry from 'claygl/src/Geometry';
 import dynamicConvertMixin from './dynamicConvertMixin';
 
 var squareTriangles = [

@@ -1,55 +1,55 @@
-import Mesh from 'qtek/src/Mesh';
-import Renderer from 'qtek/src/Renderer';
-import Texture2D from 'qtek/src/Texture2D';
-import Texture from 'qtek/src/Texture';
-import Shader from 'qtek/src/Shader';
-import Material from 'qtek/src/Material';
-import Node3D from 'qtek/src/Node';
-import Geometry from 'qtek/src/Geometry';
+import Mesh from 'claygl/src/Mesh';
+import Renderer from 'claygl/src/Renderer';
+import Texture2D from 'claygl/src/Texture2D';
+import Texture from 'claygl/src/Texture';
+import Shader from 'claygl/src/Shader';
+import Material from 'claygl/src/Material';
+import Node3D from 'claygl/src/Node';
+import Geometry from 'claygl/src/Geometry';
 import echarts from 'echarts/lib/echarts';
-import Scene from 'qtek/src/Scene';
+import Scene from 'claygl/src/Scene';
 import LRUCache from 'zrender/lib/core/LRU';
-import textureUtil from 'qtek/src/util/texture';
+import textureUtil from 'claygl/src/util/texture';
 import EChartsSurface from './EChartsSurface';
-import AmbientCubemapLight from 'qtek/src/light/AmbientCubemap';
-import AmbientSHLight from 'qtek/src/light/AmbientSH';
-import shUtil from 'qtek/src/util/sh';
+import AmbientCubemapLight from 'claygl/src/light/AmbientCubemap';
+import AmbientSHLight from 'claygl/src/light/AmbientSH';
+import shUtil from 'claygl/src/util/sh';
 import retrieve from './retrieve';
 
-import SphereGeometry from 'qtek/src/geometry/Sphere';
-import PlaneGeometry from 'qtek/src/geometry/Plane';
-import CubeGeometry from 'qtek/src/geometry/Cube';
+import SphereGeometry from 'claygl/src/geometry/Sphere';
+import PlaneGeometry from 'claygl/src/geometry/Plane';
+import CubeGeometry from 'claygl/src/geometry/Cube';
 
-import AmbientLight from 'qtek/src/light/Ambient';
-import DirectionalLight from 'qtek/src/light/Directional';
-import PointLight from 'qtek/src/light/Point';
-import SpotLight from 'qtek/src/light/Spot';
+import AmbientLight from 'claygl/src/light/Ambient';
+import DirectionalLight from 'claygl/src/light/Directional';
+import PointLight from 'claygl/src/light/Point';
+import SpotLight from 'claygl/src/light/Spot';
 
-import PerspectiveCamera from 'qtek/src/camera/Perspective';
-import OrthographicCamera from 'qtek/src/camera/Orthographic';
+import PerspectiveCamera from 'claygl/src/camera/Perspective';
+import OrthographicCamera from 'claygl/src/camera/Orthographic';
 
 // Math
-import Vector2 from 'qtek/src/math/Vector2';
-import Vector3 from 'qtek/src/math/Vector3';
-import Vector4 from 'qtek/src/math/Vector4';
+import Vector2 from 'claygl/src/math/Vector2';
+import Vector3 from 'claygl/src/math/Vector3';
+import Vector4 from 'claygl/src/math/Vector4';
 
-import Quaternion from 'qtek/src/math/Quaternion';
+import Quaternion from 'claygl/src/math/Quaternion';
 
-import Matrix2 from 'qtek/src/math/Matrix2';
-import Matrix2d from 'qtek/src/math/Matrix2d';
-import Matrix3 from 'qtek/src/math/Matrix3';
-import Matrix4 from 'qtek/src/math/Matrix4';
+import Matrix2 from 'claygl/src/math/Matrix2';
+import Matrix2d from 'claygl/src/math/Matrix2d';
+import Matrix3 from 'claygl/src/math/Matrix3';
+import Matrix4 from 'claygl/src/math/Matrix4';
 
-import Plane from 'qtek/src/math/Plane';
-import Ray from 'qtek/src/math/Ray';
-import BoundingBox from 'qtek/src/math/BoundingBox';
-import Frustum from 'qtek/src/math/Frustum';
+import Plane from 'claygl/src/math/Plane';
+import Ray from 'claygl/src/math/Ray';
+import BoundingBox from 'claygl/src/math/BoundingBox';
+import Frustum from 'claygl/src/math/Frustum';
 
 import animatableMixin from './animatableMixin';
 // Some common shaders
 
-import utilGLSL from 'qtek/src/shader/source/util.glsl.js';
-import prezGLSL from 'qtek/src/shader/source/prez.glsl.js';
+import utilGLSL from 'claygl/src/shader/source/util.glsl.js';
+import prezGLSL from 'claygl/src/shader/source/prez.glsl.js';
 import commonGLSL from './shader/common.glsl.js';
 import colorGLSL from './shader/color.glsl.js';
 import lambertGLSL from './shader/lambert.glsl.js';
@@ -515,7 +515,7 @@ graphicGL.createMaterial = function (prefix, defines) {
 };
 /**
  * Set material from model.
- * @param {qtek.Material} material
+ * @param {clay.Material} material
  * @param {module:echarts/model/Model} model
  * @param {module:echarts/ExtensionAPI} api
  */

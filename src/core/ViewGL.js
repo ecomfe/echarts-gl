@@ -5,15 +5,15 @@
 
 import echarts from 'echarts/lib/echarts';
 
-import Scene from 'qtek/src/Scene';
-import ShadowMapPass from 'qtek/src/prePass/ShadowMap';
-import PerspectiveCamera from 'qtek/src/camera/Perspective';
-import OrthographicCamera from 'qtek/src/camera/Orthographic';
-import Matrix4 from 'qtek/src/math/Matrix4';
-import Vector3 from 'qtek/src/math/Vector3';
-import Vector2 from 'qtek/src/math/Vector2';
+import Scene from 'claygl/src/Scene';
+import ShadowMapPass from 'claygl/src/prePass/ShadowMap';
+import PerspectiveCamera from 'claygl/src/camera/Perspective';
+import OrthographicCamera from 'claygl/src/camera/Orthographic';
+import Matrix4 from 'claygl/src/math/Matrix4';
+import Vector3 from 'claygl/src/math/Vector3';
+import Vector2 from 'claygl/src/math/Vector2';
 
-import notifier from 'qtek/src/core/mixin/notifier';
+import notifier from 'claygl/src/core/mixin/notifier';
 
 import EffectCompositor from '../effect/EffectCompositor';
 import TemporalSuperSampling from '../effect/TemporalSuperSampling';
@@ -33,12 +33,12 @@ function ViewGL(projection) {
      */
     this.layer = null;
     /**
-     * @type {qtek.Scene}
+     * @type {clay.Scene}
      */
     this.scene = new Scene();
 
     /**
-     * @type {qtek.Node}
+     * @type {clay.Node}
      */
     this.rootNode = this.scene;
 
@@ -147,8 +147,8 @@ ViewGL.prototype.containPoint = function (x, y) {
  * Cast a ray
  * @param {number} x offsetX
  * @param {number} y offsetY
- * @param {qtek.math.Ray} out
- * @return {qtek.math.Ray}
+ * @param {clay.math.Ray} out
+ * @return {clay.math.Ray}
  */
 var ndc = new Vector2();
 ViewGL.prototype.castRay = function (x, y, out) {

@@ -4,7 +4,7 @@ import retrieve from '../../util/retrieve';
 import format from '../../util/format';
 import BarsGeometry from '../../util/geometry/Bars3DGeometry';
 import LabelsBuilder from '../../component/common/LabelsBuilder';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 export default echarts.extendChartView({

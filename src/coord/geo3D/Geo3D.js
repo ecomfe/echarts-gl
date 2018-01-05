@@ -1,5 +1,5 @@
 import echarts from 'echarts/lib/echarts';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 var mat4 = glmatrix.mat4;
 

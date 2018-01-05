@@ -72,7 +72,7 @@ varying float v_SpotPercent;
 
 @import ecgl.common.wireframe.fragmentHeader
 
-@import qtek.util.srgb
+@import clay.util.srgb
 
 void main()
 {

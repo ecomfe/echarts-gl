@@ -6,14 +6,14 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import Geometry from 'qtek/src/Geometry';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import Geometry from 'claygl/src/Geometry';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 /**
  * @constructor
  * @alias module:echarts-gl/chart/lines3D/CurveTrailGeometry
- * @extends qtek.Geometry
+ * @extends clay.Geometry
  */
 var CurveTrailGeometry = Geometry.derive(function () {
     return {

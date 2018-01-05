@@ -1,6 +1,6 @@
 import echarts from 'echarts/lib/echarts';
-import Vector3 from 'qtek/src/math/Vector3';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import Vector3 from 'claygl/src/math/Vector3';
+import glmatrix from 'claygl/src/dep/glmatrix';
 import cartesian3DLayout from './cartesian3DLayout';
 import evaluateBarSparseness from './evaluateBarSparseness';
 

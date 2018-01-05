@@ -16,7 +16,7 @@ void main()
 {
     @import ecgl.common.uv.main
     v_Normal = normalize((worldInverseTranspose * vec4(normal, 0.0)).xyz);
-    
+
     v_WorldPosition = (world * vec4(position, 1.0)).xyz;
     gl_Position = worldViewProjection * vec4(position, 1.0);
 }
@@ -31,16 +31,16 @@ void main()
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
-// For reflection.  
+// For reflection.
 uniform float roughness: 0.2;
 
 #ifdef DIRECTIONAL_LIGHT_COUNT
-@import qtek.header.directional_light
+@import clay.header.directional_light
 #endif
 
 @import ecgl.common.ssaoMap.header
 
-@import qtek.plugin.compute_shadow_map
+@import clay.plugin.compute_shadow_map
 
 void main()
 {

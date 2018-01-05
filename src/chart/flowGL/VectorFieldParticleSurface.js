@@ -1,14 +1,14 @@
-import Pass from 'qtek/src/compositor/Pass';
-import Geometry from 'qtek/src/Geometry';
-import Mesh from 'qtek/src/Mesh';
-import Material from 'qtek/src/Material';
-import Shader from 'qtek/src/Shader';
-import Texture2D from 'qtek/src/Texture2D';
-import Texture from 'qtek/src/Texture';
-import OrthoCamera from 'qtek/src/camera/Orthographic';
-import PlaneGeometry from 'qtek/src/geometry/Plane';
+import Pass from 'claygl/src/compositor/Pass';
+import Geometry from 'claygl/src/Geometry';
+import Mesh from 'claygl/src/Mesh';
+import Material from 'claygl/src/Material';
+import Shader from 'claygl/src/Shader';
+import Texture2D from 'claygl/src/Texture2D';
+import Texture from 'claygl/src/Texture';
+import OrthoCamera from 'claygl/src/camera/Orthographic';
+import PlaneGeometry from 'claygl/src/geometry/Plane';
 
-import FrameBuffer from 'qtek/src/FrameBuffer';
+import FrameBuffer from 'claygl/src/FrameBuffer';
 import Line2DGeometry from './Line2D';
 // import TemporalSS from '../../effect/TemporalSuperSampling';
 
@@ -36,7 +36,7 @@ var VectorFieldParticleSurface = function () {
     this.motionBlurFactor = 0.99;
     /**
      * Vector field lookup image
-     * @type {qtek.Texture2D}
+     * @type {clay.Texture2D}
      */
     this.vectorFieldTexture = new Texture2D({
         type: Texture.FLOAT,
@@ -69,7 +69,7 @@ var VectorFieldParticleSurface = function () {
     this.particleSpeedScaling = 1.0;
 
     /**
-     * @type {qtek.Texture2D}
+     * @type {clay.Texture2D}
      */
     this._thisFrameTexture = null;
 
@@ -129,7 +129,7 @@ VectorFieldParticleSurface.prototype = {
         this._particlePass.setUniform('spawnTexture', this._spawnTexture);
 
         this._downsamplePass = new Pass({
-            fragment: Shader.source('qtek.compositor.downsample')
+            fragment: Shader.source('clay.compositor.downsample')
         });
 
         var particlePointsMesh = new Mesh({

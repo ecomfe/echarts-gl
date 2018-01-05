@@ -1,7 +1,7 @@
 import echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
-import Pass from 'qtek/src/compositor/Pass';
-import FrameBuffer from 'qtek/src/FrameBuffer';
+import Pass from 'claygl/src/compositor/Pass';
+import FrameBuffer from 'claygl/src/FrameBuffer';
 
 import forceAtlas2Code from './forceAtlas2.glsl.js';
 graphicGL.Shader.import(forceAtlas2Code);
@@ -60,7 +60,7 @@ function ForceAtlas2GPU(options) {
         fragment: graphicGL.Shader.source('ecgl.forceAtlas2.calcGlobalSpeed')
     });
     this._copyPass = new Pass({
-        fragment: graphicGL.Shader.source('qtek.compositor.output')
+        fragment: graphicGL.Shader.source('clay.compositor.output')
     });
 
     var additiveBlend = function (gl) {

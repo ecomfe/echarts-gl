@@ -8,16 +8,16 @@
 import echarts from 'echarts/lib/echarts';
 import dynamicConvertMixin from './dynamicConvertMixin';
 import trianglesSortMixin from './trianglesSortMixin';
-import Geometry from 'qtek/src/Geometry';
+import Geometry from 'claygl/src/Geometry';
 
-import glMatrix from 'qtek/src/dep/glmatrix';
+import glMatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glMatrix.vec3;
 var mat3 = glMatrix.mat3;
 
 /**
  * @constructor
  * @alias module:echarts-gl/chart/bars/BarsGeometry
- * @extends qtek.Geometry
+ * @extends clay.Geometry
  */
 var BarsGeometry = Geometry.extend(function () {
     return {

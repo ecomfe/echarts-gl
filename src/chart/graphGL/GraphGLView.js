@@ -7,7 +7,7 @@ import retrieve from '../../util/retrieve';
 import ForceAtlas2GPU from './ForceAtlas2GPU';
 import ForceAtlas2 from './ForceAtlas2';
 import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 
 var vec2 = glmatrix.vec2;
 

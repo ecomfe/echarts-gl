@@ -5,7 +5,7 @@
 // http://www.cosy.sbg.ac.at/~held/projects/triang/triang.html
 // Z Order Hash ?
 
-import LinkedList from 'qtek/src/core/LinkedList';
+import LinkedList from 'claygl/src/core/LinkedList';
 
 // From x,y point cast a ray to right. and intersect with edge x0, y0, x1, y1;
 // Return x value of intersect point

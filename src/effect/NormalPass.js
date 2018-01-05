@@ -1,13 +1,13 @@
 // NormalPass will generate normal and depth data.
 
 // TODO Animation
-import Texture2D from 'qtek/src/Texture2D';
-import Texture from 'qtek/src/Texture';
-import Shader from 'qtek/src/Shader';
-import FrameBuffer from 'qtek/src/FrameBuffer';
-import Material from 'qtek/src/Material';
-import Pass from 'qtek/src/compositor/Pass';
-import textureUtil from 'qtek/src/util/texture';
+import Texture2D from 'claygl/src/Texture2D';
+import Texture from 'claygl/src/Texture';
+import Shader from 'claygl/src/Shader';
+import FrameBuffer from 'claygl/src/FrameBuffer';
+import Material from 'claygl/src/Material';
+import Pass from 'claygl/src/compositor/Pass';
+import textureUtil from 'claygl/src/util/texture';
 
 import normalGLSL from '../util/shader/normal.glsl.js';
 Shader.import(normalGLSL);
@@ -145,7 +145,7 @@ function NormalPass(opt) {
 
 
     this._debugPass = new Pass({
-        fragment: Shader.source('qtek.compositor.output')
+        fragment: Shader.source('clay.compositor.output')
     });
     this._debugPass.setUniform('texture', this._normalTex);
     this._debugPass.material.undefine('fragment', 'OUTPUT_ALPHA');

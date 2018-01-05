@@ -6,9 +6,9 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import Texture2D from 'qtek/src/Texture2D';
-import Vector3 from 'qtek/src/math/Vector3';
-import Vector2 from 'qtek/src/math/Vector2';
+import Texture2D from 'claygl/src/Texture2D';
+import Vector3 from 'claygl/src/math/Vector3';
+import Vector2 from 'claygl/src/math/Vector2';
 
 var events = ['mousedown', 'mouseup', 'mousemove', 'mouseover', 'mouseout', 'click', 'dblclick', 'contextmenu'];
 
@@ -93,9 +93,9 @@ EChartsSurface.prototype = {
 
     /**
      * @method
-     * @param {qtek.Mesh} attachedMesh
+     * @param {clay.Mesh} attachedMesh
      * @param {Array.<number>} triangle Triangle indices
-     * @param {qtek.math.Vector3} point
+     * @param {clay.math.Vector3} point
      */
     dispatchEvent: (function () {
 

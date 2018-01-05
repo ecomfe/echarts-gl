@@ -12,7 +12,7 @@
     "dev": "webpack -w --devtool eval-cheap-module-source-map"
   },
   "dependencies": {
-    "qtek": "^0.6.0",
+    "claygl": "^1.0.0",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-uglify": "^2.0.1"

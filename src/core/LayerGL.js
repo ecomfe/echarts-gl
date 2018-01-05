@@ -1,5 +1,5 @@
 /**
- * Provide WebGL layer to zrender. Which is rendered on top of qtek.
+ * Provide WebGL layer to zrender. Which is rendered on top of clay.
  *
  *
  * Relationship between zrender, LayerGL(renderer) and ViewGL(Scene, Camera, Viewport)
@@ -15,18 +15,13 @@
  */
 
 import echarts from 'echarts/lib/echarts';
-import Renderer from 'qtek/src/Renderer';
-import RayPicking from 'qtek/src/picking/RayPicking';
-import Texture from 'qtek/src/Texture';
+import Renderer from 'claygl/src/Renderer';
+import RayPicking from 'claygl/src/picking/RayPicking';
+import Texture from 'claygl/src/Texture';
 
-// PENDING, qtek notifier is same with zrender Eventful
-import notifier from 'qtek/src/core/mixin/notifier';
+// PENDING, clay. notifier is same with zrender Eventful
+import notifier from 'claygl/src/core/mixin/notifier';
 import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
-
-// configs for Auto GC for GPU resources
-// PENDING
-var MAX_GEOMETRY_COUNT = 20;
-var MAX_TEXTURE_COUNT = 20;
 
 /**
  * @constructor
@@ -48,7 +43,7 @@ var LayerGL = function (id, zr) {
     this.zr = zr;
 
     /**
-     * @type {qtek.Renderer}
+     * @type {clay.Renderer}
      */
     try {
         this.renderer = new Renderer({
@@ -85,7 +80,7 @@ var LayerGL = function (id, zr) {
     style.top = '0';
 
     /**
-     * @type {Array.<qtek.Scene>}
+     * @type {Array.<clay.Scene>}
      */
     this.views = [];
 
@@ -326,20 +321,12 @@ function getId(resource) {
     return resource.__uid__;
 }
 
-function checkAndDispose(renderer, resourceMap, maxCount) {
-    var count = 0;
-    // FIXME not allocate array.
-    var unused = [];
+function checkAndDispose(renderer, resourceMap) {
     for (var id in resourceMap) {
         if (!resourceMap[id].count) {
-            unused.push(resourceMap[id].target);
+            resourceMap[id].target.dispose(renderer);
+            delete resourceMap[id];
         }
-        else {
-            count++;
-        }
-    }
-    for (var i = 0; i < Math.min(count - maxCount, unused.length); i++) {
-        unused[i].dispose(renderer);
     }
 }
 
@@ -398,8 +385,8 @@ LayerGL.prototype._trackAndClean = function () {
         }
     }
     // Dispose those unsed resources
-    checkAndDispose(this.renderer, texturesMap, MAX_TEXTURE_COUNT);
-    checkAndDispose(this.renderer, geometriesMap, MAX_GEOMETRY_COUNT);
+    checkAndDispose(this.renderer, texturesMap);
+    checkAndDispose(this.renderer, geometriesMap);
 };
 
 /**

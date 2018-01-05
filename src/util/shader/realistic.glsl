@@ -94,19 +94,19 @@ uniform float roughness : 0.5;
 uniform mat4 viewInverse : VIEWINVERSE;
 
 #ifdef AMBIENT_LIGHT_COUNT
-@import qtek.header.ambient_light
+@import clay.header.ambient_light
 #endif
 
 #ifdef AMBIENT_SH_LIGHT_COUNT
-@import qtek.header.ambient_sh_light
+@import clay.header.ambient_sh_light
 #endif
 
 #ifdef AMBIENT_CUBEMAP_LIGHT_COUNT
-@import qtek.header.ambient_cubemap_light
+@import clay.header.ambient_cubemap_light
 #endif
 
 #ifdef DIRECTIONAL_LIGHT_COUNT
-@import qtek.header.directional_light
+@import clay.header.directional_light
 #endif
 
 @import ecgl.common.normalMap.fragmentHeader
@@ -115,13 +115,13 @@ uniform mat4 viewInverse : VIEWINVERSE;
 
 @import ecgl.common.bumpMap.header
 
-@import qtek.util.srgb
+@import clay.util.srgb
 
-@import qtek.util.rgbm
+@import clay.util.rgbm
 
 @import ecgl.common.wireframe.fragmentHeader
 
-@import qtek.plugin.compute_shadow_map
+@import clay.plugin.compute_shadow_map
 
 // Fresnel
 vec3 F_Schlick(float ndv, vec3 spec) {

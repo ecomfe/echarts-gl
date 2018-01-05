@@ -19,7 +19,7 @@ export default echarts.extendComponentView({
         this.groupGL = new graphicGL.Node();
 
         /**
-         * @type {qtek.geometry.Sphere}
+         * @type {clay.geometry.Sphere}
          * @private
          */
         this._sphereGeometry = new graphicGL.SphereGeometry({
@@ -33,12 +33,12 @@ export default echarts.extendComponentView({
         });
 
         /**
-         * @type {qtek.geometry.Plane}
+         * @type {clay.geometry.Plane}
          */
         this._planeGeometry = new graphicGL.PlaneGeometry();
 
         /**
-         * @type {qtek.geometry.Mesh}
+         * @type {clay.geometry.Mesh}
          */
         this._earthMesh = new graphicGL.Mesh({
             renderNormal: true

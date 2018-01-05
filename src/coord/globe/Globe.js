@@ -1,4 +1,4 @@
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 
@@ -31,7 +31,7 @@ Globe.prototype = {
         this.displacementWidth = width;
         this.displacementHeight = height;
     },
-    
+
     _getDisplacementScale: function (lng, lat) {
         var i = (lng + 180) / 360 * (this.displacementWidth - 1);
         var j = (90 - lat) / 180 * (this.displacementHeight - 1);
@@ -57,7 +57,7 @@ Globe.prototype = {
 
         lng = lng * Math.PI / 180;
         lat = lat * Math.PI / 180;
-        
+
         var r0 = Math.cos(lat) * r;
 
         out = out || [];

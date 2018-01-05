@@ -3,16 +3,16 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import Geometry from 'qtek/src/Geometry';
+import Geometry from 'claygl/src/Geometry';
 import echarts from 'echarts/lib/echarts';
 import dynamicConvertMixin from './dynamicConvertMixin';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 /**
  * @constructor
  * @alias module:echarts-gl/util/geometry/QuadsGeometry
- * @extends qtek.Geometry
+ * @extends clay.Geometry
  */
 
 var QuadsGeometry = Geometry.extend(function () {

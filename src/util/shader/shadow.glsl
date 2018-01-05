@@ -29,6 +29,6 @@ void main(){
 
 @export ecgl.sm.depth.fragment
 
-@import qtek.sm.depth.fragment
+@import clay.sm.depth.fragment
 
 @end

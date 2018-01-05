@@ -1,5 +1,5 @@
-import Texture2D from 'qtek/src/Texture2D';
-import Texture from 'qtek/src/Texture';
+import Texture2D from 'claygl/src/Texture2D';
+import Texture from 'claygl/src/Texture';
 import workerFunc from './forceAtlas2Worker.js';
 var workerUrl = workerFunc.toString();
 workerUrl = workerUrl.slice(workerUrl.indexOf('{') + 1, workerUrl.lastIndexOf('}'));

@@ -1,5 +1,5 @@
 import echarts from 'echarts/lib/echarts';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 function ifCrossZero(extent) {
@@ -46,14 +46,14 @@ function cartesian3DLayout(seriesModel, coordSys) {
     var dims = ['x', 'y', 'z'].map(function (coordDimName) {
         return seriesModel.coordDimToDataDim(coordDimName)[0];
     });
-    
+
     data.each(dims, function (x, y, z, idx) {
         // TODO zAxis is inversed
         // TODO On different plane.
         var stackedValue = data.get(dims[2], idx, true);
         var baseValue = data.stackedOn ? (stackedValue - z)
             : (ifZAxisCrossZero ? 0 : zAxisExtent[0]);
-            
+
         var start = coordSys.dataToPoint([x, y, baseValue]);
         var end = coordSys.dataToPoint([x, y, stackedValue]);
         var height = vec3.dist(start, end);

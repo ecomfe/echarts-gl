@@ -6,10 +6,10 @@
  */
 
 // TODO Remove magic numbers on sensitivity
-import Base from 'qtek/src/core/Base';
-import Vector2 from 'qtek/src/math/Vector2';
-import Vector3 from 'qtek/src/math/Vector3';
-import Quaternion from 'qtek/src/math/Quaternion';
+import Base from 'claygl/src/core/Base';
+import Vector2 from 'claygl/src/math/Vector2';
+import Vector3 from 'claygl/src/math/Vector3';
+import Quaternion from 'claygl/src/math/Quaternion';
 import retrieve from './retrieve';
 var firstNotNull = retrieve.firstNotNull;
 
@@ -17,7 +17,7 @@ var firstNotNull = retrieve.firstNotNull;
 var MOUSE_BUTTON_KEY_MAP = {
     left: 0,
     middle: 1,
-    right: 2  
+    right: 2
 };
 
 function convertToArray(val) {
@@ -44,7 +44,7 @@ var OrbitControl = Base.extend(function () {
         viewGL: null,
 
         /**
-         * @type {qtek.math.Vector3}
+         * @type {clay.math.Vector3}
          */
         _center: new Vector3(),
 
@@ -140,7 +140,7 @@ var OrbitControl = Base.extend(function () {
 
         /**
          * @private
-         * @type {qtek.Camera}
+         * @type {clay.Camera}
          */
         _camera: null,
 
@@ -315,7 +315,7 @@ var OrbitControl = Base.extend(function () {
     },
 
     /**
-     * @return {qtek.Camera}
+     * @return {clay.Camera}
      */
     getCamera: function () {
         return this.viewGL.camera;
@@ -366,7 +366,7 @@ var OrbitControl = Base.extend(function () {
         this.maxDistance += baseDistance;
         this.minOrthographicSize += baseOrthoSize,
         this.maxOrthographicSize += baseOrthoSize;
-        
+
         var ecModel = viewControlModel.ecModel;
 
         var animationOpts = {};
@@ -713,7 +713,7 @@ var OrbitControl = Base.extend(function () {
 
         var panSensitivity = convertToArray(this.panSensitivity);
         var rotateSensitivity = convertToArray(this.rotateSensitivity);
-        
+
         if (this._mode === 'rotate') {
             this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * rotateSensitivity[0];
             this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * rotateSensitivity[1];

@@ -20,7 +20,7 @@ uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 varying vec4 v_Color;
 
-@import qtek.util.srgb
+@import clay.util.srgb
 
 void main()
 {
@@ -144,7 +144,7 @@ varying vec4 v_Color;
 
 @import ecgl.common.wireframe.fragmentHeader
 
-@import qtek.util.srgb
+@import clay.util.srgb
 
 void main()
 {

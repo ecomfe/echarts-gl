@@ -1,6 +1,6 @@
 import echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 
 import Lines3DGeometry from '../../util/geometry/Lines3D';
 import trail2GLSL from './shader/trail2.glsl.js';

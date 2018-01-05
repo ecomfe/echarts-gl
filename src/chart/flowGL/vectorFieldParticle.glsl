@@ -134,7 +134,7 @@ uniform mat4 worldViewProjection : WORLDVIEWPROJECTION;
 varying float v_Mag;
 varying vec2 v_Uv;
 
-@import qtek.util.rand
+@import clay.util.rand
 
 void main()
 {

@@ -82,7 +82,7 @@ varying float v_Size;
 
 uniform sampler2D sprite;
 
-@import qtek.util.srgb
+@import clay.util.srgb
 
 void main()
 {

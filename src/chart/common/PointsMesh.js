@@ -1,7 +1,7 @@
 import graphicGL from '../../util/graphicGL';
 import verticesSortMixin from '../../util/geometry/verticesSortMixin';
 import echarts from 'echarts/lib/echarts';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec4 = glmatrix.vec4;
 
 import sdfSpriteGLSL from './sdfSprite.glsl.js';

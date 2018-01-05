@@ -15,7 +15,7 @@ uniform float fstop: 2.8;
 
 varying vec2 v_Texcoord;
 
-@import qtek.util.encode_float
+@import clay.util.encode_float
 
 void main()
 {
@@ -68,8 +68,8 @@ uniform sampler2D coc;
 uniform sampler2D nearcoc;
 varying vec2 v_Texcoord;
 
-@import qtek.util.rgbm
-@import qtek.util.float
+@import clay.util.rgbm
+@import clay.util.float
 
 void main()
 {
@@ -139,8 +139,8 @@ float nrand(const in vec2 n) {
     return fract(sin(dot(n.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
-@import qtek.util.rgbm
-@import qtek.util.float
+@import clay.util.rgbm
+@import clay.util.float
 
 
 void main()

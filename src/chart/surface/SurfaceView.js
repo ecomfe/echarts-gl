@@ -1,7 +1,7 @@
 import echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 import trianglesSortMixin from '../../util/geometry/trianglesSortMixin';
 
 var vec3 = glmatrix.vec3;

@@ -37,11 +37,11 @@ var echartsGl = {
     version: '1.0.0-beta.6',
     dependencies: {
         echarts: '3.8.5',
-        qtek: '0.6.0'
+        claygl: '0.6.0'
     }
 };
 import echarts from 'echarts/lib/echarts';
-import qtekVersion from 'qtek/src/version';
+import clayVersion from 'claygl/src/version';
 import LayerGL from './core/LayerGL';
 import backwardCompat from './preprocessor/backwardCompat';
 import graphicGL from './util/graphicGL';
@@ -59,7 +59,7 @@ function checkVersion(version, name) {
     }
     console.log('Loaded ' + name + ', version ' + version);
 }
-checkVersion(qtekVersion, 'qtek');
+checkVersion(clayVersion, 'claygl');
 checkVersion(echarts.version, 'echarts');
 
 function EChartsGL (zr) {

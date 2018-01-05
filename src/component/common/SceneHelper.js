@@ -1,6 +1,6 @@
 import graphicGL from '../../util/graphicGL';
-import Skybox from 'qtek/src/plugin/Skybox';
-import Skydome from 'qtek/src/plugin/Skydome';
+import Skybox from 'claygl/src/plugin/Skybox';
+import Skydome from 'claygl/src/plugin/Skydome';
 import echarts from 'echarts/lib/echarts';
 
 function SceneHelper() {
@@ -20,14 +20,14 @@ SceneHelper.prototype = {
     initLight: function (rootNode) {
         this._lightRoot = rootNode;
         /**
-         * @type {qtek.light.Directional}
+         * @type {clay.light.Directional}
          */
         this.mainLight = new graphicGL.DirectionalLight({
             shadowBias: 0.005
         });
 
         /**
-         * @type {qtek.light.Ambient}
+         * @type {clay.light.Ambient}
          */
         this.ambientLight = new graphicGL.AmbientLight();
 

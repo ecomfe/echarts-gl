@@ -1,10 +1,10 @@
-import Matrix4 from 'qtek/src/math/Matrix4';
-import Vector3 from 'qtek/src/math/Vector3';
-import Texture2D from 'qtek/src/Texture2D';
-import Texture from 'qtek/src/Texture';
-import Pass from 'qtek/src/compositor/Pass';
-import Shader from 'qtek/src/Shader';
-import FrameBuffer from 'qtek/src/FrameBuffer';
+import Matrix4 from 'claygl/src/math/Matrix4';
+import Vector3 from 'claygl/src/math/Vector3';
+import Texture2D from 'claygl/src/Texture2D';
+import Texture from 'claygl/src/Texture';
+import Pass from 'claygl/src/compositor/Pass';
+import Shader from 'claygl/src/Shader';
+import FrameBuffer from 'claygl/src/FrameBuffer';
 
 function EdgePass(opt) {
     opt = opt || {};

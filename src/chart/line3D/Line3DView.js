@@ -2,10 +2,10 @@ import echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
 import Lines3DGeometry from '../../util/geometry/Lines3D';
-import Matrix4 from 'qtek/src/math/Matrix4';
-import Vector3 from 'qtek/src/math/Vector3';
+import Matrix4 from 'claygl/src/math/Matrix4';
+import Vector3 from 'claygl/src/math/Vector3';
 import lineContain from 'zrender/lib/contain/line';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 
 import lines3DGLSL from '../../util/shader/lines3D.glsl.js';
 

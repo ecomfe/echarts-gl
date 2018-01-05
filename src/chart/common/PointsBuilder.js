@@ -3,7 +3,7 @@ import graphicGL from '../../util/graphicGL';
 import spriteUtil from '../../util/sprite';
 import PointsMesh from './PointsMesh';
 import LabelsBuilder from '../../component/common/LabelsBuilder';
-import Matrix4 from 'qtek/src/math/Matrix4';
+import Matrix4 from 'claygl/src/math/Matrix4';
 import retrieve from '../../util/retrieve';
 
 var SDF_RANGE = 20;

@@ -10,7 +10,7 @@ export default {
         },
         {
             'name': 'source_half',
-            'shader': '#source(qtek.compositor.downsample)',
+            'shader': '#source(clay.compositor.downsample)',
             'inputs': {
                 'texture': 'source'
             },
@@ -31,7 +31,7 @@ export default {
 
         {
             'name' : 'bright',
-            'shader' : '#source(qtek.compositor.bright)',
+            'shader' : '#source(clay.compositor.bright)',
             'inputs' : {
                 'texture' : 'source_half'
             },
@@ -53,7 +53,7 @@ export default {
 
         {
             'name': 'bright_downsample_4',
-            'shader' : '#source(qtek.compositor.downsample)',
+            'shader' : '#source(clay.compositor.downsample)',
             'inputs' : {
                 'texture' : 'bright'
             },
@@ -72,7 +72,7 @@ export default {
         },
         {
             'name': 'bright_downsample_8',
-            'shader' : '#source(qtek.compositor.downsample)',
+            'shader' : '#source(clay.compositor.downsample)',
             'inputs' : {
                 'texture' : 'bright_downsample_4'
             },
@@ -91,7 +91,7 @@ export default {
         },
         {
             'name': 'bright_downsample_16',
-            'shader' : '#source(qtek.compositor.downsample)',
+            'shader' : '#source(clay.compositor.downsample)',
             'inputs' : {
                 'texture' : 'bright_downsample_8'
             },
@@ -110,7 +110,7 @@ export default {
         },
         {
             'name': 'bright_downsample_32',
-            'shader' : '#source(qtek.compositor.downsample)',
+            'shader' : '#source(clay.compositor.downsample)',
             'inputs' : {
                 'texture' : 'bright_downsample_16'
             },
@@ -131,7 +131,7 @@ export default {
 
         {
             'name' : 'bright_upsample_16_blur_h',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_downsample_32'
             },
@@ -152,7 +152,7 @@ export default {
         },
         {
             'name' : 'bright_upsample_16_blur_v',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_upsample_16_blur_h'
             },
@@ -176,7 +176,7 @@ export default {
 
         {
             'name' : 'bright_upsample_8_blur_h',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_downsample_16'
             },
@@ -197,7 +197,7 @@ export default {
         },
         {
             'name' : 'bright_upsample_8_blur_v',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_upsample_8_blur_h'
             },
@@ -218,7 +218,7 @@ export default {
         },
         {
             'name' : 'bright_upsample_8_blend',
-            'shader' : '#source(qtek.compositor.blend)',
+            'shader' : '#source(clay.compositor.blend)',
             'inputs' : {
                 'texture1' : 'bright_upsample_8_blur_v',
                 'texture2' : 'bright_upsample_16_blur_v'
@@ -241,7 +241,7 @@ export default {
 
         {
             'name' : 'bright_upsample_4_blur_h',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_downsample_8'
             },
@@ -262,7 +262,7 @@ export default {
         },
         {
             'name' : 'bright_upsample_4_blur_v',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_upsample_4_blur_h'
             },
@@ -283,7 +283,7 @@ export default {
         },
         {
             'name' : 'bright_upsample_4_blend',
-            'shader' : '#source(qtek.compositor.blend)',
+            'shader' : '#source(clay.compositor.blend)',
             'inputs' : {
                 'texture1' : 'bright_upsample_4_blur_v',
                 'texture2' : 'bright_upsample_8_blend'
@@ -309,7 +309,7 @@ export default {
 
         {
             'name' : 'bright_upsample_2_blur_h',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_downsample_4'
             },
@@ -330,7 +330,7 @@ export default {
         },
         {
             'name' : 'bright_upsample_2_blur_v',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_upsample_2_blur_h'
             },
@@ -351,7 +351,7 @@ export default {
         },
         {
             'name' : 'bright_upsample_2_blend',
-            'shader' : '#source(qtek.compositor.blend)',
+            'shader' : '#source(clay.compositor.blend)',
             'inputs' : {
                 'texture1' : 'bright_upsample_2_blur_v',
                 'texture2' : 'bright_upsample_4_blend'
@@ -375,7 +375,7 @@ export default {
 
         {
             'name' : 'bright_upsample_full_blur_h',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright'
             },
@@ -396,7 +396,7 @@ export default {
         },
         {
             'name' : 'bright_upsample_full_blur_v',
-            'shader' : '#source(qtek.compositor.gaussian_blur)',
+            'shader' : '#source(clay.compositor.gaussian_blur)',
             'inputs' : {
                 'texture' : 'bright_upsample_full_blur_h'
             },
@@ -417,7 +417,7 @@ export default {
         },
         {
             'name' : 'bloom_composite',
-            'shader' : '#source(qtek.compositor.blend)',
+            'shader' : '#source(clay.compositor.blend)',
             'inputs' : {
                 'texture1' : 'bright_upsample_full_blur_v',
                 'texture2' : 'bright_upsample_2_blend'
@@ -548,7 +548,7 @@ export default {
         },
         {
             'name' : 'composite',
-            'shader' : '#source(qtek.compositor.hdr.composite)',
+            'shader' : '#source(clay.compositor.hdr.composite)',
             'inputs' : {
                 'texture': 'source',
                 'bloom' : 'bloom_composite'
@@ -561,7 +561,7 @@ export default {
         },
         {
             'name' : 'FXAA',
-            'shader' : '#source(qtek.compositor.fxaa)',
+            'shader' : '#source(clay.compositor.fxaa)',
             'inputs' : {
                 'texture' : 'composite'
             }

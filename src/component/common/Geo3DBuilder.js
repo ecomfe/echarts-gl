@@ -3,7 +3,7 @@ import graphicGL from '../../util/graphicGL';
 import earcut from '../../util/earcut';
 import LinesGeo from '../../util/geometry/Lines3D';
 import retrieve from '../../util/retrieve';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 import trianglesSortMixin from '../../util/geometry/trianglesSortMixin';
 import LabelsBuilder from './LabelsBuilder';
 import lines3DGLSL from '../../util/shader/lines3D.glsl.js';

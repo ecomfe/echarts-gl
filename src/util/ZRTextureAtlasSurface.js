@@ -6,7 +6,7 @@
 
 // TODO Expand.
 import echarts from 'echarts/lib/echarts';
-import Texture2D from 'qtek/src/Texture2D';
+import Texture2D from 'claygl/src/Texture2D';
 
 function ZRTextureAtlasSurfaceNode(zr, offsetX, offsetY, width, height, gap, dpr) {
     this._zr = zr;

@@ -6,10 +6,10 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import Geometry from 'qtek/src/Geometry';
+import Geometry from 'claygl/src/Geometry';
 import echarts from 'echarts/lib/echarts';
 import dynamicConvertMixin from './dynamicConvertMixin';
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 
 // var CURVE_RECURSION_LIMIT = 8;
@@ -19,7 +19,7 @@ var sampleLinePoints = [[0, 0], [1, 1]];
 /**
  * @constructor
  * @alias module:echarts-gl/util/geometry/LinesGeometry
- * @extends qtek.Geometry
+ * @extends clay.Geometry
  */
 
 var LinesGeometry = Geometry.extend(function () {

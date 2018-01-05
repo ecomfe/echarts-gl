@@ -6,13 +6,13 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import Geometry from 'qtek/src/Geometry';
+import Geometry from 'claygl/src/Geometry';
 import echarts from 'echarts/lib/echarts';
 
 /**
  * @constructor
  * @alias module:echarts-gl/chart/flowGL/Line2D
- * @extends qtek.Geometry
+ * @extends clay.Geometry
  */
 
 var LinesGeometry = Geometry.extend(function () {
@@ -42,7 +42,7 @@ var LinesGeometry = Geometry.extend(function () {
     setLineCount: function (nLine) {
         var attributes = this.attributes;
         var nVertex = 4 * nLine;
-        var nTriangle = 2 * nLine; 
+        var nTriangle = 2 * nLine;
         if (this.vertexCount !== nVertex) {
             attributes.position.init(nVertex);
         }

@@ -1,5 +1,5 @@
 
-import Base from 'qtek/src/core/Base';
+import Base from 'claygl/src/core/Base';
 import retrieve from './retrieve';
 
 /**

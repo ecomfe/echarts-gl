@@ -1,28 +1,27 @@
-import Compositor from 'qtek/src/compositor/Compositor';
-import Shader from 'qtek/src/Shader';
-import Texture2D from 'qtek/src/Texture2D';
-import Texture from 'qtek/src/Texture';
-import FrameBuffer from 'qtek/src/FrameBuffer';
-import FXLoader from 'qtek/src/loader/FX';
+import Shader from 'claygl/src/Shader';
+import Texture2D from 'claygl/src/Texture2D';
+import Texture from 'claygl/src/Texture';
+import FrameBuffer from 'claygl/src/FrameBuffer';
+import createCompositor from 'claygl/src/compositor/createCompositor';
 import SSAOPass from './SSAOPass';
 import SSRPass from './SSRPass';
 import poissonKernel from './poissonKernel';
 import graphicGL from '../util/graphicGL';
 import NormalPass from './NormalPass';
 import EdgePass from './EdgePass';
-import Matrix4 from 'qtek/src/math/Matrix4';
+import Matrix4 from 'claygl/src/math/Matrix4';
 
 import effectJson from './composite.js';
 
-import blurCode from 'qtek/src/shader/source/compositor/blur.glsl.js';
-import lutCode from 'qtek/src/shader/source/compositor/lut.glsl.js';
-import outputCode from 'qtek/src/shader/source/compositor/output.glsl.js';
-import brightCode from 'qtek/src/shader/source/compositor/bright.glsl.js';
-import downsampleCode from 'qtek/src/shader/source/compositor/downsample.glsl.js';
-import upsampleCode from 'qtek/src/shader/source/compositor/upsample.glsl.js';
-import hdrCode from 'qtek/src/shader/source/compositor/hdr.glsl.js';
-import blendCode from 'qtek/src/shader/source/compositor/blend.glsl.js';
-import fxaaCode from 'qtek/src/shader/source/compositor/fxaa.glsl.js';
+import blurCode from 'claygl/src/shader/source/compositor/blur.glsl.js';
+import lutCode from 'claygl/src/shader/source/compositor/lut.glsl.js';
+import outputCode from 'claygl/src/shader/source/compositor/output.glsl.js';
+import brightCode from 'claygl/src/shader/source/compositor/bright.glsl.js';
+import downsampleCode from 'claygl/src/shader/source/compositor/downsample.glsl.js';
+import upsampleCode from 'claygl/src/shader/source/compositor/upsample.glsl.js';
+import hdrCode from 'claygl/src/shader/source/compositor/hdr.glsl.js';
+import blendCode from 'claygl/src/shader/source/compositor/blend.glsl.js';
+import fxaaCode from 'claygl/src/shader/source/compositor/fxaa.glsl.js';
 import DOFCode from './DOF.glsl.js';
 import edgeCode from './edge.glsl.js';
 
@@ -69,8 +68,7 @@ function EffectCompositor() {
 
     this._normalPass = new NormalPass();
 
-    var loader = new FXLoader();
-    this._compositor = loader.parse(effectJson);
+    this._compositor = createCompositor(effectJson);
 
     var sourceNode = this._compositor.getNodeByName('source');
     sourceNode.texture = this._sourceTexture;
@@ -221,14 +219,14 @@ EffectCompositor.prototype.getSSAOTexture = function (renderer, scene, camera, f
 };
 
 /**
- * @return {qtek.FrameBuffer}
+ * @return {clay.FrameBuffer}
  */
 EffectCompositor.prototype.getSourceFrameBuffer = function () {
     return this._framebuffer;
 };
 
 /**
- * @return {qtek.Texture2D}
+ * @return {clay.Texture2D}
  */
 EffectCompositor.prototype.getSourceTexture = function () {
     return this._sourceTexture;

@@ -1,4 +1,4 @@
-import glmatrix from 'qtek/src/dep/glmatrix';
+import glmatrix from 'claygl/src/dep/glmatrix';
 var mat4 = glmatrix.mat4;
 
 var TILE_SIZE = 512;

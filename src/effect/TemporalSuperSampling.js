@@ -1,10 +1,10 @@
 // Temporal Super Sample for static Scene
 import halton from './halton';
-import Pass from 'qtek/src/compositor/Pass';
-import FrameBuffer from 'qtek/src/FrameBuffer';
-import Texture2D from 'qtek/src/Texture2D';
-import Shader from 'qtek/src/Shader';
-import Matrix4 from 'qtek/src/math/Matrix4';
+import Pass from 'claygl/src/compositor/Pass';
+import FrameBuffer from 'claygl/src/FrameBuffer';
+import Texture2D from 'claygl/src/Texture2D';
+import Shader from 'claygl/src/Shader';
+import Matrix4 from 'claygl/src/math/Matrix4';
 
 function TemporalSuperSampling (frames) {
     var haltonSequence = [];
@@ -26,7 +26,7 @@ function TemporalSuperSampling (frames) {
     this._outputTex = new Texture2D();
 
     var blendPass = this._blendPass = new Pass({
-        fragment: Shader.source('qtek.compositor.blend')
+        fragment: Shader.source('clay.compositor.blend')
     });
     blendPass.material.disableTexturesAll();
     blendPass.material.enableTexture(['texture1', 'texture2']);
@@ -36,7 +36,7 @@ function TemporalSuperSampling (frames) {
     });
 
     this._outputPass = new Pass({
-        fragment: Shader.source('qtek.compositor.output'),
+        fragment: Shader.source('clay.compositor.output'),
         // TODO, alpha is premultiplied?
         blendWithPrevious: true
     });
@@ -56,8 +56,8 @@ TemporalSuperSampling.prototype = {
 
     /**
      * Jitter camera projectionMatrix
-     * @parma {qtek.Renderer} renderer
-     * @param {qtek.Camera} camera
+     * @parma {clay.Renderer} renderer
+     * @param {clay.Camera} camera
      */
     jitterProjection: function (renderer, camera) {
         var viewport = renderer.viewport;

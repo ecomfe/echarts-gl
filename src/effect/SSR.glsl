@@ -33,7 +33,7 @@ uniform float jitterOffset: 0;
 varying vec2 v_Texcoord;
 
 #ifdef DEPTH_DECODE
-@import qtek.util.decode_float
+@import clay.util.decode_float
 #endif
 
 float fetchDepth(sampler2D depthTexture, vec2 uv)
@@ -212,9 +212,9 @@ float calculateAlpha(
     return alpha;
 }
 
-@import qtek.util.rand
+@import clay.util.rand
 
-@import qtek.util.rgbm
+@import clay.util.rgbm
 
 void main()
 {
@@ -301,12 +301,12 @@ float getLinearDepth(vec2 coord)
     return projection[3][2] / (depth * projection[2][3] - projection[2][2]);
 }
 
-@import qtek.util.rgbm
+@import clay.util.rgbm
 
 
 void main()
 {
-    @import qtek.compositor.kernel.gaussian_9
+    @import clay.compositor.kernel.gaussian_9
 
     vec4 centerNTexel = texture2D(gBufferTexture1, v_Texcoord);
     float g = centerNTexel.a;
