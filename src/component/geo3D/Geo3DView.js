@@ -79,6 +79,7 @@ export default echarts.extendComponentView({
                 geo3DId: geo3DModel.id
             });
         });
+        control._update(50, true);
     },
 
     afterRender: function (geo3DModel, ecModel, api, layerGL) {

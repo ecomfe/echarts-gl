@@ -17,7 +17,7 @@ var firstNotNull = retrieve.firstNotNull;
 var MOUSE_BUTTON_KEY_MAP = {
     left: 0,
     middle: 1,
-    right: 2  
+    right: 2
 };
 
 function convertToArray(val) {
@@ -366,7 +366,7 @@ var OrbitControl = Base.extend(function () {
         this.maxDistance += baseDistance;
         this.minOrthographicSize += baseOrthoSize,
         this.maxOrthographicSize += baseOrthoSize;
-        
+
         var ecModel = viewControlModel.ecModel;
 
         var animationOpts = {};
@@ -494,9 +494,12 @@ var OrbitControl = Base.extend(function () {
     /**
      * Call update each frame
      * @param  {number} deltaTime Frame time
+     * @param  {boolean} bool _needsupdate
      */
-    _update: function (deltaTime) {
-
+    _update: function (deltaTime, bool) {
+        if (bool) {
+            this._needsUpdate = bool;
+        }
         if (this._rotating) {
             var radian = (this.autoRotateDirection === 'cw' ? 1 : -1)
                  * this.autoRotateSpeed / 180 * Math.PI;
@@ -713,7 +716,7 @@ var OrbitControl = Base.extend(function () {
 
         var panSensitivity = convertToArray(this.panSensitivity);
         var rotateSensitivity = convertToArray(this.rotateSensitivity);
-        
+
         if (this._mode === 'rotate') {
             this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * rotateSensitivity[0];
             this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * rotateSensitivity[1];
