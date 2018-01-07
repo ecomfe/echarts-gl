@@ -488,18 +488,20 @@ var OrbitControl = Base.extend(function () {
         this._animators.length = 0;
     },
 
+    update: function () {
+        this._needsUpdate = true;
+        this._update(20);
+    },
+
     _isAnimating: function () {
         return this._animators.length > 0;
     },
     /**
      * Call update each frame
      * @param  {number} deltaTime Frame time
-     * @param  {boolean} bool _needsupdate
      */
-    _update: function (deltaTime, bool) {
-        if (bool) {
-            this._needsUpdate = bool;
-        }
+    _update: function (deltaTime) {
+
         if (this._rotating) {
             var radian = (this.autoRotateDirection === 'cw' ? 1 : -1)
                  * this.autoRotateSpeed / 180 * Math.PI;
