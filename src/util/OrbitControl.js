@@ -17,7 +17,7 @@ var firstNotNull = retrieve.firstNotNull;
 var MOUSE_BUTTON_KEY_MAP = {
     left: 0,
     middle: 1,
-    right: 2  
+    right: 2
 };
 
 function convertToArray(val) {
@@ -366,7 +366,7 @@ var OrbitControl = Base.extend(function () {
         this.maxDistance += baseDistance;
         this.minOrthographicSize += baseOrthoSize,
         this.maxOrthographicSize += baseOrthoSize;
-        
+
         var ecModel = viewControlModel.ecModel;
 
         var animationOpts = {};
@@ -486,6 +486,11 @@ var OrbitControl = Base.extend(function () {
             this._animators[i].stop();
         }
         this._animators.length = 0;
+    },
+
+    update: function () {
+        this._needsUpdate = true;
+        this._update(20);
     },
 
     _isAnimating: function () {
@@ -713,7 +718,7 @@ var OrbitControl = Base.extend(function () {
 
         var panSensitivity = convertToArray(this.panSensitivity);
         var rotateSensitivity = convertToArray(this.rotateSensitivity);
-        
+
         if (this._mode === 'rotate') {
             this._rotateVelocity.y = (e.offsetX - this._mouseX) / this.zr.getHeight() * 2 * rotateSensitivity[0];
             this._rotateVelocity.x = (e.offsetY - this._mouseY) / this.zr.getWidth() * 2 * rotateSensitivity[1];
