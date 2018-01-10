@@ -64,7 +64,7 @@ Built on top of
 
 + Canvas library [zrender](https://github.com/ecomfe/zrender)
 
-+ WebGL library [qtek](https://github.com/pissang/qtek)。
++ WebGL library [claygl](https://github.com/pissang/claygl)。
 
 ## License
 
