@@ -37,7 +37,7 @@ function globeLayout(seriesModel, coordSys) {
         data.setItemLayout(idx, [start, dir, size]);
     });
 
-    data.setLayout('orient', Vector3.UP._array);
+    data.setLayout('orient', Vector3.UP.array);
 }
 
 function geo3DLayout(seriesModel, coordSys) {

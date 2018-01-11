@@ -170,7 +170,7 @@ export default echarts.extendChartView({
         lineMesh.off('mousemove');
         lineMesh.off('mouseout');
         lineMesh.on('mousemove', function (e) {
-            var value = coordSys.pointToData(e.point._array);
+            var value = coordSys.pointToData(e.point.array);
             var dataIndex = data.indicesOfNearest('x', value[0])[0];
             if (dataIndex !== lastDataIndex) {
                 // this._downplay(lastDataIndex);
@@ -233,7 +233,7 @@ export default echarts.extendChartView({
             pos[2] = points[i3 + 2];
             pos[3] = 1;
 
-            vec3.transformMat4(pos, pos, worldViewProjection._array);
+            vec3.transformMat4(pos, pos, worldViewProjection.array);
             positionNDC[i2] = pos[0] / pos[3];
             positionNDC[i2 + 1] = pos[1] / pos[3];
         }

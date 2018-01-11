@@ -99,10 +99,10 @@ Mapbox3D.prototype = {
         // Translate to center.
         mat4.translate(m, m, [-pt[0] * this.getScale() * WORLD_SCALE, -pt[1] * this.getScale() * WORLD_SCALE, 0]);
 
-        this.viewGL.camera.viewMatrix._array = m;
+        this.viewGL.camera.viewMatrix.array = m;
         var invertM = new Float64Array(16);
         mat4.invert(invertM, m);
-        this.viewGL.camera.worldTransform._array = invertM;
+        this.viewGL.camera.worldTransform.array = invertM;
         this.viewGL.camera.decomposeWorldTransform();
 
         // scale vertically to meters per pixel (inverse of ground resolution):

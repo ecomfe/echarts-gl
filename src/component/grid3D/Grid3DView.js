@@ -260,13 +260,13 @@ export default echarts.extendComponentView({
             var axis1 = cartesian.getAxis(face.faceInfo[1]);
             var idx0 = dimIndicesMap[face.faceInfo[0]];
             var idx1 = dimIndicesMap[face.faceInfo[1]];
-            if (axis0.contain(point._array[idx0]) && axis1.contain(point._array[idx1])) {
+            if (axis0.contain(point.array[idx0]) && axis1.contain(point.array[idx1])) {
                 nearestIntersectPoint = point;
             }
         }
 
         if (nearestIntersectPoint) {
-            var data = cartesian.pointToData(nearestIntersectPoint._array, [], true);
+            var data = cartesian.pointToData(nearestIntersectPoint.array, [], true);
             this._updateAxisPointer(data);
 
             this._doShowAxisPointer();

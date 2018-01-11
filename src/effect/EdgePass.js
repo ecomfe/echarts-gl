@@ -33,7 +33,7 @@ EdgePass.prototype.update = function (renderer, camera, sourceTexture, frame) {
     var frameBuffer = this._frameBuffer;
 
     frameBuffer.bind(renderer);
-    this._edgePass.setUniform('projectionInv', camera.invProjectionMatrix._array);
+    this._edgePass.setUniform('projectionInv', camera.invProjectionMatrix.array);
     this._edgePass.setUniform('textureSize', [width, height]);
     this._edgePass.setUniform('texture', sourceTexture);
     this._edgePass.render(renderer);

@@ -135,9 +135,9 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     var viewInverseTranspose = new Matrix4();
     Matrix4.transpose(viewInverseTranspose, camera.worldTransform);
 
-    ssaoPass.setUniform('projection', camera.projectionMatrix._array);
-    ssaoPass.setUniform('projectionInv', camera.invProjectionMatrix._array);
-    ssaoPass.setUniform('viewInverseTranspose', viewInverseTranspose._array);
+    ssaoPass.setUniform('projection', camera.projectionMatrix.array);
+    ssaoPass.setUniform('projectionInv', camera.invProjectionMatrix.array);
+    ssaoPass.setUniform('viewInverseTranspose', viewInverseTranspose.array);
 
     var ssaoTexture = this._ssaoTexture;
     var blurTexture = this._blurTexture;
@@ -157,7 +157,7 @@ SSAOPass.prototype.update = function (renderer, camera, frame) {
     ssaoPass.render(renderer);
 
     blurPass.setUniform('textureSize', [width / 2, height / 2]);
-    blurPass.setUniform('projection', camera.projectionMatrix._array);
+    blurPass.setUniform('projection', camera.projectionMatrix.array);
     this._framebuffer.attach(blurTexture);
     blurPass.setUniform('direction', 0);
     blurPass.setUniform('ssaoTexture', ssaoTexture);

@@ -79,7 +79,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
             ) {
                 var point = new graphicGL.Vector3();
                 var pointWorld = new graphicGL.Vector3();
-                this.geometry.attributes.position.get(idx, point._array);
+                this.geometry.attributes.position.get(idx, point.array);
                 graphicGL.Vector3.transformMat4(pointWorld, point, this.worldTransform);
                 out.push({
                     vertexIndex: idx,
@@ -103,7 +103,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
         for (var i = 0; i < geometry.vertexCount; i++) {
             geometry.attributes.position.get(i, pos);
             pos[3] = 1;
-            vec4.transformMat4(pos, pos, worldViewProjection._array);
+            vec4.transformMat4(pos, pos, worldViewProjection.array);
             vec4.scale(pos, pos, 1 / pos[3]);
 
             positionNDC[i * 2] = pos[0];

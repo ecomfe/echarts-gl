@@ -22,7 +22,7 @@ export default {
         // Do progressive quick sort.
         if (frame === 0) {
             var posAttr = this.attributes.position;
-            var cameraPos = cameraPos._array;
+            var cameraPos = cameraPos.array;
 
             if (!this._triangleZList || this._triangleZList.length !== this.triangleCount) {
                 this._triangleZList = new Float32Array(this.triangleCount);

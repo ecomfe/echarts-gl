@@ -123,7 +123,7 @@ echarts.extendChartView({
             var pos = [];
             for (var i = 0; i < triangle.length; i++) {
                 surfaceMesh.geometry.attributes.position.get(triangle[i], pos);
-                var dist = vec3.dist(point._array, pos);
+                var dist = vec3.dist(point.array, pos);
                 if (dist < nearestDist) {
                     nearestDist = dist;
                     nearestIdx = triangle[i];

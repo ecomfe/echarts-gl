@@ -68,8 +68,8 @@ TemporalSuperSampling.prototype = {
         var offset = this._haltonSequence[this._frame % this._haltonSequence.length];
 
         var translationMat = new Matrix4();
-        translationMat._array[12] = (offset[0] * 2.0 - 1.0) / width;
-        translationMat._array[13] = (offset[1] * 2.0 - 1.0) / height;
+        translationMat.array[12] = (offset[0] * 2.0 - 1.0) / width;
+        translationMat.array[13] = (offset[1] * 2.0 - 1.0) / height;
 
         Matrix4.mul(camera.projectionMatrix, translationMat, camera.projectionMatrix);
 

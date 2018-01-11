@@ -76,9 +76,9 @@ SSRPass.prototype.update = function (renderer, camera, sourceTexture, frame) {
     Matrix4.transpose(viewInverseTranspose, camera.worldTransform);
 
     ssrPass.setUniform('sourceTexture', sourceTexture);
-    ssrPass.setUniform('projection', camera.projectionMatrix._array);
-    ssrPass.setUniform('projectionInv', camera.invProjectionMatrix._array);
-    ssrPass.setUniform('viewInverseTranspose', viewInverseTranspose._array);
+    ssrPass.setUniform('projection', camera.projectionMatrix.array);
+    ssrPass.setUniform('projectionInv', camera.invProjectionMatrix.array);
+    ssrPass.setUniform('viewInverseTranspose', viewInverseTranspose.array);
     ssrPass.setUniform('nearZ', camera.near);
     ssrPass.setUniform('jitterOffset', frame / 30);
 
@@ -86,8 +86,8 @@ SSRPass.prototype.update = function (renderer, camera, sourceTexture, frame) {
     blurPass2.setUniform('textureSize', [width, height]);
     blurPass2.setUniform('sourceTexture', sourceTexture);
 
-    blurPass1.setUniform('projection', camera.projectionMatrix._array);
-    blurPass2.setUniform('projection', camera.projectionMatrix._array);
+    blurPass1.setUniform('projection', camera.projectionMatrix.array);
+    blurPass2.setUniform('projection', camera.projectionMatrix.array);
 
     frameBuffer.attach(texture1);
     frameBuffer.bind(renderer);

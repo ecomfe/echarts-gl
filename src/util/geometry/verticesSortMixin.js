@@ -25,7 +25,7 @@ export default {
         // Do progressive quick sort.
         if (frame === 0) {
             var posAttr = this.attributes.position;
-            var cameraPos = cameraPos._array;
+            var cameraPos = cameraPos.array;
             var noneCount = 0;
             if (!this._zList || this._zList.length !== this.vertexCount) {
                 this._zList = new Float32Array(this.vertexCount);
