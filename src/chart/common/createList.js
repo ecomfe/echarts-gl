@@ -1,16 +1,17 @@
 import echarts from 'echarts/lib/echarts';
 
-export default function (seriesModel, dims) {
-    var source = seriesModel.getSource();
-
+export default function (seriesModel, dims, source) {
+    source = source || seriesModel.getSource();
 
     var coordSysDimensions = dims || echarts.getCoordinateSystemDimensions(seriesModel.get('coordinateSystem')) || ['x', 'y', 'z'];
 
     var dimensions = echarts.helper.createDimensions(source, {
+        dimensionsDefine: source.dimensionsDefine || seriesModel.get('dimensions'),
+        encodeDefine: source.encodeDefine || seriesModel.get('encode'),
         coordDimensions: coordSysDimensions.map(function (dim) {
             var axis3DModel = seriesModel.getReferringComponents(dim + 'Axis3D')[0];
             return {
-                type: axis3DModel.get('type') === 'category' ? 'ordinal' : 'float',
+                type: (axis3DModel && axis3DModel.get('type') === 'category') ? 'ordinal' : 'float',
                 name: dim,
                 // Find stackable dimension. Which will represent value.
                 stackable: dim === 'z'

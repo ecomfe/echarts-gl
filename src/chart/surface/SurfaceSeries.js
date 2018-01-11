@@ -105,13 +105,16 @@ var SurfaceSeries = echarts.extendSeriesModel({
         if (option.parametric) {
             dims.push('u', 'v');
         }
-        var list = createList(this, dims);
+        // PENDING getSource?
+        var list = createList(this, dims, option.data || data);
         return list;
     },
 
     defaultOption: {
         coordinateSystem: 'cartesian3D',
         zlevel: -10,
+
+        dimensions: ['x', 'y', 'z', 'u', 'v'],
 
         // Cartesian coordinate system
         grid3DIndex: 0,

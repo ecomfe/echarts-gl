@@ -126,6 +126,7 @@ Material.prototype.setTextureImage = function (textureName, imgValue, api, textu
     var zr = api.getZr();
     var material = this;
     var texture;
+    material.autoUpdateTextureStatus = false;
     // disableTexture first
     material.disableTexture(textureName);
     if (!isValueNone(imgValue)) {
