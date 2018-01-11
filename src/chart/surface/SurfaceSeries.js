@@ -1,6 +1,7 @@
 import echarts from 'echarts/lib/echarts';
 import componentShadingMixin from '../../component/common/componentShadingMixin';
 import formatTooltip from '../common/formatTooltip';
+import createList from '../common/createList';
 
 var SurfaceSeries = echarts.extendSeriesModel({
 
@@ -104,14 +105,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
         if (option.parametric) {
             dims.push('u', 'v');
         }
-        dims = echarts.helper.completeDimensions(dims, option.data, {
-            encodeDef: this.get('encode'),
-            dimsDef: this.get('dimensions')
-        });
-
-        var list = new echarts.List(dims, this);
-        list.initData(data);
-
+        var list = createList(this, dims);
         return list;
     },
 

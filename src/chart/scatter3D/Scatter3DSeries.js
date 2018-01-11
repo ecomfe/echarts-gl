@@ -1,6 +1,7 @@
 import echarts from 'echarts/lib/echarts';
 import formatUtil from '../../util/format';
 import formatTooltip from '../common/formatTooltip';
+import createList from '../common/createList';
 
 echarts.extendSeriesModel({
 
@@ -11,14 +12,7 @@ echarts.extendSeriesModel({
     visualColorAccessPath: 'itemStyle.color',
 
     getInitialData: function (option, ecModel) {
-        var coordSysDimensions = echarts.getCoordinateSystemDimensions(this.get('coordinateSystem')) || ['x', 'y', 'z'];
-        var dimensions = echarts.helper.completeDimensions(coordSysDimensions, option.data, {
-            encodeDef: this.get('encode'),
-            dimsDef: this.get('dimensions')
-        });
-        var data = new echarts.List(dimensions, this);
-        data.initData(option.data);
-        return data;
+        return createList(this);
     },
 
     getFormattedLabel: function (dataIndex, status, dataType, dimIndex) {

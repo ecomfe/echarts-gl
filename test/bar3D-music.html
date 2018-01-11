@@ -58,8 +58,15 @@
 
                 var item = [];
                 var size = 50;
-                var dataProvider = {
-                    getItem: function (i) {
+
+
+                var beta = 0;
+                function update() {
+                    analyzer.getByteFrequencyData(dataArray);
+
+                    var data = new Float64Array(size * size * 3);
+                    var off = 0;
+                    for (var i = 0; i < size * size; i++) {
                         var x = i % size;
                         var y = Math.floor(i / size);
                         var dx = x - size / 2;
@@ -75,16 +82,11 @@
                         );
 
                         var val = Math.pow(dataArray[idx] / 100, 3);
-                        return [x, y, Math.max(val, 0.1)];
-                    },
-                    count: function () {
-                        return size * size;
-                    }
-                }
 
-                var beta = 0;
-                function update() {
-                    analyzer.getByteFrequencyData(dataArray);
+                        data[off++] = x;
+                        data[off++] = y;
+                        data[off++] = Math.max(val, 0.1);
+                    }
 
                     console.time('update');
                     chart.setOption({
@@ -98,7 +100,8 @@
                             }
                         },
                         series: [{
-                            data: dataProvider
+                            dimensions: ['x', 'y', 'z'],
+                            data: data
                         }]
                     });
                     beta += 2;

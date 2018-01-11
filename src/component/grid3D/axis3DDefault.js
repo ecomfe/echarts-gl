@@ -84,8 +84,8 @@ var logAxis = echarts.util.defaults({
 logAxis.scale = true;
 
 export default {
-    categoryAxis: categoryAxis,
-    valueAxis: valueAxis,
-    timeAxis: timeAxis,
-    logAxis: logAxis
+    categoryAxis3D: categoryAxis,
+    valueAxis3D: valueAxis,
+    timeAxis3D: timeAxis,
+    logAxis3D: logAxis
 };

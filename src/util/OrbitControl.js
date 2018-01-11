@@ -634,15 +634,14 @@ var OrbitControl = Base.extend(function () {
             return;
         }
 
-        // FIXME euler order......
-        // FIXME alpha is not certain when beta is 90 or -90
-        var euler = new Vector3();
-        euler.eulerFromQuat(
-            this.getCamera().rotation.normalize(), 'ZYX'
-        );
+        this.getCamera().updateWorldTransform();
 
-        this._theta = -euler.x;
-        this._phi = -euler.y;
+        var forward = this.getCamera().worldTransform.z;
+        var alpha = Math.asin(forward.y);
+        var beta = Math.atan2(forward.x, forward.z);
+
+        this._theta = alpha;
+        this._phi = -beta;
 
         this.setBeta(this.getBeta());
         this.setAlpha(this.getAlpha());
