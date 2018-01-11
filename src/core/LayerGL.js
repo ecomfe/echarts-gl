@@ -317,78 +317,99 @@ LayerGL.prototype._startAccumulating = function (immediate) {
     }
 };
 
-function getId(resource) {
-    return resource.__uid__;
-}
+LayerGL.prototype._trackAndClean = function () {
+    var textureList = [];
+    var geometriesList = [];
 
-function checkAndDispose(renderer, resourceMap) {
-    for (var id in resourceMap) {
-        if (!resourceMap[id].count) {
-            resourceMap[id].target.dispose(renderer);
-            delete resourceMap[id];
+    // Mark all resources unused;
+    if (this._textureList) {
+        markUnused(this._textureList);
+        markUnused(this._geometriesList);
+    }
+
+    for (var i = 0; i < this.views.length; i++) {
+        collectResources(this.views[i].scene, textureList, geometriesList);
+    }
+
+    // Dispose those unsed resources.
+    if (this._textureList) {
+        checkAndDispose(this.renderer, this._textureList);
+        checkAndDispose(this.renderer, this._geometriesList);
+    }
+
+    this._textureList = textureList;
+    this._geometriesList = geometriesList;
+};
+
+function markUnused(resourceList) {
+    for (var i = 0; i < resourceList.length; i++) {
+        resourceList[i].__used__ = 0;
+    }
+}
+function checkAndDispose(renderer, resourceList) {
+    for (var i = 0; i < resourceList.length; i++) {
+        if (!resourceList[i].__used__) {
+            resourceList[i].dispose(renderer);
         }
     }
 }
-
-function addToMap(map, target) {
-    var id = getId(target);
-    map[id] = map[id] || {
-        count: 0, target: target
-    };
-    map[id].count++;
+function updateUsed(resource, list) {
+    resource.__used__ = resource.__used__ || 0;
+    resource.__used__++;
+    if (resource.__used__ === 1) {
+        // Don't push to the list twice.
+        list.push(resource);
+    }
 }
-LayerGL.prototype._trackAndClean = function () {
-    var texturesMap = this._texturesMap = this._texturesMap || {};
-    var geometriesMap = this._geometriesMap = this._geometriesMap || {};
-
-    for (var id in texturesMap) {
-        texturesMap[id].count = 0;
-    }
-    for (var id in geometriesMap) {
-        geometriesMap[id].count = 0;
-    }
-
+function collectResources(scene, textureResourceList, geometryResourceList) {
     function trackQueue(queue) {
+        var prevMaterial;
+        var prevGeometry;
         for (var i = 0; i < queue.length; i++) {
             var renderable = queue[i];
             var geometry = renderable.geometry;
             var material = renderable.material;
-            addToMap(geometriesMap, geometry);
 
-            for (var name in material.uniforms) {
-                var val = material.uniforms[name].value;
-                if (val instanceof Texture) {
-                    addToMap(texturesMap, val);
-                }
-                else if (val instanceof Array) {
-                    for (var k = 0; k < val.length; k++) {
-                        if (val[k] instanceof Texture) {
-                            addToMap(texturesMap, val[k]);
+            // TODO optimize!!
+            if (material !== prevMaterial) {
+                var textureUniforms = material.getTextureUniforms();
+                for (var u = 0; u < textureUniforms.length; u++) {
+                    var uniformName = textureUniforms[u];
+                    var val = material.uniforms[uniformName].value;
+                    if (!val) {
+                        continue;
+                    }
+                    if (val instanceof Texture) {
+                        updateUsed(val, textureResourceList);
+                    }
+                    else if (val instanceof Array) {
+                        for (var k = 0; k < val.length; k++) {
+                            if (val[k] instanceof Texture) {
+                                updateUsed(val[k], textureResourceList);
+                            }
                         }
                     }
                 }
             }
-        }
-    }
-    for (var i = 0; i < this.views.length; i++) {
-        var viewGL = this.views[i];
-        var scene = viewGL.scene;
-
-        trackQueue(scene.opaqueList);
-        trackQueue(scene.transparentList);
-
-        for (var k = 0; k < scene.lights.length; k++) {
-            // Track AmbientCubemap
-            if (scene.lights[k].cubemap) {
-                addToMap(texturesMap, scene.lights[k].cubemap);
+            if (geometry !== prevGeometry) {
+                updateUsed(geometry, geometryResourceList);
             }
+
+            prevMaterial = material;
+            prevGeometry = geometry;
         }
     }
-    // Dispose those unsed resources
-    checkAndDispose(this.renderer, texturesMap);
-    checkAndDispose(this.renderer, geometriesMap);
-};
 
+    trackQueue(scene.opaqueList);
+    trackQueue(scene.transparentList);
+
+    for (var k = 0; k < scene.lights.length; k++) {
+        // Track AmbientCubemap
+        if (scene.lights[k].cubemap) {
+            updateUsed(scene.lights[k].cubemap, textureResourceList);
+        }
+    }
+}
 /**
  * Dispose the layer
  */
