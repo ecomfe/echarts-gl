@@ -89,15 +89,14 @@ var Polygons3DSeries = echarts.extendSeriesModel({
         },
 
         itemStyle: {
-            areaColor: '#fff',
+            color: '#fff',
             borderWidth: 0,
             borderColor: '#333'
         },
 
         emphasis: {
             itemStyle: {
-                // areaColor: '#f94b59'
-                areaColor: '#639fc0'
+                color: '#639fc0'
             },
             label: {
                 show: true

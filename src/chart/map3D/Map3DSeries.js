@@ -24,7 +24,7 @@ var Map3DSeries = echarts.extendSeriesModel({
 
     coordinateSystem: null,
 
-    visualColorAccessPath: 'itemStyle.areaColor',
+    visualColorAccessPath: 'itemStyle.color',
 
     optionUpdated: function (newOpt) {
         newOpt = newOpt || {};

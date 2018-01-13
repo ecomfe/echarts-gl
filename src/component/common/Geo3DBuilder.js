@@ -246,7 +246,7 @@ Geo3DBuilder.prototype = {
             // Get bunch of visual properties.
             var regionModel = componentModel.getRegionModel(dataIndex);
             var itemStyleModel = regionModel.getModel('itemStyle');
-            var color = itemStyleModel.get('areaColor');
+            var color = itemStyleModel.get('color');
             var opacity = retrieve.firstNotNull(itemStyleModel.get('opacity'), 1.0);
 
             // Use visual color if it is encoded by visualMap component
@@ -715,7 +715,7 @@ Geo3DBuilder.prototype = {
 
         var itemModel = data.getItemModel(dataIndex);
         var emphasisItemStyleModel = itemModel.getModel('emphasis.itemStyle');
-        var emphasisColor = emphasisItemStyleModel.get('areaColor');
+        var emphasisColor = emphasisItemStyleModel.get('color');
         var emphasisOpacity = retrieve.firstNotNull(
             emphasisItemStyleModel.get('opacity'),
             data.getItemVisual(dataIndex, 'opacity'),
