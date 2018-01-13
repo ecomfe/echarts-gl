@@ -316,7 +316,7 @@ VectorFieldParticleSurface.prototype = {
         var downsampleTextures = this._downsampleTextures;
         return downsampleTextures.length > 0
             ? downsampleTextures[downsampleTextures.length - 1]
-            : this._thisFrameTexture;
+            : this._lastFrameTexture;
     },
 
     setRegion: function (region) {
