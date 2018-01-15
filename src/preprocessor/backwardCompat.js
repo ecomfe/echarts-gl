@@ -44,6 +44,12 @@ export default function (option) {
     echarts.util.each(option.series, function (series) {
         if (echarts.util.indexOf(GL_SERIES, series.type) >= 0) {
             convertNormalEmphasisForEach(series);
+
+            // Compatitable with original mapbox
+            if (series.coordinateSystem === 'mapbox') {
+                series.coordinateSystem = 'mapbox3D';
+                option.mapbox3D = option.mapbox;
+            }
         }
     });
 
