@@ -386,10 +386,6 @@ export default echarts.extendComponentView({
         geometry.updateBoundingBox();
     },
 
-    updateLayout: function (globeModel, ecModel, api) {
-        this._displaceVertices(globeModel, api);
-    },
-
     _updateLight: function (globeModel, api) {
         var earthMesh = this._earthMesh;
 

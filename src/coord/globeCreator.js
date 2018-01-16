@@ -57,7 +57,7 @@ function updateGlobe(ecModel, api) {
         if (seriesModel.coordinateSystem !== this) {
             return;
         }
-        
+
         // Get altitude data extent.
         var data = seriesModel.getData();
         var altDim = seriesModel.coordDimToDataDim('alt')[0];
@@ -149,7 +149,7 @@ var globeCreator = {
                     graphicGL.loadTexture(displacementTextureValue, api, function (texture) {
                         var img = texture.image;
                         var displacementData = getDisplacementData(img, displacementScale);
-                        globe.setDisplacementData(displacementData.data, displacementData.width, displacementData.height);
+                        globeModel.setDisplacementData(displacementData.data, displacementData.width, displacementData.height);
                         if (!immediateLoaded) {
                             // Update layouts
                             api.dispatchAction({
@@ -162,6 +162,10 @@ var globeCreator = {
                 else {
                     globe.setDisplacementData(null, 0, 0);
                 }
+
+                globe.setDisplacementData(
+                    globeModel.displacementData, globeModel.displacementWidth, globeModel.displacementHeight
+                );
             }
         });
 

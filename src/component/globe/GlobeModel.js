@@ -146,7 +146,13 @@ var GlobeModel = echarts.extendComponentModel({
 
         layers: []
     },
-    
+
+    setDisplacementData: function (data, width, height) {
+        this.displacementData = data;
+        this.displacementWidth = width;
+        this.displacementHeight = height;
+    },
+
     getDisplacementTexture: function () {
         return this.get('displacementTexture') || this.get('heightTexture');
     },
@@ -172,7 +178,7 @@ var GlobeModel = echarts.extendComponentModel({
         var displacementTexture = this.getDisplacementTexture();
         var displacementScale = this.getDisplacemenScale();
 
-        this._displacementChanged = 
+        this._displacementChanged =
             this._displacementTexture !== displacementTexture
             || this._displacementScale !== displacementScale;
 

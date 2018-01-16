@@ -20,7 +20,7 @@ echarts.registerAction({
 echarts.registerAction({
     type: 'globeUpdateDisplacment',
     event: 'globedisplacementupdated',
-    update: 'updateLayout'
+    update: 'update'
 }, function (payload, ecModel) {
     // Noop
 });
