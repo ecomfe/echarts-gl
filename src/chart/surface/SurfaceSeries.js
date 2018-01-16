@@ -114,8 +114,6 @@ var SurfaceSeries = echarts.extendSeriesModel({
         coordinateSystem: 'cartesian3D',
         zlevel: -10,
 
-        dimensions: ['x', 'y', 'z', 'u', 'v'],
-
         // Cartesian coordinate system
         grid3DIndex: 0,
 
