@@ -488,6 +488,11 @@ var OrbitControl = Base.extend(function () {
         this._animators.length = 0;
     },
 
+    update: function () {
+        this._needsUpdate = true;
+        this._update(20);
+    },
+
     _isAnimating: function () {
         return this._animators.length > 0;
     },
