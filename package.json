@@ -12,14 +12,14 @@
     "dev": "webpack -w --devtool eval-cheap-module-source-map"
   },
   "dependencies": {
-    "claygl": "^1.0.0",
-    "rollup-plugin-commonjs": "^8.2.6",
-    "rollup-plugin-node-resolve": "^3.0.0",
-    "rollup-plugin-uglify": "^2.0.1"
+    "claygl": "^1.0.0"
   },
   "main": "dist/echarts-gl.js",
   "repository": "https://github.com/ecomfe/echarts-gl",
   "devDependencies": {
+    "rollup-plugin-commonjs": "^8.2.6",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-uglify": "^2.0.1",
     "echarts": "^4.0.0",
     "@babel/core": "^7.0.0-beta.32",
     "@babel/helper-module-transforms": "^7.0.0-beta.32",
