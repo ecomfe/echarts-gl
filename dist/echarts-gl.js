@@ -156,17 +156,20 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-
-if(!GLMAT_EPSILON) {
-    var GLMAT_EPSILON = 0.000001;
+var GLMAT_EPSILON = window.GLMAT_EPSILON;
+if(GLMAT_EPSILON == null) {
+    GLMAT_EPSILON = 0.000001;
 }
 
-if(!GLMAT_ARRAY_TYPE) {
-    var GLMAT_ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array;
-}
+// Use Array instead of Float32Array. It seems to be much faster and higher precision.
+var GLMAT_ARRAY_TYPE = window.GLMAT_ARRAY_TYPE || Array;
+// if(!GLMAT_ARRAY_TYPE) {
+//     GLMAT_ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array;
+// }
 
+var GLMAT_RANDOM = window.GLMAT_RANDOM;
 if(!GLMAT_RANDOM) {
-    var GLMAT_RANDOM = Math.random;
+    GLMAT_RANDOM = Math.random;
 }
 
 /**
@@ -6237,6 +6240,9 @@ var Texture2D = __WEBPACK_IMPORTED_MODULE_0__Texture__["a" /* default */].extend
         mipmaps: []
     };
 }, {
+
+    textureType: 'texture2D',
+
     update: function (renderer) {
 
         var _gl = renderer.gl;
@@ -8348,7 +8354,7 @@ var FrameBuffer = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].ex
                 // FIXME some texture format can't generate mipmap
                 if (!texture.NPOT && texture.useMipmap
                     && texture.minFilter === __WEBPACK_IMPORTED_MODULE_1__Texture__["a" /* default */].LINEAR_MIPMAP_LINEAR) {
-                    var target = texture instanceof __WEBPACK_IMPORTED_MODULE_2__TextureCube__["a" /* default */] ? __WEBPACK_IMPORTED_MODULE_3__core_glenum__["a" /* default */].TEXTURE_CUBE_MAP : __WEBPACK_IMPORTED_MODULE_3__core_glenum__["a" /* default */].TEXTURE_2D;
+                    var target = texture.textureType === 'textureCube' ? __WEBPACK_IMPORTED_MODULE_3__core_glenum__["a" /* default */].TEXTURE_CUBE_MAP : __WEBPACK_IMPORTED_MODULE_3__core_glenum__["a" /* default */].TEXTURE_2D;
                     _gl.bindTexture(target, texture.getWebGLTexture(renderer));
                     _gl.generateMipmap(target);
                     _gl.bindTexture(target, null);
@@ -9025,6 +9031,11 @@ var nativeReduce = arrayProto.reduce; // Avoid assign to an exported variable, f
 var methods = {};
 
 function $override(name, fn) {
+  // Clear ctx instance for different environment
+  if (name === 'createCanvas') {
+    _ctx = null;
+  }
+
   methods[name] = fn;
 }
 /**
@@ -9580,6 +9591,22 @@ function assert(condition, message) {
     throw new Error(message);
   }
 }
+/**
+ * @memberOf module:zrender/core/util
+ * @param {string} str string to be trimed
+ * @return {string} trimed string
+ */
+
+
+function trim(str) {
+  if (str == null) {
+    return null;
+  } else if (typeof str.trim === 'function') {
+    return str.trim();
+  } else {
+    return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+  }
+}
 
 var primitiveKey = '__ec_primitive__';
 /**
@@ -9601,40 +9628,40 @@ function isPrimitive(obj) {
 
 function HashMap(obj) {
   var isArr = isArray(obj);
-  obj && each(obj, function (value, key) {
-    isArr ? this.set(value, 1) : this.set(key, value);
-  }, this);
+  var thisMap = this;
+  obj instanceof HashMap ? obj.each(visit) : obj && each(obj, visit);
+
+  function visit(value, key) {
+    isArr ? thisMap.set(value, key) : thisMap.set(key, value);
+  }
 } // Add prefix to avoid conflict with Object.prototype.
 
 
-var HASH_MAP_PREFIX = '_ec_';
-var HASH_MAP_PREFIX_LENGTH = 4;
 HashMap.prototype = {
   constructor: HashMap,
   // Do not provide `has` method to avoid defining what is `has`.
   // (We usually treat `null` and `undefined` as the same, different
   // from ES6 Map).
   get: function (key) {
-    return this[HASH_MAP_PREFIX + key];
+    return this.hasOwnProperty(key) ? this[key] : null;
   },
   set: function (key, value) {
-    this[HASH_MAP_PREFIX + key] = value; // Comparing with invocation chaining, `return value` is more commonly
+    // Comparing with invocation chaining, `return value` is more commonly
     // used in this case: `var someVal = map.set('a', genVal());`
-
-    return value;
+    return this[key] = value;
   },
   // Although util.each can be performed on this hashMap directly, user
   // should not use the exposed keys, who are prefixed.
   each: function (cb, context) {
     context !== void 0 && (cb = bind(cb, context));
 
-    for (var prefixedKey in this) {
-      this.hasOwnProperty(prefixedKey) && cb(this[prefixedKey], prefixedKey.slice(HASH_MAP_PREFIX_LENGTH));
+    for (var key in this) {
+      this.hasOwnProperty(key) && cb(this[key], key);
     }
   },
   // Do not use this method if performance sensitive.
   removeKey: function (key) {
-    delete this[HASH_MAP_PREFIX + key];
+    delete this[key];
   }
 };
 
@@ -9693,6 +9720,7 @@ exports.retrieve3 = retrieve3;
 exports.slice = slice;
 exports.normalizeCssArray = normalizeCssArray;
 exports.assert = assert;
+exports.trim = trim;
 exports.setAsPrimitive = setAsPrimitive;
 exports.isPrimitive = isPrimitive;
 exports.createHashMap = createHashMap;
@@ -11499,11 +11527,15 @@ var Material = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].exten
         for (var u = 0; u < this._enabledUniforms.length; u++) {
             var symbol = this._enabledUniforms[u];
             var uniformValue = this.uniforms[symbol].value;
-            if (uniformValue instanceof __WEBPACK_IMPORTED_MODULE_1__Texture__["a" /* default */]) {
+            var uniformType = this.uniforms[symbol].type;
+            // Not use `instanceof` to determine if a value is texture in Material#bind.
+            // Use type instead, in some case texture may be in different namespaces.
+            // TODO Duck type validate.
+            if (uniformType === 't' && uniformValue) {
                 // Reset slot
                 uniformValue.__slot = -1;
             }
-            else if (Array.isArray(uniformValue)) {
+            else if (uniformType === 'tv') {
                 for (var i = 0; i < uniformValue.length; i++) {
                     if (uniformValue[i] instanceof __WEBPACK_IMPORTED_MODULE_1__Texture__["a" /* default */]) {
                         uniformValue[i].__slot = -1;
@@ -11516,6 +11548,7 @@ var Material = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].exten
             var symbol = this._enabledUniforms[u];
             var uniform = this.uniforms[symbol];
             var uniformValue = uniform.value;
+            var uniformType = uniform.type;
             // PENDING
             // When binding two materials with the same shader
             // Many uniforms will be be set twice even if they have the same value
@@ -11540,7 +11573,7 @@ var Material = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].exten
                 }
                 continue;
             }
-            else if (uniformValue instanceof __WEBPACK_IMPORTED_MODULE_1__Texture__["a" /* default */]) {
+            else if (uniformType === 't') {
                 if (uniformValue.__slot < 0) {
                     var slot = program.currentTextureSlot();
                     var res = program.setUniform(_gl, '1i', symbol, slot);
@@ -11560,9 +11593,7 @@ var Material = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].exten
                     continue;
                 }
                 // Texture Array
-                var exampleValue = uniformValue[0];
-
-                if (exampleValue instanceof __WEBPACK_IMPORTED_MODULE_1__Texture__["a" /* default */]) {
+                if (uniformType === 'tv') {
                     if (!program.hasUniform(symbol)) {
                         continue;
                     }
@@ -14215,6 +14246,9 @@ var TextureCube = __WEBPACK_IMPORTED_MODULE_0__Texture__["a" /* default */].exte
         mipmaps: []
     };
 }, {
+
+    textureType: 'textureCube',
+
     update: function (renderer) {
         var _gl = renderer.gl;
         _gl.bindTexture(_gl.TEXTURE_CUBE_MAP, this._cache.get('webgl_texture'));
@@ -15297,10 +15331,8 @@ var Scene = __WEBPACK_IMPORTED_MODULE_0__Node__["a" /* default */].extend(functi
 },
 /** @lends clay.Scene.prototype. */
 {
-    /**
-     * Add node to scene
-     * @param {Node} node
-     */
+
+    // Add node to scene
     addToScene: function (node) {
         if (node instanceof __WEBPACK_IMPORTED_MODULE_2__Camera__["a" /* default */]) {
             if (this._cameraList.length > 0) {
@@ -15313,10 +15345,7 @@ var Scene = __WEBPACK_IMPORTED_MODULE_0__Node__["a" /* default */].extend(functi
         }
     },
 
-    /**
-     * Remove node from scene
-     * @param {Node} node
-     */
+    // Remove node from scene
     removeFromScene: function (node) {
         if (node instanceof __WEBPACK_IMPORTED_MODULE_2__Camera__["a" /* default */]) {
             var idx = this._cameraList.indexOf(node);
@@ -16172,7 +16201,7 @@ var Perspective = __WEBPACK_IMPORTED_MODULE_0__Camera__["a" /* default */].exten
 /** @lends clay.camera.Perspective# */
 {
     /**
-     * Vertical field of view in radians
+     * Vertical field of view in degrees
      * @type {number}
      */
     fov: 50,
@@ -16887,6 +16916,11 @@ var OrbitControl = __WEBPACK_IMPORTED_MODULE_0_claygl_src_core_Base__["a" /* def
             this._animators[i].stop();
         }
         this._animators.length = 0;
+    },
+
+    update: function () {
+        this._needsUpdate = true;
+        this._update(20);
     },
 
     _isAnimating: function () {
@@ -22031,8 +22065,12 @@ Geo3DBuilder.prototype = {
             var height = distance;
             if (coordSys.type === 'geo3D') {
                 var region = coordSys.getRegion(name);
+                if (!region) {
+                    return [NaN, NaN, NaN];
+                }
                 center = region.center;
-                return coordSys.dataToPoint([center[0], center[1], height]);
+                var pos = coordSys.dataToPoint([center[0], center[1], height]);
+                return pos;
             }
             else {
                 var tmp = self._triangulationResults[dataIndex - self._startIndex];
@@ -22059,8 +22097,6 @@ Geo3DBuilder.prototype = {
     },
 
     _initMeshes: function () {
-        this.rootNode.removeAll();
-
         var self = this;
         function createPolygonMesh() {
             var mesh = new __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Mesh({
@@ -22068,7 +22104,7 @@ Geo3DBuilder.prototype = {
                 material: new __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Material({
                     shader: self._shadersMap.lambert
                 }),
-                culling: false,
+                // culling: false,
                 geometry: new __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Geometry({
                     sortTriangles: true,
                     dynamic: true
@@ -22275,22 +22311,10 @@ Geo3DBuilder.prototype = {
         if (dataIndex !== this._lastHoverDataIndex) {
             this.downplay(this._lastHoverDataIndex);
             this.highlight(dataIndex);
-
+            this._labelsBuilder.updateLabels([dataIndex]);
         }
         this._lastHoverDataIndex = dataIndex;
         this._polygonMesh.dataIndex = dataIndex;
-    },
-
-    _onmouseover: function (e) {
-        if (e.target) {
-            var dataIndex = e.target.eventData
-                ? this._data.indexOfName(e.target.eventData.name)
-                : e.target.dataIndex;
-            if (dataIndex != null) {
-                this.highlight(dataIndex);
-                this._labelsBuilder.updateLabels([dataIndex]);
-            }
-        }
     },
 
     _onmouseout: function (e) {
@@ -22299,6 +22323,8 @@ Geo3DBuilder.prototype = {
             this._lastHoverDataIndex = -1;
             this._polygonMesh.dataIndex = -1;
         }
+
+        this._labelsBuilder.updateLabels([]);
     },
 
     _updateGroundPlane: function (componentModel, geo3D, api) {
@@ -27939,10 +27965,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.0',
+    version: '1.0.1',
     dependencies: {
         echarts: '4.0.0',
-        claygl: '1.0.0'
+        claygl: '1.0.1'
     }
 };
 
@@ -28191,7 +28217,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.graphicGL = __WEBPAC
 /**
  * @name clay.version
  */
-/* harmony default export */ __webpack_exports__["a"] = ('1.0.0');
+/* harmony default export */ __webpack_exports__["a"] = ('1.0.1');
 
 
 /***/ }),
@@ -28851,7 +28877,7 @@ LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEven
     eventProxy.dataIndex = dataIndex;
     eventProxy.seriesIndex = seriesIndex;
 
-    if (eventData != null || parseInt(dataIndex, 10) >= 0) {
+    if (eventData != null || (parseInt(dataIndex, 10) >= 0 && parseInt(seriesIndex, 10) >= 0)) {
         this.zr.handler.dispatchToElement(targetInfo, eveName, originalEvent);
 
         if (elChangedInMouseMove) {
@@ -30167,6 +30193,8 @@ function checkShaderErrorMsg(_gl, shader, shaderString) {
     }
 }
 
+var tmpFloat32Array16 = new __WEBPACK_IMPORTED_MODULE_0__core_vendor__["a" /* default */].Float32Array(16);
+
 var GLProgram = __WEBPACK_IMPORTED_MODULE_1__core_Base__["a" /* default */].extend({
 
     uniformSemantics: {},
@@ -30229,9 +30257,16 @@ var GLProgram = __WEBPACK_IMPORTED_MODULE_1__core_Base__["a" /* default */].exte
         if (location === null || location === undefined) {
             return false;
         }
+
         switch (type) {
             case 'm4':
-                // The matrix must be created by glmatrix and can pass it directly.
+                if (!(value instanceof Float32Array)) {
+                    // Use Float32Array is much faster than array when uniformMatrix4fv.
+                    for (var i = 0; i < value.length; i++) {
+                        tmpFloat32Array16[i] = value[i];
+                    }
+                    value = tmpFloat32Array16;
+                }
                 _gl.uniformMatrix4fv(location, false, value);
                 break;
             case '2i':
@@ -30292,7 +30327,7 @@ var GLProgram = __WEBPACK_IMPORTED_MODULE_1__core_Base__["a" /* default */].exte
                 break;
             case 'm4v':
                 // Raw value
-                if (Array.isArray(value)) {
+                if (Array.isArray(value) && Array.isArray(value[0])) {
                     var array = new __WEBPACK_IMPORTED_MODULE_0__core_vendor__["a" /* default */].Float32Array(value.length * 16);
                     var cursor = 0;
                     for (var i = 0; i < value.length; i++) {
@@ -30303,7 +30338,7 @@ var GLProgram = __WEBPACK_IMPORTED_MODULE_1__core_Base__["a" /* default */].exte
                     }
                     _gl.uniformMatrix4fv(location, false, array);
                 }
-                else if (value instanceof __WEBPACK_IMPORTED_MODULE_0__core_vendor__["a" /* default */].Float32Array) {   // ArrayBufferView
+                else {   // ArrayBufferView
                     _gl.uniformMatrix4fv(location, false, value);
                 }
                 break;
@@ -31662,7 +31697,7 @@ cubemapUtil.prefilterEnvironmentMap = function (
     var dummyScene = new __WEBPACK_IMPORTED_MODULE_8__Scene__["a" /* default */]();
     var skyEnv;
 
-    if (envMap instanceof __WEBPACK_IMPORTED_MODULE_0__Texture2D__["a" /* default */]) {
+    if (envMap.textureType === 'texture2D') {
         // Convert panorama to cubemap
         var envCubemap = new __WEBPACK_IMPORTED_MODULE_1__TextureCube__["a" /* default */]({
             width: width,
@@ -32129,7 +32164,7 @@ sh.projectEnvironmentMap = function (renderer, envMap, opts) {
     var skybox;
     var dummyScene = new __WEBPACK_IMPORTED_MODULE_8__Scene__["a" /* default */]();
     var size = 64;
-    if (envMap instanceof __WEBPACK_IMPORTED_MODULE_2__Texture2D__["a" /* default */]) {
+    if (envMap.textureType === 'texture2D') {
         skybox = new __WEBPACK_IMPORTED_MODULE_6__plugin_Skydome__["a" /* default */]({
             scene: dummyScene,
             environmentMap: envMap
@@ -38376,6 +38411,7 @@ var getContext = _util.getContext;
 var extend = _util.extend;
 var retrieve2 = _util.retrieve2;
 var retrieve3 = _util.retrieve3;
+var trim = _util.trim;
 var textWidthCache = {};
 var textWidthCacheCounter = 0;
 var TEXT_CACHE_MAX = 5000;
@@ -39036,8 +39072,9 @@ function pushTokens(block, str, styleName) {
 function makeFont(style) {
   // FIXME in node-canvas fontWeight is before fontStyle
   // Use `fontSize` `fontFamily` to check whether font properties are defined.
-  return (style.fontSize || style.fontFamily) && [style.fontStyle, style.fontWeight, (style.fontSize || 12) + 'px', // If font properties are defined, `fontFamily` should not be ignored.
-  style.fontFamily || 'sans-serif'].join(' ') || style.textFont || style.font;
+  var font = (style.fontSize || style.fontFamily) && [style.fontStyle, style.fontWeight, (style.fontSize || 12) + 'px', // If font properties are defined, `fontFamily` should not be ignored.
+  style.fontFamily || 'sans-serif'].join(' ');
+  return font && trim(font) || style.textFont || style.font;
 }
 
 exports.DEFAULT_FONT = DEFAULT_FONT;
@@ -39441,7 +39478,7 @@ var ShadowMapPass = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].
         // Create textures for shadow map
         for (var i = 0; i < this._lightsCastShadow.length; i++) {
             var light = this._lightsCastShadow[i];
-            if (light instanceof __WEBPACK_IMPORTED_MODULE_11__light_Directional__["a" /* default */]) {
+            if (light.type === 'DIRECTIONAL_LIGHT') {
 
                 if (dirLightHasCascade) {
                     console.warn('Only one direectional light supported with shadow cascade');
@@ -39466,7 +39503,7 @@ var ShadowMapPass = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].
                     directionalLightShadowMaps
                 );
             }
-            else if (light instanceof __WEBPACK_IMPORTED_MODULE_10__light_Spot__["a" /* default */]) {
+            else if (light.type === 'SPOT_LIGHT') {
                 this.renderSpotLightShadow(
                     renderer,
                     scene,
@@ -39476,7 +39513,7 @@ var ShadowMapPass = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].
                     spotLightShadowMaps
                 );
             }
-            else if (light instanceof __WEBPACK_IMPORTED_MODULE_12__light_Point__["a" /* default */]) {
+            else if (light.type === 'POINT_LIGHT') {
                 this.renderPointLightShadow(
                     renderer,
                     scene,
@@ -43424,6 +43461,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.util.merge(Geo3DMode
                 geo3DId: geo3DModel.id
             });
         });
+        control.update();
     },
 
     afterRender: function (geo3DModel, ecModel, api, layerGL) {
