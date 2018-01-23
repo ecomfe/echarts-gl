@@ -29,12 +29,14 @@ function MapServiceCoordSys3D() {
     this.pitch = 0;
     this.center = [0, 0];
 
-    this.maxPitch = 60;
-
     this._origin;
 
     this.zoom = 0;
     this._initialZoom;
+
+    // Some parameters for different map services.
+    this.maxPitch = 60;
+    this.zoomOffset = 0;
 }
 
 MapServiceCoordSys3D.prototype = {
@@ -113,7 +115,7 @@ MapServiceCoordSys3D.prototype = {
 
         if (this.altitudeExtent && !isNaN(this.boxHeight)) {
             var range = this.altitudeExtent[1] - this.altitudeExtent[0];
-            verticalScale = this.boxHeight / range * this.getScale() / Math.pow(2, this._initialZoom);
+            verticalScale = this.boxHeight / range * this.getScale() / Math.pow(2, this._initialZoom - this.zoomOffset);
         }
         else {
             verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))))
@@ -127,7 +129,7 @@ MapServiceCoordSys3D.prototype = {
     },
 
     getScale: function () {
-        return Math.pow(2, this.zoom);
+        return Math.pow(2, this.zoom - this.zoomOffset);
     },
 
     projectOnTile: function (data, out) {

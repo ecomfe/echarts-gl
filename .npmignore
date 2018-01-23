@@ -2,7 +2,9 @@
 /doc
 /test
 /index.html
+/bench
 .vscode
+todo
 
 npm-debug.log
 
