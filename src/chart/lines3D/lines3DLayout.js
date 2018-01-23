@@ -159,7 +159,7 @@ echarts.registerLayout(function (ecModel, api) {
         else if (coordSys.type === 'geo3D') {
             layoutOnPlane(seriesModel, coordSys, [0, 1, 0]);
         }
-        else if (coordSys.type === 'mapbox3D') {
+        else if (coordSys.type === 'mapbox3D' || coordSys.type === 'maptalks3D') {
             layoutOnPlane(seriesModel, coordSys, [0, 0, 1]);
         }
     });

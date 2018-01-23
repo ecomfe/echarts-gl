@@ -27,7 +27,8 @@ echarts.extendChartView({
         var geo3DBuilder = this._geo3DBuilderList[0];
         if (!geo3DBuilder) {
             geo3DBuilder = new Geo3DBuilder(api);
-            geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D';
+            geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D'
+                && coordSys.type !== 'maptalks3D';
             this._geo3DBuilderList[0] = geo3DBuilder;
         }
         this._updateShaderDefines(coordSys, geo3DBuilder);
@@ -54,7 +55,8 @@ echarts.extendChartView({
         var coordSys = seriesModel.coordinateSystem;
         if (!geo3DBuilder) {
             geo3DBuilder = new Geo3DBuilder(api);
-            geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D';
+            geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D'
+                && coordSys.type !== 'maptalks3D';
             this._geo3DBuilderList[this._currentStep] = geo3DBuilder;
         }
         geo3DBuilder.update(seriesModel, ecModel, api, params.start, params.end);
@@ -72,7 +74,7 @@ echarts.extendChartView({
                 mesh.material[methodName]('fragment', 'SRGB_DECODE');
 
                 // FIXME
-                if (coordSys.type === 'mapbox3D') {
+                if (coordSys.type === 'mapbox3D' || coordSys.type === 'maptalks3D') {
                     mesh.material.define('fragment', 'NORMAL_UP_AXIS', 2);
                     mesh.material.define('fragment', 'NORMAL_FRONT_AXIS', 1);
                 }

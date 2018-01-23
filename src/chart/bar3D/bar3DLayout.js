@@ -73,7 +73,7 @@ function geo3DLayout(seriesModel, coordSys) {
     data.setLayout('orient', [1, 0, 0]);
 }
 
-function mapbox3DLayout(seriesModel, coordSys) {
+function mapService3DLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var dimLng = seriesModel.coordDimToDataDim('lng')[0];
     var dimLat = seriesModel.coordDimToDataDim('lat')[0];
@@ -136,8 +136,8 @@ echarts.registerLayout(function (ecModel, api) {
         else if (coordSysType === 'geo3D') {
             geo3DLayout(seriesModel, coordSys);
         }
-        else if (coordSysType === 'mapbox3D') {
-            mapbox3DLayout(seriesModel, coordSys);
+        else if (coordSysType === 'mapbox3D' || coordSysType === 'maptalks3D') {
+            mapService3DLayout(seriesModel, coordSys);
         }
         else {
             if (__DEV__) {

@@ -137,7 +137,7 @@ var Map3DSeries = echarts.extendSeriesModel({
     },
 
     defaultOption: {
-        // Support geo3D, mapbox
+        // Support geo3D, mapbox, maptalks3D
         coordinateSystem: 'geo3D',
         // itemStyle: {},
         // height,
