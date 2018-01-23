@@ -17,6 +17,7 @@ var Maptalks3DModel = echarts.extendComponentModel({
         zlevel: -10,
 
         urlTemplate: 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>',
 
         center: [0, 0],
 

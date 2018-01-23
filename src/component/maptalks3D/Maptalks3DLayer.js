@@ -40,12 +40,12 @@ Maptalks3DLayer.prototype.refresh = function () {
 };
 
 var EVENTS = ['mousedown', 'mouseup', 'click', 'dblclick', 'mousemove',
-    'mousewheel', 'wheel',
+    'mousewheel', 'DOMMouseScroll',
     'touchstart', 'touchend', 'touchmove', 'touchcancel'
 ];
 Maptalks3DLayer.prototype._initEvents = function () {
     // Event is bound on canvas container.
-    var maptalksRoot = this.dom.firstElementChild;
+    var maptalksRoot = this.dom;
     this._handlers = this._handlers || {
         contextmenu: function (e) {
             e.preventDefault();
@@ -60,7 +60,13 @@ Maptalks3DLayer.prototype._initEvents = function () {
             }
             obj.bubbles = false;
             var newE = new e.constructor(e.type, obj);
-            maptalksRoot.dispatchEvent(newE);
+            if (eName === 'mousewheel' || eName === 'DOMMouseScroll') {
+                // maptalks listens events to different elements?
+                maptalksRoot.dispatchEvent(newE);
+            }
+            else {
+                maptalksRoot.firstElementChild.dispatchEvent(newE);
+            }
         };
         this.zr.dom.addEventListener(eName, this._handlers[eName]);
     }, this);

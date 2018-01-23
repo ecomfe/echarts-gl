@@ -60,19 +60,22 @@ export default echarts.extendComponentView({
         var mtks = this._zrLayer.getMaptalks();
         var urlTemplate = maptalks3DModel.get('urlTemplate');
 
+        var baseLayer = mtks.getBaseLayer();
         if (urlTemplate !== this._oldUrlTemplate) {
-            var baseLayer = mtks.getBaseLayer();
             if (!baseLayer) {
                 var baseLayer = new maptalks.TileLayer('maptalks-echarts-gl-baselayer', {
                     urlTemplate: urlTemplate,
                     // used sequentially to help with browser parallel requests per domain limitation
-                    subdomains: ['a', 'b', 'c']
+                    subdomains: ['a', 'b', 'c'],
+                    attribution: maptalks3DModel.get('attribution')
                 });
                 mtks.setBaseLayer(baseLayer);
             }
             else {
+                // PENDING setOptions may not work?
                 baseLayer.setOptions({
-                    urlTemplate: urlTemplate
+                    urlTemplate: urlTemplate,
+                    attribution: maptalks3DModel.get('attribution')
                 });
             }
         }
