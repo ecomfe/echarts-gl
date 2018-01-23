@@ -101,8 +101,12 @@ Geo3DBuilder.prototype = {
             var height = distance;
             if (coordSys.type === 'geo3D') {
                 var region = coordSys.getRegion(name);
+                if (!region) {
+                    return [NaN, NaN, NaN];
+                }
                 center = region.center;
-                return coordSys.dataToPoint([center[0], center[1], height]);
+                var pos = coordSys.dataToPoint([center[0], center[1], height]);
+                return pos;
             }
             else {
                 var tmp = self._triangulationResults[dataIndex - self._startIndex];
@@ -129,8 +133,6 @@ Geo3DBuilder.prototype = {
     },
 
     _initMeshes: function () {
-        this.rootNode.removeAll();
-
         var self = this;
         function createPolygonMesh() {
             var mesh = new graphicGL.Mesh({
@@ -138,7 +140,7 @@ Geo3DBuilder.prototype = {
                 material: new graphicGL.Material({
                     shader: self._shadersMap.lambert
                 }),
-                culling: false,
+                // culling: false,
                 geometry: new graphicGL.Geometry({
                     sortTriangles: true,
                     dynamic: true
@@ -345,22 +347,10 @@ Geo3DBuilder.prototype = {
         if (dataIndex !== this._lastHoverDataIndex) {
             this.downplay(this._lastHoverDataIndex);
             this.highlight(dataIndex);
-
+            this._labelsBuilder.updateLabels([dataIndex]);
         }
         this._lastHoverDataIndex = dataIndex;
         this._polygonMesh.dataIndex = dataIndex;
-    },
-
-    _onmouseover: function (e) {
-        if (e.target) {
-            var dataIndex = e.target.eventData
-                ? this._data.indexOfName(e.target.eventData.name)
-                : e.target.dataIndex;
-            if (dataIndex != null) {
-                this.highlight(dataIndex);
-                this._labelsBuilder.updateLabels([dataIndex]);
-            }
-        }
     },
 
     _onmouseout: function (e) {
@@ -369,6 +359,8 @@ Geo3DBuilder.prototype = {
             this._lastHoverDataIndex = -1;
             this._polygonMesh.dataIndex = -1;
         }
+
+        this._labelsBuilder.updateLabels([]);
     },
 
     _updateGroundPlane: function (componentModel, geo3D, api) {

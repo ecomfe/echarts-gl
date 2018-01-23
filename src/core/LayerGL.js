@@ -642,7 +642,7 @@ LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEven
     eventProxy.dataIndex = dataIndex;
     eventProxy.seriesIndex = seriesIndex;
 
-    if (eventData != null || parseInt(dataIndex, 10) >= 0) {
+    if (eventData != null || (parseInt(dataIndex, 10) >= 0 && parseInt(seriesIndex, 10) >= 0)) {
         this.zr.handler.dispatchToElement(targetInfo, eveName, originalEvent);
 
         if (elChangedInMouseMove) {
