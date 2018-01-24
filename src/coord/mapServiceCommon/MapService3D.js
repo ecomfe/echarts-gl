@@ -84,6 +84,10 @@ MapServiceCoordSys3D.prototype = {
         var furthestDistance = Math.cos(Math.PI / 2 - pitch) * topHalfSurfaceDistance + cameraToCenterDistance;
         // Add a bit extra to avoid precision problems when a fragment's distance is exactly `furthestDistance`
         var farZ = furthestDistance * 1.1;
+        // Forced to be 1000
+        if (this.pitch > 50) {
+            farZ = 1000;
+        }
 
         // matrix for conversion from location to GL coordinates (-1 .. 1)
         var m = [];
