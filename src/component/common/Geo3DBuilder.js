@@ -144,6 +144,8 @@ Geo3DBuilder.prototype = {
                     sortTriangles: true,
                     dynamic: true
                 }),
+                // TODO Disable culling
+                culling: false,
                 ignorePicking: true,
                 // Render normal in normal pass
                 renderNormal: true

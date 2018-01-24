@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Map3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <style>
+            #data-count {
+                font-size: 30px;
+                color: #fff;
+                position: absolute;
+                z-index: 1000;
+                left: 10px;
+                bottom: 10px;
+            }
+        </style>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src='../node_modules/maptalks/dist/maptalks.js'></script>
+        <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+
+            $.getJSON('./data/buildings-ny.json')
+                .done(function (data) {
+
+                    data = data.slice(0, 2e5);
+
+                    chart.setOption({
+                        maptalks3D: {
+                            center: [-74.00274358945177, 40.708643546076274],
+                            zoom: 14.83092375925744,
+                            pitch: 59.5,
+                            bearing: 39,
+                            urlTemplate: 'http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                            altitudeScale: 1,
+                            postEffect: {
+                                enable: true,
+                                screenSpaceAmbientOcclusion: {
+                                    enable: true,
+                                    intensity: 1.4,
+                                    quality: 'high',
+                                    radius: 7
+                                },
+                                screenSpaceReflection: {
+                                    enable: false
+                                },
+                                depthOfField: {
+                                    enable: true,
+                                    blurRadius: 5,
+                                    focalDistance: 30
+                                }
+                            },
+                            light: {
+                                main: {
+                                    intensity: 3,
+                                    alpha: -30,
+                                    shadow: true,
+                                    shadowQuality: 'high'
+                                },
+                                ambient: {
+                                    intensity: 0.
+                                },
+                                ambientCubemap: {
+                                    texture: 'asset/pisa.hdr',
+                                    exposure: 1,
+                                    diffuseIntensity: 0.8,
+                                    specularIntensity: 0
+                                }
+                            }
+                        },
+                        series: [{
+                            type: 'polygons3D',
+                            coordinateSystem: 'maptalks3D',
+                            data: data,
+                            shading: 'realistic',
+                            silent: true,
+                            itemStyle: {
+                                color: '#aaa'
+                            },
+                            realisticMaterial: {
+                                metalness: 0,
+                                roughness: 0.8
+                            }
+                        }]
+                    });
+                });
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+        </script>
+    </body>
+</html>
