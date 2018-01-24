@@ -140,7 +140,6 @@ Geo3DBuilder.prototype = {
                 material: new graphicGL.Material({
                     shader: self._shadersMap.lambert
                 }),
-                // culling: false,
                 geometry: new graphicGL.Geometry({
                     sortTriangles: true,
                     dynamic: true
@@ -307,6 +306,8 @@ Geo3DBuilder.prototype = {
         polygonMesh.material.transparent = hasTranparentRegion;
         polygonMesh.material.depthMask = !hasTranparentRegion;
         polygonMesh.geometry.updateBoundingBox();
+
+        polygonMesh.frontFace = this.extrudeY ? graphicGL.Mesh.CCW : graphicGL.Mesh.CW;
 
         // Update tangents
         if (polygonMesh.material.get('normalMap')) {
@@ -545,7 +546,8 @@ Geo3DBuilder.prototype = {
 
             addVertices(polygon, y, insideOffset);
 
-            for (var k = 0; k < polygon.indices.length; k++) {
+            var len = polygon.indices.length;
+            for (var k = 0; k < len; k++) {
                 indices[triangleOffset * 3 + k] = polygon.indices[k] + startVertexOffset;
             }
             triangleOffset += polygon.indices.length / 3;
