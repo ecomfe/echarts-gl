@@ -13,7 +13,7 @@ function Maptalks3DLayer (id, zr, defaultCenter, defaultZoom) {
 
     // FIXME If in module environment.
     if (!maptalks) {
-        throw new Error('Maptalks library must be included. See https://www.mapbox.com/mapbox-gl-js/api/');
+        throw new Error('Maptalks library must be included. See https://maptalks.org');
     }
 
     this._maptalks = new maptalks.Map(this.dom, {
