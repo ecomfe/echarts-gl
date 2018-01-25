@@ -49,13 +49,18 @@ function Grid3DFace(faceInfo, linesMaterial, quadsMaterial) {
         geometry: new Lines3DGeometry({ useNativeLine: false }),
         material: linesMaterial,
         castShadow: false,
-        ignorePicking: true, renderOrder: 1
+        ignorePicking: true,
+        $ignorePicking: true,
+        renderOrder: 1
     });
     var quadsMesh = new graphicGL.Mesh({
         geometry: new QuadsGeometry(),
         material: quadsMaterial,
         castShadow: false,
-        culling: false, ignorePicking: true, renderOrder: 0
+        culling: false,
+        ignorePicking: true,
+        $ignorePicking: true,
+        renderOrder: 0
     });
     // Quads are behind lines.
     this.rootNode.add(quadsMesh);
