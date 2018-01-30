@@ -30,8 +30,6 @@ var SurfaceSeries = echarts.extendSeriesModel({
         }
 
         if (!data) {
-            data = [];
-
             if (!option.parametric) {
                 // From surface equation
                 var equation = option.equation || {};
@@ -52,14 +50,24 @@ var SurfaceSeries = echarts.extendSeriesModel({
                     }
                     return;
                 }
+                var xCount = Math.floor((xOpts.max + xOpts.step - xOpts.min) / xOpts.step);
+                var yCount = Math.floor((yOpts.max + yOpts.step - yOpts.min) / yOpts.step);
+                data = new Float32Array(xCount * yCount * 3);
+
                 var xPrecision = getPrecision(xOpts);
                 var yPrecision = getPrecision(yOpts);
-                for (var y = yOpts.min; y < yOpts.max + yOpts.step * 0.999; y += yOpts.step) {
-                    for (var x = xOpts.min; x < xOpts.max + xOpts.step * 0.999; x += xOpts.step) {
+
+                var off = 0;
+                for (var j = 0; j < yCount; j++) {
+                    for (var i = 0; i < xCount; i++) {
+                        var x = i * xOpts.step + xOpts.min;
+                        var y = j * yOpts.step + yOpts.min;
                         var x2 = echarts.number.round(Math.min(x, xOpts.max), xPrecision);
                         var y2 = echarts.number.round(Math.min(y, yOpts.max), yPrecision);
                         var z = equation.z(x2, y2);
-                        data.push([x2, y2, z]);
+                        data[off++] = x2;
+                        data[off++] = y2;
+                        data[off++] = z;
                     }
                 }
             }
@@ -85,17 +93,28 @@ var SurfaceSeries = echarts.extendSeriesModel({
                     }
                 });
 
+                var uCount = Math.floor((uOpts.max + uOpts.step - uOpts.min) / uOpts.step);
+                var vCount = Math.floor((vOpts.max + vOpts.step - vOpts.min) / vOpts.step);
+                data = new Float32Array(uCount * vCount * 5);
+
+
                 var uPrecision = getPrecision(uOpts);
                 var vPrecision = getPrecision(vOpts);
-                // TODO array intermediate storage is needless.
-                for (var v = vOpts.min; v < vOpts.max + vOpts.step * 0.999; v += vOpts.step) {
-                    for (var u = uOpts.min; u < uOpts.max + uOpts.step * 0.999; u += uOpts.step) {
+                var off = 0;
+                for (var j = 0; j < vCount; j++) {
+                    for (var i = 0; i < uCount; i++) {
+                        var u = i * uOpts.step + uOpts.min;
+                        var v = j * vOpts.step + vOpts.min;
                         var u2 = echarts.number.round(Math.min(u, uOpts.max), uPrecision);
                         var v2 = echarts.number.round(Math.min(v, vOpts.max), vPrecision);
                         var x = parametricEquation.x(u2, v2);
                         var y = parametricEquation.y(u2, v2);
                         var z = parametricEquation.z(u2, v2);
-                        data.push([x, y, z, u2, v2]);
+                        data[off++] = x;
+                        data[off++] = y;
+                        data[off++] = z;
+                        data[off++] = u2;
+                        data[off++] = v2;
                     }
                 }
             }
@@ -106,7 +125,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
             dims.push('u', 'v');
         }
         // PENDING getSource?
-        var list = createList(this, dims, option.data || data);
+        var list = createList(this, dims, data);
         return list;
     },
 
