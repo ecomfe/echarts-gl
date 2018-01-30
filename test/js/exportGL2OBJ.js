@@ -75,7 +75,7 @@
             outName += outName + '_' + count;
         }
         textureLib.__count__[outName]++;
-        textureLib[map.__GUID__] = {
+        textureLib[map.__uid__] = {
             data: canvas.toDataURL(),
             file: outName + '.png'
         };
@@ -84,10 +84,10 @@
     function convertTexture(material, textureName, textureLib, outLib, outName) {
         var map = material.get(textureName);
         if (map && map.image) {
-            if (!textureLib[map.__GUID__]) {
+            if (!textureLib[map.__uid__]) {
                 convertImage(map, textureLib, outName);
             }
-            outLib[outName] = textureLib[map.__GUID__].file;
+            outLib[outName] = textureLib[map.__uid__].file;
         }
     }
 
@@ -106,7 +106,7 @@
         obj['Ns'] = phongFromRoughness(material.get('roughness'));
         convertTexture(material, 'diffuseMap', textureLib, obj, 'map_Kd');
         // convertTexture(material, 'bumpMap', textureLib, obj, 'bump');
-        
+
         // Physically-based Rendering extension.
         if (material.shader.name === 'ecgl.realistic') {
             convertTexture(material, 'normalMap', textureLib, obj, 'norm');
@@ -121,7 +121,7 @@
         }
         return obj;
     }
-    
+
     /**
      * @param {ECharts} echartsInstance
      * @param {Object} componentQuery
@@ -147,7 +147,7 @@
         var view = componentQuery.mainType === 'series'
             ? chartInstance.getViewOfSeriesModel(componentModel)
             : chartInstance.getViewOfComponentModel(componentModel);
-        
+
         if (!view.__ecgl__) {
             throw new Error('exportGL2OBJ only support GL components.');
         }
@@ -223,7 +223,7 @@
                         image: res.image
                     });
                     convertImage(tex, textureLib, 'map_Kd');
-                    materialLib[materialName]['map_Kd'] = textureLib[tex.__GUID__].file;
+                    materialLib[materialName]['map_Kd'] = textureLib[tex.__uid__].file;
 
                     if (!hasTexcoord) {
                         for (var i = 0; i < res.texcoords.length;) {

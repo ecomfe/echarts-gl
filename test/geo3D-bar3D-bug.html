@@ -13,17 +13,18 @@
         <script src="../node_modules/echarts/map/js/world.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
+        <script src="js/commonUI.js"></script>
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
-    
+
             data =  [[116, 36, 0],[114, 27, 0],[113,34,2],[112,43,0]];
-            
+
             function setData(){
                 for(var k in data){
                     data[k][2] = Math.random()*40;
                 }
-                
+
                 chart.setOption({
                     backgroundColor: '#cdcfd5',
                     geo3D: {
@@ -96,7 +97,7 @@
             setInterval(function(){
                 setData(data)
             },5000)
-            
+
             window.addEventListener('resize', function () {
                 chart.resize();
             });

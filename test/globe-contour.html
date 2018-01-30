@@ -18,6 +18,7 @@
         <script src="lib/jquery.min.js"></script>
         <script src="lib/stackBlur.js"></script>
         <script src="lib/dat.gui.js"></script>
+        <script src="js/commonUI.js"></script>
         <script>
 
 var config = {
@@ -121,9 +122,9 @@ function image(url) {
   });
 }
 
-
+var chart;
 function initCharts(option) {
-    var chart = echarts.init(document.getElementById('main'));
+    chart = echarts.init(document.getElementById('main'));
 
     var contourChart = echarts.init(document.createElement('canvas'), null, {
         width: 4096,
