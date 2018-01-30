@@ -15460,6 +15460,20 @@ var Scene = __WEBPACK_IMPORTED_MODULE_0__Node__["a" /* default */].extend(functi
         }
     },
 
+    /**
+     * Set main camera of the scene.
+     * @param {claygl.Camera} camera
+     */
+    setMainCamera: function (camera) {
+        var idx = this._cameraList.indexOf(camera);
+        if (idx >= 0) {
+            this._cameraList.splice(idx, 1);
+        }
+        this._cameraList.unshift(camera);
+    },
+    /**
+     * Get main camera of the scene.
+     */
     getMainCamera: function () {
         return this._cameraList[0];
     },
@@ -22104,11 +22118,12 @@ Geo3DBuilder.prototype = {
                 material: new __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Material({
                     shader: self._shadersMap.lambert
                 }),
-                // culling: false,
                 geometry: new __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Geometry({
                     sortTriangles: true,
                     dynamic: true
                 }),
+                // TODO Disable culling
+                culling: false,
                 ignorePicking: true,
                 // Render normal in normal pass
                 renderNormal: true
@@ -22271,6 +22286,8 @@ Geo3DBuilder.prototype = {
         polygonMesh.material.transparent = hasTranparentRegion;
         polygonMesh.material.depthMask = !hasTranparentRegion;
         polygonMesh.geometry.updateBoundingBox();
+
+        polygonMesh.frontFace = this.extrudeY ? __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Mesh.CCW : __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Mesh.CW;
 
         // Update tangents
         if (polygonMesh.material.get('normalMap')) {
@@ -22509,7 +22526,8 @@ Geo3DBuilder.prototype = {
 
             addVertices(polygon, y, insideOffset);
 
-            for (var k = 0; k < polygon.indices.length; k++) {
+            var len = polygon.indices.length;
+            for (var k = 0; k < len; k++) {
                 indices[triangleOffset * 3 + k] = polygon.indices[k] + startVertexOffset;
             }
             triangleOffset += polygon.indices.length / 3;
@@ -23056,8 +23074,8 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__util_sprite__ = __webpack_require__(216);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__PointsMesh__ = __webpack_require__(217);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__util_sprite__ = __webpack_require__(218);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__PointsMesh__ = __webpack_require__(219);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__component_common_LabelsBuilder__ = __webpack_require__(61);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_claygl_src_math_Matrix4__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__util_retrieve__ = __webpack_require__(3);
@@ -27396,7 +27414,7 @@ if (typeof dev === 'undefined') {
 
 var __DEV__ = dev;
 exports.__DEV__ = __DEV__;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(243)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(245)))
 
 /***/ }),
 /* 86 */
@@ -27887,23 +27905,24 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__src_component_geo3D__ = __webpack_require__(183);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__src_component_globe__ = __webpack_require__(189);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__src_component_mapbox3D__ = __webpack_require__(195);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__src_chart_bar3D__ = __webpack_require__(202);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__src_chart_line3D__ = __webpack_require__(209);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__src_chart_scatter3D__ = __webpack_require__(213);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__src_chart_lines3D__ = __webpack_require__(220);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__src_chart_polygons3D__ = __webpack_require__(226);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__src_chart_surface__ = __webpack_require__(229);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__src_chart_map3D__ = __webpack_require__(233);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__src_chart_scatterGL__ = __webpack_require__(236);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__src_chart_graphGL__ = __webpack_require__(239);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__src_chart_flowGL__ = __webpack_require__(253);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__src_chart_linesGL__ = __webpack_require__(259);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__src_chart_bar3D__ = __webpack_require__(204);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__src_chart_line3D__ = __webpack_require__(211);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__src_chart_scatter3D__ = __webpack_require__(215);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__src_chart_lines3D__ = __webpack_require__(222);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__src_chart_polygons3D__ = __webpack_require__(228);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__src_chart_surface__ = __webpack_require__(231);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__src_chart_map3D__ = __webpack_require__(235);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__src_chart_scatterGL__ = __webpack_require__(238);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__src_chart_graphGL__ = __webpack_require__(241);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__src_chart_flowGL__ = __webpack_require__(255);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__src_chart_linesGL__ = __webpack_require__(261);
 
 
 
 
 
 
+// import './src/component/maptalks3D';
 
 
 
@@ -27965,10 +27984,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.0.1',
+    version: '1.0.2',
     dependencies: {
         echarts: '4.0.0',
-        claygl: '1.0.1'
+        claygl: '1.0.3'
     }
 };
 
@@ -28217,7 +28236,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.graphicGL = __WEBPAC
 /**
  * @name clay.version
  */
-/* harmony default export */ __webpack_exports__["a"] = ('1.0.1');
+/* harmony default export */ __webpack_exports__["a"] = ('1.0.3');
 
 
 /***/ }),
@@ -37145,13 +37164,18 @@ function Grid3DFace(faceInfo, linesMaterial, quadsMaterial) {
         geometry: new __WEBPACK_IMPORTED_MODULE_3__util_geometry_Lines3D__["a" /* default */]({ useNativeLine: false }),
         material: linesMaterial,
         castShadow: false,
-        ignorePicking: true, renderOrder: 1
+        ignorePicking: true,
+        $ignorePicking: true,
+        renderOrder: 1
     });
     var quadsMesh = new __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Mesh({
         geometry: new __WEBPACK_IMPORTED_MODULE_4__util_geometry_Quads__["a" /* default */](),
         material: quadsMaterial,
         castShadow: false,
-        culling: false, ignorePicking: true, renderOrder: 0
+        culling: false,
+        ignorePicking: true,
+        $ignorePicking: true,
+        renderOrder: 0
     });
     // Quads are behind lines.
     this.rootNode.add(quadsMesh);
@@ -39292,7 +39316,7 @@ var ShadowMapPass = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].
             0, -1
         ]),
 
-        precision: 'mediump',
+        precision: 'highp',
 
         _lastRenderNotCastShadow: false,
 
@@ -40001,12 +40025,11 @@ var ShadowMapPass = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].
         for (var i = 0; i < this._receivers.length; i++) {
             var mesh = this._receivers[i];
             // Mesh may be disposed
-            if (mesh.material && mesh.material.shader) {
+            if (mesh.material) {
                 var material = mesh.material;
-                var shader = material.shader;
-                shader.undefine('fragment', 'POINT_LIGHT_SHADOW_COUNT');
-                shader.undefine('fragment', 'DIRECTIONAL_LIGHT_SHADOW_COUNT');
-                shader.undefine('fragment', 'AMBIENT_LIGHT_SHADOW_COUNT');
+                material.undefine('fragment', 'POINT_LIGHT_SHADOW_COUNT');
+                material.undefine('fragment', 'DIRECTIONAL_LIGHT_SHADOW_COUNT');
+                material.undefine('fragment', 'AMBIENT_LIGHT_SHADOW_COUNT');
                 material.set('shadowEnabled', 0);
             }
         }
@@ -45230,8 +45253,8 @@ Globe.prototype = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__coord_mapbox3DCreator__ = __webpack_require__(196);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__mapbox3D_Mapbox3DModel__ = __webpack_require__(198);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__mapbox3D_Mapbox3DView__ = __webpack_require__(199);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__mapbox3D_Mapbox3DModel__ = __webpack_require__(200);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__mapbox3D_Mapbox3DView__ = __webpack_require__(201);
 
 
 
@@ -45260,124 +45283,40 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerAction({
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mapbox3D_Mapbox3D__ = __webpack_require__(197);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__util_retrieve__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__util_graphicGL__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__core_ViewGL__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__mapServiceCommon_createMapService3DCreator__ = __webpack_require__(199);
 
 
 
 
-
-
-function resizeMapbox3D(mapbox3DModel, api) {
-    var width = api.getWidth();
-    var height = api.getHeight();
-    var dpr = api.getDevicePixelRatio();
-    this.viewGL.setViewport(0, 0, width, height, dpr);
-
-    this.width = width;
-    this.height = height;
-
-    this.altitudeScale = mapbox3DModel.get('altitudeScale');
-
-    this.boxHeight = mapbox3DModel.get('boxHeight');
-    // this.updateTransform();
-}
-
-
-function updateMapbox(ecModel, api) {
-
-    if (this.model.get('boxHeight') === 'auto') {
-        return;
-    }
-
-    var altitudeDataExtent = [Infinity, -Infinity]
-
-    ecModel.eachSeries(function (seriesModel) {
-        if (seriesModel.coordinateSystem !== this) {
-            return;
-        }
-
-        // Get altitude data extent.
-        var data = seriesModel.getData();
-        var altDim = seriesModel.coordDimToDataDim('alt')[0];
-        if (altDim) {
-            // TODO altitiude is in coords of lines.
-            var dataExtent = data.getDataExtent(altDim, true);
-            altitudeDataExtent[0] = Math.min(
-                altitudeDataExtent[0], dataExtent[0]
-            );
-            altitudeDataExtent[1] = Math.max(
-                altitudeDataExtent[1], dataExtent[1]
-            );
-        }
-    }, this);
-    if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
-        this.altitudeExtent = altitudeDataExtent;
-    }
-}
-
-var mapbox3DCreator = {
-
-
-    dimensions: __WEBPACK_IMPORTED_MODULE_0__mapbox3D_Mapbox3D__["a" /* default */].prototype.dimensions,
-
-    create: function (ecModel, api) {
-        var mapbox3DList = [];
-
-        ecModel.eachComponent('mapbox3D', function (mapbox3DModel) {
-            var viewGL = mapbox3DModel.__viewGL;
-            if (!viewGL) {
-                viewGL = mapbox3DModel.__viewGL = new __WEBPACK_IMPORTED_MODULE_4__core_ViewGL__["a" /* default */]();
-                viewGL.setRootNode(new __WEBPACK_IMPORTED_MODULE_3__util_graphicGL__["a" /* default */].Node());
-            }
-
-            var mapbox3DCoordSys = new __WEBPACK_IMPORTED_MODULE_0__mapbox3D_Mapbox3D__["a" /* default */]();
-            mapbox3DCoordSys.viewGL = mapbox3DModel.__viewGL;
-            // Inject resize
-            mapbox3DCoordSys.resize = resizeMapbox3D;
-            mapbox3DCoordSys.resize(mapbox3DModel, api);
-
-            mapbox3DList.push(mapbox3DCoordSys);
-
-            mapbox3DModel.coordinateSystem = mapbox3DCoordSys;
-            mapbox3DCoordSys.model = mapbox3DModel;
-
-            mapbox3DCoordSys.setCameraOption(mapbox3DModel.getMapboxCameraOption());
-
-            mapbox3DCoordSys.update = updateMapbox;
-        });
-
-        ecModel.eachSeries(function (seriesModel) {
-            if (seriesModel.get('coordinateSystem') === 'mapbox3D') {
-                var mapbox3DModel = seriesModel.getReferringComponents('mapbox3D')[0];
-                if (!mapbox3DModel) {
-                    mapbox3DModel = ecModel.getComponent('mapbox3D');
-                }
-
-                if (!mapbox3DModel) {
-                    throw new Error('mapbox3D "' + __WEBPACK_IMPORTED_MODULE_2__util_retrieve__["a" /* default */].firstNotNull(
-                        seriesModel.get('mapbox3DIndex'),
-                        seriesModel.get('mapbox3DId'),
-                        0
-                    ) + '" not found');
-                }
-
-                seriesModel.coordinateSystem = mapbox3DModel.coordinateSystem;
-            }
-        });
-
-        return mapbox3DList;
-    }
-};
-
-
+var mapbox3DCreator = Object(__WEBPACK_IMPORTED_MODULE_2__mapServiceCommon_createMapService3DCreator__["a" /* default */])('mapbox3D', __WEBPACK_IMPORTED_MODULE_0__mapbox3D_Mapbox3D__["a" /* default */], function (mapbox3DList) {
+    mapbox3DList.forEach(function (mapbox3D) {
+        mapbox3D.setCameraOption(mapbox3D.model.getMapboxCameraOption());
+    });
+});
 __WEBPACK_IMPORTED_MODULE_1_echarts_lib_echarts___default.a.registerCoordinateSystem('mapbox3D', mapbox3DCreator);
 
 /* unused harmony default export */ var _unused_webpack_default_export = (mapbox3DCreator);
 
 /***/ }),
 /* 197 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mapServiceCommon_MapService3D__ = __webpack_require__(198);
+
+
+function Mapbox3D() {
+    __WEBPACK_IMPORTED_MODULE_0__mapServiceCommon_MapService3D__["a" /* default */].apply(this, arguments);
+}
+
+Mapbox3D.prototype = new __WEBPACK_IMPORTED_MODULE_0__mapServiceCommon_MapService3D__["a" /* default */]();
+Mapbox3D.prototype.constructor = Mapbox3D;
+Mapbox3D.prototype.type = 'mapbox3D';
+
+/* harmony default export */ __webpack_exports__["a"] = (Mapbox3D);
+
+/***/ }),
+/* 198 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -45392,7 +45331,7 @@ var PI = Math.PI;
 
 var WORLD_SCALE = 1 / 10;
 
-function Mapbox3D() {
+function MapServiceCoordSys3D() {
     /**
      * Width of mapbox viewport
      */
@@ -45413,17 +45352,20 @@ function Mapbox3D() {
     this.bearing = 0;
     this.pitch = 0;
     this.center = [0, 0];
+
     this._origin;
 
     this.zoom = 0;
     this._initialZoom;
+
+    // Some parameters for different map services.
+    this.maxPitch = 60;
+    this.zoomOffset = 0;
 }
 
-Mapbox3D.prototype = {
+MapServiceCoordSys3D.prototype = {
 
-    constructor: Mapbox3D,
-
-    type: 'mapbox3D',
+    constructor: MapServiceCoordSys3D,
 
     dimensions: ['lng', 'lat', 'alt'],
 
@@ -45452,7 +45394,7 @@ Mapbox3D.prototype = {
 
         var cameraToCenterDistance = 0.5 / Math.tan(FOV / 2) * this.height * WORLD_SCALE;
         // Convert to radian.
-        var pitch = Math.max(Math.min(this.pitch, 60), 0) / 180 * Math.PI;
+        var pitch = Math.max(Math.min(this.pitch, this.maxPitch), 0) / 180 * Math.PI;
 
         // Find the distance from the center point [width/2, height/2] to the
         // center top point [width/2, 0] in Z units, using the law of sines.
@@ -45466,14 +45408,18 @@ Mapbox3D.prototype = {
         var furthestDistance = Math.cos(Math.PI / 2 - pitch) * topHalfSurfaceDistance + cameraToCenterDistance;
         // Add a bit extra to avoid precision problems when a fragment's distance is exactly `furthestDistance`
         var farZ = furthestDistance * 1.1;
+        // Forced to be 1000
+        if (this.pitch > 50) {
+            farZ = 1000;
+        }
 
         // matrix for conversion from location to GL coordinates (-1 .. 1)
-        var m = new Float64Array(16);
+        var m = [];
         mat4.perspective(m, FOV, this.width / this.height, 1, farZ);
         this.viewGL.camera.projectionMatrix.setArray(m);
         this.viewGL.camera.decomposeProjectionMatrix();
 
-        var m = mat4.identity(new Float64Array(16));
+        var m = mat4.identity([]);
         var pt = this.dataToPoint(this.center);
         // Inverse
         mat4.scale(m, m, [1, -1, 1]);
@@ -45485,7 +45431,7 @@ Mapbox3D.prototype = {
         mat4.translate(m, m, [-pt[0] * this.getScale() * WORLD_SCALE, -pt[1] * this.getScale() * WORLD_SCALE, 0]);
 
         this.viewGL.camera.viewMatrix.array = m;
-        var invertM = new Float64Array(16);
+        var invertM = [];
         mat4.invert(invertM, m);
         this.viewGL.camera.worldTransform.array = invertM;
         this.viewGL.camera.decomposeWorldTransform();
@@ -45497,7 +45443,7 @@ Mapbox3D.prototype = {
 
         if (this.altitudeExtent && !isNaN(this.boxHeight)) {
             var range = this.altitudeExtent[1] - this.altitudeExtent[0];
-            verticalScale = this.boxHeight / range * this.getScale() / Math.pow(2, this._initialZoom);
+            verticalScale = this.boxHeight / range * this.getScale() / Math.pow(2, this._initialZoom - this.zoomOffset);
         }
         else {
             verticalScale = worldSize / (2 * Math.PI * 6378000 * Math.abs(Math.cos(this.center[1] * (Math.PI / 180))))
@@ -45511,7 +45457,7 @@ Mapbox3D.prototype = {
     },
 
     getScale: function () {
-        return Math.pow(2, this.zoom);
+        return Math.pow(2, this.zoom - this.zoomOffset);
     },
 
     projectOnTile: function (data, out) {
@@ -45563,10 +45509,128 @@ Mapbox3D.prototype = {
     }
 };
 
-/* harmony default export */ __webpack_exports__["a"] = (Mapbox3D);
+/* harmony default export */ __webpack_exports__["a"] = (MapServiceCoordSys3D);
 
 /***/ }),
-/* 198 */
+/* 199 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util_retrieve__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__core_ViewGL__ = __webpack_require__(20);
+
+
+
+
+/* harmony default export */ __webpack_exports__["a"] = (function (serviceComponentType, ServiceCtor, afterCreate) {
+
+    function resizeMapService3D(mapService3DModel, api) {
+        var width = api.getWidth();
+        var height = api.getHeight();
+        var dpr = api.getDevicePixelRatio();
+        this.viewGL.setViewport(0, 0, width, height, dpr);
+
+        this.width = width;
+        this.height = height;
+
+        this.altitudeScale = mapService3DModel.get('altitudeScale');
+
+        this.boxHeight = mapService3DModel.get('boxHeight');
+        // this.updateTransform();
+    }
+
+
+    function updateService3D(ecModel, api) {
+
+        if (this.model.get('boxHeight') === 'auto') {
+            return;
+        }
+
+        var altitudeDataExtent = [Infinity, -Infinity]
+
+        ecModel.eachSeries(function (seriesModel) {
+            if (seriesModel.coordinateSystem !== this) {
+                return;
+            }
+
+            // Get altitude data extent.
+            var data = seriesModel.getData();
+            var altDim = seriesModel.coordDimToDataDim('alt')[0];
+            if (altDim) {
+                // TODO altitiude is in coords of lines.
+                var dataExtent = data.getDataExtent(altDim, true);
+                altitudeDataExtent[0] = Math.min(
+                    altitudeDataExtent[0], dataExtent[0]
+                );
+                altitudeDataExtent[1] = Math.max(
+                    altitudeDataExtent[1], dataExtent[1]
+                );
+            }
+        }, this);
+        if (altitudeDataExtent && isFinite(altitudeDataExtent[1] - altitudeDataExtent[0])) {
+            this.altitudeExtent = altitudeDataExtent;
+        }
+    }
+
+    return {
+
+
+        dimensions: ServiceCtor.prototype.dimensions,
+
+        create: function (ecModel, api) {
+            var mapService3DList = [];
+
+            ecModel.eachComponent(serviceComponentType, function (mapService3DModel) {
+                var viewGL = mapService3DModel.__viewGL;
+                if (!viewGL) {
+                    viewGL = mapService3DModel.__viewGL = new __WEBPACK_IMPORTED_MODULE_2__core_ViewGL__["a" /* default */]();
+                    viewGL.setRootNode(new __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Node());
+                }
+
+                var mapService3DCoordSys = new ServiceCtor();
+                mapService3DCoordSys.viewGL = mapService3DModel.__viewGL;
+                // Inject resize
+                mapService3DCoordSys.resize = resizeMapService3D;
+                mapService3DCoordSys.resize(mapService3DModel, api);
+
+                mapService3DList.push(mapService3DCoordSys);
+
+                mapService3DModel.coordinateSystem = mapService3DCoordSys;
+                mapService3DCoordSys.model = mapService3DModel;
+
+                mapService3DCoordSys.update = updateService3D;
+            });
+
+            ecModel.eachSeries(function (seriesModel) {
+                if (seriesModel.get('coordinateSystem') === serviceComponentType) {
+                    var mapService3DModel = seriesModel.getReferringComponents(serviceComponentType)[0];
+                    if (!mapService3DModel) {
+                        mapService3DModel = ecModel.getComponent(serviceComponentType);
+                    }
+
+                    if (!mapService3DModel) {
+                        throw new Error(serviceComponentType + ' "' + __WEBPACK_IMPORTED_MODULE_0__util_retrieve__["a" /* default */].firstNotNull(
+                            seriesModel.get(serviceComponentType + 'Index'),
+                            seriesModel.get(serviceComponentType + 'Id'),
+                            0
+                        ) + '" not found');
+                    }
+
+                    seriesModel.coordinateSystem = mapService3DModel.coordinateSystem;
+                }
+            });
+
+            afterCreate && afterCreate(mapService3DList, ecModel, api);
+
+            return mapService3DList;
+        }
+    };
+});
+
+
+/***/ }),
+/* 200 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -45650,16 +45714,16 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.util.merge(Mapbox3DM
 /* unused harmony default export */ var _unused_webpack_default_export = (Mapbox3DModel);
 
 /***/ }),
-/* 199 */
+/* 201 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Mapbox3DLayer__ = __webpack_require__(200);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Mapbox3DLayer__ = __webpack_require__(202);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__common_SceneHelper__ = __webpack_require__(34);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__util_graphicGL__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__util_shader_displayShadow_glsl_js__ = __webpack_require__(201);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__util_shader_displayShadow_glsl_js__ = __webpack_require__(203);
 
 
 
@@ -45801,12 +45865,15 @@ var TILE_SIZE = 512;
     },
 
     dispose: function (ecModel, api) {
-        api.getZr().delLayer(-1000);
+        if (this._zrLayer) {
+            this._zrLayer.dispose();
+        }
+        api.getZr().painter.delLayer(-1000);
     }
 }));
 
 /***/ }),
-/* 200 */
+/* 202 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -45889,7 +45956,7 @@ Mapbox3DLayer.prototype.dispose = function () {
 /* harmony default export */ __webpack_exports__["a"] = (Mapbox3DLayer);
 
 /***/ }),
-/* 201 */
+/* 203 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -45897,15 +45964,15 @@ Mapbox3DLayer.prototype.dispose = function () {
 
 
 /***/ }),
-/* 202 */
+/* 204 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__bar3D_bar3DLayout__ = __webpack_require__(203);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__bar3D_Bar3DView__ = __webpack_require__(206);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__bar3D_Bar3DSeries__ = __webpack_require__(208);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__bar3D_bar3DLayout__ = __webpack_require__(205);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__bar3D_Bar3DView__ = __webpack_require__(208);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__bar3D_Bar3DSeries__ = __webpack_require__(210);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_opacityVisual__ = __webpack_require__(16);
 
 
@@ -45928,7 +45995,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerProcessor(fu
 });
 
 /***/ }),
-/* 203 */
+/* 205 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -45937,8 +46004,8 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerProcessor(fu
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_claygl_src_math_Vector3__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_claygl_src_dep_glmatrix__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_claygl_src_dep_glmatrix___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_claygl_src_dep_glmatrix__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__cartesian3DLayout__ = __webpack_require__(204);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__evaluateBarSparseness__ = __webpack_require__(205);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__cartesian3DLayout__ = __webpack_require__(206);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__evaluateBarSparseness__ = __webpack_require__(207);
 
 
 
@@ -46014,7 +46081,7 @@ function geo3DLayout(seriesModel, coordSys) {
     data.setLayout('orient', [1, 0, 0]);
 }
 
-function mapbox3DLayout(seriesModel, coordSys) {
+function mapService3DLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
     var dimLng = seriesModel.coordDimToDataDim('lng')[0];
     var dimLat = seriesModel.coordDimToDataDim('lat')[0];
@@ -46077,8 +46144,8 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerLayout(funct
         else if (coordSysType === 'geo3D') {
             geo3DLayout(seriesModel, coordSys);
         }
-        else if (coordSysType === 'mapbox3D') {
-            mapbox3DLayout(seriesModel, coordSys);
+        else if (coordSysType === 'mapbox3D' || coordSysType === 'maptalks3D') {
+            mapService3DLayout(seriesModel, coordSys);
         }
         else {
             if (true) {
@@ -46094,7 +46161,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerLayout(funct
 });
 
 /***/ }),
-/* 204 */
+/* 206 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -46177,7 +46244,7 @@ function cartesian3DLayout(seriesModel, coordSys) {
 /* harmony default export */ __webpack_exports__["a"] = (cartesian3DLayout);
 
 /***/ }),
-/* 205 */
+/* 207 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -46208,7 +46275,7 @@ function cartesian3DLayout(seriesModel, coordSys) {
 });;
 
 /***/ }),
-/* 206 */
+/* 208 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -46217,7 +46284,7 @@ function cartesian3DLayout(seriesModel, coordSys) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__util_retrieve__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__util_format__ = __webpack_require__(27);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__util_geometry_Bars3DGeometry__ = __webpack_require__(207);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__util_geometry_Bars3DGeometry__ = __webpack_require__(209);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__component_common_LabelsBuilder__ = __webpack_require__(61);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_claygl_src_dep_glmatrix__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_claygl_src_dep_glmatrix___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_claygl_src_dep_glmatrix__);
@@ -46544,7 +46611,7 @@ var vec3 = __WEBPACK_IMPORTED_MODULE_6_claygl_src_dep_glmatrix___default.a.vec3;
 }));
 
 /***/ }),
-/* 207 */
+/* 209 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -46950,7 +47017,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.util.defaults(BarsGe
 /* harmony default export */ __webpack_exports__["a"] = (BarsGeometry);
 
 /***/ }),
-/* 208 */
+/* 210 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -47047,14 +47114,14 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.util.merge(Bar3DSeri
 /* unused harmony default export */ var _unused_webpack_default_export = (Bar3DSeries);
 
 /***/ }),
-/* 209 */
+/* 211 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__line3D_Line3DSeries__ = __webpack_require__(210);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__line3D_Line3DView__ = __webpack_require__(211);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__line3D_Line3DSeries__ = __webpack_require__(212);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__line3D_Line3DView__ = __webpack_require__(213);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol__ = __webpack_require__(45);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_opacityVisual__ = __webpack_require__(16);
@@ -47110,7 +47177,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerLayout(funct
 });
 
 /***/ }),
-/* 210 */
+/* 212 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -47156,7 +47223,7 @@ var Line3DSeries = __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.e
 /* unused harmony default export */ var _unused_webpack_default_export = (Line3DSeries);
 
 /***/ }),
-/* 211 */
+/* 213 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -47167,7 +47234,7 @@ var Line3DSeries = __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.e
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__util_geometry_Lines3D__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_claygl_src_math_Matrix4__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5_claygl_src_math_Vector3__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_zrender_lib_contain_line__ = __webpack_require__(212);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_zrender_lib_contain_line__ = __webpack_require__(214);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6_zrender_lib_contain_line___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6_zrender_lib_contain_line__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_claygl_src_dep_glmatrix__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_claygl_src_dep_glmatrix___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7_claygl_src_dep_glmatrix__);
@@ -47469,7 +47536,7 @@ __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Shader.import(_
 }));
 
 /***/ }),
-/* 212 */
+/* 214 */
 /***/ (function(module, exports) {
 
 /**
@@ -47513,14 +47580,14 @@ function containStroke(x0, y0, x1, y1, lineWidth, x, y) {
 exports.containStroke = containStroke;
 
 /***/ }),
-/* 213 */
+/* 215 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__scatter3D_Scatter3DSeries__ = __webpack_require__(214);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__scatter3D_Scatter3DView__ = __webpack_require__(215);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__scatter3D_Scatter3DSeries__ = __webpack_require__(216);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__scatter3D_Scatter3DView__ = __webpack_require__(217);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol__ = __webpack_require__(45);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_opacityVisual__ = __webpack_require__(16);
@@ -47576,7 +47643,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerLayout({
 });
 
 /***/ }),
-/* 214 */
+/* 216 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -47664,7 +47731,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendSeriesModel({
 });
 
 /***/ }),
-/* 215 */
+/* 217 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -47805,7 +47872,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
 });
 
 /***/ }),
-/* 216 */
+/* 218 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -47992,17 +48059,17 @@ var spriteUtil = {
 /* harmony default export */ __webpack_exports__["a"] = (spriteUtil);
 
 /***/ }),
-/* 217 */
+/* 219 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__util_graphicGL__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__util_geometry_verticesSortMixin__ = __webpack_require__(218);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__util_geometry_verticesSortMixin__ = __webpack_require__(220);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_echarts_lib_echarts__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_claygl_src_dep_glmatrix__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_claygl_src_dep_glmatrix___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_claygl_src_dep_glmatrix__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__sdfSprite_glsl_js__ = __webpack_require__(219);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__sdfSprite_glsl_js__ = __webpack_require__(221);
 
 
 
@@ -48120,7 +48187,7 @@ var PointsMesh = __WEBPACK_IMPORTED_MODULE_0__util_graphicGL__["a" /* default */
 /* harmony default export */ __webpack_exports__["a"] = (PointsMesh);
 
 /***/ }),
-/* 218 */
+/* 220 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -48233,7 +48300,7 @@ var vec3 = __WEBPACK_IMPORTED_MODULE_1_claygl_src_dep_glmatrix___default.a.vec3;
 });
 
 /***/ }),
-/* 219 */
+/* 221 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -48241,15 +48308,15 @@ var vec3 = __WEBPACK_IMPORTED_MODULE_1_claygl_src_dep_glmatrix___default.a.vec3;
 
 
 /***/ }),
-/* 220 */
+/* 222 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lines3D_lines3DLayout__ = __webpack_require__(221);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lines3D_Lines3DView__ = __webpack_require__(222);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lines3D_Lines3DSeries__ = __webpack_require__(225);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__lines3D_lines3DLayout__ = __webpack_require__(223);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__lines3D_Lines3DView__ = __webpack_require__(224);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lines3D_Lines3DSeries__ = __webpack_require__(227);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_opacityVisual__ = __webpack_require__(16);
 
 
@@ -48282,7 +48349,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerAction({
 }, function () {});
 
 /***/ }),
-/* 221 */
+/* 223 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -48451,14 +48518,14 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerLayout(funct
         else if (coordSys.type === 'geo3D') {
             layoutOnPlane(seriesModel, coordSys, [0, 1, 0]);
         }
-        else if (coordSys.type === 'mapbox3D') {
+        else if (coordSys.type === 'mapbox3D' || coordSys.type === 'maptalks3D') {
             layoutOnPlane(seriesModel, coordSys, [0, 0, 1]);
         }
     });
 });
 
 /***/ }),
-/* 222 */
+/* 224 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -48466,7 +48533,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerLayout(funct
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__util_geometry_Lines3D__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__TrailMesh2__ = __webpack_require__(223);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__TrailMesh2__ = __webpack_require__(225);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__util_shader_lines3D_glsl_js__ = __webpack_require__(40);
 
 
@@ -48657,7 +48724,7 @@ function getCoordSysSize(coordSys) {
 }));
 
 /***/ }),
-/* 223 */
+/* 225 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -48667,7 +48734,7 @@ function getCoordSysSize(coordSys) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_claygl_src_dep_glmatrix__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_claygl_src_dep_glmatrix___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_claygl_src_dep_glmatrix__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__util_geometry_Lines3D__ = __webpack_require__(22);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__shader_trail2_glsl_js__ = __webpack_require__(224);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__shader_trail2_glsl_js__ = __webpack_require__(226);
 
 
 
@@ -48824,7 +48891,7 @@ __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Shader.import(_
 }));
 
 /***/ }),
-/* 224 */
+/* 226 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -48832,7 +48899,7 @@ __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__["a" /* default */].Shader.import(_
 
 
 /***/ }),
-/* 225 */
+/* 227 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -48904,14 +48971,14 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendSeriesModel({
 });
 
 /***/ }),
-/* 226 */
+/* 228 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__polygons3D_Polygons3DSeries__ = __webpack_require__(227);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__polygons3D_Polygons3DView__ = __webpack_require__(228);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__polygons3D_Polygons3DSeries__ = __webpack_require__(229);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__polygons3D_Polygons3DView__ = __webpack_require__(230);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_opacityVisual__ = __webpack_require__(16);
 
 
@@ -48923,7 +48990,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendSeriesModel({
 __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerVisual(Object(__WEBPACK_IMPORTED_MODULE_3__common_opacityVisual__["a" /* default */])('polygons3D'));
 
 /***/ }),
-/* 227 */
+/* 229 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -49042,7 +49109,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.util.merge(Polygons3
 /* unused harmony default export */ var _unused_webpack_default_export = (Polygons3DSeries);
 
 /***/ }),
-/* 228 */
+/* 230 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -49079,7 +49146,8 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
         var geo3DBuilder = this._geo3DBuilderList[0];
         if (!geo3DBuilder) {
             geo3DBuilder = new __WEBPACK_IMPORTED_MODULE_1__component_common_Geo3DBuilder__["a" /* default */](api);
-            geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D';
+            geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D'
+                && coordSys.type !== 'maptalks3D';
             this._geo3DBuilderList[0] = geo3DBuilder;
         }
         this._updateShaderDefines(coordSys, geo3DBuilder);
@@ -49106,7 +49174,8 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
         var coordSys = seriesModel.coordinateSystem;
         if (!geo3DBuilder) {
             geo3DBuilder = new __WEBPACK_IMPORTED_MODULE_1__component_common_Geo3DBuilder__["a" /* default */](api);
-            geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D';
+            geo3DBuilder.extrudeY = coordSys.type !== 'mapbox3D'
+                && coordSys.type !== 'maptalks3D';
             this._geo3DBuilderList[this._currentStep] = geo3DBuilder;
         }
         geo3DBuilder.update(seriesModel, ecModel, api, params.start, params.end);
@@ -49124,7 +49193,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
                 mesh.material[methodName]('fragment', 'SRGB_DECODE');
 
                 // FIXME
-                if (coordSys.type === 'mapbox3D') {
+                if (coordSys.type === 'mapbox3D' || coordSys.type === 'maptalks3D') {
                     mesh.material.define('fragment', 'NORMAL_UP_AXIS', 2);
                     mesh.material.define('fragment', 'NORMAL_FRONT_AXIS', 1);
                 }
@@ -49142,15 +49211,15 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
 });
 
 /***/ }),
-/* 229 */
+/* 231 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__surface_SurfaceSeries__ = __webpack_require__(230);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__surface_SurfaceView__ = __webpack_require__(231);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__surface_surfaceLayout__ = __webpack_require__(232);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__surface_SurfaceSeries__ = __webpack_require__(232);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__surface_SurfaceView__ = __webpack_require__(233);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__surface_surfaceLayout__ = __webpack_require__(234);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_opacityVisual__ = __webpack_require__(16);
 
 
@@ -49164,7 +49233,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerVisual(Objec
 
 
 /***/ }),
-/* 230 */
+/* 232 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -49355,7 +49424,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.util.merge(SurfaceSe
 /* unused harmony default export */ var _unused_webpack_default_export = (SurfaceSeries);
 
 /***/ }),
-/* 231 */
+/* 233 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -49835,7 +49904,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
 });
 
 /***/ }),
-/* 232 */
+/* 234 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -49878,15 +49947,15 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerLayout(funct
 });
 
 /***/ }),
-/* 233 */
+/* 235 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__coord_geo3D_Geo3D__ = __webpack_require__(83);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__map3D_Map3DSeries__ = __webpack_require__(234);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__map3D_Map3DView__ = __webpack_require__(235);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__map3D_Map3DSeries__ = __webpack_require__(236);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__map3D_Map3DView__ = __webpack_require__(237);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_opacityVisual__ = __webpack_require__(16);
 
 
@@ -49911,7 +49980,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerAction({
 });
 
 /***/ }),
-/* 234 */
+/* 236 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -50064,7 +50133,7 @@ var Map3DSeries = __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.ex
     },
 
     defaultOption: {
-        // Support geo3D, mapbox
+        // Support geo3D, mapbox, maptalks3D
         coordinateSystem: 'geo3D',
         // itemStyle: {},
         // height,
@@ -50083,7 +50152,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.util.merge(Map3DSeri
 /* unused harmony default export */ var _unused_webpack_default_export = (Map3DSeries);
 
 /***/ }),
-/* 235 */
+/* 237 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -50205,14 +50274,14 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.util.merge(Map3DSeri
 }));
 
 /***/ }),
-/* 236 */
+/* 238 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__scatterGL_ScatterGLSeries__ = __webpack_require__(237);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__scatterGL_ScatterGLView__ = __webpack_require__(238);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__scatterGL_ScatterGLSeries__ = __webpack_require__(239);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__scatterGL_ScatterGLView__ = __webpack_require__(240);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol__ = __webpack_require__(45);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_opacityVisual__ = __webpack_require__(16);
@@ -50274,7 +50343,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerLayout({
 });
 
 /***/ }),
-/* 237 */
+/* 239 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -50342,7 +50411,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendSeriesModel({
 });
 
 /***/ }),
-/* 238 */
+/* 240 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -50474,14 +50543,14 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
 });
 
 /***/ }),
-/* 239 */
+/* 241 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__graphGL_GraphGLSeries__ = __webpack_require__(240);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__graphGL_GraphGLView__ = __webpack_require__(246);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__graphGL_GraphGLSeries__ = __webpack_require__(242);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__graphGL_GraphGLView__ = __webpack_require__(248);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol__ = __webpack_require__(45);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_echarts_lib_visual_symbol__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__common_opacityVisual__ = __webpack_require__(16);
@@ -50607,13 +50676,13 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerAction({
 }, noop);
 
 /***/ }),
-/* 240 */
+/* 242 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createGraphFromNodeEdge__ = __webpack_require__(241);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__createGraphFromNodeEdge__ = __webpack_require__(243);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__util_format__ = __webpack_require__(27);
 
 
@@ -50888,15 +50957,15 @@ var GraphSeries = __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.ex
 /* unused harmony default export */ var _unused_webpack_default_export = (GraphSeries);
 
 /***/ }),
-/* 241 */
+/* 243 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_echarts_lib_data_Graph__ = __webpack_require__(242);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_echarts_lib_data_Graph__ = __webpack_require__(244);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_echarts_lib_data_Graph___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_echarts_lib_data_Graph__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_echarts_lib_data_helper_linkList__ = __webpack_require__(245);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_echarts_lib_data_helper_linkList__ = __webpack_require__(247);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_echarts_lib_data_helper_linkList___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_echarts_lib_data_helper_linkList__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__util_retrieve__ = __webpack_require__(3);
 
@@ -50957,7 +51026,7 @@ var GraphSeries = __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.ex
 });;
 
 /***/ }),
-/* 242 */
+/* 244 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _config = __webpack_require__(85);
@@ -50966,7 +51035,7 @@ var __DEV__ = _config.__DEV__;
 
 var zrUtil = __webpack_require__(12);
 
-var _clazz = __webpack_require__(244);
+var _clazz = __webpack_require__(246);
 
 var enableClassCheck = _clazz.enableClassCheck;
 
@@ -51501,7 +51570,7 @@ var _default = Graph;
 module.exports = _default;
 
 /***/ }),
-/* 243 */
+/* 245 */
 /***/ (function(module, exports) {
 
 var g;
@@ -51528,7 +51597,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 244 */
+/* 246 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _config = __webpack_require__(85);
@@ -51776,7 +51845,7 @@ exports.enableClassManagement = enableClassManagement;
 exports.setReadOnly = setReadOnly;
 
 /***/ }),
-/* 245 */
+/* 247 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var zrUtil = __webpack_require__(12);
@@ -51909,7 +51978,7 @@ var _default = linkList;
 module.exports = _default;
 
 /***/ }),
-/* 246 */
+/* 248 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -51921,15 +51990,15 @@ module.exports = _default;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__core_ViewGL__ = __webpack_require__(20);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__util_geometry_Lines2D__ = __webpack_require__(86);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__util_retrieve__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__ForceAtlas2GPU__ = __webpack_require__(247);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__ForceAtlas2__ = __webpack_require__(249);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__ForceAtlas2GPU__ = __webpack_require__(249);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__ForceAtlas2__ = __webpack_require__(251);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_zrender_lib_animation_requestAnimationFrame__ = __webpack_require__(65);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_zrender_lib_animation_requestAnimationFrame___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8_zrender_lib_animation_requestAnimationFrame__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_claygl_src_dep_glmatrix__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_claygl_src_dep_glmatrix___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_claygl_src_dep_glmatrix__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__util_Roam2DControl__ = __webpack_require__(251);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__util_Roam2DControl__ = __webpack_require__(253);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__common_PointsBuilder__ = __webpack_require__(62);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__util_shader_lines2D_glsl_js__ = __webpack_require__(252);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__util_shader_lines2D_glsl_js__ = __webpack_require__(254);
 
 
 
@@ -52660,7 +52729,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
 });
 
 /***/ }),
-/* 247 */
+/* 249 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -52669,7 +52738,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_claygl_src_compositor_Pass__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_claygl_src_FrameBuffer__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__forceAtlas2_glsl_js__ = __webpack_require__(248);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__forceAtlas2_glsl_js__ = __webpack_require__(250);
 
 
 
@@ -53142,7 +53211,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.ForceAtlas2GPU = For
 /* harmony default export */ __webpack_exports__["a"] = (ForceAtlas2GPU);
 
 /***/ }),
-/* 248 */
+/* 250 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -53150,13 +53219,13 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.ForceAtlas2GPU = For
 
 
 /***/ }),
-/* 249 */
+/* 251 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_claygl_src_Texture2D__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_claygl_src_Texture__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__forceAtlas2Worker_js__ = __webpack_require__(250);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__forceAtlas2Worker_js__ = __webpack_require__(252);
 
 
 
@@ -53440,7 +53509,7 @@ ForceAtlas2.prototype.dispose = function (renderer) {
 /* harmony default export */ __webpack_exports__["a"] = (ForceAtlas2);
 
 /***/ }),
-/* 250 */
+/* 252 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -54107,7 +54176,7 @@ function forceAtlas2Worker() {
 /* harmony default export */ __webpack_exports__["a"] = (forceAtlas2Worker);
 
 /***/ }),
-/* 251 */
+/* 253 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -54312,7 +54381,7 @@ var Roam2DControl = __WEBPACK_IMPORTED_MODULE_0_claygl_src_core_Base__["a" /* de
 /* harmony default export */ __webpack_exports__["a"] = (Roam2DControl);
 
 /***/ }),
-/* 252 */
+/* 254 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -54320,14 +54389,14 @@ var Roam2DControl = __WEBPACK_IMPORTED_MODULE_0_claygl_src_core_Base__["a" /* de
 
 
 /***/ }),
-/* 253 */
+/* 255 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__flowGL_FlowGLView__ = __webpack_require__(254);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__flowGL_FlowGLSeries__ = __webpack_require__(258);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__flowGL_FlowGLView__ = __webpack_require__(256);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__flowGL_FlowGLSeries__ = __webpack_require__(260);
 
 
 
@@ -54335,7 +54404,7 @@ var Roam2DControl = __WEBPACK_IMPORTED_MODULE_0_claygl_src_core_Base__["a" /* de
 
 
 /***/ }),
-/* 254 */
+/* 256 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -54344,7 +54413,7 @@ var Roam2DControl = __WEBPACK_IMPORTED_MODULE_0_claygl_src_core_Base__["a" /* de
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__util_graphicGL__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__util_retrieve__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__core_ViewGL__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__VectorFieldParticleSurface__ = __webpack_require__(255);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__VectorFieldParticleSurface__ = __webpack_require__(257);
 
 
 
@@ -54706,7 +54775,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
 
 
 /***/ }),
-/* 255 */
+/* 257 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -54720,8 +54789,8 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendChartView({
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7_claygl_src_camera_Orthographic__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8_claygl_src_geometry_Plane__ = __webpack_require__(37);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_claygl_src_FrameBuffer__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__Line2D__ = __webpack_require__(256);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__vectorFieldParticle_glsl_js__ = __webpack_require__(257);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__Line2D__ = __webpack_require__(258);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__vectorFieldParticle_glsl_js__ = __webpack_require__(259);
 
 
 
@@ -55166,7 +55235,7 @@ VectorFieldParticleSurface.prototype = {
 /* harmony default export */ __webpack_exports__["a"] = (VectorFieldParticleSurface);
 
 /***/ }),
-/* 256 */
+/* 258 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -55256,7 +55325,7 @@ var LinesGeometry = __WEBPACK_IMPORTED_MODULE_0_claygl_src_Geometry__["a" /* def
 /* harmony default export */ __webpack_exports__["a"] = (LinesGeometry);
 
 /***/ }),
-/* 257 */
+/* 259 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -55264,7 +55333,7 @@ var LinesGeometry = __WEBPACK_IMPORTED_MODULE_0_claygl_src_Geometry__["a" /* def
 
 
 /***/ }),
-/* 258 */
+/* 260 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -55324,14 +55393,14 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendSeriesModel({
 });
 
 /***/ }),
-/* 259 */
+/* 261 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__linesGL_LinesGLSeries__ = __webpack_require__(260);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__linesGL_LinesGLView__ = __webpack_require__(261);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__linesGL_LinesGLSeries__ = __webpack_require__(262);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__linesGL_LinesGLView__ = __webpack_require__(263);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__common_opacityVisual__ = __webpack_require__(16);
 
 
@@ -55343,7 +55412,7 @@ __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.extendSeriesModel({
 __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.registerVisual(Object(__WEBPACK_IMPORTED_MODULE_3__common_opacityVisual__["a" /* default */])('linesGL'));
 
 /***/ }),
-/* 260 */
+/* 262 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -55553,7 +55622,7 @@ var LinesSeries = __WEBPACK_IMPORTED_MODULE_0_echarts_lib_echarts___default.a.ex
 });
 
 /***/ }),
-/* 261 */
+/* 263 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";

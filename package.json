@@ -1,7 +1,7 @@
 {
   "name": "echarts-gl",
   "description": "Extension pack of ECharts providing 3D plots and globe visualization",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "maintainers": [
     {
       "name": "Yi Shen"
@@ -12,7 +12,7 @@
     "dev": "webpack -w --devtool eval-cheap-module-source-map"
   },
   "dependencies": {
-    "claygl": "^1.0.1"
+    "claygl": "^1.0.3"
   },
   "main": "dist/echarts-gl.js",
   "repository": "https://github.com/ecomfe/echarts-gl",
