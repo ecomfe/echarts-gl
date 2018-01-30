@@ -79,6 +79,7 @@ Maptalks3DLayer.prototype.dispose = function () {
     EVENTS.forEach(function (eName) {
         this.zr.dom.removeEventListener(eName, this._handlers[eName]);
     }, this);
+    this._maptalks.remove();
 };
 
 export default Maptalks3DLayer;

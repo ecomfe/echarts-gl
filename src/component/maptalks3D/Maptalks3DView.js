@@ -158,6 +158,9 @@ export default echarts.extendComponentView({
     },
 
     dispose: function (ecModel, api) {
-        api.getZr().delLayer(-1000);
+        if (this._zrLayer) {
+            this._zrLayer.dispose();
+        }
+        api.getZr().painter.delLayer(-1000);
     }
 });
