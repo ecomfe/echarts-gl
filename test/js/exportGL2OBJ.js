@@ -191,12 +191,12 @@
 
                 var tmp = [];
                 for (var i = 0; i < geometry.vertexCount; i++) {
-                    positionAttr.get(i, pos._array);
+                    positionAttr.get(i, pos.array);
 
                     echarts.graphicGL.Vector3.transformMat4(pos, pos, mesh.worldTransform);
 
                     // PENDING
-                    quantizeArr(tmp, pos._array, 1e5);
+                    quantizeArr(tmp, pos.array, 1e5);
                     var vItem = 'v ' + tmp.join(' ');
                     if (hasColor && !opts.storeVertexColorInTexture) {
                         colorAttr.get(i, col);
@@ -206,10 +206,10 @@
                     vStr.push(vItem);
 
                     if (hasNormal) {
-                        normalAttr.get(i, nor._array);
+                        normalAttr.get(i, nor.array);
                         echarts.graphicGL.Vector3.transformMat4(nor, nor, normalMat);
                         echarts.graphicGL.Vector3.normalize(nor, nor);
-                        quantizeArr(tmp, nor._array, 1e3);
+                        quantizeArr(tmp, nor.array, 1e3);
                         vnStr.push('vn ' + tmp.join(' '));
                     }
                     if (hasTexcoord) {

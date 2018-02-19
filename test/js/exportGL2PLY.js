@@ -28,7 +28,7 @@
         var view = componentQuery.mainType === 'series'
             ? chartInstance.getViewOfSeriesModel(componentModel)
             : chartInstance.getViewOfComponentModel(componentModel);
-        
+
         if (!view.__ecgl__) {
             throw new Error('exportGL2PLY only support GL components.');
         }
@@ -86,20 +86,20 @@
 
                 var tmp = [];
                 for (var i = 0; i < geometry.vertexCount; i++) {
-                    positionAttr.get(i, pos._array);
+                    positionAttr.get(i, pos.array);
 
                     echarts.graphicGL.Vector3.transformMat4(pos, pos, mesh.worldTransform);
 
                     // PENDING
-                    quantizeArr(tmp, pos._array, 1e5);
+                    quantizeArr(tmp, pos.array, 1e5);
                     var vItem = tmp.join(' ');
 
                     if (needsNormal) {
                         if (hasNormal) {
-                            normalAttr.get(i, nor._array);
+                            normalAttr.get(i, nor.array);
                             echarts.graphicGL.Vector3.transformMat4(nor, nor, normalMat);
                             echarts.graphicGL.Vector3.normalize(nor, nor);
-                            quantizeArr(tmp, nor._array, 1e3);
+                            quantizeArr(tmp, nor.array, 1e3);
                         }
                         else {
                             tmp[0] = 0;
@@ -159,10 +159,10 @@
         if (needsUv) {
             headerStr += 'property float s\nproperty float t\n';
         }
-        
+
         headerStr += 'element face ' + triangleCount + '\n';
         headerStr += 'property list uchar uint vertex_indices\nend_header\n';
-        
+
 
         plyStr += headerStr;
         plyStr += vertexStr.join('\n') + '\n';

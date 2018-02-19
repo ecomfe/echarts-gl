@@ -20,12 +20,20 @@
         <script>
             var chart = echarts.init(document.getElementById('main'));
 
-            $.getJSON('data/alcohol.json', function (data) {
+            $.getJSON('data/world-population.json', function (data) {
+
+                var max = -Infinity;
+                var min = Infinity;
+                data.forEach(function (item) {
+                    max = Math.max(Math.log(item.value), max);
+                    min = Math.min(Math.log(item.value), min);
+                });
 
                 var regionData = data.map(function (item) {
                     return {
-                        name: item[0],
-                        value: item[1]
+                        name: item.name,
+                        // value: item[1]
+                        height: (Math.log(item.value) - min) / (max - min) * 3
                     }
                 })
 
@@ -53,16 +61,15 @@
                         }
                     },
                     backgroundColor: '#cdcfd5',
-                    tooltip: {},
-                    visualMap: {
-                        min: 0,
-                        max: 15,
-                        realtime: true,
-                        calculable : true,
-                        inRange: {
-                            color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
-                        }
-                    },
+                    // visualMap: {
+                    //     min: 0,
+                    //     max: 15,
+                    //     realtime: true,
+                    //     calculable : true,
+                    //     inRange: {
+                    //         color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+                    //     }
+                    // },
                     series: [{
                         type: 'map3D',
                         map: 'world',
