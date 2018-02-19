@@ -222,7 +222,7 @@ LayerGL.prototype.needsRefresh = function () {
 LayerGL.prototype.refresh = function () {
 
     for (var i = 0; i < this.views.length; i++) {
-        this.views[i].prepareRender();
+        this.views[i].prepareRender(this.renderer);
     }
 
     this._doRender(false);
@@ -362,11 +362,10 @@ function updateUsed(resource, list) {
     }
 }
 function collectResources(scene, textureResourceList, geometryResourceList) {
-    function trackQueue(queue) {
-        var prevMaterial;
-        var prevGeometry;
-        for (var i = 0; i < queue.length; i++) {
-            var renderable = queue[i];
+    var prevMaterial;
+    var prevGeometry;
+    scene.traverse(function (renderable) {
+        if (renderable.isRenderable()) {
             var geometry = renderable.geometry;
             var material = renderable.material;
 
@@ -398,10 +397,7 @@ function collectResources(scene, textureResourceList, geometryResourceList) {
             prevMaterial = material;
             prevGeometry = geometry;
         }
-    }
-
-    trackQueue(scene.opaqueList);
-    trackQueue(scene.transparentList);
+    });
 
     for (var k = 0; k < scene.lights.length; k++) {
         // Track AmbientCubemap

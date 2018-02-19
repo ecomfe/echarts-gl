@@ -63,7 +63,7 @@ export default echarts.extendComponentView({
         var baseLayer = mtks.getBaseLayer();
         if (urlTemplate !== this._oldUrlTemplate) {
             if (!baseLayer) {
-                var baseLayer = new maptalks.TileLayer('maptalks-echarts-gl-baselayer', {
+                baseLayer = new maptalks.TileLayer('maptalks-echarts-gl-baselayer', {
                     urlTemplate: urlTemplate,
                     // used sequentially to help with browser parallel requests per domain limitation
                     subdomains: ['a', 'b', 'c'],

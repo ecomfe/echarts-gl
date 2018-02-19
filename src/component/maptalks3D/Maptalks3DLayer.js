@@ -19,6 +19,7 @@ function Maptalks3DLayer (id, zr, defaultCenter, defaultZoom) {
     this._maptalks = new maptalks.Map(this.dom, {
         center: defaultCenter,
         zoom: defaultZoom
+        // fogColor: [0, 0, 0]
     });
 
     // Proxy events

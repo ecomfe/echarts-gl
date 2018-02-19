@@ -73,8 +73,8 @@ varying vec2 v_Texcoord;
 
 void main()
 {
-    vec4 blurredColor = decodeHDR(texture2D(blurred, v_Texcoord));
-    vec4 originalColor = decodeHDR(texture2D(original, v_Texcoord));
+    vec4 blurredColor = texture2D(blurred, v_Texcoord);
+    vec4 originalColor = texture2D(original, v_Texcoord);
 
     float fCoc = decodeFloat(texture2D(coc, v_Texcoord));
 
@@ -86,7 +86,7 @@ void main()
     // float weight = fCoc;
 
 #ifdef NEARFIELD_ENABLED
-    vec4 nearfieldColor = decodeHDR(texture2D(nearfield, v_Texcoord));
+    vec4 nearfieldColor = texture2D(nearfield, v_Texcoord);
     float fNearCoc = decodeFloat(texture2D(nearcoc, v_Texcoord));
     fNearCoc = abs(fNearCoc * 2.0 - 1.0);
 
@@ -179,13 +179,14 @@ void main()
         // Blur coc in nearfield
         cocSum += clamp(fCoc, -1.0, 0.0) * w;
 #else
-        texel = decodeHDR(texel);
+        texel = texel;
     #if !defined(BLUR_NEARFIELD)
         float fCoc = decodeFloat(texture2D(coc, uv)) * 2.0 - 1.0;
         // TODO DOF premult to avoid bleeding, can be tweaked (currently x^3)
         // tradeoff between bleeding dof and out of focus object that shrinks too much
         w *= abs(fCoc);
     #endif
+        texel.rgb *= texel.a;
         color += texel * w;
 #endif
 
@@ -196,8 +197,9 @@ void main()
     gl_FragColor = encodeFloat(clamp(cocSum / weightSum, -1.0, 0.0) * 0.5 + 0.5);
 #else
     color /= weightSum;
+    color.rgb /= (color.a + 0.0001);
     // TODO Windows will not be totally transparent if color.rgb is not 0 and color.a is 0.
-    gl_FragColor = encodeHDR(color);
+    gl_FragColor = color;
 #endif
 }
 

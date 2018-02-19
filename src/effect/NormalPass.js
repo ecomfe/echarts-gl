@@ -173,7 +173,7 @@ NormalPass.prototype.update = function (renderer, scene, camera) {
     normalTexture.width = width;
     normalTexture.height = height;
 
-    var opaqueList = scene.opaqueList;
+    var opaqueList = scene.getRenderList(camera).opaque;
 
     this._framebuffer.bind(renderer);
     renderer.gl.clearColor(0, 0, 0, 0);

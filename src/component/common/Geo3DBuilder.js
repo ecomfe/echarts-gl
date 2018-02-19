@@ -334,6 +334,7 @@ Geo3DBuilder.prototype = {
                 debugWireframeModel.get('lineStyle.width'), 1
             );
 
+            // TODO  Will cause highlight wrong
             var mesh = this._polygonMesh;
             mesh.geometry.generateBarycentric();
             mesh.material.define('both', 'WIREFRAME_TRIANGLE');

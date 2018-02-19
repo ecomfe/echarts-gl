@@ -166,14 +166,16 @@ ViewGL.prototype.castRay = function (x, y, out) {
 /**
  * Prepare and update scene before render
  */
-ViewGL.prototype.prepareRender = function () {
+ViewGL.prototype.prepareRender = function (renderer) {
     this.scene.update();
     this.camera.update();
+    this.scene.updateLights();
+    var renderList = this.scene.updateRenderList(this.camera);
 
     this._needsSortProgressively = false;
     // If has any transparent mesh needs sort triangles progressively.
-    for (var i = 0; i < this.scene.transparentList.length; i++) {
-        var renderable = this.scene.transparentList[i];
+    for (var i = 0; i < renderList.transparent.length; i++) {
+        var renderable = renderList.transparent[i];
         var geometry = renderable.geometry;
         if (geometry.needsSortVerticesProgressively && geometry.needsSortVerticesProgressively()) {
             this._needsSortProgressively = true;
@@ -198,7 +200,7 @@ ViewGL.prototype.needsAccumulate = function () {
 
 ViewGL.prototype.needsTemporalSS = function () {
     var enableTemporalSS = this._enableTemporalSS;
-    if (enableTemporalSS == 'auto') {
+    if (enableTemporalSS === 'auto') {
         enableTemporalSS = this._enablePostEffect;
     }
     return enableTemporalSS;
@@ -290,10 +292,11 @@ ViewGL.prototype._updateTransparent = function (renderer, scene, camera, frame) 
     var v3 = new Vector3();
     var invWorldTransform = new Matrix4();
     var cameraWorldPosition = camera.getWorldPosition();
+    var transparentList = scene.getRenderList(camera).transparent;
 
     // Sort transparent object.
-    for (var i = 0; i < scene.transparentList.length; i++) {
-        var renderable = scene.transparentList[i];
+    for (var i = 0; i < transparentList.length; i++) {
+        var renderable = transparentList[i];
         var geometry = renderable.geometry;
         Matrix4.invert(invWorldTransform, renderable.worldTransform);
         Vector3.transformMat4(v3, cameraWorldPosition, invWorldTransform);
@@ -306,14 +309,15 @@ ViewGL.prototype._updateTransparent = function (renderer, scene, camera, frame) 
     }
 };
 
-ViewGL.prototype._updateSSAO = function (renderer, scene, camera, frame) {
+ViewGL.prototype._updateSSAO = function (renderer, scene, camera) {
     var ifEnableSSAO = this._enableSSAO && this._enablePostEffect;
     if (ifEnableSSAO) {
         this._compositor.updateSSAO(renderer, scene, camera, this._temporalSS.getFrame());
     }
+    var renderList = scene.getRenderList(camera);
 
-    for (var i = 0; i < scene.opaqueList.length; i++) {
-        var renderable = scene.opaqueList[i];
+    for (var i = 0; i < renderList.opaque.length; i++) {
+        var renderable = renderList.opaque[i];
         // PENDING
         if (renderable.renderNormal) {
             renderable.material[ifEnableSSAO ? 'enableTexture' : 'disableTexture']('ssaoMap');
@@ -326,7 +330,8 @@ ViewGL.prototype._updateSSAO = function (renderer, scene, camera, frame) {
 
 ViewGL.prototype._updateShadowPCFKernel = function (frame) {
     var pcfKernel = this._pcfKernels[frame % this._pcfKernels.length];
-    var opaqueList = this.scene.opaqueList;
+    var renderList = this.scene.getRenderList(this.camera);
+    var opaqueList = renderList.opaque;
     for (var i = 0; i < opaqueList.length; i++) {
         if (opaqueList[i].receiveShadow) {
             opaqueList[i].material.set('pcfKernel', pcfKernel);
