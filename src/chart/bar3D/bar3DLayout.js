@@ -5,6 +5,7 @@ import cartesian3DLayout from './cartesian3DLayout';
 import evaluateBarSparseness from './evaluateBarSparseness';
 
 var vec3 = glmatrix.vec3;
+var isDimensionStacked = echarts.helper.dataStack.isDimensionStacked;
 
 function globeLayout(seriesModel, coordSys) {
     var data = seriesModel.getData();
@@ -24,9 +25,12 @@ function globeLayout(seriesModel, coordSys) {
     else if (!echarts.util.isArray(barSize)) {
         barSize = [barSize, barSize];
     }
+
+    var valueDim = getValueDimension(data, dims);
+
     data.each(dims, function (lng, lat, val, idx) {
-        var stackedValue = data.get(dims[2], idx, true);
-        var baseValue = data.stackedOn ? (stackedValue - val) : coordSys.altitudeAxis.scale.getExtent()[0];
+        var stackedValue = data.get(valueDim.dimension, idx);
+        var baseValue = valueDim.isStacked ? (stackedValue - val) : coordSys.altitudeAxis.scale.getExtent()[0];
         // TODO Stacked with minHeight.
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, baseValue]);
@@ -60,9 +64,12 @@ function geo3DLayout(seriesModel, coordSys) {
         barSize = [barSize, barSize];
     }
     var dir = [0, 1, 0];
+
+    var valueDim = getValueDimension(data, dims);
+
     data.each(dims, function (lng, lat, val, idx) {
-        var stackedValue = data.get(dims[2], idx, true);
-        var baseValue = data.stackedOn ? (stackedValue - val) : coordSys.altitudeAxis.scale.getExtent()[0];
+        var stackedValue = data.get(valueDim.dimension, idx);
+        var baseValue = valueDim.isStacked ? (stackedValue - val) : coordSys.altitudeAxis.scale.getExtent()[0];
 
         var height = Math.max(coordSys.altitudeAxis.dataToCoord(val), barMinHeight);
         var start = coordSys.dataToPoint([lng, lat, baseValue]);
@@ -108,10 +115,13 @@ function mapService3DLayout(seriesModel, coordSys) {
     }
 
     var dir = [0, 0, 1];
+    var dims = [dimLng, dimLat, dimAlt];
 
-    data.each([dimLng, dimLat, dimAlt], function (lng, lat, val, idx) {
-        var stackedValue = data.get(dimAlt, idx, true);
-        var baseValue = data.stackedOn ? (stackedValue - val) : 0;
+    var valueDim = getValueDimension(data, dims);
+
+    data.each(dims, function (lng, lat, val, idx) {
+        var stackedValue = data.get(valueDim.dimension, idx);
+        var baseValue = valueDim.isStacked ? (stackedValue - val) : 0;
 
         var start = coordSys.dataToPoint([lng, lat, baseValue]);
         var end = coordSys.dataToPoint([lng, lat, stackedValue]);
@@ -121,6 +131,16 @@ function mapService3DLayout(seriesModel, coordSys) {
     });
 
     data.setLayout('orient', [1, 0, 0]);
+}
+
+function getValueDimension(data, dataDims) {
+    var isStacked = isDimensionStacked(data, dataDims[2]);
+    return {
+        dimension: isStacked
+            ? data.getCalculationInfo('stackResultDimension')
+            : dataDims[2],
+        isStacked: isStacked
+    };
 }
 
 echarts.registerLayout(function (ecModel, api) {

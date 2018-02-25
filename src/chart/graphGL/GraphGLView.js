@@ -266,7 +266,7 @@ echarts.extendChartView({
                 this._originalEdgeColors[edge.dataIndex * 4 + k] = colorArr[k];
             }
             this._edgeIndicesMap[edge.dataIndex] = idx;
-        }, false, this);
+        }, this);
 
         geometry.dirty();
     },

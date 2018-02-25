@@ -51,10 +51,12 @@ function updateCartesian3D(ecModel, api) {
             return;
         }
         var data = seriesModel.getData();
-        ['x', 'y', 'z'].forEach(function (dim) {
-            unionDataExtents(
-                dim, data.getDataExtent(seriesModel.coordDimToDataDim(dim)[0], true)
-            );
+        ['x', 'y', 'z'].forEach(function (coordDim) {
+            data.mapDimension(coordDim, true).forEach(function (dataDim) {
+                unionDataExtents(
+                    coordDim, data.getDataExtent(dataDim, true)
+                );
+            });
         });
     }, this);
 
@@ -62,7 +64,7 @@ function updateCartesian3D(ecModel, api) {
         ecModel.eachComponent(axisType, function (axisModel) {
             var dim = axisType.charAt(0);
             var grid3DModel = axisModel.getReferringComponents('grid3D')[0];
-            
+
             var cartesian3D = grid3DModel.coordinateSystem;
             if (cartesian3D !== this) {
                 return;
