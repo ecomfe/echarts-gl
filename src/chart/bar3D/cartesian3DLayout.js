@@ -1,6 +1,7 @@
 import echarts from 'echarts/lib/echarts';
 import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
+var isDimensionStacked = echarts.helper.dataStack.isDimensionStacked;
 
 function ifCrossZero(extent) {
     var min = extent[0];
@@ -47,11 +48,17 @@ function cartesian3DLayout(seriesModel, coordSys) {
         return seriesModel.coordDimToDataDim(coordDimName)[0];
     });
 
+    var isStacked = isDimensionStacked(data, dims[2]);
+    var valueDim = isStacked
+        ? data.getCalculationInfo('stackResultDimension')
+        : dims[2];
+
     data.each(dims, function (x, y, z, idx) {
         // TODO zAxis is inversed
         // TODO On different plane.
-        var stackedValue = data.get(dims[2], idx, true);
-        var baseValue = data.stackedOn ? (stackedValue - z)
+        var stackedValue = data.get(valueDim, idx);
+
+        var baseValue = isStacked ? (stackedValue - z)
             : (ifZAxisCrossZero ? 0 : zAxisExtent[0]);
 
         var start = coordSys.dataToPoint([x, y, baseValue]);

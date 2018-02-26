@@ -12,9 +12,9 @@ export default function (seriesModel, dims, source) {
             var axis3DModel = seriesModel.getReferringComponents(dim + 'Axis3D')[0];
             return {
                 type: (axis3DModel && axis3DModel.get('type') === 'category') ? 'ordinal' : 'float',
-                name: dim,
+                name: dim
                 // Find stackable dimension. Which will represent value.
-                stackable: dim === 'z'
+                // stackable: dim === 'z'
             };
         })
     });
@@ -29,7 +29,15 @@ export default function (seriesModel, dims, source) {
         });
     }
 
+    var stackCalculationInfo = echarts.helper.dataStack.enableDataStack(
+        // Only support 'z' and `byIndex` now.
+        seriesModel, dimensions, {byIndex: true, stackedCoordDimension: 'z'}
+    );
+
     var data = new echarts.List(dimensions, seriesModel);
+
+    data.setCalculationInfo(stackCalculationInfo);
+
     data.initData(source);
 
     return data;
