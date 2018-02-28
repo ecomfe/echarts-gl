@@ -10,9 +10,9 @@ export default function (seriesType, ecModel, api) {
 
             data.setVisual('opacity', opacity == null ? 1 : opacity);
 
-            function dataEach(idx) {
+            function dataEach(data, idx) {
                 var itemModel = data.getItemModel(idx);
-                var opacity = itemModel.get(opacityAccessPath);
+                var opacity = itemModel.get(opacityAccessPath, true);
                 if (opacity != null) {
                     data.setItemVisual(idx, 'opacity', opacity);
                 }
