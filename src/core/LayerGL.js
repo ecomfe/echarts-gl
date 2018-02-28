@@ -18,6 +18,7 @@ import echarts from 'echarts/lib/echarts';
 import Renderer from 'claygl/src/Renderer';
 import RayPicking from 'claygl/src/picking/RayPicking';
 import Texture from 'claygl/src/Texture';
+import graphicGL from '../util/graphicGL';
 
 // PENDING, clay. notifier is same with zrender Eventful
 import notifier from 'claygl/src/core/mixin/notifier';
@@ -100,6 +101,8 @@ var LayerGL = function (id, zr) {
         // FIXME Better solution.
         __isGLToZRProxy: true
     });
+
+    this._backgroundColor = null;
 };
 
 /**
@@ -186,7 +189,8 @@ LayerGL.prototype.resize = function (width, height) {
  */
 LayerGL.prototype.clear = function () {
     var gl = this.renderer.gl;
-    gl.clearColor(0, 0, 0, 0);
+    var clearColor = this._backgroundColor || [0, 0, 0, 0];
+    gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
     gl.depthMask(true);
     gl.colorMask(true, true, true, true);
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
@@ -219,7 +223,10 @@ LayerGL.prototype.needsRefresh = function () {
 /**
  * Refresh the layer, will be invoked by zrender
  */
-LayerGL.prototype.refresh = function () {
+LayerGL.prototype.refresh = function (bgColor) {
+
+    this._backgroundColor = bgColor ? graphicGL.parseColor(bgColor) : [0, 0, 0, 0];
+    this.renderer.clearColor = this._backgroundColor;
 
     for (var i = 0; i < this.views.length; i++) {
         this.views[i].prepareRender(this.renderer);
@@ -434,7 +441,7 @@ LayerGL.prototype.onmousedown = function (e) {
 };
 
 LayerGL.prototype.onmousemove = function (e) {
-        if (e.target && e.target.__isGLToZRProxy) {
+    if (e.target && e.target.__isGLToZRProxy) {
         return;
     }
 

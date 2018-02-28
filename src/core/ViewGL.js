@@ -166,7 +166,7 @@ ViewGL.prototype.castRay = function (x, y, out) {
 /**
  * Prepare and update scene before render
  */
-ViewGL.prototype.prepareRender = function (renderer) {
+ViewGL.prototype.prepareRender = function () {
     this.scene.update();
     this.camera.update();
     this.scene.updateLights();
@@ -187,6 +187,18 @@ ViewGL.prototype.prepareRender = function (renderer) {
 
     this._frame = 0;
     this._temporalSS.resetFrame();
+
+    // var lights = this.scene.getLights();
+    // for (var i = 0; i < lights.length; i++) {
+    //     if (lights[i].cubemap) {
+    //         if (this._compositor && this._compositor.isSSREnabled()) {
+    //             lights[i].invisible = true;
+    //         }
+    //         else {
+    //             lights[i].invisible = false;
+    //         }
+    //     }
+    // }
 };
 
 ViewGL.prototype.render = function (renderer, accumulating) {
@@ -232,8 +244,9 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
 
     this._updateShadowPCFKernel(accumFrame);
 
-    // Shadowmap will set clearColor.
-    renderer.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+    // Shadowmap will set clear color.
+    var bgColor = renderer.clearColor;
+    renderer.gl.clearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
 
     if (this._enablePostEffect) {
         // normal render also needs to be jittered when have edge pass.
@@ -255,13 +268,13 @@ ViewGL.prototype._doRender = function (renderer, accumulating, accumFrame) {
         frameBuffer.unbind(renderer);
 
         if (this.needsTemporalSS() && accumulating) {
-            this._compositor.composite(renderer, camera, this._temporalSS.getSourceFrameBuffer(), this._temporalSS.getFrame());
+            this._compositor.composite(renderer, scene, camera, this._temporalSS.getSourceFrameBuffer(), this._temporalSS.getFrame());
             renderer.setViewport(this.viewport);
             this._temporalSS.render(renderer);
         }
         else {
             renderer.setViewport(this.viewport);
-            this._compositor.composite(renderer, camera, null, 0);
+            this._compositor.composite(renderer, scene, camera, null, 0);
         }
     }
     else {
@@ -378,7 +391,7 @@ ViewGL.prototype.setPostEffect = function (postEffectModel, api) {
     ['radius', 'quality', 'intensity'].forEach(function (name) {
         compositor.setSSAOParameter(name, ssaoModel.get(name));
     });
-    ['quality', 'maxRoughness'].forEach(function (name) {
+    ['quality', 'maxRoughness', 'physical'].forEach(function (name) {
         compositor.setSSRParameter(name, ssrModel.get(name));
     });
     ['quality', 'focalDistance', 'focalRange', 'blurRadius', 'fstop'].forEach(function (name) {
