@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Grid3D - ECHARTS-GL</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Fullscreen Landscape on iOS -->
+        <link rel="stylesheet" href="./common.css">
+    </head>
+    <body>
+        <div id="main"></div>
+        <script src="../node_modules/echarts/dist/echarts.js"></script>
+        <script src="../dist/echarts-gl.js"></script>
+        <script src="lib/jquery.min.js"></script>
+        <script src="lib/dat.gui.js"></script>
+        <script src="js/commonUI.js"></script>
+        <script>
+            var chart = echarts.init(document.getElementById('main'));
+            chart.setOption({
+                xAxis3D: {
+                   type: 'category',
+                    data:['北京','四川','广州']
+                },
+                yAxis3D: {
+                    type: 'category',
+                    data:['2014','2015','2016']
+                },
+                zAxis3D: {
+
+                },
+                grid3D: {
+                    axisLine: {
+                        lineStyle: {
+                            color: '#fff'
+                        }
+                    },
+                    axisPointer: {
+                        lineStyle: {
+                            color: '#ffbd67'
+                        }
+                    }
+                },
+                series: [{
+                    type: 'scatter3D',
+                    data: [{
+                        name: '数据1',
+                        value: ['北京', '2014',12 ]
+                    }, {
+                        name: '数据2',
+                        value: ['四川', '2015',34 ]
+                    }, {
+                        name: '数据2',
+                        value: ['四川', '2014', 20]
+                    }],
+                    symbolSize: 12,
+                    itemStyle: {
+                        borderWidth: 1,
+                        borderColor: 'rgba(255,255,255,0.8)'
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            color: '#fff'
+                        }
+                    }
+                }]
+            });
+            window.addEventListener('resize', function () {
+                chart.resize();
+            });
+        </script>
+    </body>
+</html>

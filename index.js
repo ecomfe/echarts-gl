@@ -4,7 +4,7 @@ import './src/component/grid3D';
 import './src/component/geo3D';
 import './src/component/globe';
 import './src/component/mapbox3D';
-// import './src/component/maptalks3D';
+import './src/component/maptalks3D';
 
 import './src/chart/bar3D';
 import './src/chart/line3D';

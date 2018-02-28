@@ -49,7 +49,7 @@
         var needsColor = false;
         var needsUv = false;
         viewGL.scene.traverse(function (mesh) {
-            if (mesh.geometry && mesh.geometry.vertexCount) {
+            if (mesh.isRenderable() && mesh.geometry.vertexCount) {
                 var geometry = mesh.geometry;
                 var colorAttr = geometry.attributes.color;
                 var normalAttr = geometry.attributes.normal;
@@ -65,7 +65,7 @@
             }
         });
         viewGL.scene.traverse(function (mesh) {
-            if (mesh.geometry && mesh.geometry.vertexCount) {
+            if (mesh.isRenderable() && mesh.geometry.vertexCount) {
                 var geometry = mesh.geometry;
                 var positionAttr = geometry.attributes.position;
                 var colorAttr = geometry.attributes.color;

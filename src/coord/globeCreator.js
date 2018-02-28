@@ -60,7 +60,8 @@ function updateGlobe(ecModel, api) {
 
         // Get altitude data extent.
         var data = seriesModel.getData();
-        var altDim = seriesModel.coordDimToDataDim('alt')[0];
+        var altDims = seriesModel.coordDimToDataDim('alt');
+        var altDim = altDims && altDims[0];
         if (altDim) {
             // TODO altitiude is in coords of lines.
             var dataExtent = data.getDataExtent(altDim, true);

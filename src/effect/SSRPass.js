@@ -35,7 +35,7 @@ function SSRPass(opt) {
 
     this._ssrPass.setUniform('gBufferTexture1', opt.normalTexture);
     this._ssrPass.setUniform('gBufferTexture2', opt.depthTexture);
-    this._ssrPass.setUniform('gBufferTexture3', opt.albedoTexture);
+    // this._ssrPass.setUniform('gBufferTexture3', opt.albedoTexture);
 
     this._blurPass1.setUniform('gBufferTexture1', opt.normalTexture);
     this._blurPass1.setUniform('gBufferTexture2', opt.depthTexture);

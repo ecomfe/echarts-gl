@@ -161,7 +161,7 @@
         var textureLib = {};
         var indexStart = 1;
         viewGL.scene.traverse(function (mesh) {
-            if (mesh.geometry && mesh.geometry.vertexCount) {
+            if (mesh.isRenderable() && mesh.geometry.vertexCount) {
                 var materialName = 'mat_' + matCount++;
                 objStr += 'o ' + mesh.name + '\n';
 

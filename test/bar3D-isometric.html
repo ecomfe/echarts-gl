@@ -63,6 +63,13 @@
                 },
                 tooltip: {},
                 backgroundColor: '#000',
+                visualMap: {
+                    max: 90,
+                    min: 20,
+                    inRange: {
+                        color: ['#2c1a1b', '#3b2e39', '#864335', '#dbac55']
+                    }
+                },
                 xAxis3D: {
                     type: 'value'
                 },
@@ -91,14 +98,11 @@
                             intensity: 0.2
                         },
                         screenSpaceAmbientOcclusion: {
-                            enable: true,
+                            enable: false,
                             intensity: 1.5,
                             radius: 4,
                             quality: 'high'
                         },
-                        screenSpaceReflection: {
-                            enable: true
-                        }
                         // depthOfField: {
                         //     enable: true,
                         //     blurRadius: 4,
@@ -114,9 +118,9 @@
                             intensity: 2
                         },
                         ambientCubemap: {
-                            texture: 'asset/canyon.hdr',
-                            exposure: 2,
-                            diffuseIntensity: 0.2
+                            // texture: 'asset/pisa.hdr',
+                            // exposure: 2,
+                            // diffuseIntensity: 0.2
                         }
                     }
                 }
@@ -152,19 +156,19 @@
                         barSize: 0.4,
                         silent: true,
                         dimensions: ['x', 'y', 'z'],
-                        itemStyle: {
-                            color: function (params) {
-                                var i = params.dataIndex;
-                                var r = pixelData[i * 4] / 255;
-                                var g = pixelData[i * 4 + 1] / 255;
-                                var b = pixelData[i * 4 + 2] / 255;
-                                var lum = (0.2125 * r + 0.7154 * g + 0.0721 * b);
-                                // r *= lum * 2;
-                                // g *= lum * 2;
-                                // b *= lum * 2;
-                                return [r, g, b, 1];
-                            }
-                        },
+                        // itemStyle: {
+                        //     color: function (params) {
+                        //         var i = params.dataIndex;
+                        //         var r = pixelData[i * 4] / 255;
+                        //         var g = pixelData[i * 4 + 1] / 255;
+                        //         var b = pixelData[i * 4 + 2] / 255;
+                        //         var lum = (0.2125 * r + 0.7154 * g + 0.0721 * b);
+                        //         // r *= lum * 2;
+                        //         // g *= lum * 2;
+                        //         // b *= lum * 2;
+                        //         return [r, g, b, 1];
+                        //     }
+                        // },
                         data: data
                     }]
                 });

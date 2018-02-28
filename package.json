@@ -1,18 +1,19 @@
 {
   "name": "echarts-gl",
   "description": "Extension pack of ECharts providing 3D plots and globe visualization",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "maintainers": [
     {
       "name": "Yi Shen"
     }
   ],
   "scripts": {
-    "build": "node build/glsl2js.js && webpack && webpack -p",
-    "dev": "webpack -w --devtool eval-cheap-module-source-map"
+    "build": "node build/glsl2js.js && node node_modules/webpack/bin/webpack.js && node node_modules/webpack/bin/webpack.js -p",
+    "dev": "node node_modules/webpack/bin/webpack.js -w --devtool eval-cheap-module-source-map"
   },
   "dependencies": {
-    "claygl": "^1.0.3"
+    "claygl": "^1.1.0",
+    "zrender": "^4.0.2"
   },
   "main": "dist/echarts-gl.js",
   "repository": "https://github.com/ecomfe/echarts-gl",
@@ -28,7 +29,7 @@
     "fs-extra": "^4.0.2",
     "glob": "^7.1.1",
     "http-server": "^0.10.0",
-    "maptalks": "^0.37.0",
+    "maptalks": "^0.38.0",
     "rollup": "^0.52.0",
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",

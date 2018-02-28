@@ -46,7 +46,7 @@ export default echarts.extendComponentView({
 
         // PENDING
         ['zoomend', 'zooming', 'zoomstart', 'dragrotating', 'pitch', 'pitchend', 'movestart',
-            'moving','moveend','resize','touchstart','touchmove','touchend'].forEach(function (eName) {
+            'moving', 'moveend', 'resize', 'touchstart', 'touchmove', 'touchend'].forEach(function (eName) {
             maptalks.on(eName, dispatchInteractAction);
         });
 

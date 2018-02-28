@@ -49,7 +49,7 @@ function resizeGeo3D(geo3DModel, api) {
 
 function updateGeo3D(ecModel, api) {
 
-    var altitudeDataExtent = [Infinity, -Infinity]
+    var altitudeDataExtent = [Infinity, -Infinity];
 
     ecModel.eachSeries(function (seriesModel) {
         if (seriesModel.coordinateSystem !== this) {
@@ -60,7 +60,8 @@ function updateGeo3D(ecModel, api) {
         }
         // Get altitude data extent.
         var data = seriesModel.getData();
-        var altDim = seriesModel.coordDimToDataDim('alt')[0];
+        var altDims = seriesModel.coordDimToDataDim('alt');
+        var altDim = altDims && altDims[0];
         if (altDim) {
             // TODO altitiude is in coords of lines.
             var dataExtent = data.getDataExtent(altDim, true);
@@ -171,7 +172,7 @@ var geo3DCreator = {
     },
 
     createGeo3D: function (componentModel) {
-        
+
         var mapData = componentModel.get('map');
         var name;
         if (typeof mapData === 'string') {

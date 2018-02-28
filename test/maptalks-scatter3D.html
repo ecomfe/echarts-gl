@@ -12,12 +12,10 @@
         <script src="../node_modules/echarts/dist/echarts.js"></script>
         <script src="../node_modules/echarts/theme/dark.js"></script>
         <script src="../dist/echarts-gl.js"></script>
-        <script src='lib/mapbox-gl.js'></script>
-        <link href='lib/mapbox-gl.css' rel='stylesheet' />
+        <script src='../node_modules/maptalks/dist/maptalks.js'></script>
         <script src="lib/jquery.min.js"></script>
         <script src="js/commonUI.js"></script>
         <script>
-            mapboxgl.accessToken = window.location.search.slice(1);
             var chart = echarts.init(document.getElementById('main'));
 
             $.getJSON('data/weibo.json', function (weiboData) {
@@ -41,17 +39,17 @@
                 });
 
                 chart.setOption({
-                    mapbox3D: {
+                    maptalks3D: {
                         center: [104.114129, 37.550339],
-                        zoom: 3,
+                        zoom: 4,
                         pitch: 50,
                         bearing: -10,
-                        style: 'mapbox://styles/mapbox/dark-v9'
+                        urlTemplate: 'http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
                     },
                     series: [{
                         name: '弱',
                         type: 'scatter3D',
-                        coordinateSystem: 'mapbox3D',
+                        coordinateSystem: 'maptalks3D',
                         symbolSize: 1,
                         itemStyle: {
                             shadowBlur: 2,
@@ -62,7 +60,7 @@
                     }, {
                         name: '中',
                         type: 'scatter3D',
-                        coordinateSystem: 'mapbox3D',
+                        coordinateSystem: 'maptalks3D',
                         symbolSize: 1,
                         itemStyle: {
                             shadowBlur: 2,
@@ -73,7 +71,7 @@
                     }, {
                         name: '强',
                         type: 'scatter3D',
-                        coordinateSystem: 'mapbox3D',
+                        coordinateSystem: 'maptalks3D',
                         symbolSize: 1,
                         itemStyle: {
                             shadowBlur: 2,

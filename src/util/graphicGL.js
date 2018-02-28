@@ -374,7 +374,14 @@ graphicGL.createAmbientCubemap = function (opt, renderer, api, cb) {
     }, function () {
         // TODO Performance when multiple view
         ambientCubemap.cubemap.flipY = false;
+        if (__DEV__) {
+            var time = Date.now();
+        }
         ambientCubemap.prefilter(renderer, 32);
+        if (__DEV__) {
+            var dTime = Date.now() - time;
+            console.log('Prefilter environment map: ' + dTime + 'ms');
+        }
         ambientSH.coefficients = shUtil.projectEnvironmentMap(renderer, ambientCubemap.cubemap, {
             lod: 1
         });
