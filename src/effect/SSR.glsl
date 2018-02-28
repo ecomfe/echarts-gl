@@ -2,17 +2,24 @@
 // http://casual-effects.blogspot.jp/2014/08/screen-space-ray-tracing.html
 @export ecgl.ssr.main
 
+#define SHADER_NAME SSR
 #define MAX_ITERATION 20;
+#define SAMPLE_PER_FRAME 5;
+#define TOTAL_SAMPLES 128;
 
 uniform sampler2D sourceTexture;
 uniform sampler2D gBufferTexture1;
 uniform sampler2D gBufferTexture2;
+uniform sampler2D gBufferTexture3;
+uniform samplerCube specularCubemap;
+uniform float specularIntensity: 1;
 
 uniform mat4 projection;
 uniform mat4 projectionInv;
-uniform mat4 viewInverseTranspose;
+uniform mat4 toViewSpace;
+uniform mat4 toWorldSpace;
 
-uniform float maxRayDistance: 50;
+uniform float maxRayDistance: 200;
 
 uniform float pixelStride: 16;
 uniform float pixelStrideZCutoff: 50; // ray origin Z at this distance will have a pixel stride of 1.0
@@ -23,7 +30,7 @@ uniform float eyeFadeStart : 0.2; // ray direction's Z that ray hits will start 
 uniform float eyeFadeEnd: 0.8; // ray direction's Z that ray hits will be cut (0.0 -> 1.0)
 
 uniform float minGlossiness: 0.2; // Object larger than minGlossiness will have ssr effect
-uniform float zThicknessThreshold: 10;
+uniform float zThicknessThreshold: 1;
 
 uniform float nearZ;
 uniform vec2 viewportSize : VIEWPORT_SIZE;
@@ -34,6 +41,36 @@ varying vec2 v_Texcoord;
 
 #ifdef DEPTH_DECODE
 @import clay.util.decode_float
+#endif
+
+#ifdef PHYSICALLY_CORRECT
+// uniform vec3 lambertNormals[SAMPLE_PER_FRAME];
+uniform sampler2D normalDistribution;
+uniform float sampleOffset: 0;
+uniform vec2 normalDistributionSize;
+
+vec3 transformNormal(vec3 H, vec3 N) {
+    vec3 upVector = N.y > 0.999 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+    vec3 tangentX = normalize(cross(N, upVector));
+    vec3 tangentZ = cross(N, tangentX);
+    // Tangent to world space
+    return normalize(tangentX * H.x + N * H.y + tangentZ * H.z);
+}
+vec3 importanceSampleNormalGGX(float i, float roughness, vec3 N) {
+    float p = fract((i + sampleOffset) / float(TOTAL_SAMPLES));
+    vec3 H = texture2D(normalDistribution,vec2(roughness, p)).rgb;
+    return transformNormal(H, N);
+}
+float G_Smith(float g, float ndv, float ndl) {
+    float roughness = 1.0 - g;
+    float k = roughness * roughness / 2.0;
+    float G1V = ndv / (ndv * (1.0 - k) + k);
+    float G1L = ndl / (ndl * (1.0 - k) + k);
+    return G1L * G1V;
+}
+vec3 F_Schlick(float ndv, vec3 spec) {
+    return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);
+}
 #endif
 
 float fetchDepth(sampler2D depthTexture, vec2 uv)
@@ -167,12 +204,13 @@ bool traceScreenSpaceRay(
 
         iterationCount += 1.0;
 
+        dPQK *= 1.2;
+
         // PENDING Right on all platforms?
         if (intersect) {
             break;
         }
     }
-
 
     Q0.xy += dQ.xy * iterationCount;
     Q0.z = pqk.z;
@@ -226,51 +264,108 @@ void main()
     }
 
     float g = normalAndGloss.a;
+#if !defined(PHYSICALLY_CORRECT)
     if (g <= minGlossiness) {
         discard;
     }
+#endif
 
     float reflectivity = (g - minGlossiness) / (1.0 - minGlossiness);
 
-    vec3 N = normalAndGloss.rgb * 2.0 - 1.0;
-    N = normalize((viewInverseTranspose * vec4(N, 0.0)).xyz);
+    vec3 N = normalize(normalAndGloss.rgb * 2.0 - 1.0);
+    N = normalize((toViewSpace * vec4(N, 0.0)).xyz);
 
     // Position in view
     vec4 projectedPos = vec4(v_Texcoord * 2.0 - 1.0, fetchDepth(gBufferTexture2, v_Texcoord), 1.0);
     vec4 pos = projectionInv * projectedPos;
     vec3 rayOrigin = pos.xyz / pos.w;
+    vec3 V = -normalize(rayOrigin);
 
-    vec3 rayDir = normalize(reflect(normalize(rayOrigin), N));
-    vec2 hitPixel;
-    vec3 hitPoint;
+    float ndv = clamp(dot(N, V), 0.0, 1.0);
     float iterationCount;
-
-    vec2 uv2 = v_Texcoord * viewportSize;
     float jitter = rand(fract(v_Texcoord + jitterOffset));
 
-    bool intersect = traceScreenSpaceRay(rayOrigin, rayDir, jitter, hitPixel, hitPoint, iterationCount);
+#ifdef PHYSICALLY_CORRECT
+    vec4 color = vec4(vec3(0.0), 1.0);
+    vec4 albedoMetalness = texture2D(gBufferTexture3, v_Texcoord);
+    vec3 albedo = albedoMetalness.rgb;
+    float m = albedoMetalness.a;
+    vec3 diffuseColor = albedo * (1.0 - m);
+    vec3 spec = mix(vec3(0.04), albedo, m);
 
-    float dist = distance(rayOrigin, hitPoint);
+    // PENDING Add noise?
+    float jitter2 = rand(fract(v_Texcoord)) * float(TOTAL_SAMPLES);
 
-    float alpha = calculateAlpha(iterationCount, reflectivity, hitPixel, hitPoint, dist, rayDir) * float(intersect);
+    for (int i = 0; i < SAMPLE_PER_FRAME; i++) {
+        vec3 H = importanceSampleNormalGGX(float(i) + jitter2, 1.0 - g, N);
+        // TODO Normal
+        // vec3 H = transformNormal(lambertNormals[i], N);
+        // vec3 rayDir = H;
+        vec3 rayDir = normalize(reflect(-V, H));
+#else
+        vec3 rayDir = normalize(reflect(-V, N));
+#endif
+        vec2 hitPixel;
+        vec3 hitPoint;
 
-    vec3 hitNormal = texture2D(gBufferTexture1, hitPixel).rgb * 2.0 - 1.0;
-    hitNormal = normalize((viewInverseTranspose * vec4(hitNormal, 0.0)).xyz);
+        bool intersect = traceScreenSpaceRay(rayOrigin, rayDir, jitter, hitPixel, hitPoint, iterationCount);
 
+        float dist = distance(rayOrigin, hitPoint);
+
+        vec3 hitNormal = texture2D(gBufferTexture1, hitPixel).rgb * 2.0 - 1.0;
+        hitNormal = normalize((toViewSpace * vec4(hitNormal, 0.0)).xyz);
+#ifdef PHYSICALLY_CORRECT
+        float ndl = clamp(dot(N, rayDir), 0.0, 1.0);
+        float vdh = clamp(dot(V, H), 0.0, 1.0);
+        float ndh = clamp(dot(N, H), 0.0, 1.0);
+        vec3 litTexel = vec3(0.0);
+        if (dot(hitNormal, rayDir) < 0.0 && intersect) {
+            litTexel = texture2D(sourceTexture, hitPixel).rgb;
+            // PENDING
+            litTexel *= pow(clamp(1.0 - dist / 200.0, 0.0, 1.0), 3.0);
+
+            // color.rgb += ndl * litTexel * fade * diffuseColor;
+        }
+        else {
+            // Fetch from environment
+#ifdef SPECULARCUBEMAP_ENABLED
+            vec3 rayDirW = normalize(toWorldSpace * vec4(rayDir, 0.0)).rgb;
+            litTexel = RGBMDecode(textureCubeLodEXT(specularCubemap, rayDirW, 0.0), 8.12).rgb * specularIntensity;
+#endif
+        }
+        color.rgb += ndl * litTexel * (
+                F_Schlick(ndl, spec) * G_Smith(g, ndv, ndl) * vdh / (ndh * ndv + 0.001)
+            );
+    }
+    color.rgb /= float(SAMPLE_PER_FRAME);
+#else
     // Ignore the pixel not face the ray
     // TODO fadeout ?
     // PENDING Can be configured?
+#if !defined(SPECULARCUBEMAP_ENABLED)
     if (dot(hitNormal, rayDir) >= 0.0) {
         discard;
     }
-
-    // vec4 color = decodeHDR(texture2DLodEXT(sourceTexture, hitPixel, clamp(dist / maxRayDistance, 0.0, 1.0) * maxMipmapLevel));
-
     if (!intersect) {
         discard;
     }
-    vec4 color = decodeHDR(texture2D(sourceTexture, hitPixel));
-    gl_FragColor = encodeHDR(vec4(color.rgb * alpha, color.a));
+#endif
+    float alpha = clamp(calculateAlpha(iterationCount, reflectivity, hitPixel, hitPoint, dist, rayDir), 0.0, 1.0);
+    vec4 color = texture2D(sourceTexture, hitPixel);
+    color.rgb *= alpha;
+
+#ifdef SPECULARCUBEMAP_ENABLED
+    vec3 rayDirW = normalize(toWorldSpace * vec4(rayDir, 0.0)).rgb;
+    alpha = alpha * (intersect ? 1.0 : 0.0);
+    float bias = (1.0 -g) * 5.0;
+    color.rgb += (1.0 - alpha)
+        * RGBMDecode(textureCubeLodEXT(specularCubemap, rayDirW, bias), 8.12).rgb
+        * specularIntensity;
+#endif
+
+#endif
+
+    gl_FragColor = encodeHDR(color);
 }
 @end
 
@@ -286,7 +381,7 @@ uniform float depthRange : 0.05;
 varying vec2 v_Texcoord;
 
 uniform vec2 textureSize;
-uniform float blurSize : 4.0;
+uniform float blurSize : 1.0;
 
 #ifdef BLEND
     #ifdef SSAOTEX_ENABLED
@@ -310,7 +405,7 @@ void main()
 
     vec4 centerNTexel = texture2D(gBufferTexture1, v_Texcoord);
     float g = centerNTexel.a;
-    float maxBlurSize = clamp(1.0 - g + 0.1, 0.0, 1.0) * blurSize;
+    float maxBlurSize = clamp(1.0 - g, 0.0, 1.0) * blurSize;
 #ifdef VERTICAL
     vec2 off = vec2(0.0, maxBlurSize / textureSize.y);
 #else

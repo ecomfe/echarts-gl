@@ -203,18 +203,20 @@ EffectCompositor.prototype.disableSSAO = function () {
  */
 EffectCompositor.prototype.enableSSR = function () {
     this._enableSSR = true;
+    // this._normalPass.enableTargetTexture3 = true;
 };
 /**
  * Disable SSR effect
  */
 EffectCompositor.prototype.disableSSR = function () {
     this._enableSSR = false;
+    // this._normalPass.enableTargetTexture3 = false;
 };
 
 /**
  * Render SSAO after render the scene, before compositing
  */
-EffectCompositor.prototype.getSSAOTexture = function (renderer, scene, camera, frame) {
+EffectCompositor.prototype.getSSAOTexture = function () {
     return this._ssaoPass.getTargetTexture();
 };
 
@@ -370,13 +372,16 @@ EffectCompositor.prototype.setDOFParameter = function (name, value) {
 };
 
 EffectCompositor.prototype.setSSRParameter = function (name, value) {
+    if (value == null) {
+        return;
+    }
     switch (name) {
         case 'quality':
             // PENDING
             var maxIteration = ({
                 low: 10,
-                medium: 20,
-                high: 40,
+                medium: 15,
+                high: 30,
                 ultra: 80
             })[value] || 20;
             var pixelStride = ({
@@ -391,13 +396,18 @@ EffectCompositor.prototype.setSSRParameter = function (name, value) {
         case 'maxRoughness':
             this._ssrPass.setParameter('minGlossiness', Math.max(Math.min(1.0 - value, 1.0), 0.0));
             break;
+        case 'physical':
+            this.setPhysicallyCorrectSSR(value);
+            break;
         default:
-            if (__DEV__) {
-                console.warn('Unkown SSR parameter ' + name);
-            }
+            console.warn('Unkown SSR parameter ' + name);
     }
-}
-;
+};
+
+EffectCompositor.prototype.setPhysicallyCorrectSSR = function (physical) {
+    this._ssrPass.setPhysicallyCorrect(physical);
+};
+
 /**
  * Set color of edge
  */
@@ -421,7 +431,11 @@ EffectCompositor.prototype.setColorCorrection = function (type, value) {
     this._compositeNode.setParameter(type, value);
 };
 
-EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, frame) {
+EffectCompositor.prototype.isSSREnabled = function () {
+    return this._enableSSR;
+};
+
+EffectCompositor.prototype.composite = function (renderer, scene, camera, framebuffer, frame) {
 
     var sourceTexture = this._sourceTexture;
     var targetTexture = sourceTexture;
@@ -436,6 +450,12 @@ EffectCompositor.prototype.composite = function (renderer, camera, framebuffer, 
         this._ssrPass.setSSAOTexture(
             this._enableSSAO ? this._ssaoPass.getTargetTexture() : null
         );
+        // var lights = scene.getLights();
+        // for (var i = 0; i < lights.length; i++) {
+        //     if (lights[i].cubemap) {
+        //         this._ssrPass.setAmbientCubemap(lights[i].cubemap, lights[i].intensity);
+        //     }
+        // }
     }
     this._sourceNode.texture = targetTexture;
 
