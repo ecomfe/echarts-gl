@@ -61,7 +61,7 @@ var LayerGL = function (id, zr) {
         this.dom = document.createElement('div');
         this.dom.style.cssText = 'position:absolute; left: 0; top: 0; right: 0; bottom: 0;';
         this.dom.className = 'ecgl-nowebgl';
-        this.dom.innerHTML = 'Sorry, your browser does support WebGL';
+        this.dom.innerHTML = 'Sorry, your browser does not support WebGL';
 
         console.error(e);
         return;
