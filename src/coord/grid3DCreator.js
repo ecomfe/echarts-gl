@@ -89,6 +89,15 @@ function updateCartesian3D(ecModel, api) {
             axisModel.axis = axis;
             axis.model = axisModel;
 
+            // override `echarts/coord/Axis#getLabelModel`
+            axis.getLabelModel = function () {
+                return axisModel.getModel('axisLabel', grid3DModel.getModel('axisLabel'));
+            };
+            // override `echarts/coord/Axis#getTickModel`
+            axis.getTickModel = function () {
+                return axisModel.getModel('axisTick', grid3DModel.getModel('axisTick'));
+            };
+
             cartesian3D.addAxis(axis);
         }, this);
     }, this);
