@@ -16,6 +16,11 @@ Axis3D.prototype = {
     getExtentMax: function () {
         var extent = this._extent;
         return Math.max(extent[0], extent[1]);
+    },
+
+    calculateCategoryInterval: function () {
+        // TODO consider label length
+        return Math.floor(this.scale.count() / 8);
     }
 };
 

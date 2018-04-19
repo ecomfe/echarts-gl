@@ -4,7 +4,6 @@ import retrieve from '../../util/retrieve';
 import Lines3DGeometry from '../../util/geometry/Lines3D';
 import QuadsGeometry from '../../util/geometry/Quads';
 var firstNotNull = retrieve.firstNotNull;
-import ifIgnoreOnTick from './ifIgnoreOnTick';
 
 var dimIndicesMap = {
     // Left to right
@@ -72,7 +71,7 @@ function Grid3DFace(faceInfo, linesMaterial, quadsMaterial) {
     this.quadsMesh =quadsMesh;
 }
 
-Grid3DFace.prototype.update = function (labelIntervalFuncs, grid3DModel, ecModel, api) {
+Grid3DFace.prototype.update = function (grid3DModel, ecModel, api) {
     var cartesian = grid3DModel.coordinateSystem;
     var axes = [
         cartesian.getAxis(this.faceInfo[0]),
@@ -83,8 +82,8 @@ Grid3DFace.prototype.update = function (labelIntervalFuncs, grid3DModel, ecModel
 
     lineGeometry.convertToDynamicArray(true);
     quadsGeometry.convertToDynamicArray(true);
-    this._updateSplitLines(lineGeometry, axes, grid3DModel, labelIntervalFuncs, api);
-    this._udpateSplitAreas(quadsGeometry, axes, grid3DModel, labelIntervalFuncs, api);
+    this._updateSplitLines(lineGeometry, axes, grid3DModel, api);
+    this._udpateSplitAreas(quadsGeometry, axes, grid3DModel, api);
     lineGeometry.convertToTypedArray();
     quadsGeometry.convertToTypedArray();
 
@@ -93,7 +92,7 @@ Grid3DFace.prototype.update = function (labelIntervalFuncs, grid3DModel, ecModel
     updateFacePlane(this.rootNode, this.plane, otherAxis, this.faceInfo[3]);
 };
 
-Grid3DFace.prototype._updateSplitLines = function (geometry, axes, grid3DModel, labelIntervalFuncs, api) {
+Grid3DFace.prototype._updateSplitLines = function (geometry, axes, grid3DModel, api) {
     var dpr = api.getDevicePixelRatio();
     axes.forEach(function (axis, idx) {
         var axisModel = axis.model;
@@ -110,21 +109,16 @@ Grid3DFace.prototype._updateSplitLines = function (geometry, axes, grid3DModel, 
             var lineColors = lineStyleModel.get('color');
             var opacity = firstNotNull(lineStyleModel.get('opacity'), 1.0);
             var lineWidth = firstNotNull(lineStyleModel.get('width'), 1.0);
-            // TODO Automatic interval
-            var intervalFunc = splitLineModel.get('interval');
-            if (intervalFunc == null || intervalFunc === 'auto') {
-                intervalFunc = labelIntervalFuncs[axis.dim];
-            }
+
             lineColors = echarts.util.isArray(lineColors) ? lineColors : [lineColors];
 
-            var ticksCoords = axis.getTicksCoords();
+            var ticksCoords = axis.getTicksCoords({
+                tickModel: splitLineModel
+            });
 
             var count = 0;
             for (var i = 0; i < ticksCoords.length; i++) {
-                if (ifIgnoreOnTick(axis, i, intervalFunc)) {
-                    continue;
-                }
-                var tickCoord = ticksCoords[i];
+                var tickCoord = ticksCoords[i].coord;
                 var lineColor = graphicGL.parseColor(lineColors[count % lineColors.length]);
                 lineColor[3] *= opacity;
 
@@ -142,7 +136,7 @@ Grid3DFace.prototype._updateSplitLines = function (geometry, axes, grid3DModel, 
     });
 };
 
-Grid3DFace.prototype._udpateSplitAreas = function (geometry, axes, grid3DModel, labelIntervalFuncs, api) {
+Grid3DFace.prototype._udpateSplitAreas = function (geometry, axes, grid3DModel, api) {
     axes.forEach(function (axis, idx) {
         var axisModel = axis.model;
         var otherExtent = axes[1 - idx].getExtent();
@@ -157,22 +151,20 @@ Grid3DFace.prototype._udpateSplitAreas = function (geometry, axes, grid3DModel, 
             var areaStyleModel = splitAreaModel.getModel('areaStyle');
             var colors = areaStyleModel.get('color');
             var opacity = firstNotNull(areaStyleModel.get('opacity'), 1.0);
-            // TODO Automatic interval
-            var intervalFunc = splitAreaModel.get('interval');
-            if (intervalFunc == null || intervalFunc === 'auto') {
-                intervalFunc = labelIntervalFuncs[axis.dim];
-            }
 
             colors = echarts.util.isArray(colors) ? colors : [colors];
 
-            var ticksCoords = axis.getTicksCoords();
+            var ticksCoords = axis.getTicksCoords({
+                tickModel: splitAreaModel,
+                clamp: true
+            });
 
             var count = 0;
             var prevP0 = [0, 0, 0];
             var prevP1 = [0, 0, 0];
             // 0 - x, 1 - y
             for (var i = 0; i < ticksCoords.length; i++) {
-                var tickCoord = ticksCoords[i];
+                var tickCoord = ticksCoords[i].coord;
 
                 var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
                 // 0 - x, 1 - y
@@ -183,10 +175,6 @@ Grid3DFace.prototype._udpateSplitAreas = function (geometry, axes, grid3DModel, 
                 if (i === 0) {
                     prevP0 = p0;
                     prevP1 = p1;
-                    continue;
-                }
-
-                if (ifIgnoreOnTick(axis, i, intervalFunc)) {
                     continue;
                 }
 

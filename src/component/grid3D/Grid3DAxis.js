@@ -4,7 +4,6 @@ import Lines3DGeometry from '../../util/geometry/Lines3D';
 import retrieve from '../../util/retrieve';
 import LabelsMesh from '../../util/mesh/LabelsMesh';
 var firstNotNull = retrieve.firstNotNull;
-import ifIgnoreOnTick from './ifIgnoreOnTick';
 
 var dimIndicesMap = {
     // Left to right
@@ -42,11 +41,10 @@ var otherDim = {
     x: 'y', y: 'x', z: 'y'
 };
 Grid3DAxis.prototype.update = function (
-    grid3DModel, labelIntervalFuncs, axisLabelSurface, api
+    grid3DModel, axisLabelSurface, api
 ) {
     var cartesian = grid3DModel.coordinateSystem;
     var axis = cartesian.getAxis(this.dim);
-    var labelIntervalFunc = labelIntervalFuncs[this.dim];
 
     var linesGeo = this.linesMesh.geometry;
     var labelsGeo = this.labelsMesh.geometry;
@@ -86,18 +84,10 @@ Grid3DAxis.prototype.update = function (
         var lineWidth = firstNotNull(lineStyleModel.get('width'), 1.0);
         lineColor[3] *= firstNotNull(lineStyleModel.get('opacity'), 1.0);
         var ticksCoords = axis.getTicksCoords();
-        // TODO Automatic interval
-        var intervalFunc = axisTickModel.get('interval');
-        if (intervalFunc == null || intervalFunc === 'auto') {
-            intervalFunc = labelIntervalFunc;
-        }
         var tickLength = axisTickModel.get('length');
 
         for (var i = 0; i < ticksCoords.length; i++) {
-            if (ifIgnoreOnTick(axis, i, intervalFunc)) {
-                continue;
-            }
-            var tickCoord = ticksCoords[i];
+            var tickCoord = ticksCoords[i].coord;
 
             var p0 = [0, 0, 0]; var p1 = [0, 0, 0];
             var idx = dimIndicesMap[axis.dim];
@@ -113,20 +103,18 @@ Grid3DAxis.prototype.update = function (
     this.labelElements = [];
     var dpr = api.getDevicePixelRatio();
     if (axisLabelModel.get('show')) {
-        var labelsCoords = axis.getLabelsCoords();
+        var ticksCoords = axis.getTicksCoords();
         var categoryData = axisModel.get('data');
-        // TODO Automatic interval
-        var intervalFunc = labelIntervalFunc;
 
         var labelMargin = axisLabelModel.get('margin');
+        var labels = axis.getViewLabels();
 
-        var labels = axisModel.getFormattedLabels();
-        var ticks = axis.scale.getTicks();
-        for (var i = 0; i < labelsCoords.length; i++) {
-            if (ifIgnoreOnTick(axis, i, intervalFunc)) {
-                continue;
-            }
-            var tickCoord = labelsCoords[i];
+        for (var i = 0; i < labels.length; i++) {
+            var tickValue = labels[i].tickValue;
+            var formattedLabel = labels[i].formattedLabel;
+            var rawLabel = labels[i].rawLabel;
+
+            var tickCoord = axis.dataToCoord(tickValue);
 
             var p = [0, 0, 0];
             var idx = dimIndicesMap[axis.dim];
@@ -136,16 +124,16 @@ Grid3DAxis.prototype.update = function (
             p[otherIdx] = labelMargin;
 
             var itemTextStyleModel = axisLabelModel;
-            if (categoryData && categoryData[ticks[i]] && categoryData[ticks[i]].textStyle) {
+            if (categoryData && categoryData[tickValue] && categoryData[tickValue].textStyle) {
                 itemTextStyleModel = new echarts.Model(
-                    categoryData[ticks[i]].textStyle, axisLabelModel, axisModel.ecModel
+                    categoryData[tickValue].textStyle, axisLabelModel, axisModel.ecModel
                 );
             }
             var textColor = firstNotNull(itemTextStyleModel.get('color'), axisLineColor);
 
             var textEl = new echarts.graphic.Text();
             echarts.graphic.setTextStyle(textEl.style, itemTextStyleModel, {
-                text: labels[i],
+                text: formattedLabel,
                 textFill: typeof textColor === 'function'
                     ? textColor(
                         // (1) In category axis with data zoom, tick is not the original
@@ -155,7 +143,7 @@ Grid3DAxis.prototype.update = function (
                         // But in interval scale labelStr is like '223,445', which maked
                         // user repalce ','. So we modify it to return original val but remain
                         // it as 'string' to avoid error in replacing.
-                        axis.type === 'category' ? labels[i] : axis.type === 'value' ? ticks[i] + '' : ticks[i],
+                        axis.type === 'category' ? rawLabel : axis.type === 'value' ? tickValue + '' : tickValue,
                         i
                     )
                     : textColor,
