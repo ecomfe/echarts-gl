@@ -1,6 +1,5 @@
 import graphicGL from '../../util/graphicGL';
 import Skybox from 'claygl/src/plugin/Skybox';
-import Skydome from 'claygl/src/plugin/Skydome';
 import echarts from 'echarts/lib/echarts';
 
 function SceneHelper() {
@@ -77,7 +76,7 @@ SceneHelper.prototype = {
                 lights = this._cubemapLightsCache[textureUrl]
                     = graphicGL.createAmbientCubemap(ambientCubemapModel.option, renderer, api, function () {
                         // Use prefitered cubemap
-                        if (self._skybox instanceof Skybox) {
+                        if (self._isSkyboxFromAmbientCubemap) {
                             self._skybox.setEnvironmentMap(lights.specular.cubemap);
                         }
 
@@ -101,35 +100,22 @@ SceneHelper.prototype = {
 
         var self = this;
         function getSkybox() {
-            if (!(self._skybox instanceof Skybox)) {
-                if (self._skybox) {
-                    self._skybox.dispose(renderer);
-                }
-                self._skybox = new Skybox();
-            }
-            return self._skybox;
-        }
-        function getSkydome() {
-            if (!(self._skybox instanceof Skydome)) {
-                if (self._skybox) {
-                    self._skybox.dispose(renderer);
-                }
-                self._skybox = new Skydome();
-            }
+            self._skybox = self._skybox || new Skybox();
             return self._skybox;
         }
 
+        var skybox = getSkybox();
         if (environmentUrl && environmentUrl !== 'none') {
             if (environmentUrl === 'auto') {
+                this._isSkyboxFromAmbientCubemap = true;
                 // Use environment in ambient cubemap
                 if (this._currentCubemapLights) {
-                    var skybox = getSkybox();
                     var cubemap = this._currentCubemapLights.specular.cubemap;
                     skybox.setEnvironmentMap(cubemap);
                     if (this._scene) {
                         skybox.attachScene(this._scene);
                     }
-                    skybox.material.set('lod', 2);
+                    skybox.material.set('lod', 3);
                 }
                 else if (this._skybox) {
                     this._skybox.detachScene();
@@ -139,12 +125,12 @@ SceneHelper.prototype = {
             else if ((typeof environmentUrl === 'object' && environmentUrl.colorStops)
                 || (typeof environmentUrl === 'string' && echarts.color.parse(environmentUrl))
             ) {
-                var skydome = getSkydome();
+                this._isSkyboxFromAmbientCubemap = false;
                 var texture = new graphicGL.Texture2D({
                     anisotropic: 8,
                     flipY: false
                 });
-                skydome.setEnvironmentMap(texture);
+                skybox.setEnvironmentMap(texture);
                 var canvas = texture.image = document.createElement('canvas');
                 canvas.width = canvas.height = 16;
                 var ctx = canvas.getContext('2d');
@@ -154,18 +140,18 @@ SceneHelper.prototype = {
                 });
                 rect.brush(ctx);
 
-                skydome.attachScene(this._scene);
+                skybox.attachScene(this._scene);
             }
             else {
+                this._isSkyboxFromAmbientCubemap = false;
                 // Panorama
-                var skydome = getSkydome();
                 var texture = graphicGL.loadTexture(environmentUrl, api, {
                     anisotropic: 8,
                     flipY: false
                 });
-                skydome.setEnvironmentMap(texture);
+                skybox.setEnvironmentMap(texture);
 
-                skydome.attachScene(this._scene);
+                skybox.attachScene(this._scene);
             }
         }
         else {
