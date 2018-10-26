@@ -15,6 +15,9 @@
     "claygl": "^1.2.1",
     "zrender": "^4.0.4"
   },
+  "peerDependencies": {
+    "echarts": "^4.1.0"
+  },
   "main": "dist/echarts-gl.js",
   "repository": "https://github.com/ecomfe/echarts-gl",
   "devDependencies": {
