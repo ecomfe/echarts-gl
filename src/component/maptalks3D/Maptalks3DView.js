@@ -134,7 +134,7 @@ export default echarts.extendComponentView({
         api.dispatchAction({
             type: 'maptalks3DChangeCamera',
             pitch: maptalks.getPitch(),
-            zoom: maptalks.getZoom(),
+            zoom: getMapboxZoom(maptalks.getResolution()) + 1,
             center: maptalks.getCenter().toArray(),
             bearing: maptalks.getBearing(),
             maptalks3DId: this._maptalks3DModel && this._maptalks3DModel.id
@@ -164,3 +164,8 @@ export default echarts.extendComponentView({
         api.getZr().painter.delLayer(-1000);
     }
 });
+
+const MAX_RES = 2 * 6378137 * Math.PI / (256 * Math.pow(2, 20));
+function getMapboxZoom(res) {
+    return 19 - Math.log(res / MAX_RES) / Math.LN2;
+}
