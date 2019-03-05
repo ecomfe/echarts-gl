@@ -7626,7 +7626,7 @@ var Material = __WEBPACK_IMPORTED_MODULE_0__core_Base__["a" /* default */].exten
 },
 /** @lends clay.Material.prototype */
 {
-    precision: 'highp',
+    precision: 'mediump',
 
     /**
      * Set material uniform
