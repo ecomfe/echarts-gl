@@ -110,6 +110,9 @@ Geo3DBuilder.prototype = {
             }
             else {
                 var tmp = self._triangulationResults[dataIndex - self._startIndex];
+                if(Array.isArray(tmp)){
+                    tmp=tmp[0];
+                }
                 var center = self.extrudeY ? [
                     (tmp.max[0] + tmp.min[0]) / 2,
                     tmp.max[1] + height,
@@ -119,6 +122,8 @@ Geo3DBuilder.prototype = {
                     (tmp.max[1] + tmp.min[1]) / 2,
                     tmp.max[2] + height
                 ];
+                var pos = coordSys.dataToPoint([center[0], center[1], height]);
+                return pos;
             }
         };
 
