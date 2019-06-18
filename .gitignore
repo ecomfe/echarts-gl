@@ -177,3 +177,4 @@ tmp
 package-lock.json
 test/data/gps
 test/data/gps2
+dist/*

@@ -84,9 +84,11 @@ Geo3DBuilder.prototype = {
 
         this.rootNode.updateWorldTransform();
 
+        var coordSys =this.coordSys= componentModel.coordinateSystem;
+
         this._updateRegionMesh(componentModel, api, start, end);
 
-        var coordSys = componentModel.coordinateSystem;
+     
         // PENDING
         if (coordSys.type === 'geo3D') {
             this._updateGroundPlane(componentModel, coordSys, api);
@@ -122,8 +124,14 @@ Geo3DBuilder.prototype = {
                     (tmp.max[1] + tmp.min[1]) / 2,
                     tmp.max[2] + height
                 ];
-                var pos = coordSys.dataToPoint([center[0], center[1], height]);
-                return pos;
+                return [center[0],center[2]-height,center[1]];
+                // console.log(center);
+                // return [center[0],center[2],center[1]];
+                // return [center[0], center[1]];
+                // return center;
+                // var pos = coordSys.dataToPoint([center[0], center[1], height]);
+                // console.log(pos);
+                // return pos;
             }
         };
 
@@ -674,15 +682,21 @@ Geo3DBuilder.prototype = {
     },
 
     _updateLinesGeometry: function (geometry, componentModel, dataIndex, regionHeight, lineWidth, transform) {
-        function convertToPoints3(polygon) {
+        
+        function convertToPoints3(polygon,coordSys) {
             var points = new Float64Array(polygon.length * 3);
             var offset = 0;
             var pos = [];
             for (var i = 0; i < polygon.length; i++) {
                 pos[0] = polygon[i][0];
                 // Add a offset to avoid z-fighting
-                pos[1] = regionHeight + 0.1;
-                pos[2] = polygon[i][1];
+                if((coordSys||{}).type==='geo3D'){
+                    pos[1] = regionHeight + 0.05;
+                    pos[2] = polygon[i][1];
+                }else{
+                    pos[2] = regionHeight + 0.05;
+                    pos[1] = polygon[i][1];
+                }
 
                 if (transform) {
                     vec3.transformMat4(pos, pos, transform);
@@ -696,15 +710,16 @@ Geo3DBuilder.prototype = {
         }
 
         var whiteColor = [1, 1, 1, 1];
+        var coordSys=this.coordSys;
         var coords = componentModel.getRegionPolygonCoords(dataIndex);
         coords.forEach(function (geo) {
             var exterior = geo.exterior;
             var interiors = geo.interiors;
 
-            geometry.addPolyline(convertToPoints3(exterior), whiteColor, lineWidth);
+            geometry.addPolyline(convertToPoints3(exterior,coordSys), whiteColor, lineWidth);
 
             for (var i = 0; i < interiors.length; i++) {
-                geometry.addPolyline(convertToPoints3(interiors[i]), whiteColor, lineWidth);
+                geometry.addPolyline(convertToPoints3(interiors[i],coordSys), whiteColor, lineWidth);
             }
         });
     },
