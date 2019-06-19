@@ -121,7 +121,7 @@ export default {
 
         itemStyle: {
             color: '#fff',
-            borderWidth: 0,
+            borderWidth: 1,
             borderColor: '#333'
         },
 
