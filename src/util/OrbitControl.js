@@ -385,7 +385,7 @@ var OrbitControl = Base.extend(function () {
                 beta: beta,
                 center: center,
                 distance: targetDistance,
-                targetOrthographicSize: targetOrthographicSize,
+                orthographicSize: targetOrthographicSize,
                 easing: animationOpts.animationEasingUpdate,
                 duration: animationOpts.animationDurationUpdate
             });

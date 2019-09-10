@@ -55,7 +55,15 @@ echarts.extendChartView({
 
         var isParametric = seriesModel.get('parametric');
 
-        var dataShape = this._getDataShape(data, isParametric);
+        var dataShape = seriesModel.get('dataShape');
+        if (!dataShape) {
+            dataShape = this._getDataShape(data, isParametric);
+            if (__DEV__) {
+                if (seriesModel.get('data')) {
+                    console.warn('dataShape is not provided. Guess it is ', dataShape);
+                }
+            }
+        }
 
         var wireframeModel = seriesModel.getModel('wireframe');
         var wireframeLineWidth = wireframeModel.get('lineStyle.width');
@@ -202,8 +210,8 @@ echarts.extendChartView({
         var texcoordAttr = geometry.attributes.texcoord0;
         var barycentricAttr = geometry.attributes.barycentric;
         var colorAttr = geometry.attributes.color;
-        var row = dataShape.row;
-        var column = dataShape.column;
+        var row = dataShape[0];
+        var column = dataShape[1];
         var shading = seriesModel.get('shading');
         var needsNormal = shading !== 'color';
 
@@ -431,15 +439,17 @@ echarts.extendChartView({
         var columnCount = 0;
         var prevColumnCount = 0;
 
-        var rowDim = isParametric ? 'u' : 'x';
+        var mayInvalid = false;
 
+        var rowDim = isParametric ? 'u' : 'x';
+        var dataCount = data.count();
         // Check data format
-        for (var i = 0; i < data.count(); i++) {
+        for (var i = 0; i < dataCount; i++) {
             var x = data.get(rowDim, i);
             if (x < prevX) {
                 if (prevColumnCount && prevColumnCount !== columnCount) {
                     if (__DEV__) {
-                        throw new Error('Invalid data. data should be a row major 2d array.')
+                        mayInvalid = true;
                     }
                 }
                 // A new row.
@@ -450,11 +460,21 @@ echarts.extendChartView({
             prevX = x;
             columnCount++;
         }
+        if (!mayInvalid) {
+            return [rowCount + 1, columnCount];
+        }
 
-        return {
-            row: rowCount + 1,
-            column: columnCount
-        };
+        var rows = Math.floor(Math.sqrt(dataCount));
+        while (rows > 0) {
+            if (Math.floor(dataCount / rows) === dataCount / rows) { // Can be divided
+                return [rows, dataCount / rows];
+            }
+            rows--;
+        }
+
+        // Bailout
+        rows = Math.floor(Math.sqrt(dataCount));
+        return [rows, rows];
     },
 
     dispose: function () {

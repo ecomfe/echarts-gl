@@ -186,6 +186,11 @@ var SurfaceSeries = echarts.extendSeriesModel({
             z: null
         },
 
+        // Shape of give data
+        // It is an array to specify rows and columns.
+        // For example [30, 30]
+        dataShape: null,
+
         itemStyle: {
             // Color
         },

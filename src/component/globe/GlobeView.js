@@ -97,7 +97,7 @@ export default echarts.extendComponentView({
             if (texture) {
                 texture.flipY = false;
             }
-        })
+        });
 
         earthMesh.material.set('color', graphicGL.parseColor(
             globeModel.get('baseColor')
