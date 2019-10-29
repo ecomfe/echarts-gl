@@ -460,6 +460,9 @@ echarts.extendChartView({
             prevX = x;
             columnCount++;
         }
+        if (!rowCount || columnCount === 1) {
+            mayInvalid = true;
+        }
         if (!mayInvalid) {
             return [rowCount + 1, columnCount];
         }
