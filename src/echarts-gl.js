@@ -34,7 +34,7 @@
 
 // PENDING Use a single canvas as layer or use image element?
 var echartsGl = {
-    version: '1.1.1',
+    version: '1.1.2',
     dependencies: {
         echarts: '4.1.0',
         claygl: '1.2.1'
