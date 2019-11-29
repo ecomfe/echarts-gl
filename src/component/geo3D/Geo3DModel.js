@@ -61,7 +61,7 @@ var Geo3DModel = echarts.extendComponentModel({
      */
     getFormattedLabel: function (dataIndex, status) {
         var name = this._data.getName(dataIndex);
-        var regionModel = this.getRegionModel(name);
+        var regionModel = this.getRegionModel(dataIndex);
         var formatter = regionModel.get(status === 'normal' ? ['label', 'formatter'] : ['emphasis', 'label', 'formatter']);
         if (formatter == null) {
             formatter = regionModel.get(['label', 'formatter']);
