@@ -38,22 +38,25 @@ Shader['import'](DOFCode);
 Shader['import'](edgeCode);
 
 
-var commonOutputs = {
-    color : {
-        parameters : {
-            width : function (renderer) {
-                return renderer.getWidth();
-            },
-            height : function (renderer) {
-                return renderer.getHeight();
+function makeCommonOutputs(getWidth, getHeight) {
+    return {
+        color: {
+            parameters: {
+                width: getWidth,
+                height: getHeight
             }
         }
-    }
+    };
 }
 
 var FINAL_NODES_CHAIN = ['composite', 'FXAA'];
 
 function EffectCompositor() {
+    this._width;
+    this._height;
+    this._dpr;
+
+
     this._sourceTexture = new Texture2D({
         type: Texture.HALF_FLOAT
     });
@@ -110,6 +113,51 @@ EffectCompositor.prototype.resize = function (width, height, dpr) {
     sourceTexture.height = height;
     depthTexture.width = width;
     depthTexture.height = height;
+
+    var rendererMock = {
+        getWidth: function () {
+            return width;
+        },
+        getHeight: function () {
+            return height;
+        },
+        getDevicePixelRatio: function () {
+            return dpr;
+        }
+    };
+    function wrapCallback(obj, key) {
+        if (typeof obj[key] === 'function') {
+            var oldFunc = obj[key].__original || obj[key];
+            // Use viewport width/height instead of renderer width/height
+            obj[key] = function (renderer) {
+                return oldFunc.call(this, rendererMock);
+            };
+            obj[key].__original = oldFunc;
+        }
+    }
+    this._compositor.nodes.forEach(function (node) {
+        for (var outKey in node.outputs) {
+            var parameters = node.outputs[outKey].parameters;
+            if (parameters) {
+                wrapCallback(parameters, 'width');
+                wrapCallback(parameters, 'height');
+            }
+        }
+        for (var paramKey in node.parameters) {
+            wrapCallback(node.parameters, paramKey);
+        }
+    });
+
+    this._width = width;
+    this._height = height;
+    this._dpr = dpr;
+};
+
+EffectCompositor.prototype.getWidth = function () {
+    return this._width;
+};
+EffectCompositor.prototype.getHeight = function () {
+    return this._height;
 };
 
 EffectCompositor.prototype._ifRenderNormalPass = function () {
@@ -141,10 +189,9 @@ EffectCompositor.prototype._addChainNode = function (node) {
         return;
     }
 
-    prevNode.outputs = commonOutputs;
     node.inputs.texture = prevNode.name;
     if (nextNode) {
-        node.outputs = commonOutputs;
+        node.outputs = makeCommonOutputs(this.getWidth.bind(this), this.getHeight.bind(this));
         nextNode.inputs.texture = node.name;
     }
     else {
@@ -160,7 +207,7 @@ EffectCompositor.prototype._removeChainNode = function (node) {
     }
 
     if (nextNode) {
-        prevNode.outputs = commonOutputs;
+        prevNode.outputs = makeCommonOutputs(this.getWidth.bind(this), this.getHeight.bind(this));
         nextNode.inputs.texture = prevNode.name;
     }
     else {
