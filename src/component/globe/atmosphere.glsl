@@ -26,6 +26,6 @@ varying vec3 v_PositionNormal;
 
 void main() {
     float intensity = pow(1.0 - 1.0 * dot(v_Normal, v_PositionNormal), glowPower);
-    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0) * intensity;
+    gl_FragColor = vec4(glowColor, 1.0) * intensity;
 }
 @end
