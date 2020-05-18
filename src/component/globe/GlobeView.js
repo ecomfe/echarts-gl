@@ -7,6 +7,12 @@ import SceneHelper from '../common/SceneHelper';
 import sunCalc from '../../util/sunCalc';
 import retrieve from '../../util/retrieve';
 
+import utilGLSL from 'claygl/src/shader/source/util.glsl.js';
+
+import atmosphere from './atmosphere.glsl.js';
+
+graphicGL.Shader['import'](atmosphere);
+
 export default echarts.extendComponentView({
 
     type: 'globe',
@@ -44,10 +50,30 @@ export default echarts.extendComponentView({
             renderNormal: true
         });
 
+        /**
+         * @type {clay.geometry.Mesh}
+         */
+        this._atmosphereMesh = new graphicGL.Mesh();
+        this._atmosphereGeometry = new graphicGL.SphereGeometry({
+            widthSegments: 80,
+            heightSegments: 40
+        });
+        this._atmosphereMaterial = new graphicGL.Material({
+            shader: new graphicGL.Shader(
+                graphicGL.Shader.source('ecgl.atmosphere.vertex'),
+                graphicGL.Shader.source('ecgl.atmosphere.fragment')
+            ),
+            transparent: true
+        });
+        this._atmosphereMesh.geometry = this._atmosphereGeometry;
+        this._atmosphereMesh.material = this._atmosphereMaterial;
+        this._atmosphereMesh.frontFace = graphicGL.Mesh.CW;
+
         this._lightRoot = new graphicGL.Node();
         this._sceneHelper = new SceneHelper();
         this._sceneHelper.initLight(this._lightRoot);
 
+        this.groupGL.add(this._atmosphereMesh);
         this.groupGL.add(this._earthMesh);
 
         this._control = new OrbitControl({
@@ -106,6 +132,24 @@ export default echarts.extendComponentView({
         // shrink a little
         var scale = coordSys.radius * 0.99;
         earthMesh.scale.set(scale, scale, scale);
+
+        if (globeModel.get('atmosphere.enable')) {
+            earthMesh.material.define('both', 'ATMOSPHERE_ENABLED');
+            this._atmosphereMesh.invisible = false;
+            this._atmosphereMaterial.setUniforms({
+                glowPower: globeModel.get('atmosphere.glowPower') || 6.0,
+                glowColor: globeModel.get('atmosphere.color') || '#ffffff'
+            });
+            earthMesh.material.setUniforms({
+                glowPower: globeModel.get('atmosphere.innerGlowPower') || 2.0,
+                glowColor: globeModel.get('atmosphere.color') || '#ffffff'
+            });
+            var offset = globeModel.get('atmosphere.offset') || 5;
+            this._atmosphereMesh.scale.set(scale + offset, scale + offset, scale + offset);
+        } else {
+            earthMesh.material.undefine('both', 'ATMOSPHERE_ENABLED');
+            this._atmosphereMesh.invisible = true;
+        }
 
         var diffuseTexture = earthMesh.material.setTextureImage('diffuseMap', globeModel.get('baseTexture'), api, {
             flipY: false,

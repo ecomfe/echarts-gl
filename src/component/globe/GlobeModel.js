@@ -117,6 +117,15 @@ var GlobeModel = echarts.extendComponentModel({
             }
         },
 
+        // atmosphere
+        atmosphere: {
+            enable: false,
+            offset: 5,
+            color: '#ffffff',
+            glowPower: 6.0,
+            innerGlowPower: 3.0
+        },
+
         // light
         // postEffect
         // temporalSuperSampling
