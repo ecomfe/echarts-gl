@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "build": "node build/glsl2js.js && node node_modules/webpack/bin/webpack.js && node node_modules/webpack/bin/webpack.js -p",
-    "dev": "node node_modules/webpack/bin/webpack.js -w --devtool eval-cheap-module-source-map"
+    "dev": "node node_modules/webpack/bin/webpack.js -w --devtool eval-cheap-module-source-map",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "claygl": "^1.2.1",
