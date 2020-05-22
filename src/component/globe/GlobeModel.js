@@ -123,7 +123,7 @@ var GlobeModel = echarts.extendComponentModel({
             offset: 5,
             color: '#ffffff',
             glowPower: 6.0,
-            innerGlowPower: 3.0
+            innerGlowPower: 2.0
         },
 
         // light

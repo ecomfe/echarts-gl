@@ -20,11 +20,6 @@ varying vec3 v_Tangent;
 varying vec3 v_Bitangent;
 #endif
 
-#ifdef ATMOSPHERE_ENABLED
-uniform mat4 modelViewMatrix : WORLDVIEWINVERSE;
-varying vec3 v_PositionNormal;
-#endif
-
 @import ecgl.common.vertexAnimation.header
 
 varying vec3 v_Normal;
@@ -41,10 +36,6 @@ void main()
 
     v_Normal = normalize((worldInverseTranspose * vec4(norm, 0.0)).xyz);
     v_WorldPosition = (world * vec4(pos, 1.0)).xyz;
-
-#ifdef ATMOSPHERE_ENABLED
-    v_PositionNormal = normalize((modelViewMatrix * vec4(position, 1.0)).xyz);
-#endif
 
 #ifdef VERTEX_COLOR
     v_Color = a_Color;
@@ -83,10 +74,6 @@ varying vec4 v_Color;
 varying vec3 v_Normal;
 varying vec3 v_WorldPosition;
 
-uniform vec3 glowColor;
-uniform float glowPower;
-varying vec3 v_PositionNormal;
-
 // diffuseMap, bumpMap use v_Texcoord
 uniform sampler2D diffuseMap;
 
@@ -105,6 +92,12 @@ uniform float metalness : 0.0;
 uniform float roughness : 0.5;
 
 uniform mat4 viewInverse : VIEWINVERSE;
+
+#ifdef ATMOSPHERE_ENABLED
+uniform mat4 viewTranspose: VIEWTRANSPOSE;
+uniform vec3 glowColor;
+uniform float glowPower;
+#endif
 
 #ifdef AMBIENT_LIGHT_COUNT
 @import clay.header.ambient_light
@@ -283,14 +276,13 @@ void main()
     }}
 #endif
 
-    vec3 atmosphereColor;
-#ifdef ATMOSPHERE_ENABLED
-    float atmosphereIntensity = pow(1.0  - 1.0 * dot(v_Normal, v_PositionNormal), glowPower);
-    atmosphereColor = glowColor * atmosphereIntensity;
-#endif
-
-    gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm + atmosphereColor;
+    gl_FragColor.rgb = albedoColor.rgb * diffuseTerm + specularTerm;
     gl_FragColor.a = albedoColor.a;
+
+#ifdef ATMOSPHERE_ENABLED
+    float atmoIntensity = pow(1.0 - dot(v_Normal, (viewTranspose * vec4(0.0, 0.0, 1.0, 0.0)).xyz), glowPower);
+    gl_FragColor.rgb += glowColor * atmoIntensity;
+#endif
 
 #ifdef SRGB_ENCODE
     gl_FragColor = linearTosRGB(gl_FragColor);

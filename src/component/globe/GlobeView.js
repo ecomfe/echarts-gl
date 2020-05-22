@@ -146,7 +146,8 @@ export default echarts.extendComponentView({
             });
             var offset = globeModel.get('atmosphere.offset') || 5;
             this._atmosphereMesh.scale.set(scale + offset, scale + offset, scale + offset);
-        } else {
+        }
+        else {
             earthMesh.material.undefine('both', 'ATMOSPHERE_ENABLED');
             this._atmosphereMesh.invisible = true;
         }

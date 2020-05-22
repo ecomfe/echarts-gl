@@ -71,6 +71,12 @@ uniform vec4 color : [1.0, 1.0, 1.0, 1.0];
 
 uniform mat4 viewInverse : VIEWINVERSE;
 
+#ifdef ATMOSPHERE_ENABLED
+uniform mat4 viewTranspose: VIEWTRANSPOSE;
+uniform vec3 glowColor;
+uniform float glowPower;
+#endif
+
 #ifdef AMBIENT_LIGHT_COUNT
 @import clay.header.ambient_light
 #endif
@@ -186,6 +192,11 @@ void main()
 #endif
 
     gl_FragColor.rgb *= diffuseColor;
+
+#ifdef ATMOSPHERE_ENABLED
+    float atmoIntensity = pow(1.0 - dot(v_Normal, (viewTranspose * vec4(0.0, 0.0, 1.0, 0.0)).xyz), glowPower);
+    gl_FragColor.rgb += glowColor * atmoIntensity;
+#endif
 
     @import ecgl.common.emissiveLayer.main
 

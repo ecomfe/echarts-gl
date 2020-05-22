@@ -9,7 +9,6 @@ import poissonKernel from './poissonKernel';
 import graphicGL from '../util/graphicGL';
 import NormalPass from './NormalPass';
 import EdgePass from './EdgePass';
-import Matrix4 from 'claygl/src/math/Matrix4';
 
 import effectJson from './composite.js';
 
