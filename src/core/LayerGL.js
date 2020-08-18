@@ -14,7 +14,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import Renderer from 'claygl/src/Renderer';
 import RayPicking from 'claygl/src/picking/RayPicking';
 import Texture from 'claygl/src/Texture';

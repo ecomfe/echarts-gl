@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 
 import './scatter3D/Scatter3DSeries';
 import './scatter3D/Scatter3DView';

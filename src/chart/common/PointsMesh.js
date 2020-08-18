@@ -1,6 +1,6 @@
 import graphicGL from '../../util/graphicGL';
 import verticesSortMixin from '../../util/geometry/verticesSortMixin';
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import glmatrix from 'claygl/src/dep/glmatrix';
 var vec4 = glmatrix.vec4;
 

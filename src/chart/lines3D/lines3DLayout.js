@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 var vec2 = glmatrix.vec2;

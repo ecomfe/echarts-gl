@@ -5,7 +5,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import dynamicConvertMixin from './dynamicConvertMixin';
 import trianglesSortMixin from './trianglesSortMixin';
 import Geometry from 'claygl/src/Geometry';

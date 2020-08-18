@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import ZRTextureAtlasSurface from '../../util/ZRTextureAtlasSurface';
 import LabelsMesh from '../../util/mesh/LabelsMesh';
 import retrieve from '../../util/retrieve';

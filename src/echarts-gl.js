@@ -40,7 +40,7 @@ var echartsGl = {
         claygl: '1.2.1'
     }
 };
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import clayVersion from 'claygl/src/version';
 import LayerGL from './core/LayerGL';
 import backwardCompat from './preprocessor/backwardCompat';

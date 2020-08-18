@@ -1,6 +1,6 @@
 // TODO orthographic camera
 
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
 import OrbitControl from '../../util/OrbitControl';
 import Lines3DGeometry from '../../util/geometry/Lines3D';

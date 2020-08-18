@@ -1,5 +1,5 @@
 import Geo3D from './geo3D/Geo3D';
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import layoutUtil from 'echarts/lib/util/layout';
 import ViewGL from '../core/ViewGL';
 import retrieve from '../util/retrieve';

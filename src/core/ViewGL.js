@@ -3,7 +3,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 
 import Scene from 'claygl/src/Scene';
 import ShadowMapPass from 'claygl/src/prePass/ShadowMap';

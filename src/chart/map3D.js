@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import Geo3D from '../coord/geo3D/Geo3D';
 
 import './map3D/Map3DSeries';

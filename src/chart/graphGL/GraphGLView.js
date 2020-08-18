@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import layoutUtil from 'echarts/lib/util/layout';
 import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';

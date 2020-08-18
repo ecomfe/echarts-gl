@@ -1,6 +1,6 @@
 import Cartesian3D from './grid3D/Cartesian3D';
 import Axis3D from './grid3D/Axis3D';
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import layoutUtil from 'echarts/lib/util/layout';
 import ViewGL from '../core/ViewGL';
 import retrieve from '../util/retrieve';

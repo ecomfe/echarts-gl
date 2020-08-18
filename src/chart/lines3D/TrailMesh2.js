@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
 import glmatrix from 'claygl/src/dep/glmatrix';
 

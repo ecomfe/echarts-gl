@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 
 function makeSprite(size, canvas, draw) {
     // http://simonsarris.com/blog/346-how-you-clear-your-canvas-matters

@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import formatTooltip from '../common/formatTooltip';
 import createList from '../common/createList';
 

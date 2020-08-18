@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 import axisDefault from './axis3DDefault';
 
 import OrdinalMeta from 'echarts/lib/data/OrdinalMeta';

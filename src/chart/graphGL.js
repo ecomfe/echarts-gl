@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts';
 
 import './graphGL/GraphGLSeries';
 import './graphGL/GraphGLView';
