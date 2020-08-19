@@ -52,7 +52,7 @@ function updateCartesian3D(ecModel, api) {
         }
         var data = seriesModel.getData();
         ['x', 'y', 'z'].forEach(function (coordDim) {
-            data.mapDimension(coordDim, true).forEach(function (dataDim) {
+            data.mapDimension(coordDim, 0).forEach(function (dataDim) {
                 unionDataExtents(
                     coordDim, data.getDataExtent(dataDim, true)
                 );
@@ -63,7 +63,7 @@ function updateCartesian3D(ecModel, api) {
     ['xAxis3D', 'yAxis3D', 'zAxis3D'].forEach(function (axisType) {
         ecModel.eachComponent(axisType, function (axisModel) {
             var dim = axisType.charAt(0);
-            var grid3DModel = axisModel.getReferringComponents('grid3D')[0];
+            var grid3DModel = axisModel.getReferringComponents('grid3D', { useDefault: true, enableAll: false, enableNone: false })[0];
 
             var cartesian3D = grid3DModel.coordinateSystem;
             if (cartesian3D !== this) {
@@ -133,7 +133,7 @@ var grid3DCreator = {
         var axesTypes = ['xAxis3D', 'yAxis3D', 'zAxis3D'];
         function findAxesModels(seriesModel, ecModel) {
             return axesTypes.map(function (axisType) {
-                var axisModel = seriesModel.getReferringComponents(axisType)[0];
+                var axisModel = seriesModel.getReferringComponents(axisType, { useDefault: true, enableAll: false, enableNone: false })[0];
                 if (axisModel == null) {
                     axisModel = ecModel.getComponent(axisType);
                 }
@@ -154,7 +154,7 @@ var grid3DCreator = {
             if (seriesModel.get('coordinateSystem') !== 'cartesian3D') {
                 return;
             }
-            var firstGridModel = seriesModel.getReferringComponents('grid3D')[0];
+            var firstGridModel = seriesModel.getReferringComponents('grid3D', { useDefault: true, enableAll: false, enableNone: false })[0];
 
             if (firstGridModel == null) {
                 var axesModels = findAxesModels(seriesModel, ecModel);

@@ -151,7 +151,7 @@ var geo3DCreator = {
                 if (seriesModel.type === 'series.map3D') {
                     return;
                 }
-                var geo3DModel = seriesModel.getReferringComponents('geo3D')[0];
+                var geo3DModel = seriesModel.getReferringComponents('geo3D', { useDefault: true, enableAll: false, enableNone: false })[0];
                 if (!geo3DModel) {
                     geo3DModel = ecModel.getComponent('geo3D');
                 }

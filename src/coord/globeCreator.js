@@ -118,7 +118,7 @@ var globeCreator = {
 
         ecModel.eachSeries(function (seriesModel) {
             if (seriesModel.get('coordinateSystem') === 'globe') {
-                var globeModel = seriesModel.getReferringComponents('globe')[0];
+                var globeModel = seriesModel.getReferringComponents('globe', { useDefault: true, enableAll: false, enableNone: false })[0];
                 if (!globeModel) {
                     globeModel = ecModel.getComponent('globe');
                 }
