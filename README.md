@@ -1,16 +1,11 @@
 # ECHARTS-GL
 
-<a href="http://echarts.baidu.com">
-    <img style="vertical-align: top;" src="./asset/logo.png?raw=true" alt="logo" height="50px">
-</a>
-
-
-ECharts-GL is an extension pack of [echarts](http://echarts.baidu.com), which providing 3D plots, globe visualization and WebGL acceleration.
+ECharts-GL is an extension pack of [Apache ECharts (incubating)](http://echarts.apache.org/), which providing 3D plots, globe visualization and WebGL acceleration.
 
 
 ## Docs
 
-+ [Option Manual](https://ecomfe.github.io/echarts-doc/public/cn/option-gl.html)
++ [Option Manual](https://echarts.apache.org/zh/option-gl.html)
 
 + [Gallery](http://gallery.echartsjs.com/explore.html#tags=echarts-gl)
 
@@ -60,7 +55,7 @@ chart.setOption({
 
 Built on top of
 
-+ [ECharts](https://github.com/ecomfe/echarts)
++ [Apache ECharts (incubating)](http://echarts.apache.org/)
 
 + Canvas library [zrender](https://github.com/ecomfe/zrender)
 
