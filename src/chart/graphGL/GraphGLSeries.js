@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import createGraphFromNodeEdge from './createGraphFromNodeEdge';
 import formatUtil from '../../util/format';
 
@@ -129,7 +129,7 @@ var GraphSeries = echarts.extendSeriesModel({
     _updateCategoriesData: function () {
         var categories = (this.option.categories || []).map(function (category) {
             // Data must has value
-            return category.value != null ? category : echarts.util.extend({
+            return category.value != null ? category : Object.assign({
                 value: 0
             }, category);
         });

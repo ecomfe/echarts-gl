@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import componentViewControlMixin from '../common/componentViewControlMixin';
 import componentPostEffectMixin from '../common/componentPostEffectMixin';
 import componentLightMixin from '../common/componentLightMixin';
@@ -119,7 +119,7 @@ var GlobeModel = echarts.extendComponentModel({
 
         // atmosphere
         atmosphere: {
-            enable: false,
+            show: false,
             offset: 5,
             color: '#ffffff',
             glowPower: 6.0,

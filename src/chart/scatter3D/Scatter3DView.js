@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
 import format from '../../util/format';

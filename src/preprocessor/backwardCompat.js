@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 
 var GL_SERIES = ['bar3D', 'line3D', 'map3D', 'scatter3D', 'surface', 'lines3D', 'scatterGL', 'scatter3D'];
 
@@ -34,7 +34,7 @@ function removeTextStyleInAxis(axesOpt) {
     echarts.util.each(axesOpt, function (axisOpt) {
         if (axisOpt.axisLabel) {
             var labelOpt = axisOpt.axisLabel;
-            echarts.util.extend(labelOpt, labelOpt.textStyle);
+            Object.assign(labelOpt, labelOpt.textStyle);
             labelOpt.textStyle = null;
         }
     });

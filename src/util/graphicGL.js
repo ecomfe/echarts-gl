@@ -6,7 +6,7 @@ import Shader from 'claygl/src/Shader';
 import Material from 'claygl/src/Material';
 import Node3D from 'claygl/src/Node';
 import Geometry from 'claygl/src/Geometry';
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import Scene from 'claygl/src/Scene';
 import LRUCache from 'zrender/lib/core/LRU';
 import textureUtil from 'claygl/src/util/texture';
@@ -57,7 +57,7 @@ import realisticGLSL from './shader/realistic.glsl.js';
 import hatchingGLSL from './shader/hatching.glsl.js';
 import shadowGLSL from './shader/shadow.glsl.js';
 
-echarts.util.extend(Node3D.prototype, animatableMixin);
+Object.assign(Node3D.prototype, animatableMixin);
 
 Shader.import(utilGLSL);
 Shader.import(prezGLSL);
@@ -486,13 +486,16 @@ graphicGL.getShadowResolution = function (shadowQuality) {
 /**
  * Shading utilities
  */
-graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic', 'hatching'];
+graphicGL.COMMON_SHADERS = ['lambert', 'color', 'realistic', 'hatching', 'shadow'];
 
 /**
  * Create shader including vertex and fragment
  * @param {string} prefix.
  */
 graphicGL.createShader = function (prefix) {
+    if (prefix === 'ecgl.shadow') {
+        prefix = 'ecgl.displayShadow';
+    }
     var vertexShaderStr = Shader.source(prefix + '.vertex');
     var fragmentShaderStr = Shader.source(prefix + '.fragment');
     if (!vertexShaderStr) {

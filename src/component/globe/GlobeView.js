@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 
 import graphicGL from '../../util/graphicGL';
 import OrbitControl from '../../util/OrbitControl';
@@ -7,7 +7,7 @@ import SceneHelper from '../common/SceneHelper';
 import sunCalc from '../../util/sunCalc';
 import retrieve from '../../util/retrieve';
 
-import utilGLSL from 'claygl/src/shader/source/util.glsl.js';
+import 'claygl/src/shader/source/util.glsl.js';
 
 import atmosphere from './atmosphere.glsl.js';
 
@@ -133,7 +133,7 @@ export default echarts.extendComponentView({
         var scale = coordSys.radius * 0.99;
         earthMesh.scale.set(scale, scale, scale);
 
-        if (globeModel.get('atmosphere.enable')) {
+        if (globeModel.get('atmosphere.show')) {
             earthMesh.material.define('both', 'ATMOSPHERE_ENABLED');
             this._atmosphereMesh.invisible = false;
             this._atmosphereMaterial.setUniforms({

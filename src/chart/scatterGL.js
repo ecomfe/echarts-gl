@@ -1,12 +1,9 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 
 import './scatterGL/ScatterGLSeries';
 import './scatterGL/ScatterGLView';
 
-import symbolVisual from 'echarts/lib/visual/symbol';
 import opacityVisual from './common/opacityVisual';
-
-echarts.registerVisual(symbolVisual('scatterGL', 'circle', null));
 
 echarts.registerVisual(opacityVisual('scatterGL'));
 

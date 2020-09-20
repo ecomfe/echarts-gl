@@ -1,5 +1,5 @@
-import echarts from 'echarts/lib/echarts';
-import layoutUtil from 'echarts/lib/util/layout';
+import * as echarts from 'echarts/esm/echarts';
+import {getLayoutRect} from 'echarts/esm/util/layout';
 import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';
 import Lines2DGeometry from '../../util/geometry/Lines2D';
@@ -286,7 +286,7 @@ echarts.extendChartView({
         var graph = seriesModel.getGraph();
 
         var boxLayoutOption = seriesModel.getBoxLayoutParams();
-        var viewport = layoutUtil.getLayoutRect(boxLayoutOption, {
+        var viewport = getLayoutRect(boxLayoutOption, {
             width: api.getWidth(),
             height: api.getHeight()
         });

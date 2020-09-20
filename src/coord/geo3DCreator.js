@@ -1,6 +1,6 @@
 import Geo3D from './geo3D/Geo3D';
-import echarts from 'echarts/lib/echarts';
-import layoutUtil from 'echarts/lib/util/layout';
+import * as echarts from 'echarts/esm/echarts';
+import {getLayoutRect} from 'echarts/esm/util/layout';
 import ViewGL from '../core/ViewGL';
 import retrieve from '../util/retrieve';
 
@@ -8,7 +8,7 @@ function resizeGeo3D(geo3DModel, api) {
     // Use left/top/width/height
     var boxLayoutOption = geo3DModel.getBoxLayoutParams();
 
-    var viewport = layoutUtil.getLayoutRect(boxLayoutOption, {
+    var viewport = getLayoutRect(boxLayoutOption, {
         width: api.getWidth(),
         height: api.getHeight()
     });
@@ -151,7 +151,7 @@ var geo3DCreator = {
                 if (seriesModel.type === 'series.map3D') {
                     return;
                 }
-                var geo3DModel = seriesModel.getReferringComponents('geo3D')[0];
+                var geo3DModel = seriesModel.getReferringComponents('geo3D').models[0];
                 if (!geo3DModel) {
                     geo3DModel = ecModel.getComponent('geo3D');
                 }

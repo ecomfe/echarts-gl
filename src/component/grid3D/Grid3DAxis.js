@@ -1,8 +1,11 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
+import {createTextStyle} from 'echarts/esm/label/labelStyle';
+
 import graphicGL from '../../util/graphicGL';
 import Lines3DGeometry from '../../util/geometry/Lines3D';
 import retrieve from '../../util/retrieve';
 import LabelsMesh from '../../util/mesh/LabelsMesh';
+
 var firstNotNull = retrieve.firstNotNull;
 
 var dimIndicesMap = {
@@ -131,25 +134,27 @@ Grid3DAxis.prototype.update = function (
             }
             var textColor = firstNotNull(itemTextStyleModel.get('color'), axisLineColor);
 
-            var textEl = new echarts.graphic.Text();
-            echarts.graphic.setTextStyle(textEl.style, itemTextStyleModel, {
-                text: formattedLabel,
-                textFill: typeof textColor === 'function'
-                    ? textColor(
-                        // (1) In category axis with data zoom, tick is not the original
-                        // index of axis.data. So tick should not be exposed to user
-                        // in category axis.
-                        // (2) Compatible with previous version, which always returns labelStr.
-                        // But in interval scale labelStr is like '223,445', which maked
-                        // user repalce ','. So we modify it to return original val but remain
-                        // it as 'string' to avoid error in replacing.
-                        axis.type === 'category' ? rawLabel : axis.type === 'value' ? tickValue + '' : tickValue,
-                        i
-                    )
-                    : textColor,
-                textVerticalAlign: 'top',
-                textAlign: 'left'
+            var textEl = new echarts.graphic.Text({
+                style: createTextStyle(itemTextStyleModel, {
+                    text: formattedLabel,
+                    fill: typeof textColor === 'function'
+                        ? textColor(
+                            // (1) In category axis with data zoom, tick is not the original
+                            // index of axis.data. So tick should not be exposed to user
+                            // in category axis.
+                            // (2) Compatible with previous version, which always returns labelStr.
+                            // But in interval scale labelStr is like '223,445', which maked
+                            // user repalce ','. So we modify it to return original val but remain
+                            // it as 'string' to avoid error in replacing.
+                            axis.type === 'category' ? rawLabel : axis.type === 'value' ? tickValue + '' : tickValue,
+                            i
+                        )
+                        : textColor,
+                    verticalAlign: 'top',
+                    align: 'left'
+                })
             });
+
             var coords = axisLabelSurface.add(textEl);
             var rect = textEl.getBoundingRect();
             labelsGeo.addSprite(p, [rect.width * dpr, rect.height * dpr], coords);
@@ -170,13 +175,14 @@ Grid3DAxis.prototype.update = function (
         p[idx] = p[idx] = (extent[0] + extent[1]) / 2;
         p[otherIdx] = axisModel.get('nameGap');
 
-        var textEl = new echarts.graphic.Text();
-        echarts.graphic.setTextStyle(textEl.style, nameTextStyleModel, {
-            text: axisModel.get('name'),
-            textFill: labelColor,
-            textStroke: strokeColor,
-            lineWidth: lineWidth
+        var textEl = new echarts.graphic.Text({
+            style: createTextStyle(nameTextStyleModel, {
+                textFill: labelColor,
+                stroke: strokeColor,
+                lineWidth: lineWidth
+            })
         });
+
         var coords = axisLabelSurface.add(textEl);
         var rect = textEl.getBoundingRect();
         labelsGeo.addSprite(p, [rect.width * dpr, rect.height * dpr], coords);

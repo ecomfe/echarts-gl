@@ -1,10 +1,12 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
 import format from '../../util/format';
 import BarsGeometry from '../../util/geometry/Bars3DGeometry';
 import LabelsBuilder from '../../component/common/LabelsBuilder';
 import glmatrix from 'claygl/src/dep/glmatrix';
+import {getItemVisualColor, getItemVisualOpacity} from '../../util/visual';
+
 var vec3 = glmatrix.vec3;
 
 export default echarts.extendChartView({
@@ -133,9 +135,9 @@ export default echarts.extendChartView({
             if (!data.hasValue(idx)) {
                 return;
             }
-            var color = data.getItemVisual(idx, 'color');
+            var color = getItemVisualColor(data, idx);
 
-            var opacity = data.getItemVisual(idx, 'opacity');
+            var opacity = getItemVisualOpacity(data, idx);
             if (opacity == null) {
                 opacity = 1;
             }
@@ -251,11 +253,11 @@ export default echarts.extendChartView({
         var emphasisColor = emphasisItemStyleModel.get('color');
         var emphasisOpacity = emphasisItemStyleModel.get('opacity');
         if (emphasisColor == null) {
-            var color = data.getItemVisual(dataIndex, 'color');
+            var color = getItemVisualColor(data, dataIndex);
             emphasisColor = echarts.color.lift(color, -0.4);
         }
         if (emphasisOpacity == null) {
-            emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
+            emphasisOpacity = getItemVisualOpacity(data, dataIndex);
         }
         var colorArr = graphicGL.parseColor(emphasisColor);
         colorArr[3] *= emphasisOpacity;
@@ -275,8 +277,8 @@ export default echarts.extendChartView({
             return;
         }
 
-        var color = data.getItemVisual(dataIndex, 'color');
-        var opacity = data.getItemVisual(dataIndex, 'opacity');
+        var color = getItemVisualColor(data, dataIndex);
+        var opacity = getItemVisualOpacity(data, dataIndex);
 
         var colorArr = graphicGL.parseColor(color);
         colorArr[3] *= opacity;

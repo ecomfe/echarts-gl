@@ -1,5 +1,5 @@
 import Mapbox3D from './mapbox3D/Mapbox3D';
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import createMapService3DCreator from './mapServiceCommon/createMapService3DCreator';
 
 var mapbox3DCreator = createMapService3DCreator('mapbox3D', Mapbox3D, function (mapbox3DList) {

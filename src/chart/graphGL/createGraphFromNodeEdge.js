@@ -1,6 +1,6 @@
-import echarts from 'echarts/lib/echarts';
-import Graph from 'echarts/lib/data/Graph';
-import linkList from 'echarts/lib/data/helper/linkList';
+import * as echarts from 'echarts/esm/echarts';
+import Graph from 'echarts/esm/data/Graph';
+import linkList from 'echarts/esm/data/helper/linkList';
 import retrieve from '../../util/retrieve';
 
 export default function (nodes, edges, hostModel, directed, beforeLink) {

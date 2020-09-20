@@ -1,11 +1,8 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 
 import './graphGL/GraphGLSeries';
 import './graphGL/GraphGLView';
-import symbolVisual from 'echarts/lib/visual/symbol';
 import opacityVisual from './common/opacityVisual';
-
-echarts.registerVisual(symbolVisual('graphGL', 'circle', null));
 
 echarts.registerVisual(opacityVisual('graphGL'));
 

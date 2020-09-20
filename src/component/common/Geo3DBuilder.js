@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import graphicGL from '../../util/graphicGL';
 import earcut from '../../util/earcut';
 import LinesGeo from '../../util/geometry/Lines3D';
@@ -150,7 +150,7 @@ Geo3DBuilder.prototype = {
                 // Render normal in normal pass
                 renderNormal: true
             });
-            echarts.util.extend(mesh.geometry, trianglesSortMixin);
+            Object.assign(mesh.geometry, trianglesSortMixin);
             return mesh;
         }
 

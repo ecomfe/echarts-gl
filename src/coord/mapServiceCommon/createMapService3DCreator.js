@@ -83,7 +83,7 @@ export default function (serviceComponentType, ServiceCtor, afterCreate) {
 
             ecModel.eachSeries(function (seriesModel) {
                 if (seriesModel.get('coordinateSystem') === serviceComponentType) {
-                    var mapService3DModel = seriesModel.getReferringComponents(serviceComponentType)[0];
+                    var mapService3DModel = seriesModel.getReferringComponents(serviceComponentType).models[0];
                     if (!mapService3DModel) {
                         mapService3DModel = ecModel.getComponent(serviceComponentType);
                     }

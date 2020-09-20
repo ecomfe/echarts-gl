@@ -1,11 +1,9 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 
 import './scatter3D/Scatter3DSeries';
 import './scatter3D/Scatter3DView';
 
-import symbolVisual from 'echarts/lib/visual/symbol';
 import opacityVisual from './common/opacityVisual';
-echarts.registerVisual(symbolVisual('scatter3D', 'circle', null));
 
 echarts.registerVisual(opacityVisual('scatter3D'));
 

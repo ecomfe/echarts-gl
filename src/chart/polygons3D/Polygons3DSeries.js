@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import componentShadingMixin from '../../component/common/componentShadingMixin';
 
 function transformPolygon(coordSys, poly) {

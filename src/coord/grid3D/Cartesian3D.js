@@ -1,9 +1,13 @@
-import echarts from 'echarts/lib/echarts';
-import Cartesian from 'echarts/lib/coord/cartesian/Cartesian';
+import * as echarts from 'echarts/esm/echarts';
+import Cartesian from 'echarts/esm/coord/cartesian/Cartesian';
 
 function Cartesian3D(name) {
 
     Cartesian.call(this, name);
+
+    this.type = 'cartesian3D';
+
+    this.dimensions = ['x', 'y', 'z'];
 
     this.size = [0, 0, 0];
 }
@@ -12,9 +16,6 @@ Cartesian3D.prototype = {
 
     constructor: Cartesian3D,
 
-    type: 'cartesian3D',
-
-    dimensions: ['x', 'y', 'z'],
 
     model: null,
 

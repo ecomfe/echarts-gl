@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 
 export default function (seriesModel, dims, source) {
     source = source || seriesModel.getSource();
@@ -9,7 +9,7 @@ export default function (seriesModel, dims, source) {
         dimensionsDefine: source.dimensionsDefine || seriesModel.get('dimensions'),
         encodeDefine: source.encodeDefine || seriesModel.get('encode'),
         coordDimensions: coordSysDimensions.map(function (dim) {
-            var axis3DModel = seriesModel.getReferringComponents(dim + 'Axis3D')[0];
+            var axis3DModel = seriesModel.getReferringComponents(dim + 'Axis3D').models[0];
             return {
                 type: (axis3DModel && axis3DModel.get('type') === 'category') ? 'ordinal' : 'float',
                 name: dim
@@ -21,7 +21,7 @@ export default function (seriesModel, dims, source) {
     if (seriesModel.get('coordinateSystem') === 'cartesian3D') {
         dimensions.forEach(function (dimInfo) {
             if (coordSysDimensions.indexOf(dimInfo.coordDim) >= 0) {
-                var axis3DModel = seriesModel.getReferringComponents(dimInfo.coordDim + 'Axis3D')[0];
+                var axis3DModel = seriesModel.getReferringComponents(dimInfo.coordDim + 'Axis3D').models[0];
                 if (axis3DModel && axis3DModel.get('type') === 'category') {
                     dimInfo.ordinalMeta = axis3DModel.getOrdinalMeta();
                 }

@@ -3,7 +3,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 
 import Scene from 'claygl/src/Scene';
 import ShadowMapPass from 'claygl/src/prePass/ShadowMap';
@@ -448,6 +448,6 @@ ViewGL.prototype.removeAll = function (node3D) {
     this.rootNode.removeAll(node3D);
 };
 
-echarts.util.extend(ViewGL.prototype, notifier);
+Object.assign(ViewGL.prototype, notifier);
 
 export default ViewGL;

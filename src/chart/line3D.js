@@ -1,12 +1,9 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 
 import './line3D/Line3DSeries';
 import './line3D/Line3DView';
 
-import symbolVisual from 'echarts/lib/visual/symbol';
 import opacityVisual from './common/opacityVisual';
-
-echarts.registerVisual(symbolVisual('line3D', 'circle', null));
 
 echarts.registerVisual(opacityVisual('line3D'));
 

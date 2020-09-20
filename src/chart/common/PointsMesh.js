@@ -1,6 +1,6 @@
 import graphicGL from '../../util/graphicGL';
 import verticesSortMixin from '../../util/geometry/verticesSortMixin';
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import glmatrix from 'claygl/src/dep/glmatrix';
 var vec4 = glmatrix.vec4;
 
@@ -18,7 +18,7 @@ var PointsMesh = graphicGL.Mesh.extend(function () {
             prevSize: new graphicGL.Geometry.Attribute('prevSize', 'float', 1)
         }
     });
-    echarts.util.extend(geometry, verticesSortMixin);
+    Object.assign(geometry, verticesSortMixin);
 
     var material = new graphicGL.Material({
         shader: graphicGL.createShader('ecgl.sdfSprite'),

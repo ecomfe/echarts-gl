@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 var isDimensionStacked = echarts.helper.dataStack.isDimensionStacked;

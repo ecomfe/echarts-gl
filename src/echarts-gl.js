@@ -40,7 +40,7 @@ var echartsGl = {
         claygl: '1.2.1'
     }
 };
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import clayVersion from 'claygl/src/version';
 import LayerGL from './core/LayerGL';
 import backwardCompat from './preprocessor/backwardCompat';
@@ -195,9 +195,8 @@ EChartsGL.prototype.update = function (ecModel, api) {
 
 // Hack original getRenderedCanvas. Will removed after new echarts released
 // TODO
-var oldInit = echarts.init;
-echarts.init = function () {
-    var chart = oldInit.apply(this, arguments);
+
+echarts.registerPostInit(function (chart) {
     chart.getZr().painter.getRenderedCanvas = function (opts) {
         opts = opts || {};
         if (this._singleCanvas) {
@@ -260,9 +259,7 @@ echarts.init = function () {
 
         return canvas;
     };
-    return chart;
-};
-
+});
 
 echarts.registerPostUpdate(function (ecModel, api) {
     var zr = api.getZr();

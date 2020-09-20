@@ -1,4 +1,4 @@
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
 import glmatrix from 'claygl/src/dep/glmatrix';
@@ -114,7 +114,7 @@ echarts.extendChartView({
         mesh.geometry.createAttribute('prevPosition', 'float', 3);
         mesh.geometry.createAttribute('prevNormal', 'float', 3);
 
-        echarts.util.extend(mesh.geometry, trianglesSortMixin);
+        Object.assign(mesh.geometry, trianglesSortMixin);
 
         return mesh;
     },

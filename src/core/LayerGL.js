@@ -14,7 +14,7 @@
  * @author Yi Shen(http://github.com/pissang)
  */
 
-import echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/esm/echarts';
 import Renderer from 'claygl/src/Renderer';
 import RayPicking from 'claygl/src/picking/RayPicking';
 import Texture from 'claygl/src/Texture';
@@ -608,7 +608,8 @@ LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEven
     var elChangedInMouseMove = false;
 
     var eventProxy = this._zrEventProxy;
-    eventProxy.position = [originalEvent.offsetX, originalEvent.offsetY];
+    eventProxy.x = originalEvent.offsetX;
+    eventProxy.y = originalEvent.offsetY;
     eventProxy.update();
 
     var targetInfo = {
@@ -662,6 +663,6 @@ LayerGL.prototype._dispatchToView = function (eventName, e) {
     }
 };
 
-echarts.util.extend(LayerGL.prototype, notifier);
+Object.assign(LayerGL.prototype, notifier);
 
 export default LayerGL;

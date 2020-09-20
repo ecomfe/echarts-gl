@@ -1,7 +1,7 @@
 import Cartesian3D from './grid3D/Cartesian3D';
 import Axis3D from './grid3D/Axis3D';
-import echarts from 'echarts/lib/echarts';
-import layoutUtil from 'echarts/lib/util/layout';
+import * as echarts from 'echarts/esm/echarts';
+import {getLayoutRect} from 'echarts/esm/util/layout';
 import ViewGL from '../core/ViewGL';
 import retrieve from '../util/retrieve';
 
@@ -9,7 +9,7 @@ function resizeCartesian3D(grid3DModel, api) {
     // Use left/top/width/height
     var boxLayoutOption = grid3DModel.getBoxLayoutParams();
 
-    var viewport = layoutUtil.getLayoutRect(boxLayoutOption, {
+    var viewport = getLayoutRect(boxLayoutOption, {
         width: api.getWidth(),
         height: api.getHeight()
     });
@@ -52,7 +52,7 @@ function updateCartesian3D(ecModel, api) {
         }
         var data = seriesModel.getData();
         ['x', 'y', 'z'].forEach(function (coordDim) {
-            data.mapDimension(coordDim, true).forEach(function (dataDim) {
+            data.mapDimensionsAll(coordDim, true).forEach(function (dataDim) {
                 unionDataExtents(
                     coordDim, data.getDataExtent(dataDim, true)
                 );
@@ -63,7 +63,7 @@ function updateCartesian3D(ecModel, api) {
     ['xAxis3D', 'yAxis3D', 'zAxis3D'].forEach(function (axisType) {
         ecModel.eachComponent(axisType, function (axisModel) {
             var dim = axisType.charAt(0);
-            var grid3DModel = axisModel.getReferringComponents('grid3D')[0];
+            var grid3DModel = axisModel.getReferringComponents('grid3D').models[0];
 
             var cartesian3D = grid3DModel.coordinateSystem;
             if (cartesian3D !== this) {
@@ -133,7 +133,7 @@ var grid3DCreator = {
         var axesTypes = ['xAxis3D', 'yAxis3D', 'zAxis3D'];
         function findAxesModels(seriesModel, ecModel) {
             return axesTypes.map(function (axisType) {
-                var axisModel = seriesModel.getReferringComponents(axisType)[0];
+                var axisModel = seriesModel.getReferringComponents(axisType).models[0];
                 if (axisModel == null) {
                     axisModel = ecModel.getComponent(axisType);
                 }
@@ -154,7 +154,7 @@ var grid3DCreator = {
             if (seriesModel.get('coordinateSystem') !== 'cartesian3D') {
                 return;
             }
-            var firstGridModel = seriesModel.getReferringComponents('grid3D')[0];
+            var firstGridModel = seriesModel.getReferringComponents('grid3D').models[0];
 
             if (firstGridModel == null) {
                 var axesModels = findAxesModels(seriesModel, ecModel);
