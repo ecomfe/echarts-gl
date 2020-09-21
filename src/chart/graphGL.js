@@ -3,8 +3,14 @@ import * as echarts from 'echarts/esm/echarts';
 import './graphGL/GraphGLSeries';
 import './graphGL/GraphGLView';
 
+function normalize(a) {
+    if (!(a instanceof Array)) {
+        a = [a, a];
+    }
+    return a;
+}
 echarts.registerVisual(function (ecModel) {
-    var paletteScope = {};
+    const paletteScope = {};
     ecModel.eachSeriesByType('graphGL', function (seriesModel) {
         var categoriesData = seriesModel.getCategoriesData();
         var data = seriesModel.getData();
@@ -13,27 +19,47 @@ echarts.registerVisual(function (ecModel) {
 
         categoriesData.each(function (idx) {
             var name = categoriesData.getName(idx);
-            categoryNameIdxMap[name] = idx;
-
+            // Add prefix to avoid conflict with Object.prototype.
+            categoryNameIdxMap['ec-' + name] = idx;
             var itemModel = categoriesData.getItemModel(idx);
-            var color = itemModel.get('itemStyle.color')
-                || seriesModel.getColorFromPalette(name, paletteScope);
-            categoriesData.setItemVisual(idx, 'color', color);
+
+            var style = itemModel.getModel('itemStyle').getItemStyle();
+            if (!style.fill) {
+                // Get color from palette.
+                style.fill = seriesModel.getColorFromPalette(name, paletteScope);
+            }
+            categoriesData.setItemVisual(idx, 'style', style);
+
+            var symbolVisualList = ['symbol', 'symbolSize', 'symbolKeepAspect'];
+
+            for (let i = 0; i < symbolVisualList.length; i++) {
+                var symbolVisual = itemModel.getShallow(symbolVisualList[i], true);
+                if (symbolVisual != null) {
+                    categoriesData.setItemVisual(idx, symbolVisualList[i], symbolVisual);
+                }
+            }
         });
 
         // Assign category color to visual
         if (categoriesData.count()) {
             data.each(function (idx) {
                 var model = data.getItemModel(idx);
-                var category = model.getShallow('category');
-                if (category != null) {
-                    if (typeof category === 'string') {
-                        category = categoryNameIdxMap[category];
+                let categoryIdx = model.getShallow('category');
+                if (categoryIdx != null) {
+                    if (typeof categoryIdx === 'string') {
+                        categoryIdx = categoryNameIdxMap['ec-' + categoryIdx];
                     }
-                    if (!data.getItemVisual(idx, 'color', true)) {
+
+                    var categoryStyle = categoriesData.getItemVisual(categoryIdx, 'style');
+                    var style = data.ensureUniqueItemVisual(idx, 'style');
+                    echarts.util.extend(style, categoryStyle);
+
+                    var visualList = ['symbol', 'symbolSize', 'symbolKeepAspect'];
+
+                    for (let i = 0; i < visualList.length; i++) {
                         data.setItemVisual(
-                            idx, 'color',
-                            categoriesData.getItemVisual(category, 'color')
+                            idx, visualList[i],
+                            categoriesData.getItemVisual(categoryIdx, visualList[i])
                         );
                     }
                 }
@@ -43,33 +69,53 @@ echarts.registerVisual(function (ecModel) {
 });
 
 echarts.registerVisual(function (ecModel) {
+
     ecModel.eachSeriesByType('graphGL', function (seriesModel) {
         var graph = seriesModel.getGraph();
         var edgeData = seriesModel.getEdgeData();
+        var symbolType = normalize(seriesModel.get('edgeSymbol'));
+        var symbolSize = normalize(seriesModel.get('edgeSymbolSize'));
 
-        var colorQuery = 'lineStyle.color'.split('.');
-        var opacityQuery = 'lineStyle.opacity'.split('.');
+        edgeData.setVisual('drawType', 'stroke');
 
-        edgeData.setVisual('color', seriesModel.get(colorQuery));
-        edgeData.setVisual('opacity', seriesModel.get(opacityQuery));
+        // var colorQuery = ['lineStyle', 'color'];
+        // var opacityQuery = ['lineStyle', 'opacity'];
+
+        edgeData.setVisual('fromSymbol', symbolType && symbolType[0]);
+        edgeData.setVisual('toSymbol', symbolType && symbolType[1]);
+        edgeData.setVisual('fromSymbolSize', symbolSize && symbolSize[0]);
+        edgeData.setVisual('toSymbolSize', symbolSize && symbolSize[1]);
+
+        edgeData.setVisual('style', seriesModel.getModel('lineStyle').getLineStyle());
 
         edgeData.each(function (idx) {
             var itemModel = edgeData.getItemModel(idx);
             var edge = graph.getEdgeByIndex(idx);
+            var symbolType = normalize(itemModel.getShallow('symbol', true));
+            var symbolSize = normalize(itemModel.getShallow('symbolSize', true));
             // Edge visual must after node visual
-            var color = itemModel.get(colorQuery);
-            var opacity = itemModel.get(opacityQuery);
-            switch (color) {
-                case 'source':
-                    color = edge.node1.getVisual('color');
+            var style = itemModel.getModel('lineStyle').getLineStyle();
+
+            var existsStyle = edgeData.ensureUniqueItemVisual(idx, 'style');
+            echarts.util.extend(existsStyle, style);
+
+            switch (existsStyle.stroke) {
+                case 'source': {
+                    var nodeStyle = edge.node1.getVisual('style');
+                    existsStyle.stroke = nodeStyle && nodeStyle.fill;
                     break;
-                case 'target':
-                    color = edge.node2.getVisual('color');
+                }
+                case 'target': {
+                    var nodeStyle = edge.node2.getVisual('style');
+                    existsStyle.stroke = nodeStyle && nodeStyle.fill;
                     break;
+                }
             }
 
-            edge.setVisual('color', color);
-            edge.setVisual('opacity', opacity);
+            symbolType[0] && edge.setVisual('fromSymbol', symbolType[0]);
+            symbolType[1] && edge.setVisual('toSymbol', symbolType[1]);
+            symbolSize[0] && edge.setVisual('fromSymbolSize', symbolSize[0]);
+            symbolSize[1] && edge.setVisual('toSymbolSize', symbolSize[1]);
         });
     });
 });

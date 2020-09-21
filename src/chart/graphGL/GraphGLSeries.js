@@ -8,6 +8,8 @@ var GraphSeries = echarts.extendSeriesModel({
 
     visualStyleAccessPath: 'itemStyle',
 
+    hasSymbolVisual: true,
+
     init: function (option) {
         GraphSeries.superApply(this, 'init', arguments);
 
@@ -47,9 +49,9 @@ var GraphSeries = echarts.extendSeriesModel({
         function beforeLink(nodeData, edgeData) {
             // Overwrite nodeData.getItemModel to
             nodeData.wrapMethod('getItemModel', function (model) {
-                var categoriesModels = self._categoriesModels;
-                var categoryIdx = model.getShallow('category');
-                var categoryModel = categoriesModels[categoryIdx];
+                const categoriesModels = self._categoriesModels;
+                const categoryIdx = model.getShallow('category');
+                const categoryModel = categoriesModels[categoryIdx];
                 if (categoryModel) {
                     categoryModel.parentModel = model.parentModel;
                     model.parentModel = categoryModel;
@@ -57,24 +59,32 @@ var GraphSeries = echarts.extendSeriesModel({
                 return model;
             });
 
-            var edgeLabelModel = self.getModel('edgeLabel');
-            // For option `edgeLabel` can be found by label.xxx.xxx on item mode.
-            var fakeSeriesModel = new echarts.Model(
-                { label: edgeLabelModel.option },
-                edgeLabelModel.parentModel,
-                ecModel
-            );
+            // TODO Inherit resolveParentPath by default in Model#getModel?
+            const oldGetModel = ecModel.getModel([]).getModel;
+            function newGetModel(path, parentModel) {
+                const model = oldGetModel.call(this, path, parentModel);
+                model.resolveParentPath = resolveParentPath;
+                return model;
+            }
 
             edgeData.wrapMethod('getItemModel', function (model) {
-                model.customizeGetParent(edgeGetParent);
+                model.resolveParentPath = resolveParentPath;
+                model.getModel = newGetModel;
                 return model;
             });
 
-            function edgeGetParent(path) {
-                path = this.parsePath(path);
-                return (path && path[0] === 'label')
-                    ? fakeSeriesModel
-                    : this.parentModel;
+            function resolveParentPath(pathArr) {
+                if (pathArr && (pathArr[0] === 'label' || pathArr[1] === 'label')) {
+                    const newPathArr = pathArr.slice();
+                    if (pathArr[0] === 'label') {
+                        newPathArr[0] = 'edgeLabel';
+                    }
+                    else if (pathArr[1] === 'label') {
+                        newPathArr[1] = 'edgeLabel';
+                    }
+                    return newPathArr;
+                }
+                return pathArr;
             }
         }
     },

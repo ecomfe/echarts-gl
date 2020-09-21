@@ -78,6 +78,9 @@ EChartsGL.prototype.update = function (ecModel, api) {
     }
 
     function getLayerGL(model) {
+        // Disable auto sleep in gl layer.
+        zr.setSleepAfterStill(0);
+
         var zlevel;
         // Host on coordinate system.
         if (model.coordinateSystem && model.coordinateSystem.model) {
