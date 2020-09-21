@@ -2,6 +2,7 @@ import * as echarts from 'echarts/esm/echarts';
 import ZRTextureAtlasSurface from '../../util/ZRTextureAtlasSurface';
 import LabelsMesh from '../../util/mesh/LabelsMesh';
 import retrieve from '../../util/retrieve';
+import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 import {createTextStyle} from 'echarts/esm/label/labelStyle';
 
@@ -137,10 +138,10 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
         var textEl = new echarts.graphic.Text({
             style: createTextStyle(textStyleModel, {
                 text: text,
-                fill: textStyleModel.get('color') || data.getItemVisual(dataIndex, 'color') || '#000',
+                fill: textStyleModel.get('color') || getItemVisualColor(data, dataIndex) || '#000',
                 align: 'left',
                 verticalAlign: 'top',
-                opacity: retrieve.firstNotNull(textStyleModel.get('opacity'), data.getItemVisual(dataIndex, 'opacity'), 1)
+                opacity: retrieve.firstNotNull(textStyleModel.get('opacity'), getItemVisualOpacity(data, dataIndex), 1)
             })
         });
 

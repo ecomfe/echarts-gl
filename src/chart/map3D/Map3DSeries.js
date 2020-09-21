@@ -24,7 +24,7 @@ var Map3DSeries = echarts.extendSeriesModel({
 
     coordinateSystem: null,
 
-    visualColorAccessPath: 'itemStyle.color',
+    visualStyleAccessPath: 'itemStyle',
 
     optionUpdated: function (newOpt) {
         newOpt = newOpt || {};
@@ -66,7 +66,7 @@ var Map3DSeries = echarts.extendSeriesModel({
     getInitialData: function (option) {
         option.data = this.getFilledRegions(option.data, option.map);
 
-        var dimensions = echarts.helper.completeDimensions(['value'], option.data);
+        var dimensions = echarts.helper.createDimensions(['value'], option.data);
         var list = new echarts.List(dimensions, this);
         list.initData(option.data);
 

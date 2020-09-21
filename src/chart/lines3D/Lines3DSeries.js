@@ -6,7 +6,7 @@ echarts.extendSeriesModel({
 
     dependencies: ['globe'],
 
-    visualColorAccessPath: 'lineStyle.color',
+    visualStyleAccessPath: 'lineStyle',
 
     getInitialData: function (option, ecModel) {
         var lineData = new echarts.List(['value'], this);

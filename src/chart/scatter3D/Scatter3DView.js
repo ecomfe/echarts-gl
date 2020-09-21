@@ -9,6 +9,8 @@ echarts.extendChartView({
 
     type: 'scatter3D',
 
+    hasSymbolVisual: true,
+
     __ecgl__: true,
 
     init: function (ecModel, api) {

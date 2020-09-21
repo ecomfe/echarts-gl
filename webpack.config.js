@@ -21,6 +21,6 @@ module.exports = {
         filename: PROD ? '[name].min.js' : '[name].js'
     },
     externals: {
-        'echarts/lib/echarts': 'echarts'
+        'echarts/esm/echarts': 'echarts'
     }
 };

@@ -3,10 +3,6 @@ import * as echarts from 'echarts/esm/echarts';
 import './scatterGL/ScatterGLSeries';
 import './scatterGL/ScatterGLView';
 
-import opacityVisual from './common/opacityVisual';
-
-echarts.registerVisual(opacityVisual('scatterGL'));
-
 echarts.registerLayout({
     seriesType: 'scatterGL',
     reset: function (seriesModel) {

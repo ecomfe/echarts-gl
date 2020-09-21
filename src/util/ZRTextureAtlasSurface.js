@@ -123,8 +123,8 @@ ZRTextureAtlasSurfaceNode.prototype = {
         }
 
         // Shift the el
-        el.position[0] += this.offsetX * this.dpr + x;
-        el.position[1] += this.offsetY * this.dpr + y;
+        el.x += this.offsetX * this.dpr + x;
+        el.y += this.offsetY * this.dpr + y;
 
         this._zr.add(el);
 
@@ -152,8 +152,10 @@ ZRTextureAtlasSurfaceNode.prototype = {
 
         var scaleX = spriteWidth / rect.width;
         var scaleY = spriteHeight / rect.height;
-        el.position = [-rect.x * scaleX, -rect.y * scaleY];
-        el.scale = [scaleX, scaleY];
+        el.x = -rect.x * scaleX;
+        el.y = -rect.y * scaleY;
+        el.scaleX = scaleX;
+        el.scaleY = scaleY;
         el.update();
     }
 }

@@ -6,7 +6,7 @@ var GraphSeries = echarts.extendSeriesModel({
 
     type: 'series.graphGL',
 
-    visualColorAccessPath: 'itemStyle.color',
+    visualStyleAccessPath: 'itemStyle',
 
     init: function (option) {
         GraphSeries.superApply(this, 'init', arguments);

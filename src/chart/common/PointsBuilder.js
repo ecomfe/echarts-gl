@@ -5,6 +5,7 @@ import PointsMesh from './PointsMesh';
 import LabelsBuilder from '../../component/common/LabelsBuilder';
 import Matrix4 from 'claygl/src/math/Matrix4';
 import retrieve from '../../util/retrieve';
+import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 var SDF_RANGE = 20;
 
@@ -149,8 +150,8 @@ PointsBuilder.prototype = {
             }
 
             if (!largeMode) {
-                var color = data.getItemVisual(i, 'color');
-                var opacity = data.getItemVisual(i, 'opacity');
+                var color = getItemVisualColor(data, i);
+                var opacity = getItemVisualOpacity(data, i);
                 graphicGL.parseColor(color, rgbaArr);
                 rgbaArr[3] *= opacity;
                 attributes.color.set(i, rgbaArr);
@@ -415,11 +416,11 @@ PointsBuilder.prototype = {
         var emphasisColor = emphasisItemStyleModel.get('color');
         var emphasisOpacity = emphasisItemStyleModel.get('opacity');
         if (emphasisColor == null) {
-            var color = data.getItemVisual(dataIndex, 'color');
+            var color = getItemVisualColor(data, dataIndex);
             emphasisColor = echarts.color.lift(color, -0.4);
         }
         if (emphasisOpacity == null) {
-            emphasisOpacity = data.getItemVisual(dataIndex, 'opacity');
+            emphasisOpacity = getItemVisualOpacity(data, dataIndex);
         }
         var colorArr = graphicGL.parseColor(emphasisColor);
         colorArr[3] *= emphasisOpacity;
@@ -434,8 +435,8 @@ PointsBuilder.prototype = {
         if (dataIndex > this._endDataIndex || dataIndex < this._startDataIndex) {
             return;
         }
-        var color = data.getItemVisual(dataIndex, 'color');
-        var opacity = data.getItemVisual(dataIndex, 'opacity');
+        var color = getItemVisualColor(data, dataIndex);
+        var opacity = getItemVisualOpacity(data, dataIndex);
 
         var colorArr = graphicGL.parseColor(color);
         colorArr[3] *= opacity;
@@ -537,7 +538,7 @@ PointsBuilder.prototype = {
             if (!(symbolSize instanceof Array)) {
                 // Ignore NaN value.
                 if (isNaN(symbolSize)) {
-                    return;
+                    continue;
                 }
 
                 currentSymbolAspect = 1;

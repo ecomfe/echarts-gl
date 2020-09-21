@@ -1,4 +1,5 @@
 import * as echarts from 'echarts/esm/echarts';
+import { getItemVisualColor } from '../../util/visual';
 
 function otherDimToDataDim (data, otherDim) {
     var dataDim = [];
@@ -54,7 +55,7 @@ export default function (seriesModel, dataIndex, multipleSeries) {
         ? formatArrayValue(value) : echarts.format.encodeHTML(echarts.format.addCommas(value));
     var name = data.getName(dataIndex);
 
-    var color = data.getItemVisual(dataIndex, 'color');
+    var color = getItemVisualColor(data, dataIndex);
     if (echarts.util.isObject(color) && color.colorStops) {
         color = (color.colorStops[0] || {}).color;
     }

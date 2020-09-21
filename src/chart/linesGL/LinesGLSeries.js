@@ -7,7 +7,7 @@ var LinesSeries = echarts.extendSeriesModel({
 
     dependencies: ['grid', 'geo'],
 
-    visualColorAccessPath: 'lineStyle.color',
+    visualStyleAccessPath: 'lineStyle',
 
     streamEnabled: true,
 

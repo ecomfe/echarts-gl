@@ -6,7 +6,7 @@ echarts.extendSeriesModel({
 
     dependencies: ['grid', 'polar', 'geo', 'singleAxis'],
 
-    visualColorAccessPath: 'itemStyle.color',
+    visualStyleAccessPath: 'itemStyle',
 
     getInitialData: function () {
         return echarts.helper.createList(this);

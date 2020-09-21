@@ -8,7 +8,7 @@ var Line3DSeries = echarts.extendSeriesModel({
 
     dependencies: ['grid3D'],
 
-    visualColorAccessPath: 'lineStyle.color',
+    visualStyleAccessPath: 'lineStyle',
 
     getInitialData: function (option, ecModel) {
         return createList(this);

@@ -4,6 +4,7 @@ import glmatrix from 'claygl/src/dep/glmatrix';
 
 import Lines3DGeometry from '../../util/geometry/Lines3D';
 import trail2GLSL from './shader/trail2.glsl.js';
+import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 var vec3 = glmatrix.vec3;
 
@@ -98,8 +99,8 @@ export default graphicGL.Mesh.extend(function () {
 
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
-            var opacity = hasEffectOpacity ? effectOpacity : data.getItemVisual(idx, 'opacity');
-            var color = data.getItemVisual(idx, 'color');
+            var opacity = hasEffectOpacity ? effectOpacity : getItemVisualOpacity(data, idx);
+            var color = getItemVisualColor(data, idx);
 
             if (opacity == null) {
                 opacity = 1;

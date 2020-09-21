@@ -2,9 +2,6 @@ import * as echarts from 'echarts/esm/echarts';
 
 import './graphGL/GraphGLSeries';
 import './graphGL/GraphGLView';
-import opacityVisual from './common/opacityVisual';
-
-echarts.registerVisual(opacityVisual('graphGL'));
 
 echarts.registerVisual(function (ecModel) {
     var paletteScope = {};

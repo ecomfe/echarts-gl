@@ -10,7 +10,7 @@ var Bar3DSeries = echarts.extendSeriesModel({
 
     dependencies: ['globe'],
 
-    visualColorAccessPath: 'itemStyle.color',
+    visualStyleAccessPathvisu: 'itemStyle',
 
     getInitialData: function (option, ecModel) {
         return createList(this);

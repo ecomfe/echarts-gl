@@ -3,6 +3,7 @@ import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
 import glmatrix from 'claygl/src/dep/glmatrix';
 import trianglesSortMixin from '../../util/geometry/trianglesSortMixin';
+import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 var vec3 = glmatrix.vec3;
 
@@ -279,8 +280,8 @@ echarts.extendChartView({
 
             for (var i = 0; i < data.count(); i++) {
                 if (data.hasValue(i)) {
-                    var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
-                    var opacity = data.getItemVisual(i, 'opacity');
+                    var rgbaArr = graphicGL.parseColor(getItemVisualColor(data, i));
+                    var opacity = getItemVisualOpacity(data, i);
                     rgbaArr[3] *= opacity;
                     if (rgbaArr[3] < 0.99) {
                         isTransparent = true;
@@ -391,8 +392,8 @@ echarts.extendChartView({
             for (var i = 0; i < data.count(); i++) {
                 uvArr[0] = (i % column) / (column - 1);
                 uvArr[1] = Math.floor(i / column) / (row - 1);
-                var rgbaArr = graphicGL.parseColor(data.getItemVisual(i, 'color'));
-                var opacity = data.getItemVisual(i, 'opacity');
+                var rgbaArr = graphicGL.parseColor(getItemVisualColor(data, i));
+                var opacity = getItemVisualOpacity(data, i);
                 rgbaArr[3] *= opacity;
                 if (rgbaArr[3] < 0.99) {
                     isTransparent = true;

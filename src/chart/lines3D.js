@@ -5,10 +5,6 @@ import './lines3D/lines3DLayout';
 import './lines3D/Lines3DView';
 import './lines3D/Lines3DSeries';
 
-import opacityVisual from './common/opacityVisual';
-
-echarts.registerVisual(opacityVisual('lines3D'));
-
 
 echarts.registerAction({
     type: 'lines3DPauseEffect',

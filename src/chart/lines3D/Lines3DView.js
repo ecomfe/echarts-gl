@@ -3,6 +3,7 @@ import graphicGL from '../../util/graphicGL';
 import LinesGeometry from '../../util/geometry/Lines3D';
 // import TrailMesh from './TrailMesh';
 import TrailMesh2 from './TrailMesh2';
+import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 import lines3DGLSL from '../../util/shader/lines3D.glsl.js';
 graphicGL.Shader.import(lines3DGLSL);
@@ -157,8 +158,8 @@ export default echarts.extendChartView({
         var colorArr = [];
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
-            var color = data.getItemVisual(idx, 'color');
-            var opacity = data.getItemVisual(idx, 'opacity');
+            var color = getItemVisualColor(data, idx);
+            var opacity = getItemVisualOpacity(data, idx);
             var lineWidth = data.getItemVisual(idx, 'lineWidth') * dpr;
             if (opacity == null) {
                 opacity = 1;

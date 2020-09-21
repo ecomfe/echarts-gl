@@ -9,7 +9,9 @@ echarts.extendSeriesModel({
 
     dependencies: ['globe', 'grid3D', 'geo3D'],
 
-    visualColorAccessPath: 'itemStyle.color',
+    visualStyleAccessPath: 'itemStyle',
+
+    hasSymbolVisual: true,
 
     getInitialData: function (option, ecModel) {
         return createList(this);

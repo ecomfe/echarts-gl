@@ -6,6 +6,7 @@ import Matrix4 from 'claygl/src/math/Matrix4';
 import Vector3 from 'claygl/src/math/Vector3';
 import lineContain from 'zrender/lib/contain/line';
 import glmatrix from 'claygl/src/dep/glmatrix';
+import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 import lines3DGLSL from '../../util/shader/lines3D.glsl.js';
 
@@ -85,8 +86,8 @@ export default echarts.extendChartView({
         var hasTransparent = false;
 
         data.each(function (idx) {
-            var color = data.getItemVisual(idx, 'color');
-            var opacity = data.getItemVisual(idx, 'opacity');
+            var color = getItemVisualColor(data, idx);
+            var opacity = getItemVisualOpacity(data, idx);
             if (opacity == null) {
                 opacity = 1;
             }

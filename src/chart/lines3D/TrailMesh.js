@@ -2,8 +2,10 @@ import * as echarts from 'echarts/esm/echarts';
 import graphicGL from '../../util/graphicGL';
 
 import TrailGeometry from './TrailGeometry';
+import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 import trailGLSL from './shader/trail.glsl.js';
+
 graphicGL.Shader.import(trailGLSL);
 
 export default graphicGL.Mesh.extend(function () {
@@ -78,8 +80,8 @@ export default graphicGL.Mesh.extend(function () {
 
         data.each(function (idx) {
             var pts = data.getItemLayout(idx);
-            var opacity = hasEffectOpacity ? effectOpacity : data.getItemVisual(idx, 'opacity');
-            var color = data.getItemVisual(idx, 'color');
+            var opacity = hasEffectOpacity ? effectOpacity : getItemVisualOpacity(data, idx);
+            var color = getItemVisualColor(data, idx);
 
             if (opacity == null) {
                 opacity = 1;

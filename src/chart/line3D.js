@@ -3,9 +3,6 @@ import * as echarts from 'echarts/esm/echarts';
 import './line3D/Line3DSeries';
 import './line3D/Line3DView';
 
-import opacityVisual from './common/opacityVisual';
-
-echarts.registerVisual(opacityVisual('line3D'));
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('line3D', function (seriesModel) {

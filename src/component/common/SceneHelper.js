@@ -138,7 +138,7 @@ SceneHelper.prototype = {
                     shape: { x: 0, y: 0, width: 16, height: 16 },
                     style: { fill: environmentUrl }
                 });
-                rect.brush(ctx);
+                echarts.innerDrawElementOnCanvas(ctx, rect);
 
                 skybox.attachScene(this._scene);
             }

@@ -27,17 +27,18 @@ function makePath(symbol, symbolSize, style, marginBias) {
 
     var size = Math.max(width, height);
 
-    path.position = [margin.left, margin.top];
+    path.x = margin.left;
+    path.y = margin.top;
     if (width > height) {
-        path.position[1] += (size - height) / 2;
+        path.y += (size - height) / 2;
     }
     else {
-        path.position[0] += (size - width) / 2;
+        path.x += (size - width) / 2;
     }
 
     var rect = path.getBoundingRect();
-    path.position[0] -= rect.x;
-    path.position[1] -= rect.y;
+    path.x -= rect.x;
+    path.y -= rect.y;
 
     path.setStyle(style);
 
@@ -141,7 +142,7 @@ var spriteUtil = {
 
         return {
             image: makeSprite(path.__size, canvas, function (ctx) {
-                path.brush(ctx);
+                echarts.innerDrawElementOnCanvas(ctx, path);
             }),
             margin: margin
         };

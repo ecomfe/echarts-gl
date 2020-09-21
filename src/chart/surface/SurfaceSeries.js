@@ -9,7 +9,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
     dependencies: ['globe', 'grid3D', 'geo3D'],
 
-    visualColorAccessPath: 'itemStyle.color',
+    visualStyleAccessPath: 'itemStyle',
 
     formatTooltip: function (dataIndex) {
         return formatTooltip(this, dataIndex);

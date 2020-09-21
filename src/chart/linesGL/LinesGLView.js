@@ -3,6 +3,7 @@ import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';
 import Lines2DGeometry from '../../util/geometry/Lines2D';
 import GLViewHelper from '../common/GLViewHelper';
+import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 import retrieve from '../../util/retrieve';
 
@@ -166,8 +167,8 @@ echarts.extendChartView({
         var dataIndex = start;
         var colorArr = [];
         for (var idx = start; idx < end; idx++) {
-            graphicGL.parseColor(data.getItemVisual(dataIndex, 'color'), colorArr);
-            var opacity = retrieve.firstNotNull(data.getItemVisual(dataIndex, 'opacity'), 1);
+            graphicGL.parseColor(getItemVisualColor(data, dataIndex), colorArr);
+            var opacity = retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), 1);
             colorArr[3] *= opacity;
 
             var count = seriesModel.getLineCoords(idx, lineCoords);

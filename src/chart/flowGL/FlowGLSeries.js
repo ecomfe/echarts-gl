@@ -6,7 +6,7 @@ echarts.extendSeriesModel({
 
     dependencies: ['geo', 'grid', 'bmap'],
 
-    visualColorAccessPath: 'itemStyle.color',
+    visualStyleAccessPath: 'itemStyle',
 
     getInitialData: function (option, ecModel) {
         var coordSysDimensions = echarts.getCoordinateSystemDimensions(this.get('coordinateSystem')) || ['x', 'y'];
@@ -16,7 +16,7 @@ echarts.extendSeriesModel({
             }
         }
         coordSysDimensions.push('vx', 'vy');
-        var dimensions = echarts.helper.completeDimensions(coordSysDimensions, this.getSource(), {
+        var dimensions = echarts.helper.createDimensions(coordSysDimensions, this.getSource(), {
             encodeDef: this.get('encode'),
             dimsDef: this.get('dimensions')
         });
