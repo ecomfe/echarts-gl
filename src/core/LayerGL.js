@@ -615,12 +615,13 @@ LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEven
     var targetInfo = {
         target: eventProxy
     };
+    const ecData = echarts.helper.getECData(eventProxy);
     if (eveName === 'mousemove') {
         if (dataIndex != null) {
             if (dataIndex !== this._lastDataIndex) {
                 if (parseInt(this._lastDataIndex, 10) >= 0) {
-                    eventProxy.dataIndex = this._lastDataIndex;
-                    eventProxy.seriesIndex = this._lastSeriesIndex;
+                    ecData.dataIndex = this._lastDataIndex;
+                    ecData.seriesIndex = this._lastSeriesIndex;
                     // FIXME May cause double events.
                     this.zr.handler.dispatchToElement(targetInfo, 'mouseout', originalEvent);
                 }
@@ -630,7 +631,7 @@ LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEven
         else if (eventData != null) {
             if (eventData !== this._lastEventData) {
                 if (this._lastEventData != null) {
-                    eventProxy.eventData = this._lastEventData;
+                    ecData.eventData = this._lastEventData;
                     // FIXME May cause double events.
                     this.zr.handler.dispatchToElement(targetInfo, 'mouseout', originalEvent);
                 }
@@ -642,9 +643,9 @@ LayerGL.prototype._dispatchDataEvent = function (eveName, originalEvent, newEven
         this._lastSeriesIndex = seriesIndex;
     }
 
-    eventProxy.eventData = eventData;
-    eventProxy.dataIndex = dataIndex;
-    eventProxy.seriesIndex = seriesIndex;
+    ecData.eventData = eventData;
+    ecData.dataIndex = dataIndex;
+    ecData.seriesIndex = seriesIndex;
 
     if (eventData != null || (parseInt(dataIndex, 10) >= 0 && parseInt(seriesIndex, 10) >= 0)) {
         this.zr.handler.dispatchToElement(targetInfo, eveName, originalEvent);
