@@ -27,19 +27,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @module echarts-gl
- * @author Yi Shen(http://github.com/pissang)
- */
-
-// PENDING Use a single canvas as layer or use image element?
-var echartsGl = {
-    version: '1.1.2',
-    dependencies: {
-        echarts: '4.1.0',
-        claygl: '1.2.1'
-    }
-};
 import * as echarts from 'echarts/esm/echarts';
 import clayVersion from 'claygl/src/version';
 import LayerGL from './core/LayerGL';
@@ -274,6 +261,5 @@ echarts.registerPostUpdate(function (ecModel, api) {
 
 echarts.registerPreprocessor(backwardCompat);
 
-echarts.graphicGL = graphicGL;
 
 export default EChartsGL;

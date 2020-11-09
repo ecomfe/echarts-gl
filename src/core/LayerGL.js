@@ -22,7 +22,7 @@ import graphicGL from '../util/graphicGL';
 
 // PENDING, clay. notifier is same with zrender Eventful
 import notifier from 'claygl/src/core/mixin/notifier';
-import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
+import requestAnimationFrame from 'zrender/esm/animation/requestAnimationFrame';
 
 /**
  * @constructor

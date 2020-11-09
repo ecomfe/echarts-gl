@@ -6,7 +6,7 @@ import Lines2DGeometry from '../../util/geometry/Lines2D';
 import retrieve from '../../util/retrieve';
 import ForceAtlas2GPU from './ForceAtlas2GPU';
 import ForceAtlas2 from './ForceAtlas2';
-import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
+import requestAnimationFrame from 'zrender/esm/animation/requestAnimationFrame';
 import glmatrix from 'claygl/src/dep/glmatrix';
 import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 

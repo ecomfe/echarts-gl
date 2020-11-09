@@ -4,7 +4,7 @@ import retrieve from '../../util/retrieve';
 import Lines3DGeometry from '../../util/geometry/Lines3D';
 import Matrix4 from 'claygl/src/math/Matrix4';
 import Vector3 from 'claygl/src/math/Vector3';
-import * as lineContain from 'zrender/lib/contain/line';
+import * as lineContain from 'zrender/esm/contain/line';
 import glmatrix from 'claygl/src/dep/glmatrix';
 import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 

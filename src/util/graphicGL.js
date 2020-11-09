@@ -8,7 +8,7 @@ import Node3D from 'claygl/src/Node';
 import Geometry from 'claygl/src/Geometry';
 import * as echarts from 'echarts/esm/echarts';
 import Scene from 'claygl/src/Scene';
-import LRUCache from 'zrender/lib/core/LRU';
+import LRUCache from 'zrender/esm/core/LRU';
 import textureUtil from 'claygl/src/util/texture';
 import EChartsSurface from './EChartsSurface';
 import AmbientCubemapLight from 'claygl/src/light/AmbientCubemap';
