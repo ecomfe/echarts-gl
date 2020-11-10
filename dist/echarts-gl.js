@@ -26382,40 +26382,11 @@ function backwardCompat_removeTextStyleInAxis(axesOpt) {
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * @module echarts-gl
- * @author Yi Shen(http://github.com/pissang)
- */
-
-// PENDING Use a single canvas as layer or use image element?
-var echarts_gl_echartsGl = {
-    version: '1.1.2',
-    dependencies: {
-        echarts: '4.1.0',
-        claygl: '1.2.1'
-    }
-};
 
 
 
 
 
-
-// Version checking
-var echarts_gl_deps = echarts_gl_echartsGl.dependencies;
-function echarts_gl_versionTooOldMsg(name) {
-    throw new Error(
-        name + ' version is too old, needs ' + echarts_gl_deps[name] + ' or higher'
-    );
-}
-function echarts_gl_checkVersion(version, name) {
-    if ((version.replace('.', '') - 0) < (echarts_gl_deps[name].replace('.', '') - 0)) {
-        echarts_gl_versionTooOldMsg(name);
-    }
-    console.log('Loaded ' + name + ', version ' + version);
-}
-echarts_gl_checkVersion(version, 'claygl');
-echarts_gl_checkVersion(external_echarts_["version"], 'echarts');
 
 function echarts_gl_EChartsGL (zr) {
     this._layers = {};
@@ -28842,13 +28813,13 @@ var Transformable_Transformable = (function () {
         if (Transformable_isNotAroundZero(sy - 1)) {
             sy = Math.sqrt(sy);
         }
-        this.rotation = Math.atan2(-m[1] / sy, m[0] / sx);
         if (m[0] < 0) {
             sx = -sx;
         }
         if (m[3] < 0) {
             sy = -sy;
         }
+        this.rotation = Math.atan2(-m[1] / sy, m[0] / sx);
         if (sx < 0 && sy < 0) {
             this.rotation += Math.PI;
             sx = -sx;
@@ -30033,23 +30004,28 @@ function Element_animateTo(animatable, target, cfg, animationProps, reverse) {
     cfg = cfg || {};
     var animators = [];
     Element_animateToShallow(animatable, '', animatable, target, cfg, animationProps, animators, reverse);
-    var doneCount = animators.length;
-    var abortedCount = doneCount;
+    var finishCount = animators.length;
+    var doneHappened = false;
     var cfgDone = cfg.done;
     var cfgAborted = cfg.aborted;
-    var doneCb = cfgDone ? function () {
-        doneCount--;
-        if (!doneCount) {
-            cfgDone();
+    var doneCb = function () {
+        doneHappened = true;
+        finishCount--;
+        if (finishCount <= 0) {
+            doneHappened
+                ? (cfgDone && cfgDone())
+                : (cfgAborted && cfgAborted());
         }
-    } : null;
-    var abortedCb = cfgAborted ? function () {
-        abortedCount--;
-        if (!abortedCount) {
-            cfgAborted();
+    };
+    var abortedCb = function () {
+        finishCount--;
+        if (finishCount <= 0) {
+            doneHappened
+                ? (cfgDone && cfgDone())
+                : (cfgAborted && cfgAborted());
         }
-    } : null;
-    if (!doneCount) {
+    };
+    if (!finishCount) {
         cfgDone && cfgDone();
     }
     if (animators.length > 0 && cfg.during) {
@@ -30150,7 +30126,8 @@ function Element_animateToShallow(animatable, topKey, source, target, cfg, anima
         }
     }
     var keyLen = animatableKeys.length;
-    if (keyLen > 0 || cfg.force) {
+    if (keyLen > 0
+        || (cfg.force && !animators.length)) {
         var existsAnimators = animatable.animators;
         var existsAnimatorsOnSameTarget = [];
         for (var i = 0; i < existsAnimators.length; i++) {
@@ -32705,9 +32682,9 @@ var Image_DEFAULT_IMAGE_ANIMATION_PROPS = {
     }, Displayable_DEFAULT_COMMON_ANIMATION_PROPS.style)
 };
 function Image_isImageLike(source) {
-    return source
+    return !!(source
         && typeof source !== 'string'
-        && source.width && source.height;
+        && source.width && source.height);
 }
 var Image_ZRImage = (function (_super) {
     __extends(ZRImage, _super);
@@ -32717,53 +32694,31 @@ var Image_ZRImage = (function (_super) {
     ZRImage.prototype.createStyle = function (obj) {
         return createObject(Image_DEFAULT_IMAGE_STYLE, obj);
     };
-    ZRImage.prototype.getWidth = function () {
+    ZRImage.prototype._getSize = function (dim) {
         var style = this.style;
-        var imageSource = style.image;
-        if (Image_isImageLike(imageSource)) {
-            return imageSource.width;
+        var size = style[dim];
+        if (size != null) {
+            return size;
         }
-        if (!this.__image) {
+        var imageSource = Image_isImageLike(style.image)
+            ? style.image : this.__image;
+        if (!imageSource) {
             return 0;
         }
-        var width = style.width;
-        var height = style.height;
-        if (width == null) {
-            if (height == null) {
-                return this.__image.width;
-            }
-            else {
-                var aspect = this.__image.width / this.__image.height;
-                return aspect * height;
-            }
+        var otherDim = dim === 'width' ? 'height' : 'width';
+        var otherDimSize = style[otherDim];
+        if (otherDimSize == null) {
+            return imageSource[dim];
         }
         else {
-            return width;
+            return imageSource[dim] / imageSource[otherDim] * otherDimSize;
         }
     };
+    ZRImage.prototype.getWidth = function () {
+        return this._getSize('width');
+    };
     ZRImage.prototype.getHeight = function () {
-        var style = this.style;
-        var imageSource = style.image;
-        if (Image_isImageLike(imageSource)) {
-            return imageSource.height;
-        }
-        if (!this.__image) {
-            return 0;
-        }
-        var width = style.width;
-        var height = style.height;
-        if (height == null) {
-            if (width == null) {
-                return this.__image.height;
-            }
-            else {
-                var aspect = this.__image.height / this.__image.width;
-                return aspect * width;
-            }
-        }
-        else {
-            return height;
-        }
+        return this._getSize('height');
     };
     ZRImage.prototype.getAnimationStyleProps = function () {
         return Image_DEFAULT_IMAGE_ANIMATION_PROPS;
@@ -34831,18 +34786,18 @@ function states_shouldSilent(el, e) {
   return el.__highDownSilentOnTouch && e.zrByTouch;
 }
 
-function states_allLeaveBlur(ecIns) {
-  var model = ecIns.getModel();
+function states_allLeaveBlur(api) {
+  var model = api.getModel();
   model.eachComponent(function (componentType, componentModel) {
-    var view = componentType === 'series' ? ecIns.getViewOfSeriesModel(componentModel) : ecIns.getViewOfComponentModel(componentModel);
+    var view = componentType === 'series' ? api.getViewOfSeriesModel(componentModel) : api.getViewOfComponentModel(componentModel);
     view.group.traverse(function (child) {
       states_singleLeaveBlur(child);
     });
   });
 }
 
-function states_toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, ecIns, isBlur) {
-  var ecModel = ecIns.getModel();
+function states_toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, api, isBlur) {
+  var ecModel = api.getModel();
   blurScope = blurScope || 'coordinateSystem';
 
   function leaveBlurOfIndices(data, dataIndices) {
@@ -34853,7 +34808,7 @@ function states_toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, ecIns
   }
 
   if (!isBlur) {
-    states_allLeaveBlur(ecIns);
+    states_allLeaveBlur(api);
     return;
   }
 
@@ -34884,7 +34839,7 @@ function states_toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, ecIns
     var sameCoordSys = coordSys && targetCoordSys ? coordSys === targetCoordSys : sameSeries;
 
     if (!(blurScope === 'series' && !sameSeries || blurScope === 'coordinateSystem' && !sameCoordSys || focus === 'series' && sameSeries)) {
-      var view = ecIns.getViewOfSeriesModel(seriesModel);
+      var view = api.getViewOfSeriesModel(seriesModel);
       view.group.traverse(function (child) {
         states_singleEnterBlur(child);
       });
@@ -34907,14 +34862,14 @@ function states_toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, ecIns
       return;
     }
 
-    var view = ecIns.getViewOfComponentModel(componentModel);
+    var view = api.getViewOfComponentModel(componentModel);
 
     if (view && view.blurSeries) {
       view.blurSeries(blurredSeries, ecModel);
     }
   });
 }
-function states_toggleSeriesBlurStateFromPayload(seriesModel, payload, ecIns) {
+function states_toggleSeriesBlurStateFromPayload(seriesModel, payload, api) {
   if (!states_isHighDownPayload(payload)) {
     return;
   }
@@ -34937,17 +34892,17 @@ function states_toggleSeriesBlurStateFromPayload(seriesModel, payload, ecIns) {
 
   if (el) {
     var ecData = innerStore_getECData(el);
-    states_toggleSeriesBlurState(seriesIndex, ecData.focus, ecData.blurScope, ecIns, isHighlight);
+    states_toggleSeriesBlurState(seriesIndex, ecData.focus, ecData.blurScope, api, isHighlight);
   } else {
     var focus_1 = seriesModel.get(['emphasis', 'focus']);
     var blurScope = seriesModel.get(['emphasis', 'blurScope']);
 
     if (focus_1 != null) {
-      states_toggleSeriesBlurState(seriesIndex, focus_1, blurScope, ecIns, isHighlight);
+      states_toggleSeriesBlurState(seriesIndex, focus_1, blurScope, api, isHighlight);
     }
   }
 }
-function states_toggleSelectionFromPayload(seriesModel, payload, ecIns) {
+function states_toggleSelectionFromPayload(seriesModel, payload, api) {
   if (!states_isSelectChangePayload(payload)) {
     return;
   }
@@ -35003,10 +34958,13 @@ function states_enableHoverEmphasis(el, focus, blurScope) {
   states_enableHoverFocus(el, focus, blurScope);
 }
 function states_enableHoverFocus(el, focus, blurScope) {
+  var ecData = innerStore_getECData(el);
+
   if (focus != null) {
-    var ecData = innerStore_getECData(el);
     ecData.focus = focus;
     ecData.blurScope = blurScope;
+  } else if (ecData.focus) {
+    ecData.focus = null;
   }
 }
 var states_OTHER_STATES = ['emphasis', 'blur', 'select'];
@@ -35073,7 +35031,7 @@ var transformPath_CMD = core_PathProxy.CMD;
 var transformPath_points = [[], [], []];
 var transformPath_mathSqrt = Math.sqrt;
 var transformPath_mathAtan2 = Math.atan2;
-/* harmony default export */ var transformPath = (function (path, m) {
+function transformPath_transformPath(path, m) {
     var data = path.data;
     var len = path.len();
     var cmd;
@@ -35144,7 +35102,7 @@ var transformPath_mathAtan2 = Math.atan2;
         }
     }
     path.increaseVersion();
-});
+}
 
 // CONCATENATED MODULE: ./node_modules/zrender/esm/tool/path.js
 
@@ -35449,7 +35407,7 @@ function path_createPathOptions(str, opts) {
         }
     };
     innerOpts.applyTransform = function (m) {
-        transformPath(pathProxy, m);
+        transformPath_transformPath(pathProxy, m);
         this.dirtyShape();
     };
     return innerOpts;
@@ -35822,16 +35780,16 @@ function roundSector_buildPath(ctx, shape) {
         radius = innerRadius;
         innerRadius = tmp;
     }
-    var x = shape.cx;
-    var y = shape.cy;
     var clockwise = !!shape.clockwise;
     var startAngle = shape.startAngle;
     var endAngle = shape.endAngle;
-    var cornerRadius = shape.cornerRadius || 0;
-    var innerCornerRadius = shape.innerCornerRadius || 0;
     var tmpAngles = [startAngle, endAngle];
     PathProxy_normalizeArcAngles(tmpAngles, !clockwise);
     var arc = roundSector_mathAbs(tmpAngles[0] - tmpAngles[1]);
+    var x = shape.cx;
+    var y = shape.cy;
+    var cornerRadius = shape.cornerRadius || 0;
+    var innerCornerRadius = shape.innerCornerRadius || 0;
     if (!(radius > roundSector_e)) {
         ctx.moveTo(x, y);
     }
@@ -35896,7 +35854,7 @@ function roundSector_buildPath(ctx, shape) {
             ctx.moveTo(x + xrs, y + yrs);
             ctx.arc(x, y, radius, startAngle, endAngle, !clockwise);
         }
-        if (!(innerRadius > roundSector_e)) {
+        if (!(innerRadius > roundSector_e) || !(arc > roundSector_e)) {
             ctx.lineTo(x + xire, y + yire);
         }
         else if (cr0 > roundSector_e) {
@@ -36001,7 +35959,7 @@ function smoothSpline_interpolate(p0, p1, p2, p3, t, t2, t3) {
         + (-3 * (p1 - p2) - 2 * v0 - v1) * t2
         + v0 * t + p1;
 }
-/* harmony default export */ var smoothSpline = (function (points, isLoop) {
+function smoothSpline_smoothSpline(points, isLoop) {
     var len = points.length;
     var ret = [];
     var distance = 0;
@@ -36036,11 +35994,11 @@ function smoothSpline_interpolate(p0, p1, p2, p3, t, t2, t3) {
         ]);
     }
     return ret;
-});
+}
 
 // CONCATENATED MODULE: ./node_modules/zrender/esm/graphic/helper/smoothBezier.js
 
-/* harmony default export */ var smoothBezier = (function (points, smooth, isLoop, constraint) {
+function smoothBezier_smoothBezier(points, smooth, isLoop, constraint) {
     var cps = [];
     var v = [];
     var v1 = [];
@@ -36101,7 +36059,7 @@ function smoothSpline_interpolate(p0, p1, p2, p3, t, t2, t3) {
         cps.push(cps.shift());
     }
     return cps;
-});
+}
 
 // CONCATENATED MODULE: ./node_modules/zrender/esm/graphic/helper/poly.js
 
@@ -36111,7 +36069,7 @@ function poly_buildPath(ctx, shape, closePath) {
     var points = shape.points;
     if (points && points.length >= 2) {
         if (smooth && smooth !== 'spline') {
-            var controlPoints = smoothBezier(points, smooth, closePath, shape.smoothConstraint);
+            var controlPoints = smoothBezier_smoothBezier(points, smooth, closePath, shape.smoothConstraint);
             ctx.moveTo(points[0][0], points[0][1]);
             var len = points.length;
             for (var i = 0; i < (closePath ? len : len - 1); i++) {
@@ -36123,7 +36081,7 @@ function poly_buildPath(ctx, shape, closePath) {
         }
         else {
             if (smooth === 'spline') {
-                points = smoothSpline(points, closePath);
+                points = smoothSpline_smoothSpline(points, closePath);
             }
             ctx.moveTo(points[0][0], points[0][1]);
             for (var i = 1, l = points.length; i < l; i++) {
@@ -36905,6 +36863,7 @@ var graphic_subPixelOptimize = subPixelOptimize_subPixelOptimize;
 
 function graphic_animateOrSetProps(animationType, el, props, animatableModel, dataIndex, cb, during) {
   var isFrom = false;
+  var removeOpt;
 
   if (typeof dataIndex === 'function') {
     during = cb;
@@ -36914,6 +36873,7 @@ function graphic_animateOrSetProps(animationType, el, props, animatableModel, da
     cb = dataIndex.cb;
     during = dataIndex.during;
     isFrom = dataIndex.isFrom;
+    removeOpt = dataIndex.removeOpt;
     dataIndex = dataIndex.dataIndex;
   }
 
@@ -36942,21 +36902,22 @@ function graphic_animateOrSetProps(animationType, el, props, animatableModel, da
       animationEasing = animationPayload.easing || 'cubicOut';
       animationDelay = animationPayload.delay || 0;
     } else if (isRemove) {
-      duration = 200;
-      animationEasing = 'cubicOut';
+      removeOpt = removeOpt || {};
+      duration = retrieve2(removeOpt.duration, 200);
+      animationEasing = retrieve2(removeOpt.easing, 'cubicOut');
       animationDelay = 0;
     } else {
       duration = animatableModel.getShallow(isUpdate ? 'animationDurationUpdate' : 'animationDuration');
       animationEasing = animatableModel.getShallow(isUpdate ? 'animationEasingUpdate' : 'animationEasing');
       animationDelay = animatableModel.getShallow(isUpdate ? 'animationDelayUpdate' : 'animationDelay');
+    }
 
-      if (typeof animationDelay === 'function') {
-        animationDelay = animationDelay(dataIndex, animatableModel.getAnimationDelayParams ? animatableModel.getAnimationDelayParams(el, dataIndex) : null);
-      }
+    if (typeof animationDelay === 'function') {
+      animationDelay = animationDelay(dataIndex, animatableModel.getAnimationDelayParams ? animatableModel.getAnimationDelayParams(el, dataIndex) : null);
+    }
 
-      if (typeof duration === 'function') {
-        duration = duration(dataIndex);
-      }
+    if (typeof duration === 'function') {
+      duration = duration(dataIndex);
     }
 
     duration > 0 ? isFrom ? el.animateFrom(props, {
@@ -36994,6 +36955,10 @@ function graphic_initProps(el, props, animatableModel, dataIndex, cb, during) {
   graphic_animateOrSetProps('init', el, props, animatableModel, dataIndex, cb, during);
 }
 function graphic_removeElement(el, props, animatableModel, dataIndex, cb, during) {
+  if (graphic_isElementRemoved(el)) {
+    return;
+  }
+
   graphic_animateOrSetProps('remove', el, props, animatableModel, dataIndex, cb, during);
 }
 
@@ -37449,7 +37414,7 @@ function labelStyle_setTextStyleCommon(textStyle, textStyleModel, opt, isNotNorm
     for (var name_1 in richItemNames) {
       if (richItemNames.hasOwnProperty(name_1)) {
         var richTextStyle = textStyleModel.getModel(['rich', name_1]);
-        labelStyle_setTokenTextStyle(richResult[name_1] = {}, richTextStyle, globalTextStyle, opt, isNotNormal, isAttached);
+        labelStyle_setTokenTextStyle(richResult[name_1] = {}, richTextStyle, globalTextStyle, opt, isNotNormal, isAttached, false, true);
       }
     }
   }
@@ -37470,7 +37435,7 @@ function labelStyle_setTextStyleCommon(textStyle, textStyleModel, opt, isNotNorm
     textStyle.margin = margin;
   }
 
-  labelStyle_setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNotNormal, isAttached, true);
+  labelStyle_setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNotNormal, isAttached, true, false);
 }
 
 function labelStyle_getRichItemNames(textStyleModel) {
@@ -37495,15 +37460,16 @@ function labelStyle_getRichItemNames(textStyleModel) {
   return richItemNameMap;
 }
 
-var labelStyle_TEXT_PROPS_WITH_GLOBAL = ['fontStyle', 'fontWeight', 'fontSize', 'fontFamily', 'opacity', 'textShadowColor', 'textShadowBlur', 'textShadowOffsetX', 'textShadowOffsetY'];
+var labelStyle_TEXT_PROPS_WITH_GLOBAL = ['fontStyle', 'fontWeight', 'fontSize', 'fontFamily', 'textShadowColor', 'textShadowBlur', 'textShadowOffsetX', 'textShadowOffsetY'];
 var labelStyle_TEXT_PROPS_SELF = ['align', 'lineHeight', 'width', 'height', 'tag', 'verticalAlign'];
 var labelStyle_TEXT_PROPS_BOX = ['padding', 'borderWidth', 'borderRadius', 'borderDashOffset', 'backgroundColor', 'borderColor', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY'];
 
-function labelStyle_setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNotNormal, isAttached, isBlock) {
+function labelStyle_setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNotNormal, isAttached, isBlock, inRich) {
   globalTextStyle = !isNotNormal && globalTextStyle || labelStyle_EMPTY_OBJ;
   var inheritColor = opt && opt.inheritColor;
   var fillColor = textStyleModel.getShallow('color');
   var strokeColor = textStyleModel.getShallow('textBorderColor');
+  var opacity = retrieve2(textStyleModel.getShallow('opacity'), globalTextStyle.opacity);
 
   if (fillColor === 'inherit' || fillColor === 'auto') {
     if (true) {
@@ -37562,6 +37528,14 @@ function labelStyle_setTokenTextStyle(textStyle, textStyleModel, globalTextStyle
 
   if (textBorderDashOffset != null) {
     textStyle.lineDashOffset = textBorderDashOffset;
+  }
+
+  if (!isNotNormal && opacity == null && !inRich) {
+    opacity = opt && opt.defaultOpacity;
+  }
+
+  if (opacity != null) {
+    textStyle.opacity = opacity;
   }
 
   if (!isNotNormal && !isAttached) {
@@ -41062,27 +41036,27 @@ Axis3D_Axis3D.prototype = {
 external_echarts_["util"].inherits(Axis3D_Axis3D, external_echarts_["Axis"]);
 
 /* harmony default export */ var grid3D_Axis3D = (Axis3D_Axis3D);
-// CONCATENATED MODULE: ./node_modules/tslib/tslib.es6.js
+// CONCATENATED MODULE: ./node_modules/echarts/node_modules/tslib/tslib.es6.js
 /*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
 
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
 
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
 ***************************************************************************** */
 /* global Reflect, Promise */
 
 var tslib_es6_extendStatics = function(d, b) {
     tslib_es6_extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
     return tslib_es6_extendStatics(d, b);
 };
 
@@ -41131,11 +41105,10 @@ function tslib_es6_metadata(metadataKey, metadataValue) {
 }
 
 function tslib_es6_awaiter(thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 }
@@ -41168,28 +41141,19 @@ function tslib_es6_generator(thisArg, body) {
     }
 }
 
-var __createBinding = Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-});
-
-function tslib_es6_exportStar(m, o) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+function tslib_es6_exportStar(m, exports) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 }
 
 function tslib_es6_values(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
     if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
+    return {
         next: function () {
             if (o && i >= o.length) o = void 0;
             return { value: o && o[i++], done: !o };
         }
     };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 }
 
 function tslib_es6_read(o, n) {
@@ -41258,37 +41222,16 @@ function tslib_es6_makeTemplateObject(cooked, raw) {
     return cooked;
 };
 
-var __setModuleDefault = Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-};
-
 function tslib_es6_importStar(mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result.default = mod;
     return result;
 }
 
 function tslib_es6_importDefault(mod) {
     return (mod && mod.__esModule) ? mod : { default: mod };
-}
-
-function __classPrivateFieldGet(receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-}
-
-function __classPrivateFieldSet(receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
 }
 
 // CONCATENATED MODULE: ./node_modules/echarts/esm/util/clazz.js
@@ -41552,7 +41495,7 @@ function clazz_enableClassManagement(target, options) {
  */
 
 
-/* harmony default export */ var makeStyleMapper = (function (properties, ignoreParent) {
+function makeStyleMapper_makeStyleMapper(properties, ignoreParent) {
   for (var i = 0; i < properties.length; i++) {
     if (!properties[i][1]) {
       properties[i][1] = properties[i][0];
@@ -41579,7 +41522,7 @@ function clazz_enableClassManagement(target, options) {
 
     return style;
   };
-});
+}
 // CONCATENATED MODULE: ./node_modules/echarts/esm/model/mixin/areaStyle.js
 
 /*
@@ -41608,8 +41551,8 @@ function clazz_enableClassManagement(target, options) {
  */
 
 
-var areaStyle_AREA_STYLE_KEY_MAP = [['fill', 'color'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['opacity'], ['shadowColor'], ['decal']];
-var areaStyle_getAreaStyle = makeStyleMapper(areaStyle_AREA_STYLE_KEY_MAP);
+var areaStyle_AREA_STYLE_KEY_MAP = [['fill', 'color'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['opacity'], ['shadowColor']];
+var areaStyle_getAreaStyle = makeStyleMapper_makeStyleMapper(areaStyle_AREA_STYLE_KEY_MAP);
 
 var areaStyle_AreaStyleMixin = function () {
   function AreaStyleMixin() {}
@@ -41721,8 +41664,8 @@ var textStyle_TextStyleMixin = function () {
  */
 
 
-var lineStyle_LINE_STYLE_KEY_MAP = [['lineWidth', 'width'], ['stroke', 'color'], ['opacity'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['shadowColor'], ['lineDash', 'type'], ['lineDashOffset', 'dashOffset'], ['lineCap', 'cap'], ['lineJoin', 'join'], ['miterLimit'], ['decal']];
-var lineStyle_getLineStyle = makeStyleMapper(lineStyle_LINE_STYLE_KEY_MAP);
+var lineStyle_LINE_STYLE_KEY_MAP = [['lineWidth', 'width'], ['stroke', 'color'], ['opacity'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['shadowColor'], ['lineDash', 'type'], ['lineDashOffset', 'dashOffset'], ['lineCap', 'cap'], ['lineJoin', 'join'], ['miterLimit']];
+var lineStyle_getLineStyle = makeStyleMapper_makeStyleMapper(lineStyle_LINE_STYLE_KEY_MAP);
 
 var lineStyle_LineStyleMixin = function () {
   function LineStyleMixin() {}
@@ -41764,8 +41707,8 @@ var lineStyle_LineStyleMixin = function () {
  */
 
 
-var itemStyle_ITEM_STYLE_KEY_MAP = [['fill', 'color'], ['stroke', 'borderColor'], ['lineWidth', 'borderWidth'], ['opacity'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['shadowColor'], ['lineDash', 'borderType'], ['lineDashOffset', 'borderDashOffset'], ['lineCap', 'borderCap'], ['lineJoin', 'borderJoin'], ['miterLimit', 'borderMiterLimit'], ['decal']];
-var itemStyle_getItemStyle = makeStyleMapper(itemStyle_ITEM_STYLE_KEY_MAP);
+var itemStyle_ITEM_STYLE_KEY_MAP = [['fill', 'color'], ['stroke', 'borderColor'], ['lineWidth', 'borderWidth'], ['opacity'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['shadowColor'], ['lineDash', 'borderType'], ['lineDashOffset', 'borderDashOffset'], ['lineCap', 'borderCap'], ['lineJoin', 'borderJoin'], ['miterLimit', 'borderMiterLimit']];
+var itemStyle_getItemStyle = makeStyleMapper_makeStyleMapper(itemStyle_ITEM_STYLE_KEY_MAP);
 
 var itemStyle_ItemStyleMixin = function () {
   function ItemStyleMixin() {}
@@ -42368,7 +42311,7 @@ function time_getDefaultFormatPrecisionOfInterval(timeUnit) {
       return 'second';
   }
 }
-function time_format(time, template, lang, isUTC) {
+function time_format(time, template, isUTC, lang) {
   var date = number_parseDate(time);
   var y = date[time_fullYearGetterName(isUTC)]();
   var M = date[time_monthGetterName(isUTC)]() + 1;
@@ -42431,7 +42374,7 @@ function time_leveledFormat(tick, idx, formatter, lang, isUTC) {
     }
   }
 
-  return time_format(new Date(tick.value), template, lang, isUTC);
+  return time_format(new Date(tick.value), template, isUTC, lang);
 }
 function time_getUnitFromValue(value, isUTC) {
   var date = number_parseDate(value);
@@ -42651,7 +42594,7 @@ function format_encodeHTML(source) {
     return format_replaceMap[c];
   });
 }
-function format_makeValueReadable(value, valueType) {
+function format_makeValueReadable(value, valueType, useUTC) {
   var USER_READABLE_DEFUALT_TIME_PATTERN = 'yyyy-MM-dd hh:mm:ss';
 
   function stringToUserReadable(str) {
@@ -42669,7 +42612,7 @@ function format_makeValueReadable(value, valueType) {
     var date = isTypeTime ? number_parseDate(value) : value;
 
     if (!isNaN(+date)) {
-      return time_format(date, USER_READABLE_DEFUALT_TIME_PATTERN);
+      return time_format(date, USER_READABLE_DEFUALT_TIME_PATTERN, useUTC);
     } else if (isValueDate) {
       return '-';
     }
@@ -42699,25 +42642,17 @@ function format_formatTpl(tpl, paramsList, encode) {
     return '';
   }
 
-  var isTimeAxis = paramsList[0].axisType && paramsList[0].axisType.indexOf('time') >= 0;
+  var $vars = paramsList[0].$vars || [];
 
-  if (isTimeAxis) {
-    var axisValue = paramsList[0].data[paramsList[0].axisIndex];
-    var date = number_parseDate(axisValue);
-    return time_format(date, tpl);
-  } else {
-    var $vars = paramsList[0].$vars || [];
+  for (var i = 0; i < $vars.length; i++) {
+    var alias = format_TPL_VAR_ALIAS[i];
+    tpl = tpl.replace(format_wrapVar(alias), format_wrapVar(alias, 0));
+  }
 
-    for (var i = 0; i < $vars.length; i++) {
-      var alias = format_TPL_VAR_ALIAS[i];
-      tpl = tpl.replace(format_wrapVar(alias), format_wrapVar(alias, 0));
-    }
-
-    for (var seriesIdx = 0; seriesIdx < seriesLen; seriesIdx++) {
-      for (var k = 0; k < $vars.length; k++) {
-        var val = paramsList[seriesIdx][$vars[k]];
-        tpl = tpl.replace(format_wrapVar(format_TPL_VAR_ALIAS[k], seriesIdx), encode ? format_encodeHTML(val) : val);
-      }
+  for (var seriesIdx = 0; seriesIdx < seriesLen; seriesIdx++) {
+    for (var k = 0; k < $vars.length; k++) {
+      var val = paramsList[seriesIdx][$vars[k]];
+      tpl = tpl.replace(format_wrapVar(format_TPL_VAR_ALIAS[k], seriesIdx), encode ? format_encodeHTML(val) : val);
     }
   }
 
@@ -50456,7 +50391,7 @@ var coordsOffsetMap = {
   '澳门': [-10, 10],
   '天津': [5, 5]
 };
-/* harmony default export */ var textCoord = (function (mapType, region) {
+function fixTextCoords(mapType, region) {
   if (mapType === 'china') {
     var coordFix = coordsOffsetMap[region.name];
 
@@ -50466,7 +50401,7 @@ var coordsOffsetMap = {
       cp[1] += -coordFix[1] / (10.5 / 0.75);
     }
   }
-});
+}
 // CONCATENATED MODULE: ./node_modules/echarts/esm/coord/geo/fix/geoCoord.js
 
 /*
@@ -50499,7 +50434,7 @@ var geoCoordMap = {
   'United States': [-99, 38],
   'United States of America': [-99, 38]
 };
-/* harmony default export */ var geoCoord = (function (mapType, region) {
+function fixGeoCoords(mapType, region) {
   if (mapType === 'world') {
     var geoCoord = geoCoordMap[region.name];
 
@@ -50509,7 +50444,7 @@ var geoCoordMap = {
       cp[1] = geoCoord[1];
     }
   }
-});
+}
 // CONCATENATED MODULE: ./src/coord/geo3D/Geo3D.js
 
 
@@ -50519,7 +50454,7 @@ var Geo3D_mat4 = dep_glmatrix.mat4;
 
 
 // Geo fix functions
-var Geo3D_geoFixFuncs = [textCoord, geoCoord];
+var Geo3D_geoFixFuncs = [fixTextCoords, fixGeoCoords];
 
 function Geo3D_Geo3D(name, map, geoJson, specialAreas, nameMap) {
 

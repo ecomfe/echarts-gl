@@ -33,22 +33,6 @@ import LayerGL from './core/LayerGL';
 import backwardCompat from './preprocessor/backwardCompat';
 import graphicGL from './util/graphicGL';
 
-// Version checking
-var deps = echartsGl.dependencies;
-function versionTooOldMsg(name) {
-    throw new Error(
-        name + ' version is too old, needs ' + deps[name] + ' or higher'
-    );
-}
-function checkVersion(version, name) {
-    if ((version.replace('.', '') - 0) < (deps[name].replace('.', '') - 0)) {
-        versionTooOldMsg(name);
-    }
-    console.log('Loaded ' + name + ', version ' + version);
-}
-checkVersion(clayVersion, 'claygl');
-checkVersion(echarts.version, 'echarts');
-
 function EChartsGL (zr) {
     this._layers = {};
 
