@@ -11,7 +11,7 @@ module.exports = (env, options) => {
             })
         ],
         entry: {
-            'echarts-gl': __dirname + '/index.js'
+            'echarts-gl': __dirname + '/index.esm.js'
         },
         output: {
             libraryTarget: 'umd',
