@@ -10,7 +10,8 @@
   "scripts": {
     "build": "node build/glsl2js.js && node node_modules/webpack/bin/webpack.js --mode development --devtool source-map && node node_modules/webpack/bin/webpack.js --mode production",
     "dev": "node node_modules/webpack/bin/webpack.js --mode development -w --devtool eval-cheap-module-source-map",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublish": "node build/glsl2js.js && ./node_modules/.bin/babel src -d lib "
   },
   "dependencies": {
     "claygl": "^1.2.1",
@@ -20,13 +21,13 @@
     "echarts": "5.0.0"
   },
   "main": "index.js",
+  "module": "index.esm.js",
   "repository": "https://github.com/ecomfe/echarts-gl",
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.32",
-    "@babel/helper-module-transforms": "^7.0.0-beta.32",
-    "@babel/helper-simple-access": "^7.0.0-beta.32",
-    "@babel/template": "^7.0.0-beta.32",
-    "@babel/types": "^7.0.0-beta.32",
+    "@babel/cli": "^7.12.10",
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "babel-plugin-module-resolver": "^4.1.0",
     "benchmark": "^2.1.3",
     "case-sensitive-paths-webpack-plugin": "^2.1.1",
     "echarts": "^5.0.0",

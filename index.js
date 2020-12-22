@@ -1,20 +1,20 @@
-import './src/echarts-gl';
+require('./src/echarts-gl');
 
-import './src/component/grid3D';
-import './src/component/geo3D';
-import './src/component/globe';
-import './src/component/mapbox3D';
-import './src/component/maptalks3D';
+require('./src/component/grid3D');
+require('./src/component/geo3D');
+require('./src/component/globe');
+require('./src/component/mapbox3D');
+require('./src/component/maptalks3D');
 
-import './src/chart/bar3D';
-import './src/chart/line3D';
-import './src/chart/scatter3D';
-import './src/chart/lines3D';
-import './src/chart/polygons3D';
-import './src/chart/surface';
-import './src/chart/map3D';
+require('./src/chart/bar3D');
+require('./src/chart/line3D');
+require('./src/chart/scatter3D');
+require('./src/chart/lines3D');
+require('./src/chart/polygons3D');
+require('./src/chart/surface');
+require('./src/chart/map3D');
 
-import './src/chart/scatterGL';
-import './src/chart/graphGL';
-import './src/chart/flowGL';
-import './src/chart/linesGL';
+require('./src/chart/scatterGL');
+require('./src/chart/graphGL');
+require('./src/chart/flowGL');
+require('./src/chart/linesGL');

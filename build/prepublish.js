@@ -7,9 +7,9 @@
 
 const path = require('path');
 const fsExtra = require('fs-extra');
-const {color, travelSrcDir, prePulishSrc} = require('zrender/build/helper');
+const glob = require('glob');
+const babel = require('@babel/core');
 
-const ecDir = path.resolve(__dirname, '..');
 const srcDir = path.resolve(__dirname, '../src');
 const libDir = path.resolve(__dirname, '../lib');
 
@@ -19,33 +19,18 @@ function prepublish () {
     fsExtra.removeSync(libDir);
     fsExtra.ensureDirSync(libDir);
 
-    travelSrcDir(srcDir, ({fileName, relativePath, absolutePath}) => {
-        prePulishSrc({
-            inputPath: absolutePath,
-            outputPath: path.resolve(libDir, relativePath, fileName),
-            transform
+    glob(srcDir, (files) => {
+        files.forEach(file => {
+            const code = fsExtra.readFileSync(file, 'utf-8');
+            babel.transform(code, {
+                plugins: [
+                    ['@babel/plugin-transform-modules-commonjs', {
+                        noInterop: true
+                    }]
+                ]
+            });
         });
     });
-
-    function transform({code, inputPath, outputPath}) {
-        if (inputPath === path.resolve(ecDir, 'src/echarts-gl.js')) {
-            // Using `echarts/echarts.blank.js` to overwrite `echarts/lib/echarts.js`
-            // for including exports API.
-            code += `
-var ___ec_export = require("./export");
-(function () {
-    for (var key in ___ec_export) {
-        if (___ec_export.hasOwnProperty(key)) {
-            exports[key] = ___ec_export[key];
-        }
-    }
-})();`;
-        }
-
-        return code;
-    }
-
-    console.log(color('fgGreen', 'bright')('All done.'));
 }
 
 prepublish();

@@ -1,4 +1,3 @@
-import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import Pass from 'claygl/src/compositor/Pass';
 import FrameBuffer from 'claygl/src/FrameBuffer';
@@ -464,7 +463,5 @@ ForceAtlas2GPU.prototype.dispose = function (renderer) {
     this._globalSpeedTex.dispose(renderer);
     this._globalSpeedPrevTex.dispose(renderer);
 };
-
-echarts.ForceAtlas2GPU = ForceAtlas2GPU;
 
 export default ForceAtlas2GPU;
