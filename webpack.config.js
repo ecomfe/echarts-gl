@@ -19,9 +19,6 @@ module.exports = (env, options) => {
             path: __dirname + '/dist',
             filename: options.mode === 'production' ? '[name].min.js' : '[name].js'
         },
-        optimization: {
-            concatenateModules: true
-        },
         externals: {
             'echarts/esm/echarts': 'echarts'
         }

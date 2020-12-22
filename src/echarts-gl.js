@@ -28,10 +28,8 @@
  */
 
 import * as echarts from 'echarts/esm/echarts';
-import clayVersion from 'claygl/src/version';
 import LayerGL from './core/LayerGL';
 import backwardCompat from './preprocessor/backwardCompat';
-import graphicGL from './util/graphicGL';
 
 function EChartsGL (zr) {
     this._layers = {};
