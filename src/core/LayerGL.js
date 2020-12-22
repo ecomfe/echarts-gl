@@ -105,6 +105,8 @@ var LayerGL = function (id, zr) {
     this._backgroundColor = null;
 };
 
+LayerGL.prototype.setUnpainted = function () {};
+
 /**
  * @param {module:echarts-gl/core/ViewGL} view
  */
