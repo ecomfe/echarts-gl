@@ -177,7 +177,8 @@ Grid3DAxis.prototype.update = function (
 
         var textEl = new echarts.graphic.Text({
             style: createTextStyle(nameTextStyleModel, {
-                textFill: labelColor,
+                text: axisModel.get('name'),
+                fill: labelColor,
                 stroke: strokeColor,
                 lineWidth: lineWidth
             })
