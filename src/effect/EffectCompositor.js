@@ -382,7 +382,7 @@ EffectCompositor.prototype.setSSAOParameter = function (name, value) {
             this._ssaoPass.setParameter(name, value);
             break;
         default:
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.warn('Unkown SSAO parameter ' + name);
             }
     }
@@ -411,7 +411,7 @@ EffectCompositor.prototype.setDOFParameter = function (name, value) {
             this._dofBlurKernel = new Float32Array(kernelSize * 2);
             break;
         default:
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.warn('Unkown DOF parameter ' + name);
             }
     }

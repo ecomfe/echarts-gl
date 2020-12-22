@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 import './line3D/Line3DSeries';
 import './line3D/Line3DView';
@@ -11,7 +11,7 @@ echarts.registerLayout(function (ecModel, api) {
 
         if (coordSys) {
             if (coordSys.type !== 'cartesian3D') {
-                if (__DEV__) {
+                if (process.env.NODE_ENV !== 'production') {
                     console.error('line3D needs cartesian3D coordinateSystem');
                 }
                 return;

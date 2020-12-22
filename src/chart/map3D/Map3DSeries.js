@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import componentViewControlMixin from '../../component/common/componentViewControlMixin';
 import componentPostEffectMixin from '../../component/common/componentPostEffectMixin';
 import componentLightMixin from '../../component/common/componentLightMixin';
@@ -33,7 +33,7 @@ var Map3DSeries = echarts.extendSeriesModel({
             return;
         }
 
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             var propsNeedToCheck = [
                 'left', 'top', 'width', 'height',
                 'boxWidth', 'boxDepth', 'boxHeight',

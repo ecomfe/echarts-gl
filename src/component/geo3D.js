@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 import './geo3D/Geo3DModel';
 import './geo3D/Geo3DView';

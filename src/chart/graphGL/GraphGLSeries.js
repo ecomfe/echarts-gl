@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import createGraphFromNodeEdge from './createGraphFromNodeEdge';
 import formatUtil from '../../util/format';
 

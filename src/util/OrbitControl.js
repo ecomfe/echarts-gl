@@ -328,7 +328,7 @@ var OrbitControl = Base.extend(function () {
 
         var projection = viewControlModel.get('projection');
         if (projection !== 'perspective' && projection !== 'orthographic' && projection !== 'isometric') {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.error('Unkown projection type %s, use perspective projection instead.', projection);
             }
             projection = 'perspective';
@@ -404,7 +404,7 @@ var OrbitControl = Base.extend(function () {
     },
 
     _validateProperties: function () {
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             if (MOUSE_BUTTON_KEY_MAP[this.panMouseButton] == null) {
                 console.error('Unkown panMouseButton %s. It should be left|middle|right', this.panMouseButton);
             }

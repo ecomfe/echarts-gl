@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 import './scatter3D/Scatter3DSeries';
 import './scatter3D/Scatter3DView';
@@ -11,7 +11,7 @@ echarts.registerLayout({
         if (coordSys) {
             var coordDims = coordSys.dimensions;
             if (coordDims.length < 3) {
-                if (__DEV__) {
+                if (process.env.NODE_ENV !== 'production') {
                     console.error('scatter3D needs 3D coordinateSystem');
                 }
                 return;

@@ -4,7 +4,7 @@ import './grid3D/Grid3DView';
 
 import '../coord/grid3DCreator';
 
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 echarts.registerAction({
     type: 'grid3DChangeCamera',
     event: 'grid3dcamerachanged',

@@ -1,6 +1,6 @@
 import graphicGL from '../../util/graphicGL';
 import Skybox from 'claygl/src/plugin/Skybox';
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 function SceneHelper() {
 }

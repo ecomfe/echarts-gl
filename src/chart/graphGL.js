@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 import './graphGL/GraphGLSeries';
 import './graphGL/GraphGLView';

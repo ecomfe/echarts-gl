@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import componentShadingMixin from '../../component/common/componentShadingMixin';
 import formatTooltip from '../common/formatTooltip';
 import createList from '../common/createList';
@@ -38,14 +38,14 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
                 ['x', 'y'].forEach(function (dim) {
                     if (!validateDimension(equation[dim])) {
-                        if (__DEV__) {
+                        if (process.env.NODE_ENV !== 'production') {
                             console.error('Invalid equation.%s', dim);
                         }
                         return;
                     }
                 });
                 if (typeof equation.z !== 'function') {
-                    if (__DEV__) {
+                    if (process.env.NODE_ENV !== 'production') {
                         console.error('equation.z needs to be function');
                     }
                     return;
@@ -78,7 +78,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
 
                 ['u', 'v'].forEach(function (dim) {
                     if (!validateDimension(parametricEquation[dim])) {
-                        if (__DEV__) {
+                        if (process.env.NODE_ENV !== 'production') {
                             console.error('Invalid parametricEquation.%s', dim);
                         }
                         return;
@@ -86,7 +86,7 @@ var SurfaceSeries = echarts.extendSeriesModel({
                 });
                 ['x', 'y', 'z'].forEach(function (dim) {
                     if (typeof parametricEquation[dim] !== 'function') {
-                        if (__DEV__) {
+                        if (process.env.NODE_ENV !== 'production') {
                             console.error('parametricEquation.%s needs to be function', dim);
                         }
                         return;

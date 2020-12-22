@@ -20,7 +20,7 @@ module.exports = (env, options) => {
             filename: options.mode === 'production' ? '[name].min.js' : '[name].js'
         },
         externals: {
-            'echarts/esm/echarts': 'echarts'
+            'echarts/echarts.blank': 'echarts'
         }
     };
 };

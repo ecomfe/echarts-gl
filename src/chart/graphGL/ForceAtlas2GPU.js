@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import Pass from 'claygl/src/compositor/Pass';
 import FrameBuffer from 'claygl/src/FrameBuffer';

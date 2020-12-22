@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';
 import PointsBuilder from '../common/PointsBuilder';

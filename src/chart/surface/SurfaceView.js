@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
 import glmatrix from 'claygl/src/dep/glmatrix';
@@ -59,7 +59,7 @@ echarts.extendChartView({
         var dataShape = seriesModel.get('dataShape');
         if (!dataShape) {
             dataShape = this._getDataShape(data, isParametric);
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 if (seriesModel.get('data')) {
                     console.warn('dataShape is not provided. Guess it is ', dataShape);
                 }
@@ -449,7 +449,7 @@ echarts.extendChartView({
             var x = data.get(rowDim, i);
             if (x < prevX) {
                 if (prevColumnCount && prevColumnCount !== columnCount) {
-                    if (__DEV__) {
+                    if (process.env.NODE_ENV !== 'production') {
                         mayInvalid = true;
                     }
                 }

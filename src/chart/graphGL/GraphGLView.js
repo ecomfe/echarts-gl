@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import {getLayoutRect} from 'echarts/esm/util/layout';
 import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';
@@ -138,7 +138,7 @@ echarts.extendChartView({
                 this._pointsBuilder.highlightOnMouseover = false;
             }
             else {
-                if (__DEV__) {
+                if (process.env.NODE_ENV !== 'production') {
                     console.warn('Unkown focusNodeAdjacencyOn value \s' + focusNodeAdjacencyOn);
                 }
             }
@@ -293,7 +293,7 @@ echarts.extendChartView({
         });
 
         if (layout === 'force') {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.warn('Currently only forceAtlas2 layout supported.');
             }
             layout = 'forceAtlas2';
@@ -445,7 +445,7 @@ echarts.extendChartView({
         var layoutModel = this._model.getModel('forceAtlas2');
 
         if (!layoutInstance) {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.error('None layout don\'t have startLayout action');
             }
             return;

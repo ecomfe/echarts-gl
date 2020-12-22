@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import glmatrix from 'claygl/src/dep/glmatrix';
 var vec3 = glmatrix.vec3;
 var vec2 = glmatrix.vec2;
@@ -106,7 +106,7 @@ function prepareCoords(data) {
         var coords = (itemModel.option instanceof Array) ?
             itemModel.option : itemModel.getShallow('coords', true);
 
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             if (!(coords instanceof Array && coords.length > 0 && coords[0] instanceof Array)) {
                 throw new Error('Invalid coords ' + JSON.stringify(coords) + '. Lines must have 2d coords array in data item.');
             }

@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import createAxis3DModel from './createAxis3DModel';
 
 var Axis3DModel = echarts.extendComponentModel({

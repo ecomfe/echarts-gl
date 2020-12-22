@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import glmatrix from 'claygl/src/dep/glmatrix';
 
@@ -52,7 +52,7 @@ export default graphicGL.Mesh.extend(function () {
         var period = seriesModel.get('effect.period') * 1000;
         var useConstantSpeed = speed != null;
 
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             if (!this.getScene()) {
                 console.error('TrailMesh must been add to scene before updateData');
             }

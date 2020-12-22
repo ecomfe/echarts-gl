@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import Cartesian from 'echarts/esm/coord/cartesian/Cartesian';
 
 function Cartesian3D(name) {

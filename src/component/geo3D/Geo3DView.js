@@ -1,5 +1,5 @@
 import Geo3DBuilder from '../common/Geo3DBuilder';
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 import graphicGL from '../../util/graphicGL';
 import OrbitControl from '../../util/OrbitControl';

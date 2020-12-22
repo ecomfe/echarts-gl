@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import componentViewControlMixin from '../common/componentViewControlMixin';
 import componentPostEffectMixin from '../common/componentPostEffectMixin';
 import componentLightMixin from '../common/componentLightMixin';

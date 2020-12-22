@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 echarts.extendSeriesModel({
 
@@ -10,7 +10,7 @@ echarts.extendSeriesModel({
 
     getInitialData: function (option, ecModel) {
         var coordSysDimensions = echarts.getCoordinateSystemDimensions(this.get('coordinateSystem')) || ['x', 'y'];
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             if (coordSysDimensions.length > 2) {
                 throw new Error('flowGL can only be used on 2d coordinate systems.')
             }

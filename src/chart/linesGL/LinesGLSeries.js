@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import { concatArray } from 'zrender/esm/core/util';
 
 var LinesSeries = echarts.extendSeriesModel({
@@ -55,7 +55,7 @@ var LinesSeries = echarts.extendSeriesModel({
         var coords = (itemModel.option instanceof Array)
             ? itemModel.option : itemModel.getShallow('coords');
 
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             if (!(coords instanceof Array && coords.length > 0 && coords[0] instanceof Array)) {
                 throw new Error('Invalid coords ' + JSON.stringify(coords) + '. Lines must have 2d coords array in data item.');
             }
@@ -123,7 +123,7 @@ var LinesSeries = echarts.extendSeriesModel({
                     coordsStorage[coordsCursor++] = y;
 
                     if (i > len) {
-                        if (__DEV__) {
+                        if (process.env.NODE_ENV !== 'production') {
                             throw new Error('Invalid data format.');
                         }
                     }

@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
 import format from '../../util/format';
@@ -43,7 +43,7 @@ echarts.extendChartView({
             pointsBuilder.updateView(coordSys.viewGL.camera);
         }
         else {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 throw new Error('Invalid coordinate system');
             }
         }
@@ -56,7 +56,7 @@ echarts.extendChartView({
             this._camera = coordSys.viewGL.camera;
         }
         else {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 throw new Error('Invalid coordinate system');
             }
         }

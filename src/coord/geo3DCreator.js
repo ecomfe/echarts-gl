@@ -1,5 +1,5 @@
 import Geo3D from './geo3D/Geo3D';
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import {getLayoutRect} from 'echarts/esm/util/layout';
 import ViewGL from '../core/ViewGL';
 import retrieve from '../util/retrieve';
@@ -90,7 +90,7 @@ function updateGeo3D(ecModel, api) {
 }
 
 
-if (__DEV__) {
+if (process.env.NODE_ENV !== 'production') {
     var mapNotExistsError = function (name) {
         console.error('Map ' + name + ' not exists. You can download map file on http://echarts.baidu.com/download-map.html');
     };
@@ -186,7 +186,7 @@ var geo3DCreator = {
                 };
             }
         }
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             if (!mapData) {
                 mapNotExistsError(mapData);
             }

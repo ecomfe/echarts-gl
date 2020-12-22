@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 var GL_SERIES = ['bar3D', 'line3D', 'map3D', 'scatter3D', 'surface', 'lines3D', 'scatterGL', 'scatter3D'];
 

@@ -6,7 +6,7 @@ import Shader from 'claygl/src/Shader';
 import Material from 'claygl/src/Material';
 import Node3D from 'claygl/src/Node';
 import Geometry from 'claygl/src/Geometry';
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import Scene from 'claygl/src/Scene';
 import LRUCache from 'zrender/esm/core/LRU';
 import textureUtil from 'claygl/src/util/texture';
@@ -374,11 +374,11 @@ graphicGL.createAmbientCubemap = function (opt, renderer, api, cb) {
     }, function () {
         // TODO Performance when multiple view
         ambientCubemap.cubemap.flipY = false;
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             var time = Date.now();
         }
         ambientCubemap.prefilter(renderer, 32);
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             var dTime = Date.now() - time;
             console.log('Prefilter environment map: ' + dTime + 'ms');
         }
@@ -606,7 +606,7 @@ graphicGL.setMaterialFromModel = function (shading, material, model, api) {
     else if (shading === 'hatching') {
         var tams = materialModel.get('hatchingTextures') || [];
         if (tams.length < 6) {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.error('Invalid hatchingTextures.');
             }
         }

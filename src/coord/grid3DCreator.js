@@ -1,6 +1,6 @@
 import Cartesian3D from './grid3D/Cartesian3D';
 import Axis3D from './grid3D/Axis3D';
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import {getLayoutRect} from 'echarts/esm/util/layout';
 import ViewGL from '../core/ViewGL';
 import retrieve from '../util/retrieve';
@@ -23,7 +23,7 @@ function resizeCartesian3D(grid3DModel, api) {
     var boxHeight = grid3DModel.get('boxHeight');
     var boxDepth = grid3DModel.get('boxDepth');
 
-    if (__DEV__) {
+    if (process.env.NODE_ENV !== 'production') {
         ['x', 'y', 'z'].forEach(function (dim) {
             if (!this.getAxis(dim)) {
                 throw new Error('Grid' + grid3DModel.id + ' don\'t have ' + dim + 'Axis');
@@ -72,7 +72,7 @@ function updateCartesian3D(ecModel, api) {
 
             var axis = cartesian3D.getAxis(dim);
             if (axis) {
-                if (__DEV__) {
+                if (process.env.NODE_ENV !== 'production') {
                     console.warn('Can\'t have two %s in one grid3D', axisType);
                 }
                 return;
@@ -137,7 +137,7 @@ var grid3DCreator = {
                 if (axisModel == null) {
                     axisModel = ecModel.getComponent(axisType);
                 }
-                if (__DEV__) {
+                if (process.env.NODE_ENV !== 'production') {
                     if (!axisModel) {
                         throw new Error(axisType + ' "' + retrieve.firstNotNull(
                             seriesModel.get(axisType + 'Index'),
@@ -161,7 +161,7 @@ var grid3DCreator = {
                 var firstGridModel = axesModels[0].getCoordSysModel();
                 axesModels.forEach(function (axisModel) {
                     var grid3DModel = axisModel.getCoordSysModel();
-                    if (__DEV__) {
+                    if (process.env.NODE_ENV !== 'production') {
                         if (!grid3DModel) {
                             throw new Error(
                                 'grid3D "' + retrieve.firstNotNull(

@@ -5,7 +5,7 @@
  */
 
 // TODO Expand.
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import Texture2D from 'claygl/src/Texture2D';
 
 function ZRTextureAtlasSurfaceNode(zr, offsetX, offsetY, width, height, gap, dpr) {
@@ -290,7 +290,7 @@ ZRTextureAtlasSurface.prototype = {
         var offsetY = Math.floor(nodeLen * this._nodeWidth / maxSize) * this._nodeHeight;
         if (offsetY >= maxSize) {
             // Failed if image is too large.
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.error('Too much labels. Some will be ignored.');
             }
             return;
@@ -320,7 +320,7 @@ ZRTextureAtlasSurface.prototype = {
 
     add: function (el, width, height) {
         if (this._coords[el.id]) {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.warn('Element already been add');
             }
             return this._coords[el.id];

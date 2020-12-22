@@ -1,6 +1,6 @@
 // TODO orthographic camera
 
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import {createTextStyle} from 'echarts/esm/label/labelStyle';
 import graphicGL from '../../util/graphicGL';
 import OrbitControl from '../../util/OrbitControl';

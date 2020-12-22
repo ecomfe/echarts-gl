@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import spriteUtil from '../../util/sprite';
 import PointsMesh from './PointsMesh';
@@ -548,7 +548,7 @@ PointsBuilder.prototype = {
                 currentSymbolAspect = symbolSize[0] / symbolSize[1];
                 maxSymbolSize = Math.max(Math.max(symbolSize[0], symbolSize[1]), maxSymbolSize);
             }
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 if (symbolAspect != null && Math.abs(currentSymbolAspect - symbolAspect) > 0.05) {
                     differentSymbolAspect = true;
                 }
@@ -560,7 +560,7 @@ PointsBuilder.prototype = {
             symbolAspect = currentSymbolAspect;
         }
 
-        if (__DEV__) {
+        if (process.env.NODE_ENV !== 'production') {
             if (differentSymbolAspect) {
                 console.warn('Different symbol width / height ratio will be ignored.');
             }

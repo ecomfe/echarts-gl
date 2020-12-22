@@ -19,7 +19,7 @@
   "peerDependencies": {
     "echarts": "5.0.0"
   },
-  "main": "dist/echarts-gl.js",
+  "main": "index.js",
   "repository": "https://github.com/ecomfe/echarts-gl",
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.32",

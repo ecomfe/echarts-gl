@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import Graph from 'echarts/esm/data/Graph';
 import linkList from 'echarts/esm/data/helper/linkList';
 import retrieve from '../../util/retrieve';

@@ -1,10 +1,10 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('surface', function (surfaceModel) {
         var cartesian = surfaceModel.coordinateSystem;
         if (!cartesian || cartesian.type !== 'cartesian3D') {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.error('Surface chart only support cartesian3D coordinateSystem');
             }
         }

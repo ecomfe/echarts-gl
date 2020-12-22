@@ -7,7 +7,7 @@
  */
 
 import Geometry from 'claygl/src/Geometry';
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import dynamicConvertMixin from './dynamicConvertMixin';
 import glmatrix from 'claygl/src/dep/glmatrix';
 var vec2 = glmatrix.vec2;

@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import retrieve from '../../util/retrieve';
 import Lines3DGeometry from '../../util/geometry/Lines3D';

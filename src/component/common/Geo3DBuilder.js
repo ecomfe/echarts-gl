@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import graphicGL from '../../util/graphicGL';
 import earcut from '../../util/earcut';
 import LinesGeo from '../../util/geometry/Lines3D';
@@ -184,7 +184,7 @@ Geo3DBuilder.prototype = {
     _getShader: function (shading) {
         var shader = this._shadersMap[shading];
         if (!shader) {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.warn('Unkown shading ' + shading);
             }
             // Default use lambert shader.
@@ -374,7 +374,7 @@ Geo3DBuilder.prototype = {
         var shading = componentModel.get('shading');
         var material = this._groundMaterials[shading];
         if (!material) {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.warn('Unkown shading ' + shading);
             }
             material = this._groundMaterials.lambert;

@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import Vector3 from 'claygl/src/math/Vector3';
 import glmatrix from 'claygl/src/dep/glmatrix';
 import cartesian3DLayout from './cartesian3DLayout';
@@ -160,7 +160,7 @@ echarts.registerLayout(function (ecModel, api) {
             mapService3DLayout(seriesModel, coordSys);
         }
         else {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 if (!coordSys) {
                     throw new Error('bar3D doesn\'t have coordinate system.');
                 }

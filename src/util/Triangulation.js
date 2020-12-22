@@ -304,7 +304,7 @@ TriangulationContext.prototype._cutHoles = function () {
         }
         // Didn't find
         if (edgeStartPointIndex < 0) {
-            if (__DEV__) {
+            if (process.env.NODE_ENV !== 'production') {
                 console.warn('Hole must be inside exterior.');
             }
             return;

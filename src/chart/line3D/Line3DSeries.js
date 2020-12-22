@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/esm/echarts';
+import * as echarts from 'echarts/echarts.blank';
 import formatTooltip from '../common/formatTooltip';
 import createList from '../common/createList';
 
