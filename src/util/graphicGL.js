@@ -6,7 +6,7 @@ import Shader from 'claygl/src/Shader';
 import Material from 'claygl/src/Material';
 import Node3D from 'claygl/src/Node';
 import Geometry from 'claygl/src/Geometry';
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 import Scene from 'claygl/src/Scene';
 import LRUCache from 'zrender/esm/core/LRU';
 import textureUtil from 'claygl/src/util/texture';

@@ -1,7 +1,7 @@
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 import axisDefault from './axis3DDefault';
 
-import OrdinalMeta from 'echarts/esm/data/OrdinalMeta';
+import OrdinalMeta from 'echarts/lib/data/OrdinalMeta';
 
 var AXIS_TYPES = ['value', 'category', 'time', 'log'];
 /**

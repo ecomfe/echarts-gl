@@ -1,10 +1,10 @@
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 import ZRTextureAtlasSurface from '../../util/ZRTextureAtlasSurface';
 import LabelsMesh from '../../util/mesh/LabelsMesh';
 import retrieve from '../../util/retrieve';
 import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
-import {createTextStyle} from 'echarts/esm/label/labelStyle';
+import {createTextStyle} from 'echarts/lib/label/labelStyle';
 
 var LABEL_NORMAL_SHOW_BIT = 1;
 var LABEL_EMPHASIS_SHOW_BIT = 2;

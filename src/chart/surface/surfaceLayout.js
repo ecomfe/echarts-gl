@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 
 echarts.registerLayout(function (ecModel, api) {
     ecModel.eachSeriesByType('surface', function (surfaceModel) {

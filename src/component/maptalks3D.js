@@ -1,6 +1,6 @@
 // Thanks to https://gitee.com/iverson_hu/maptalks-echarts-gl
 
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 
 import '../coord/maptalks3DCreator';
 

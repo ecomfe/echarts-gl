@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 import componentShadingMixin from '../../component/common/componentShadingMixin';
 import formatUtil from '../../util/format';
 import formatTooltip from '../common/formatTooltip';

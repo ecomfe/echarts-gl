@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 
 import graphicGL from '../../util/graphicGL';
 import OrbitControl from '../../util/OrbitControl';

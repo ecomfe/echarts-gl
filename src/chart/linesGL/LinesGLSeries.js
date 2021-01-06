@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 import { concatArray } from 'zrender/esm/core/util';
 
 var LinesSeries = echarts.extendSeriesModel({

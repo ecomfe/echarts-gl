@@ -23,13 +23,16 @@ require('echarts');
 require('echarts-gl');
 ```
 
-You can also use the released bundle. Which is [Universal Module Definition](https://github.com/umdjs/umd), supports AMD, CommonJS and vanilla environments.
-
-For example, load it by script tag.
+Use in script.
 ```html
-<script src="dist/echarts.min.js"></script>
-<script src="dist/echarts-gl.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script>
 ```
+
+NOTE:
+
+ECharts GL 2.x is compatible with ECharts 5.x.
+ECharts GL 1.x is compatible with ECharts 4.x.
 
 ## Basic Usage
 
@@ -50,16 +53,6 @@ chart.setOption({
     }]
 })
 ```
-
-## Dependencies
-
-Built on top of
-
-+ [Apache ECharts (incubating)](http://echarts.apache.org/)
-
-+ Canvas library [zrender](https://github.com/ecomfe/zrender)
-
-+ WebGL library [claygl](https://github.com/pissang/claygl)。
 
 ## License
 

@@ -4,7 +4,7 @@
  * @module echarts-gl/util/geometry/Sprites
  * @author Yi Shen(https://github.com/pissang)
  */
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 import Geometry from 'claygl/src/Geometry';
 import dynamicConvertMixin from './dynamicConvertMixin';
 

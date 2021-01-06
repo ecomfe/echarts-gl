@@ -4,14 +4,13 @@ var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 module.exports = (env, options) => {
     return {
         plugins: [
-            new CaseSensitivePathsPlugin({}),
-            new webpack.DefinePlugin({
-                'typeof __DEV__': JSON.stringify('boolean'),
-                __DEV__: options.mode === 'production' ? false : true
-            })
+            new CaseSensitivePathsPlugin({})
         ],
         entry: {
             'echarts-gl': __dirname + '/index.esm.js'
+        },
+        optimization: {
+            concatenateModules: true
         },
         output: {
             libraryTarget: 'umd',
@@ -20,7 +19,7 @@ module.exports = (env, options) => {
             filename: options.mode === 'production' ? '[name].min.js' : '[name].js'
         },
         externals: {
-            'echarts/echarts.blank': 'echarts'
+            'echarts/lib/echarts': 'echarts'
         }
     };
 };

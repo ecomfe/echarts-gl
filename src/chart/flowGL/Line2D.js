@@ -7,7 +7,7 @@
  */
 
 import Geometry from 'claygl/src/Geometry';
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 
 /**
  * @constructor

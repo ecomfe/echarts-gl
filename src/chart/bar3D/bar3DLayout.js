@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 import Vector3 from 'claygl/src/math/Vector3';
 import glmatrix from 'claygl/src/dep/glmatrix';
 import cartesian3DLayout from './cartesian3DLayout';

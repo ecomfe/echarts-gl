@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/echarts.blank';
+import * as echarts from 'echarts/lib/echarts';
 import Maptalks3DLayer from './Maptalks3DLayer';
 import SceneHelper from '../common/SceneHelper';
 import graphicGL from '../../util/graphicGL';
