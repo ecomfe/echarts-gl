@@ -1,5 +1,3 @@
-import * as echarts from 'echarts/lib/echarts';
-
-import './surface/SurfaceSeries';
-import './surface/SurfaceView';
-import './surface/surfaceLayout';
+import { use } from 'echarts/lib/echarts';
+import { install } from './surface/install';
+use(install);

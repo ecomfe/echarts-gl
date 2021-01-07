@@ -2,7 +2,7 @@ import * as echarts from 'echarts/lib/echarts';
 import Geo3DBuilder from '../../component/common/Geo3DBuilder';
 import graphicGL from '../../util/graphicGL';
 
-echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'polygons3D',
 

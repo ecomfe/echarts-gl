@@ -13,7 +13,7 @@ import atmosphere from './atmosphere.glsl.js';
 
 graphicGL.Shader['import'](atmosphere);
 
-export default echarts.extendComponentView({
+export default echarts.ComponentView.extend({
 
     type: 'globe',
 

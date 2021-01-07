@@ -3,7 +3,7 @@ import componentViewControlMixin from '../common/componentViewControlMixin';
 import componentPostEffectMixin from '../common/componentPostEffectMixin';
 import componentLightMixin from '../common/componentLightMixin';
 
-var Grid3DModel = echarts.extendComponentModel({
+var Grid3DModel = echarts.ComponentModel.extend({
 
     type: 'grid3D',
 

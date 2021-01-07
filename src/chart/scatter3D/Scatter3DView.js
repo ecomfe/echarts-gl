@@ -5,7 +5,7 @@ import format from '../../util/format';
 
 import PointsBuilder from '../common/PointsBuilder';
 
-echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'scatter3D',
 

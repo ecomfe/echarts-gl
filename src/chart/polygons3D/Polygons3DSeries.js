@@ -9,7 +9,7 @@ function transformPolygon(coordSys, poly) {
     return ret;
 }
 
-var Polygons3DSeries = echarts.extendSeriesModel({
+var Polygons3DSeries = echarts.SeriesModel.extend({
 
     type: 'series.polygons3D',
 

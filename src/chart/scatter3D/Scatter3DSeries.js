@@ -3,7 +3,7 @@ import formatUtil from '../../util/format';
 import formatTooltip from '../common/formatTooltip';
 import createList from '../common/createList';
 
-echarts.extendSeriesModel({
+export default echarts.SeriesModel.extend({
 
     type: 'series.scatter3D',
 

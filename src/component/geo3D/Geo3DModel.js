@@ -5,7 +5,7 @@ import componentLightMixin from '../common/componentLightMixin';
 import componentShadingMixin from '../common/componentShadingMixin';
 import geo3DModelMixin from '../../coord/geo3D/geo3DModelMixin';
 
-var Geo3DModel = echarts.extendComponentModel({
+var Geo3DModel = echarts.ComponentModel.extend({
 
     type: 'geo3D',
 

@@ -5,7 +5,7 @@ import OrbitControl from '../../util/OrbitControl';
 import SceneHelper from '../../component/common/SceneHelper';
 import Geo3DBuilder from '../../component/common/Geo3DBuilder';
 
-export default echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'map3D',
 

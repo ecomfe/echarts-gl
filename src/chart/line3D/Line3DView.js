@@ -14,7 +14,7 @@ var vec3 = glmatrix.vec3;
 
 graphicGL.Shader.import(lines3DGLSL);
 
-export default echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'line3D',
 

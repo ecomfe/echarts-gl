@@ -20,7 +20,7 @@ function getCoordSysSize(coordSys) {
     }
 }
 
-export default echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'lines3D',
 

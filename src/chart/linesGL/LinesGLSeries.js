@@ -1,7 +1,7 @@
 import * as echarts from 'echarts/lib/echarts';
 import { concatArray } from 'zrender/esm/core/util';
 
-var LinesSeries = echarts.extendSeriesModel({
+var LinesGLSeries = echarts.SeriesModel.extend({
 
     type: 'series.linesGL',
 
@@ -19,7 +19,7 @@ var LinesSeries = echarts.extendSeriesModel({
             option.data = new Float32Array(result.count);
         }
 
-        LinesSeries.superApply(this, 'init', arguments);
+        LinesGLSeries.superApply(this, 'init', arguments);
     },
 
     mergeOption: function (option) {
@@ -30,7 +30,7 @@ var LinesSeries = echarts.extendSeriesModel({
             option.data = new Float32Array(result.count);
         }
 
-        LinesSeries.superApply(this, 'mergeOption', arguments);
+        LinesGLSeries.superApply(this, 'mergeOption', arguments);
     },
 
     appendData: function (params) {
@@ -198,3 +198,5 @@ var LinesSeries = echarts.extendSeriesModel({
         }
     }
 });
+
+export default LinesGLSeries;

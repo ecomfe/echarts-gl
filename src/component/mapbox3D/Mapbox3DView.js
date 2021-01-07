@@ -9,7 +9,7 @@ graphicGL.Shader.import(displayShadowGLSL);
 
 var TILE_SIZE = 512;
 
-export default echarts.extendComponentView({
+export default echarts.ComponentView.extend({
 
     type: 'mapbox3D',
 

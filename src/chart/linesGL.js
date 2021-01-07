@@ -1,4 +1,3 @@
-import * as echarts from 'echarts/lib/echarts';
-
-import './linesGL/LinesGLSeries';
-import './linesGL/LinesGLView';
+import { use } from 'echarts/lib/echarts';
+import { install } from './linesGL/install';
+use(install);

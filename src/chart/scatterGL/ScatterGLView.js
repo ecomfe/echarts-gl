@@ -4,9 +4,8 @@ import ViewGL from '../../core/ViewGL';
 import PointsBuilder from '../common/PointsBuilder';
 
 import GLViewHelper from '../common/GLViewHelper';
-import retrieve from '../../util/retrieve';
 
-echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'scatterGL',
 

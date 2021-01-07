@@ -7,7 +7,7 @@ import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 
 import retrieve from '../../util/retrieve';
 
-echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'linesGL',
 

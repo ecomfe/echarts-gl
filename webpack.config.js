@@ -7,7 +7,7 @@ module.exports = (env, options) => {
             new CaseSensitivePathsPlugin({})
         ],
         entry: {
-            'echarts-gl': __dirname + '/index.esm.js'
+            'echarts-gl': __dirname + '/src/export/all.js'
         },
         optimization: {
             concatenateModules: true

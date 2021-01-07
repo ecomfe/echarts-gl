@@ -7,7 +7,7 @@ import displayShadowGLSL from '../../util/shader/displayShadow.glsl.js';
 
 graphicGL.Shader.import(displayShadowGLSL);
 
-export default echarts.extendComponentView({
+export default echarts.ComponentView.extend({
 
     type: 'maptalks3D',
 

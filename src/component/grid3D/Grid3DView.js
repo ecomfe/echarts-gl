@@ -16,12 +16,6 @@ import LabelsMesh from '../../util/mesh/LabelsMesh';
 import lines3DGLSL from '../../util/shader/lines3D.glsl.js';
 graphicGL.Shader.import(lines3DGLSL);
 
-['x', 'y', 'z'].forEach(function (dim) {
-    echarts.extendComponentView({
-        type: dim + 'Axis3D'
-    });
-});
-
 var dimIndicesMap = {
     // Left to right
     x: 0,
@@ -31,7 +25,7 @@ var dimIndicesMap = {
     z: 1
 };
 
-export default echarts.extendComponentView({
+export default echarts.ComponentView.extend({
 
     type: 'grid3D',
 

@@ -21,7 +21,7 @@ graphicGL.Shader.import(lines2DGLSL);
 
 var globalLayoutId = 1;
 
-echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'graphGL',
 

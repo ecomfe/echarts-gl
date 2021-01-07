@@ -1,4 +1,3 @@
-import * as echarts from 'echarts/lib/echarts';
-
-import './polygons3D/Polygons3DSeries';
-import './polygons3D/Polygons3DView';
+import { use } from 'echarts/lib/echarts';
+import { install } from './polygons3D/install';
+use(install);

@@ -174,6 +174,4 @@ var globeCreator = {
     }
 };
 
-echarts.registerCoordinateSystem('globe', globeCreator);
-
 export default globeCreator;

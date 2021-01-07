@@ -206,6 +206,4 @@ var geo3DCreator = {
     }
 };
 
-echarts.registerCoordinateSystem('geo3D', geo3DCreator);
-
 export default geo3DCreator;

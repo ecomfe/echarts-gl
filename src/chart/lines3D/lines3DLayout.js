@@ -150,7 +150,7 @@ function layoutOnPlane(seriesModel, coordSys, normal) {
     });
 }
 
-echarts.registerLayout(function (ecModel, api) {
+export default function lines3DLayout(ecModel, api) {
     ecModel.eachSeriesByType('lines3D', function (seriesModel) {
         var coordSys = seriesModel.coordinateSystem;
         if (coordSys.type === 'globe') {
@@ -163,4 +163,4 @@ echarts.registerLayout(function (ecModel, api) {
             layoutOnPlane(seriesModel, coordSys, [0, 0, 1]);
         }
     });
-});
+};

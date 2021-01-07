@@ -4,7 +4,7 @@ import formatUtil from '../../util/format';
 import formatTooltip from '../common/formatTooltip';
 import createList from '../common/createList';
 
-var Bar3DSeries = echarts.extendSeriesModel({
+var Bar3DSeries = echarts.SeriesModel.extend({
 
     type: 'series.bar3D',
 

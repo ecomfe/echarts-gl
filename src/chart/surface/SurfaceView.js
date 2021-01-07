@@ -1,6 +1,5 @@
 import * as echarts from 'echarts/lib/echarts';
 import graphicGL from '../../util/graphicGL';
-import retrieve from '../../util/retrieve';
 import glmatrix from 'claygl/src/dep/glmatrix';
 import trianglesSortMixin from '../../util/geometry/trianglesSortMixin';
 import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
@@ -11,7 +10,7 @@ function isPointsNaN(pt) {
     return isNaN(pt[0]) || isNaN(pt[1]) || isNaN(pt[2]);
 }
 
-echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'surface',
 
@@ -88,8 +87,10 @@ echarts.extendChartView({
 
     _updateAnimation: function (seriesModel) {
         graphicGL.updateVertexAnimation(
-            [['prevPosition', 'position'],
-            ['prevNormal', 'normal']],
+            [
+                ['prevPosition', 'position'],
+                ['prevNormal', 'normal']
+            ],
             this._prevSurfaceMesh,
             this._surfaceMesh,
             seriesModel

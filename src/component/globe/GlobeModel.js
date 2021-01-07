@@ -8,7 +8,7 @@ import componentShadingMixin from '../common/componentShadingMixin';
 function defaultId(option, idx) {
     option.id = option.id || option.name || (idx + '');
 }
-var GlobeModel = echarts.extendComponentModel({
+var GlobeModel = echarts.ComponentModel.extend({
 
     type: 'globe',
 

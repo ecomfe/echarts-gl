@@ -143,31 +143,34 @@ function getValueDimension(data, dataDims) {
     };
 }
 
-echarts.registerLayout(function (ecModel, api) {
-    ecModel.eachSeriesByType('bar3D', function (seriesModel) {
-        var coordSys = seriesModel.coordinateSystem;
-        var coordSysType = coordSys && coordSys.type;
-        if (coordSysType === 'globe') {
-            globeLayout(seriesModel, coordSys);
-        }
-        else if (coordSysType === 'cartesian3D') {
-            cartesian3DLayout(seriesModel, coordSys);
-        }
-        else if (coordSysType === 'geo3D') {
-            geo3DLayout(seriesModel, coordSys);
-        }
-        else if (coordSysType === 'mapbox3D' || coordSysType === 'maptalks3D') {
-            mapService3DLayout(seriesModel, coordSys);
-        }
-        else {
-            if (process.env.NODE_ENV !== 'production') {
-                if (!coordSys) {
-                    throw new Error('bar3D doesn\'t have coordinate system.');
-                }
-                else {
-                    throw new Error('bar3D doesn\'t support coordinate system ' + coordSys.type);
+
+export default function registerBarLayout(registers) {
+    registers.registerLayout(function (ecModel, api) {
+        ecModel.eachSeriesByType('bar3D', function (seriesModel) {
+            var coordSys = seriesModel.coordinateSystem;
+            var coordSysType = coordSys && coordSys.type;
+            if (coordSysType === 'globe') {
+                globeLayout(seriesModel, coordSys);
+            }
+            else if (coordSysType === 'cartesian3D') {
+                cartesian3DLayout(seriesModel, coordSys);
+            }
+            else if (coordSysType === 'geo3D') {
+                geo3DLayout(seriesModel, coordSys);
+            }
+            else if (coordSysType === 'mapbox3D' || coordSysType === 'maptalks3D') {
+                mapService3DLayout(seriesModel, coordSys);
+            }
+            else {
+                if (process.env.NODE_ENV !== 'production') {
+                    if (!coordSys) {
+                        throw new Error('bar3D doesn\'t have coordinate system.');
+                    }
+                    else {
+                        throw new Error('bar3D doesn\'t support coordinate system ' + coordSys.type);
+                    }
                 }
             }
-        }
+        });
     });
-});
+}

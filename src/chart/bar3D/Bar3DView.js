@@ -9,7 +9,7 @@ import {getItemVisualColor, getItemVisualOpacity} from '../../util/visual';
 
 var vec3 = glmatrix.vec3;
 
-export default echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'bar3D',
 

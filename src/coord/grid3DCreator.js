@@ -186,6 +186,4 @@ var grid3DCreator = {
     }
 };
 
-echarts.registerCoordinateSystem('grid3D', grid3DCreator);
-
 export default grid3DCreator;

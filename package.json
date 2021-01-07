@@ -20,9 +20,22 @@
   "peerDependencies": {
     "echarts": "5.0.0"
   },
-  "main": "index.js",
-  "module": "index.esm.js",
+  "main": "dist/echarts-gl.js",
+  "module": "index.js",
   "repository": "https://github.com/ecomfe/echarts-gl",
+  "sideEffects": [
+    "lib/chart/*.js",
+    "lib/component/*.js",
+    "lib/echarts-gl.js",
+    "lib/export/all.js",
+
+    "src/chart/*.js",
+    "src/component/*.js",
+    "src/echarts-gl.js",
+    "src/export/all.js",
+
+    "index.js"
+  ],
   "devDependencies": {
     "@babel/cli": "^7.12.10",
     "@babel/core": "^7.12.10",

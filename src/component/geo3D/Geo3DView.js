@@ -5,7 +5,7 @@ import graphicGL from '../../util/graphicGL';
 import OrbitControl from '../../util/OrbitControl';
 import SceneHelper from '../common/SceneHelper';
 
-export default echarts.extendComponentView({
+export default echarts.ComponentView.extend({
 
     type: 'geo3D',
 

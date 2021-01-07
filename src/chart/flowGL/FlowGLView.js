@@ -7,7 +7,7 @@ import VectorFieldParticleSurface from './VectorFieldParticleSurface';
 
 
 // TODO 百度地图不是 linear 的
-echarts.extendChartView({
+export default echarts.ChartView.extend({
 
     type: 'flowGL',
 

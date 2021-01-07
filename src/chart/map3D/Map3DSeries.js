@@ -16,7 +16,7 @@ function transformPolygon(mapbox3DCoordSys, poly) {
     return newPoly;
 }
 
-var Map3DSeries = echarts.extendSeriesModel({
+var Map3DSeries = echarts.SeriesModel.extend({
 
     type: 'series.map3D',
 

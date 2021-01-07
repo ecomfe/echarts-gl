@@ -6,16 +6,17 @@ import OrdinalMeta from 'echarts/lib/data/OrdinalMeta';
 var AXIS_TYPES = ['value', 'category', 'time', 'log'];
 /**
  * Generate sub axis model class
+ * @param {} registers
  * @param {string} dim 'x' 'y' 'radius' 'angle' 'parallel'
  * @param {module:echarts/model/Component} BaseAxisModelClass
  * @param {Function} axisTypeDefaulter
  * @param {Object} [extraDefaultOption]
  */
-export default function (dim, BaseAxisModelClass, axisTypeDefaulter, extraDefaultOption) {
+export default function (registers, dim, BaseAxisModelClass, axisTypeDefaulter, extraDefaultOption) {
 
-    echarts.util.each(AXIS_TYPES, function (axisType) {
+    AXIS_TYPES.forEach(function (axisType) {
 
-        BaseAxisModelClass.extend({
+        var AxisModel = BaseAxisModelClass.extend({
 
             type: dim + 'Axis3D.' + axisType,
 
@@ -60,10 +61,12 @@ export default function (dim, BaseAxisModelClass, axisTypeDefaulter, extraDefaul
                 true
             )
         });
+
+        registers.registerComponentModel(AxisModel);
     });
 
     // TODO
-    BaseAxisModelClass.superClass.registerSubTypeDefaulter(
+    registers.registerSubTypeDefaulter(
         dim + 'Axis3D',
         echarts.util.curry(axisTypeDefaulter, dim)
     );

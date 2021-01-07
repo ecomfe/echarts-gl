@@ -11,19 +11,29 @@ ECharts-GL is an extension pack of [Apache ECharts (incubating)](http://echarts.
 
 ## Installing
 
-Use npm and webpack
+###  npm and webpack
 
 ```bash
 npm install echarts
 npm install echarts-gl
 ```
 
+#### Import all
 ```js
-require('echarts');
-require('echarts-gl');
+import * as echarts from 'echarts';
+import 'echarts-gl';
 ```
 
-Use in script.
+#### Minimal Import
+```js
+import * as echarts from 'echarts/core';
+import { Scatter3DChart } from 'echarts-gl/charts';
+import { Grid3DComponent } from 'echarts-gl/components';
+
+echarts.use([Scatter3DChart, Grid3DComponent]);
+```
+
+### Include by scripts
 ```html
 <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script>

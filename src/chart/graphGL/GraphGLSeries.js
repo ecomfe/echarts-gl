@@ -2,7 +2,7 @@ import * as echarts from 'echarts/lib/echarts';
 import createGraphFromNodeEdge from './createGraphFromNodeEdge';
 import formatUtil from '../../util/format';
 
-var GraphSeries = echarts.extendSeriesModel({
+var GraphSeries = echarts.SeriesModel.extend({
 
     type: 'series.graphGL',
 

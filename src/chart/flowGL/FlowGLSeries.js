@@ -1,6 +1,6 @@
 import * as echarts from 'echarts/lib/echarts';
 
-echarts.extendSeriesModel({
+export default echarts.SeriesModel.extend({
 
     type: 'series.flowGL',
 

@@ -3,7 +3,7 @@ import componentShadingMixin from '../../component/common/componentShadingMixin'
 import formatTooltip from '../common/formatTooltip';
 import createList from '../common/createList';
 
-var SurfaceSeries = echarts.extendSeriesModel({
+var SurfaceSeries = echarts.SeriesModel.extend({
 
     type: 'series.surface',
 
