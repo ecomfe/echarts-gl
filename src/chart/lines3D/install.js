@@ -1,9 +1,12 @@
+import lines3DLayout from './lines3DLayout';
 import Lines3DSeries from './Lines3DSeries';
 import Lines3DView from './Lines3DView';
 
 export function install(registers) {
     registers.registerChartView(Lines3DView);
     registers.registerSeriesModel(Lines3DSeries);
+
+    registers.registerLayout(lines3DLayout);
 
     registers.registerAction({
         type: 'lines3DPauseEffect',

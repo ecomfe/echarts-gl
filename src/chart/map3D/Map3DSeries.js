@@ -66,7 +66,9 @@ var Map3DSeries = echarts.SeriesModel.extend({
     getInitialData: function (option) {
         option.data = this.getFilledRegions(option.data, option.map);
 
-        var dimensions = echarts.helper.createDimensions(['value'], option.data);
+        var dimensions = echarts.helper.createDimensions(option.data, {
+            coordDimensions: ['value']
+        });
         var list = new echarts.List(dimensions, this);
         list.initData(option.data);
 

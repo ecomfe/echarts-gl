@@ -31,7 +31,9 @@ export default function (nodes, edges, hostModel, directed, beforeLink) {
 
     // FIXME, support more coordinate systems.
     var dimensionNames = echarts.helper.createDimensions(
-        ['value'], nodes
+        nodes, {
+            coordDimensions: ['value']
+        }
     );
     nodeData = new echarts.List(dimensionNames, hostModel);
     nodeData.initData(nodes);

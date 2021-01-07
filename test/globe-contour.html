@@ -13,7 +13,7 @@
         <script src="https://unpkg.com/d3-geo@1"></script>
         <script src="https://unpkg.com/d3-timer@1"></script>
         <script src="../node_modules/echarts/dist/echarts.js"></script>
-        <script src="../node_modules/echarts/map/js/world.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/world.js"></script>
         <script src="../dist/echarts-gl.js"></script>
         <script src="lib/jquery.min.js"></script>
         <script src="lib/stackBlur.js"></script>
@@ -151,7 +151,7 @@ function initCharts(option) {
     chart.setOption({
         globe: {
 
-            environment: 'asset/starfield.jpg',
+            // environment: 'asset/starfield.jpg',
 
             heightTexture: 'asset/bathymetry_bw_composite_4k.jpg',
 
@@ -167,7 +167,7 @@ function initCharts(option) {
             },
 
             postEffect: {
-                enable: true,
+                enable: false,
                 depthOfField: {
                     enable: true
                 },

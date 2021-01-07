@@ -8,6 +8,8 @@ export default echarts.SeriesModel.extend({
 
     visualStyleAccessPath: 'itemStyle',
 
+    hasSymbolVisual: true,
+
     getInitialData: function () {
         return echarts.helper.createList(this);
     },
