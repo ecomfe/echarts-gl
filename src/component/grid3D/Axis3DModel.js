@@ -1,6 +1,6 @@
 import * as echarts from 'echarts/lib/echarts';
 
-var Axis3DModel = echarts.extendComponentModel({
+var Axis3DModel = echarts.ComponentModel.extend({
 
     type: 'cartesian3DAxis',
 
