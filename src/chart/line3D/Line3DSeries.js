@@ -9,6 +9,7 @@ var Line3DSeries = echarts.SeriesModel.extend({
     dependencies: ['grid3D'],
 
     visualStyleAccessPath: 'lineStyle',
+    visualDrawType: 'stroke',
 
     getInitialData: function (option, ecModel) {
         return createList(this);

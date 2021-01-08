@@ -8,6 +8,7 @@ var LinesGLSeries = echarts.SeriesModel.extend({
     dependencies: ['grid', 'geo'],
 
     visualStyleAccessPath: 'lineStyle',
+    visualDrawType: 'stroke',
 
     streamEnabled: true,
 

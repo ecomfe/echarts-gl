@@ -7,6 +7,7 @@ export default echarts.SeriesModel.extend({
     dependencies: ['globe'],
 
     visualStyleAccessPath: 'lineStyle',
+    visualDrawType: 'stroke',
 
     getInitialData: function (option, ecModel) {
         var lineData = new echarts.List(['value'], this);
