@@ -1,5 +1,5 @@
 import * as echarts from 'echarts/lib/echarts';
-import { concatArray } from 'zrender/esm/core/util';
+import { concatArray } from 'zrender/lib/core/util';
 
 var LinesGLSeries = echarts.SeriesModel.extend({
 
