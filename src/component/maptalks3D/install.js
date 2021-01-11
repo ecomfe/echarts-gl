@@ -8,7 +8,7 @@ export function install(registers) {
 
     registers.registerCoordinateSystem('maptalks3D', maptalks3DCreator);
 
-    echarts.registerAction({
+    registers.registerAction({
         type: 'maptalks3DChangeCamera',
         event: 'maptalks3dcamerachanged',
         update: 'maptalks3D:updateCamera'

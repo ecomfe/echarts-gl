@@ -7,11 +7,11 @@ import SceneHelper from '../common/SceneHelper';
 import sunCalc from '../../util/sunCalc';
 import retrieve from '../../util/retrieve';
 
-import 'claygl/src/shader/source/util.glsl.js';
+import utilShaderCode from 'claygl/src/shader/source/util.glsl.js';
+import atmosphereShaderCode from './atmosphere.glsl.js';
 
-import atmosphere from './atmosphere.glsl.js';
-
-graphicGL.Shader['import'](atmosphere);
+graphicGL.Shader['import'](utilShaderCode);
+graphicGL.Shader['import'](atmosphereShaderCode);
 
 export default echarts.ComponentView.extend({
 
