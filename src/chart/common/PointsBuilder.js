@@ -6,6 +6,7 @@ import LabelsBuilder from '../../component/common/LabelsBuilder';
 import Matrix4 from 'claygl/src/math/Matrix4';
 import retrieve from '../../util/retrieve';
 import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
+import { getVisualColor, getVisualOpacity } from '../../../lib/util/visual';
 
 var SDF_RANGE = 20;
 
@@ -108,8 +109,8 @@ PointsBuilder.prototype = {
             material.undefine('VERTEX_SIZE');
             material.undefine('VERTEX_COLOR');
 
-            var color = data.getVisual('color');
-            var opacity = data.getVisual('opacity');
+            var color = getVisualColor(data);
+            var opacity = getVisualOpacity(data);
             graphicGL.parseColor(color, rgbaArr);
             rgbaArr[3] *= opacity;
 

@@ -10,8 +10,8 @@
   "scripts": {
     "build": "node build/glsl2js.js && node node_modules/webpack/bin/webpack.js --mode development --devtool source-map && node node_modules/webpack/bin/webpack.js --mode production",
     "dev": "node node_modules/webpack/bin/webpack.js --mode development -w --devtool eval-cheap-module-source-map",
-    "prepare": "npm run build",
-    "prepublish": "node build/glsl2js.js && ./node_modules/.bin/babel src -d lib "
+    "prepublish": "node build/glsl2js.js && ./node_modules/.bin/babel src -d lib",
+    "release": "npm run prepublish && npm run build"
   },
   "dependencies": {
     "claygl": "^1.2.1",
