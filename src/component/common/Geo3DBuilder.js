@@ -20,7 +20,9 @@ function Geo3DBuilder(api) {
     // Cache triangulation result
     this._triangulationResults = {};
 
-    this._shadersMap = graphicGL.COMMON_SHADERS.reduce(function (obj, shaderName) {
+    this._shadersMap = graphicGL.COMMON_SHADERS.filter(function (shaderName) {
+        return shaderName !== 'shadow';
+    }).reduce(function (obj, shaderName) {
         obj[shaderName] = graphicGL.createShader('ecgl.' + shaderName);
         return obj;
     }, {});

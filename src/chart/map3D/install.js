@@ -4,7 +4,12 @@ import '../../echarts-gl';
 import Map3DSeries from './Map3DSeries';
 import Map3DView from './Map3DView';
 
+import {install as installGeo3D} from '../../component/geo3D/install';
+
 export function install(registers) {
+    // Depends on geo3d
+    installGeo3D(registers);
+
     registers.registerChartView(Map3DView);
     registers.registerSeriesModel(Map3DSeries);
     registers.registerAction({
