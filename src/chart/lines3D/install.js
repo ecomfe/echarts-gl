@@ -1,3 +1,6 @@
+// TODO ECharts GL must be imported whatever component,charts is imported.
+import '../../echarts-gl';
+
 import lines3DLayout from './lines3DLayout';
 import Lines3DSeries from './Lines3DSeries';
 import Lines3DView from './Lines3DView';

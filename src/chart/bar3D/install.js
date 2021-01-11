@@ -1,3 +1,7 @@
+// TODO ECharts GL must be imported whatever component,charts is imported.
+import '../../echarts-gl';
+
+
 import registerBarLayout from './bar3DLayout';
 import Bar3DSeries from './Bar3DSeries';
 import Bar3DView from './Bar3DView';

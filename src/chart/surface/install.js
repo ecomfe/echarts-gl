@@ -1,3 +1,6 @@
+// TODO ECharts GL must be imported whatever component,charts is imported.
+import '../../echarts-gl';
+
 import SurfaceSeries from './SurfaceSeries';
 import SurfaceView from './SurfaceView';
 

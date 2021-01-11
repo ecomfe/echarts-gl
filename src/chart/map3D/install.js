@@ -1,3 +1,6 @@
+// TODO ECharts GL must be imported whatever component,charts is imported.
+import '../../echarts-gl';
+
 import Map3DSeries from './Map3DSeries';
 import Map3DView from './Map3DView';
 

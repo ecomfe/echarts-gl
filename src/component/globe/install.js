@@ -1,3 +1,6 @@
+// TODO ECharts GL must be imported whatever component,charts is imported.
+import '../../echarts-gl';
+
 import GlobeModel from './GlobeModel';
 import GlobeView from './GlobeView';
 import globeCreator from '../../coord/globeCreator';

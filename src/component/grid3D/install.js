@@ -1,3 +1,6 @@
+// TODO ECharts GL must be imported whatever component,charts is imported.
+import '../../echarts-gl';
+
 import Grid3DModel from './Grid3DModel';
 import Grid3DView from './Grid3DView';
 import grid3DCreator from '../../coord/grid3DCreator';

@@ -1,3 +1,6 @@
+// TODO ECharts GL must be imported whatever component,charts is imported.
+import '../../echarts-gl';
+
 import Geo3DModel from './Geo3DModel';
 import Geo3DView from './Geo3DView';
 import geo3DCreator from '../../coord/geo3DCreator';

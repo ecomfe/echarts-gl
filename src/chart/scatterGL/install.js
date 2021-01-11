@@ -1,3 +1,6 @@
+// TODO ECharts GL must be imported whatever component,charts is imported.
+import '../../echarts-gl';
+
 import ScatterGLSeries from './ScatterGLSeries';
 import ScatterGLView from './ScatterGLView';
 
