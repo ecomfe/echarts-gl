@@ -126,7 +126,6 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
         );
         var distance = labelModel.get('distance') || 0;
         var position = labelModel.get('position');
-        var textStyleModel = labelModel.getModel('textStyle');
 
         var dpr = this._api.getDevicePixelRatio();
         var text = seriesModel.getFormattedLabel(dataIndex, isEmphasis ? 'emphasis' : 'normal');
@@ -136,12 +135,12 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
 
         // TODO Background.
         var textEl = new echarts.graphic.Text({
-            style: createTextStyle(textStyleModel, {
+            style: createTextStyle(labelModel, {
                 text: text,
-                fill: textStyleModel.get('color') || getItemVisualColor(data, dataIndex) || '#000',
+                fill: labelModel.get('color') || getItemVisualColor(data, dataIndex) || '#000',
                 align: 'left',
                 verticalAlign: 'top',
-                opacity: retrieve.firstNotNull(textStyleModel.get('opacity'), getItemVisualOpacity(data, dataIndex), 1)
+                opacity: retrieve.firstNotNull(labelModel.get('opacity'), getItemVisualOpacity(data, dataIndex), 1)
             })
         });
 

@@ -550,10 +550,9 @@ export default echarts.ComponentView.extend({
                 }
             }
 
-            var textStyleModel = labelModel.getModel('textStyle');
-            var labelColor = textStyleModel.get('color');
+            var labelColor = labelModel.get('color');
             var textEl = new echarts.graphic.Text({
-                style: createTextStyle(textStyleModel, {
+                style: createTextStyle(labelModel, {
                     text: text,
                     fill: labelColor || lineColor,
                     align: 'left',
