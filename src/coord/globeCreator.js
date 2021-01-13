@@ -51,7 +51,7 @@ function resizeGlobe(globeModel, api) {
 
 function updateGlobe(ecModel, api) {
 
-    var altitudeDataExtent = [Infinity, -Infinity]
+    var altitudeDataExtent = [Infinity, -Infinity];
 
     ecModel.eachSeries(function (seriesModel) {
         if (seriesModel.coordinateSystem !== this) {
