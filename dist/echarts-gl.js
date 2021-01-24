@@ -59156,7 +59156,7 @@ function isPointsNaN(pt) {
                 if (data.hasValue(i)) {
                     var rgbaArr = util_graphicGL.parseColor(getItemVisualColor(data, i));
                     var opacity = getItemVisualOpacity(data, i);
-                    rgbaArr[3] *= opacity;
+                    opacity != null && (rgbaArr[3] *= opacity);
                     if (rgbaArr[3] < 0.99) {
                         isTransparent = true;
                     }
@@ -59268,7 +59268,7 @@ function isPointsNaN(pt) {
                 uvArr[1] = Math.floor(i / column) / (row - 1);
                 var rgbaArr = util_graphicGL.parseColor(getItemVisualColor(data, i));
                 var opacity = getItemVisualOpacity(data, i);
-                rgbaArr[3] *= opacity;
+                opacity != null && (rgbaArr[3] *= opacity);
                 if (rgbaArr[3] < 0.99) {
                     isTransparent = true;
                 }
