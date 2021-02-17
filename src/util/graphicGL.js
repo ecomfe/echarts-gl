@@ -199,9 +199,7 @@ function nearestPowerOfTwo(val) {
     return Math.pow(2, Math.round(Math.log(val) / Math.LN2));
 }
 function convertTextureToPowerOfTwo(texture) {
-    if ((texture.wrapS === Texture.REPEAT || texture.wrapT === Texture.REPEAT)
-     && texture.image
-     ) {
+    if ((texture.wrapS === Texture.REPEAT || texture.wrapT === Texture.REPEAT) && texture.image) {
         // var canvas = document.createElement('canvas');
         var width = nearestPowerOfTwo(texture.width);
         var height = nearestPowerOfTwo(texture.height);
@@ -339,6 +337,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
                     });
                     textureObj.callbacks = null;
                 };
+                originalImage.crossOrigin = 'Anonymous';
                 originalImage.src = imgValue;
                 // Use blank image as place holder.
                 texture.image = blankImage;
