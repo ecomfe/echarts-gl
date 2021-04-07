@@ -26588,7 +26588,7 @@ external_echarts_.registerPostInit(function (chart) {
                 findAndDrawOtherLayer(zlevel, el.zlevel);
                 zlevel = el.zlevel;
             }
-            this._doPaintEl(el, layer, true, scope);
+            this._doPaintEl(el, layer, true, null, scope);
         }
 
         findAndDrawOtherLayer(zlevel, Infinity);
