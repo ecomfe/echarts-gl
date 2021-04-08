@@ -53897,6 +53897,7 @@ function Mapbox3DLayer (id, zr) {
 
 }
 
+Mapbox3DLayer.prototype.setUnpainted = function () {};
 Mapbox3DLayer.prototype.resize = function () {
     this._mapbox.resize();
 };
@@ -54558,6 +54559,7 @@ function Maptalks3DLayer (id, zr, defaultCenter, defaultZoom) {
 
 }
 
+Maptalks3DLayer.prototype.setUnpainted = function () {};
 Maptalks3DLayer.prototype.resize = function () {
     this._maptalks.checkSize();
 };
