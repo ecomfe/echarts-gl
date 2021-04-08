@@ -25,6 +25,7 @@ function Mapbox3DLayer (id, zr) {
 
 }
 
+Mapbox3DLayer.prototype.setUnpainted = function () {};
 Mapbox3DLayer.prototype.resize = function () {
     this._mapbox.resize();
 };

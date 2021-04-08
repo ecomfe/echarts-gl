@@ -29,6 +29,7 @@ function Maptalks3DLayer (id, zr, defaultCenter, defaultZoom) {
 
 }
 
+Maptalks3DLayer.prototype.setUnpainted = function () {};
 Maptalks3DLayer.prototype.resize = function () {
     this._maptalks.checkSize();
 };
