@@ -6,7 +6,7 @@ import LabelsBuilder from '../../component/common/LabelsBuilder';
 import Matrix4 from 'claygl/src/math/Matrix4';
 import retrieve from '../../util/retrieve';
 import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
-import { getVisualColor, getVisualOpacity } from '../../../lib/util/visual';
+import { getVisualColor, getVisualOpacity } from '../../util/visual';
 
 var SDF_RANGE = 20;
 
