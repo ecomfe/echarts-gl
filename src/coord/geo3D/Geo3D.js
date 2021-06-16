@@ -62,7 +62,7 @@ Geo3D.prototype = {
 
             regionsMap[regionName] = regions[i];
             // Add geoJson
-            this.addGeoCoord(regionName, regions[i].center);
+            this.addGeoCoord(regionName, regions[i].getCenter());
 
             // Some area like Alaska in USA map needs to be tansformed
             // to look better

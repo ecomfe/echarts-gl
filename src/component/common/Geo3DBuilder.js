@@ -107,7 +107,7 @@ Geo3DBuilder.prototype = {
                 if (!region) {
                     return [NaN, NaN, NaN];
                 }
-                center = region.center;
+                center = region.getCenter();
                 var pos = coordSys.dataToPoint([center[0], center[1], height]);
                 return pos;
             }

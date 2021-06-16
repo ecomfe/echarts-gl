@@ -23931,7 +23931,7 @@ function isDom(value) {
 function isGradientObject(value) {
     return value.colorStops != null;
 }
-function isPatternObject(value) {
+function isImagePatternObject(value) {
     return value.image != null;
 }
 function isRegExp(value) {
@@ -24313,7 +24313,7 @@ var Track = (function () {
                         this.interpolable = false;
                     }
                 }
-                else if (typeof value !== 'number') {
+                else if (typeof value !== 'number' || isNaN(value)) {
                     this.interpolable = false;
                     return;
                 }
@@ -27682,7 +27682,7 @@ function util_isDom(value) {
 function util_isGradientObject(value) {
     return value.colorStops != null;
 }
-function util_isPatternObject(value) {
+function util_isImagePatternObject(value) {
     return value.image != null;
 }
 function util_isRegExp(value) {
@@ -28070,11 +28070,11 @@ var minTv = new core_Point();
 var maxTv = new core_Point();
 var BoundingRect = (function () {
     function BoundingRect(x, y, width, height) {
-        if (width < 0 && isFinite(width)) {
+        if (width < 0) {
             x = x + width;
             width = -width;
         }
-        if (height < 0 && isFinite(height)) {
+        if (height < 0) {
             y = y + height;
             height = -height;
         }
@@ -28659,7 +28659,6 @@ function parseRichText(text, style) {
     var stlPadding = style.padding;
     var truncate = overflow === 'truncate';
     var truncateLine = style.lineOverflow === 'truncate';
-    var prevToken;
     function finishLine(line, lineWidth, lineHeight) {
         line.width = lineWidth;
         line.lineHeight = lineHeight;
@@ -28732,7 +28731,6 @@ function parseRichText(text, style) {
             token.width += paddingH;
             lineWidth += token.width;
             tokenStyle && (lineHeight = Math.max(lineHeight, token.lineHeight));
-            prevToken = token;
         }
         finishLine(line, lineWidth, lineHeight);
     }
@@ -28763,7 +28761,7 @@ function pushTokens(block, str, style, wrapInfo, styleName) {
         var tokenPadding = tokenStyle.padding;
         var tokenPaddingH = tokenPadding ? tokenPadding[1] + tokenPadding[3] : 0;
         if (tokenStyle.width != null && tokenStyle.width !== 'auto') {
-            var outerWidth_1 = parseText_parsePercent(tokenStyle.width, wrapInfo.width) + tokenPaddingH;
+            var outerWidth_1 = parsePercent(tokenStyle.width, wrapInfo.width) + tokenPaddingH;
             if (lines.length > 0) {
                 if (outerWidth_1 + wrapInfo.accumWidth > wrapInfo.width) {
                     strLines = str.split('\n');
@@ -28929,15 +28927,6 @@ function wrapText(text, font, lineWidth, isBreakAll, lastAccumWidth) {
         linesWidths: linesWidths
     };
 }
-function parseText_parsePercent(value, maxValue) {
-    if (typeof value === 'string') {
-        if (value.lastIndexOf('%') >= 0) {
-            return parseFloat(value) / 100 * maxValue;
-        }
-        return parseFloat(value);
-    }
-    return value;
-}
 
 ;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/vector.js
 function vector_create(x, y) {
@@ -29076,6 +29065,10 @@ var Transformable = (function () {
         this.scaleX = arr[0];
         this.scaleY = arr[1];
     };
+    Transformable.prototype.setSkew = function (arr) {
+        this.skewX = arr[0];
+        this.skewY = arr[1];
+    };
     Transformable.prototype.setOrigin = function (arr) {
         this.originX = arr[0];
         this.originY = arr[1];
@@ -29151,28 +29144,19 @@ var Transformable = (function () {
         }
         var sx = m[0] * m[0] + m[1] * m[1];
         var sy = m[2] * m[2] + m[3] * m[3];
-        if (isNotAroundZero(sx - 1)) {
-            sx = Math.sqrt(sx);
-        }
-        if (isNotAroundZero(sy - 1)) {
-            sy = Math.sqrt(sy);
-        }
-        if (m[0] < 0) {
-            sx = -sx;
-        }
-        if (m[3] < 0) {
-            sy = -sy;
-        }
-        this.rotation = Math.atan2(-m[1] / sy, m[0] / sx);
-        if (sx < 0 && sy < 0) {
-            this.rotation += Math.PI;
-            sx = -sx;
-            sy = -sy;
-        }
-        this.x = m[4];
-        this.y = m[5];
+        var rotation = Math.atan2(m[1], m[0]);
+        var shearX = Math.PI / 2 + rotation - Math.atan2(m[3], m[2]);
+        sy = Math.sqrt(sy) * Math.cos(shearX);
+        sx = Math.sqrt(sx);
+        this.skewX = shearX;
+        this.skewY = 0;
+        this.rotation = -rotation;
+        this.x = +m[4];
+        this.y = +m[5];
         this.scaleX = sx;
         this.scaleY = sy;
+        this.originX = 0;
+        this.originY = 0;
     };
     Transformable.prototype.decomposeTransform = function () {
         if (!this.transform) {
@@ -29238,7 +29222,6 @@ var Transformable = (function () {
     };
     Transformable.getLocalTransform = function (target, m) {
         m = m || [];
-        mIdentity(m);
         var ox = target.originX || 0;
         var oy = target.originY || 0;
         var sx = target.scaleX;
@@ -29246,21 +29229,22 @@ var Transformable = (function () {
         var rotation = target.rotation || 0;
         var x = target.x;
         var y = target.y;
-        m[4] -= ox;
-        m[5] -= oy;
-        m[0] *= sx;
-        m[1] *= sy;
-        m[2] *= sx;
-        m[3] *= sy;
-        m[4] *= sx;
-        m[5] *= sy;
-        if (rotation) {
-            rotate(m, m, rotation);
+        var skewX = target.skewX ? Math.tan(target.skewX) : 0;
+        var skewY = target.skewY ? Math.tan(-target.skewY) : 0;
+        if (ox || oy) {
+            m[4] = -ox * sx - skewX * oy * sy;
+            m[5] = -oy * sy - skewY * ox * sx;
         }
-        m[4] += ox;
-        m[5] += oy;
-        m[4] += x;
-        m[5] += y;
+        else {
+            m[4] = m[5] = 0;
+        }
+        m[0] = sx;
+        m[3] = sy;
+        m[1] = skewY * sx;
+        m[2] = skewX * sy;
+        rotation && rotate(m, m, rotation);
+        m[4] += ox + x;
+        m[5] += oy + y;
         return m;
     };
     Transformable.initDefaultProps = (function () {
@@ -29271,6 +29255,8 @@ var Transformable = (function () {
         proto.scaleY = 1;
         proto.originX = 0;
         proto.originY = 0;
+        proto.skewX = 0;
+        proto.skewY = 0;
         proto.rotation = 0;
         proto.globalScaleRatio = 1;
     })();
@@ -30185,7 +30171,7 @@ var Animator_Track = (function () {
                         this.interpolable = false;
                     }
                 }
-                else if (typeof value !== 'number') {
+                else if (typeof value !== 'number' || isNaN(value)) {
                     this.interpolable = false;
                     return;
                 }
@@ -30890,6 +30876,8 @@ var Env = (function () {
         this.touchEventsSupported = false;
         this.pointerEventsSupported = false;
         this.domSupported = false;
+        this.transformSupported = false;
+        this.transform3dSupported = false;
     }
     return Env;
 }());
@@ -30940,10 +30928,24 @@ function detect(ua, env) {
     env.pointerEventsSupported = 'onpointerdown' in window
         && (browser.edge || (browser.ie && +browser.version >= 11));
     env.domSupported = typeof document !== 'undefined';
+    var style = document.documentElement.style;
+    env.transform3dSupported = ((browser.ie && 'transition' in style)
+        || browser.edge
+        || (('WebKitCSSMatrix' in window) && ('m11' in new WebKitCSSMatrix()))
+        || 'MozPerspective' in style)
+        && !('OTransition' in style);
+    env.transformSupported = env.transform3dSupported
+        || (browser.ie && +browser.version >= 9);
 }
 /* harmony default export */ const core_env = (env);
 
+;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/constants.js
+var REDARAW_BIT = 1;
+var STYLE_CHANGED_BIT = 2;
+var SHAPE_CHANGED_BIT = 4;
+
 ;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/Element.js
+
 
 
 
@@ -31123,10 +31125,10 @@ var Element = (function () {
                 innerTextDefaultStyle.verticalAlign = textVerticalAlign;
                 textEl.setDefaultTextStyle(innerTextDefaultStyle);
             }
+            textEl.__dirty |= REDARAW_BIT;
             if (textStyleChanged) {
-                textEl.dirtyStyle();
+                textEl.dirtyStyle(true);
             }
-            textEl.markRedraw();
         }
     };
     Element.prototype.canBeInsideText = function () {
@@ -31246,7 +31248,7 @@ var Element = (function () {
     Element.prototype.clearStates = function (noAnimation) {
         this.useState(PRESERVED_NORMAL_STATE, false, noAnimation);
     };
-    Element.prototype.useState = function (stateName, keepCurrentStates, noAnimation) {
+    Element.prototype.useState = function (stateName, keepCurrentStates, noAnimation, forceUseHoverLayer) {
         var toNormalState = stateName === PRESERVED_NORMAL_STATE;
         var hasStates = this.hasState();
         if (!hasStates && toNormalState) {
@@ -31271,16 +31273,18 @@ var Element = (function () {
         if (!toNormalState) {
             this.saveCurrentToNormalState(state);
         }
-        var useHoverLayer = !!(state && state.hoverLayer);
+        var useHoverLayer = !!((state && state.hoverLayer) || forceUseHoverLayer);
         if (useHoverLayer) {
             this._toggleHoverLayerFlag(true);
         }
         this._applyStateObj(stateName, state, this._normalState, keepCurrentStates, !noAnimation && !this.__inHover && animationCfg && animationCfg.duration > 0, animationCfg);
-        if (this._textContent) {
-            this._textContent.useState(stateName, keepCurrentStates);
+        var textContent = this._textContent;
+        var textGuide = this._textGuide;
+        if (textContent) {
+            textContent.useState(stateName, keepCurrentStates, noAnimation, useHoverLayer);
         }
-        if (this._textGuide) {
-            this._textGuide.useState(stateName, keepCurrentStates);
+        if (textGuide) {
+            textGuide.useState(stateName, keepCurrentStates, noAnimation, useHoverLayer);
         }
         if (toNormalState) {
             this.currentStates = [];
@@ -31298,11 +31302,11 @@ var Element = (function () {
         this.markRedraw();
         if (!useHoverLayer && this.__inHover) {
             this._toggleHoverLayerFlag(false);
-            this.__dirty &= ~Element.REDARAW_BIT;
+            this.__dirty &= ~REDARAW_BIT;
         }
         return state;
     };
-    Element.prototype.useStates = function (states, noAnimation) {
+    Element.prototype.useStates = function (states, noAnimation, forceUseHoverLayer) {
         if (!states.length) {
             this.clearStates();
         }
@@ -31335,7 +31339,8 @@ var Element = (function () {
                     stateObjects.push(stateObj);
                 }
             }
-            var useHoverLayer = !!(stateObjects[len - 1] && stateObjects[len - 1].hoverLayer);
+            var lastStateObj = stateObjects[len - 1];
+            var useHoverLayer = !!((lastStateObj && lastStateObj.hoverLayer) || forceUseHoverLayer);
             if (useHoverLayer) {
                 this._toggleHoverLayerFlag(true);
             }
@@ -31343,18 +31348,20 @@ var Element = (function () {
             var animationCfg = this.stateTransition;
             this.saveCurrentToNormalState(mergedState);
             this._applyStateObj(states.join(','), mergedState, this._normalState, false, !noAnimation && !this.__inHover && animationCfg && animationCfg.duration > 0, animationCfg);
-            if (this._textContent) {
-                this._textContent.useStates(states);
+            var textContent = this._textContent;
+            var textGuide = this._textGuide;
+            if (textContent) {
+                textContent.useStates(states, noAnimation, useHoverLayer);
             }
-            if (this._textGuide) {
-                this._textGuide.useStates(states);
+            if (textGuide) {
+                textGuide.useStates(states, noAnimation, useHoverLayer);
             }
             this._updateAnimationTargets();
             this.currentStates = states.slice();
             this.markRedraw();
             if (!useHoverLayer && this.__inHover) {
                 this._toggleHoverLayerFlag(false);
-                this.__dirty &= ~Element.REDARAW_BIT;
+                this.__dirty &= ~REDARAW_BIT;
             }
         }
     };
@@ -31531,6 +31538,10 @@ var Element = (function () {
         core_util_extend(this.textConfig, cfg);
         this.markRedraw();
     };
+    Element.prototype.removeTextConfig = function () {
+        this.textConfig = null;
+        this.markRedraw();
+    };
     Element.prototype.removeTextContent = function () {
         var textEl = this._textContent;
         if (textEl) {
@@ -31561,7 +31572,7 @@ var Element = (function () {
         }
     };
     Element.prototype.markRedraw = function () {
-        this.__dirty |= Element.REDARAW_BIT;
+        this.__dirty |= REDARAW_BIT;
         var zr = this.__zr;
         if (zr) {
             if (this.__inHover) {
@@ -31693,7 +31704,6 @@ var Element = (function () {
     Element.prototype.getPaintRect = function () {
         return null;
     };
-    Element.REDARAW_BIT = 1;
     Element.initDefaultProps = (function () {
         var elProto = Element.prototype;
         elProto.type = 'element';
@@ -31705,7 +31715,7 @@ var Element = (function () {
         elProto.dragging = false;
         elProto.ignoreClip = false;
         elProto.__inHover = false;
-        elProto.__dirty = Element.REDARAW_BIT;
+        elProto.__dirty = REDARAW_BIT;
         var logs = {};
         function logDeprecatedError(key, xKey, yKey) {
             if (!logs[key + xKey + yKey]) {
@@ -31954,6 +31964,7 @@ function animateToShallow(animatable, topKey, source, target, cfg, animationProp
 
 
 
+
 var STYLE_MAGIC_KEY = '__zr_style_' + Math.round((Math.random() * 10));
 var DEFAULT_COMMON_STYLE = {
     shadowBlur: 0,
@@ -31974,6 +31985,7 @@ var DEFAULT_COMMON_ANIMATION_PROPS = {
 };
 DEFAULT_COMMON_STYLE[STYLE_MAGIC_KEY] = true;
 var Displayable_PRIMARY_STATES_KEYS = ['z', 'z2', 'invisible'];
+var PRIMARY_STATES_KEYS_IN_HOVER_LAYER = ['invisible'];
 var Displayable = (function (_super) {
     __extends(Displayable, _super);
     function Displayable(props) {
@@ -32115,9 +32127,11 @@ var Displayable = (function (_super) {
         this.dirtyStyle();
         return this;
     };
-    Displayable.prototype.dirtyStyle = function () {
-        this.markRedraw();
-        this.__dirty |= Displayable.STYLE_CHANGED_BIT;
+    Displayable.prototype.dirtyStyle = function (notRedraw) {
+        if (!notRedraw) {
+            this.markRedraw();
+        }
+        this.__dirty |= STYLE_CHANGED_BIT;
         if (this._rect) {
             this._rect = null;
         }
@@ -32126,10 +32140,10 @@ var Displayable = (function (_super) {
         this.dirtyStyle();
     };
     Displayable.prototype.styleChanged = function () {
-        return !!(this.__dirty & Displayable.STYLE_CHANGED_BIT);
+        return !!(this.__dirty & STYLE_CHANGED_BIT);
     };
     Displayable.prototype.styleUpdated = function () {
-        this.__dirty &= ~Displayable.STYLE_CHANGED_BIT;
+        this.__dirty &= ~STYLE_CHANGED_BIT;
     };
     Displayable.prototype.createStyle = function (obj) {
         return util_createObject(DEFAULT_COMMON_STYLE, obj);
@@ -32206,8 +32220,9 @@ var Displayable = (function (_super) {
                 this.useStyle(targetStyle);
             }
         }
-        for (var i = 0; i < Displayable_PRIMARY_STATES_KEYS.length; i++) {
-            var key = Displayable_PRIMARY_STATES_KEYS[i];
+        var statesKeys = this.__inHover ? PRIMARY_STATES_KEYS_IN_HOVER_LAYER : Displayable_PRIMARY_STATES_KEYS;
+        for (var i = 0; i < statesKeys.length; i++) {
+            var key = statesKeys[i];
             if (state && state[key] != null) {
                 this[key] = state[key];
             }
@@ -32240,7 +32255,6 @@ var Displayable = (function (_super) {
     Displayable.prototype.getAnimationStyleProps = function () {
         return DEFAULT_COMMON_ANIMATION_PROPS;
     };
-    Displayable.STYLE_CHANGED_BIT = 2;
     Displayable.initDefaultProps = (function () {
         var dispProto = Displayable.prototype;
         dispProto.type = 'displayable';
@@ -32254,7 +32268,7 @@ var Displayable = (function (_super) {
         dispProto.incremental = false;
         dispProto._rect = null;
         dispProto.dirtyRectTolerance = 0;
-        dispProto.__dirty = lib_Element.REDARAW_BIT | Displayable.STYLE_CHANGED_BIT;
+        dispProto.__dirty = REDARAW_BIT | STYLE_CHANGED_BIT;
     })();
     return Displayable;
 }(lib_Element));
@@ -32794,12 +32808,10 @@ function normalizeArcAngles(angles, anticlockwise) {
         newEndAngle = newStartAngle - PathProxy_PI2;
     }
     else if (!anticlockwise && newStartAngle > newEndAngle) {
-        newEndAngle = newStartAngle +
-            (PathProxy_PI2 - modPI2(newStartAngle - newEndAngle));
+        newEndAngle = newStartAngle + (PathProxy_PI2 - modPI2(newStartAngle - newEndAngle));
     }
     else if (anticlockwise && newStartAngle < newEndAngle) {
-        newEndAngle = newStartAngle -
-            (PathProxy_PI2 - modPI2(newEndAngle - newStartAngle));
+        newEndAngle = newStartAngle - (PathProxy_PI2 - modPI2(newEndAngle - newStartAngle));
     }
     angles[0] = newStartAngle;
     angles[1] = newEndAngle;
@@ -32807,7 +32819,6 @@ function normalizeArcAngles(angles, anticlockwise) {
 var PathProxy = (function () {
     function PathProxy(notSaveData) {
         this.dpr = 1;
-        this._version = 0;
         this._xi = 0;
         this._yi = 0;
         this._x0 = 0;
@@ -32862,6 +32873,7 @@ var PathProxy = (function () {
         this._version++;
     };
     PathProxy.prototype.moveTo = function (x, y) {
+        this._drawPendingPt();
         this.addData(CMD.M, x, y);
         this._ctx && this._ctx.moveTo(x, y);
         this._x0 = x;
@@ -32871,9 +32883,9 @@ var PathProxy = (function () {
         return this;
     };
     PathProxy.prototype.lineTo = function (x, y) {
-        var exceedUnit = mathAbs(x - this._xi) > this._ux
-            || mathAbs(y - this._yi) > this._uy
-            || this._len < 5;
+        var dx = mathAbs(x - this._xi);
+        var dy = mathAbs(y - this._yi);
+        var exceedUnit = dx > this._ux || dy > this._uy;
         this.addData(CMD.L, x, y);
         if (this._ctx && exceedUnit) {
             this._needsDash ? this._dashedLineTo(x, y)
@@ -32882,6 +32894,15 @@ var PathProxy = (function () {
         if (exceedUnit) {
             this._xi = x;
             this._yi = y;
+            this._pendingPtDist = 0;
+        }
+        else {
+            var d2 = dx * dx + dy * dy;
+            if (d2 > this._pendingPtDist) {
+                this._pendingPtX = x;
+                this._pendingPtY = y;
+                this._pendingPtDist = d2;
+            }
         }
         return this;
     };
@@ -32930,6 +32951,7 @@ var PathProxy = (function () {
         return this;
     };
     PathProxy.prototype.closePath = function () {
+        this._drawPendingPt();
         this.addData(CMD.Z);
         var ctx = this._ctx;
         var x0 = this._x0;
@@ -33016,6 +33038,12 @@ var PathProxy = (function () {
         }
         for (var i = 0; i < arguments.length; i++) {
             data[this._len++] = arguments[i];
+        }
+    };
+    PathProxy.prototype._drawPendingPt = function () {
+        if (this._pendingPtDist > 0) {
+            this._ctx && this._ctx.lineTo(this._pendingPtX, this._pendingPtY);
+            this._pendingPtDist = 0;
         }
     };
     PathProxy.prototype._expandData = function () {
@@ -33126,6 +33154,7 @@ var PathProxy = (function () {
         if (!this._saveData) {
             return;
         }
+        this._drawPendingPt();
         var data = this.data;
         if (data instanceof Array) {
             data.length = this._len;
@@ -33337,6 +33366,9 @@ var PathProxy = (function () {
         var accumLength = 0;
         var segCount = 0;
         var displayedLength;
+        var pendingPtDist = 0;
+        var pendingPtX;
+        var pendingPtY;
         if (drawPart) {
             if (!this._pathSegLen) {
                 this._calculateLength();
@@ -33359,6 +33391,10 @@ var PathProxy = (function () {
             }
             switch (cmd) {
                 case CMD.M:
+                    if (pendingPtDist > 0) {
+                        ctx.lineTo(pendingPtX, pendingPtY);
+                        pendingPtDist = 0;
+                    }
                     x0 = xi = d[i++];
                     y0 = yi = d[i++];
                     ctx.moveTo(xi, yi);
@@ -33366,7 +33402,9 @@ var PathProxy = (function () {
                 case CMD.L: {
                     x = d[i++];
                     y = d[i++];
-                    if (mathAbs(x - xi) > ux || mathAbs(y - yi) > uy || i === len - 1) {
+                    var dx = mathAbs(x - xi);
+                    var dy = mathAbs(y - yi);
+                    if (dx > ux || dy > uy) {
                         if (drawPart) {
                             var l = pathSegLen[segCount++];
                             if (accumLength + l > displayedLength) {
@@ -33379,6 +33417,15 @@ var PathProxy = (function () {
                         ctx.lineTo(x, y);
                         xi = x;
                         yi = y;
+                        pendingPtDist = 0;
+                    }
+                    else {
+                        var d2 = dx * dx + dy * dy;
+                        if (d2 > pendingPtDist) {
+                            pendingPtX = x;
+                            pendingPtY = y;
+                            pendingPtDist = d2;
+                        }
                     }
                     break;
                 }
@@ -33497,6 +33544,10 @@ var PathProxy = (function () {
                     ctx.rect(x, y, width, height);
                     break;
                 case CMD.Z:
+                    if (pendingPtDist > 0) {
+                        ctx.lineTo(pendingPtX, pendingPtY);
+                        pendingPtDist = 0;
+                    }
                     if (drawPart) {
                         var l = pathSegLen[segCount++];
                         if (accumLength + l > displayedLength) {
@@ -33522,6 +33573,8 @@ var PathProxy = (function () {
         proto._dashSum = 0;
         proto._ux = 0;
         proto._uy = 0;
+        proto._pendingPtDist = 0;
+        proto._version = 0;
     })();
     return PathProxy;
 }());
@@ -34008,8 +34061,7 @@ var Path = (function (_super) {
         _super.prototype.update.call(this);
         var style = this.style;
         if (style.decal) {
-            var decalEl = this._decalEl
-                = this._decalEl || new Path();
+            var decalEl = this._decalEl = this._decalEl || new Path();
             if (decalEl.buildPath === Path.prototype.buildPath) {
                 decalEl.buildPath = function (ctx) {
                     _this.buildPath(ctx, _this.shape);
@@ -34029,7 +34081,7 @@ var Path = (function (_super) {
             for (var i = 0; i < pathCopyParams.length; ++i) {
                 decalEl[pathCopyParams[i]] = this[pathCopyParams[i]];
             }
-            decalEl.__dirty |= lib_Element.REDARAW_BIT;
+            decalEl.__dirty |= REDARAW_BIT;
         }
         else if (this._decalEl) {
             this._decalEl = null;
@@ -34108,7 +34160,7 @@ var Path = (function (_super) {
     };
     Path.prototype.buildPath = function (ctx, shapeCfg, inBundle) { };
     Path.prototype.pathUpdated = function () {
-        this.__dirty &= ~Path.SHAPE_CHANGED_BIT;
+        this.__dirty &= ~SHAPE_CHANGED_BIT;
     };
     Path.prototype.createPathProxy = function () {
         this.path = new core_PathProxy(false);
@@ -34134,7 +34186,7 @@ var Path = (function (_super) {
                 this.createPathProxy();
             }
             var path = this.path;
-            if (firstInvoke || (this.__dirty & Path.SHAPE_CHANGED_BIT)) {
+            if (firstInvoke || (this.__dirty & SHAPE_CHANGED_BIT)) {
                 path.beginPath();
                 this.buildPath(path, this.shape, false);
                 this.pathUpdated();
@@ -34190,7 +34242,7 @@ var Path = (function (_super) {
         return false;
     };
     Path.prototype.dirtyShape = function () {
-        this.__dirty |= Path.SHAPE_CHANGED_BIT;
+        this.__dirty |= SHAPE_CHANGED_BIT;
         if (this._rect) {
             this._rect = null;
         }
@@ -34240,7 +34292,7 @@ var Path = (function (_super) {
         return this;
     };
     Path.prototype.shapeChanged = function () {
-        return !!(this.__dirty & Path.SHAPE_CHANGED_BIT);
+        return !!(this.__dirty & SHAPE_CHANGED_BIT);
     };
     Path.prototype.createStyle = function (obj) {
         return util_createObject(DEFAULT_PATH_STYLE, obj);
@@ -34342,7 +34394,6 @@ var Path = (function (_super) {
         }
         return Sub;
     };
-    Path.SHAPE_CHANGED_BIT = 4;
     Path.initDefaultProps = (function () {
         var pathProto = Path.prototype;
         pathProto.type = 'path';
@@ -34350,7 +34401,7 @@ var Path = (function (_super) {
         pathProto.segmentIgnoreThreshold = 0;
         pathProto.subPixelOptimize = false;
         pathProto.autoBatch = false;
-        pathProto.__dirty = lib_Element.REDARAW_BIT | graphic_Displayable.STYLE_CHANGED_BIT | Path.SHAPE_CHANGED_BIT;
+        pathProto.__dirty = REDARAW_BIT | STYLE_CHANGED_BIT | SHAPE_CHANGED_BIT;
     })();
     return Path;
 }(graphic_Displayable));
@@ -34644,6 +34695,7 @@ var RectShape = (function () {
     }
     return RectShape;
 }());
+
 var subPixelOptimizeOutputShape = {};
 var Rect = (function (_super) {
     __extends(Rect, _super);
@@ -35083,12 +35135,13 @@ var ZRText = (function (_super) {
         var textBackgroundColor = style.backgroundColor;
         var textBorderWidth = style.borderWidth;
         var textBorderColor = style.borderColor;
-        var isPlainBg = util_isString(textBackgroundColor);
+        var isImageBg = textBackgroundColor && textBackgroundColor.image;
+        var isPlainOrGradientBg = textBackgroundColor && !isImageBg;
         var textBorderRadius = style.borderRadius;
         var self = this;
         var rectEl;
         var imgEl;
-        if (isPlainBg || (textBorderWidth && textBorderColor)) {
+        if (isPlainOrGradientBg || (textBorderWidth && textBorderColor)) {
             rectEl = this._getOrCreateChild(shape_Rect);
             rectEl.useStyle(rectEl.createStyle());
             rectEl.style.fill = null;
@@ -35100,12 +35153,12 @@ var ZRText = (function (_super) {
             rectShape.r = textBorderRadius;
             rectEl.dirtyShape();
         }
-        if (isPlainBg) {
+        if (isPlainOrGradientBg) {
             var rectStyle = rectEl.style;
             rectStyle.fill = textBackgroundColor || null;
             rectStyle.fillOpacity = util_retrieve2(style.fillOpacity, 1);
         }
-        else if (textBackgroundColor && textBackgroundColor.image) {
+        else if (isImageBg) {
             imgEl = this._getOrCreateChild(graphic_Image);
             imgEl.onload = function () {
                 self.dirtyStyle();
@@ -35244,47 +35297,99 @@ function needDrawBackground(style) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
-var RADIAN_EPSILON = 1e-4;
+/*
+* A third-party license is embeded for some of the code in this file:
+* The method "quantile" was copied from "d3.js".
+* (See more details in the comment of the method below.)
+* The use of the source code of this file is also subject to the terms
+* and consitions of the license of "d3.js" (BSD-3Clause, see
+* </licenses/LICENSE-d3>).
+*/
+
+var RADIAN_EPSILON = 1e-4; // Although chrome already enlarge this number to 100 for `toFixed`, but
+// we sill follow the spec for compatibility.
+
+var ROUND_SUPPORTED_PRECISION_MAX = 20;
 
 function _trim(str) {
   return str.replace(/^\s+|\s+$/g, '');
 }
+/**
+ * Linear mapping a value from domain to range
+ * @param  val
+ * @param  domain Domain extent domain[0] can be bigger than domain[1]
+ * @param  range  Range extent range[0] can be bigger than range[1]
+ * @param  clamp Default to be false
+ */
+
 
 function linearMap(val, domain, range, clamp) {
-  var subDomain = domain[1] - domain[0];
-  var subRange = range[1] - range[0];
+  var d0 = domain[0];
+  var d1 = domain[1];
+  var r0 = range[0];
+  var r1 = range[1];
+  var subDomain = d1 - d0;
+  var subRange = r1 - r0;
 
   if (subDomain === 0) {
-    return subRange === 0 ? range[0] : (range[0] + range[1]) / 2;
-  }
+    return subRange === 0 ? r0 : (r0 + r1) / 2;
+  } // Avoid accuracy problem in edge, such as
+  // 146.39 - 62.83 === 83.55999999999999.
+  // See echarts/test/ut/spec/util/number.js#linearMap#accuracyError
+  // It is a little verbose for efficiency considering this method
+  // is a hotspot.
+
 
   if (clamp) {
     if (subDomain > 0) {
-      if (val <= domain[0]) {
-        return range[0];
-      } else if (val >= domain[1]) {
-        return range[1];
+      if (val <= d0) {
+        return r0;
+      } else if (val >= d1) {
+        return r1;
       }
     } else {
-      if (val >= domain[0]) {
-        return range[0];
-      } else if (val <= domain[1]) {
-        return range[1];
+      if (val >= d0) {
+        return r0;
+      } else if (val <= d1) {
+        return r1;
       }
     }
   } else {
-    if (val === domain[0]) {
-      return range[0];
+    if (val === d0) {
+      return r0;
     }
 
-    if (val === domain[1]) {
-      return range[1];
+    if (val === d1) {
+      return r1;
     }
   }
 
-  return (val - domain[0]) / subDomain * subRange + range[0];
+  return (val - d0) / subDomain * subRange + r0;
 }
+/**
+ * Convert a percent string to absolute number.
+ * Returns NaN if percent is not a valid string or number
+ */
+
 function number_parsePercent(percent, all) {
   switch (percent) {
     case 'center':
@@ -35316,55 +35421,97 @@ function number_parsePercent(percent, all) {
 function number_round(x, precision, returnStr) {
   if (precision == null) {
     precision = 10;
-  }
+  } // Avoid range error
 
-  precision = Math.min(Math.max(0, precision), 20);
+
+  precision = Math.min(Math.max(0, precision), ROUND_SUPPORTED_PRECISION_MAX); // PENDING: 1.005.toFixed(2) is '1.00' rather than '1.01'
+
   x = (+x).toFixed(precision);
   return returnStr ? x : +x;
 }
+/**
+ * Inplacd asc sort arr.
+ * The input arr will be modified.
+ */
+
 function asc(arr) {
   arr.sort(function (a, b) {
     return a - b;
   });
   return arr;
 }
+/**
+ * Get precision.
+ */
+
 function getPrecision(val) {
   val = +val;
 
   if (isNaN(val)) {
     return 0;
+  } // It is much faster than methods converting number to string as follows
+  //      let tmp = val.toString();
+  //      return tmp.length - 1 - tmp.indexOf('.');
+  // especially when precision is low
+  // Notice:
+  // (1) If the loop count is over about 20, it is slower than `getPrecisionSafe`.
+  //     (see https://jsbench.me/2vkpcekkvw/1)
+  // (2) If the val is less than for example 1e-15, the result may be incorrect.
+  //     (see test/ut/spec/util/number.test.ts `getPrecision_equal_random`)
+
+
+  if (val > 1e-14) {
+    var e = 1;
+
+    for (var i = 0; i < 15; i++, e *= 10) {
+      if (Math.round(val * e) / e === val) {
+        return i;
+      }
+    }
   }
 
-  var e = 1;
-  var count = 0;
-
-  while (Math.round(val * e) / e !== val) {
-    e *= 10;
-    count++;
-  }
-
-  return count;
+  return getPrecisionSafe(val);
 }
+/**
+ * Get precision with slow but safe method
+ */
+
 function getPrecisionSafe(val) {
-  var str = val.toString();
-  var eIndex = str.indexOf('e');
+  // toLowerCase for: '3.4E-12'
+  var str = val.toString().toLowerCase(); // Consider scientific notation: '3.4e-12' '3.4e+12'
 
-  if (eIndex > 0) {
-    var precision = +str.slice(eIndex + 1);
-    return precision < 0 ? -precision : 0;
-  } else {
-    var dotIndex = str.indexOf('.');
-    return dotIndex < 0 ? 0 : str.length - 1 - dotIndex;
-  }
+  var eIndex = str.indexOf('e');
+  var exp = eIndex > 0 ? +str.slice(eIndex + 1) : 0;
+  var significandPartLen = eIndex > 0 ? eIndex : str.length;
+  var dotIndex = str.indexOf('.');
+  var decimalPartLen = dotIndex < 0 ? 0 : significandPartLen - 1 - dotIndex;
+  return Math.max(0, decimalPartLen - exp);
 }
+/**
+ * Minimal dicernible data precisioin according to a single pixel.
+ */
+
 function getPixelPrecision(dataExtent, pixelExtent) {
   var log = Math.log;
   var LN10 = Math.LN10;
   var dataQuantity = Math.floor(log(dataExtent[1] - dataExtent[0]) / LN10);
-  var sizeQuantity = Math.round(log(Math.abs(pixelExtent[1] - pixelExtent[0])) / LN10);
+  var sizeQuantity = Math.round(log(Math.abs(pixelExtent[1] - pixelExtent[0])) / LN10); // toFixed() digits argument must be between 0 and 20.
+
   var precision = Math.min(Math.max(-dataQuantity + sizeQuantity, 0), 20);
   return !isFinite(precision) ? 20 : precision;
 }
+/**
+ * Get a data of given precision, assuring the sum of percentages
+ * in valueList is 1.
+ * The largest remainer method is used.
+ * https://en.wikipedia.org/wiki/Largest_remainder_method
+ *
+ * @param valueList a list of all data
+ * @param idx index of the data to be processed in valueList
+ * @param precision integer number showing digits of precision
+ * @return percent ranging from 0 to 100
+ */
+
 function getPercentWithPrecision(valueList, idx, precision) {
   if (!valueList[idx]) {
     return 0;
@@ -35384,6 +35531,7 @@ function getPercentWithPrecision(valueList, idx, precision) {
   });
   var targetSeats = digits * 100;
   var seats = util_map(votesPerQuota, function (votes) {
+    // Assign automatic seats.
     return Math.floor(votes);
   });
   var currentSum = util_reduce(seats, function (acc, val) {
@@ -35391,9 +35539,10 @@ function getPercentWithPrecision(valueList, idx, precision) {
   }, 0);
   var remainder = util_map(votesPerQuota, function (votes, idx) {
     return votes - seats[idx];
-  });
+  }); // Has remainding votes.
 
   while (currentSum < targetSeats) {
+    // Find next largest remainder.
     var max = Number.NEGATIVE_INFINITY;
     var maxId = null;
 
@@ -35402,7 +35551,8 @@ function getPercentWithPrecision(valueList, idx, precision) {
         max = remainder[i];
         maxId = i;
       }
-    }
+    } // Add a vote to max remainder.
+
 
     ++seats[maxId];
     remainder[maxId] = 0;
@@ -35411,51 +35561,129 @@ function getPercentWithPrecision(valueList, idx, precision) {
 
   return seats[idx] / digits;
 }
+/**
+ * Solve the floating point adding problem like 0.1 + 0.2 === 0.30000000000000004
+ * See <http://0.30000000000000004.com/>
+ */
+
+function addSafe(val0, val1) {
+  var maxPrecision = Math.max(getPrecision(val0), getPrecision(val1)); // const multiplier = Math.pow(10, maxPrecision);
+  // return (Math.round(val0 * multiplier) + Math.round(val1 * multiplier)) / multiplier;
+
+  var sum = val0 + val1; // // PENDING: support more?
+
+  return maxPrecision > ROUND_SUPPORTED_PRECISION_MAX ? sum : number_round(sum, maxPrecision);
+} // Number.MAX_SAFE_INTEGER, ie do not support.
+
 var MAX_SAFE_INTEGER = 9007199254740991;
+/**
+ * To 0 - 2 * PI, considering negative radian.
+ */
+
 function remRadian(radian) {
   var pi2 = Math.PI * 2;
   return (radian % pi2 + pi2) % pi2;
 }
+/**
+ * @param {type} radian
+ * @return {boolean}
+ */
+
 function isRadianAroundZero(val) {
   return val > -RADIAN_EPSILON && val < RADIAN_EPSILON;
-}
-var TIME_REG = /^(?:(\d{4})(?:[-\/](\d{1,2})(?:[-\/](\d{1,2})(?:[T ](\d{1,2})(?::(\d{1,2})(?::(\d{1,2})(?:[.,](\d+))?)?)?(Z|[\+\-]\d\d:?\d\d)?)?)?)?)?$/;
+} // eslint-disable-next-line
+
+var TIME_REG = /^(?:(\d{4})(?:[-\/](\d{1,2})(?:[-\/](\d{1,2})(?:[T ](\d{1,2})(?::(\d{1,2})(?::(\d{1,2})(?:[.,](\d+))?)?)?(Z|[\+\-]\d\d:?\d\d)?)?)?)?)?$/; // jshint ignore:line
+
+/**
+ * @param value valid type: number | string | Date, otherwise return `new Date(NaN)`
+ *   These values can be accepted:
+ *   + An instance of Date, represent a time in its own time zone.
+ *   + Or string in a subset of ISO 8601, only including:
+ *     + only year, month, date: '2012-03', '2012-03-01', '2012-03-01 05', '2012-03-01 05:06',
+ *     + separated with T or space: '2012-03-01T12:22:33.123', '2012-03-01 12:22:33.123',
+ *     + time zone: '2012-03-01T12:22:33Z', '2012-03-01T12:22:33+8000', '2012-03-01T12:22:33-05:00',
+ *     all of which will be treated as local time if time zone is not specified
+ *     (see <https://momentjs.com/>).
+ *   + Or other string format, including (all of which will be treated as loacal time):
+ *     '2012', '2012-3-1', '2012/3/1', '2012/03/01',
+ *     '2009/6/12 2:00', '2009/6/12 2:05:08', '2009/6/12 2:05:08.123'
+ *   + a timestamp, which represent a time in UTC.
+ * @return date Never be null/undefined. If invalid, return `new Date(NaN)`.
+ */
+
 function parseDate(value) {
   if (value instanceof Date) {
     return value;
   } else if (typeof value === 'string') {
+    // Different browsers parse date in different way, so we parse it manually.
+    // Some other issues:
+    // new Date('1970-01-01') is UTC,
+    // new Date('1970/01/01') and new Date('1970-1-01') is local.
+    // See issue #3623
     var match = TIME_REG.exec(value);
 
     if (!match) {
+      // return Invalid Date.
       return new Date(NaN);
-    }
+    } // Use local time when no timezone offset specifed.
+
 
     if (!match[8]) {
+      // match[n] can only be string or undefined.
+      // But take care of '12' + 1 => '121'.
       return new Date(+match[1], +(match[2] || 1) - 1, +match[3] || 1, +match[4] || 0, +(match[5] || 0), +match[6] || 0, +match[7] || 0);
-    } else {
-      var hour = +match[4] || 0;
+    } // Timezoneoffset of Javascript Date has considered DST (Daylight Saving Time,
+    // https://tc39.github.io/ecma262/#sec-daylight-saving-time-adjustment).
+    // For example, system timezone is set as "Time Zone: America/Toronto",
+    // then these code will get different result:
+    // `new Date(1478411999999).getTimezoneOffset();  // get 240`
+    // `new Date(1478412000000).getTimezoneOffset();  // get 300`
+    // So we should not use `new Date`, but use `Date.UTC`.
+    else {
+        var hour = +match[4] || 0;
 
-      if (match[8].toUpperCase() !== 'Z') {
-        hour -= +match[8].slice(0, 3);
+        if (match[8].toUpperCase() !== 'Z') {
+          hour -= +match[8].slice(0, 3);
+        }
+
+        return new Date(Date.UTC(+match[1], +(match[2] || 1) - 1, +match[3] || 1, hour, +(match[5] || 0), +match[6] || 0, +match[7] || 0));
       }
-
-      return new Date(Date.UTC(+match[1], +(match[2] || 1) - 1, +match[3] || 1, hour, +(match[5] || 0), +match[6] || 0, +match[7] || 0));
-    }
   } else if (value == null) {
     return new Date(NaN);
   }
 
   return new Date(Math.round(value));
 }
+/**
+ * Quantity of a number. e.g. 0.1, 1, 10, 100
+ *
+ * @param val
+ * @return
+ */
+
 function quantity(val) {
   return Math.pow(10, quantityExponent(val));
 }
+/**
+ * Exponent of the quantity of a number
+ * e.g., 1234 equals to 1.234*10^3, so quantityExponent(1234) is 3
+ *
+ * @param val non-negative value
+ * @return
+ */
+
 function quantityExponent(val) {
   if (val === 0) {
     return 0;
   }
 
   var exp = Math.floor(Math.log(val) / Math.LN10);
+  /**
+   * exp is expected to be the rounded-down result of the base-10 log of val.
+   * But due to the precision loss with Math.log(val), we need to restore it
+   * using 10^exp to make sure we can get val back from exp. #11249
+   */
 
   if (val / Math.pow(10, exp) >= 10) {
     exp++;
@@ -35463,10 +35691,23 @@ function quantityExponent(val) {
 
   return exp;
 }
+/**
+ * find a “nice” number approximately equal to x. Round the number if round = true,
+ * take ceiling if round = false. The primary observation is that the “nicest”
+ * numbers in decimal are 1, 2, and 5, and all power-of-ten multiples of these numbers.
+ *
+ * See "Nice Numbers for Graph Labels" of Graphic Gems.
+ *
+ * @param  val Non-negative value.
+ * @param  round
+ * @return Niced number
+ */
+
 function nice(val, round) {
   var exponent = quantityExponent(val);
   var exp10 = Math.pow(10, exponent);
-  var f = val / exp10;
+  var f = val / exp10; // 1 <= f < 10
+
   var nf;
 
   if (round) {
@@ -35495,9 +35736,18 @@ function nice(val, round) {
     }
   }
 
-  val = nf * exp10;
+  val = nf * exp10; // Fix 3 * 0.1 === 0.30000000000000004 issue (see IEEE 754).
+  // 20 is the uppper bound of toFixed.
+
   return exponent >= -20 ? +val.toFixed(exponent < 0 ? -exponent : 0) : val;
 }
+/**
+ * This code was copied from "d3.js"
+ * <https://github.com/d3/d3/blob/9cc9a875e636a1dcf36cc1e07bdf77e1ad6e2c74/src/arrays/quantile.js>.
+ * See the license statement at the head of this file.
+ * @param ascArr
+ */
+
 function quantile(ascArr, p) {
   var H = (ascArr.length - 1) * p + 1;
   var h = Math.floor(H);
@@ -35505,6 +35755,29 @@ function quantile(ascArr, p) {
   var e = H - h;
   return e ? v + e * (ascArr[h] - v) : v;
 }
+/**
+ * Order intervals asc, and split them when overlap.
+ * expect(numberUtil.reformIntervals([
+ *     {interval: [18, 62], close: [1, 1]},
+ *     {interval: [-Infinity, -70], close: [0, 0]},
+ *     {interval: [-70, -26], close: [1, 1]},
+ *     {interval: [-26, 18], close: [1, 1]},
+ *     {interval: [62, 150], close: [1, 1]},
+ *     {interval: [106, 150], close: [1, 1]},
+ *     {interval: [150, Infinity], close: [0, 0]}
+ * ])).toEqual([
+ *     {interval: [-Infinity, -70], close: [0, 0]},
+ *     {interval: [-70, -26], close: [1, 1]},
+ *     {interval: [-26, 18], close: [0, 1]},
+ *     {interval: [18, 62], close: [0, 1]},
+ *     {interval: [62, 150], close: [0, 1]},
+ *     {interval: [150, Infinity], close: [0, 0]}
+ * ]);
+ * @param list, where `close` mean open or close
+ *        of the interval, and Infinity can be used.
+ * @return The origin list, which has been reformed.
+ */
+
 function reformIntervals(list) {
   list.sort(function (a, b) {
     return littleThan(a, b, 0) ? -1 : 1;
@@ -35539,16 +35812,52 @@ function reformIntervals(list) {
     return a.interval[lg] < b.interval[lg] || a.interval[lg] === b.interval[lg] && (a.close[lg] - b.close[lg] === (!lg ? 1 : -1) || !lg && littleThan(a, b, 1));
   }
 }
+/**
+ * [Numberic is defined as]:
+ *     `parseFloat(val) == val`
+ * For example:
+ * numeric:
+ *     typeof number except NaN, '-123', '123', '2e3', '-2e3', '011', 'Infinity', Infinity,
+ *     and they rounded by white-spaces or line-terminal like ' -123 \n ' (see es spec)
+ * not-numeric:
+ *     null, undefined, [], {}, true, false, 'NaN', NaN, '123ab',
+ *     empty string, string with only white-spaces or line-terminal (see es spec),
+ *     0x12, '0x12', '-0x12', 012, '012', '-012',
+ *     non-string, ...
+ *
+ * @test See full test cases in `test/ut/spec/util/number.js`.
+ * @return Must be a typeof number. If not numeric, return NaN.
+ */
+
 function numericToNumber(val) {
   var valFloat = parseFloat(val);
-  return valFloat == val && (valFloat !== 0 || typeof val !== 'string' || val.indexOf('x') <= 0) ? valFloat : NaN;
+  return valFloat == val // eslint-disable-line eqeqeq
+  && (valFloat !== 0 || typeof val !== 'string' || val.indexOf('x') <= 0) // For case ' 0x0 '.
+  ? valFloat : NaN;
 }
+/**
+ * Definition of "numeric": see `numericToNumber`.
+ */
+
 function isNumeric(val) {
   return !isNaN(numericToNumber(val));
 }
+/**
+ * Use random base to prevent users hard code depending on
+ * this auto generated marker id.
+ * @return An positive integer.
+ */
+
 function getRandomIdBase() {
   return Math.round(Math.random() * 9);
 }
+/**
+ * Get the greatest common dividor
+ *
+ * @param {number} a one number
+ * @param {number} b the other number
+ */
+
 function getGreatestCommonDividor(a, b) {
   if (b === 0) {
     return a;
@@ -35556,6 +35865,13 @@ function getGreatestCommonDividor(a, b) {
 
   return getGreatestCommonDividor(b, a % b);
 }
+/**
+ * Get the least common multiple
+ *
+ * @param {number} a one number
+ * @param {number} b the other number
+ */
+
 function getLeastCommonMultiple(a, b) {
   if (a == null) {
     return b;
@@ -35593,12 +35909,32 @@ function getLeastCommonMultiple(a, b) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 var ECHARTS_PREFIX = '[ECharts] ';
 var storedLogs = {};
-var hasConsole = typeof console !== 'undefined' && console.warn && console.log;
+var hasConsole = typeof console !== 'undefined' // eslint-disable-next-line
+&& console.warn && console.log;
 function log(str) {
   if (hasConsole) {
+    // eslint-disable-next-line
     console.log(ECHARTS_PREFIX + str);
   }
 }
@@ -35615,6 +35951,7 @@ function error(str) {
 function deprecateLog(str) {
   if (true) {
     if (storedLogs[str]) {
+      // Not display duplicate message.
       return;
     }
 
@@ -35637,11 +35974,24 @@ function consoleLog() {
   }
 
   if (true) {
+    /* eslint-disable no-console */
     if (typeof console !== 'undefined' && console.log) {
       console.log.apply(console, args);
     }
+    /* eslint-enable no-console */
+
   }
 }
+/**
+ * If in __DEV__ environment, get console printable message for users hint.
+ * Parameters are separated by ' '.
+ * @usuage
+ * makePrintable('This is an error on', someVar, someObj);
+ *
+ * @param hintInfo anything about the current execution context to hint users.
+ * @throws Error
+ */
+
 function makePrintable() {
   var hintInfo = [];
 
@@ -35652,12 +36002,15 @@ function makePrintable() {
   var msg = '';
 
   if (true) {
+    // Fuzzy stringify for print.
+    // This code only exist in dev environment.
     var makePrintableStringIfPossible_1 = function (val) {
       return val === void 0 ? 'undefined' : val === Infinity ? 'Infinity' : val === -Infinity ? '-Infinity' : util_eqNaN(val) ? 'NaN' : val instanceof Date ? 'Date(' + val.toISOString() + ')' : util_isFunction(val) ? 'function () { ... }' : util_isRegExp(val) ? val + '' : null;
     };
 
     msg = util_map(hintInfo, function (arg) {
       if (util_isString(arg)) {
+        // Print without quotation mark for some statement.
         return arg;
       } else {
         var printableStr = makePrintableStringIfPossible_1(arg);
@@ -35669,7 +36022,7 @@ function makePrintable() {
             return JSON.stringify(arg, function (n, val) {
               var printableStr = makePrintableStringIfPossible_1(val);
               return printableStr == null ? val : printableStr;
-            });
+            }); // In most cases the info object is small, so do not line break.
           } catch (err) {
             return '?';
           }
@@ -35682,6 +36035,10 @@ function makePrintable() {
 
   return msg;
 }
+/**
+ * @throws Error
+ */
+
 function throwError(msg) {
   throw new Error(msg);
 }
@@ -35711,21 +36068,65 @@ function throwError(msg) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 
 
+
+/**
+ * Make the name displayable. But we should
+ * make sure it is not duplicated with user
+ * specified name, so use '\0';
+ */
 
 var DUMMY_COMPONENT_NAME_PREFIX = 'series\0';
 var INTERNAL_COMPONENT_ID_PREFIX = '\0_ec_\0';
+/**
+ * If value is not array, then translate it to array.
+ * @param  {*} value
+ * @return {Array} [value] or value
+ */
+
 function normalizeToArray(value) {
   return value instanceof Array ? value : value == null ? [] : [value];
 }
+/**
+ * Sync default option between normal and emphasis like `position` and `show`
+ * In case some one will write code like
+ *     label: {
+ *          show: false,
+ *          position: 'outside',
+ *          fontSize: 18
+ *     },
+ *     emphasis: {
+ *          label: { show: true }
+ *     }
+ */
+
 function defaultEmphasis(opt, key, subOpts) {
+  // Caution: performance sensitive.
   if (opt) {
     opt[key] = opt[key] || {};
     opt.emphasis = opt.emphasis || {};
-    opt.emphasis[key] = opt.emphasis[key] || {};
+    opt.emphasis[key] = opt.emphasis[key] || {}; // Default emphasis option from normal
 
     for (var i = 0, len = subOpts.length; i < len; i++) {
       var subOptName = subOpts[i];
@@ -35736,21 +36137,70 @@ function defaultEmphasis(opt, key, subOpts) {
     }
   }
 }
-var TEXT_STYLE_OPTIONS = ['fontStyle', 'fontWeight', 'fontSize', 'fontFamily', 'rich', 'tag', 'color', 'textBorderColor', 'textBorderWidth', 'width', 'height', 'lineHeight', 'align', 'verticalAlign', 'baseline', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'textShadowColor', 'textShadowBlur', 'textShadowOffsetX', 'textShadowOffsetY', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding'];
+var TEXT_STYLE_OPTIONS = ['fontStyle', 'fontWeight', 'fontSize', 'fontFamily', 'rich', 'tag', 'color', 'textBorderColor', 'textBorderWidth', 'width', 'height', 'lineHeight', 'align', 'verticalAlign', 'baseline', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'textShadowColor', 'textShadowBlur', 'textShadowOffsetX', 'textShadowOffsetY', 'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius', 'padding']; // modelUtil.LABEL_OPTIONS = modelUtil.TEXT_STYLE_OPTIONS.concat([
+//     'position', 'offset', 'rotate', 'origin', 'show', 'distance', 'formatter',
+//     'fontStyle', 'fontWeight', 'fontSize', 'fontFamily',
+//     // FIXME: deprecated, check and remove it.
+//     'textStyle'
+// ]);
+
+/**
+ * The method do not ensure performance.
+ * data could be [12, 2323, {value: 223}, [1221, 23], {value: [2, 23]}]
+ * This helper method retieves value from data.
+ */
+
 function getDataItemValue(dataItem) {
   return util_isObject(dataItem) && !util_isArray(dataItem) && !(dataItem instanceof Date) ? dataItem.value : dataItem;
 }
+/**
+ * data could be [12, 2323, {value: 223}, [1221, 23], {value: [2, 23]}]
+ * This helper method determine if dataItem has extra option besides value
+ */
+
 function isDataItemOption(dataItem) {
-  return util_isObject(dataItem) && !(dataItem instanceof Array);
+  return util_isObject(dataItem) && !(dataItem instanceof Array); // // markLine data can be array
+  // && !(dataItem[0] && isObject(dataItem[0]) && !(dataItem[0] instanceof Array));
 }
 ;
+/**
+ * Mapping to existings for merge.
+ *
+ * Mode "normalMege":
+ *     The mapping result (merge result) will keep the order of the existing
+ *     component, rather than the order of new option. Because we should ensure
+ *     some specified index reference (like xAxisIndex) keep work.
+ *     And in most cases, "merge option" is used to update partial option but not
+ *     be expected to change the order.
+ *
+ * Mode "replaceMege":
+ *     (1) Only the id mapped components will be merged.
+ *     (2) Other existing components (except internal compoonets) will be removed.
+ *     (3) Other new options will be used to create new component.
+ *     (4) The index of the existing compoents will not be modified.
+ *     That means their might be "hole" after the removal.
+ *     The new components are created first at those available index.
+ *
+ * Mode "replaceAll":
+ *     This mode try to support that reproduce an echarts instance from another
+ *     echarts instance (via `getOption`) in some simple cases.
+ *     In this senario, the `result` index are exactly the consistent with the `newCmptOptions`,
+ *     which ensures the compoennt index referring (like `xAxisIndex: ?`) corrent. That is,
+ *     the "hole" in `newCmptOptions` will also be kept.
+ *     On the contrary, other modes try best to eliminate holes.
+ *     PENDING: This is an experimental mode yet.
+ *
+ * @return See the comment of <MappingResult>.
+ */
+
 function mappingToExists(existings, newCmptOptions, mode) {
   var isNormalMergeMode = mode === 'normalMerge';
   var isReplaceMergeMode = mode === 'replaceMerge';
   var isReplaceAllMode = mode === 'replaceAll';
   existings = existings || [];
   newCmptOptions = (newCmptOptions || []).slice();
-  var existingIdIdxMap = util_createHashMap();
+  var existingIdIdxMap = util_createHashMap(); // Validate id and name on user input option.
+
   util_each(newCmptOptions, function (cmptOption, index) {
     if (!util_isObject(cmptOption)) {
       newCmptOptions[index] = null;
@@ -35758,6 +36208,8 @@ function mappingToExists(existings, newCmptOptions, mode) {
     }
 
     if (true) {
+      // There is some legacy case that name is set as `false`.
+      // But should work normally rather than throw error.
       if (cmptOption.id != null && !isValidIdOrName(cmptOption.id)) {
         warnInvalidateIdOrName(cmptOption.id);
       }
@@ -35783,7 +36235,9 @@ function mappingToExists(existings, newCmptOptions, mode) {
     mappingInReplaceAllMode(result, newCmptOptions);
   }
 
-  makeIdAndName(result);
+  makeIdAndName(result); // The array `result` MUST NOT contain elided items, otherwise the
+  // forEach will ommit those items and result in incorrect result.
+
   return result;
 }
 
@@ -35792,14 +36246,21 @@ function prepareResult(existings, existingIdIdxMap, mode) {
 
   if (mode === 'replaceAll') {
     return result;
-  }
+  } // Do not use native `map` to in case that the array `existings`
+  // contains elided items, which will be ommited.
+
 
   for (var index = 0; index < existings.length; index++) {
-    var existing = existings[index];
+    var existing = existings[index]; // Because of replaceMerge, `existing` may be null/undefined.
 
     if (existing && existing.id != null) {
       existingIdIdxMap.set(existing.id, index);
-    }
+    } // For non-internal-componnets:
+    //     Mode "normalMerge": all existings kept.
+    //     Mode "replaceMerge": all existing removed unless mapped by id.
+    // For internal-components:
+    //     go with "replaceMerge" approach in both mode.
+
 
     result.push({
       existing: mode === 'replaceMerge' || isComponentIdInternal(existing) ? null : existing,
@@ -35813,6 +36274,7 @@ function prepareResult(existings, existingIdIdxMap, mode) {
 }
 
 function mappingById(result, existings, existingIdIdxMap, newCmptOptions) {
+  // Mapping by id if specified.
   util_each(newCmptOptions, function (cmptOption, index) {
     if (!cmptOption || cmptOption.id == null) {
       return;
@@ -35824,7 +36286,9 @@ function mappingById(result, existings, existingIdIdxMap, newCmptOptions) {
     if (existingIdx != null) {
       var resultItem = result[existingIdx];
       util_assert(!resultItem.newOption, 'Duplicated option on id "' + optionId + '".');
-      resultItem.newOption = cmptOption;
+      resultItem.newOption = cmptOption; // In both mode, if id matched, new option will be merged to
+      // the existings rather than creating new component model.
+
       resultItem.existing = existings[existingIdx];
       newCmptOptions[index] = null;
     }
@@ -35832,6 +36296,7 @@ function mappingById(result, existings, existingIdIdxMap, newCmptOptions) {
 }
 
 function mappingByName(result, newCmptOptions) {
+  // Mapping by name if specified.
   util_each(newCmptOptions, function (cmptOption, index) {
     if (!cmptOption || cmptOption.name == null) {
       return;
@@ -35840,7 +36305,9 @@ function mappingByName(result, newCmptOptions) {
     for (var i = 0; i < result.length; i++) {
       var existing = result[i].existing;
 
-      if (!result[i].newOption && existing && (existing.id == null || cmptOption.id == null) && !isComponentIdInternal(cmptOption) && !isComponentIdInternal(existing) && keyExistAndEqual('name', existing, cmptOption)) {
+      if (!result[i].newOption // Consider name: two map to one.
+      // Can not match when both ids existing but different.
+      && existing && (existing.id == null || cmptOption.id == null) && !isComponentIdInternal(cmptOption) && !isComponentIdInternal(existing) && keyExistAndEqual('name', existing, cmptOption)) {
         result[i].newOption = cmptOption;
         newCmptOptions[index] = null;
         return;
@@ -35853,12 +36320,21 @@ function mappingByIndex(result, newCmptOptions, brandNew) {
   util_each(newCmptOptions, function (cmptOption) {
     if (!cmptOption) {
       return;
-    }
+    } // Find the first place that not mapped by id and not internal component (consider the "hole").
+
 
     var resultItem;
     var nextIdx = 0;
 
-    while ((resultItem = result[nextIdx]) && (resultItem.newOption || isComponentIdInternal(resultItem.existing) || resultItem.existing && cmptOption.id != null && !keyExistAndEqual('id', cmptOption, resultItem.existing))) {
+    while ( // Be `!resultItem` only when `nextIdx >= result.length`.
+    (resultItem = result[nextIdx]) && ( // (1) Existing models that already have id should be able to mapped to. Because
+    // after mapping performed, model will always be assigned with an id if user not given.
+    // After that all models have id.
+    // (2) If new option has id, it can only set to a hole or append to the last. It should
+    // not be merged to the existings with different id. Because id should not be overwritten.
+    // (3) Name can be overwritten, because axis use name as 'show label text'.
+    resultItem.newOption || isComponentIdInternal(resultItem.existing) || // In mode "replaceMerge", here no not-mapped-non-internal-existing.
+    resultItem.existing && cmptOption.id != null && !keyExistAndEqual('id', cmptOption, resultItem.existing))) {
       nextIdx++;
     }
 
@@ -35880,6 +36356,8 @@ function mappingByIndex(result, newCmptOptions, brandNew) {
 
 function mappingInReplaceAllMode(result, newCmptOptions) {
   util_each(newCmptOptions, function (cmptOption) {
+    // The feature "reproduce" requires "hole" will also reproduced
+    // in case that compoennt index referring are broken.
     result.push({
       newOption: cmptOption,
       brandNew: true,
@@ -35888,19 +36366,35 @@ function mappingInReplaceAllMode(result, newCmptOptions) {
     });
   });
 }
+/**
+ * Make id and name for mapping result (result of mappingToExists)
+ * into `keyInfo` field.
+ */
+
 
 function makeIdAndName(mapResult) {
+  // We use this id to hash component models and view instances
+  // in echarts. id can be specified by user, or auto generated.
+  // The id generation rule ensures new view instance are able
+  // to mapped to old instance when setOption are called in
+  // no-merge mode. So we generate model id by name and plus
+  // type in view id.
+  // name can be duplicated among components, which is convenient
+  // to specify multi components (like series) by one name.
+  // Ensure that each id is distinct.
   var idMap = util_createHashMap();
   util_each(mapResult, function (item) {
     var existing = item.existing;
     existing && idMap.set(existing.id, item);
   });
   util_each(mapResult, function (item) {
-    var opt = item.newOption;
+    var opt = item.newOption; // Force ensure id not duplicated.
+
     util_assert(!opt || opt.id == null || !idMap.get(opt.id) || idMap.get(opt.id) === item, 'id duplicates: ' + (opt && opt.id));
     opt && opt.id != null && idMap.set(opt.id, item);
     !item.keyInfo && (item.keyInfo = {});
-  });
+  }); // Make name and id.
+
   util_each(mapResult, function (item, index) {
     var existing = item.existing;
     var opt = item.newOption;
@@ -35908,15 +36402,26 @@ function makeIdAndName(mapResult) {
 
     if (!util_isObject(opt)) {
       return;
-    }
+    } // name can be overwitten. Consider case: axis.name = '20km'.
+    // But id generated by name will not be changed, which affect
+    // only in that case: setOption with 'not merge mode' and view
+    // instance will be recreated, which can be accepted.
 
-    keyInfo.name = opt.name != null ? makeComparableKey(opt.name) : existing ? existing.name : DUMMY_COMPONENT_NAME_PREFIX + index;
+
+    keyInfo.name = opt.name != null ? makeComparableKey(opt.name) : existing ? existing.name // Avoid diffferent series has the same name,
+    // because name may be used like in color pallet.
+    : DUMMY_COMPONENT_NAME_PREFIX + index;
 
     if (existing) {
       keyInfo.id = makeComparableKey(existing.id);
     } else if (opt.id != null) {
       keyInfo.id = makeComparableKey(opt.id);
     } else {
+      // Consider this situatoin:
+      //  optionA: [{name: 'a'}, {name: 'a'}, {..}]
+      //  optionB [{..}, {name: 'a'}, {name: 'a'}]
+      // Series with the same name between optionA and optionB
+      // should be mapped.
       var idNum = 0;
 
       do {
@@ -35930,9 +36435,14 @@ function makeIdAndName(mapResult) {
 
 function keyExistAndEqual(attr, obj1, obj2) {
   var key1 = convertOptionIdName(obj1[attr], null);
-  var key2 = convertOptionIdName(obj2[attr], null);
+  var key2 = convertOptionIdName(obj2[attr], null); // See `MappingExistingItem`. `id` and `name` trade string equals to number.
+
   return key1 != null && key2 != null && key1 === key2;
 }
+/**
+ * @return return null if not exist.
+ */
+
 
 function makeComparableKey(val) {
   if (true) {
@@ -35964,9 +36474,16 @@ function isValidIdOrName(idOrName) {
 }
 
 function isNameSpecified(componentModel) {
-  var name = componentModel.name;
+  var name = componentModel.name; // Is specified when `indexOf` get -1 or > 0.
+
   return !!(name && name.indexOf(DUMMY_COMPONENT_NAME_PREFIX));
 }
+/**
+ * @public
+ * @param {Object} cmptOption
+ * @return {boolean}
+ */
+
 function isComponentIdInternal(cmptOption) {
   return cmptOption && cmptOption.id != null && makeComparableKey(cmptOption.id).indexOf(INTERNAL_COMPONENT_ID_PREFIX) === 0;
 }
@@ -35974,6 +36491,7 @@ function makeInternalComponentId(idSuffix) {
   return INTERNAL_COMPONENT_ID_PREFIX + idSuffix;
 }
 function setComponentTypeToKeyInfo(mappingResult, mainType, componentModelCtor) {
+  // Set mainType and complete subType.
   util_each(mappingResult, function (item) {
     var newOption = item.newOption;
 
@@ -35985,9 +36503,20 @@ function setComponentTypeToKeyInfo(mappingResult, mainType, componentModelCtor) 
 }
 
 function determineSubType(mainType, newCmptOption, existComponent, componentModelCtor) {
-  var subType = newCmptOption.type ? newCmptOption.type : existComponent ? existComponent.subType : componentModelCtor.determineSubType(mainType, newCmptOption);
+  var subType = newCmptOption.type ? newCmptOption.type : existComponent ? existComponent.subType // Use determineSubType only when there is no existComponent.
+  : componentModelCtor.determineSubType(mainType, newCmptOption); // tooltip, markline, markpoint may always has no subType
+
   return subType;
 }
+/**
+ * A helper for removing duplicate items between batchA and batchB,
+ * and in themselves, and categorize by series.
+ *
+ * @param batchA Like: [{seriesId: 2, dataIndex: [32, 4, 5]}, ...]
+ * @param batchB Like: [{seriesId: 2, dataIndex: [32, 4, 5]}, ...]
+ * @return result: [resultBatchA, resultBatchB]
+ */
+
 
 function compressBatches(batchA, batchB) {
   var mapA = {};
@@ -36039,6 +36568,12 @@ function compressBatches(batchA, batchB) {
     return result;
   }
 }
+/**
+ * @param payload Contains dataIndex (means rawIndex) / dataIndexInside / name
+ *                         each of which can be Array or primary type.
+ * @return dataIndex If not found, return undefined/null.
+ */
+
 function queryDataIndex(data, payload) {
   if (payload.dataIndexInside != null) {
     return payload.dataIndexInside;
@@ -36052,6 +36587,27 @@ function queryDataIndex(data, payload) {
     }) : data.indexOfName(payload.name);
   }
 }
+/**
+ * Enable property storage to any host object.
+ * Notice: Serialization is not supported.
+ *
+ * For example:
+ * let inner = zrUitl.makeInner();
+ *
+ * function some1(hostObj) {
+ *      inner(hostObj).someProperty = 1212;
+ *      ...
+ * }
+ * function some2() {
+ *      let fields = inner(this);
+ *      fields.someProperty1 = 1212;
+ *      fields.someProperty2 = 'xx';
+ *      ...
+ * }
+ *
+ * @return {Function}
+ */
+
 function makeInner() {
   var key = '__ec_inner_' + innerUniqueIndex++;
   return function (hostObj) {
@@ -36059,38 +36615,17 @@ function makeInner() {
   };
 }
 var innerUniqueIndex = getRandomIdBase();
+/**
+ * The same behavior as `component.getReferringComponents`.
+ */
+
 function parseFinder(ecModel, finderInput, opt) {
-  var finder;
+  var _a = preParseFinder(finderInput, opt),
+      mainTypeSpecified = _a.mainTypeSpecified,
+      queryOptionMap = _a.queryOptionMap,
+      others = _a.others;
 
-  if (util_isString(finderInput)) {
-    var obj = {};
-    obj[finderInput + 'Index'] = 0;
-    finder = obj;
-  } else {
-    finder = finderInput;
-  }
-
-  var queryOptionMap = util_createHashMap();
-  var result = {};
-  var mainTypeSpecified = false;
-  util_each(finder, function (value, key) {
-    if (key === 'dataIndex' || key === 'dataIndexInside') {
-      result[key] = value;
-      return;
-    }
-
-    var parsedKey = key.match(/^(\w+)(Index|Id|Name)$/) || [];
-    var mainType = parsedKey[1];
-    var queryType = (parsedKey[2] || '').toLowerCase();
-
-    if (!mainType || !queryType || opt && opt.includeMainTypes && util_indexOf(opt.includeMainTypes, mainType) < 0) {
-      return;
-    }
-
-    mainTypeSpecified = mainTypeSpecified || !!mainType;
-    var queryOption = queryOptionMap.get(mainType) || queryOptionMap.set(mainType, {});
-    queryOption[queryType] = value;
-  });
+  var result = others;
   var defaultMainType = opt ? opt.defaultMainType : null;
 
   if (!mainTypeSpecified && defaultMainType) {
@@ -36107,6 +36642,45 @@ function parseFinder(ecModel, finderInput, opt) {
     result[mainType + 'Model'] = queryResult.models[0];
   });
   return result;
+}
+function preParseFinder(finderInput, opt) {
+  var finder;
+
+  if (util_isString(finderInput)) {
+    var obj = {};
+    obj[finderInput + 'Index'] = 0;
+    finder = obj;
+  } else {
+    finder = finderInput;
+  }
+
+  var queryOptionMap = util_createHashMap();
+  var others = {};
+  var mainTypeSpecified = false;
+  util_each(finder, function (value, key) {
+    // Exclude 'dataIndex' and other illgal keys.
+    if (key === 'dataIndex' || key === 'dataIndexInside') {
+      others[key] = value;
+      return;
+    }
+
+    var parsedKey = key.match(/^(\w+)(Index|Id|Name)$/) || [];
+    var mainType = parsedKey[1];
+    var queryType = (parsedKey[2] || '').toLowerCase();
+
+    if (!mainType || !queryType || opt && opt.includeMainTypes && util_indexOf(opt.includeMainTypes, mainType) < 0) {
+      return;
+    }
+
+    mainTypeSpecified = mainTypeSpecified || !!mainType;
+    var queryOption = queryOptionMap.get(mainType) || queryOptionMap.set(mainType, {});
+    queryOption[queryType] = value;
+  });
+  return {
+    mainTypeSpecified: mainTypeSpecified,
+    queryOptionMap: queryOptionMap,
+    others: others
+  };
 }
 var SINGLE_REFERRING = {
   useDefault: true,
@@ -36129,6 +36703,7 @@ function queryReferringComponents(ecModel, mainType, userOption, opt) {
   };
 
   if (!result.specified) {
+    // Use the first as default if `useDefault`.
     var firstCmpt = void 0;
     result.models = opt.useDefault && (firstCmpt = ecModel.getComponent(mainType)) ? [firstCmpt] : [];
     return result;
@@ -36138,7 +36713,9 @@ function queryReferringComponents(ecModel, mainType, userOption, opt) {
     util_assert(opt.enableNone, '`"none"` or `false` is not a valid value on index option.');
     result.models = [];
     return result;
-  }
+  } // `queryComponents` will return all components if
+  // both all of index/id/name are null/undefined.
+
 
   if (indexOption === 'all') {
     util_assert(opt.enableAll, '`"all"` is not a valid value on index option.');
@@ -36161,12 +36738,18 @@ function getAttribute(dom, key) {
 }
 function getTooltipRenderMode(renderModeOption) {
   if (renderModeOption === 'auto') {
+    // Using html when `document` exists, use richText otherwise
     return core_env.domSupported ? 'html' : 'richText';
   } else {
     return renderModeOption || 'html';
   }
 }
-function groupData(array, getKey) {
+/**
+ * Group a list by key.
+ */
+
+function groupData(array, getKey // return key
+) {
   var buckets = util_createHashMap();
   var keys = [];
   util_each(array, function (item) {
@@ -36178,6 +36761,21 @@ function groupData(array, getKey) {
     buckets: buckets
   };
 }
+/**
+ * Interpolate raw values of a series with percent
+ *
+ * @param data         data
+ * @param labelModel   label model of the text element
+ * @param sourceValue  start value. May be null/undefined when init.
+ * @param targetValue  end value
+ * @param percent      0~1 percentage; 0 uses start value while 1 uses end value
+ * @return             interpolated values
+ *                     If `sourceValue` and `targetValue` are `number`, return `number`.
+ *                     If `sourceValue` and `targetValue` are `string`, return `string`.
+ *                     If `sourceValue` and `targetValue` are `(string | number)[]`, return `(string | number)[]`.
+ *                     Other cases do not supported.
+ */
+
 function interpolateRawValues(data, precision, sourceValue, targetValue, percent) {
   var isAutoPrecision = precision == null || precision === 'auto';
 
@@ -36187,7 +36785,7 @@ function interpolateRawValues(data, precision, sourceValue, targetValue, percent
 
   if (typeof targetValue === 'number') {
     var value = Animator_interpolateNumber(sourceValue || 0, targetValue, percent);
-    return number_round(value, isAutoPrecision ? Math.max(getPrecisionSafe(sourceValue || 0), getPrecisionSafe(targetValue)) : precision);
+    return number_round(value, isAutoPrecision ? Math.max(getPrecision(sourceValue || 0), getPrecision(targetValue)) : precision);
   } else if (typeof targetValue === 'string') {
     return percent < 1 ? sourceValue : targetValue;
   } else {
@@ -36197,15 +36795,16 @@ function interpolateRawValues(data, precision, sourceValue, targetValue, percent
     var length_1 = Math.max(leftArr ? leftArr.length : 0, rightArr.length);
 
     for (var i = 0; i < length_1; ++i) {
-      var info = data.getDimensionInfo(i);
+      var info = data.getDimensionInfo(i); // Don't interpolate ordinal dims
 
       if (info.type === 'ordinal') {
+        // In init, there is no `sourceValue`, but should better not to get undefined result.
         interpolated[i] = (percent < 1 && leftArr ? leftArr : rightArr)[i];
       } else {
         var leftVal = leftArr && leftArr[i] ? leftArr[i] : 0;
         var rightVal = rightArr[i];
         var value = Animator_interpolateNumber(leftVal, rightVal, percent);
-        interpolated[i] = number_round(value, isAutoPrecision ? Math.max(getPrecisionSafe(leftVal), getPrecisionSafe(rightVal)) : precision);
+        interpolated[i] = number_round(value, isAutoPrecision ? Math.max(getPrecision(leftVal), getPrecision(rightVal)) : precision);
       }
     }
 
@@ -36238,6 +36837,24 @@ function interpolateRawValues(data, precision, sourceValue, targetValue, percent
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 var getECData = makeInner();
 ;// CONCATENATED MODULE: ./node_modules/echarts/lib/util/states.js
@@ -36266,11 +36883,31 @@ var getECData = makeInner();
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 
 
 
+
+ // Reserve 0 as default.
 
 var _highlightNextDigit = 1;
 var _highlightKeyMap = {};
@@ -36290,7 +36927,8 @@ var TOGGLE_SELECT_ACTION_TYPE = 'toggleSelect';
 
 function hasFillOrStroke(fillOrStroke) {
   return fillOrStroke != null && fillOrStroke !== 'none';
-}
+} // Most lifted color are duplicated.
+
 
 var liftedColorCache = new zrender_lib_core_LRU(100);
 
@@ -36318,10 +36956,14 @@ function doChangeHoverState(el, stateName, hoverStateEnum) {
 }
 
 function singleEnterEmphasis(el) {
+  // Only mark the flag.
+  // States will be applied in the echarts.ts in next frame.
   doChangeHoverState(el, 'emphasis', HOVER_STATE_EMPHASIS);
 }
 
 function singleLeaveEmphasis(el) {
+  // Only mark the flag.
+  // States will be applied in the echarts.ts in next frame.
   if (el.hoverState === HOVER_STATE_EMPHASIS) {
     doChangeHoverState(el, 'normal', HOVER_STATE_NORMAL);
   }
@@ -36374,6 +37016,12 @@ function setStatesFlag(el, stateName) {
       el.selected = true;
   }
 }
+/**
+ * If we reuse elements when rerender.
+ * DONT forget to clearStates before we update the style and shape.
+ * Or we may update on the wrong state instead of normal state.
+ */
+
 function clearStates(el) {
   if (el.isGroup) {
     el.traverse(function (child) {
@@ -36397,7 +37045,8 @@ function getFromStateStyle(el, props, toStateName, defaultValue) {
   for (var i = 0; i < el.animators.length; i++) {
     var animator = el.animators[i];
 
-    if (animator.__fromStateTransition && animator.__fromStateTransition.indexOf(toStateName) < 0 && animator.targetName === 'style') {
+    if (animator.__fromStateTransition // Dont consider the animation to emphasis state.
+    && animator.__fromStateTransition.indexOf(toStateName) < 0 && animator.targetName === 'style') {
       animator.saveFinalToTarget(fromState, props);
     }
   }
@@ -36415,28 +37064,33 @@ function createEmphasisDefaultState(el, stateName, targetStates, state) {
     var fromStroke = hasSelect ? store.selectStroke || store.normalStroke : store.normalStroke;
 
     if (hasFillOrStroke(fromFill) || hasFillOrStroke(fromStroke)) {
-      state = state || {};
+      state = state || {}; // Apply default color lift
+
       var emphasisStyle = state.style || {};
 
       if (!hasFillOrStroke(emphasisStyle.fill) && hasFillOrStroke(fromFill)) {
-        cloned = true;
-        state = core_util_extend({}, state);
-        emphasisStyle = core_util_extend({}, emphasisStyle);
-        emphasisStyle.fill = liftColor(fromFill);
-      } else if (!hasFillOrStroke(emphasisStyle.stroke) && hasFillOrStroke(fromStroke)) {
-        if (!cloned) {
-          state = core_util_extend({}, state);
-          emphasisStyle = core_util_extend({}, emphasisStyle);
-        }
+        cloned = true; // Not modify the original value.
 
-        emphasisStyle.stroke = liftColor(fromStroke);
-      }
+        state = core_util_extend({}, state);
+        emphasisStyle = core_util_extend({}, emphasisStyle); // Already being applied 'emphasis'. DON'T lift color multiple times.
+
+        emphasisStyle.fill = liftColor(fromFill);
+      } // Not highlight stroke if fill has been highlighted.
+      else if (!hasFillOrStroke(emphasisStyle.stroke) && hasFillOrStroke(fromStroke)) {
+          if (!cloned) {
+            state = core_util_extend({}, state);
+            emphasisStyle = core_util_extend({}, emphasisStyle);
+          }
+
+          emphasisStyle.stroke = liftColor(fromStroke);
+        }
 
       state.style = emphasisStyle;
     }
   }
 
   if (state) {
+    // TODO Share with textContent?
     if (state.z2 == null) {
       if (!cloned) {
         state = core_util_extend({}, state);
@@ -36451,7 +37105,9 @@ function createEmphasisDefaultState(el, stateName, targetStates, state) {
 }
 
 function createSelectDefaultState(el, stateName, state) {
+  // const hasSelect = indexOf(el.currentStates, stateName) >= 0;
   if (state) {
+    // TODO Share with textContent?
     if (state.z2 == null) {
       state = core_util_extend({}, state);
       var z2SelectLift = el.z2SelectLift;
@@ -36472,8 +37128,10 @@ function createBlurDefaultState(el, stateName, state) {
   var blurStyle = state.style || {};
 
   if (blurStyle.opacity == null) {
+    // clone state
     state = core_util_extend({}, state);
     blurStyle = core_util_extend({
+      // Already being applied 'emphasis'. DON'T mul opacity multiple times.
       opacity: hasBlur ? currentOpacity : fromState.opacity * 0.1
     }, blurStyle);
     state.style = blurStyle;
@@ -36497,6 +37155,12 @@ function elementStateProxy(stateName, targetStates) {
 
   return state;
 }
+/**FI
+ * Set hover style (namely "emphasis style") of element.
+ * @param el Should not be `zrender/graphic/Group`.
+ * @param focus 'self' | 'selfInSeries' | 'series'
+ */
+
 
 function setDefaultStateProxy(el) {
   el.stateProxy = elementStateProxy;
@@ -36512,10 +37176,12 @@ function setDefaultStateProxy(el) {
   }
 }
 function enterEmphasisWhenMouseOver(el, e) {
-  !shouldSilent(el, e) && !el.__highByOuter && traverseUpdateState(el, singleEnterEmphasis);
+  !shouldSilent(el, e) // "emphasis" event highlight has higher priority than mouse highlight.
+  && !el.__highByOuter && traverseUpdateState(el, singleEnterEmphasis);
 }
 function leaveEmphasisWhenMouseOut(el, e) {
-  !shouldSilent(el, e) && !el.__highByOuter && traverseUpdateState(el, singleLeaveEmphasis);
+  !shouldSilent(el, e) // "emphasis" event highlight has higher priority than mouse highlight.
+  && !el.__highByOuter && traverseUpdateState(el, singleLeaveEmphasis);
 }
 function enterEmphasis(el, highlightDigit) {
   el.__highByOuter |= 1 << (highlightDigit || 0);
@@ -36544,14 +37210,14 @@ function shouldSilent(el, e) {
 function allLeaveBlur(api) {
   var model = api.getModel();
   model.eachComponent(function (componentType, componentModel) {
-    var view = componentType === 'series' ? api.getViewOfSeriesModel(componentModel) : api.getViewOfComponentModel(componentModel);
+    var view = componentType === 'series' ? api.getViewOfSeriesModel(componentModel) : api.getViewOfComponentModel(componentModel); // Leave blur anyway
+
     view.group.traverse(function (child) {
       singleLeaveBlur(child);
     });
   });
 }
-
-function toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, api, isBlur) {
+function blurSeries(targetSeriesIndex, focus, blurScope, api) {
   var ecModel = api.getModel();
   blurScope = blurScope || 'coordinateSystem';
 
@@ -36560,11 +37226,6 @@ function toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, api, isBlur)
       var itemEl = data.getItemGraphicEl(dataIndices[i]);
       itemEl && leaveBlur(itemEl);
     }
-  }
-
-  if (!isBlur) {
-    allLeaveBlur(api);
-    return;
   }
 
   if (targetSeriesIndex == null) {
@@ -36591,9 +37252,13 @@ function toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, api, isBlur)
       coordSys = coordSys.master;
     }
 
-    var sameCoordSys = coordSys && targetCoordSys ? coordSys === targetCoordSys : sameSeries;
+    var sameCoordSys = coordSys && targetCoordSys ? coordSys === targetCoordSys : sameSeries; // If there is no coordinate system. use sameSeries instead.
 
-    if (!(blurScope === 'series' && !sameSeries || blurScope === 'coordinateSystem' && !sameCoordSys || focus === 'series' && sameSeries)) {
+    if (!( // Not blur other series if blurScope series
+    blurScope === 'series' && !sameSeries // Not blur other coordinate system if blurScope is coordinateSystem
+    || blurScope === 'coordinateSystem' && !sameCoordSys // Not blur self series if focus is series.
+    || focus === 'series' && sameSeries // TODO blurScope: coordinate system
+    )) {
       var view = api.getViewOfSeriesModel(seriesModel);
       view.group.traverse(function (child) {
         singleEnterBlur(child);
@@ -36624,21 +37289,38 @@ function toggleSeriesBlurState(targetSeriesIndex, focus, blurScope, api, isBlur)
     }
   });
 }
-function toggleSeriesBlurStateFromPayload(seriesModel, payload, api) {
-  if (!isHighDownPayload(payload)) {
+function blurComponent(componentMainType, componentIndex, api) {
+  if (componentMainType == null || componentIndex == null) {
     return;
   }
 
-  var isHighlight = payload.type === HIGHLIGHT_ACTION_TYPE;
+  var componentModel = api.getModel().getComponent(componentMainType, componentIndex);
+
+  if (!componentModel) {
+    return;
+  }
+
+  var view = api.getViewOfComponentModel(componentModel);
+
+  if (!view || !view.focusBlurEnabled) {
+    return;
+  }
+
+  view.group.traverse(function (child) {
+    singleEnterBlur(child);
+  });
+}
+function blurSeriesFromHighlightPayload(seriesModel, payload, api) {
   var seriesIndex = seriesModel.seriesIndex;
   var data = seriesModel.getData(payload.dataType);
-  var dataIndex = queryDataIndex(data, payload);
+  var dataIndex = queryDataIndex(data, payload); // Pick the first one if there is multiple/none exists.
+
   dataIndex = (util_isArray(dataIndex) ? dataIndex[0] : dataIndex) || 0;
   var el = data.getItemGraphicEl(dataIndex);
 
   if (!el) {
     var count = data.count();
-    var current = 0;
+    var current = 0; // If data on dataIndex is NaN.
 
     while (!el && current < count) {
       el = data.getItemGraphicEl(current++);
@@ -36647,14 +37329,112 @@ function toggleSeriesBlurStateFromPayload(seriesModel, payload, api) {
 
   if (el) {
     var ecData = getECData(el);
-    toggleSeriesBlurState(seriesIndex, ecData.focus, ecData.blurScope, api, isHighlight);
+    blurSeries(seriesIndex, ecData.focus, ecData.blurScope, api);
   } else {
+    // If there is no element put on the data. Try getting it from raw option
+    // TODO Should put it on seriesModel?
     var focus_1 = seriesModel.get(['emphasis', 'focus']);
     var blurScope = seriesModel.get(['emphasis', 'blurScope']);
 
     if (focus_1 != null) {
-      toggleSeriesBlurState(seriesIndex, focus_1, blurScope, api, isHighlight);
+      blurSeries(seriesIndex, focus_1, blurScope, api);
     }
+  }
+}
+function findComponentHighDownDispatchers(componentMainType, componentIndex, name, api) {
+  var ret = {
+    focusSelf: false,
+    dispatchers: null
+  };
+
+  if (componentMainType == null || componentMainType === 'series' || componentIndex == null || name == null) {
+    return ret;
+  }
+
+  var componentModel = api.getModel().getComponent(componentMainType, componentIndex);
+
+  if (!componentModel) {
+    return ret;
+  }
+
+  var view = api.getViewOfComponentModel(componentModel);
+
+  if (!view || !view.findHighDownDispatchers) {
+    return ret;
+  }
+
+  var dispatchers = view.findHighDownDispatchers(name); // At presnet, the component (like Geo) only blur inside itself.
+  // So we do not use `blurScope` in component.
+
+  var focusSelf;
+
+  for (var i = 0; i < dispatchers.length; i++) {
+    if ( true && !isHighDownDispatcher(dispatchers[i])) {
+      error('param should be highDownDispatcher');
+    }
+
+    if (getECData(dispatchers[i]).focus === 'self') {
+      focusSelf = true;
+      break;
+    }
+  }
+
+  return {
+    focusSelf: focusSelf,
+    dispatchers: dispatchers
+  };
+}
+function handleGlobalMouseOverForHighDown(dispatcher, e, api) {
+  if ( true && !isHighDownDispatcher(dispatcher)) {
+    error('param should be highDownDispatcher');
+  }
+
+  var ecData = getECData(dispatcher);
+
+  var _a = findComponentHighDownDispatchers(ecData.componentMainType, ecData.componentIndex, ecData.componentHighDownName, api),
+      dispatchers = _a.dispatchers,
+      focusSelf = _a.focusSelf; // If `findHighDownDispatchers` is supported on the component,
+  // highlight/downplay elements with the same name.
+
+
+  if (dispatchers) {
+    if (focusSelf) {
+      blurComponent(ecData.componentMainType, ecData.componentIndex, api);
+    }
+
+    util_each(dispatchers, function (dispatcher) {
+      return enterEmphasisWhenMouseOver(dispatcher, e);
+    });
+  } else {
+    // Try blur all in the related series. Then emphasis the hoverred.
+    // TODO. progressive mode.
+    blurSeries(ecData.seriesIndex, ecData.focus, ecData.blurScope, api);
+
+    if (ecData.focus === 'self') {
+      blurComponent(ecData.componentMainType, ecData.componentIndex, api);
+    } // Other than series, component that not support `findHighDownDispatcher` will
+    // also use it. But in this case, highlight/downplay are only supported in
+    // mouse hover but not in dispatchAction.
+
+
+    enterEmphasisWhenMouseOver(dispatcher, e);
+  }
+}
+function handleGlboalMouseOutForHighDown(dispatcher, e, api) {
+  if ( true && !isHighDownDispatcher(dispatcher)) {
+    error('param should be highDownDispatcher');
+  }
+
+  allLeaveBlur(api);
+  var ecData = getECData(dispatcher);
+  var dispatchers = findComponentHighDownDispatchers(ecData.componentMainType, ecData.componentIndex, ecData.componentHighDownName, api).dispatchers;
+
+  if (dispatchers) {
+    util_each(dispatchers, function (dispatcher) {
+      return leaveEmphasisWhenMouseOut(dispatcher, e);
+    });
+  } else {
+    leaveEmphasisWhenMouseOut(dispatcher, e);
   }
 }
 function toggleSelectionFromPayload(seriesModel, payload, api) {
@@ -36707,6 +37487,14 @@ function getAllSelectedIndices(ecModel) {
   });
   return ret;
 }
+/**
+ * Enable the function that mouseover will trigger the emphasis state.
+ *
+ * NOTE:
+ * This function should be used on the element with dataIndex, seriesIndex.
+ *
+ */
+
 function enableHoverEmphasis(el, focus, blurScope) {
   setAsHighDownDispatcher(el, true);
   traverseUpdateState(el, setDefaultStateProxy);
@@ -36716,8 +37504,15 @@ function enableHoverFocus(el, focus, blurScope) {
   var ecData = getECData(el);
 
   if (focus != null) {
+    // TODO dataIndex may be set after this function. This check is not useful.
+    // if (ecData.dataIndex == null) {
+    //     if (__DEV__) {
+    //         console.warn('focus can only been set on element with dataIndex');
+    //     }
+    // }
+    // else {
     ecData.focus = focus;
-    ecData.blurScope = blurScope;
+    ecData.blurScope = blurScope; // }
   } else if (ecData.focus) {
     ecData.focus = null;
   }
@@ -36728,25 +37523,52 @@ var defaultStyleGetterMap = {
   lineStyle: 'getLineStyle',
   areaStyle: 'getAreaStyle'
 };
-function setStatesStylesFromModel(el, itemModel, styleType, getter) {
+/**
+ * Set emphasis/blur/selected states of element.
+ */
+
+function setStatesStylesFromModel(el, itemModel, styleType, // default itemStyle
+getter) {
   styleType = styleType || 'itemStyle';
 
   for (var i = 0; i < OTHER_STATES.length; i++) {
     var stateName = OTHER_STATES[i];
     var model = itemModel.getModel([stateName, styleType]);
-    var state = el.ensureState(stateName);
+    var state = el.ensureState(stateName); // Let it throw error if getterType is not found.
+
     state.style = getter ? getter(model) : model[defaultStyleGetterMap[styleType]]();
   }
 }
+/**
+ * @parame el
+ * @param el.highDownSilentOnTouch
+ *        In touch device, mouseover event will be trigger on touchstart event
+ *        (see module:zrender/dom/HandlerProxy). By this mechanism, we can
+ *        conveniently use hoverStyle when tap on touch screen without additional
+ *        code for compatibility.
+ *        But if the chart/component has select feature, which usually also use
+ *        hoverStyle, there might be conflict between 'select-highlight' and
+ *        'hover-highlight' especially when roam is enabled (see geo for example).
+ *        In this case, `highDownSilentOnTouch` should be used to disable
+ *        hover-highlight on touch device.
+ * @param asDispatcher If `false`, do not set as "highDownDispatcher".
+ */
+
 function setAsHighDownDispatcher(el, asDispatcher) {
   var disable = asDispatcher === false;
-  var extendedEl = el;
+  var extendedEl = el; // Make `highDownSilentOnTouch` and `onStateChange` only work after
+  // `setAsHighDownDispatcher` called. Avoid it is modified by user unexpectedly.
 
   if (el.highDownSilentOnTouch) {
     extendedEl.__highDownSilentOnTouch = el.highDownSilentOnTouch;
-  }
+  } // Simple optimize, since this method might be
+  // called for each elements of a group in some cases.
+
 
   if (!disable || extendedEl.__highDownDispatcher) {
+    // Emphasis, normal can be triggered manually by API or other components like hover link.
+    // el[method]('emphasis', onElementEmphasisEvent)[method]('normal', onElementNormalEvent);
+    // Also keep previous record.
     extendedEl.__highByOuter = extendedEl.__highByOuter || 0;
     extendedEl.__highDownDispatcher = !disable;
   }
@@ -36754,6 +37576,27 @@ function setAsHighDownDispatcher(el, asDispatcher) {
 function isHighDownDispatcher(el) {
   return !!(el && el.__highDownDispatcher);
 }
+/**
+ * Enable component highlight/downplay features:
+ * + hover link (within the same name)
+ * + focus blur in component
+ */
+
+function enableComponentHighDownFeatures(el, componentModel, componentHighDownName) {
+  var ecData = getECData(el);
+  ecData.componentMainType = componentModel.mainType;
+  ecData.componentIndex = componentModel.componentIndex;
+  ecData.componentHighDownName = componentHighDownName;
+}
+/**
+ * Support hightlight/downplay record on each elements.
+ * For the case: hover highlight/downplay (legend, visualMap, ...) and
+ * user triggerred hightlight/downplay should not conflict.
+ * Only all of the highlightDigit cleared, return to normal.
+ * @param {string} highlightKey
+ * @return {number} highlightDigit
+ */
+
 function getHighlightDigit(highlightKey) {
   var highlightDigit = _highlightKeyMap[highlightKey];
 
@@ -37397,6 +38240,7 @@ var CircleShape = (function () {
     }
     return CircleShape;
 }());
+
 var Circle = (function (_super) {
     __extends(Circle, _super);
     function Circle(opts) {
@@ -37429,6 +38273,7 @@ var EllipseShape = (function () {
     }
     return EllipseShape;
 }());
+
 var Ellipse = (function (_super) {
     __extends(Ellipse, _super);
     function Ellipse(opts) {
@@ -37541,9 +38386,15 @@ function roundSector_buildPath(ctx, shape) {
     var clockwise = !!shape.clockwise;
     var startAngle = shape.startAngle;
     var endAngle = shape.endAngle;
-    var tmpAngles = [startAngle, endAngle];
-    normalizeArcAngles(tmpAngles, !clockwise);
-    var arc = roundSector_mathAbs(tmpAngles[0] - tmpAngles[1]);
+    var arc;
+    if (startAngle === endAngle) {
+        arc = 0;
+    }
+    else {
+        var tmpAngles = [startAngle, endAngle];
+        normalizeArcAngles(tmpAngles, !clockwise);
+        arc = roundSector_mathAbs(tmpAngles[0] - tmpAngles[1]);
+    }
     var x = shape.cx;
     var y = shape.cy;
     var cornerRadius = shape.cornerRadius || 0;
@@ -37654,6 +38505,7 @@ var SectorShape = (function () {
     }
     return SectorShape;
 }());
+
 var Sector = (function (_super) {
     __extends(Sector, _super);
     function Sector(opts) {
@@ -37686,6 +38538,7 @@ var RingShape = (function () {
     }
     return RingShape;
 }());
+
 var Ring = (function (_super) {
     __extends(Ring, _super);
     function Ring(opts) {
@@ -37862,6 +38715,7 @@ var PolygonShape = (function () {
     }
     return PolygonShape;
 }());
+
 var Polygon = (function (_super) {
     __extends(Polygon, _super);
     function Polygon(opts) {
@@ -37892,6 +38746,7 @@ var PolylineShape = (function () {
     }
     return PolylineShape;
 }());
+
 var Polyline = (function (_super) {
     __extends(Polyline, _super);
     function Polyline(opts) {
@@ -37929,6 +38784,7 @@ var LineShape = (function () {
     }
     return LineShape;
 }());
+
 var Line = (function (_super) {
     __extends(Line, _super);
     function Line(opts) {
@@ -38002,6 +38858,7 @@ var BezierCurveShape = (function () {
     }
     return BezierCurveShape;
 }());
+
 function someVectorAt(shape, t, isTangent) {
     var cpx2 = shape.cpx2;
     var cpy2 = shape.cpy2;
@@ -38098,6 +38955,7 @@ var ArcShape = (function () {
     }
     return ArcShape;
 }());
+
 var Arc = (function (_super) {
     __extends(Arc, _super);
     function Arc(opts) {
@@ -38495,6 +39353,24 @@ var IncrementalDisplayable = (function (_super) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 
@@ -38526,21 +39402,77 @@ var IncrementalDisplayable = (function (_super) {
 var graphic_mathMax = Math.max;
 var graphic_mathMin = Math.min;
 var _customShapeMap = {};
+/**
+ * Extend shape with parameters
+ */
+
 function extendShape(opts) {
   return graphic_Path.extend(opts);
 }
 var extendPathFromString = extendFromString;
+/**
+ * Extend path
+ */
+
 function extendPath(pathData, opts) {
   return extendPathFromString(pathData, opts);
 }
+/**
+ * Register a user defined shape.
+ * The shape class can be fetched by `getShapeClass`
+ * This method will overwrite the registered shapes, including
+ * the registered built-in shapes, if using the same `name`.
+ * The shape can be used in `custom series` and
+ * `graphic component` by declaring `{type: name}`.
+ *
+ * @param name
+ * @param ShapeClass Can be generated by `extendShape`.
+ */
+
 function registerShape(name, ShapeClass) {
   _customShapeMap[name] = ShapeClass;
 }
+/**
+ * Find shape class registered by `registerShape`. Usually used in
+ * fetching user defined shape.
+ *
+ * [Caution]:
+ * (1) This method **MUST NOT be used inside echarts !!!**, unless it is prepared
+ * to use user registered shapes.
+ * Because the built-in shape (see `getBuiltInShape`) will be registered by
+ * `registerShape` by default. That enables users to get both built-in
+ * shapes as well as the shapes belonging to themsleves. But users can overwrite
+ * the built-in shapes by using names like 'circle', 'rect' via calling
+ * `registerShape`. So the echarts inner featrues should not fetch shapes from here
+ * in case that it is overwritten by users, except that some features, like
+ * `custom series`, `graphic component`, do it deliberately.
+ *
+ * (2) In the features like `custom series`, `graphic component`, the user input
+ * `{tpye: 'xxx'}` does not only specify shapes but also specify other graphic
+ * elements like `'group'`, `'text'`, `'image'` or event `'path'`. Those names
+ * are reserved names, that is, if some user register a shape named `'image'`,
+ * the shape will not be used. If we intending to add some more reserved names
+ * in feature, that might bring break changes (disable some existing user shape
+ * names). But that case probably rearly happen. So we dont make more mechanism
+ * to resolve this issue here.
+ *
+ * @param name
+ * @return The shape class. If not found, return nothing.
+ */
+
 function getShapeClass(name) {
   if (_customShapeMap.hasOwnProperty(name)) {
     return _customShapeMap[name];
   }
 }
+/**
+ * Create a path element from path data string
+ * @param pathData
+ * @param opts
+ * @param rect
+ * @param layout 'center' or 'cover' default to be cover
+ */
+
 function makePath(pathData, opts, rect, layout) {
   var path = createFromString(pathData, opts);
 
@@ -38554,6 +39486,14 @@ function makePath(pathData, opts, rect, layout) {
 
   return path;
 }
+/**
+ * Create a image element from image url
+ * @param imageUrl image url
+ * @param opts options
+ * @param rect constrain rect
+ * @param layout 'center' or 'cover'. Default to be 'cover'
+ */
+
 function makeImage(imageUrl, rect, layout) {
   var zrImg = new graphic_Image({
     style: {
@@ -38575,8 +39515,16 @@ function makeImage(imageUrl, rect, layout) {
   });
   return zrImg;
 }
+/**
+ * Get position of centered element in bounding box.
+ *
+ * @param  rect         element local bounding box
+ * @param  boundingRect constraint bounding box
+ * @return element position containing x, y, width, and height
+ */
 
 function centerGraphic(rect, boundingRect) {
+  // Set rect to center, keep width / height ratio.
   var aspect = boundingRect.width / boundingRect.height;
   var width = rect.height * aspect;
   var height;
@@ -38599,6 +39547,12 @@ function centerGraphic(rect, boundingRect) {
 }
 
 var graphic_mergePath = mergePath;
+/**
+ * Resize a path to fit the rect
+ * @param path
+ * @param rect
+ */
+
 function resizePath(path, rect) {
   if (!path.applyTransform) {
     return;
@@ -38608,14 +39562,31 @@ function resizePath(path, rect) {
   var m = pathRect.calculateTransform(rect);
   path.applyTransform(m);
 }
+/**
+ * Sub pixel optimize line for canvas
+ */
+
 function graphic_subPixelOptimizeLine(param) {
   subPixelOptimizeLine(param.shape, param.shape, param.style);
   return param;
 }
+/**
+ * Sub pixel optimize rect for canvas
+ */
+
 function graphic_subPixelOptimizeRect(param) {
   subPixelOptimizeRect(param.shape, param.shape, param.style);
   return param;
 }
+/**
+ * Sub pixel optimize for canvas
+ *
+ * @param position Coordinate, such as x, y
+ * @param lineWidth Should be nonnegative integer.
+ * @param positiveOrNegative Default false (negative).
+ * @return Optimized position.
+ */
+
 var graphic_subPixelOptimize = subPixelOptimize;
 
 function animateOrSetProps(animationType, el, props, animatableModel, dataIndex, cb, during) {
@@ -38636,7 +39607,9 @@ function animateOrSetProps(animationType, el, props, animatableModel, dataIndex,
 
   var isUpdate = animationType === 'update';
   var isRemove = animationType === 'remove';
-  var animationPayload;
+  var animationPayload; // Check if there is global animation configuration from dataZoom/resize can override the config in option.
+  // If animation is enabled. Will use this animation config in payload.
+  // If animation is disabled. Just ignore it.
 
   if (animatableModel && animatableModel.ecModel) {
     var updatePayload = animatableModel.ecModel.getUpdatePayload();
@@ -38646,6 +39619,7 @@ function animateOrSetProps(animationType, el, props, animatableModel, dataIndex,
   var animationEnabled = animatableModel && animatableModel.isAnimationEnabled();
 
   if (!isRemove) {
+    // Must stop the remove animation.
     el.stopAnimation('remove');
   }
 
@@ -38694,24 +39668,63 @@ function animateOrSetProps(animationType, el, props, animatableModel, dataIndex,
       setToFinal: true,
       scope: animationType,
       during: during
-    }) : (el.stopAnimation(), !isFrom && el.attr(props), cb && cb());
+    }) : ( // FIXME:
+    // If `duration` is 0, only the animation on props
+    // can be stoped, other animation should be continued?
+    // But at present using duration 0 in `animateTo`, `animateFrom`
+    // might cause unexpected behavior.
+    el.stopAnimation(), // If `isFrom`, the props is the "from" props.
+    !isFrom && el.attr(props), cb && cb());
   } else {
     el.stopAnimation();
-    !isFrom && el.attr(props);
+    !isFrom && el.attr(props); // Call during once.
+
     during && during(1);
     cb && cb();
   }
 }
+/**
+ * Update graphic element properties with or without animation according to the
+ * configuration in series.
+ *
+ * Caution: this method will stop previous animation.
+ * So do not use this method to one element twice before
+ * animation starts, unless you know what you are doing.
+ * @example
+ *     graphic.updateProps(el, {
+ *         position: [100, 100]
+ *     }, seriesModel, dataIndex, function () { console.log('Animation done!'); });
+ *     // Or
+ *     graphic.updateProps(el, {
+ *         position: [100, 100]
+ *     }, seriesModel, function () { console.log('Animation done!'); });
+ */
 
-function updateProps(el, props, animatableModel, dataIndex, cb, during) {
+
+function updateProps(el, props, // TODO: TYPE AnimatableModel
+animatableModel, dataIndex, cb, during) {
   animateOrSetProps('update', el, props, animatableModel, dataIndex, cb, during);
 }
 
 
+/**
+ * Init graphic element properties with or without animation according to the
+ * configuration in series.
+ *
+ * Caution: this method will stop previous animation.
+ * So do not use this method to one element twice before
+ * animation starts, unless you know what you are doing.
+ */
+
 function initProps(el, props, animatableModel, dataIndex, cb, during) {
   animateOrSetProps('init', el, props, animatableModel, dataIndex, cb, during);
 }
+/**
+ * Remove graphic element
+ */
+
 function removeElement(el, props, animatableModel, dataIndex, cb, during) {
+  // Don't do remove animation twice.
   if (isElementRemoved(el)) {
     return;
   }
@@ -38732,18 +39745,26 @@ function fadeOutDisplayable(el, animatableModel, dataIndex, done) {
 function removeElementWithFadeOut(el, animatableModel, dataIndex) {
   function doRemove() {
     el.parent && el.parent.remove(el);
-  }
+  } // Hide label and labelLine first
+  // TODO Also use fade out animation?
+
 
   if (!el.isGroup) {
     fadeOutDisplayable(el, animatableModel, dataIndex, doRemove);
   } else {
     el.traverse(function (disp) {
       if (!disp.isGroup) {
+        // Can invoke doRemove multiple times.
         fadeOutDisplayable(disp, animatableModel, dataIndex, doRemove);
       }
     });
   }
 }
+/**
+ * If element is removed.
+ * It can determine if element is having remove animation.
+ */
+
 function isElementRemoved(el) {
   if (!el.__zr) {
     return true;
@@ -38759,6 +39780,14 @@ function isElementRemoved(el) {
 
   return false;
 }
+/**
+ * Get transform matrix of target (param target),
+ * in coordinate of its ancestor (param ancestor)
+ *
+ * @param target
+ * @param [ancestor]
+ */
+
 function getTransform(target, ancestor) {
   var mat = identity([]);
 
@@ -38769,6 +39798,16 @@ function getTransform(target, ancestor) {
 
   return mat;
 }
+/**
+ * Apply transform to an vertex.
+ * @param target [x, y]
+ * @param transform Can be:
+ *      + Transform matrix: like [1, 0, 0, 1, 0, 0]
+ *      + {position, rotation, scale}, the same as `zrender/Transformable`.
+ * @param invert Whether use invert matrix.
+ * @return [x, y]
+ */
+
 function graphic_applyTransform(target, transform, invert) {
   if (transform && !util_isArrayLike(transform)) {
     transform = core_Transformable.getLocalTransform(transform);
@@ -38780,7 +39819,15 @@ function graphic_applyTransform(target, transform, invert) {
 
   return applyTransform([], target, transform);
 }
+/**
+ * @param direction 'left' 'right' 'top' 'bottom'
+ * @param transform Transform matrix: like [1, 0, 0, 1, 0, 0]
+ * @param invert Whether use invert matrix.
+ * @return Transformed direction. 'left' 'right' 'top' 'bottom'
+ */
+
 function transformDirection(direction, transform, invert) {
+  // Pick a base, ensure that transform result will not be (0, 0).
   var hBase = transform[4] === 0 || transform[5] === 0 || transform[0] === 0 ? 1 : Math.abs(2 * transform[4] / transform[0]);
   var vBase = transform[4] === 0 || transform[5] === 0 || transform[2] === 0 ? 1 : Math.abs(2 * transform[4] / transform[2]);
   var vertex = [direction === 'left' ? -hBase : direction === 'right' ? hBase : 0, direction === 'top' ? -vBase : direction === 'bottom' ? vBase : 0];
@@ -38795,6 +39842,11 @@ function isNotGroup(el) {
 function isPath(el) {
   return el.shape != null;
 }
+/**
+ * Apply group transition animation from g1 to g2.
+ * If no animatableModel, no animation.
+ */
+
 
 function groupTransition(g1, g2, animatableModel) {
   if (!g1 || !g2) {
@@ -38839,6 +39891,8 @@ function groupTransition(g1, g2, animatableModel) {
   });
 }
 function clipPointsByRect(points, rect) {
+  // FIXME: this way migth be incorrect when grpahic clipped by a corner.
+  // and when element have border.
   return util_map(points, function (point) {
     var x = point[0];
     x = graphic_mathMax(x, rect.x);
@@ -38849,11 +39903,16 @@ function clipPointsByRect(points, rect) {
     return [x, y];
   });
 }
+/**
+ * Return a new clipped rect. If rect size are negative, return undefined.
+ */
+
 function clipRectByRect(targetRect, rect) {
   var x = graphic_mathMax(targetRect.x, rect.x);
   var x2 = graphic_mathMin(targetRect.x + targetRect.width, rect.x + rect.width);
   var y = graphic_mathMax(targetRect.y, rect.y);
-  var y2 = graphic_mathMin(targetRect.y + targetRect.height, rect.y + rect.height);
+  var y2 = graphic_mathMin(targetRect.y + targetRect.height, rect.y + rect.height); // If the total rect is cliped, nothing, including the border,
+  // should be painted. So return undefined.
 
   if (x2 >= x && y2 >= y) {
     return {
@@ -38864,7 +39923,8 @@ function clipRectByRect(targetRect, rect) {
     };
   }
 }
-function createIcon(iconStr, opt, rect) {
+function createIcon(iconStr, // Support 'image://' or 'path://' or direct svg path.
+opt, rect) {
   var innerOpts = core_util_extend({
     rectHover: true
   }, opt);
@@ -38882,6 +39942,13 @@ function createIcon(iconStr, opt, rect) {
     return iconStr.indexOf('image://') === 0 ? (style.image = iconStr.slice(8), util_defaults(style, rect), new graphic_Image(innerOpts)) : makePath(iconStr.replace('path://', ''), innerOpts, rect, 'center');
   }
 }
+/**
+ * Return `true` if the given line (line `a`) and the given polygon
+ * are intersect.
+ * Note that we do not count colinear as intersect here because no
+ * requirement for that. We could do that if required in future.
+ */
+
 function linePolygonIntersect(a1x, a1y, a2x, a2y, points) {
   for (var i = 0, p2 = points[points.length - 1]; i < points.length; i++) {
     var p = points[i];
@@ -38893,16 +39960,30 @@ function linePolygonIntersect(a1x, a1y, a2x, a2y, points) {
     p2 = p;
   }
 }
+/**
+ * Return `true` if the given two lines (line `a` and line `b`)
+ * are intersect.
+ * Note that we do not count colinear as intersect here because no
+ * requirement for that. We could do that if required in future.
+ */
+
 function lineLineIntersect(a1x, a1y, a2x, a2y, b1x, b1y, b2x, b2y) {
+  // let `vec_m` to be `vec_a2 - vec_a1` and `vec_n` to be `vec_b2 - vec_b1`.
   var mx = a2x - a1x;
   var my = a2y - a1y;
   var nx = b2x - b1x;
-  var ny = b2y - b1y;
+  var ny = b2y - b1y; // `vec_m` and `vec_n` are parallel iff
+  //     exising `k` such that `vec_m = k · vec_n`, equivalent to `vec_m X vec_n = 0`.
+
   var nmCrossProduct = crossProduct2d(nx, ny, mx, my);
 
   if (nearZero(nmCrossProduct)) {
     return false;
-  }
+  } // `vec_m` and `vec_n` are intersect iff
+  //     existing `p` and `q` in [0, 1] such that `vec_a1 + p * vec_m = vec_b1 + q * vec_n`,
+  //     such that `q = ((vec_a1 - vec_b1) X vec_m) / (vec_n X vec_m)`
+  //           and `p = ((vec_a1 - vec_b1) X vec_n) / (vec_n X vec_m)`.
+
 
   var b1a1x = a1x - b1x;
   var b1a1y = a1y - b1y;
@@ -38920,6 +40001,9 @@ function lineLineIntersect(a1x, a1y, a2x, a2y, b1x, b1y, b2x, b2y) {
 
   return true;
 }
+/**
+ * Cross product of 2-dimension vector.
+ */
 
 function crossProduct2d(x1, y1, x2, y2) {
   return x1 * y2 - x2 * y1;
@@ -38928,6 +40012,45 @@ function crossProduct2d(x1, y1, x2, y2) {
 function nearZero(val) {
   return val <= 1e-6 && val >= -1e-6;
 }
+
+function setTooltipConfig(opt) {
+  var itemTooltipOption = opt.itemTooltipOption;
+  var componentModel = opt.componentModel;
+  var itemName = opt.itemName;
+  var itemTooltipOptionObj = util_isString(itemTooltipOption) ? {
+    formatter: itemTooltipOption
+  } : itemTooltipOption;
+  var mainType = componentModel.mainType;
+  var componentIndex = componentModel.componentIndex;
+  var formatterParams = {
+    componentType: mainType,
+    name: itemName,
+    $vars: ['name']
+  };
+  formatterParams[mainType + 'Index'] = componentIndex;
+  var formatterParamsExtra = opt.formatterParamsExtra;
+
+  if (formatterParamsExtra) {
+    util_each(util_keys(formatterParamsExtra), function (key) {
+      if (!util_hasOwn(formatterParams, key)) {
+        formatterParams[key] = formatterParamsExtra[key];
+        formatterParams.$vars.push(key);
+      }
+    });
+  }
+
+  var ecData = getECData(opt.el);
+  ecData.componentMainType = mainType;
+  ecData.componentIndex = componentIndex;
+  ecData.tooltipConfig = {
+    name: itemName,
+    option: util_defaults({
+      content: itemName,
+      formatterParams: formatterParams
+    }, itemTooltipOptionObj)
+  };
+} // Register built-in shapes. These shapes might be overwirtten
+// by users, although we do not recommend that.
 
 registerShape('circle', shape_Circle);
 registerShape('ellipse', shape_Ellipse);
@@ -38966,6 +40089,24 @@ registerShape('arc', shape_Arc);
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 
@@ -39020,7 +40161,8 @@ function getLabelText(opt, stateModels, interpolatedValue) {
   return statesText;
 }
 
-function setLabelStyle(targetEl, labelStatesModels, opt, stateSpecified) {
+function setLabelStyle(targetEl, labelStatesModels, opt, stateSpecified // TODO specified position?
+) {
   opt = opt || EMPTY_OBJ;
   var isSetOnText = targetEl instanceof Text;
   var needsCreateText = false;
@@ -39038,10 +40180,12 @@ function setLabelStyle(targetEl, labelStatesModels, opt, stateSpecified) {
 
   if (needsCreateText) {
     if (!isSetOnText) {
+      // Reuse the previous
       if (!textContent) {
         textContent = new Text();
         targetEl.setTextContent(textContent);
-      }
+      } // Use same state proxy
+
 
       if (targetEl.stateProxy) {
         textContent.stateProxy = targetEl.stateProxy;
@@ -39055,6 +40199,7 @@ function setLabelStyle(targetEl, labelStatesModels, opt, stateSpecified) {
     normalStyle.text = labelStatesTexts.normal;
 
     if (!isSetOnText) {
+      // Always create new
       targetEl.setTextConfig(createTextConfig(normalModel, opt, false));
     }
 
@@ -39078,9 +40223,12 @@ function setLabelStyle(targetEl, labelStatesModels, opt, stateSpecified) {
           targetElEmphasisState.textConfig = createTextConfig(stateModel, opt, true);
         }
       }
-    }
+    } // PENDING: if there is many requirements that emphasis position
+    // need to be different from normal position, we might consider
+    // auto slient is those cases.
 
-    textContent.silent = !!normalModel.getShallow('silent');
+
+    textContent.silent = !!normalModel.getShallow('silent'); // Keep x and y
 
     if (textContent.style.x != null) {
       normalStyle.x = textContent.style.x;
@@ -39090,7 +40238,8 @@ function setLabelStyle(targetEl, labelStatesModels, opt, stateSpecified) {
       normalStyle.y = textContent.style.y;
     }
 
-    textContent.ignore = !showNormal;
+    textContent.ignore = !showNormal; // Always create new style.
+
     textContent.useStyle(normalStyle);
     textContent.dirty();
 
@@ -39101,6 +40250,7 @@ function setLabelStyle(targetEl, labelStatesModels, opt, stateSpecified) {
       };
     }
   } else if (textContent) {
+    // Not display rich text.
     textContent.ignore = true;
   }
 
@@ -39121,10 +40271,17 @@ function getLabelStatesModels(itemModel, labelName) {
 
   return statesModels;
 }
-function createTextStyle(textStyleModel, specifiedTextStyle, opt, isNotNormal, isAttached) {
+/**
+ * Set basic textStyle properties.
+ */
+
+function createTextStyle(textStyleModel, specifiedTextStyle, // Fixed style in the code. Can't be set by model.
+opt, isNotNormal, isAttached // If text is attached on an element. If so, auto color will handling in zrender.
+) {
   var textStyle = {};
   setTextStyleCommon(textStyle, textStyleModel, opt, isNotNormal, isAttached);
-  specifiedTextStyle && core_util_extend(textStyle, specifiedTextStyle);
+  specifiedTextStyle && core_util_extend(textStyle, specifiedTextStyle); // textStyle.host && textStyle.host.dirty && textStyle.host.dirty(false);
+
   return textStyle;
 }
 function createTextConfig(textStyleModel, opt, isNotNormal) {
@@ -39134,7 +40291,9 @@ function createTextConfig(textStyleModel, opt, isNotNormal) {
   var labelRotate = textStyleModel.getShallow('rotate');
   var labelDistance = util_retrieve2(textStyleModel.getShallow('distance'), isNotNormal ? null : 5);
   var labelOffset = textStyleModel.getShallow('offset');
-  labelPosition = textStyleModel.getShallow('position') || (isNotNormal ? null : 'inside');
+  labelPosition = textStyleModel.getShallow('position') || (isNotNormal ? null : 'inside'); // 'outside' is not a valid zr textPostion value, but used
+  // in bar series, and magric type should be considered.
+
   labelPosition === 'outside' && (labelPosition = opt.defaultOutsidePosition || 'top');
 
   if (labelPosition != null) {
@@ -39152,16 +40311,41 @@ function createTextConfig(textStyleModel, opt, isNotNormal) {
 
   if (labelDistance != null) {
     textConfig.distance = labelDistance;
-  }
+  } // fill and auto is determined by the color of path fill if it's not specified by developers.
+
 
   textConfig.outsideFill = textStyleModel.get('color') === 'inherit' ? opt.inheritColor || null : 'auto';
   return textConfig;
 }
+/**
+ * The uniform entry of set text style, that is, retrieve style definitions
+ * from `model` and set to `textStyle` object.
+ *
+ * Never in merge mode, but in overwrite mode, that is, all of the text style
+ * properties will be set. (Consider the states of normal and emphasis and
+ * default value can be adopted, merge would make the logic too complicated
+ * to manage.)
+ */
 
 function setTextStyleCommon(textStyle, textStyleModel, opt, isNotNormal, isAttached) {
+  // Consider there will be abnormal when merge hover style to normal style if given default value.
   opt = opt || EMPTY_OBJ;
   var ecModel = textStyleModel.ecModel;
-  var globalTextStyle = ecModel && ecModel.option.textStyle;
+  var globalTextStyle = ecModel && ecModel.option.textStyle; // Consider case:
+  // {
+  //     data: [{
+  //         value: 12,
+  //         label: {
+  //             rich: {
+  //                 // no 'a' here but using parent 'a'.
+  //             }
+  //         }
+  //     }],
+  //     rich: {
+  //         a: { ... }
+  //     }
+  // }
+
   var richItemNames = getRichItemNames(textStyleModel);
   var richResult;
 
@@ -39170,7 +40354,13 @@ function setTextStyleCommon(textStyle, textStyleModel, opt, isNotNormal, isAttac
 
     for (var name_1 in richItemNames) {
       if (richItemNames.hasOwnProperty(name_1)) {
-        var richTextStyle = textStyleModel.getModel(['rich', name_1]);
+        // Cascade is supported in rich.
+        var richTextStyle = textStyleModel.getModel(['rich', name_1]); // In rich, never `disableBox`.
+        // FIXME: consider `label: {formatter: '{a|xx}', color: 'blue', rich: {a: {}}}`,
+        // the default color `'blue'` will not be adopted if no color declared in `rich`.
+        // That might confuses users. So probably we should put `textStyleModel` as the
+        // root ancestor of the `richTextStyle`. But that would be a break change.
+
         setTokenTextStyle(richResult[name_1] = {}, richTextStyle, globalTextStyle, opt, isNotNormal, isAttached, false, true);
       }
     }
@@ -39193,9 +40383,25 @@ function setTextStyleCommon(textStyle, textStyleModel, opt, isNotNormal, isAttac
   }
 
   setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNotNormal, isAttached, true, false);
-}
+} // Consider case:
+// {
+//     data: [{
+//         value: 12,
+//         label: {
+//             rich: {
+//                 // no 'a' here but using parent 'a'.
+//             }
+//         }
+//     }],
+//     rich: {
+//         a: { ... }
+//     }
+// }
+// TODO TextStyleModel
+
 
 function getRichItemNames(textStyleModel) {
+  // Use object to remove duplicated names.
   var richItemNameMap;
 
   while (textStyleModel && textStyleModel !== textStyleModel.ecModel) {
@@ -39222,6 +40428,7 @@ var TEXT_PROPS_SELF = ['align', 'lineHeight', 'width', 'height', 'tag', 'vertica
 var TEXT_PROPS_BOX = ['padding', 'borderWidth', 'borderRadius', 'borderDashOffset', 'backgroundColor', 'borderColor', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY'];
 
 function setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNotNormal, isAttached, isBlock, inRich) {
+  // In merge mode, default value should not be given.
   globalTextStyle = !isNotNormal && globalTextStyle || EMPTY_OBJ;
   var inheritColor = opt && opt.inheritColor;
   var fillColor = textStyleModel.getShallow('color');
@@ -39257,6 +40464,8 @@ function setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNo
   }
 
   if (!isAttached) {
+    // Only use default global textStyle.color if text is individual.
+    // Otherwise it will use the strategy of attached text color because text may be on a path.
     fillColor = fillColor || globalTextStyle.color;
     strokeColor = strokeColor || globalTextStyle.textBorderColor;
   }
@@ -39293,13 +40502,18 @@ function setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNo
 
   if (opacity != null) {
     textStyle.opacity = opacity;
-  }
+  } // TODO
+
 
   if (!isNotNormal && !isAttached) {
+    // Set default finally.
     if (textStyle.fill == null && opt.inheritColor) {
       textStyle.fill = opt.inheritColor;
     }
-  }
+  } // Do not use `getFont` here, because merge should be supported, where
+  // part of these properties may be changed in emphasis style, and the
+  // others should remain their original value got from normal style.
+
 
   for (var i = 0; i < TEXT_PROPS_WITH_GLOBAL.length; i++) {
     var key = TEXT_PROPS_WITH_GLOBAL[i];
@@ -39367,7 +40581,8 @@ function setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNo
 
 function getFont(opt, ecModel) {
   var gTextStyleModel = ecModel && ecModel.getModel('textStyle');
-  return util_trim([opt.fontStyle || gTextStyleModel && gTextStyleModel.getShallow('fontStyle') || '', opt.fontWeight || gTextStyleModel && gTextStyleModel.getShallow('fontWeight') || '', (opt.fontSize || gTextStyleModel && gTextStyleModel.getShallow('fontSize') || 12) + 'px', opt.fontFamily || gTextStyleModel && gTextStyleModel.getShallow('fontFamily') || 'sans-serif'].join(' '));
+  return util_trim([// FIXME in node-canvas fontWeight is before fontStyle
+  opt.fontStyle || gTextStyleModel && gTextStyleModel.getShallow('fontStyle') || '', opt.fontWeight || gTextStyleModel && gTextStyleModel.getShallow('fontWeight') || '', (opt.fontSize || gTextStyleModel && gTextStyleModel.getShallow('fontSize') || 12) + 'px', opt.fontFamily || gTextStyleModel && gTextStyleModel.getShallow('fontFamily') || 'sans-serif'].join(' '));
 }
 var labelInner = makeInner();
 function setLabelValueAnimation(label, labelStatesModels, value, getDefaultText) {
@@ -39394,7 +40609,9 @@ function animateLabelValue(textEl, dataIndex, data, animatableModel, labelFetche
     return;
   }
 
-  var defaultInterpolatedText = labelInnerStore.defaultInterpolatedText;
+  var defaultInterpolatedText = labelInnerStore.defaultInterpolatedText; // Consider the case that being animating, do not use the `obj.value`,
+  // Otherwise it will jump to the `obj.value` when this new animation started.
+
   var currValue = util_retrieve2(labelInnerStore.interpolatedValue, labelInnerStore.prevValue);
   var targetValue = labelInnerStore.value;
 
@@ -42665,9 +43882,29 @@ var Grid3DView_dimIndicesMap = {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
-var Cartesian = function () {
+var Cartesian =
+/** @class */
+function () {
   function Cartesian(name) {
     this.type = 'cartesian';
     this._dimList = [];
@@ -42814,11 +44051,34 @@ external_echarts_.util.inherits(Axis3D, external_echarts_.Axis);
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 var TYPE_DELIMITER = '.';
 var IS_CONTAINER = '___EC__COMPONENT__CONTAINER___';
 var IS_EXTENDED_CLASS = '___EC__EXTENDED_CLASS___';
+/**
+ * Notice, parseClassType('') should returns {main: '', sub: ''}
+ * @public
+ */
+
 function parseClassType(componentType) {
   var ret = {
     main: '',
@@ -42833,6 +44093,9 @@ function parseClassType(componentType) {
 
   return ret;
 }
+/**
+ * @public
+ */
 
 function checkClassType(componentType) {
   util_assert(/^[a-zA-Z0-9_]+([.][a-zA-Z0-9_]+)?$/.test(componentType), 'componentType "' + componentType + '" illegal');
@@ -42841,8 +44104,19 @@ function checkClassType(componentType) {
 function isExtendedClass(clz) {
   return !!(clz && clz[IS_EXTENDED_CLASS]);
 }
+/**
+ * Implements `ExtendableConstructor` for `rootClz`.
+ *
+ * @usage
+ * ```ts
+ * class Xxx {}
+ * type XxxConstructor = typeof Xxx & ExtendableConstructor
+ * enableClassExtend(Xxx as XxxConstructor);
+ * ```
+ */
+
 function enableClassExtend(rootClz, mandatoryMethods) {
-  rootClz.$constructor = rootClz;
+  rootClz.$constructor = rootClz; // FIXME: not necessary?
 
   rootClz.extend = function (proto) {
     if (true) {
@@ -42853,7 +44127,13 @@ function enableClassExtend(rootClz, mandatoryMethods) {
       });
     }
 
-    var superClass = this;
+    var superClass = this; // For backward compat, we both support ts class inheritance and this
+    // "extend" approach.
+    // The constructor should keep the same behavior as ts class inheritance:
+    // If this constructor/$constructor is not declared, auto invoke the super
+    // constructor.
+    // If this constructor/$constructor is declared, it is responsible for
+    // calling the super constructor.
 
     function ExtendedClass() {
       var args = [];
@@ -42864,9 +44144,11 @@ function enableClassExtend(rootClz, mandatoryMethods) {
 
       if (!proto.$constructor) {
         if (!isESClass(superClass)) {
+          // Will throw error if superClass is an es6 native class.
           superClass.apply(this, arguments);
         } else {
-          var ins = util_createObject(ExtendedClass.prototype, new (superClass.bind.apply(superClass, __spreadArrays([void 0], args)))());
+          var ins = util_createObject( // @ts-ignore
+          ExtendedClass.prototype, new (superClass.bind.apply(superClass, __spreadArrays([void 0], args)))());
           return ins;
         }
       } else {
@@ -42888,11 +44170,41 @@ function enableClassExtend(rootClz, mandatoryMethods) {
 function isESClass(fn) {
   return typeof fn === 'function' && /^class\s/.test(Function.prototype.toString.call(fn));
 }
+/**
+ * A work around to both support ts extend and this extend mechanism.
+ * on sub-class.
+ * @usage
+ * ```ts
+ * class Component { ... }
+ * classUtil.enableClassExtend(Component);
+ * classUtil.enableClassManagement(Component, {registerWhenExtend: true});
+ *
+ * class Series extends Component { ... }
+ * // Without calling `markExtend`, `registerWhenExtend` will not work.
+ * Component.markExtend(Series);
+ * ```
+ */
+
 
 function mountExtend(SubClz, SupperClz) {
   SubClz.extend = SupperClz.extend;
-}
+} // A random offset.
+
 var classBase = Math.round(Math.random() * 10);
+/**
+ * Implements `CheckableConstructor` for `target`.
+ * Can not use instanceof, consider different scope by
+ * cross domain or es module import in ec extensions.
+ * Mount a method "isInstance()" to Clz.
+ *
+ * @usage
+ * ```ts
+ * class Xxx {}
+ * type XxxConstructor = typeof Xxx & CheckableConstructor;
+ * enableClassCheck(Xxx as XxxConstructor)
+ * ```
+ */
+
 function enableClassCheck(target) {
   var classAttr = ['__\0is_clz', classBase++].join('_');
   target.prototype[classAttr] = true;
@@ -42904,7 +44216,12 @@ function enableClassCheck(target) {
   target.isInstance = function (obj) {
     return !!(obj && obj[classAttr]);
   };
-}
+} // superCall should have class info, which can not be fetch from 'this'.
+// Consider this case:
+// class A has method f,
+// class B inherits class A, overrides method f, f call superApply('f'),
+// class C inherits class B, do not overrides method f,
+// then when method of class C is called, dead loop occured.
 
 function superCall(context, methodName) {
   var args = [];
@@ -42919,15 +44236,39 @@ function superCall(context, methodName) {
 function superApply(context, methodName, args) {
   return this.superClass.prototype[methodName].apply(context, args);
 }
+/**
+ * Implements `ClassManager` for `target`
+ *
+ * @usage
+ * ```ts
+ * class Xxx {}
+ * type XxxConstructor = typeof Xxx & ClassManager
+ * enableClassManagement(Xxx as XxxConstructor);
+ * ```
+ */
+
 
 function enableClassManagement(target) {
+  /**
+   * Component model classes
+   * key: componentType,
+   * value:
+   *     componentClass, when componentType is 'xxx'
+   *     or Object.<subKey, componentClass>, when componentType is 'xxx.yy'
+   */
   var storage = {};
 
   target.registerClass = function (clz) {
+    // `type` should not be a "instance memeber".
+    // If using TS class, should better declared as `static type = 'series.pie'`.
+    // otherwise users have to mount `type` on prototype manually.
+    // For backward compat and enable instance visit type via `this.type`,
+    // we stil support fetch `type` from prototype.
     var componentFullType = clz.type || clz.prototype.type;
 
     if (componentFullType) {
-      checkClassType(componentFullType);
+      checkClassType(componentFullType); // If only static type declared, we assign it to prototype mandatorily.
+
       clz.prototype.type = componentFullType;
       var componentTypeInfo = parseClassType(componentFullType);
 
@@ -42956,7 +44297,7 @@ function enableClassManagement(target) {
     }
 
     if (throwWhenNotFound && !clz) {
-      throw new Error(!subType ? mainType + '.' + 'type should be specified.' : 'Component ' + mainType + '.' + (subType || '') + ' not exists. Load it first.');
+      throw new Error(!subType ? mainType + '.' + 'type should be specified.' : 'Component ' + mainType + '.' + (subType || '') + ' is used but not imported.');
     }
 
     return clz;
@@ -42979,9 +44320,14 @@ function enableClassManagement(target) {
   };
 
   target.hasClass = function (componentType) {
+    // Just consider componentType.main.
     var componentTypeInfo = parseClassType(componentType);
     return !!storage[componentTypeInfo.main];
   };
+  /**
+   * @return Like ['aa', 'bb'], but can not be ['aa.xx']
+   */
+
 
   target.getAllClassMainTypes = function () {
     var types = [];
@@ -42990,6 +44336,10 @@ function enableClassManagement(target) {
     });
     return types;
   };
+  /**
+   * If a main type is container and has sub types
+   */
+
 
   target.hasSubTypes = function (componentType) {
     var componentTypeInfo = parseClassType(componentType);
@@ -43007,7 +44357,25 @@ function enableClassManagement(target) {
 
     return container;
   }
-}
+} // /**
+//  * @param {string|Array.<string>} properties
+//  */
+// export function setReadOnly(obj, properties) {
+// FIXME It seems broken in IE8 simulation of IE11
+// if (!zrUtil.isArray(properties)) {
+//     properties = properties != null ? [properties] : [];
+// }
+// zrUtil.each(properties, function (prop) {
+//     let value = obj[prop];
+//     Object.defineProperty
+//         && Object.defineProperty(obj, prop, {
+//             value: value, writable: false
+//         });
+//     zrUtil.isArray(obj[prop])
+//         && Object.freeze
+//         && Object.freeze(obj[prop]);
+// });
+// }
 ;// CONCATENATED MODULE: ./node_modules/echarts/lib/model/mixin/makeStyleMapper.js
 
 /*
@@ -43034,8 +44402,29 @@ function enableClassManagement(target) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
+// TODO Parse shadow style
+// TODO Only shallow path support
 
 function makeStyleMapper(properties, ignoreParent) {
+  // Normalize
   for (var i = 0; i < properties.length; i++) {
     if (!properties[i][1]) {
       properties[i][1] = properties[i][0];
@@ -43058,7 +44447,8 @@ function makeStyleMapper(properties, ignoreParent) {
       if (val != null) {
         style[properties[i][0]] = val;
       }
-    }
+    } // TODO Text or image?
+
 
     return style;
   };
@@ -43089,11 +44479,33 @@ function makeStyleMapper(properties, ignoreParent) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
-var AREA_STYLE_KEY_MAP = [['fill', 'color'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['opacity'], ['shadowColor']];
+var AREA_STYLE_KEY_MAP = [['fill', 'color'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['opacity'], ['shadowColor'] // Option decal is in `DecalObject` but style.decal is in `PatternObject`.
+// So do not transfer decal directly.
+];
 var getAreaStyle = makeStyleMapper(AREA_STYLE_KEY_MAP);
 
-var AreaStyleMixin = function () {
+var AreaStyleMixin =
+/** @class */
+function () {
   function AreaStyleMixin() {}
 
   AreaStyleMixin.prototype.getAreaStyle = function (excludes, includes) {
@@ -43131,18 +44543,49 @@ var AreaStyleMixin = function () {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
-var PATH_COLOR = ['textStyle', 'color'];
+var PATH_COLOR = ['textStyle', 'color']; // TODO Performance improvement?
+
 var tmpRichText = new Text();
 
-var TextStyleMixin = function () {
+var TextStyleMixin =
+/** @class */
+function () {
   function TextStyleMixin() {}
+  /**
+   * Get color property or get color from option.textStyle.color
+   */
+  // TODO Callback
+
 
   TextStyleMixin.prototype.getTextColor = function (isEmphasis) {
     var ecModel = this.ecModel;
     return this.getShallow('color') || (!isEmphasis && ecModel ? ecModel.get(PATH_COLOR) : null);
   };
+  /**
+   * Create font string from fontStyle, fontWeight, fontSize, fontFamily
+   * @return {string}
+   */
+
 
   TextStyleMixin.prototype.getFont = function () {
     return getFont({
@@ -43200,11 +44643,33 @@ var TextStyleMixin = function () {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
-var LINE_STYLE_KEY_MAP = [['lineWidth', 'width'], ['stroke', 'color'], ['opacity'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['shadowColor'], ['lineDash', 'type'], ['lineDashOffset', 'dashOffset'], ['lineCap', 'cap'], ['lineJoin', 'join'], ['miterLimit']];
+var LINE_STYLE_KEY_MAP = [['lineWidth', 'width'], ['stroke', 'color'], ['opacity'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['shadowColor'], ['lineDash', 'type'], ['lineDashOffset', 'dashOffset'], ['lineCap', 'cap'], ['lineJoin', 'join'], ['miterLimit'] // Option decal is in `DecalObject` but style.decal is in `PatternObject`.
+// So do not transfer decal directly.
+];
 var getLineStyle = makeStyleMapper(LINE_STYLE_KEY_MAP);
 
-var LineStyleMixin = function () {
+var LineStyleMixin =
+/** @class */
+function () {
   function LineStyleMixin() {}
 
   LineStyleMixin.prototype.getLineStyle = function (excludes) {
@@ -43242,11 +44707,33 @@ var LineStyleMixin = function () {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
-var ITEM_STYLE_KEY_MAP = [['fill', 'color'], ['stroke', 'borderColor'], ['lineWidth', 'borderWidth'], ['opacity'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['shadowColor'], ['lineDash', 'borderType'], ['lineDashOffset', 'borderDashOffset'], ['lineCap', 'borderCap'], ['lineJoin', 'borderJoin'], ['miterLimit', 'borderMiterLimit']];
+var ITEM_STYLE_KEY_MAP = [['fill', 'color'], ['stroke', 'borderColor'], ['lineWidth', 'borderWidth'], ['opacity'], ['shadowBlur'], ['shadowOffsetX'], ['shadowOffsetY'], ['shadowColor'], ['lineDash', 'borderType'], ['lineDashOffset', 'borderDashOffset'], ['lineCap', 'borderCap'], ['lineJoin', 'borderJoin'], ['miterLimit', 'borderMiterLimit'] // Option decal is in `DecalObject` but style.decal is in `PatternObject`.
+// So do not transfer decal directly.
+];
 var getItemStyle = makeStyleMapper(ITEM_STYLE_KEY_MAP);
 
-var ItemStyleMixin = function () {
+var ItemStyleMixin =
+/** @class */
+function () {
   function ItemStyleMixin() {}
 
   ItemStyleMixin.prototype.getItemStyle = function (excludes, includes) {
@@ -43283,6 +44770,24 @@ var ItemStyleMixin = function () {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 
@@ -43291,11 +44796,21 @@ var ItemStyleMixin = function () {
 
 
 
-var Model = function () {
+var Model =
+/** @class */
+function () {
   function Model(option, parentModel, ecModel) {
     this.parentModel = parentModel;
     this.ecModel = ecModel;
-    this.option = option;
+    this.option = option; // Simple optimization
+    // if (this.init) {
+    //     if (arguments.length <= 4) {
+    //         this.init(option, parentModel, ecModel, extraOpt);
+    //     }
+    //     else {
+    //         this.init.apply(this, arguments);
+    //     }
+    // }
   }
 
   Model.prototype.init = function (option, parentModel, ecModel) {
@@ -43305,10 +44820,17 @@ var Model = function () {
       rest[_i - 3] = arguments[_i];
     }
   };
+  /**
+   * Merge the input option to me.
+   */
+
 
   Model.prototype.mergeOption = function (option, ecModel) {
     util_merge(this.option, option, true);
-  };
+  }; // `path` can be 'xxx.yyy.zzz', so the return value type have to be `ModelOption`
+  // TODO: TYPE strict key check?
+  // get(path: string | string[], ignoreParent?: boolean): ModelOption;
+
 
   Model.prototype.get = function (path, ignoreParent) {
     if (path == null) {
@@ -43326,12 +44848,16 @@ var Model = function () {
       var parentModel = this.parentModel;
 
       if (parentModel) {
+        // FIXME:TS do not know how to make it works
         val = parentModel.getShallow(key);
       }
     }
 
     return val;
-  };
+  }; // `path` can be 'xxx.yyy.zzz', so the return value type have to be `Model<ModelOption>`
+  // getModel(path: string | string[], parentModel?: Model): Model;
+  // TODO 'xxx.yyy.zzz' is deprecated
+
 
   Model.prototype.getModel = function (path, parentModel) {
     var hasPath = path != null;
@@ -43340,17 +44866,65 @@ var Model = function () {
     parentModel = parentModel || this.parentModel && this.parentModel.getModel(this.resolveParentPath(pathFinal));
     return new Model(obj, parentModel, this.ecModel);
   };
+  /**
+   * Squash option stack into one.
+   * parentModel will be removed after squashed.
+   *
+   * NOTE: resolveParentPath will not be applied here for simplicity. DON'T use this function
+   * if resolveParentPath is modified.
+   *
+   * @param deepMerge If do deep merge. Default to be false.
+   */
+  // squash(
+  //     deepMerge?: boolean,
+  //     handleCallback?: (func: () => object) => object
+  // ) {
+  //     const optionStack = [];
+  //     let model: Model = this;
+  //     while (model) {
+  //         if (model.option) {
+  //             optionStack.push(model.option);
+  //         }
+  //         model = model.parentModel;
+  //     }
+  //     const newOption = {} as Opt;
+  //     let option;
+  //     while (option = optionStack.pop()) {    // Top down merge
+  //         if (isFunction(option) && handleCallback) {
+  //             option = handleCallback(option);
+  //         }
+  //         if (deepMerge) {
+  //             merge(newOption, option);
+  //         }
+  //         else {
+  //             extend(newOption, option);
+  //         }
+  //     }
+  //     // Remove parentModel
+  //     this.option = newOption;
+  //     this.parentModel = null;
+  // }
+
+  /**
+   * If model has option
+   */
+
 
   Model.prototype.isEmpty = function () {
     return this.option == null;
   };
 
-  Model.prototype.restoreData = function () {};
+  Model.prototype.restoreData = function () {}; // Pending
+
 
   Model.prototype.clone = function () {
     var Ctor = this.constructor;
     return new Ctor(util_clone(this.option));
-  };
+  }; // setReadOnly(properties): void {
+  // clazzUtil.setReadOnly(this, properties);
+  // }
+  // If path is null/undefined, return null/undefined.
+
 
   Model.prototype.parsePath = function (path) {
     if (typeof path === 'string') {
@@ -43358,11 +44932,15 @@ var Model = function () {
     }
 
     return path;
-  };
+  }; // Resolve path for parent. Perhaps useful when parent use a different property.
+  // Default to be a identity resolver.
+  // Can be modified to a different resolver.
+
 
   Model.prototype.resolveParentPath = function (path) {
     return path;
-  };
+  }; // FIXME:TS check whether put this method here
+
 
   Model.prototype.isAnimationEnabled = function () {
     if (!core_env.node && this.option) {
@@ -43382,9 +44960,11 @@ var Model = function () {
     }
 
     for (var i = 0; i < pathArr.length; i++) {
+      // Ignore empty
       if (!pathArr[i]) {
         continue;
-      }
+      } // obj could be number/string/... (like 0)
+
 
       obj = obj && typeof obj === 'object' ? obj[pathArr[i]] : null;
 
@@ -43403,7 +44983,8 @@ var Model = function () {
   return Model;
 }();
 
-;
+; // Enable Model.extend.
+
 enableClassExtend(Model);
 enableClassCheck(Model);
 util_mixin(Model, LineStyleMixin);
@@ -43437,6 +45018,28 @@ util_mixin(Model, textStyle);
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
+
+/**
+ * Language: English.
+ */
 /* harmony default export */ const langEN = ({
   time: {
     month: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
@@ -43507,7 +45110,7 @@ util_mixin(Model, textStyle);
       graph: 'Relationship graph',
       sankey: 'Sankey diagram',
       funnel: 'Funnel chart',
-      gauge: 'Guage',
+      gauge: 'Gauge',
       pictorialBar: 'Pictorial bar',
       themeRiver: 'Theme River Map',
       sunburst: 'Sunburst'
@@ -43572,6 +45175,24 @@ util_mixin(Model, textStyle);
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 /* harmony default export */ const langZH = ({
   time: {
     month: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
@@ -43707,7 +45328,26 @@ util_mixin(Model, textStyle);
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
+ // default import ZH and EN lang
 
 
 
@@ -43718,14 +45358,19 @@ var DEFAULT_LOCALE = LOCALE_EN;
 var localeStorage = {};
 var localeModels = {};
 var SYSTEM_LANG = !core_env.domSupported ? DEFAULT_LOCALE : function () {
-  var langStr = (document.documentElement.lang || navigator.language || navigator.browserLanguage).toUpperCase();
+  var langStr = (
+  /* eslint-disable-next-line */
+  document.documentElement.lang || navigator.language || navigator.browserLanguage).toUpperCase();
   return langStr.indexOf(LOCALE_ZH) > -1 ? LOCALE_ZH : DEFAULT_LOCALE;
 }();
 function registerLocale(locale, localeObj) {
   locale = locale.toUpperCase();
   localeModels[locale] = new model_Model(localeObj);
   localeStorage[locale] = localeObj;
-}
+} // export function getLocale(locale: string) {
+//     return localeStorage[locale];
+// }
+
 function createLocaleObject(locale) {
   if (util_isString(locale)) {
     var localeObj = localeStorage[locale.toUpperCase()] || {};
@@ -43744,7 +45389,8 @@ function getLocaleModel(lang) {
 }
 function getDefaultLocaleModel() {
   return localeModels[DEFAULT_LOCALE];
-}
+} // Default locale
+
 registerLocale(LOCALE_EN, langEN);
 registerLocale(LOCALE_ZH, langZH);
 ;// CONCATENATED MODULE: ./node_modules/echarts/lib/util/time.js
@@ -43773,6 +45419,24 @@ registerLocale(LOCALE_ZH, langZH);
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 
@@ -43823,6 +45487,7 @@ function getPrimaryTimeUnit(timeUnit) {
       return 'hour';
 
     default:
+      // year, minutes, second, milliseconds
       return timeUnit;
   }
 }
@@ -43839,10 +45504,13 @@ function getDefaultFormatPrecisionOfInterval(timeUnit) {
       return 'millisecond';
 
     default:
+      // Also for day, hour, minute, second
       return 'second';
   }
 }
-function format(time, template, isUTC, lang) {
+function format( // Note: The result based on `isUTC` are totally different, which can not be just simply
+// substituted by the result without `isUTC`. So we make the param `isUTC` mandatory.
+time, template, isUTC, lang) {
   var date = parseDate(time);
   var y = date[fullYearGetterName(isUTC)]();
   var M = date[monthGetterName(isUTC)]() + 1;
@@ -43866,8 +45534,10 @@ function leveledFormat(tick, idx, formatter, lang, isUTC) {
   var template = null;
 
   if (typeof formatter === 'string') {
+    // Single formatter for all units at all levels
     template = formatter;
   } else if (typeof formatter === 'function') {
+    // Callback formatter
     template = formatter(tick.value, idx, {
       level: tick.level
     });
@@ -43880,12 +45550,14 @@ function leveledFormat(tick, idx, formatter, lang, isUTC) {
       }
     }
 
-    var mergedFormatter = formatter ? formatter.inherit === false ? formatter : util_defaults(formatter, defaults) : defaults;
+    var mergedFormatter = formatter ? formatter.inherit === false ? formatter // Use formatter with bigger units
+    : util_defaults(formatter, defaults) : defaults;
     var unit = getUnitFromValue(tick.value, isUTC);
 
     if (mergedFormatter[unit]) {
       template = mergedFormatter[unit];
     } else if (mergedFormatter.inherit) {
+      // Unit formatter is not defined and should inherit from bigger units
       var targetId = timeUnits.indexOf(unit);
 
       for (var i = targetId - 1; i >= 0; --i) {
@@ -44042,6 +45714,24 @@ function millisecondsSetterName(isUTC) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 function getTextRect(text, font, align, verticalAlign, padding, rich, truncate, lineHeight) {
@@ -44086,9 +45776,31 @@ function getTextRect(text, font, align, verticalAlign, padding, rich, truncate, 
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
 
+
+/**
+ * Add a comma each three digit.
+ */
 
 function addCommas(x) {
   if (!isNumeric(x)) {
@@ -44123,8 +45835,16 @@ function encodeHTML(source) {
     return replaceMap[c];
   });
 }
+/**
+ * Make value user readable for tooltip and label.
+ * "User readable":
+ *     Try to not print programmer-specific text like NaN, Infinity, null, undefined.
+ *     Avoid to display an empty string, which users can not recognize there is
+ *     a value and it might look like a bug.
+ */
+
 function makeValueReadable(value, valueType, useUTC) {
-  var USER_READABLE_DEFUALT_TIME_PATTERN = 'yyyy-MM-dd hh:mm:ss';
+  var USER_READABLE_DEFUALT_TIME_PATTERN = '{yyyy}-{MM}-{dd} {hh}:{mm}:{ss}';
 
   function stringToUserReadable(str) {
     return str && util_trim(str) ? str : '-';
@@ -44144,12 +45864,14 @@ function makeValueReadable(value, valueType, useUTC) {
       return format(date, USER_READABLE_DEFUALT_TIME_PATTERN, useUTC);
     } else if (isValueDate) {
       return '-';
-    }
+    } // In other cases, continue to try to display the value in the following code.
+
   }
 
   if (valueType === 'ordinal') {
     return util_isStringSafe(value) ? stringToUserReadable(value) : util_isNumber(value) ? isNumberUserReadable(value) ? value + '' : '-' : '-';
-  }
+  } // By default.
+
 
   var numericResult = numericToNumber(value);
   return isNumberUserReadable(numericResult) ? addCommas(numericResult) : util_isStringSafe(value) ? stringToUserReadable(value) : '-';
@@ -44159,6 +45881,11 @@ var TPL_VAR_ALIAS = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 var wrapVar = function (varName, seriesIdx) {
   return '{' + varName + (seriesIdx == null ? '' : seriesIdx) + '}';
 };
+/**
+ * Template formatter
+ * @param {Array.<Object>|Object} paramsList
+ */
+
 
 function formatTpl(tpl, paramsList, encode) {
   if (!util_isArray(paramsList)) {
@@ -44187,6 +45914,10 @@ function formatTpl(tpl, paramsList, encode) {
 
   return tpl;
 }
+/**
+ * simple Template formatter
+ */
+
 function formatTplSimple(tpl, param, encode) {
   util_each(param, function (value, key) {
     tpl = tpl.replace('{' + key + '}', encode ? encodeHTML(value) : value);
@@ -44208,8 +45939,13 @@ function getTooltipMarker(inOpt, extraCssText) {
   }
 
   if (renderMode === 'html') {
-    return type === 'subItem' ? '<span style="display:inline-block;vertical-align:middle;margin-right:8px;margin-left:3px;' + 'border-radius:4px;width:4px;height:4px;background-color:' + encodeHTML(color) + ';' + (extraCssText || '') + '"></span>' : '<span style="display:inline-block;margin-right:4px;' + 'border-radius:10px;width:10px;height:10px;background-color:' + encodeHTML(color) + ';' + (extraCssText || '') + '"></span>';
+    return type === 'subItem' ? '<span style="display:inline-block;vertical-align:middle;margin-right:8px;margin-left:3px;' + 'border-radius:4px;width:4px;height:4px;background-color:' // Only support string
+    + encodeHTML(color) + ';' + (extraCssText || '') + '"></span>' : '<span style="display:inline-block;margin-right:4px;' + 'border-radius:10px;width:10px;height:10px;background-color:' + encodeHTML(color) + ';' + (extraCssText || '') + '"></span>';
   } else {
+    // Should better not to auto generate style name by auto-increment number here.
+    // Because this util is usually called in tooltip formatter, which is probably
+    // called repeatly when mouse move and the auto-increment number increases fast.
+    // Users can make their own style name by theirselves, make it unique and readable.
     var markerId = opt.markerId || 'markerX';
     return {
       renderMode: renderMode,
@@ -44228,6 +45964,17 @@ function getTooltipMarker(inOpt, extraCssText) {
     };
   }
 }
+/**
+ * @deprecated Use `time/format` instead.
+ * ISO Date format
+ * @param {string} tpl
+ * @param {number} value
+ * @param {boolean} [isUTC=false] Default in local time.
+ *           see `module:echarts/scale/Time`
+ *           and `module:echarts/util/number#parseDate`.
+ * @inner
+ */
+
 function formatTime(tpl, value, isUTC) {
   if (true) {
     deprecateReplaceLog('echarts.format.formatTime', 'echarts.time.format');
@@ -44249,15 +45996,32 @@ function formatTime(tpl, value, isUTC) {
   tpl = tpl.replace('MM', pad(M, 2)).replace('M', M).replace('yyyy', y).replace('yy', y % 100 + '').replace('dd', pad(d, 2)).replace('d', d).replace('hh', pad(h, 2)).replace('h', h).replace('mm', pad(m, 2)).replace('m', m).replace('ss', pad(s, 2)).replace('s', s).replace('SSS', pad(S, 3));
   return tpl;
 }
+/**
+ * Capital first
+ * @param {string} str
+ * @return {string}
+ */
+
 function capitalFirst(str) {
   return str ? str.charAt(0).toUpperCase() + str.substr(1) : str;
 }
+/**
+ * @return Never be null/undefined.
+ */
+
 function convertToColorString(color, defaultColor) {
   defaultColor = defaultColor || 'transparent';
   return util_isString(color) ? color : util_isObject(color) ? color.colorStops && (color.colorStops[0] || {}).color || defaultColor : defaultColor;
 }
 
+/**
+ * open new tab
+ * @param link url
+ * @param target blank or self
+ */
+
 function windowOpen(link, target) {
+  /* global window */
   if (target === '_blank' || target === 'blank') {
     var blank = window.open();
     blank.opener = null;
@@ -44293,12 +46057,39 @@ function windowOpen(link, target) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
+// Layout helpers for each component positioning
 
 
 
 
 var layout_each = util_each;
+/**
+ * @public
+ */
+
 var LOCATION_PARAMS = ['left', 'right', 'top', 'bottom', 'width', 'height'];
+/**
+ * @public
+ */
+
 var HV_NAMES = [['width', 'left', 'right'], ['height', 'top', 'bottom']];
 
 function boxLayout(orient, group, gap, maxWidth, maxHeight) {
@@ -44323,7 +46114,8 @@ function boxLayout(orient, group, gap, maxWidth, maxHeight) {
 
     if (orient === 'horizontal') {
       var moveX = rect.width + (nextChildRect ? -nextChildRect.x + rect.x : 0);
-      nextX = x + moveX;
+      nextX = x + moveX; // Wrap when width exceeds maxWidth or meet a `newline` group
+      // FIXME compare before adding gap?
 
       if (nextX > maxWidth || child.newline) {
         x = 0;
@@ -44331,11 +46123,12 @@ function boxLayout(orient, group, gap, maxWidth, maxHeight) {
         y += currentLineMaxSize + gap;
         currentLineMaxSize = rect.height;
       } else {
+        // FIXME: consider rect.y is not `0`?
         currentLineMaxSize = Math.max(currentLineMaxSize, rect.height);
       }
     } else {
       var moveY = rect.height + (nextChildRect ? -nextChildRect.y + rect.y : 0);
-      nextY = y + moveY;
+      nextY = y + moveY; // Wrap when width exceeds maxHeight or meet a `newline` group
 
       if (nextY > maxHeight || child.newline) {
         x += currentLineMaxSize + gap;
@@ -44357,10 +46150,42 @@ function boxLayout(orient, group, gap, maxWidth, maxHeight) {
     orient === 'horizontal' ? x = nextX + gap : y = nextY + gap;
   });
 }
+/**
+ * VBox or HBox layouting
+ * @param {string} orient
+ * @param {module:zrender/graphic/Group} group
+ * @param {number} gap
+ * @param {number} [width=Infinity]
+ * @param {number} [height=Infinity]
+ */
+
 
 var box = boxLayout;
+/**
+ * VBox layouting
+ * @param {module:zrender/graphic/Group} group
+ * @param {number} gap
+ * @param {number} [width=Infinity]
+ * @param {number} [height=Infinity]
+ */
+
 var vbox = util_curry(boxLayout, 'vertical');
+/**
+ * HBox layouting
+ * @param {module:zrender/graphic/Group} group
+ * @param {number} gap
+ * @param {number} [width=Infinity]
+ * @param {number} [height=Infinity]
+ */
+
 var hbox = util_curry(boxLayout, 'horizontal');
+/**
+ * If x or x2 is not specified or 'center' 'left' 'right',
+ * the width would be as long as possible.
+ * If y or y2 is not specified or 'middle' 'top' 'bottom',
+ * the height would be as long as possible.
+ */
+
 function getAvailableSize(positionInfo, containerRect, margin) {
   var containerWidth = containerRect.width;
   var containerHeight = containerRect.height;
@@ -44378,6 +46203,10 @@ function getAvailableSize(positionInfo, containerRect, margin) {
     height: Math.max(y2 - y - margin[0] - margin[2], 0)
   };
 }
+/**
+ * Parse position info.
+ */
+
 function getLayoutRect(positionInfo, containerRect, margin) {
   margin = format_normalizeCssArray(margin || 0);
   var containerWidth = containerRect.width;
@@ -44390,7 +46219,7 @@ function getLayoutRect(positionInfo, containerRect, margin) {
   var height = number_parsePercent(positionInfo.height, containerHeight);
   var verticalMargin = margin[2] + margin[0];
   var horizontalMargin = margin[1] + margin[3];
-  var aspect = positionInfo.aspect;
+  var aspect = positionInfo.aspect; // If width is not specified, calculate width from left and right
 
   if (isNaN(width)) {
     width = containerWidth - right - horizontalMargin - left;
@@ -44401,13 +46230,21 @@ function getLayoutRect(positionInfo, containerRect, margin) {
   }
 
   if (aspect != null) {
+    // If width and height are not given
+    // 1. Graph should not exceeds the container
+    // 2. Aspect must be keeped
+    // 3. Graph should take the space as more as possible
+    // FIXME
+    // Margin is not considered, because there is no case that both
+    // using margin and aspect so far.
     if (isNaN(width) && isNaN(height)) {
       if (aspect > containerWidth / containerHeight) {
         width = containerWidth * 0.8;
       } else {
         height = containerHeight * 0.8;
       }
-    }
+    } // Calculate width or height with given aspect
+
 
     if (isNaN(width)) {
       width = aspect * height;
@@ -44416,7 +46253,8 @@ function getLayoutRect(positionInfo, containerRect, margin) {
     if (isNaN(height)) {
       height = width / aspect;
     }
-  }
+  } // If left is not specified, calculate left from right and width
+
 
   if (isNaN(left)) {
     left = containerWidth - right - width - horizontalMargin;
@@ -44424,7 +46262,8 @@ function getLayoutRect(positionInfo, containerRect, margin) {
 
   if (isNaN(top)) {
     top = containerHeight - bottom - height - verticalMargin;
-  }
+  } // Align left and top
+
 
   switch (positionInfo.left || positionInfo.right) {
     case 'center':
@@ -44445,16 +46284,19 @@ function getLayoutRect(positionInfo, containerRect, margin) {
     case 'bottom':
       top = containerHeight - height - verticalMargin;
       break;
-  }
+  } // If something is wrong and left, top, width, height are calculated as NaN
+
 
   left = left || 0;
   top = top || 0;
 
   if (isNaN(width)) {
+    // Width may be NaN if only one value is given except width
     width = containerWidth - horizontalMargin - left - (right || 0);
   }
 
   if (isNaN(height)) {
+    // Height may be NaN if only one value is given except height
     height = containerHeight - verticalMargin - top - (bottom || 0);
   }
 
@@ -44462,6 +46304,45 @@ function getLayoutRect(positionInfo, containerRect, margin) {
   rect.margin = margin;
   return rect;
 }
+/**
+ * Position a zr element in viewport
+ *  Group position is specified by either
+ *  {left, top}, {right, bottom}
+ *  If all properties exists, right and bottom will be igonred.
+ *
+ * Logic:
+ *     1. Scale (against origin point in parent coord)
+ *     2. Rotate (against origin point in parent coord)
+ *     3. Traslate (with el.position by this method)
+ * So this method only fixes the last step 'Traslate', which does not affect
+ * scaling and rotating.
+ *
+ * If be called repeatly with the same input el, the same result will be gotten.
+ *
+ * @param el Should have `getBoundingRect` method.
+ * @param positionInfo
+ * @param positionInfo.left
+ * @param positionInfo.top
+ * @param positionInfo.right
+ * @param positionInfo.bottom
+ * @param positionInfo.width Only for opt.boundingModel: 'raw'
+ * @param positionInfo.height Only for opt.boundingModel: 'raw'
+ * @param containerRect
+ * @param margin
+ * @param opt
+ * @param opt.hv Only horizontal or only vertical. Default to be [1, 1]
+ * @param opt.boundingMode
+ *        Specify how to calculate boundingRect when locating.
+ *        'all': Position the boundingRect that is transformed and uioned
+ *               both itself and its descendants.
+ *               This mode simplies confine the elements in the bounding
+ *               of their container (e.g., using 'right: 0').
+ *        'raw': Position the boundingRect that is not transformed and only itself.
+ *               This mode is useful when you want a element can overflow its
+ *               container. (Consider a rotated circle needs to be located in a corner.)
+ *               In this mode positionInfo.width/height can only be number.
+ */
+
 function positionElement(el, positionInfo, containerRect, margin, opt) {
   var h = !opt || !opt.hv || opt.hv[0];
   var v = !opt || !opt.hv || opt.hv[1];
@@ -44479,16 +46360,22 @@ function positionElement(el, positionInfo, containerRect, margin, opt) {
     rect = el.getBoundingRect();
 
     if (el.needLocalTransform()) {
-      var transform = el.getLocalTransform();
+      var transform = el.getLocalTransform(); // Notice: raw rect may be inner object of el,
+      // which should not be modified.
+
       rect = rect.clone();
       rect.applyTransform(transform);
     }
-  }
+  } // The real width and height can not be specified but calculated by the given el.
+
 
   var layoutRect = getLayoutRect(util_defaults({
     width: rect.width,
     height: rect.height
-  }, positionInfo), containerRect, margin);
+  }, positionInfo), containerRect, margin); // Because 'tranlate' is the last step in transform
+  // (see zrender/core/Transformable#getLocalTransform),
+  // we can just only modify el.position to get final result.
+
   var dx = h ? layoutRect.x - rect.x : 0;
   var dy = v ? layoutRect.y - rect.y : 0;
 
@@ -44502,6 +46389,11 @@ function positionElement(el, positionInfo, containerRect, margin, opt) {
 
   el.markRedraw();
 }
+/**
+ * @param option Contains some of the properties in HV_NAMES.
+ * @param hvIdx 0: horizontal; 1: vertical.
+ */
+
 function sizeCalculable(option, hvIdx) {
   return option[HV_NAMES[hvIdx][0]] != null || option[HV_NAMES[hvIdx][1]] != null && option[HV_NAMES[hvIdx][2]] != null;
 }
@@ -44511,6 +46403,30 @@ function fetchLayoutMode(ins) {
     type: layoutMode
   } : null;
 }
+/**
+ * Consider Case:
+ * When default option has {left: 0, width: 100}, and we set {right: 0}
+ * through setOption or media query, using normal zrUtil.merge will cause
+ * {right: 0} does not take effect.
+ *
+ * @example
+ * ComponentModel.extend({
+ *     init: function () {
+ *         ...
+ *         let inputPositionParams = layout.getLayoutParams(option);
+ *         this.mergeOption(inputPositionParams);
+ *     },
+ *     mergeOption: function (newOption) {
+ *         newOption && zrUtil.merge(thisOption, newOption, true);
+ *         layout.mergeLayoutParam(thisOption, newOption);
+ *     }
+ * });
+ *
+ * @param targetOption
+ * @param newOption
+ * @param opt
+ */
+
 function mergeLayoutParam(targetOption, newOption, opt) {
   var ignoreSize = opt && opt.ignoreSize;
   !util_isArray(ignoreSize) && (ignoreSize = [ignoreSize, ignoreSize]);
@@ -44529,12 +46445,15 @@ function mergeLayoutParam(targetOption, newOption, opt) {
       merged[name] = targetOption[name];
     });
     layout_each(names, function (name) {
+      // Consider case: newOption.width is null, which is
+      // set by user for removing width setting.
       hasProp(newOption, name) && (newParams[name] = merged[name] = newOption[name]);
       hasValue(newParams, name) && newValueCount++;
       hasValue(merged, name) && mergedValueCount++;
     });
 
     if (ignoreSize[hvIdx]) {
+      // Only one of left/right is premitted to exist.
       if (hasValue(newOption, names[1])) {
         merged[names[2]] = null;
       } else if (hasValue(newOption, names[2])) {
@@ -44542,24 +46461,32 @@ function mergeLayoutParam(targetOption, newOption, opt) {
       }
 
       return merged;
-    }
+    } // Case: newOption: {width: ..., right: ...},
+    // or targetOption: {right: ...} and newOption: {width: ...},
+    // There is no conflict when merged only has params count
+    // little than enoughParamNumber.
+
 
     if (mergedValueCount === enoughParamNumber || !newValueCount) {
       return merged;
-    } else if (newValueCount >= enoughParamNumber) {
-      return newParams;
-    } else {
-      for (var i = 0; i < names.length; i++) {
-        var name_1 = names[i];
+    } // Case: newOption: {width: ..., right: ...},
+    // Than we can make sure user only want those two, and ignore
+    // all origin params in targetOption.
+    else if (newValueCount >= enoughParamNumber) {
+        return newParams;
+      } else {
+        // Chose another param from targetOption by priority.
+        for (var i = 0; i < names.length; i++) {
+          var name_1 = names[i];
 
-        if (!hasProp(newParams, name_1) && hasProp(targetOption, name_1)) {
-          newParams[name_1] = targetOption[name_1];
-          break;
+          if (!hasProp(newParams, name_1) && hasProp(targetOption, name_1)) {
+            newParams[name_1] = targetOption[name_1];
+            break;
+          }
         }
-      }
 
-      return newParams;
-    }
+        return newParams;
+      }
   }
 
   function hasProp(obj, name) {
@@ -44576,9 +46503,19 @@ function mergeLayoutParam(targetOption, newOption, opt) {
     });
   }
 }
+/**
+ * Retrieve 'left', 'right', 'top', 'bottom', 'width', 'height' from object.
+ */
+
 function getLayoutParams(source) {
   return copyLayoutParams({}, source);
 }
+/**
+ * Retrieve 'left', 'right', 'top', 'bottom', 'width', 'height' from object.
+ * @param {Object} source
+ * @return {Object} Result contains those props.
+ */
+
 function copyLayoutParams(target, source) {
   source && target && layout_each(LOCATION_PARAMS, function (name) {
     source.hasOwnProperty(name) && (target[name] = source[name]);
@@ -49769,9 +51706,29 @@ logAxis.scale = true;
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 
 
-var OrdinalMeta = function () {
+var OrdinalMeta =
+/** @class */
+function () {
   function OrdinalMeta(opt) {
     this.categories = opt.categories || [];
     this._needCollect = opt.needCollect;
@@ -49785,6 +51742,7 @@ var OrdinalMeta = function () {
     return new OrdinalMeta({
       categories: categories,
       needCollect: !categories,
+      // deduplication is default in axis.
       deduplication: option.dedplication !== false
     });
   };
@@ -49792,16 +51750,33 @@ var OrdinalMeta = function () {
   ;
 
   OrdinalMeta.prototype.getOrdinal = function (category) {
+    // @ts-ignore
     return this._getOrCreateMap().get(category);
   };
+  /**
+   * @return The ordinal. If not found, return NaN.
+   */
+
 
   OrdinalMeta.prototype.parseAndCollect = function (category) {
     var index;
-    var needCollect = this._needCollect;
+    var needCollect = this._needCollect; // The value of category dim can be the index of the given category set.
+    // This feature is only supported when !needCollect, because we should
+    // consider a common case: a value is 2017, which is a number but is
+    // expected to be tread as a category. This case usually happen in dataset,
+    // where it happent to be no need of the index feature.
 
     if (typeof category !== 'string' && !needCollect) {
       return category;
-    }
+    } // Optimize for the scenario:
+    // category is ['2012-01-01', '2012-01-02', ...], where the input
+    // data has been ensured not duplicate and is large data.
+    // Notice, if a dataset dimension provide categroies, usually echarts
+    // should remove duplication except user tell echarts dont do that
+    // (set axis.deduplication = false), because echarts do not know whether
+    // the values in the category dimension has duplication (consider the
+    // parallel-aqi example)
+
 
     if (needCollect && !this._deduplication) {
       index = this.categories.length;
@@ -49809,14 +51784,16 @@ var OrdinalMeta = function () {
       return index;
     }
 
-    var map = this._getOrCreateMap();
+    var map = this._getOrCreateMap(); // @ts-ignore
+
 
     index = map.get(category);
 
     if (index == null) {
       if (needCollect) {
         index = this.categories.length;
-        this.categories[index] = category;
+        this.categories[index] = category; // @ts-ignore
+
         map.set(category, index);
       } else {
         index = NaN;
@@ -49824,7 +51801,8 @@ var OrdinalMeta = function () {
     }
 
     return index;
-  };
+  }; // Consider big data, do not create map until needed.
+
 
   OrdinalMeta.prototype._getOrCreateMap = function () {
     return this._map || (this._map = util_createHashMap(this.categories));
@@ -51453,7 +53431,7 @@ Geo3DBuilder.prototype = {
                 if (!region) {
                     return [NaN, NaN, NaN];
                 }
-                center = region.center;
+                center = region.getCenter();
                 var pos = coordSys.dataToPoint([center[0], center[1], height]);
                 return pos;
             }
@@ -52232,11 +54210,31 @@ Geo3DBuilder.prototype = {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 var coordsOffsetMap = {
   '南海诸岛': [32, 80],
+  // 全国
   '广东': [0, -10],
   '香港': [10, 5],
   '澳门': [-10, 10],
+  //'北京': [-10, 0],
   '天津': [5, 5]
 };
 function fixTextCoords(mapType, region) {
@@ -52244,9 +54242,10 @@ function fixTextCoords(mapType, region) {
     var coordFix = coordsOffsetMap[region.name];
 
     if (coordFix) {
-      var cp = region.center;
+      var cp = region.getCenter();
       cp[0] += coordFix[0] / 10.5;
       cp[1] += -coordFix[1] / (10.5 / 0.75);
+      region.setCenter(cp);
     }
   }
 }
@@ -52276,6 +54275,24 @@ function fixTextCoords(mapType, region) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
 var geoCoordMap = {
   'Russia': [100, 60],
   'United States': [-99, 38],
@@ -52286,9 +54303,8 @@ function fixGeoCoords(mapType, region) {
     var geoCoord = geoCoordMap[region.name];
 
     if (geoCoord) {
-      var cp = region.center;
-      cp[0] = geoCoord[0];
-      cp[1] = geoCoord[1];
+      var cp = [geoCoord[0], geoCoord[1]];
+      region.setCenter(cp);
     }
   }
 }
@@ -52357,7 +54373,7 @@ Geo3D.prototype = {
 
             regionsMap[regionName] = regions[i];
             // Add geoJson
-            this.addGeoCoord(regionName, regions[i].center);
+            this.addGeoCoord(regionName, regions[i].getCenter());
 
             // Some area like Alaska in USA map needs to be tansformed
             // to look better
@@ -57035,31 +59051,6 @@ var PointsMesh = util_graphicGL.Mesh.extend(function () {
 });
 
 /* harmony default export */ const common_PointsMesh = (PointsMesh);
-;// CONCATENATED MODULE: ./lib/util/visual.js
-function visual_getVisualColor(data) {
-  const style = data.getVisual('style');
-
-  if (style) {
-    const drawType = data.getVisual('drawType');
-    return style[drawType];
-  }
-}
-function visual_getVisualOpacity(data) {
-  const style = data.getVisual('style');
-  return style.opacity;
-}
-function visual_getItemVisualColor(data, idx) {
-  const style = data.getItemVisual(idx, 'style');
-
-  if (style) {
-    const drawType = data.getVisual('drawType');
-    return style[drawType];
-  }
-}
-function visual_getItemVisualOpacity(data, idx) {
-  const style = data.getItemVisual(idx, 'style');
-  return style && style.opacity;
-}
 ;// CONCATENATED MODULE: ./src/chart/common/PointsBuilder.js
 
 
@@ -57172,8 +59163,8 @@ PointsBuilder.prototype = {
             material.undefine('VERTEX_SIZE');
             material.undefine('VERTEX_COLOR');
 
-            var color = visual_getVisualColor(data);
-            var opacity = visual_getVisualOpacity(data);
+            var color = getVisualColor(data);
+            var opacity = getVisualOpacity(data);
             util_graphicGL.parseColor(color, rgbaArr);
             rgbaArr[3] *= opacity;
 
@@ -60283,27 +62274,59 @@ function scatterGL_install_install(registers) {
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
-
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
+ // id may be function name of Object, add a prefix to avoid this problem.
 
 function generateNodeKey(id) {
   return '_EC_' + id;
 }
 
-var Graph_Graph = function () {
+var Graph_Graph =
+/** @class */
+function () {
   function Graph(directed) {
     this.type = 'graph';
     this.nodes = [];
     this.edges = [];
     this._nodesMap = {};
+    /**
+     * @type {Object.<string, module:echarts/data/Graph.Edge>}
+     * @private
+     */
+
     this._edgesMap = {};
     this._directed = directed || false;
   }
+  /**
+   * If is directed graph
+   */
+
 
   Graph.prototype.isDirected = function () {
     return this._directed;
   };
 
   ;
+  /**
+   * Add a new node
+   */
 
   Graph.prototype.addNode = function (id, dataIndex) {
     id = id == null ? '' + dataIndex : '' + id;
@@ -60325,6 +62348,9 @@ var Graph_Graph = function () {
   };
 
   ;
+  /**
+   * Get node by data index
+   */
 
   Graph.prototype.getNodeByIndex = function (dataIndex) {
     var rawIdx = this.data.getRawIndex(dataIndex);
@@ -60332,16 +62358,22 @@ var Graph_Graph = function () {
   };
 
   ;
+  /**
+   * Get node by id
+   */
 
   Graph.prototype.getNodeById = function (id) {
     return this._nodesMap[generateNodeKey(id)];
   };
 
   ;
+  /**
+   * Add a new edge
+   */
 
   Graph.prototype.addEdge = function (n1, n2, dataIndex) {
     var nodesMap = this._nodesMap;
-    var edgesMap = this._edgesMap;
+    var edgesMap = this._edgesMap; // PNEDING
 
     if (typeof n1 === 'number') {
       n1 = this.nodes[n1];
@@ -60384,6 +62416,9 @@ var Graph_Graph = function () {
   };
 
   ;
+  /**
+   * Get edge by data index
+   */
 
   Graph.prototype.getEdgeByIndex = function (dataIndex) {
     var rawIdx = this.edgeData.getRawIndex(dataIndex);
@@ -60391,6 +62426,9 @@ var Graph_Graph = function () {
   };
 
   ;
+  /**
+   * Get edge by two linked nodes
+   */
 
   Graph.prototype.getEdge = function (n1, n2) {
     if (n1 instanceof GraphNode) {
@@ -60411,6 +62449,9 @@ var Graph_Graph = function () {
   };
 
   ;
+  /**
+   * Iterate all nodes
+   */
 
   Graph.prototype.eachNode = function (cb, context) {
     var nodes = this.nodes;
@@ -60424,6 +62465,9 @@ var Graph_Graph = function () {
   };
 
   ;
+  /**
+   * Iterate all edges
+   */
 
   Graph.prototype.eachEdge = function (cb, context) {
     var edges = this.edges;
@@ -60437,6 +62481,10 @@ var Graph_Graph = function () {
   };
 
   ;
+  /**
+   * Breadth first traverse
+   * Return true to stop traversing
+   */
 
   Graph.prototype.breadthFirstTraverse = function (cb, startNode, direction, context) {
     if (!(startNode instanceof GraphNode)) {
@@ -60469,6 +62517,7 @@ var Graph_Graph = function () {
 
         if (!otherNode.__visited) {
           if (cb.call(context, otherNode, currentNode)) {
+            // Stop traversing
             return;
           }
 
@@ -60479,7 +62528,12 @@ var Graph_Graph = function () {
     }
   };
 
-  ;
+  ; // TODO
+  // depthFirstTraverse(
+  //     cb, startNode, direction, context
+  // ) {
+  // };
+  // Filter update
 
   Graph.prototype.update = function () {
     var data = this.data;
@@ -60498,7 +62552,7 @@ var Graph_Graph = function () {
     edgeData.filterSelf(function (idx) {
       var edge = edges[edgeData.getRawIndex(idx)];
       return edge.node1.dataIndex >= 0 && edge.node2.dataIndex >= 0;
-    });
+    }); // Update edge
 
     for (var i = 0, len = edges.length; i < len; i++) {
       edges[i].dataIndex = -1;
@@ -60510,6 +62564,9 @@ var Graph_Graph = function () {
   };
 
   ;
+  /**
+   * @return {module:echarts/data/Graph}
+   */
 
   Graph.prototype.clone = function () {
     var graph = new Graph(this._directed);
@@ -60532,7 +62589,9 @@ var Graph_Graph = function () {
   return Graph;
 }();
 
-var GraphNode = function () {
+var GraphNode =
+/** @class */
+function () {
   function GraphNode(id, dataIndex) {
     this.inEdges = [];
     this.outEdges = [];
@@ -60541,14 +62600,26 @@ var GraphNode = function () {
     this.id = id == null ? '' : id;
     this.dataIndex = dataIndex == null ? -1 : dataIndex;
   }
+  /**
+   * @return {number}
+   */
+
 
   GraphNode.prototype.degree = function () {
     return this.edges.length;
   };
+  /**
+   * @return {number}
+   */
+
 
   GraphNode.prototype.inDegree = function () {
     return this.inEdges.length;
   };
+  /**
+  * @return {number}
+  */
+
 
   GraphNode.prototype.outDegree = function () {
     return this.outEdges.length;
@@ -60587,7 +62658,9 @@ var GraphNode = function () {
   return GraphNode;
 }();
 
-var GraphEdge = function () {
+var GraphEdge =
+/** @class */
+function () {
   function GraphEdge(n1, n2, dataIndex) {
     this.dataIndex = -1;
     this.node1 = n1;
@@ -60617,10 +62690,14 @@ var GraphEdge = function () {
 
 function createGraphDataProxyMixin(hostName, dataName) {
   return {
+    /**
+     * @param Default 'value'. can be 'a', 'b', 'c', 'd', 'e'.
+     */
     getValue: function (dimension) {
       var data = this[hostName][dataName];
       return data.get(data.getDimension(dimension || 'value'), this.dataIndex);
     },
+    // TODO: TYPE stricter type.
     setVisual: function (key, value) {
       this.dataIndex >= 0 && this[hostName][dataName].setItemVisual(this.dataIndex, key, value);
     },
@@ -60675,6 +62752,28 @@ util_mixin(GraphEdge, createGraphDataProxyMixin('hostGraph', 'edgeData'));
  * AUTO-GENERATED FILE. DO NOT MODIFY.
  */
 
+/*
+* Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*   http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing,
+* software distributed under the License is distributed on an
+* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+* KIND, either express or implied.  See the License for the
+* specific language governing permissions and limitations
+* under the License.
+*/
+
+/**
+ * Link lists and struct (graph or tree)
+ */
 
 
 var inner = makeInner();
@@ -60693,25 +62792,32 @@ function linkList(opt) {
   }
 
   opt.datas = opt.mainData = null;
-  linkAll(mainData, datas, opt);
+  linkAll(mainData, datas, opt); // Porxy data original methods.
+
   util_each(datas, function (data) {
     util_each(mainData.TRANSFERABLE_METHODS, function (methodName) {
       data.wrapMethod(methodName, util_curry(transferInjection, opt));
     });
-  });
-  mainData.wrapMethod('cloneShallow', util_curry(cloneShallowInjection, opt));
+  }); // Beyond transfer, additional features should be added to `cloneShallow`.
+
+  mainData.wrapMethod('cloneShallow', util_curry(cloneShallowInjection, opt)); // Only mainData trigger change, because struct.update may trigger
+  // another changable methods, which may bring about dead lock.
+
   util_each(mainData.CHANGABLE_METHODS, function (methodName) {
     mainData.wrapMethod(methodName, util_curry(changeInjection, opt));
-  });
+  }); // Make sure datas contains mainData.
+
   util_assert(datas[mainData.dataType] === mainData);
 }
 
 function transferInjection(opt, res) {
   if (isMainData(this)) {
+    // Transfer datas to new main data.
     var datas = core_util_extend({}, inner(this).datas);
     datas[this.dataType] = res;
     linkAll(res, datas, opt);
   } else {
+    // Modify the reference in main data to point newData.
     linkSingle(res, this.dataType, inner(this).mainData, opt);
   }
 
@@ -60724,16 +62830,31 @@ function changeInjection(opt, res) {
 }
 
 function cloneShallowInjection(opt, res) {
+  // cloneShallow, which brings about some fragilities, may be inappropriate
+  // to be exposed as an API. So for implementation simplicity we can make
+  // the restriction that cloneShallow of not-mainData should not be invoked
+  // outside, but only be invoked here.
   util_each(inner(res).datas, function (data, dataType) {
     data !== res && linkSingle(data.cloneShallow(), dataType, res, opt);
   });
   return res;
 }
+/**
+ * Supplement method to List.
+ *
+ * @public
+ * @param [dataType] If not specified, return mainData.
+ */
+
 
 function getLinkedData(dataType) {
   var mainData = inner(this).mainData;
   return dataType == null || mainData == null ? mainData : inner(mainData).datas[dataType];
 }
+/**
+ * Get list of all linked data
+ */
+
 
 function getLinkedDataAll() {
   var mainData = inner(this).mainData;
@@ -60766,7 +62887,8 @@ function linkSingle(data, dataType, mainData, opt) {
   if (opt.struct) {
     data[opt.structAttr] = opt.struct;
     opt.struct[opt.datasAttr[dataType]] = data;
-  }
+  } // Supplement method.
+
 
   data.getLinkedData = getLinkedData;
   data.getLinkedDataAll = getLinkedDataAll;
