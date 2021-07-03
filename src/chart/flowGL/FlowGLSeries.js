@@ -9,7 +9,10 @@ export default echarts.SeriesModel.extend({
     visualStyleAccessPath: 'itemStyle',
 
     getInitialData: function (option, ecModel) {
-        var coordSysDimensions = echarts.getCoordinateSystemDimensions(this.get('coordinateSystem')) || ['x', 'y'];
+        var coordType = this.get('coordinateSystem');
+        // TODO hotfix for the bug in echarts that get coord dimensions is undefined.
+        var coordSysDimensions = coordType === 'geo' ? ['lng', 'lat']
+            : (echarts.getCoordinateSystemDimensions(coordType) || ['x', 'y']);
         if (process.env.NODE_ENV !== 'production') {
             if (coordSysDimensions.length > 2) {
                 throw new Error('flowGL can only be used on 2d coordinate systems.');
