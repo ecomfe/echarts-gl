@@ -14,7 +14,7 @@ return /******/ (() => { // webpackBootstrap
 
 /***/ "./src/export/all.js":
 /*!*****************************************!*\
-  !*** ./src/export/all.js + 368 modules ***!
+  !*** ./src/export/all.js + 360 modules ***!
   \*****************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
@@ -23712,7 +23712,7 @@ function util_extend(target, source) {
     }
     return target;
 }
-function defaults(target, source, overlay) {
+function util_defaults(target, source, overlay) {
     var keysArr = keys(source);
     for (var i = 0; i < keysArr.length; i++) {
         var key = keysArr[i];
@@ -23769,7 +23769,7 @@ function mixin(target, source, override) {
         }
     }
     else {
-        defaults(target, source, override);
+        util_defaults(target, source, override);
     }
 }
 function isArrayLike(data) {
@@ -26934,7 +26934,7 @@ external_echarts_.util.merge(Grid3DModel.prototype, componentLightMixin);
 /* harmony default export */ const grid3D_Grid3DModel = (Grid3DModel);
 
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/tslib/tslib.es6.js
+;// CONCATENATED MODULE: ./node_modules/zrender/node_modules/tslib/tslib.es6.js
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -27163,121 +27163,9 @@ function __classPrivateFieldSet(receiver, privateMap, value) {
     return value;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/LRU.js
-var LRU_Entry = (function () {
-    function Entry(val) {
-        this.value = val;
-    }
-    return Entry;
-}());
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/helper/image.js
 
-var core_LRU_LinkedList = (function () {
-    function LinkedList() {
-        this._len = 0;
-    }
-    LinkedList.prototype.insert = function (val) {
-        var entry = new LRU_Entry(val);
-        this.insertEntry(entry);
-        return entry;
-    };
-    LinkedList.prototype.insertEntry = function (entry) {
-        if (!this.head) {
-            this.head = this.tail = entry;
-        }
-        else {
-            this.tail.next = entry;
-            entry.prev = this.tail;
-            entry.next = null;
-            this.tail = entry;
-        }
-        this._len++;
-    };
-    LinkedList.prototype.remove = function (entry) {
-        var prev = entry.prev;
-        var next = entry.next;
-        if (prev) {
-            prev.next = next;
-        }
-        else {
-            this.head = next;
-        }
-        if (next) {
-            next.prev = prev;
-        }
-        else {
-            this.tail = prev;
-        }
-        entry.next = entry.prev = null;
-        this._len--;
-    };
-    LinkedList.prototype.len = function () {
-        return this._len;
-    };
-    LinkedList.prototype.clear = function () {
-        this.head = this.tail = null;
-        this._len = 0;
-    };
-    return LinkedList;
-}());
-
-var core_LRU_LRU = (function () {
-    function LRU(maxSize) {
-        this._list = new core_LRU_LinkedList();
-        this._maxSize = 10;
-        this._map = {};
-        this._maxSize = maxSize;
-    }
-    LRU.prototype.put = function (key, value) {
-        var list = this._list;
-        var map = this._map;
-        var removed = null;
-        if (map[key] == null) {
-            var len = list.len();
-            var entry = this._lastRemovedEntry;
-            if (len >= this._maxSize && len > 0) {
-                var leastUsedEntry = list.head;
-                list.remove(leastUsedEntry);
-                delete map[leastUsedEntry.key];
-                removed = leastUsedEntry.value;
-                this._lastRemovedEntry = leastUsedEntry;
-            }
-            if (entry) {
-                entry.value = value;
-            }
-            else {
-                entry = new LRU_Entry(value);
-            }
-            entry.key = key;
-            list.insertEntry(entry);
-            map[key] = entry;
-        }
-        return removed;
-    };
-    LRU.prototype.get = function (key) {
-        var entry = this._map[key];
-        var list = this._list;
-        if (entry != null) {
-            if (entry !== list.tail) {
-                list.remove(entry);
-                list.insertEntry(entry);
-            }
-            return entry.value;
-        }
-    };
-    LRU.prototype.clear = function () {
-        this._list.clear();
-        this._map = {};
-    };
-    LRU.prototype.len = function () {
-        return this._list.len();
-    };
-    return LRU;
-}());
-/* harmony default export */ const zrender_lib_core_LRU = (core_LRU_LRU);
-
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/helper/image.js
-
-var globalImageCache = new zrender_lib_core_LRU(50);
+var globalImageCache = new lib_core_LRU(50);
 function findExistImage(newImageOrSrc) {
     if (typeof newImageOrSrc === 'string') {
         var cachedImgObj = globalImageCache.get(newImageOrSrc);
@@ -27331,502 +27219,7 @@ function isImageReady(image) {
     return image && image.width && image.height;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/util.js
-var util_BUILTIN_OBJECT = {
-    '[object Function]': true,
-    '[object RegExp]': true,
-    '[object Date]': true,
-    '[object Error]': true,
-    '[object CanvasGradient]': true,
-    '[object CanvasPattern]': true,
-    '[object Image]': true,
-    '[object Canvas]': true
-};
-var util_TYPED_ARRAY = {
-    '[object Int8Array]': true,
-    '[object Uint8Array]': true,
-    '[object Uint8ClampedArray]': true,
-    '[object Int16Array]': true,
-    '[object Uint16Array]': true,
-    '[object Int32Array]': true,
-    '[object Uint32Array]': true,
-    '[object Float32Array]': true,
-    '[object Float64Array]': true
-};
-var util_objToString = Object.prototype.toString;
-var util_arrayProto = Array.prototype;
-var core_util_nativeForEach = util_arrayProto.forEach;
-var util_nativeFilter = util_arrayProto.filter;
-var util_nativeSlice = util_arrayProto.slice;
-var util_nativeMap = util_arrayProto.map;
-var util_ctorFunction = function () { }.constructor;
-var util_protoFunction = util_ctorFunction ? util_ctorFunction.prototype : null;
-var util_methods = {};
-function util_$override(name, fn) {
-    util_methods[name] = fn;
-}
-var util_idStart = 0x0907;
-function core_util_guid() {
-    return util_idStart++;
-}
-function util_logError() {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-    }
-    if (typeof console !== 'undefined') {
-        console.error.apply(console, args);
-    }
-}
-function util_clone(source) {
-    if (source == null || typeof source !== 'object') {
-        return source;
-    }
-    var result = source;
-    var typeStr = util_objToString.call(source);
-    if (typeStr === '[object Array]') {
-        if (!util_isPrimitive(source)) {
-            result = [];
-            for (var i = 0, len = source.length; i < len; i++) {
-                result[i] = util_clone(source[i]);
-            }
-        }
-    }
-    else if (util_TYPED_ARRAY[typeStr]) {
-        if (!util_isPrimitive(source)) {
-            var Ctor = source.constructor;
-            if (Ctor.from) {
-                result = Ctor.from(source);
-            }
-            else {
-                result = new Ctor(source.length);
-                for (var i = 0, len = source.length; i < len; i++) {
-                    result[i] = util_clone(source[i]);
-                }
-            }
-        }
-    }
-    else if (!util_BUILTIN_OBJECT[typeStr] && !util_isPrimitive(source) && !util_isDom(source)) {
-        result = {};
-        for (var key in source) {
-            if (source.hasOwnProperty(key)) {
-                result[key] = util_clone(source[key]);
-            }
-        }
-    }
-    return result;
-}
-function util_merge(target, source, overwrite) {
-    if (!util_isObject(source) || !util_isObject(target)) {
-        return overwrite ? util_clone(source) : target;
-    }
-    for (var key in source) {
-        if (source.hasOwnProperty(key)) {
-            var targetProp = target[key];
-            var sourceProp = source[key];
-            if (util_isObject(sourceProp)
-                && util_isObject(targetProp)
-                && !util_isArray(sourceProp)
-                && !util_isArray(targetProp)
-                && !util_isDom(sourceProp)
-                && !util_isDom(targetProp)
-                && !util_isBuiltInObject(sourceProp)
-                && !util_isBuiltInObject(targetProp)
-                && !util_isPrimitive(sourceProp)
-                && !util_isPrimitive(targetProp)) {
-                util_merge(targetProp, sourceProp, overwrite);
-            }
-            else if (overwrite || !(key in target)) {
-                target[key] = util_clone(source[key]);
-            }
-        }
-    }
-    return target;
-}
-function util_mergeAll(targetAndSources, overwrite) {
-    var result = targetAndSources[0];
-    for (var i = 1, len = targetAndSources.length; i < len; i++) {
-        result = util_merge(result, targetAndSources[i], overwrite);
-    }
-    return result;
-}
-function core_util_extend(target, source) {
-    if (Object.assign) {
-        Object.assign(target, source);
-    }
-    else {
-        for (var key in source) {
-            if (source.hasOwnProperty(key)) {
-                target[key] = source[key];
-            }
-        }
-    }
-    return target;
-}
-function util_defaults(target, source, overlay) {
-    var keysArr = util_keys(source);
-    for (var i = 0; i < keysArr.length; i++) {
-        var key = keysArr[i];
-        if ((overlay ? source[key] != null : target[key] == null)) {
-            target[key] = source[key];
-        }
-    }
-    return target;
-}
-var util_createCanvas = function () {
-    return util_methods.createCanvas();
-};
-util_methods.createCanvas = function () {
-    return document.createElement('canvas');
-};
-function util_indexOf(array, value) {
-    if (array) {
-        if (array.indexOf) {
-            return array.indexOf(value);
-        }
-        for (var i = 0, len = array.length; i < len; i++) {
-            if (array[i] === value) {
-                return i;
-            }
-        }
-    }
-    return -1;
-}
-function util_inherits(clazz, baseClazz) {
-    var clazzPrototype = clazz.prototype;
-    function F() { }
-    F.prototype = baseClazz.prototype;
-    clazz.prototype = new F();
-    for (var prop in clazzPrototype) {
-        if (clazzPrototype.hasOwnProperty(prop)) {
-            clazz.prototype[prop] = clazzPrototype[prop];
-        }
-    }
-    clazz.prototype.constructor = clazz;
-    clazz.superClass = baseClazz;
-}
-function util_mixin(target, source, override) {
-    target = 'prototype' in target ? target.prototype : target;
-    source = 'prototype' in source ? source.prototype : source;
-    if (Object.getOwnPropertyNames) {
-        var keyList = Object.getOwnPropertyNames(source);
-        for (var i = 0; i < keyList.length; i++) {
-            var key = keyList[i];
-            if (key !== 'constructor') {
-                if ((override ? source[key] != null : target[key] == null)) {
-                    target[key] = source[key];
-                }
-            }
-        }
-    }
-    else {
-        util_defaults(target, source, override);
-    }
-}
-function util_isArrayLike(data) {
-    if (!data) {
-        return false;
-    }
-    if (typeof data === 'string') {
-        return false;
-    }
-    return typeof data.length === 'number';
-}
-function util_each(arr, cb, context) {
-    if (!(arr && cb)) {
-        return;
-    }
-    if (arr.forEach && arr.forEach === core_util_nativeForEach) {
-        arr.forEach(cb, context);
-    }
-    else if (arr.length === +arr.length) {
-        for (var i = 0, len = arr.length; i < len; i++) {
-            cb.call(context, arr[i], i, arr);
-        }
-    }
-    else {
-        for (var key in arr) {
-            if (arr.hasOwnProperty(key)) {
-                cb.call(context, arr[key], key, arr);
-            }
-        }
-    }
-}
-function util_map(arr, cb, context) {
-    if (!arr) {
-        return [];
-    }
-    if (!cb) {
-        return util_slice(arr);
-    }
-    if (arr.map && arr.map === util_nativeMap) {
-        return arr.map(cb, context);
-    }
-    else {
-        var result = [];
-        for (var i = 0, len = arr.length; i < len; i++) {
-            result.push(cb.call(context, arr[i], i, arr));
-        }
-        return result;
-    }
-}
-function util_reduce(arr, cb, memo, context) {
-    if (!(arr && cb)) {
-        return;
-    }
-    for (var i = 0, len = arr.length; i < len; i++) {
-        memo = cb.call(context, memo, arr[i], i, arr);
-    }
-    return memo;
-}
-function util_filter(arr, cb, context) {
-    if (!arr) {
-        return [];
-    }
-    if (!cb) {
-        return util_slice(arr);
-    }
-    if (arr.filter && arr.filter === util_nativeFilter) {
-        return arr.filter(cb, context);
-    }
-    else {
-        var result = [];
-        for (var i = 0, len = arr.length; i < len; i++) {
-            if (cb.call(context, arr[i], i, arr)) {
-                result.push(arr[i]);
-            }
-        }
-        return result;
-    }
-}
-function util_find(arr, cb, context) {
-    if (!(arr && cb)) {
-        return;
-    }
-    for (var i = 0, len = arr.length; i < len; i++) {
-        if (cb.call(context, arr[i], i, arr)) {
-            return arr[i];
-        }
-    }
-}
-function util_keys(obj) {
-    if (!obj) {
-        return [];
-    }
-    if (Object.keys) {
-        return Object.keys(obj);
-    }
-    var keyList = [];
-    for (var key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            keyList.push(key);
-        }
-    }
-    return keyList;
-}
-function util_bindPolyfill(func, context) {
-    var args = [];
-    for (var _i = 2; _i < arguments.length; _i++) {
-        args[_i - 2] = arguments[_i];
-    }
-    return function () {
-        return func.apply(context, args.concat(util_nativeSlice.call(arguments)));
-    };
-}
-var util_bind = (util_protoFunction && util_isFunction(util_protoFunction.bind))
-    ? util_protoFunction.call.bind(util_protoFunction.bind)
-    : util_bindPolyfill;
-function util_curry(func) {
-    var args = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        args[_i - 1] = arguments[_i];
-    }
-    return function () {
-        return func.apply(this, args.concat(util_nativeSlice.call(arguments)));
-    };
-}
-
-function util_isArray(value) {
-    if (Array.isArray) {
-        return Array.isArray(value);
-    }
-    return util_objToString.call(value) === '[object Array]';
-}
-function util_isFunction(value) {
-    return typeof value === 'function';
-}
-function util_isString(value) {
-    return typeof value === 'string';
-}
-function util_isStringSafe(value) {
-    return util_objToString.call(value) === '[object String]';
-}
-function util_isNumber(value) {
-    return typeof value === 'number';
-}
-function util_isObject(value) {
-    var type = typeof value;
-    return type === 'function' || (!!value && type === 'object');
-}
-function util_isBuiltInObject(value) {
-    return !!util_BUILTIN_OBJECT[util_objToString.call(value)];
-}
-function util_isTypedArray(value) {
-    return !!util_TYPED_ARRAY[util_objToString.call(value)];
-}
-function util_isDom(value) {
-    return typeof value === 'object'
-        && typeof value.nodeType === 'number'
-        && typeof value.ownerDocument === 'object';
-}
-function util_isGradientObject(value) {
-    return value.colorStops != null;
-}
-function util_isImagePatternObject(value) {
-    return value.image != null;
-}
-function util_isRegExp(value) {
-    return util_objToString.call(value) === '[object RegExp]';
-}
-function util_eqNaN(value) {
-    return value !== value;
-}
-function lib_core_util_retrieve() {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-    }
-    for (var i = 0, len = args.length; i < len; i++) {
-        if (args[i] != null) {
-            return args[i];
-        }
-    }
-}
-function util_retrieve2(value0, value1) {
-    return value0 != null
-        ? value0
-        : value1;
-}
-function util_retrieve3(value0, value1, value2) {
-    return value0 != null
-        ? value0
-        : value1 != null
-            ? value1
-            : value2;
-}
-function util_slice(arr) {
-    var args = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        args[_i - 1] = arguments[_i];
-    }
-    return util_nativeSlice.apply(arr, args);
-}
-function util_normalizeCssArray(val) {
-    if (typeof (val) === 'number') {
-        return [val, val, val, val];
-    }
-    var len = val.length;
-    if (len === 2) {
-        return [val[0], val[1], val[0], val[1]];
-    }
-    else if (len === 3) {
-        return [val[0], val[1], val[2], val[1]];
-    }
-    return val;
-}
-function util_assert(condition, message) {
-    if (!condition) {
-        throw new Error(message);
-    }
-}
-function util_trim(str) {
-    if (str == null) {
-        return null;
-    }
-    else if (typeof str.trim === 'function') {
-        return str.trim();
-    }
-    else {
-        return str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-    }
-}
-var util_primitiveKey = '__ec_primitive__';
-function util_setAsPrimitive(obj) {
-    obj[util_primitiveKey] = true;
-}
-function util_isPrimitive(obj) {
-    return obj[util_primitiveKey];
-}
-var util_HashMap = (function () {
-    function HashMap(obj) {
-        this.data = {};
-        var isArr = util_isArray(obj);
-        this.data = {};
-        var thisMap = this;
-        (obj instanceof HashMap)
-            ? obj.each(visit)
-            : (obj && util_each(obj, visit));
-        function visit(value, key) {
-            isArr ? thisMap.set(value, key) : thisMap.set(key, value);
-        }
-    }
-    HashMap.prototype.get = function (key) {
-        return this.data.hasOwnProperty(key) ? this.data[key] : null;
-    };
-    HashMap.prototype.set = function (key, value) {
-        return (this.data[key] = value);
-    };
-    HashMap.prototype.each = function (cb, context) {
-        for (var key in this.data) {
-            if (this.data.hasOwnProperty(key)) {
-                cb.call(context, this.data[key], key);
-            }
-        }
-    };
-    HashMap.prototype.keys = function () {
-        return util_keys(this.data);
-    };
-    HashMap.prototype.removeKey = function (key) {
-        delete this.data[key];
-    };
-    return HashMap;
-}());
-
-function util_createHashMap(obj) {
-    return new util_HashMap(obj);
-}
-function util_concatArray(a, b) {
-    var newArray = new a.constructor(a.length + b.length);
-    for (var i = 0; i < a.length; i++) {
-        newArray[i] = a[i];
-    }
-    var offset = a.length;
-    for (var i = 0; i < b.length; i++) {
-        newArray[i + offset] = b[i];
-    }
-    return newArray;
-}
-function util_createObject(proto, properties) {
-    var obj;
-    if (Object.create) {
-        obj = Object.create(proto);
-    }
-    else {
-        var StyleCtor = function () { };
-        StyleCtor.prototype = proto;
-        obj = new StyleCtor();
-    }
-    if (properties) {
-        core_util_extend(obj, properties);
-    }
-    return obj;
-}
-function util_hasOwn(own, prop) {
-    return own.hasOwnProperty(prop);
-}
-function core_util_noop() { }
-
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/matrix.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/matrix.js
 function create() {
     return [1, 0, 0, 1, 0, 0];
 }
@@ -27926,7 +27319,7 @@ function matrix_clone(a) {
     return b;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/Point.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/Point.js
 var Point_Point = (function () {
     function Point(x, y) {
         this.x = x || 0;
@@ -28057,7 +27450,7 @@ var Point_Point = (function () {
 }());
 /* harmony default export */ const core_Point = (Point_Point);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/BoundingRect.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/BoundingRect.js
 
 
 var BoundingRect_mathMin = Math.min;
@@ -28274,7 +27667,7 @@ var BoundingRect = (function () {
 }());
 /* harmony default export */ const core_BoundingRect = (BoundingRect);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/contain/text.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/text.js
 
 
 
@@ -28284,7 +27677,7 @@ var _ctx;
 var _cachedFont;
 function defaultMeasureText(text, font) {
     if (!_ctx) {
-        _ctx = util_createCanvas().getContext('2d');
+        _ctx = createCanvas().getContext('2d');
     }
     if (_cachedFont !== font) {
         _cachedFont = _ctx.font = font || DEFAULT_FONT;
@@ -28301,7 +27694,7 @@ function getWidth(text, font) {
     font = font || DEFAULT_FONT;
     var cacheOfFont = textWidthCache[font];
     if (!cacheOfFont) {
-        cacheOfFont = textWidthCache[font] = new zrender_lib_core_LRU(500);
+        cacheOfFont = textWidthCache[font] = new lib_core_LRU(500);
     }
     var width = cacheOfFont.get(text);
     if (width == null) {
@@ -28464,7 +27857,7 @@ function calculateTextPosition(out, opts, rect) {
     return out;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/helper/parseText.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/helper/parseText.js
 
 
 
@@ -28482,14 +27875,14 @@ function truncateText(text, containerWidth, font, ellipsis, options) {
 }
 function prepareTruncateOptions(containerWidth, font, ellipsis, options) {
     options = options || {};
-    var preparedOpts = core_util_extend({}, options);
+    var preparedOpts = util_extend({}, options);
     preparedOpts.font = font;
-    ellipsis = util_retrieve2(ellipsis, '...');
-    preparedOpts.maxIterations = util_retrieve2(options.maxIterations, 2);
-    var minChar = preparedOpts.minChar = util_retrieve2(options.minChar, 0);
+    ellipsis = retrieve2(ellipsis, '...');
+    preparedOpts.maxIterations = retrieve2(options.maxIterations, 2);
+    var minChar = preparedOpts.minChar = retrieve2(options.minChar, 0);
     preparedOpts.cnCharWidth = getWidth('国', font);
     var ascCharWidth = preparedOpts.ascCharWidth = getWidth('a', font);
-    preparedOpts.placeholder = util_retrieve2(options.placeholder, '');
+    preparedOpts.placeholder = retrieve2(options.placeholder, '');
     var contentWidth = containerWidth = Math.max(0, containerWidth - 1);
     for (var i = 0; i < minChar && contentWidth >= ascCharWidth; i++) {
         contentWidth -= ascCharWidth;
@@ -28551,7 +27944,7 @@ function parsePlainText(text, style) {
     var font = style.font;
     var truncate = overflow === 'truncate';
     var calculatedLineHeight = getLineHeight(font);
-    var lineHeight = util_retrieve2(style.lineHeight, calculatedLineHeight);
+    var lineHeight = retrieve2(style.lineHeight, calculatedLineHeight);
     var truncateLineOverflow = style.lineOverflow === 'truncate';
     var width = style.width;
     var lines;
@@ -28562,7 +27955,7 @@ function parsePlainText(text, style) {
         lines = text ? text.split('\n') : [];
     }
     var contentHeight = lines.length * lineHeight;
-    var height = util_retrieve2(style.height, contentHeight);
+    var height = retrieve2(style.height, contentHeight);
     if (contentHeight > height && truncateLineOverflow) {
         var lineCount = Math.floor(height / lineHeight);
         lines = lines.slice(0, lineCount);
@@ -28676,11 +28069,11 @@ function parseRichText(text, style) {
             var paddingH = textPadding ? textPadding[1] + textPadding[3] : 0;
             var font = token.font = tokenStyle.font || style.font;
             token.contentHeight = getLineHeight(font);
-            var tokenHeight = util_retrieve2(tokenStyle.height, token.contentHeight);
+            var tokenHeight = retrieve2(tokenStyle.height, token.contentHeight);
             token.innerHeight = tokenHeight;
             textPadding && (tokenHeight += textPadding[0] + textPadding[2]);
             token.height = tokenHeight;
-            token.lineHeight = util_retrieve3(tokenStyle.lineHeight, style.lineHeight, tokenHeight);
+            token.lineHeight = retrieve3(tokenStyle.lineHeight, style.lineHeight, tokenHeight);
             token.align = tokenStyle && tokenStyle.align || style.align;
             token.verticalAlign = tokenStyle && tokenStyle.verticalAlign || 'middle';
             if (truncateLine && topHeight != null && calculatedHeight + token.lineHeight > topHeight) {
@@ -28734,8 +28127,8 @@ function parseRichText(text, style) {
         }
         finishLine(line, lineWidth, lineHeight);
     }
-    contentBlock.outerWidth = contentBlock.width = util_retrieve2(topWidth, calculatedWidth);
-    contentBlock.outerHeight = contentBlock.height = util_retrieve2(topHeight, calculatedHeight);
+    contentBlock.outerWidth = contentBlock.width = retrieve2(topWidth, calculatedWidth);
+    contentBlock.outerHeight = contentBlock.height = retrieve2(topHeight, calculatedHeight);
     contentBlock.contentHeight = calculatedHeight;
     contentBlock.contentWidth = calculatedWidth;
     if (stlPadding) {
@@ -28810,7 +28203,7 @@ function isLatin(ch) {
     var code = ch.charCodeAt(0);
     return code >= 0x21 && code <= 0xFF;
 }
-var breakCharMap = util_reduce(',&?/;] '.split(''), function (obj, ch) {
+var breakCharMap = reduce(',&?/;] '.split(''), function (obj, ch) {
     obj[ch] = true;
     return obj;
 }, {});
@@ -28928,7 +28321,7 @@ function wrapText(text, font, lineWidth, isBreakAll, lastAccumWidth) {
     };
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/vector.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/vector.js
 function vector_create(x, y) {
     if (x == null) {
         x = 0;
@@ -29042,7 +28435,7 @@ function vector_max(out, v1, v2) {
     return out;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/Transformable.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/Transformable.js
 
 
 var mIdentity = identity;
@@ -29265,1421 +28658,7 @@ var Transformable = (function () {
 ;
 /* harmony default export */ const core_Transformable = (Transformable);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/animation/easing.js
-var easing_easing = {
-    linear: function (k) {
-        return k;
-    },
-    quadraticIn: function (k) {
-        return k * k;
-    },
-    quadraticOut: function (k) {
-        return k * (2 - k);
-    },
-    quadraticInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return 0.5 * k * k;
-        }
-        return -0.5 * (--k * (k - 2) - 1);
-    },
-    cubicIn: function (k) {
-        return k * k * k;
-    },
-    cubicOut: function (k) {
-        return --k * k * k + 1;
-    },
-    cubicInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return 0.5 * k * k * k;
-        }
-        return 0.5 * ((k -= 2) * k * k + 2);
-    },
-    quarticIn: function (k) {
-        return k * k * k * k;
-    },
-    quarticOut: function (k) {
-        return 1 - (--k * k * k * k);
-    },
-    quarticInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return 0.5 * k * k * k * k;
-        }
-        return -0.5 * ((k -= 2) * k * k * k - 2);
-    },
-    quinticIn: function (k) {
-        return k * k * k * k * k;
-    },
-    quinticOut: function (k) {
-        return --k * k * k * k * k + 1;
-    },
-    quinticInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return 0.5 * k * k * k * k * k;
-        }
-        return 0.5 * ((k -= 2) * k * k * k * k + 2);
-    },
-    sinusoidalIn: function (k) {
-        return 1 - Math.cos(k * Math.PI / 2);
-    },
-    sinusoidalOut: function (k) {
-        return Math.sin(k * Math.PI / 2);
-    },
-    sinusoidalInOut: function (k) {
-        return 0.5 * (1 - Math.cos(Math.PI * k));
-    },
-    exponentialIn: function (k) {
-        return k === 0 ? 0 : Math.pow(1024, k - 1);
-    },
-    exponentialOut: function (k) {
-        return k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
-    },
-    exponentialInOut: function (k) {
-        if (k === 0) {
-            return 0;
-        }
-        if (k === 1) {
-            return 1;
-        }
-        if ((k *= 2) < 1) {
-            return 0.5 * Math.pow(1024, k - 1);
-        }
-        return 0.5 * (-Math.pow(2, -10 * (k - 1)) + 2);
-    },
-    circularIn: function (k) {
-        return 1 - Math.sqrt(1 - k * k);
-    },
-    circularOut: function (k) {
-        return Math.sqrt(1 - (--k * k));
-    },
-    circularInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return -0.5 * (Math.sqrt(1 - k * k) - 1);
-        }
-        return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
-    },
-    elasticIn: function (k) {
-        var s;
-        var a = 0.1;
-        var p = 0.4;
-        if (k === 0) {
-            return 0;
-        }
-        if (k === 1) {
-            return 1;
-        }
-        if (!a || a < 1) {
-            a = 1;
-            s = p / 4;
-        }
-        else {
-            s = p * Math.asin(1 / a) / (2 * Math.PI);
-        }
-        return -(a * Math.pow(2, 10 * (k -= 1))
-            * Math.sin((k - s) * (2 * Math.PI) / p));
-    },
-    elasticOut: function (k) {
-        var s;
-        var a = 0.1;
-        var p = 0.4;
-        if (k === 0) {
-            return 0;
-        }
-        if (k === 1) {
-            return 1;
-        }
-        if (!a || a < 1) {
-            a = 1;
-            s = p / 4;
-        }
-        else {
-            s = p * Math.asin(1 / a) / (2 * Math.PI);
-        }
-        return (a * Math.pow(2, -10 * k)
-            * Math.sin((k - s) * (2 * Math.PI) / p) + 1);
-    },
-    elasticInOut: function (k) {
-        var s;
-        var a = 0.1;
-        var p = 0.4;
-        if (k === 0) {
-            return 0;
-        }
-        if (k === 1) {
-            return 1;
-        }
-        if (!a || a < 1) {
-            a = 1;
-            s = p / 4;
-        }
-        else {
-            s = p * Math.asin(1 / a) / (2 * Math.PI);
-        }
-        if ((k *= 2) < 1) {
-            return -0.5 * (a * Math.pow(2, 10 * (k -= 1))
-                * Math.sin((k - s) * (2 * Math.PI) / p));
-        }
-        return a * Math.pow(2, -10 * (k -= 1))
-            * Math.sin((k - s) * (2 * Math.PI) / p) * 0.5 + 1;
-    },
-    backIn: function (k) {
-        var s = 1.70158;
-        return k * k * ((s + 1) * k - s);
-    },
-    backOut: function (k) {
-        var s = 1.70158;
-        return --k * k * ((s + 1) * k + s) + 1;
-    },
-    backInOut: function (k) {
-        var s = 1.70158 * 1.525;
-        if ((k *= 2) < 1) {
-            return 0.5 * (k * k * ((s + 1) * k - s));
-        }
-        return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
-    },
-    bounceIn: function (k) {
-        return 1 - easing_easing.bounceOut(1 - k);
-    },
-    bounceOut: function (k) {
-        if (k < (1 / 2.75)) {
-            return 7.5625 * k * k;
-        }
-        else if (k < (2 / 2.75)) {
-            return 7.5625 * (k -= (1.5 / 2.75)) * k + 0.75;
-        }
-        else if (k < (2.5 / 2.75)) {
-            return 7.5625 * (k -= (2.25 / 2.75)) * k + 0.9375;
-        }
-        else {
-            return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375;
-        }
-    },
-    bounceInOut: function (k) {
-        if (k < 0.5) {
-            return easing_easing.bounceIn(k * 2) * 0.5;
-        }
-        return easing_easing.bounceOut(k * 2 - 1) * 0.5 + 0.5;
-    }
-};
-/* harmony default export */ const lib_animation_easing = (easing_easing);
-
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/animation/Clip.js
-
-var Clip_Clip = (function () {
-    function Clip(opts) {
-        this._initialized = false;
-        this._startTime = 0;
-        this._pausedTime = 0;
-        this._paused = false;
-        this._life = opts.life || 1000;
-        this._delay = opts.delay || 0;
-        this.loop = opts.loop == null ? false : opts.loop;
-        this.gap = opts.gap || 0;
-        this.easing = opts.easing || 'linear';
-        this.onframe = opts.onframe;
-        this.ondestroy = opts.ondestroy;
-        this.onrestart = opts.onrestart;
-    }
-    Clip.prototype.step = function (globalTime, deltaTime) {
-        if (!this._initialized) {
-            this._startTime = globalTime + this._delay;
-            this._initialized = true;
-        }
-        if (this._paused) {
-            this._pausedTime += deltaTime;
-            return;
-        }
-        var percent = (globalTime - this._startTime - this._pausedTime) / this._life;
-        if (percent < 0) {
-            percent = 0;
-        }
-        percent = Math.min(percent, 1);
-        var easing = this.easing;
-        var easingFunc = typeof easing === 'string'
-            ? lib_animation_easing[easing] : easing;
-        var schedule = typeof easingFunc === 'function'
-            ? easingFunc(percent)
-            : percent;
-        this.onframe && this.onframe(schedule);
-        if (percent === 1) {
-            if (this.loop) {
-                this._restart(globalTime);
-                this.onrestart && this.onrestart();
-            }
-            else {
-                return true;
-            }
-        }
-        return false;
-    };
-    Clip.prototype._restart = function (globalTime) {
-        var remainder = (globalTime - this._startTime - this._pausedTime) % this._life;
-        this._startTime = globalTime - remainder + this.gap;
-        this._pausedTime = 0;
-    };
-    Clip.prototype.pause = function () {
-        this._paused = true;
-    };
-    Clip.prototype.resume = function () {
-        this._paused = false;
-    };
-    return Clip;
-}());
-/* harmony default export */ const lib_animation_Clip = (Clip_Clip);
-
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/tool/color.js
-
-var tool_color_kCSSColorTable = {
-    'transparent': [0, 0, 0, 0], 'aliceblue': [240, 248, 255, 1],
-    'antiquewhite': [250, 235, 215, 1], 'aqua': [0, 255, 255, 1],
-    'aquamarine': [127, 255, 212, 1], 'azure': [240, 255, 255, 1],
-    'beige': [245, 245, 220, 1], 'bisque': [255, 228, 196, 1],
-    'black': [0, 0, 0, 1], 'blanchedalmond': [255, 235, 205, 1],
-    'blue': [0, 0, 255, 1], 'blueviolet': [138, 43, 226, 1],
-    'brown': [165, 42, 42, 1], 'burlywood': [222, 184, 135, 1],
-    'cadetblue': [95, 158, 160, 1], 'chartreuse': [127, 255, 0, 1],
-    'chocolate': [210, 105, 30, 1], 'coral': [255, 127, 80, 1],
-    'cornflowerblue': [100, 149, 237, 1], 'cornsilk': [255, 248, 220, 1],
-    'crimson': [220, 20, 60, 1], 'cyan': [0, 255, 255, 1],
-    'darkblue': [0, 0, 139, 1], 'darkcyan': [0, 139, 139, 1],
-    'darkgoldenrod': [184, 134, 11, 1], 'darkgray': [169, 169, 169, 1],
-    'darkgreen': [0, 100, 0, 1], 'darkgrey': [169, 169, 169, 1],
-    'darkkhaki': [189, 183, 107, 1], 'darkmagenta': [139, 0, 139, 1],
-    'darkolivegreen': [85, 107, 47, 1], 'darkorange': [255, 140, 0, 1],
-    'darkorchid': [153, 50, 204, 1], 'darkred': [139, 0, 0, 1],
-    'darksalmon': [233, 150, 122, 1], 'darkseagreen': [143, 188, 143, 1],
-    'darkslateblue': [72, 61, 139, 1], 'darkslategray': [47, 79, 79, 1],
-    'darkslategrey': [47, 79, 79, 1], 'darkturquoise': [0, 206, 209, 1],
-    'darkviolet': [148, 0, 211, 1], 'deeppink': [255, 20, 147, 1],
-    'deepskyblue': [0, 191, 255, 1], 'dimgray': [105, 105, 105, 1],
-    'dimgrey': [105, 105, 105, 1], 'dodgerblue': [30, 144, 255, 1],
-    'firebrick': [178, 34, 34, 1], 'floralwhite': [255, 250, 240, 1],
-    'forestgreen': [34, 139, 34, 1], 'fuchsia': [255, 0, 255, 1],
-    'gainsboro': [220, 220, 220, 1], 'ghostwhite': [248, 248, 255, 1],
-    'gold': [255, 215, 0, 1], 'goldenrod': [218, 165, 32, 1],
-    'gray': [128, 128, 128, 1], 'green': [0, 128, 0, 1],
-    'greenyellow': [173, 255, 47, 1], 'grey': [128, 128, 128, 1],
-    'honeydew': [240, 255, 240, 1], 'hotpink': [255, 105, 180, 1],
-    'indianred': [205, 92, 92, 1], 'indigo': [75, 0, 130, 1],
-    'ivory': [255, 255, 240, 1], 'khaki': [240, 230, 140, 1],
-    'lavender': [230, 230, 250, 1], 'lavenderblush': [255, 240, 245, 1],
-    'lawngreen': [124, 252, 0, 1], 'lemonchiffon': [255, 250, 205, 1],
-    'lightblue': [173, 216, 230, 1], 'lightcoral': [240, 128, 128, 1],
-    'lightcyan': [224, 255, 255, 1], 'lightgoldenrodyellow': [250, 250, 210, 1],
-    'lightgray': [211, 211, 211, 1], 'lightgreen': [144, 238, 144, 1],
-    'lightgrey': [211, 211, 211, 1], 'lightpink': [255, 182, 193, 1],
-    'lightsalmon': [255, 160, 122, 1], 'lightseagreen': [32, 178, 170, 1],
-    'lightskyblue': [135, 206, 250, 1], 'lightslategray': [119, 136, 153, 1],
-    'lightslategrey': [119, 136, 153, 1], 'lightsteelblue': [176, 196, 222, 1],
-    'lightyellow': [255, 255, 224, 1], 'lime': [0, 255, 0, 1],
-    'limegreen': [50, 205, 50, 1], 'linen': [250, 240, 230, 1],
-    'magenta': [255, 0, 255, 1], 'maroon': [128, 0, 0, 1],
-    'mediumaquamarine': [102, 205, 170, 1], 'mediumblue': [0, 0, 205, 1],
-    'mediumorchid': [186, 85, 211, 1], 'mediumpurple': [147, 112, 219, 1],
-    'mediumseagreen': [60, 179, 113, 1], 'mediumslateblue': [123, 104, 238, 1],
-    'mediumspringgreen': [0, 250, 154, 1], 'mediumturquoise': [72, 209, 204, 1],
-    'mediumvioletred': [199, 21, 133, 1], 'midnightblue': [25, 25, 112, 1],
-    'mintcream': [245, 255, 250, 1], 'mistyrose': [255, 228, 225, 1],
-    'moccasin': [255, 228, 181, 1], 'navajowhite': [255, 222, 173, 1],
-    'navy': [0, 0, 128, 1], 'oldlace': [253, 245, 230, 1],
-    'olive': [128, 128, 0, 1], 'olivedrab': [107, 142, 35, 1],
-    'orange': [255, 165, 0, 1], 'orangered': [255, 69, 0, 1],
-    'orchid': [218, 112, 214, 1], 'palegoldenrod': [238, 232, 170, 1],
-    'palegreen': [152, 251, 152, 1], 'paleturquoise': [175, 238, 238, 1],
-    'palevioletred': [219, 112, 147, 1], 'papayawhip': [255, 239, 213, 1],
-    'peachpuff': [255, 218, 185, 1], 'peru': [205, 133, 63, 1],
-    'pink': [255, 192, 203, 1], 'plum': [221, 160, 221, 1],
-    'powderblue': [176, 224, 230, 1], 'purple': [128, 0, 128, 1],
-    'red': [255, 0, 0, 1], 'rosybrown': [188, 143, 143, 1],
-    'royalblue': [65, 105, 225, 1], 'saddlebrown': [139, 69, 19, 1],
-    'salmon': [250, 128, 114, 1], 'sandybrown': [244, 164, 96, 1],
-    'seagreen': [46, 139, 87, 1], 'seashell': [255, 245, 238, 1],
-    'sienna': [160, 82, 45, 1], 'silver': [192, 192, 192, 1],
-    'skyblue': [135, 206, 235, 1], 'slateblue': [106, 90, 205, 1],
-    'slategray': [112, 128, 144, 1], 'slategrey': [112, 128, 144, 1],
-    'snow': [255, 250, 250, 1], 'springgreen': [0, 255, 127, 1],
-    'steelblue': [70, 130, 180, 1], 'tan': [210, 180, 140, 1],
-    'teal': [0, 128, 128, 1], 'thistle': [216, 191, 216, 1],
-    'tomato': [255, 99, 71, 1], 'turquoise': [64, 224, 208, 1],
-    'violet': [238, 130, 238, 1], 'wheat': [245, 222, 179, 1],
-    'white': [255, 255, 255, 1], 'whitesmoke': [245, 245, 245, 1],
-    'yellow': [255, 255, 0, 1], 'yellowgreen': [154, 205, 50, 1]
-};
-function tool_color_clampCssByte(i) {
-    i = Math.round(i);
-    return i < 0 ? 0 : i > 255 ? 255 : i;
-}
-function tool_color_clampCssAngle(i) {
-    i = Math.round(i);
-    return i < 0 ? 0 : i > 360 ? 360 : i;
-}
-function tool_color_clampCssFloat(f) {
-    return f < 0 ? 0 : f > 1 ? 1 : f;
-}
-function tool_color_parseCssInt(val) {
-    var str = val;
-    if (str.length && str.charAt(str.length - 1) === '%') {
-        return tool_color_clampCssByte(parseFloat(str) / 100 * 255);
-    }
-    return tool_color_clampCssByte(parseInt(str, 10));
-}
-function tool_color_parseCssFloat(val) {
-    var str = val;
-    if (str.length && str.charAt(str.length - 1) === '%') {
-        return tool_color_clampCssFloat(parseFloat(str) / 100);
-    }
-    return tool_color_clampCssFloat(parseFloat(str));
-}
-function tool_color_cssHueToRgb(m1, m2, h) {
-    if (h < 0) {
-        h += 1;
-    }
-    else if (h > 1) {
-        h -= 1;
-    }
-    if (h * 6 < 1) {
-        return m1 + (m2 - m1) * h * 6;
-    }
-    if (h * 2 < 1) {
-        return m2;
-    }
-    if (h * 3 < 2) {
-        return m1 + (m2 - m1) * (2 / 3 - h) * 6;
-    }
-    return m1;
-}
-function tool_color_lerpNumber(a, b, p) {
-    return a + (b - a) * p;
-}
-function tool_color_setRgba(out, r, g, b, a) {
-    out[0] = r;
-    out[1] = g;
-    out[2] = b;
-    out[3] = a;
-    return out;
-}
-function tool_color_copyRgba(out, a) {
-    out[0] = a[0];
-    out[1] = a[1];
-    out[2] = a[2];
-    out[3] = a[3];
-    return out;
-}
-var tool_color_colorCache = new zrender_lib_core_LRU(20);
-var tool_color_lastRemovedArr = null;
-function tool_color_putToCache(colorStr, rgbaArr) {
-    if (tool_color_lastRemovedArr) {
-        tool_color_copyRgba(tool_color_lastRemovedArr, rgbaArr);
-    }
-    tool_color_lastRemovedArr = tool_color_colorCache.put(colorStr, tool_color_lastRemovedArr || (rgbaArr.slice()));
-}
-function color_parse(colorStr, rgbaArr) {
-    if (!colorStr) {
-        return;
-    }
-    rgbaArr = rgbaArr || [];
-    var cached = tool_color_colorCache.get(colorStr);
-    if (cached) {
-        return tool_color_copyRgba(rgbaArr, cached);
-    }
-    colorStr = colorStr + '';
-    var str = colorStr.replace(/ /g, '').toLowerCase();
-    if (str in tool_color_kCSSColorTable) {
-        tool_color_copyRgba(rgbaArr, tool_color_kCSSColorTable[str]);
-        tool_color_putToCache(colorStr, rgbaArr);
-        return rgbaArr;
-    }
-    var strLen = str.length;
-    if (str.charAt(0) === '#') {
-        if (strLen === 4 || strLen === 5) {
-            var iv = parseInt(str.slice(1, 4), 16);
-            if (!(iv >= 0 && iv <= 0xfff)) {
-                tool_color_setRgba(rgbaArr, 0, 0, 0, 1);
-                return;
-            }
-            tool_color_setRgba(rgbaArr, ((iv & 0xf00) >> 4) | ((iv & 0xf00) >> 8), (iv & 0xf0) | ((iv & 0xf0) >> 4), (iv & 0xf) | ((iv & 0xf) << 4), strLen === 5 ? parseInt(str.slice(4), 16) / 0xf : 1);
-            tool_color_putToCache(colorStr, rgbaArr);
-            return rgbaArr;
-        }
-        else if (strLen === 7 || strLen === 9) {
-            var iv = parseInt(str.slice(1, 7), 16);
-            if (!(iv >= 0 && iv <= 0xffffff)) {
-                tool_color_setRgba(rgbaArr, 0, 0, 0, 1);
-                return;
-            }
-            tool_color_setRgba(rgbaArr, (iv & 0xff0000) >> 16, (iv & 0xff00) >> 8, iv & 0xff, strLen === 9 ? parseInt(str.slice(7), 16) / 0xff : 1);
-            tool_color_putToCache(colorStr, rgbaArr);
-            return rgbaArr;
-        }
-        return;
-    }
-    var op = str.indexOf('(');
-    var ep = str.indexOf(')');
-    if (op !== -1 && ep + 1 === strLen) {
-        var fname = str.substr(0, op);
-        var params = str.substr(op + 1, ep - (op + 1)).split(',');
-        var alpha = 1;
-        switch (fname) {
-            case 'rgba':
-                if (params.length !== 4) {
-                    return params.length === 3
-                        ? tool_color_setRgba(rgbaArr, +params[0], +params[1], +params[2], 1)
-                        : tool_color_setRgba(rgbaArr, 0, 0, 0, 1);
-                }
-                alpha = tool_color_parseCssFloat(params.pop());
-            case 'rgb':
-                if (params.length !== 3) {
-                    tool_color_setRgba(rgbaArr, 0, 0, 0, 1);
-                    return;
-                }
-                tool_color_setRgba(rgbaArr, tool_color_parseCssInt(params[0]), tool_color_parseCssInt(params[1]), tool_color_parseCssInt(params[2]), alpha);
-                tool_color_putToCache(colorStr, rgbaArr);
-                return rgbaArr;
-            case 'hsla':
-                if (params.length !== 4) {
-                    tool_color_setRgba(rgbaArr, 0, 0, 0, 1);
-                    return;
-                }
-                params[3] = tool_color_parseCssFloat(params[3]);
-                tool_color_hsla2rgba(params, rgbaArr);
-                tool_color_putToCache(colorStr, rgbaArr);
-                return rgbaArr;
-            case 'hsl':
-                if (params.length !== 3) {
-                    tool_color_setRgba(rgbaArr, 0, 0, 0, 1);
-                    return;
-                }
-                tool_color_hsla2rgba(params, rgbaArr);
-                tool_color_putToCache(colorStr, rgbaArr);
-                return rgbaArr;
-            default:
-                return;
-        }
-    }
-    tool_color_setRgba(rgbaArr, 0, 0, 0, 1);
-    return;
-}
-function tool_color_hsla2rgba(hsla, rgba) {
-    var h = (((parseFloat(hsla[0]) % 360) + 360) % 360) / 360;
-    var s = tool_color_parseCssFloat(hsla[1]);
-    var l = tool_color_parseCssFloat(hsla[2]);
-    var m2 = l <= 0.5 ? l * (s + 1) : l + s - l * s;
-    var m1 = l * 2 - m2;
-    rgba = rgba || [];
-    tool_color_setRgba(rgba, tool_color_clampCssByte(tool_color_cssHueToRgb(m1, m2, h + 1 / 3) * 255), tool_color_clampCssByte(tool_color_cssHueToRgb(m1, m2, h) * 255), tool_color_clampCssByte(tool_color_cssHueToRgb(m1, m2, h - 1 / 3) * 255), 1);
-    if (hsla.length === 4) {
-        rgba[3] = hsla[3];
-    }
-    return rgba;
-}
-function tool_color_rgba2hsla(rgba) {
-    if (!rgba) {
-        return;
-    }
-    var R = rgba[0] / 255;
-    var G = rgba[1] / 255;
-    var B = rgba[2] / 255;
-    var vMin = Math.min(R, G, B);
-    var vMax = Math.max(R, G, B);
-    var delta = vMax - vMin;
-    var L = (vMax + vMin) / 2;
-    var H;
-    var S;
-    if (delta === 0) {
-        H = 0;
-        S = 0;
-    }
-    else {
-        if (L < 0.5) {
-            S = delta / (vMax + vMin);
-        }
-        else {
-            S = delta / (2 - vMax - vMin);
-        }
-        var deltaR = (((vMax - R) / 6) + (delta / 2)) / delta;
-        var deltaG = (((vMax - G) / 6) + (delta / 2)) / delta;
-        var deltaB = (((vMax - B) / 6) + (delta / 2)) / delta;
-        if (R === vMax) {
-            H = deltaB - deltaG;
-        }
-        else if (G === vMax) {
-            H = (1 / 3) + deltaR - deltaB;
-        }
-        else if (B === vMax) {
-            H = (2 / 3) + deltaG - deltaR;
-        }
-        if (H < 0) {
-            H += 1;
-        }
-        if (H > 1) {
-            H -= 1;
-        }
-    }
-    var hsla = [H * 360, S, L];
-    if (rgba[3] != null) {
-        hsla.push(rgba[3]);
-    }
-    return hsla;
-}
-function color_lift(color, level) {
-    var colorArr = color_parse(color);
-    if (colorArr) {
-        for (var i = 0; i < 3; i++) {
-            if (level < 0) {
-                colorArr[i] = colorArr[i] * (1 - level) | 0;
-            }
-            else {
-                colorArr[i] = ((255 - colorArr[i]) * level + colorArr[i]) | 0;
-            }
-            if (colorArr[i] > 255) {
-                colorArr[i] = 255;
-            }
-            else if (colorArr[i] < 0) {
-                colorArr[i] = 0;
-            }
-        }
-        return color_stringify(colorArr, colorArr.length === 4 ? 'rgba' : 'rgb');
-    }
-}
-function color_toHex(color) {
-    var colorArr = color_parse(color);
-    if (colorArr) {
-        return ((1 << 24) + (colorArr[0] << 16) + (colorArr[1] << 8) + (+colorArr[2])).toString(16).slice(1);
-    }
-}
-function color_fastLerp(normalizedValue, colors, out) {
-    if (!(colors && colors.length)
-        || !(normalizedValue >= 0 && normalizedValue <= 1)) {
-        return;
-    }
-    out = out || [];
-    var value = normalizedValue * (colors.length - 1);
-    var leftIndex = Math.floor(value);
-    var rightIndex = Math.ceil(value);
-    var leftColor = colors[leftIndex];
-    var rightColor = colors[rightIndex];
-    var dv = value - leftIndex;
-    out[0] = tool_color_clampCssByte(tool_color_lerpNumber(leftColor[0], rightColor[0], dv));
-    out[1] = tool_color_clampCssByte(tool_color_lerpNumber(leftColor[1], rightColor[1], dv));
-    out[2] = tool_color_clampCssByte(tool_color_lerpNumber(leftColor[2], rightColor[2], dv));
-    out[3] = tool_color_clampCssFloat(tool_color_lerpNumber(leftColor[3], rightColor[3], dv));
-    return out;
-}
-var color_fastMapToColor = color_fastLerp;
-function color_lerp(normalizedValue, colors, fullOutput) {
-    if (!(colors && colors.length)
-        || !(normalizedValue >= 0 && normalizedValue <= 1)) {
-        return;
-    }
-    var value = normalizedValue * (colors.length - 1);
-    var leftIndex = Math.floor(value);
-    var rightIndex = Math.ceil(value);
-    var leftColor = color_parse(colors[leftIndex]);
-    var rightColor = color_parse(colors[rightIndex]);
-    var dv = value - leftIndex;
-    var color = color_stringify([
-        tool_color_clampCssByte(tool_color_lerpNumber(leftColor[0], rightColor[0], dv)),
-        tool_color_clampCssByte(tool_color_lerpNumber(leftColor[1], rightColor[1], dv)),
-        tool_color_clampCssByte(tool_color_lerpNumber(leftColor[2], rightColor[2], dv)),
-        tool_color_clampCssFloat(tool_color_lerpNumber(leftColor[3], rightColor[3], dv))
-    ], 'rgba');
-    return fullOutput
-        ? {
-            color: color,
-            leftIndex: leftIndex,
-            rightIndex: rightIndex,
-            value: value
-        }
-        : color;
-}
-var color_mapToColor = color_lerp;
-function color_modifyHSL(color, h, s, l) {
-    var colorArr = color_parse(color);
-    if (color) {
-        colorArr = tool_color_rgba2hsla(colorArr);
-        h != null && (colorArr[0] = tool_color_clampCssAngle(h));
-        s != null && (colorArr[1] = tool_color_parseCssFloat(s));
-        l != null && (colorArr[2] = tool_color_parseCssFloat(l));
-        return color_stringify(tool_color_hsla2rgba(colorArr), 'rgba');
-    }
-}
-function color_modifyAlpha(color, alpha) {
-    var colorArr = color_parse(color);
-    if (colorArr && alpha != null) {
-        colorArr[3] = tool_color_clampCssFloat(alpha);
-        return color_stringify(colorArr, 'rgba');
-    }
-}
-function color_stringify(arrColor, type) {
-    if (!arrColor || !arrColor.length) {
-        return;
-    }
-    var colorStr = arrColor[0] + ',' + arrColor[1] + ',' + arrColor[2];
-    if (type === 'rgba' || type === 'hsva' || type === 'hsla') {
-        colorStr += ',' + arrColor[3];
-    }
-    return type + '(' + colorStr + ')';
-}
-function color_lum(color, backgroundLum) {
-    var arr = color_parse(color);
-    return arr
-        ? (0.299 * arr[0] + 0.587 * arr[1] + 0.114 * arr[2]) * arr[3] / 255
-            + (1 - arr[3]) * backgroundLum
-        : 0;
-}
-function color_random() {
-    var r = Math.round(Math.random() * 255);
-    var g = Math.round(Math.random() * 255);
-    var b = Math.round(Math.random() * 255);
-    return 'rgb(' + r + ',' + g + ',' + b + ')';
-}
-
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/animation/Animator.js
-
-
-
-var Animator_arraySlice = Array.prototype.slice;
-function Animator_interpolateNumber(p0, p1, percent) {
-    return (p1 - p0) * percent + p0;
-}
-function Animator_step(p0, p1, percent) {
-    return percent > 0.5 ? p1 : p0;
-}
-function Animator_interpolate1DArray(out, p0, p1, percent) {
-    var len = p0.length;
-    for (var i = 0; i < len; i++) {
-        out[i] = Animator_interpolateNumber(p0[i], p1[i], percent);
-    }
-}
-function Animator_interpolate2DArray(out, p0, p1, percent) {
-    var len = p0.length;
-    var len2 = len && p0[0].length;
-    for (var i = 0; i < len; i++) {
-        if (!out[i]) {
-            out[i] = [];
-        }
-        for (var j = 0; j < len2; j++) {
-            out[i][j] = Animator_interpolateNumber(p0[i][j], p1[i][j], percent);
-        }
-    }
-}
-function Animator_add1DArray(out, p0, p1, sign) {
-    var len = p0.length;
-    for (var i = 0; i < len; i++) {
-        out[i] = p0[i] + p1[i] * sign;
-    }
-    return out;
-}
-function Animator_add2DArray(out, p0, p1, sign) {
-    var len = p0.length;
-    var len2 = len && p0[0].length;
-    for (var i = 0; i < len; i++) {
-        if (!out[i]) {
-            out[i] = [];
-        }
-        for (var j = 0; j < len2; j++) {
-            out[i][j] = p0[i][j] + p1[i][j] * sign;
-        }
-    }
-    return out;
-}
-function Animator_fillArray(val0, val1, arrDim) {
-    var arr0 = val0;
-    var arr1 = val1;
-    if (!arr0.push || !arr1.push) {
-        return;
-    }
-    var arr0Len = arr0.length;
-    var arr1Len = arr1.length;
-    if (arr0Len !== arr1Len) {
-        var isPreviousLarger = arr0Len > arr1Len;
-        if (isPreviousLarger) {
-            arr0.length = arr1Len;
-        }
-        else {
-            for (var i = arr0Len; i < arr1Len; i++) {
-                arr0.push(arrDim === 1 ? arr1[i] : Animator_arraySlice.call(arr1[i]));
-            }
-        }
-    }
-    var len2 = arr0[0] && arr0[0].length;
-    for (var i = 0; i < arr0.length; i++) {
-        if (arrDim === 1) {
-            if (isNaN(arr0[i])) {
-                arr0[i] = arr1[i];
-            }
-        }
-        else {
-            for (var j = 0; j < len2; j++) {
-                if (isNaN(arr0[i][j])) {
-                    arr0[i][j] = arr1[i][j];
-                }
-            }
-        }
-    }
-}
-function Animator_is1DArraySame(arr0, arr1) {
-    var len = arr0.length;
-    if (len !== arr1.length) {
-        return false;
-    }
-    for (var i = 0; i < len; i++) {
-        if (arr0[i] !== arr1[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-function Animator_is2DArraySame(arr0, arr1) {
-    var len = arr0.length;
-    if (len !== arr1.length) {
-        return false;
-    }
-    var len2 = arr0[0].length;
-    for (var i = 0; i < len; i++) {
-        for (var j = 0; j < len2; j++) {
-            if (arr0[i][j] !== arr1[i][j]) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-function Animator_catmullRomInterpolate(p0, p1, p2, p3, t, t2, t3) {
-    var v0 = (p2 - p0) * 0.5;
-    var v1 = (p3 - p1) * 0.5;
-    return (2 * (p1 - p2) + v0 + v1) * t3
-        + (-3 * (p1 - p2) - 2 * v0 - v1) * t2
-        + v0 * t + p1;
-}
-function Animator_catmullRomInterpolate1DArray(out, p0, p1, p2, p3, t, t2, t3) {
-    var len = p0.length;
-    for (var i = 0; i < len; i++) {
-        out[i] = Animator_catmullRomInterpolate(p0[i], p1[i], p2[i], p3[i], t, t2, t3);
-    }
-}
-function Animator_catmullRomInterpolate2DArray(out, p0, p1, p2, p3, t, t2, t3) {
-    var len = p0.length;
-    var len2 = p0[0].length;
-    for (var i = 0; i < len; i++) {
-        if (!out[i]) {
-            out[1] = [];
-        }
-        for (var j = 0; j < len2; j++) {
-            out[i][j] = Animator_catmullRomInterpolate(p0[i][j], p1[i][j], p2[i][j], p3[i][j], t, t2, t3);
-        }
-    }
-}
-function Animator_cloneValue(value) {
-    if (util_isArrayLike(value)) {
-        var len = value.length;
-        if (util_isArrayLike(value[0])) {
-            var ret = [];
-            for (var i = 0; i < len; i++) {
-                ret.push(Animator_arraySlice.call(value[i]));
-            }
-            return ret;
-        }
-        return Animator_arraySlice.call(value);
-    }
-    return value;
-}
-function Animator_rgba2String(rgba) {
-    rgba[0] = Math.floor(rgba[0]);
-    rgba[1] = Math.floor(rgba[1]);
-    rgba[2] = Math.floor(rgba[2]);
-    return 'rgba(' + rgba.join(',') + ')';
-}
-function Animator_guessArrayDim(value) {
-    return util_isArrayLike(value && value[0]) ? 2 : 1;
-}
-var Animator_tmpRgba = [0, 0, 0, 0];
-var Animator_Track = (function () {
-    function Track(propName) {
-        this.keyframes = [];
-        this.maxTime = 0;
-        this.arrDim = 0;
-        this.interpolable = true;
-        this._needsSort = false;
-        this._isAllValueEqual = true;
-        this._lastFrame = 0;
-        this._lastFramePercent = 0;
-        this.propName = propName;
-    }
-    Track.prototype.isFinished = function () {
-        return this._finished;
-    };
-    Track.prototype.setFinished = function () {
-        this._finished = true;
-        if (this._additiveTrack) {
-            this._additiveTrack.setFinished();
-        }
-    };
-    Track.prototype.needsAnimate = function () {
-        return !this._isAllValueEqual && this.keyframes.length >= 2 && this.interpolable;
-    };
-    Track.prototype.getAdditiveTrack = function () {
-        return this._additiveTrack;
-    };
-    Track.prototype.addKeyframe = function (time, value) {
-        if (time >= this.maxTime) {
-            this.maxTime = time;
-        }
-        else {
-            this._needsSort = true;
-        }
-        var keyframes = this.keyframes;
-        var len = keyframes.length;
-        if (this.interpolable) {
-            if (util_isArrayLike(value)) {
-                var arrayDim = Animator_guessArrayDim(value);
-                if (len > 0 && this.arrDim !== arrayDim) {
-                    this.interpolable = false;
-                    return;
-                }
-                if (arrayDim === 1 && typeof value[0] !== 'number'
-                    || arrayDim === 2 && typeof value[0][0] !== 'number') {
-                    this.interpolable = false;
-                    return;
-                }
-                if (len > 0) {
-                    var lastFrame = keyframes[len - 1];
-                    if (this._isAllValueEqual) {
-                        if (arrayDim === 1) {
-                            if (!Animator_is1DArraySame(value, lastFrame.value)) {
-                                this._isAllValueEqual = false;
-                            }
-                        }
-                        else {
-                            this._isAllValueEqual = false;
-                        }
-                    }
-                }
-                this.arrDim = arrayDim;
-            }
-            else {
-                if (this.arrDim > 0) {
-                    this.interpolable = false;
-                    return;
-                }
-                if (typeof value === 'string') {
-                    var colorArray = color_parse(value);
-                    if (colorArray) {
-                        value = colorArray;
-                        this.isValueColor = true;
-                    }
-                    else {
-                        this.interpolable = false;
-                    }
-                }
-                else if (typeof value !== 'number' || isNaN(value)) {
-                    this.interpolable = false;
-                    return;
-                }
-                if (this._isAllValueEqual && len > 0) {
-                    var lastFrame = keyframes[len - 1];
-                    if (this.isValueColor && !Animator_is1DArraySame(lastFrame.value, value)) {
-                        this._isAllValueEqual = false;
-                    }
-                    else if (lastFrame.value !== value) {
-                        this._isAllValueEqual = false;
-                    }
-                }
-            }
-        }
-        var kf = {
-            time: time,
-            value: value,
-            percent: 0
-        };
-        this.keyframes.push(kf);
-        return kf;
-    };
-    Track.prototype.prepare = function (additiveTrack) {
-        var kfs = this.keyframes;
-        if (this._needsSort) {
-            kfs.sort(function (a, b) {
-                return a.time - b.time;
-            });
-        }
-        var arrDim = this.arrDim;
-        var kfsLen = kfs.length;
-        var lastKf = kfs[kfsLen - 1];
-        for (var i = 0; i < kfsLen; i++) {
-            kfs[i].percent = kfs[i].time / this.maxTime;
-            if (arrDim > 0 && i !== kfsLen - 1) {
-                Animator_fillArray(kfs[i].value, lastKf.value, arrDim);
-            }
-        }
-        if (additiveTrack
-            && this.needsAnimate()
-            && additiveTrack.needsAnimate()
-            && arrDim === additiveTrack.arrDim
-            && this.isValueColor === additiveTrack.isValueColor
-            && !additiveTrack._finished) {
-            this._additiveTrack = additiveTrack;
-            var startValue = kfs[0].value;
-            for (var i = 0; i < kfsLen; i++) {
-                if (arrDim === 0) {
-                    if (this.isValueColor) {
-                        kfs[i].additiveValue
-                            = Animator_add1DArray([], kfs[i].value, startValue, -1);
-                    }
-                    else {
-                        kfs[i].additiveValue = kfs[i].value - startValue;
-                    }
-                }
-                else if (arrDim === 1) {
-                    kfs[i].additiveValue = Animator_add1DArray([], kfs[i].value, startValue, -1);
-                }
-                else if (arrDim === 2) {
-                    kfs[i].additiveValue = Animator_add2DArray([], kfs[i].value, startValue, -1);
-                }
-            }
-        }
-    };
-    Track.prototype.step = function (target, percent) {
-        if (this._finished) {
-            return;
-        }
-        if (this._additiveTrack && this._additiveTrack._finished) {
-            this._additiveTrack = null;
-        }
-        var isAdditive = this._additiveTrack != null;
-        var valueKey = isAdditive ? 'additiveValue' : 'value';
-        var keyframes = this.keyframes;
-        var kfsNum = this.keyframes.length;
-        var propName = this.propName;
-        var arrDim = this.arrDim;
-        var isValueColor = this.isValueColor;
-        var frameIdx;
-        if (percent < 0) {
-            frameIdx = 0;
-        }
-        else if (percent < this._lastFramePercent) {
-            var start = Math.min(this._lastFrame + 1, kfsNum - 1);
-            for (frameIdx = start; frameIdx >= 0; frameIdx--) {
-                if (keyframes[frameIdx].percent <= percent) {
-                    break;
-                }
-            }
-            frameIdx = Math.min(frameIdx, kfsNum - 2);
-        }
-        else {
-            for (frameIdx = this._lastFrame; frameIdx < kfsNum; frameIdx++) {
-                if (keyframes[frameIdx].percent > percent) {
-                    break;
-                }
-            }
-            frameIdx = Math.min(frameIdx - 1, kfsNum - 2);
-        }
-        var nextFrame = keyframes[frameIdx + 1];
-        var frame = keyframes[frameIdx];
-        if (!(frame && nextFrame)) {
-            return;
-        }
-        this._lastFrame = frameIdx;
-        this._lastFramePercent = percent;
-        var range = (nextFrame.percent - frame.percent);
-        if (range === 0) {
-            return;
-        }
-        var w = (percent - frame.percent) / range;
-        var targetArr = isAdditive ? this._additiveValue
-            : (isValueColor ? Animator_tmpRgba : target[propName]);
-        if ((arrDim > 0 || isValueColor) && !targetArr) {
-            targetArr = this._additiveValue = [];
-        }
-        if (this.useSpline) {
-            var p1 = keyframes[frameIdx][valueKey];
-            var p0 = keyframes[frameIdx === 0 ? frameIdx : frameIdx - 1][valueKey];
-            var p2 = keyframes[frameIdx > kfsNum - 2 ? kfsNum - 1 : frameIdx + 1][valueKey];
-            var p3 = keyframes[frameIdx > kfsNum - 3 ? kfsNum - 1 : frameIdx + 2][valueKey];
-            if (arrDim > 0) {
-                arrDim === 1
-                    ? Animator_catmullRomInterpolate1DArray(targetArr, p0, p1, p2, p3, w, w * w, w * w * w)
-                    : Animator_catmullRomInterpolate2DArray(targetArr, p0, p1, p2, p3, w, w * w, w * w * w);
-            }
-            else if (isValueColor) {
-                Animator_catmullRomInterpolate1DArray(targetArr, p0, p1, p2, p3, w, w * w, w * w * w);
-                if (!isAdditive) {
-                    target[propName] = Animator_rgba2String(targetArr);
-                }
-            }
-            else {
-                var value = void 0;
-                if (!this.interpolable) {
-                    value = p2;
-                }
-                else {
-                    value = Animator_catmullRomInterpolate(p0, p1, p2, p3, w, w * w, w * w * w);
-                }
-                if (isAdditive) {
-                    this._additiveValue = value;
-                }
-                else {
-                    target[propName] = value;
-                }
-            }
-        }
-        else {
-            if (arrDim > 0) {
-                arrDim === 1
-                    ? Animator_interpolate1DArray(targetArr, frame[valueKey], nextFrame[valueKey], w)
-                    : Animator_interpolate2DArray(targetArr, frame[valueKey], nextFrame[valueKey], w);
-            }
-            else if (isValueColor) {
-                Animator_interpolate1DArray(targetArr, frame[valueKey], nextFrame[valueKey], w);
-                if (!isAdditive) {
-                    target[propName] = Animator_rgba2String(targetArr);
-                }
-            }
-            else {
-                var value = void 0;
-                if (!this.interpolable) {
-                    value = Animator_step(frame[valueKey], nextFrame[valueKey], w);
-                }
-                else {
-                    value = Animator_interpolateNumber(frame[valueKey], nextFrame[valueKey], w);
-                }
-                if (isAdditive) {
-                    this._additiveValue = value;
-                }
-                else {
-                    target[propName] = value;
-                }
-            }
-        }
-        if (isAdditive) {
-            this._addToTarget(target);
-        }
-    };
-    Track.prototype._addToTarget = function (target) {
-        var arrDim = this.arrDim;
-        var propName = this.propName;
-        var additiveValue = this._additiveValue;
-        if (arrDim === 0) {
-            if (this.isValueColor) {
-                color_parse(target[propName], Animator_tmpRgba);
-                Animator_add1DArray(Animator_tmpRgba, Animator_tmpRgba, additiveValue, 1);
-                target[propName] = Animator_rgba2String(Animator_tmpRgba);
-            }
-            else {
-                target[propName] = target[propName] + additiveValue;
-            }
-        }
-        else if (arrDim === 1) {
-            Animator_add1DArray(target[propName], target[propName], additiveValue, 1);
-        }
-        else if (arrDim === 2) {
-            Animator_add2DArray(target[propName], target[propName], additiveValue, 1);
-        }
-    };
-    return Track;
-}());
-var Animator_Animator = (function () {
-    function Animator(target, loop, additiveTo) {
-        this._tracks = {};
-        this._trackKeys = [];
-        this._delay = 0;
-        this._maxTime = 0;
-        this._paused = false;
-        this._started = 0;
-        this._clip = null;
-        this._target = target;
-        this._loop = loop;
-        if (loop && additiveTo) {
-            util_logError('Can\' use additive animation on looped animation.');
-            return;
-        }
-        this._additiveAnimators = additiveTo;
-    }
-    Animator.prototype.getTarget = function () {
-        return this._target;
-    };
-    Animator.prototype.changeTarget = function (target) {
-        this._target = target;
-    };
-    Animator.prototype.when = function (time, props) {
-        return this.whenWithKeys(time, props, util_keys(props));
-    };
-    Animator.prototype.whenWithKeys = function (time, props, propNames) {
-        var tracks = this._tracks;
-        for (var i = 0; i < propNames.length; i++) {
-            var propName = propNames[i];
-            var track = tracks[propName];
-            if (!track) {
-                track = tracks[propName] = new Animator_Track(propName);
-                var initialValue = void 0;
-                var additiveTrack = this._getAdditiveTrack(propName);
-                if (additiveTrack) {
-                    var lastFinalKf = additiveTrack.keyframes[additiveTrack.keyframes.length - 1];
-                    initialValue = lastFinalKf && lastFinalKf.value;
-                    if (additiveTrack.isValueColor && initialValue) {
-                        initialValue = Animator_rgba2String(initialValue);
-                    }
-                }
-                else {
-                    initialValue = this._target[propName];
-                }
-                if (initialValue == null) {
-                    continue;
-                }
-                if (time !== 0) {
-                    track.addKeyframe(0, Animator_cloneValue(initialValue));
-                }
-                this._trackKeys.push(propName);
-            }
-            track.addKeyframe(time, Animator_cloneValue(props[propName]));
-        }
-        this._maxTime = Math.max(this._maxTime, time);
-        return this;
-    };
-    Animator.prototype.pause = function () {
-        this._clip.pause();
-        this._paused = true;
-    };
-    Animator.prototype.resume = function () {
-        this._clip.resume();
-        this._paused = false;
-    };
-    Animator.prototype.isPaused = function () {
-        return !!this._paused;
-    };
-    Animator.prototype._doneCallback = function () {
-        this._setTracksFinished();
-        this._clip = null;
-        var doneList = this._doneList;
-        if (doneList) {
-            var len = doneList.length;
-            for (var i = 0; i < len; i++) {
-                doneList[i].call(this);
-            }
-        }
-    };
-    Animator.prototype._abortedCallback = function () {
-        this._setTracksFinished();
-        var animation = this.animation;
-        var abortedList = this._abortedList;
-        if (animation) {
-            animation.removeClip(this._clip);
-        }
-        this._clip = null;
-        if (abortedList) {
-            for (var i = 0; i < abortedList.length; i++) {
-                abortedList[i].call(this);
-            }
-        }
-    };
-    Animator.prototype._setTracksFinished = function () {
-        var tracks = this._tracks;
-        var tracksKeys = this._trackKeys;
-        for (var i = 0; i < tracksKeys.length; i++) {
-            tracks[tracksKeys[i]].setFinished();
-        }
-    };
-    Animator.prototype._getAdditiveTrack = function (trackName) {
-        var additiveTrack;
-        var additiveAnimators = this._additiveAnimators;
-        if (additiveAnimators) {
-            for (var i = 0; i < additiveAnimators.length; i++) {
-                var track = additiveAnimators[i].getTrack(trackName);
-                if (track) {
-                    additiveTrack = track;
-                }
-            }
-        }
-        return additiveTrack;
-    };
-    Animator.prototype.start = function (easing, forceAnimate) {
-        if (this._started > 0) {
-            return;
-        }
-        this._started = 1;
-        var self = this;
-        var tracks = [];
-        for (var i = 0; i < this._trackKeys.length; i++) {
-            var propName = this._trackKeys[i];
-            var track = this._tracks[propName];
-            var additiveTrack = this._getAdditiveTrack(propName);
-            var kfs = track.keyframes;
-            track.prepare(additiveTrack);
-            if (track.needsAnimate()) {
-                tracks.push(track);
-            }
-            else if (!track.interpolable) {
-                var lastKf = kfs[kfs.length - 1];
-                if (lastKf) {
-                    self._target[track.propName] = lastKf.value;
-                }
-            }
-        }
-        if (tracks.length || forceAnimate) {
-            var clip = new lib_animation_Clip({
-                life: this._maxTime,
-                loop: this._loop,
-                delay: this._delay,
-                onframe: function (percent) {
-                    self._started = 2;
-                    var additiveAnimators = self._additiveAnimators;
-                    if (additiveAnimators) {
-                        var stillHasAdditiveAnimator = false;
-                        for (var i = 0; i < additiveAnimators.length; i++) {
-                            if (additiveAnimators[i]._clip) {
-                                stillHasAdditiveAnimator = true;
-                                break;
-                            }
-                        }
-                        if (!stillHasAdditiveAnimator) {
-                            self._additiveAnimators = null;
-                        }
-                    }
-                    for (var i = 0; i < tracks.length; i++) {
-                        tracks[i].step(self._target, percent);
-                    }
-                    var onframeList = self._onframeList;
-                    if (onframeList) {
-                        for (var i = 0; i < onframeList.length; i++) {
-                            onframeList[i](self._target, percent);
-                        }
-                    }
-                },
-                ondestroy: function () {
-                    self._doneCallback();
-                }
-            });
-            this._clip = clip;
-            if (this.animation) {
-                this.animation.addClip(clip);
-            }
-            if (easing && easing !== 'spline') {
-                clip.easing = easing;
-            }
-        }
-        else {
-            this._doneCallback();
-        }
-        return this;
-    };
-    Animator.prototype.stop = function (forwardToLast) {
-        if (!this._clip) {
-            return;
-        }
-        var clip = this._clip;
-        if (forwardToLast) {
-            clip.onframe(1);
-        }
-        this._abortedCallback();
-    };
-    Animator.prototype.delay = function (time) {
-        this._delay = time;
-        return this;
-    };
-    Animator.prototype.during = function (cb) {
-        if (cb) {
-            if (!this._onframeList) {
-                this._onframeList = [];
-            }
-            this._onframeList.push(cb);
-        }
-        return this;
-    };
-    Animator.prototype.done = function (cb) {
-        if (cb) {
-            if (!this._doneList) {
-                this._doneList = [];
-            }
-            this._doneList.push(cb);
-        }
-        return this;
-    };
-    Animator.prototype.aborted = function (cb) {
-        if (cb) {
-            if (!this._abortedList) {
-                this._abortedList = [];
-            }
-            this._abortedList.push(cb);
-        }
-        return this;
-    };
-    Animator.prototype.getClip = function () {
-        return this._clip;
-    };
-    Animator.prototype.getTrack = function (propName) {
-        return this._tracks[propName];
-    };
-    Animator.prototype.stopTracks = function (propNames, forwardToLast) {
-        if (!propNames.length || !this._clip) {
-            return true;
-        }
-        var tracks = this._tracks;
-        var tracksKeys = this._trackKeys;
-        for (var i = 0; i < propNames.length; i++) {
-            var track = tracks[propNames[i]];
-            if (track) {
-                if (forwardToLast) {
-                    track.step(this._target, 1);
-                }
-                else if (this._started === 1) {
-                    track.step(this._target, 0);
-                }
-                track.setFinished();
-            }
-        }
-        var allAborted = true;
-        for (var i = 0; i < tracksKeys.length; i++) {
-            if (!tracks[tracksKeys[i]].isFinished()) {
-                allAborted = false;
-                break;
-            }
-        }
-        if (allAborted) {
-            this._abortedCallback();
-        }
-        return allAborted;
-    };
-    Animator.prototype.saveFinalToTarget = function (target, trackKeys) {
-        if (!target) {
-            return;
-        }
-        trackKeys = trackKeys || this._trackKeys;
-        for (var i = 0; i < trackKeys.length; i++) {
-            var propName = trackKeys[i];
-            var track = this._tracks[propName];
-            if (!track || track.isFinished()) {
-                continue;
-            }
-            var kfs = track.keyframes;
-            var lastKf = kfs[kfs.length - 1];
-            if (lastKf) {
-                var val = Animator_cloneValue(lastKf.value);
-                if (track.isValueColor) {
-                    val = Animator_rgba2String(val);
-                }
-                target[propName] = val;
-            }
-        }
-    };
-    Animator.prototype.__changeFinalValue = function (finalProps, trackKeys) {
-        trackKeys = trackKeys || util_keys(finalProps);
-        for (var i = 0; i < trackKeys.length; i++) {
-            var propName = trackKeys[i];
-            var track = this._tracks[propName];
-            if (!track) {
-                continue;
-            }
-            var kfs = track.keyframes;
-            if (kfs.length > 1) {
-                var lastKf = kfs.pop();
-                track.addKeyframe(lastKf.time, finalProps[propName]);
-                track.prepare(track.getAdditiveTrack());
-            }
-        }
-    };
-    return Animator;
-}());
-/* harmony default export */ const lib_animation_Animator = (Animator_Animator);
-
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/Eventful.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/Eventful.js
 var Eventful = (function () {
     function Eventful(eventProcessors) {
         if (eventProcessors) {
@@ -30840,7 +28819,7 @@ var Eventful = (function () {
 }());
 /* harmony default export */ const core_Eventful = (Eventful);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/config.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/config.js
 var dpr = 1;
 if (typeof window !== 'undefined') {
     dpr = Math.max(window.devicePixelRatio
@@ -30854,7 +28833,7 @@ var DARK_LABEL_COLOR = '#333';
 var LIGHT_LABEL_COLOR = '#ccc';
 var LIGHTER_LABEL_COLOR = '#eee';
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/env.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/env.js
 var Browser = (function () {
     function Browser() {
         this.firefox = false;
@@ -30939,12 +28918,12 @@ function detect(ua, env) {
 }
 /* harmony default export */ const core_env = (env);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/constants.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/constants.js
 var REDARAW_BIT = 1;
 var STYLE_CHANGED_BIT = 2;
 var SHAPE_CHANGED_BIT = 4;
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/Element.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/Element.js
 
 
 
@@ -30971,7 +28950,7 @@ var tmpTextPosCalcRes = {};
 var tmpBoundingRect = new core_BoundingRect(0, 0, 0, 0);
 var Element = (function () {
     function Element(props) {
-        this.id = core_util_guid();
+        this.id = util_guid();
         this.animators = [];
         this.currentStates = [];
         this.states = {};
@@ -31145,7 +29124,7 @@ var Element = (function () {
     };
     Element.prototype.getOutsideStroke = function (textFill) {
         var backgroundColor = this.__zr && this.__zr.getBackgroundColor();
-        var colorArr = typeof backgroundColor === 'string' && color_parse(backgroundColor);
+        var colorArr = typeof backgroundColor === 'string' && parse(backgroundColor);
         if (!colorArr) {
             colorArr = [255, 255, 255, 1];
         }
@@ -31155,7 +29134,7 @@ var Element = (function () {
             colorArr[i] = colorArr[i] * alpha + (isDark ? 0 : 255) * (1 - alpha);
         }
         colorArr[3] = 1;
-        return color_stringify(colorArr, 'rgba');
+        return stringify(colorArr, 'rgba');
     };
     Element.prototype.traverse = function (cb, context) { };
     Element.prototype.attrKV = function (key, value) {
@@ -31170,7 +29149,7 @@ var Element = (function () {
         }
         else if (key === 'extra') {
             this.extra = this.extra || {};
-            core_util_extend(this.extra, value);
+            util_extend(this.extra, value);
         }
         else {
             this[key] = value;
@@ -31188,9 +29167,9 @@ var Element = (function () {
         if (typeof keyOrObj === 'string') {
             this.attrKV(keyOrObj, value);
         }
-        else if (util_isObject(keyOrObj)) {
+        else if (isObject(keyOrObj)) {
             var obj = keyOrObj;
-            var keysArr = util_keys(obj);
+            var keysArr = keys(obj);
             for (var i = 0; i < keysArr.length; i++) {
                 var key = keysArr[i];
                 this.attrKV(key, keyOrObj[key]);
@@ -31256,7 +29235,7 @@ var Element = (function () {
         }
         var currentStates = this.currentStates;
         var animationCfg = this.stateTransition;
-        if (util_indexOf(currentStates, stateName) >= 0 && (keepCurrentStates || currentStates.length === 1)) {
+        if (indexOf(currentStates, stateName) >= 0 && (keepCurrentStates || currentStates.length === 1)) {
             return;
         }
         var state;
@@ -31267,7 +29246,7 @@ var Element = (function () {
             state = (this.states && this.states[stateName]);
         }
         if (!state && !toNormalState) {
-            util_logError("State " + stateName + " not exists.");
+            logError("State " + stateName + " not exists.");
             return;
         }
         if (!toNormalState) {
@@ -31374,7 +29353,7 @@ var Element = (function () {
         }
     };
     Element.prototype.removeState = function (state) {
-        var idx = util_indexOf(this.currentStates, state);
+        var idx = indexOf(this.currentStates, state);
         if (idx >= 0) {
             var currentStates = this.currentStates.slice();
             currentStates.splice(idx, 1);
@@ -31383,8 +29362,8 @@ var Element = (function () {
     };
     Element.prototype.replaceState = function (oldState, newState, forceAdd) {
         var currentStates = this.currentStates.slice();
-        var idx = util_indexOf(currentStates, oldState);
-        var newStateExists = util_indexOf(currentStates, newState) >= 0;
+        var idx = indexOf(currentStates, oldState);
+        var newStateExists = indexOf(currentStates, newState) >= 0;
         if (idx >= 0) {
             if (!newStateExists) {
                 currentStates[idx] = newState;
@@ -31411,10 +29390,10 @@ var Element = (function () {
         var mergedTextConfig;
         for (var i = 0; i < states.length; i++) {
             var state = states[i];
-            core_util_extend(mergedState, state);
+            util_extend(mergedState, state);
             if (state.textConfig) {
                 mergedTextConfig = mergedTextConfig || {};
-                core_util_extend(mergedTextConfig, state.textConfig);
+                util_extend(mergedTextConfig, state.textConfig);
             }
         }
         if (mergedTextConfig) {
@@ -31425,8 +29404,8 @@ var Element = (function () {
     Element.prototype._applyStateObj = function (stateName, state, normalState, keepCurrentStates, transition, animationCfg) {
         var needsRestoreToNormal = !(state && keepCurrentStates);
         if (state && state.textConfig) {
-            this.textConfig = core_util_extend({}, keepCurrentStates ? this.textConfig : normalState.textConfig);
-            core_util_extend(this.textConfig, state.textConfig);
+            this.textConfig = util_extend({}, keepCurrentStates ? this.textConfig : normalState.textConfig);
+            util_extend(this.textConfig, state.textConfig);
         }
         else if (needsRestoreToNormal) {
             if (normalState.textConfig) {
@@ -31535,7 +29514,7 @@ var Element = (function () {
         if (!this.textConfig) {
             this.textConfig = {};
         }
-        core_util_extend(this.textConfig, cfg);
+        util_extend(this.textConfig, cfg);
         this.markRedraw();
     };
     Element.prototype.removeTextConfig = function () {
@@ -31639,13 +29618,13 @@ var Element = (function () {
     Element.prototype.animate = function (key, loop) {
         var target = key ? this[key] : this;
         if (!target) {
-            util_logError('Property "'
+            logError('Property "'
                 + key
                 + '" is not existed in element '
                 + this.id);
             return;
         }
-        var animator = new lib_animation_Animator(target, loop);
+        var animator = new animation_Animator(target, loop);
         this.addAnimator(animator, key);
         return animator;
     };
@@ -31656,7 +29635,7 @@ var Element = (function () {
             el.updateDuringAnimation(key);
         }).done(function () {
             var animators = el.animators;
-            var idx = util_indexOf(animators, animator);
+            var idx = indexOf(animators, animator);
             if (idx >= 0) {
                 animators.splice(idx, 1);
             }
@@ -31768,8 +29747,8 @@ var Element = (function () {
     })();
     return Element;
 }());
-util_mixin(Element, core_Eventful);
-util_mixin(Element, core_Transformable);
+mixin(Element, core_Eventful);
+mixin(Element, core_Transformable);
 function animateTo(animatable, target, cfg, animationProps, reverse) {
     cfg = cfg || {};
     var animators = [];
@@ -31821,14 +29800,14 @@ function copyArrShallow(source, target, len) {
     }
 }
 function is2DArray(value) {
-    return util_isArrayLike(value[0]);
+    return isArrayLike(value[0]);
 }
 function copyValue(target, source, key) {
-    if (util_isArrayLike(source[key])) {
-        if (!util_isArrayLike(target[key])) {
+    if (isArrayLike(source[key])) {
+        if (!isArrayLike(target[key])) {
             target[key] = [];
         }
-        if (util_isTypedArray(source[key])) {
+        if (isTypedArray(source[key])) {
             var len = source[key].length;
             if (target[key].length !== len) {
                 target[key] = new (source[key].constructor)(len);
@@ -31863,18 +29842,18 @@ function copyValue(target, source, key) {
 function animateToShallow(animatable, topKey, source, target, cfg, animationProps, animators, reverse) {
     var animatableKeys = [];
     var changedKeys = [];
-    var targetKeys = util_keys(target);
+    var targetKeys = keys(target);
     var duration = cfg.duration;
     var delay = cfg.delay;
     var additive = cfg.additive;
     var setToFinal = cfg.setToFinal;
-    var animateAll = !util_isObject(animationProps);
+    var animateAll = !isObject(animationProps);
     for (var k = 0; k < targetKeys.length; k++) {
         var innerKey = targetKeys[k];
         if (source[innerKey] != null
             && target[innerKey] != null
             && (animateAll || animationProps[innerKey])) {
-            if (util_isObject(target[innerKey]) && !util_isArrayLike(target[innerKey])) {
+            if (isObject(target[innerKey]) && !isArrayLike(target[innerKey])) {
                 if (topKey) {
                     if (!reverse) {
                         source[innerKey] = target[innerKey];
@@ -31909,7 +29888,7 @@ function animateToShallow(animatable, topKey, source, target, cfg, animationProp
             for (var i = 0; i < existsAnimatorsOnSameTarget.length; i++) {
                 var allAborted = existsAnimatorsOnSameTarget[i].stopTracks(changedKeys);
                 if (allAborted) {
-                    var idx = util_indexOf(existsAnimators, existsAnimatorsOnSameTarget[i]);
+                    var idx = indexOf(existsAnimators, existsAnimatorsOnSameTarget[i]);
                     existsAnimators.splice(idx, 1);
                 }
             }
@@ -31937,11 +29916,11 @@ function animateToShallow(animatable, topKey, source, target, cfg, animationProp
             sourceClone = {};
             for (var i = 0; i < keyLen; i++) {
                 var innerKey = animatableKeys[i];
-                sourceClone[innerKey] = Animator_cloneValue(source[innerKey]);
+                sourceClone[innerKey] = cloneValue(source[innerKey]);
                 copyValue(source, target, innerKey);
             }
         }
-        var animator = new lib_animation_Animator(source, false, additive ? existsAnimatorsOnSameTarget : null);
+        var animator = new animation_Animator(source, false, additive ? existsAnimatorsOnSameTarget : null);
         animator.targetName = topKey;
         if (cfg.scope) {
             animator.scope = cfg.scope;
@@ -31959,7 +29938,7 @@ function animateToShallow(animatable, topKey, source, target, cfg, animationProp
 }
 /* harmony default export */ const lib_Element = (Element);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/Displayable.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/Displayable.js
 
 
 
@@ -31992,7 +29971,7 @@ var Displayable = (function (_super) {
         return _super.call(this, props) || this;
     }
     Displayable.prototype._init = function (props) {
-        var keysArr = util_keys(props);
+        var keysArr = keys(props);
         for (var i = 0; i < keysArr.length; i++) {
             var key = keysArr[i];
             if (key === 'style') {
@@ -32122,7 +30101,7 @@ var Displayable = (function (_super) {
             this.style[keyOrObj] = value;
         }
         else {
-            core_util_extend(this.style, keyOrObj);
+            util_extend(this.style, keyOrObj);
         }
         this.dirtyStyle();
         return this;
@@ -32146,7 +30125,7 @@ var Displayable = (function (_super) {
         this.__dirty &= ~STYLE_CHANGED_BIT;
     };
     Displayable.prototype.createStyle = function (obj) {
-        return util_createObject(DEFAULT_COMMON_STYLE, obj);
+        return createObject(DEFAULT_COMMON_STYLE, obj);
     };
     Displayable.prototype.useStyle = function (obj) {
         if (!obj[STYLE_MAGIC_KEY]) {
@@ -32198,7 +30177,7 @@ var Displayable = (function (_super) {
                 var sourceStyle = this.style;
                 this.style = this.createStyle(needsRestoreToNormal ? {} : sourceStyle);
                 if (needsRestoreToNormal) {
-                    var changedKeys = util_keys(sourceStyle);
+                    var changedKeys = keys(sourceStyle);
                     for (var i = 0; i < changedKeys.length; i++) {
                         var key = changedKeys[i];
                         if (key in targetStyle) {
@@ -32207,7 +30186,7 @@ var Displayable = (function (_super) {
                         }
                     }
                 }
-                var targetKeys = util_keys(targetStyle);
+                var targetKeys = keys(targetStyle);
                 for (var i = 0; i < targetKeys.length; i++) {
                     var key = targetKeys[i];
                     this.style[key] = this.style[key];
@@ -32249,7 +30228,7 @@ var Displayable = (function (_super) {
         return mergedState;
     };
     Displayable.prototype._mergeStyle = function (targetStyle, sourceStyle) {
-        core_util_extend(targetStyle, sourceStyle);
+        util_extend(targetStyle, sourceStyle);
         return targetStyle;
     };
     Displayable.prototype.getAnimationStyleProps = function () {
@@ -32285,7 +30264,7 @@ function isDisplayableCulled(el, width, height) {
 }
 /* harmony default export */ const graphic_Displayable = (Displayable);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/curve.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/curve.js
 
 var mathPow = Math.pow;
 var mathSqrt = Math.sqrt;
@@ -32632,7 +30611,7 @@ function quadraticLength(x0, y0, x1, y1, x2, y2, iteration) {
     return d;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/bbox.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/bbox.js
 
 
 var bbox_mathMin = Math.min;
@@ -32758,7 +30737,7 @@ function fromArc(x, y, rx, ry, startAngle, endAngle, anticlockwise, min, max) {
     }
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/PathProxy.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/PathProxy.js
 
 
 
@@ -33580,7 +31559,7 @@ var PathProxy = (function () {
 }());
 /* harmony default export */ const core_PathProxy = (PathProxy);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/contain/line.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/line.js
 function containStroke(x0, y0, x1, y1, lineWidth, x, y) {
     if (lineWidth === 0) {
         return false;
@@ -33606,7 +31585,7 @@ function containStroke(x0, y0, x1, y1, lineWidth, x, y) {
     return _s <= _l / 2 * _l / 2;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/contain/cubic.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/cubic.js
 
 function cubic_containStroke(x0, y0, x1, y1, x2, y2, x3, y3, lineWidth, x, y) {
     if (lineWidth === 0) {
@@ -33623,7 +31602,7 @@ function cubic_containStroke(x0, y0, x1, y1, x2, y2, x3, y3, lineWidth, x, y) {
     return d <= _l / 2;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/contain/quadratic.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/quadratic.js
 
 function quadratic_containStroke(x0, y0, x1, y1, x2, y2, lineWidth, x, y) {
     if (lineWidth === 0) {
@@ -33640,7 +31619,7 @@ function quadratic_containStroke(x0, y0, x1, y1, x2, y2, lineWidth, x, y) {
     return d <= _l / 2;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/contain/util.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/util.js
 var util_PI2 = Math.PI * 2;
 function normalizeRadian(angle) {
     angle %= util_PI2;
@@ -33650,7 +31629,7 @@ function normalizeRadian(angle) {
     return angle;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/contain/arc.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/arc.js
 
 var arc_PI2 = Math.PI * 2;
 function arc_containStroke(cx, cy, r, startAngle, endAngle, anticlockwise, lineWidth, x, y) {
@@ -33687,7 +31666,7 @@ function arc_containStroke(cx, cy, r, startAngle, endAngle, anticlockwise, lineW
         || (angle + arc_PI2 >= startAngle && angle + arc_PI2 <= endAngle);
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/contain/windingLine.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/windingLine.js
 function windingLine(x0, y0, x1, y1, x, y) {
     if ((y > y0 && y > y1) || (y < y0 && y < y1)) {
         return 0;
@@ -33704,7 +31683,7 @@ function windingLine(x0, y0, x1, y1, x, y) {
     return x_ === x ? Infinity : x_ > x ? dir : 0;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/contain/path.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/path.js
 
 
 
@@ -34013,7 +31992,7 @@ function path_containStroke(pathProxy, lineWidth, x, y) {
     return containPath(pathProxy, lineWidth, true, x, y);
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/Path.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/Path.js
 
 
 
@@ -34091,7 +32070,7 @@ var Path = (function (_super) {
         return this._decalEl;
     };
     Path.prototype._init = function (props) {
-        var keysArr = util_keys(props);
+        var keysArr = keys(props);
         this.shape = this.getDefaultShape();
         var defaultStyle = this.getDefaultStyle();
         if (defaultStyle) {
@@ -34105,11 +32084,11 @@ var Path = (function (_super) {
                     this.useStyle(value);
                 }
                 else {
-                    core_util_extend(this.style, value);
+                    util_extend(this.style, value);
                 }
             }
             else if (key === 'shape') {
-                core_util_extend(this.shape, value);
+                util_extend(this.shape, value);
             }
             else {
                 _super.prototype.attrKV.call(this, key, value);
@@ -34131,8 +32110,8 @@ var Path = (function (_super) {
     Path.prototype.getInsideTextFill = function () {
         var pathFill = this.style.fill;
         if (pathFill !== 'none') {
-            if (util_isString(pathFill)) {
-                var fillLum = color_lum(pathFill, 0);
+            if (isString(pathFill)) {
+                var fillLum = lum(pathFill, 0);
                 if (fillLum > 0.5) {
                     return DARK_LABEL_COLOR;
                 }
@@ -34149,10 +32128,10 @@ var Path = (function (_super) {
     };
     Path.prototype.getInsideTextStroke = function (textFill) {
         var pathFill = this.style.fill;
-        if (util_isString(pathFill)) {
+        if (isString(pathFill)) {
             var zr = this.__zr;
             var isDarkMode = !!(zr && zr.isDarkMode());
-            var isDarkLabel = color_lum(textFill, 0) < DARK_MODE_THRESHOLD;
+            var isDarkLabel = lum(textFill, 0) < DARK_MODE_THRESHOLD;
             if (isDarkMode === isDarkLabel) {
                 return pathFill;
             }
@@ -34286,7 +32265,7 @@ var Path = (function (_super) {
             shape[keyOrObj] = value;
         }
         else {
-            core_util_extend(shape, keyOrObj);
+            util_extend(shape, keyOrObj);
         }
         this.dirtyShape();
         return this;
@@ -34295,13 +32274,13 @@ var Path = (function (_super) {
         return !!(this.__dirty & SHAPE_CHANGED_BIT);
     };
     Path.prototype.createStyle = function (obj) {
-        return util_createObject(DEFAULT_PATH_STYLE, obj);
+        return createObject(DEFAULT_PATH_STYLE, obj);
     };
     Path.prototype._innerSaveToNormal = function (toState) {
         _super.prototype._innerSaveToNormal.call(this, toState);
         var normalState = this._normalState;
         if (toState.shape && !normalState.shape) {
-            normalState.shape = core_util_extend({}, this.shape);
+            normalState.shape = util_extend({}, this.shape);
         }
     };
     Path.prototype._applyStateObj = function (stateName, state, normalState, keepCurrentStates, transition, animationCfg) {
@@ -34314,13 +32293,13 @@ var Path = (function (_super) {
                     targetShape = state.shape;
                 }
                 else {
-                    targetShape = core_util_extend({}, normalState.shape);
-                    core_util_extend(targetShape, state.shape);
+                    targetShape = util_extend({}, normalState.shape);
+                    util_extend(targetShape, state.shape);
                 }
             }
             else {
-                targetShape = core_util_extend({}, keepCurrentStates ? this.shape : normalState.shape);
-                core_util_extend(targetShape, state.shape);
+                targetShape = util_extend({}, keepCurrentStates ? this.shape : normalState.shape);
+                util_extend(targetShape, state.shape);
             }
         }
         else if (needsRestoreToNormal) {
@@ -34328,9 +32307,9 @@ var Path = (function (_super) {
         }
         if (targetShape) {
             if (transition) {
-                this.shape = core_util_extend({}, this.shape);
+                this.shape = util_extend({}, this.shape);
                 var targetShapePrimaryProps = {};
-                var shapeKeys = util_keys(targetShape);
+                var shapeKeys = keys(targetShape);
                 for (var i = 0; i < shapeKeys.length; i++) {
                     var key = shapeKeys[i];
                     if (typeof targetShape[key] === 'object') {
@@ -34380,10 +32359,10 @@ var Path = (function (_super) {
                 return _this;
             }
             Sub.prototype.getDefaultStyle = function () {
-                return util_clone(defaultProps.style);
+                return clone(defaultProps.style);
             };
             Sub.prototype.getDefaultShape = function () {
-                return util_clone(defaultProps.shape);
+                return clone(defaultProps.shape);
             };
             return Sub;
         }(Path));
@@ -34407,7 +32386,7 @@ var Path = (function (_super) {
 }(graphic_Displayable));
 /* harmony default export */ const graphic_Path = (Path);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/TSpan.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/TSpan.js
 
 
 
@@ -34438,7 +32417,7 @@ var TSpan = (function (_super) {
         return fill != null && fill !== 'none';
     };
     TSpan.prototype.createStyle = function (obj) {
-        return util_createObject(DEFAULT_TSPAN_STYLE, obj);
+        return createObject(DEFAULT_TSPAN_STYLE, obj);
     };
     TSpan.prototype.setBoundingRect = function (rect) {
         this._rect = rect;
@@ -34471,7 +32450,7 @@ var TSpan = (function (_super) {
 TSpan.prototype.type = 'tspan';
 /* harmony default export */ const graphic_TSpan = (TSpan);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/Image.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/Image.js
 
 
 
@@ -34503,7 +32482,7 @@ var ZRImage = (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     ZRImage.prototype.createStyle = function (obj) {
-        return util_createObject(DEFAULT_IMAGE_STYLE, obj);
+        return createObject(DEFAULT_IMAGE_STYLE, obj);
     };
     ZRImage.prototype._getSize = function (dim) {
         var style = this.style;
@@ -34546,7 +32525,7 @@ var ZRImage = (function (_super) {
 ZRImage.prototype.type = 'image';
 /* harmony default export */ const graphic_Image = (ZRImage);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/helper/roundRect.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/helper/roundRect.js
 function buildPath(ctx, shape) {
     var x = shape.x;
     var y = shape.y;
@@ -34623,7 +32602,7 @@ function buildPath(ctx, shape) {
     r1 !== 0 && ctx.arc(x + r1, y + r1, r1, Math.PI, Math.PI * 1.5);
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/helper/subPixelOptimize.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/helper/subPixelOptimize.js
 var round = Math.round;
 function subPixelOptimizeLine(outputShape, inputShape, style) {
     if (!inputShape) {
@@ -34681,7 +32660,7 @@ function subPixelOptimize(position, lineWidth, positiveOrNegative) {
         : (doubledPosition + (positiveOrNegative ? 1 : -1)) / 2;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Rect.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Rect.js
 
 
 
@@ -34740,7 +32719,7 @@ var Rect = (function (_super) {
 Rect.prototype.type = 'rect';
 /* harmony default export */ const shape_Rect = (Rect);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/Text.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/Text.js
 
 
 
@@ -34888,7 +32867,7 @@ var ZRText = (function (_super) {
         }
         var sourceRich = sourceStyle.rich;
         var targetRich = targetStyle.rich || (sourceRich && {});
-        core_util_extend(targetStyle, sourceStyle);
+        util_extend(targetStyle, sourceStyle);
         if (sourceRich && targetRich) {
             this._mergeRich(targetRich, sourceRich);
             targetStyle.rich = targetRich;
@@ -34899,11 +32878,11 @@ var ZRText = (function (_super) {
         return targetStyle;
     };
     ZRText.prototype._mergeRich = function (targetRich, sourceRich) {
-        var richNames = util_keys(sourceRich);
+        var richNames = keys(sourceRich);
         for (var i = 0; i < richNames.length; i++) {
             var richName = richNames[i];
             targetRich[richName] = targetRich[richName] || {};
-            core_util_extend(targetRich[richName], sourceRich[richName]);
+            util_extend(targetRich[richName], sourceRich[richName]);
         }
     };
     ZRText.prototype.getAnimationStyleProps = function () {
@@ -35117,10 +33096,10 @@ var ZRText = (function (_super) {
         subElStyle.textAlign = textAlign;
         subElStyle.textBaseline = 'middle';
         subElStyle.font = token.font || DEFAULT_FONT;
-        subElStyle.opacity = util_retrieve3(tokenStyle.opacity, style.opacity, 1);
+        subElStyle.opacity = retrieve3(tokenStyle.opacity, style.opacity, 1);
         if (textStroke) {
-            subElStyle.lineWidth = util_retrieve3(tokenStyle.lineWidth, style.lineWidth, defaultLineWidth);
-            subElStyle.lineDash = util_retrieve2(tokenStyle.lineDash, style.lineDash);
+            subElStyle.lineWidth = retrieve3(tokenStyle.lineWidth, style.lineWidth, defaultLineWidth);
+            subElStyle.lineDash = retrieve2(tokenStyle.lineDash, style.lineDash);
             subElStyle.lineDashOffset = style.lineDashOffset || 0;
             subElStyle.stroke = textStroke;
         }
@@ -35156,7 +33135,7 @@ var ZRText = (function (_super) {
         if (isPlainOrGradientBg) {
             var rectStyle = rectEl.style;
             rectStyle.fill = textBackgroundColor || null;
-            rectStyle.fillOpacity = util_retrieve2(style.fillOpacity, 1);
+            rectStyle.fillOpacity = retrieve2(style.fillOpacity, 1);
         }
         else if (isImageBg) {
             imgEl = this._getOrCreateChild(graphic_Image);
@@ -35174,7 +33153,7 @@ var ZRText = (function (_super) {
             var rectStyle = rectEl.style;
             rectStyle.lineWidth = textBorderWidth;
             rectStyle.stroke = textBorderColor;
-            rectStyle.strokeOpacity = util_retrieve2(style.strokeOpacity, 1);
+            rectStyle.strokeOpacity = retrieve2(style.strokeOpacity, 1);
             rectStyle.lineDash = style.borderDash;
             rectStyle.lineDashOffset = style.borderDashOffset || 0;
             rectEl.strokeContainThreshold = 0;
@@ -35188,7 +33167,7 @@ var ZRText = (function (_super) {
         commonStyle.shadowColor = style.shadowColor || 'transparent';
         commonStyle.shadowOffsetX = style.shadowOffsetX || 0;
         commonStyle.shadowOffsetY = style.shadowOffsetY || 0;
-        commonStyle.opacity = util_retrieve3(style.opacity, topStyle.opacity, 1);
+        commonStyle.opacity = retrieve3(style.opacity, topStyle.opacity, 1);
     };
     ZRText.makeFont = function (style) {
         var font = '';
@@ -35213,7 +33192,7 @@ var ZRText = (function (_super) {
                 style.fontFamily || 'sans-serif'
             ].join(' ');
         }
-        return font && util_trim(font) || style.textFont || style.font;
+        return font && trim(font) || style.textFont || style.font;
     };
     return ZRText;
 }(graphic_Displayable));
@@ -35221,7 +33200,7 @@ var VALID_TEXT_ALIGN = { left: true, right: 1, center: 1 };
 var VALID_TEXT_VERTICAL_ALIGN = { top: 1, bottom: 1, middle: 1 };
 function normalizeTextStyle(style) {
     normalizeStyle(style);
-    util_each(style.rich, normalizeStyle);
+    each(style.rich, normalizeStyle);
     return style;
 }
 function normalizeStyle(style) {
@@ -35235,7 +33214,7 @@ function normalizeStyle(style) {
         style.verticalAlign = (verticalAlign == null || VALID_TEXT_VERTICAL_ALIGN[verticalAlign]) ? verticalAlign : 'top';
         var textPadding = style.padding;
         if (textPadding) {
-            style.padding = util_normalizeCssArray(style.padding);
+            style.padding = normalizeCssArray(style.padding);
         }
     }
 }
@@ -35517,7 +33496,7 @@ function getPercentWithPrecision(valueList, idx, precision) {
     return 0;
   }
 
-  var sum = util_reduce(valueList, function (acc, val) {
+  var sum = reduce(valueList, function (acc, val) {
     return acc + (isNaN(val) ? 0 : val);
   }, 0);
 
@@ -35526,18 +33505,18 @@ function getPercentWithPrecision(valueList, idx, precision) {
   }
 
   var digits = Math.pow(10, precision);
-  var votesPerQuota = util_map(valueList, function (val) {
+  var votesPerQuota = map(valueList, function (val) {
     return (isNaN(val) ? 0 : val) / sum * digits * 100;
   });
   var targetSeats = digits * 100;
-  var seats = util_map(votesPerQuota, function (votes) {
+  var seats = map(votesPerQuota, function (votes) {
     // Assign automatic seats.
     return Math.floor(votes);
   });
-  var currentSum = util_reduce(seats, function (acc, val) {
+  var currentSum = reduce(seats, function (acc, val) {
     return acc + val;
   }, 0);
-  var remainder = util_map(votesPerQuota, function (votes, idx) {
+  var remainder = map(votesPerQuota, function (votes, idx) {
     return votes - seats[idx];
   }); // Has remainding votes.
 
@@ -36005,11 +33984,11 @@ function makePrintable() {
     // Fuzzy stringify for print.
     // This code only exist in dev environment.
     var makePrintableStringIfPossible_1 = function (val) {
-      return val === void 0 ? 'undefined' : val === Infinity ? 'Infinity' : val === -Infinity ? '-Infinity' : util_eqNaN(val) ? 'NaN' : val instanceof Date ? 'Date(' + val.toISOString() + ')' : util_isFunction(val) ? 'function () { ... }' : util_isRegExp(val) ? val + '' : null;
+      return val === void 0 ? 'undefined' : val === Infinity ? 'Infinity' : val === -Infinity ? '-Infinity' : eqNaN(val) ? 'NaN' : val instanceof Date ? 'Date(' + val.toISOString() + ')' : isFunction(val) ? 'function () { ... }' : isRegExp(val) ? val + '' : null;
     };
 
-    msg = util_map(hintInfo, function (arg) {
-      if (util_isString(arg)) {
+    msg = map(hintInfo, function (arg) {
+      if (isString(arg)) {
         // Print without quotation mark for some statement.
         return arg;
       } else {
@@ -36151,7 +34130,7 @@ var TEXT_STYLE_OPTIONS = ['fontStyle', 'fontWeight', 'fontSize', 'fontFamily', '
  */
 
 function getDataItemValue(dataItem) {
-  return util_isObject(dataItem) && !util_isArray(dataItem) && !(dataItem instanceof Date) ? dataItem.value : dataItem;
+  return isObject(dataItem) && !isArray(dataItem) && !(dataItem instanceof Date) ? dataItem.value : dataItem;
 }
 /**
  * data could be [12, 2323, {value: 223}, [1221, 23], {value: [2, 23]}]
@@ -36159,7 +34138,7 @@ function getDataItemValue(dataItem) {
  */
 
 function isDataItemOption(dataItem) {
-  return util_isObject(dataItem) && !(dataItem instanceof Array); // // markLine data can be array
+  return isObject(dataItem) && !(dataItem instanceof Array); // // markLine data can be array
   // && !(dataItem[0] && isObject(dataItem[0]) && !(dataItem[0] instanceof Array));
 }
 ;
@@ -36199,10 +34178,10 @@ function mappingToExists(existings, newCmptOptions, mode) {
   var isReplaceAllMode = mode === 'replaceAll';
   existings = existings || [];
   newCmptOptions = (newCmptOptions || []).slice();
-  var existingIdIdxMap = util_createHashMap(); // Validate id and name on user input option.
+  var existingIdIdxMap = createHashMap(); // Validate id and name on user input option.
 
-  util_each(newCmptOptions, function (cmptOption, index) {
-    if (!util_isObject(cmptOption)) {
+  each(newCmptOptions, function (cmptOption, index) {
+    if (!isObject(cmptOption)) {
       newCmptOptions[index] = null;
       return;
     }
@@ -36275,7 +34254,7 @@ function prepareResult(existings, existingIdIdxMap, mode) {
 
 function mappingById(result, existings, existingIdIdxMap, newCmptOptions) {
   // Mapping by id if specified.
-  util_each(newCmptOptions, function (cmptOption, index) {
+  each(newCmptOptions, function (cmptOption, index) {
     if (!cmptOption || cmptOption.id == null) {
       return;
     }
@@ -36285,7 +34264,7 @@ function mappingById(result, existings, existingIdIdxMap, newCmptOptions) {
 
     if (existingIdx != null) {
       var resultItem = result[existingIdx];
-      util_assert(!resultItem.newOption, 'Duplicated option on id "' + optionId + '".');
+      assert(!resultItem.newOption, 'Duplicated option on id "' + optionId + '".');
       resultItem.newOption = cmptOption; // In both mode, if id matched, new option will be merged to
       // the existings rather than creating new component model.
 
@@ -36297,7 +34276,7 @@ function mappingById(result, existings, existingIdIdxMap, newCmptOptions) {
 
 function mappingByName(result, newCmptOptions) {
   // Mapping by name if specified.
-  util_each(newCmptOptions, function (cmptOption, index) {
+  each(newCmptOptions, function (cmptOption, index) {
     if (!cmptOption || cmptOption.name == null) {
       return;
     }
@@ -36317,7 +34296,7 @@ function mappingByName(result, newCmptOptions) {
 }
 
 function mappingByIndex(result, newCmptOptions, brandNew) {
-  util_each(newCmptOptions, function (cmptOption) {
+  each(newCmptOptions, function (cmptOption) {
     if (!cmptOption) {
       return;
     } // Find the first place that not mapped by id and not internal component (consider the "hole").
@@ -36355,7 +34334,7 @@ function mappingByIndex(result, newCmptOptions, brandNew) {
 }
 
 function mappingInReplaceAllMode(result, newCmptOptions) {
-  util_each(newCmptOptions, function (cmptOption) {
+  each(newCmptOptions, function (cmptOption) {
     // The feature "reproduce" requires "hole" will also reproduced
     // in case that compoennt index referring are broken.
     result.push({
@@ -36382,25 +34361,25 @@ function makeIdAndName(mapResult) {
   // name can be duplicated among components, which is convenient
   // to specify multi components (like series) by one name.
   // Ensure that each id is distinct.
-  var idMap = util_createHashMap();
-  util_each(mapResult, function (item) {
+  var idMap = createHashMap();
+  each(mapResult, function (item) {
     var existing = item.existing;
     existing && idMap.set(existing.id, item);
   });
-  util_each(mapResult, function (item) {
+  each(mapResult, function (item) {
     var opt = item.newOption; // Force ensure id not duplicated.
 
-    util_assert(!opt || opt.id == null || !idMap.get(opt.id) || idMap.get(opt.id) === item, 'id duplicates: ' + (opt && opt.id));
+    assert(!opt || opt.id == null || !idMap.get(opt.id) || idMap.get(opt.id) === item, 'id duplicates: ' + (opt && opt.id));
     opt && opt.id != null && idMap.set(opt.id, item);
     !item.keyInfo && (item.keyInfo = {});
   }); // Make name and id.
 
-  util_each(mapResult, function (item, index) {
+  each(mapResult, function (item, index) {
     var existing = item.existing;
     var opt = item.newOption;
     var keyInfo = item.keyInfo;
 
-    if (!util_isObject(opt)) {
+    if (!isObject(opt)) {
       return;
     } // name can be overwitten. Consider case: axis.name = '20km'.
     // But id generated by name will not be changed, which affect
@@ -36460,7 +34439,7 @@ function convertOptionIdName(idOrName, defaultValue) {
   }
 
   var type = typeof idOrName;
-  return type === 'string' ? idOrName : type === 'number' || util_isStringSafe(idOrName) ? idOrName + '' : defaultValue;
+  return type === 'string' ? idOrName : type === 'number' || isStringSafe(idOrName) ? idOrName + '' : defaultValue;
 }
 
 function warnInvalidateIdOrName(idOrName) {
@@ -36470,7 +34449,7 @@ function warnInvalidateIdOrName(idOrName) {
 }
 
 function isValidIdOrName(idOrName) {
-  return util_isStringSafe(idOrName) || isNumeric(idOrName);
+  return isStringSafe(idOrName) || isNumeric(idOrName);
 }
 
 function isNameSpecified(componentModel) {
@@ -36492,10 +34471,10 @@ function makeInternalComponentId(idSuffix) {
 }
 function setComponentTypeToKeyInfo(mappingResult, mainType, componentModelCtor) {
   // Set mainType and complete subType.
-  util_each(mappingResult, function (item) {
+  each(mappingResult, function (item) {
     var newOption = item.newOption;
 
-    if (util_isObject(newOption)) {
+    if (isObject(newOption)) {
       item.keyInfo.mainType = mainType;
       item.keyInfo.subType = determineSubType(mainType, newOption, item.existing, componentModelCtor);
     }
@@ -36578,11 +34557,11 @@ function queryDataIndex(data, payload) {
   if (payload.dataIndexInside != null) {
     return payload.dataIndexInside;
   } else if (payload.dataIndex != null) {
-    return util_isArray(payload.dataIndex) ? util_map(payload.dataIndex, function (value) {
+    return isArray(payload.dataIndex) ? map(payload.dataIndex, function (value) {
       return data.indexOfRawIndex(value);
     }) : data.indexOfRawIndex(payload.dataIndex);
   } else if (payload.name != null) {
-    return util_isArray(payload.name) ? util_map(payload.name, function (value) {
+    return isArray(payload.name) ? map(payload.name, function (value) {
       return data.indexOfName(value);
     }) : data.indexOfName(payload.name);
   }
@@ -36646,7 +34625,7 @@ function parseFinder(ecModel, finderInput, opt) {
 function preParseFinder(finderInput, opt) {
   var finder;
 
-  if (util_isString(finderInput)) {
+  if (isString(finderInput)) {
     var obj = {};
     obj[finderInput + 'Index'] = 0;
     finder = obj;
@@ -36654,10 +34633,10 @@ function preParseFinder(finderInput, opt) {
     finder = finderInput;
   }
 
-  var queryOptionMap = util_createHashMap();
+  var queryOptionMap = createHashMap();
   var others = {};
   var mainTypeSpecified = false;
-  util_each(finder, function (value, key) {
+  each(finder, function (value, key) {
     // Exclude 'dataIndex' and other illgal keys.
     if (key === 'dataIndex' || key === 'dataIndexInside') {
       others[key] = value;
@@ -36668,7 +34647,7 @@ function preParseFinder(finderInput, opt) {
     var mainType = parsedKey[1];
     var queryType = (parsedKey[2] || '').toLowerCase();
 
-    if (!mainType || !queryType || opt && opt.includeMainTypes && util_indexOf(opt.includeMainTypes, mainType) < 0) {
+    if (!mainType || !queryType || opt && opt.includeMainTypes && indexOf(opt.includeMainTypes, mainType) < 0) {
       return;
     }
 
@@ -36710,7 +34689,7 @@ function queryReferringComponents(ecModel, mainType, userOption, opt) {
   }
 
   if (indexOption === 'none' || indexOption === false) {
-    util_assert(opt.enableNone, '`"none"` or `false` is not a valid value on index option.');
+    assert(opt.enableNone, '`"none"` or `false` is not a valid value on index option.');
     result.models = [];
     return result;
   } // `queryComponents` will return all components if
@@ -36718,7 +34697,7 @@ function queryReferringComponents(ecModel, mainType, userOption, opt) {
 
 
   if (indexOption === 'all') {
-    util_assert(opt.enableAll, '`"all"` is not a valid value on index option.');
+    assert(opt.enableAll, '`"all"` is not a valid value on index option.');
     indexOption = idOption = nameOption = null;
   }
 
@@ -36750,9 +34729,9 @@ function getTooltipRenderMode(renderModeOption) {
 
 function groupData(array, getKey // return key
 ) {
-  var buckets = util_createHashMap();
+  var buckets = createHashMap();
   var keys = [];
-  util_each(array, function (item) {
+  each(array, function (item) {
     var key = getKey(item);
     (buckets.get(key) || (keys.push(key), buckets.set(key, []))).push(item);
   });
@@ -36784,7 +34763,7 @@ function interpolateRawValues(data, precision, sourceValue, targetValue, percent
   }
 
   if (typeof targetValue === 'number') {
-    var value = Animator_interpolateNumber(sourceValue || 0, targetValue, percent);
+    var value = interpolateNumber(sourceValue || 0, targetValue, percent);
     return number_round(value, isAutoPrecision ? Math.max(getPrecision(sourceValue || 0), getPrecision(targetValue)) : precision);
   } else if (typeof targetValue === 'string') {
     return percent < 1 ? sourceValue : targetValue;
@@ -36803,7 +34782,7 @@ function interpolateRawValues(data, precision, sourceValue, targetValue, percent
       } else {
         var leftVal = leftArr && leftArr[i] ? leftArr[i] : 0;
         var rightVal = rightArr[i];
-        var value = Animator_interpolateNumber(leftVal, rightVal, percent);
+        var value = interpolateNumber(leftVal, rightVal, percent);
         interpolated[i] = number_round(value, isAutoPrecision ? Math.max(getPrecision(leftVal), getPrecision(rightVal)) : precision);
       }
     }
@@ -36930,7 +34909,7 @@ function hasFillOrStroke(fillOrStroke) {
 } // Most lifted color are duplicated.
 
 
-var liftedColorCache = new zrender_lib_core_LRU(100);
+var liftedColorCache = new lib_core_LRU(100);
 
 function liftColor(color) {
   if (typeof color !== 'string') {
@@ -36940,7 +34919,7 @@ function liftColor(color) {
   var liftedColor = liftedColorCache.get(color);
 
   if (!liftedColor) {
-    liftedColor = color_lift(color, -0.1);
+    liftedColor = lift(color, -0.1);
     liftedColorCache.put(color, liftedColor);
   }
 
@@ -37055,7 +35034,7 @@ function getFromStateStyle(el, props, toStateName, defaultValue) {
 }
 
 function createEmphasisDefaultState(el, stateName, targetStates, state) {
-  var hasSelect = targetStates && util_indexOf(targetStates, 'select') >= 0;
+  var hasSelect = targetStates && indexOf(targetStates, 'select') >= 0;
   var cloned = false;
 
   if (el instanceof graphic_Path) {
@@ -37071,15 +35050,15 @@ function createEmphasisDefaultState(el, stateName, targetStates, state) {
       if (!hasFillOrStroke(emphasisStyle.fill) && hasFillOrStroke(fromFill)) {
         cloned = true; // Not modify the original value.
 
-        state = core_util_extend({}, state);
-        emphasisStyle = core_util_extend({}, emphasisStyle); // Already being applied 'emphasis'. DON'T lift color multiple times.
+        state = util_extend({}, state);
+        emphasisStyle = util_extend({}, emphasisStyle); // Already being applied 'emphasis'. DON'T lift color multiple times.
 
         emphasisStyle.fill = liftColor(fromFill);
       } // Not highlight stroke if fill has been highlighted.
       else if (!hasFillOrStroke(emphasisStyle.stroke) && hasFillOrStroke(fromStroke)) {
           if (!cloned) {
-            state = core_util_extend({}, state);
-            emphasisStyle = core_util_extend({}, emphasisStyle);
+            state = util_extend({}, state);
+            emphasisStyle = util_extend({}, emphasisStyle);
           }
 
           emphasisStyle.stroke = liftColor(fromStroke);
@@ -37093,7 +35072,7 @@ function createEmphasisDefaultState(el, stateName, targetStates, state) {
     // TODO Share with textContent?
     if (state.z2 == null) {
       if (!cloned) {
-        state = core_util_extend({}, state);
+        state = util_extend({}, state);
       }
 
       var z2EmphasisLift = el.z2EmphasisLift;
@@ -37109,7 +35088,7 @@ function createSelectDefaultState(el, stateName, state) {
   if (state) {
     // TODO Share with textContent?
     if (state.z2 == null) {
-      state = core_util_extend({}, state);
+      state = util_extend({}, state);
       var z2SelectLift = el.z2SelectLift;
       state.z2 = el.z2 + (z2SelectLift != null ? z2SelectLift : Z2_SELECT_LIFT);
     }
@@ -37119,7 +35098,7 @@ function createSelectDefaultState(el, stateName, state) {
 }
 
 function createBlurDefaultState(el, stateName, state) {
-  var hasBlur = util_indexOf(el.currentStates, stateName) >= 0;
+  var hasBlur = indexOf(el.currentStates, stateName) >= 0;
   var currentOpacity = el.style.opacity;
   var fromState = !hasBlur ? getFromStateStyle(el, ['opacity'], stateName, {
     opacity: 1
@@ -37129,8 +35108,8 @@ function createBlurDefaultState(el, stateName, state) {
 
   if (blurStyle.opacity == null) {
     // clone state
-    state = core_util_extend({}, state);
-    blurStyle = core_util_extend({
+    state = util_extend({}, state);
+    blurStyle = util_extend({
       // Already being applied 'emphasis'. DON'T mul opacity multiple times.
       opacity: hasBlur ? currentOpacity : fromState.opacity * 0.1
     }, blurStyle);
@@ -37264,10 +35243,10 @@ function blurSeries(targetSeriesIndex, focus, blurScope, api) {
         singleEnterBlur(child);
       });
 
-      if (util_isArrayLike(focus)) {
+      if (isArrayLike(focus)) {
         leaveBlurOfIndices(seriesModel.getData(), focus);
-      } else if (util_isObject(focus)) {
-        var dataTypes = util_keys(focus);
+      } else if (isObject(focus)) {
+        var dataTypes = keys(focus);
 
         for (var d = 0; d < dataTypes.length; d++) {
           leaveBlurOfIndices(seriesModel.getData(dataTypes[d]), focus[dataTypes[d]]);
@@ -37315,7 +35294,7 @@ function blurSeriesFromHighlightPayload(seriesModel, payload, api) {
   var data = seriesModel.getData(payload.dataType);
   var dataIndex = queryDataIndex(data, payload); // Pick the first one if there is multiple/none exists.
 
-  dataIndex = (util_isArray(dataIndex) ? dataIndex[0] : dataIndex) || 0;
+  dataIndex = (isArray(dataIndex) ? dataIndex[0] : dataIndex) || 0;
   var el = data.getItemGraphicEl(dataIndex);
 
   if (!el) {
@@ -37402,7 +35381,7 @@ function handleGlobalMouseOverForHighDown(dispatcher, e, api) {
       blurComponent(ecData.componentMainType, ecData.componentIndex, api);
     }
 
-    util_each(dispatchers, function (dispatcher) {
+    each(dispatchers, function (dispatcher) {
       return enterEmphasisWhenMouseOver(dispatcher, e);
     });
   } else {
@@ -37430,7 +35409,7 @@ function handleGlboalMouseOutForHighDown(dispatcher, e, api) {
   var dispatchers = findComponentHighDownDispatchers(ecData.componentMainType, ecData.componentIndex, ecData.componentHighDownName, api).dispatchers;
 
   if (dispatchers) {
-    util_each(dispatchers, function (dispatcher) {
+    each(dispatchers, function (dispatcher) {
       return leaveEmphasisWhenMouseOut(dispatcher, e);
     });
   } else {
@@ -37446,7 +35425,7 @@ function toggleSelectionFromPayload(seriesModel, payload, api) {
   var data = seriesModel.getData(dataType);
   var dataIndex = queryDataIndex(data, payload);
 
-  if (!util_isArray(dataIndex)) {
+  if (!isArray(dataIndex)) {
     dataIndex = [dataIndex];
   }
 
@@ -37454,7 +35433,7 @@ function toggleSelectionFromPayload(seriesModel, payload, api) {
 }
 function updateSeriesElementSelection(seriesModel) {
   var allData = seriesModel.getAllData();
-  util_each(allData, function (_a) {
+  each(allData, function (_a) {
     var data = _a.data,
         type = _a.type;
     data.eachItemGraphicEl(function (el, idx) {
@@ -37466,7 +35445,7 @@ function getAllSelectedIndices(ecModel) {
   var ret = [];
   ecModel.eachSeries(function (seriesModel) {
     var allData = seriesModel.getAllData();
-    util_each(allData, function (_a) {
+    each(allData, function (_a) {
       var data = _a.data,
           type = _a.type;
       var dataIndices = seriesModel.getSelectedDataIndices();
@@ -37622,7 +35601,7 @@ function savePathStates(el) {
   store.selectFill = selectState.style && selectState.style.fill || null;
   store.selectStroke = selectState.style && selectState.style.stroke || null;
 }
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/tool/transformPath.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/tool/transformPath.js
 
 
 var transformPath_CMD = core_PathProxy.CMD;
@@ -37702,7 +35681,7 @@ function transformPath(path, m) {
     path.increaseVersion();
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/tool/path.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/tool/path.js
 
 
 
@@ -37993,7 +35972,7 @@ function isPathProxy(path) {
 }
 function createPathOptions(str, opts) {
     var pathProxy = createPathProxyFromString(str);
-    var innerOpts = core_util_extend({}, opts);
+    var innerOpts = util_extend({}, opts);
     innerOpts.buildPath = function (path) {
         if (isPathProxy(path)) {
             path.setData(pathProxy.data);
@@ -38057,7 +36036,7 @@ function mergePath(pathEls, opts) {
     return pathBundle;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/Group.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/Group.js
 
 
 
@@ -38143,7 +36122,7 @@ var Group = (function (_super) {
     Group.prototype.remove = function (child) {
         var zr = this.__zr;
         var children = this._children;
-        var idx = util_indexOf(children, child);
+        var idx = indexOf(children, child);
         if (idx < 0) {
             return this;
         }
@@ -38229,7 +36208,7 @@ var Group = (function (_super) {
 Group.prototype.type = 'group';
 /* harmony default export */ const graphic_Group = (Group);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Circle.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Circle.js
 
 
 var CircleShape = (function () {
@@ -38261,7 +36240,7 @@ var Circle = (function (_super) {
 Circle.prototype.type = 'circle';
 /* harmony default export */ const shape_Circle = (Circle);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Ellipse.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Ellipse.js
 
 
 var EllipseShape = (function () {
@@ -38302,7 +36281,7 @@ var Ellipse = (function (_super) {
 Ellipse.prototype.type = 'ellipse';
 /* harmony default export */ const shape_Ellipse = (Ellipse);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/helper/roundSector.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/helper/roundSector.js
 
 var roundSector_PI = Math.PI;
 var roundSector_PI2 = roundSector_PI * 2;
@@ -38487,7 +36466,7 @@ function roundSector_buildPath(ctx, shape) {
     ctx.closePath();
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Sector.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Sector.js
 
 
 
@@ -38526,7 +36505,7 @@ var Sector = (function (_super) {
 Sector.prototype.type = 'sector';
 /* harmony default export */ const shape_Sector = (Sector);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Ring.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Ring.js
 
 
 var RingShape = (function () {
@@ -38561,7 +36540,7 @@ var Ring = (function (_super) {
 Ring.prototype.type = 'ring';
 /* harmony default export */ const shape_Ring = (Ring);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/helper/smoothSpline.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/helper/smoothSpline.js
 
 function interpolate(p0, p1, p2, p3, t, t2, t3) {
     var v0 = (p2 - p0) * 0.5;
@@ -38607,7 +36586,7 @@ function smoothSpline(points, isLoop) {
     return ret;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/helper/smoothBezier.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/helper/smoothBezier.js
 
 function smoothBezier(points, smooth, isLoop, constraint) {
     var cps = [];
@@ -38672,7 +36651,7 @@ function smoothBezier(points, smooth, isLoop, constraint) {
     return cps;
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/helper/poly.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/helper/poly.js
 
 
 function poly_buildPath(ctx, shape, closePath) {
@@ -38703,7 +36682,7 @@ function poly_buildPath(ctx, shape, closePath) {
     }
 }
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Polygon.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Polygon.js
 
 
 
@@ -38733,7 +36712,7 @@ var Polygon = (function (_super) {
 Polygon.prototype.type = 'polygon';
 /* harmony default export */ const shape_Polygon = (Polygon);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Polyline.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Polyline.js
 
 
 
@@ -38769,7 +36748,7 @@ var Polyline = (function (_super) {
 Polyline.prototype.type = 'polyline';
 /* harmony default export */ const shape_Polyline = (Polyline);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Line.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Line.js
 
 
 
@@ -38840,7 +36819,7 @@ var Line = (function (_super) {
 Line.prototype.type = 'line';
 /* harmony default export */ const shape_Line = (Line);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/BezierCurve.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/BezierCurve.js
 
 
 
@@ -38941,7 +36920,7 @@ var BezierCurve = (function (_super) {
 BezierCurve.prototype.type = 'bezier-curve';
 /* harmony default export */ const shape_BezierCurve = (BezierCurve);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/shape/Arc.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/shape/Arc.js
 
 
 var ArcShape = (function () {
@@ -38987,7 +36966,7 @@ var Arc = (function (_super) {
 Arc.prototype.type = 'arc';
 /* harmony default export */ const shape_Arc = (Arc);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/CompoundPath.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/CompoundPath.js
 
 
 var CompoundPath = (function (_super) {
@@ -39038,7 +37017,7 @@ var CompoundPath = (function (_super) {
 }(graphic_Path));
 /* harmony default export */ const graphic_CompoundPath = (CompoundPath);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/Gradient.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/Gradient.js
 var Gradient = (function () {
     function Gradient(colorStops) {
         this.colorStops = colorStops || [];
@@ -39053,7 +37032,7 @@ var Gradient = (function () {
 }());
 /* harmony default export */ const graphic_Gradient = (Gradient);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/LinearGradient.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/LinearGradient.js
 
 
 var LinearGradient = (function (_super) {
@@ -39073,7 +37052,7 @@ var LinearGradient = (function (_super) {
 /* harmony default export */ const graphic_LinearGradient = (LinearGradient);
 ;
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/RadialGradient.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/RadialGradient.js
 
 
 var RadialGradient = (function (_super) {
@@ -39091,7 +37070,7 @@ var RadialGradient = (function (_super) {
 }(graphic_Gradient));
 /* harmony default export */ const graphic_RadialGradient = (RadialGradient);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/core/OrientedBoundingRect.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/OrientedBoundingRect.js
 
 var extent = [0, 0];
 var extent2 = [0, 0];
@@ -39213,7 +37192,7 @@ var OrientedBoundingRect = (function () {
 }());
 /* harmony default export */ const core_OrientedBoundingRect = (OrientedBoundingRect);
 
-;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/zrender/lib/graphic/IncrementalDisplayable.js
+;// CONCATENATED MODULE: ./node_modules/zrender/lib/graphic/IncrementalDisplayable.js
 
 
 
@@ -39597,7 +37576,7 @@ function animateOrSetProps(animationType, el, props, animatableModel, dataIndex,
     during = cb;
     cb = dataIndex;
     dataIndex = null;
-  } else if (util_isObject(dataIndex)) {
+  } else if (isObject(dataIndex)) {
     cb = dataIndex.cb;
     during = dataIndex.during;
     isFrom = dataIndex.isFrom;
@@ -39634,8 +37613,8 @@ function animateOrSetProps(animationType, el, props, animatableModel, dataIndex,
       animationDelay = animationPayload.delay || 0;
     } else if (isRemove) {
       removeOpt = removeOpt || {};
-      duration = util_retrieve2(removeOpt.duration, 200);
-      animationEasing = util_retrieve2(removeOpt.easing, 'cubicOut');
+      duration = retrieve2(removeOpt.duration, 200);
+      animationEasing = retrieve2(removeOpt.easing, 'cubicOut');
       animationDelay = 0;
     } else {
       duration = animatableModel.getShallow(isUpdate ? 'animationDurationUpdate' : 'animationDuration');
@@ -39809,7 +37788,7 @@ function getTransform(target, ancestor) {
  */
 
 function graphic_applyTransform(target, transform, invert) {
-  if (transform && !util_isArrayLike(transform)) {
+  if (transform && !isArrayLike(transform)) {
     transform = core_Transformable.getLocalTransform(transform);
   }
 
@@ -39871,7 +37850,7 @@ function groupTransition(g1, g2, animatableModel) {
     };
 
     if (isPath(el)) {
-      obj.shape = core_util_extend({}, el.shape);
+      obj.shape = util_extend({}, el.shape);
     }
 
     return obj;
@@ -39893,7 +37872,7 @@ function groupTransition(g1, g2, animatableModel) {
 function clipPointsByRect(points, rect) {
   // FIXME: this way migth be incorrect when grpahic clipped by a corner.
   // and when element have border.
-  return util_map(points, function (point) {
+  return map(points, function (point) {
     var x = point[0];
     x = graphic_mathMax(x, rect.x);
     x = graphic_mathMin(x, rect.x + rect.width);
@@ -39925,7 +37904,7 @@ function clipRectByRect(targetRect, rect) {
 }
 function createIcon(iconStr, // Support 'image://' or 'path://' or direct svg path.
 opt, rect) {
-  var innerOpts = core_util_extend({
+  var innerOpts = util_extend({
     rectHover: true
   }, opt);
   var style = innerOpts.style = {
@@ -40017,7 +37996,7 @@ function setTooltipConfig(opt) {
   var itemTooltipOption = opt.itemTooltipOption;
   var componentModel = opt.componentModel;
   var itemName = opt.itemName;
-  var itemTooltipOptionObj = util_isString(itemTooltipOption) ? {
+  var itemTooltipOptionObj = isString(itemTooltipOption) ? {
     formatter: itemTooltipOption
   } : itemTooltipOption;
   var mainType = componentModel.mainType;
@@ -40031,8 +38010,8 @@ function setTooltipConfig(opt) {
   var formatterParamsExtra = opt.formatterParamsExtra;
 
   if (formatterParamsExtra) {
-    util_each(util_keys(formatterParamsExtra), function (key) {
-      if (!util_hasOwn(formatterParams, key)) {
+    each(keys(formatterParamsExtra), function (key) {
+      if (!hasOwn(formatterParams, key)) {
         formatterParams[key] = formatterParamsExtra[key];
         formatterParams.$vars.push(key);
       }
@@ -40145,7 +38124,7 @@ function getLabelText(opt, stateModels, interpolatedValue) {
   }
 
   if (baseText == null) {
-    baseText = util_isFunction(opt.defaultText) ? opt.defaultText(labelDataIndex, opt, interpolatedValue) : opt.defaultText;
+    baseText = isFunction(opt.defaultText) ? opt.defaultText(labelDataIndex, opt, interpolatedValue) : opt.defaultText;
   }
 
   var statesText = {
@@ -40155,7 +38134,7 @@ function getLabelText(opt, stateModels, interpolatedValue) {
   for (var i = 0; i < SPECIAL_STATES.length; i++) {
     var stateName = SPECIAL_STATES[i];
     var stateModel = stateModels[stateName];
-    statesText[stateName] = util_retrieve2(labelFetcher ? labelFetcher.getFormattedLabel(labelDataIndex, stateName, null, labelDimIndex, stateModel && stateModel.get('formatter')) : null, baseText);
+    statesText[stateName] = retrieve2(labelFetcher ? labelFetcher.getFormattedLabel(labelDataIndex, stateName, null, labelDimIndex, stateModel && stateModel.get('formatter')) : null, baseText);
   }
 
   return statesText;
@@ -40209,7 +38188,7 @@ function setLabelStyle(targetEl, labelStatesModels, opt, stateSpecified // TODO 
 
       if (stateModel) {
         var stateObj = textContent.ensureState(stateName);
-        var stateShow = !!util_retrieve2(stateModel.getShallow('show'), showNormal);
+        var stateShow = !!retrieve2(stateModel.getShallow('show'), showNormal);
 
         if (stateShow !== showNormal) {
           stateObj.ignore = !stateShow;
@@ -40280,7 +38259,7 @@ opt, isNotNormal, isAttached // If text is attached on an element. If so, auto c
 ) {
   var textStyle = {};
   setTextStyleCommon(textStyle, textStyleModel, opt, isNotNormal, isAttached);
-  specifiedTextStyle && core_util_extend(textStyle, specifiedTextStyle); // textStyle.host && textStyle.host.dirty && textStyle.host.dirty(false);
+  specifiedTextStyle && util_extend(textStyle, specifiedTextStyle); // textStyle.host && textStyle.host.dirty && textStyle.host.dirty(false);
 
   return textStyle;
 }
@@ -40289,7 +38268,7 @@ function createTextConfig(textStyleModel, opt, isNotNormal) {
   var textConfig = {};
   var labelPosition;
   var labelRotate = textStyleModel.getShallow('rotate');
-  var labelDistance = util_retrieve2(textStyleModel.getShallow('distance'), isNotNormal ? null : 5);
+  var labelDistance = retrieve2(textStyleModel.getShallow('distance'), isNotNormal ? null : 5);
   var labelOffset = textStyleModel.getShallow('offset');
   labelPosition = textStyleModel.getShallow('position') || (isNotNormal ? null : 'inside'); // 'outside' is not a valid zr textPostion value, but used
   // in bar series, and magric type should be considered.
@@ -40409,7 +38388,7 @@ function getRichItemNames(textStyleModel) {
 
     if (rich) {
       richItemNameMap = richItemNameMap || {};
-      var richKeys = util_keys(rich);
+      var richKeys = keys(rich);
 
       for (var i = 0; i < richKeys.length; i++) {
         var richKey = richKeys[i];
@@ -40433,7 +38412,7 @@ function setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNo
   var inheritColor = opt && opt.inheritColor;
   var fillColor = textStyleModel.getShallow('color');
   var strokeColor = textStyleModel.getShallow('textBorderColor');
-  var opacity = util_retrieve2(textStyleModel.getShallow('opacity'), globalTextStyle.opacity);
+  var opacity = retrieve2(textStyleModel.getShallow('opacity'), globalTextStyle.opacity);
 
   if (fillColor === 'inherit' || fillColor === 'auto') {
     if (true) {
@@ -40478,19 +38457,19 @@ function setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNo
     textStyle.stroke = strokeColor;
   }
 
-  var textBorderWidth = util_retrieve2(textStyleModel.getShallow('textBorderWidth'), globalTextStyle.textBorderWidth);
+  var textBorderWidth = retrieve2(textStyleModel.getShallow('textBorderWidth'), globalTextStyle.textBorderWidth);
 
   if (textBorderWidth != null) {
     textStyle.lineWidth = textBorderWidth;
   }
 
-  var textBorderType = util_retrieve2(textStyleModel.getShallow('textBorderType'), globalTextStyle.textBorderType);
+  var textBorderType = retrieve2(textStyleModel.getShallow('textBorderType'), globalTextStyle.textBorderType);
 
   if (textBorderType != null) {
     textStyle.lineDash = textBorderType;
   }
 
-  var textBorderDashOffset = util_retrieve2(textStyleModel.getShallow('textBorderDashOffset'), globalTextStyle.textBorderDashOffset);
+  var textBorderDashOffset = retrieve2(textStyleModel.getShallow('textBorderDashOffset'), globalTextStyle.textBorderDashOffset);
 
   if (textBorderDashOffset != null) {
     textStyle.lineDashOffset = textBorderDashOffset;
@@ -40517,7 +38496,7 @@ function setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNo
 
   for (var i = 0; i < TEXT_PROPS_WITH_GLOBAL.length; i++) {
     var key = TEXT_PROPS_WITH_GLOBAL[i];
-    var val = util_retrieve2(textStyleModel.getShallow(key), globalTextStyle[key]);
+    var val = retrieve2(textStyleModel.getShallow(key), globalTextStyle[key]);
 
     if (val != null) {
       textStyle[key] = val;
@@ -40581,7 +38560,7 @@ function setTokenTextStyle(textStyle, textStyleModel, globalTextStyle, opt, isNo
 
 function getFont(opt, ecModel) {
   var gTextStyleModel = ecModel && ecModel.getModel('textStyle');
-  return util_trim([// FIXME in node-canvas fontWeight is before fontStyle
+  return trim([// FIXME in node-canvas fontWeight is before fontStyle
   opt.fontStyle || gTextStyleModel && gTextStyleModel.getShallow('fontStyle') || '', opt.fontWeight || gTextStyleModel && gTextStyleModel.getShallow('fontWeight') || '', (opt.fontSize || gTextStyleModel && gTextStyleModel.getShallow('fontSize') || 12) + 'px', opt.fontFamily || gTextStyleModel && gTextStyleModel.getShallow('fontFamily') || 'sans-serif'].join(' '));
 }
 var labelInner = makeInner();
@@ -40612,7 +38591,7 @@ function animateLabelValue(textEl, dataIndex, data, animatableModel, labelFetche
   var defaultInterpolatedText = labelInnerStore.defaultInterpolatedText; // Consider the case that being animating, do not use the `obj.value`,
   // Otherwise it will jump to the `obj.value` when this new animation started.
 
-  var currValue = util_retrieve2(labelInnerStore.interpolatedValue, labelInnerStore.prevValue);
+  var currValue = retrieve2(labelInnerStore.interpolatedValue, labelInnerStore.prevValue);
   var targetValue = labelInnerStore.value;
 
   function during(percent) {
@@ -43917,14 +41896,14 @@ function () {
   };
 
   Cartesian.prototype.getAxes = function () {
-    return util_map(this._dimList, function (dim) {
+    return map(this._dimList, function (dim) {
       return this._axes[dim];
     }, this);
   };
 
   Cartesian.prototype.getAxesByScale = function (scaleType) {
     scaleType = scaleType.toLowerCase();
-    return util_filter(this.getAxes(), function (axis) {
+    return filter(this.getAxes(), function (axis) {
       return axis.scale.type === scaleType;
     });
   };
@@ -44025,6 +42004,235 @@ Axis3D.prototype = {
 external_echarts_.util.inherits(Axis3D, external_echarts_.Axis);
 
 /* harmony default export */ const grid3D_Axis3D = (Axis3D);
+;// CONCATENATED MODULE: ./node_modules/echarts/node_modules/tslib/tslib.es6.js
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+var tslib_es6_extendStatics = function(d, b) {
+    tslib_es6_extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+    return tslib_es6_extendStatics(d, b);
+};
+
+function tslib_es6_extends(d, b) {
+    tslib_es6_extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
+
+var tslib_es6_assign = function() {
+    tslib_es6_assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    }
+    return tslib_es6_assign.apply(this, arguments);
+}
+
+function tslib_es6_rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
+
+function tslib_es6_decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+function tslib_es6_param(paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+}
+
+function tslib_es6_metadata(metadataKey, metadataValue) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+}
+
+function tslib_es6_awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
+
+function tslib_es6_generator(thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+}
+
+var tslib_es6_createBinding = Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+});
+
+function tslib_es6_exportStar(m, o) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) tslib_es6_createBinding(o, m, p);
+}
+
+function tslib_es6_values(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+
+function tslib_es6_read(o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+}
+
+function tslib_es6_spread() {
+    for (var ar = [], i = 0; i < arguments.length; i++)
+        ar = ar.concat(tslib_es6_read(arguments[i]));
+    return ar;
+}
+
+function tslib_es6_spreadArrays() {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
+
+function tslib_es6_await(v) {
+    return this instanceof tslib_es6_await ? (this.v = v, this) : new tslib_es6_await(v);
+}
+
+function tslib_es6_asyncGenerator(thisArg, _arguments, generator) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var g = generator.apply(thisArg, _arguments || []), i, q = [];
+    return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+    function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+    function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+    function step(r) { r.value instanceof tslib_es6_await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
+    function fulfill(value) { resume("next", value); }
+    function reject(value) { resume("throw", value); }
+    function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+}
+
+function tslib_es6_asyncDelegator(o) {
+    var i, p;
+    return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+    function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: tslib_es6_await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
+}
+
+function tslib_es6_asyncValues(o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof tslib_es6_values === "function" ? tslib_es6_values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+}
+
+function tslib_es6_makeTemplateObject(cooked, raw) {
+    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+    return cooked;
+};
+
+var tslib_es6_setModuleDefault = Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+};
+
+function tslib_es6_importStar(mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) tslib_es6_createBinding(result, mod, k);
+    tslib_es6_setModuleDefault(result, mod);
+    return result;
+}
+
+function tslib_es6_importDefault(mod) {
+    return (mod && mod.__esModule) ? mod : { default: mod };
+}
+
+function tslib_es6_classPrivateFieldGet(receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+}
+
+function tslib_es6_classPrivateFieldSet(receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+}
+
 ;// CONCATENATED MODULE: ./node_modules/echarts/lib/util/clazz.js
 
 /*
@@ -44098,7 +42306,7 @@ function parseClassType(componentType) {
  */
 
 function checkClassType(componentType) {
-  util_assert(/^[a-zA-Z0-9_]+([.][a-zA-Z0-9_]+)?$/.test(componentType), 'componentType "' + componentType + '" illegal');
+  assert(/^[a-zA-Z0-9_]+([.][a-zA-Z0-9_]+)?$/.test(componentType), 'componentType "' + componentType + '" illegal');
 }
 
 function isExtendedClass(clz) {
@@ -44120,7 +42328,7 @@ function enableClassExtend(rootClz, mandatoryMethods) {
 
   rootClz.extend = function (proto) {
     if (true) {
-      util_each(mandatoryMethods, function (method) {
+      each(mandatoryMethods, function (method) {
         if (!proto[method]) {
           console.warn('Method `' + method + '` should be implemented' + (proto.type ? ' in ' + proto.type : '') + '.');
         }
@@ -44147,8 +42355,8 @@ function enableClassExtend(rootClz, mandatoryMethods) {
           // Will throw error if superClass is an es6 native class.
           superClass.apply(this, arguments);
         } else {
-          var ins = util_createObject( // @ts-ignore
-          ExtendedClass.prototype, new (superClass.bind.apply(superClass, __spreadArrays([void 0], args)))());
+          var ins = createObject( // @ts-ignore
+          ExtendedClass.prototype, new (superClass.bind.apply(superClass, tslib_es6_spreadArrays([void 0], args)))());
           return ins;
         }
       } else {
@@ -44157,11 +42365,11 @@ function enableClassExtend(rootClz, mandatoryMethods) {
     }
 
     ExtendedClass[IS_EXTENDED_CLASS] = true;
-    core_util_extend(ExtendedClass.prototype, proto);
+    util_extend(ExtendedClass.prototype, proto);
     ExtendedClass.extend = this.extend;
     ExtendedClass.superCall = superCall;
     ExtendedClass.superApply = superApply;
-    util_inherits(ExtendedClass, this);
+    inherits(ExtendedClass, this);
     ExtendedClass.superClass = superClass;
     return ExtendedClass;
   };
@@ -44210,7 +42418,7 @@ function enableClassCheck(target) {
   target.prototype[classAttr] = true;
 
   if (true) {
-    util_assert(!target.isInstance, 'The method "is" can not be defined.');
+    assert(!target.isInstance, 'The method "is" can not be defined.');
   }
 
   target.isInstance = function (obj) {
@@ -44309,7 +42517,7 @@ function enableClassManagement(target) {
     var obj = storage[componentTypeInfo.main];
 
     if (obj && obj[IS_CONTAINER]) {
-      util_each(obj, function (o, type) {
+      each(obj, function (o, type) {
         type !== IS_CONTAINER && result.push(o);
       });
     } else {
@@ -44331,7 +42539,7 @@ function enableClassManagement(target) {
 
   target.getAllClassMainTypes = function () {
     var types = [];
-    util_each(storage, function (obj, type) {
+    each(storage, function (obj, type) {
       types.push(type);
     });
     return types;
@@ -44438,7 +42646,7 @@ function makeStyleMapper(properties, ignoreParent) {
     for (var i = 0; i < properties.length; i++) {
       var propName = properties[i][1];
 
-      if (excludes && util_indexOf(excludes, propName) >= 0 || includes && util_indexOf(includes, propName) < 0) {
+      if (excludes && indexOf(excludes, propName) >= 0 || includes && indexOf(includes, propName) < 0) {
         continue;
       }
 
@@ -44826,7 +43034,7 @@ function () {
 
 
   Model.prototype.mergeOption = function (option, ecModel) {
-    util_merge(this.option, option, true);
+    merge(this.option, option, true);
   }; // `path` can be 'xxx.yyy.zzz', so the return value type have to be `ModelOption`
   // TODO: TYPE strict key check?
   // get(path: string | string[], ignoreParent?: boolean): ModelOption;
@@ -44919,7 +43127,7 @@ function () {
 
   Model.prototype.clone = function () {
     var Ctor = this.constructor;
-    return new Ctor(util_clone(this.option));
+    return new Ctor(clone(this.option));
   }; // setReadOnly(properties): void {
   // clazzUtil.setReadOnly(this, properties);
   // }
@@ -44987,10 +43195,10 @@ function () {
 
 enableClassExtend(Model);
 enableClassCheck(Model);
-util_mixin(Model, LineStyleMixin);
-util_mixin(Model, ItemStyleMixin);
-util_mixin(Model, AreaStyleMixin);
-util_mixin(Model, textStyle);
+mixin(Model, LineStyleMixin);
+mixin(Model, ItemStyleMixin);
+mixin(Model, AreaStyleMixin);
+mixin(Model, textStyle);
 /* harmony default export */ const model_Model = (Model);
 ;// CONCATENATED MODULE: ./node_modules/echarts/lib/i18n/langEN.js
 
@@ -45372,16 +43580,16 @@ function registerLocale(locale, localeObj) {
 // }
 
 function createLocaleObject(locale) {
-  if (util_isString(locale)) {
+  if (isString(locale)) {
     var localeObj = localeStorage[locale.toUpperCase()] || {};
 
     if (locale === LOCALE_ZH || locale === LOCALE_EN) {
-      return util_clone(localeObj);
+      return clone(localeObj);
     } else {
-      return util_merge(util_clone(localeObj), util_clone(localeStorage[DEFAULT_LOCALE]), false);
+      return merge(clone(localeObj), clone(localeStorage[DEFAULT_LOCALE]), false);
     }
   } else {
-    return util_merge(util_clone(locale), util_clone(localeStorage[DEFAULT_LOCALE]), false);
+    return merge(clone(locale), clone(localeStorage[DEFAULT_LOCALE]), false);
   }
 }
 function getLocaleModel(lang) {
@@ -45542,7 +43750,7 @@ function leveledFormat(tick, idx, formatter, lang, isUTC) {
       level: tick.level
     });
   } else {
-    var defaults = core_util_extend({}, defaultLeveledFormatter);
+    var defaults = util_extend({}, defaultLeveledFormatter);
 
     if (tick.level > 0) {
       for (var i = 0; i < primaryTimeUnits.length; ++i) {
@@ -45570,7 +43778,7 @@ function leveledFormat(tick, idx, formatter, lang, isUTC) {
       template = template || defaults.none;
     }
 
-    if (util_isArray(template)) {
+    if (isArray(template)) {
       var levelId = tick.level == null ? 0 : tick.level >= 0 ? tick.level : template.length + tick.level;
       levelId = Math.min(levelId, template.length - 1);
       template = template[levelId];
@@ -45804,7 +44012,7 @@ function getTextRect(text, font, align, verticalAlign, padding, rich, truncate, 
 
 function addCommas(x) {
   if (!isNumeric(x)) {
-    return util_isString(x) ? x : '-';
+    return isString(x) ? x : '-';
   }
 
   var parts = (x + '').split('.');
@@ -45821,7 +44029,7 @@ function toCamelCase(str, upperCaseFirst) {
 
   return str;
 }
-var format_normalizeCssArray = util_normalizeCssArray;
+var format_normalizeCssArray = normalizeCssArray;
 var replaceReg = /([&<>"'])/g;
 var replaceMap = {
   '&': '&amp;',
@@ -45847,7 +44055,7 @@ function makeValueReadable(value, valueType, useUTC) {
   var USER_READABLE_DEFUALT_TIME_PATTERN = '{yyyy}-{MM}-{dd} {hh}:{mm}:{ss}';
 
   function stringToUserReadable(str) {
-    return str && util_trim(str) ? str : '-';
+    return str && trim(str) ? str : '-';
   }
 
   function isNumberUserReadable(num) {
@@ -45869,12 +44077,12 @@ function makeValueReadable(value, valueType, useUTC) {
   }
 
   if (valueType === 'ordinal') {
-    return util_isStringSafe(value) ? stringToUserReadable(value) : util_isNumber(value) ? isNumberUserReadable(value) ? value + '' : '-' : '-';
+    return isStringSafe(value) ? stringToUserReadable(value) : isNumber(value) ? isNumberUserReadable(value) ? value + '' : '-' : '-';
   } // By default.
 
 
   var numericResult = numericToNumber(value);
-  return isNumberUserReadable(numericResult) ? addCommas(numericResult) : util_isStringSafe(value) ? stringToUserReadable(value) : '-';
+  return isNumberUserReadable(numericResult) ? addCommas(numericResult) : isStringSafe(value) ? stringToUserReadable(value) : '-';
 }
 var TPL_VAR_ALIAS = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 
@@ -45888,7 +44096,7 @@ var wrapVar = function (varName, seriesIdx) {
 
 
 function formatTpl(tpl, paramsList, encode) {
-  if (!util_isArray(paramsList)) {
+  if (!isArray(paramsList)) {
     paramsList = [paramsList];
   }
 
@@ -45919,13 +44127,13 @@ function formatTpl(tpl, paramsList, encode) {
  */
 
 function formatTplSimple(tpl, param, encode) {
-  util_each(param, function (value, key) {
+  each(param, function (value, key) {
     tpl = tpl.replace('{' + key + '}', encode ? encodeHTML(value) : value);
   });
   return tpl;
 }
 function getTooltipMarker(inOpt, extraCssText) {
-  var opt = util_isString(inOpt) ? {
+  var opt = isString(inOpt) ? {
     color: inOpt,
     extraCssText: extraCssText
   } : inOpt || {};
@@ -46011,7 +44219,7 @@ function capitalFirst(str) {
 
 function convertToColorString(color, defaultColor) {
   defaultColor = defaultColor || 'transparent';
-  return util_isString(color) ? color : util_isObject(color) ? color.colorStops && (color.colorStops[0] || {}).color || defaultColor : defaultColor;
+  return isString(color) ? color : isObject(color) ? color.colorStops && (color.colorStops[0] || {}).color || defaultColor : defaultColor;
 }
 
 /**
@@ -46080,7 +44288,7 @@ function windowOpen(link, target) {
 
 
 
-var layout_each = util_each;
+var layout_each = each;
 /**
  * @public
  */
@@ -46169,7 +44377,7 @@ var box = boxLayout;
  * @param {number} [height=Infinity]
  */
 
-var vbox = util_curry(boxLayout, 'vertical');
+var vbox = curry(boxLayout, 'vertical');
 /**
  * HBox layouting
  * @param {module:zrender/graphic/Group} group
@@ -46178,7 +44386,7 @@ var vbox = util_curry(boxLayout, 'vertical');
  * @param {number} [height=Infinity]
  */
 
-var hbox = util_curry(boxLayout, 'horizontal');
+var hbox = curry(boxLayout, 'horizontal');
 /**
  * If x or x2 is not specified or 'center' 'left' 'right',
  * the width would be as long as possible.
@@ -46399,7 +44607,7 @@ function sizeCalculable(option, hvIdx) {
 }
 function fetchLayoutMode(ins) {
   var layoutMode = ins.layoutMode || ins.constructor.layoutMode;
-  return util_isObject(layoutMode) ? layoutMode : layoutMode ? {
+  return isObject(layoutMode) ? layoutMode : layoutMode ? {
     type: layoutMode
   } : null;
 }
@@ -46429,7 +44637,7 @@ function fetchLayoutMode(ins) {
 
 function mergeLayoutParam(targetOption, newOption, opt) {
   var ignoreSize = opt && opt.ignoreSize;
-  !util_isArray(ignoreSize) && (ignoreSize = [ignoreSize, ignoreSize]);
+  !isArray(ignoreSize) && (ignoreSize = [ignoreSize, ignoreSize]);
   var hResult = merge(HV_NAMES[0], 0);
   var vResult = merge(HV_NAMES[1], 1);
   copy(HV_NAMES[0], targetOption, hResult);
@@ -51738,7 +49946,7 @@ function () {
   OrdinalMeta.createByAxisModel = function (axisModel) {
     var option = axisModel.option;
     var data = option.data;
-    var categories = data && util_map(data, getName);
+    var categories = data && map(data, getName);
     return new OrdinalMeta({
       categories: categories,
       needCollect: !categories,
@@ -51805,14 +50013,14 @@ function () {
 
 
   OrdinalMeta.prototype._getOrCreateMap = function () {
-    return this._map || (this._map = util_createHashMap(this.categories));
+    return this._map || (this._map = createHashMap(this.categories));
   };
 
   return OrdinalMeta;
 }();
 
 function getName(obj) {
-  if (util_isObject(obj) && obj.value != null) {
+  if (isObject(obj) && obj.value != null) {
     return obj.value;
   } else {
     return obj + '';
@@ -58189,32 +56397,6 @@ var Line3DSeries = external_echarts_.SeriesModel.extend({
 });
 
 /* harmony default export */ const line3D_Line3DSeries = (Line3DSeries);
-;// CONCATENATED MODULE: ./node_modules/zrender/lib/contain/line.js
-function line_containStroke(x0, y0, x1, y1, lineWidth, x, y) {
-    if (lineWidth === 0) {
-        return false;
-    }
-    var _l = lineWidth;
-    var _a = 0;
-    var _b = x0;
-    if ((y > y0 + _l && y > y1 + _l)
-        || (y < y0 - _l && y < y1 - _l)
-        || (x > x0 + _l && x > x1 + _l)
-        || (x < x0 - _l && x < x1 - _l)) {
-        return false;
-    }
-    if (x0 !== x1) {
-        _a = (y0 - y1) / (x0 - x1);
-        _b = (x0 * y1 - x1 * y0) / (x0 - x1);
-    }
-    else {
-        return Math.abs(x - x0) <= _l / 2;
-    }
-    var tmp = _a * x - y + _b;
-    var _s = tmp * tmp / (_a * _a + 1);
-    return _s <= _l / 2 * _l / 2;
-}
-
 ;// CONCATENATED MODULE: ./src/chart/line3D/Line3DView.js
 
 
@@ -58478,7 +56660,7 @@ util_graphicGL.Shader.import(lines3D_glsl);
             var x1 = (positionNDC[i * 2] + 1) * halfWidth;
             var y1 = (positionNDC[i * 2 + 1] + 1) * halfHeight;
 
-            if (line_containStroke(x0, y0, x1, y1, lineWidth, x, y)) {
+            if (containStroke(x0, y0, x1, y1, lineWidth, x, y)) {
                 var dist0 = (x0 - x) * (x0 - x) + (y0 - y) * (y0 - y);
                 var dist1 = (x1 - x) * (x1 - x) + (y1 - y) * (y1 - y);
                 // Nearest point.
@@ -61768,220 +59950,6 @@ function map3D_install_install(registers) {
 
     }
 }));
-;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/matrix.js
-function matrix_create() {
-    return [1, 0, 0, 1, 0, 0];
-}
-function matrix_identity(out) {
-    out[0] = 1;
-    out[1] = 0;
-    out[2] = 0;
-    out[3] = 1;
-    out[4] = 0;
-    out[5] = 0;
-    return out;
-}
-function matrix_copy(out, m) {
-    out[0] = m[0];
-    out[1] = m[1];
-    out[2] = m[2];
-    out[3] = m[3];
-    out[4] = m[4];
-    out[5] = m[5];
-    return out;
-}
-function matrix_mul(out, m1, m2) {
-    var out0 = m1[0] * m2[0] + m1[2] * m2[1];
-    var out1 = m1[1] * m2[0] + m1[3] * m2[1];
-    var out2 = m1[0] * m2[2] + m1[2] * m2[3];
-    var out3 = m1[1] * m2[2] + m1[3] * m2[3];
-    var out4 = m1[0] * m2[4] + m1[2] * m2[5] + m1[4];
-    var out5 = m1[1] * m2[4] + m1[3] * m2[5] + m1[5];
-    out[0] = out0;
-    out[1] = out1;
-    out[2] = out2;
-    out[3] = out3;
-    out[4] = out4;
-    out[5] = out5;
-    return out;
-}
-function matrix_translate(out, a, v) {
-    out[0] = a[0];
-    out[1] = a[1];
-    out[2] = a[2];
-    out[3] = a[3];
-    out[4] = a[4] + v[0];
-    out[5] = a[5] + v[1];
-    return out;
-}
-function matrix_rotate(out, a, rad) {
-    var aa = a[0];
-    var ac = a[2];
-    var atx = a[4];
-    var ab = a[1];
-    var ad = a[3];
-    var aty = a[5];
-    var st = Math.sin(rad);
-    var ct = Math.cos(rad);
-    out[0] = aa * ct + ab * st;
-    out[1] = -aa * st + ab * ct;
-    out[2] = ac * ct + ad * st;
-    out[3] = -ac * st + ct * ad;
-    out[4] = ct * atx + st * aty;
-    out[5] = ct * aty - st * atx;
-    return out;
-}
-function matrix_scale(out, a, v) {
-    var vx = v[0];
-    var vy = v[1];
-    out[0] = a[0] * vx;
-    out[1] = a[1] * vy;
-    out[2] = a[2] * vx;
-    out[3] = a[3] * vy;
-    out[4] = a[4] * vx;
-    out[5] = a[5] * vy;
-    return out;
-}
-function invert(out, a) {
-    var aa = a[0];
-    var ac = a[2];
-    var atx = a[4];
-    var ab = a[1];
-    var ad = a[3];
-    var aty = a[5];
-    var det = aa * ad - ab * ac;
-    if (!det) {
-        return null;
-    }
-    det = 1.0 / det;
-    out[0] = ad * det;
-    out[1] = -ab * det;
-    out[2] = -ac * det;
-    out[3] = aa * det;
-    out[4] = (ac * aty - ad * atx) * det;
-    out[5] = (ab * atx - aa * aty) * det;
-    return out;
-}
-function core_matrix_clone(a) {
-    var b = matrix_create();
-    matrix_copy(b, a);
-    return b;
-}
-
-;// CONCATENATED MODULE: ./node_modules/zrender/lib/core/vector.js
-function core_vector_create(x, y) {
-    if (x == null) {
-        x = 0;
-    }
-    if (y == null) {
-        y = 0;
-    }
-    return [x, y];
-}
-function core_vector_copy(out, v) {
-    out[0] = v[0];
-    out[1] = v[1];
-    return out;
-}
-function core_vector_clone(v) {
-    return [v[0], v[1]];
-}
-function vector_set(out, a, b) {
-    out[0] = a;
-    out[1] = b;
-    return out;
-}
-function vector_add(out, v1, v2) {
-    out[0] = v1[0] + v2[0];
-    out[1] = v1[1] + v2[1];
-    return out;
-}
-function vector_scaleAndAdd(out, v1, v2, a) {
-    out[0] = v1[0] + v2[0] * a;
-    out[1] = v1[1] + v2[1] * a;
-    return out;
-}
-function vector_sub(out, v1, v2) {
-    out[0] = v1[0] - v2[0];
-    out[1] = v1[1] - v2[1];
-    return out;
-}
-function vector_len(v) {
-    return Math.sqrt(vector_lenSquare(v));
-}
-var core_vector_length = vector_len;
-function vector_lenSquare(v) {
-    return v[0] * v[0] + v[1] * v[1];
-}
-var vector_lengthSquare = vector_lenSquare;
-function core_vector_mul(out, v1, v2) {
-    out[0] = v1[0] * v2[0];
-    out[1] = v1[1] * v2[1];
-    return out;
-}
-function vector_div(out, v1, v2) {
-    out[0] = v1[0] / v2[0];
-    out[1] = v1[1] / v2[1];
-    return out;
-}
-function vector_dot(v1, v2) {
-    return v1[0] * v2[0] + v1[1] * v2[1];
-}
-function core_vector_scale(out, v, s) {
-    out[0] = v[0] * s;
-    out[1] = v[1] * s;
-    return out;
-}
-function vector_normalize(out, v) {
-    var d = vector_len(v);
-    if (d === 0) {
-        out[0] = 0;
-        out[1] = 0;
-    }
-    else {
-        out[0] = v[0] / d;
-        out[1] = v[1] / d;
-    }
-    return out;
-}
-function distance(v1, v2) {
-    return Math.sqrt((v1[0] - v2[0]) * (v1[0] - v2[0])
-        + (v1[1] - v2[1]) * (v1[1] - v2[1]));
-}
-var vector_dist = distance;
-function vector_distanceSquare(v1, v2) {
-    return (v1[0] - v2[0]) * (v1[0] - v2[0])
-        + (v1[1] - v2[1]) * (v1[1] - v2[1]);
-}
-var vector_distSquare = vector_distanceSquare;
-function vector_negate(out, v) {
-    out[0] = -v[0];
-    out[1] = -v[1];
-    return out;
-}
-function core_vector_lerp(out, v1, v2, t) {
-    out[0] = v1[0] + t * (v2[0] - v1[0]);
-    out[1] = v1[1] + t * (v2[1] - v1[1]);
-    return out;
-}
-function vector_applyTransform(out, v, m) {
-    var x = v[0];
-    var y = v[1];
-    out[0] = m[0] * x + m[2] * y + m[4];
-    out[1] = m[1] * x + m[3] * y + m[5];
-    return out;
-}
-function core_vector_min(out, v1, v2) {
-    out[0] = Math.min(v1[0], v2[0]);
-    out[1] = Math.min(v1[1], v2[1]);
-    return out;
-}
-function core_vector_max(out, v1, v2) {
-    out[0] = Math.max(v1[0], v2[0]);
-    out[1] = Math.max(v1[1], v2[1]);
-    return out;
-}
-
 ;// CONCATENATED MODULE: ./src/chart/common/GLViewHelper.js
 
 
@@ -61993,7 +59961,7 @@ function GLViewHelper(viewGL) {
 
 GLViewHelper.prototype.reset = function (seriesModel, api) {
     this._updateCamera(api.getWidth(), api.getHeight(), api.getDevicePixelRatio());
-    this._viewTransform = matrix_create();
+    this._viewTransform = create();
     this.updateTransform(seriesModel, api);
 };
 
@@ -62002,7 +59970,7 @@ GLViewHelper.prototype.updateTransform = function (seriesModel, api) {
 
     if (coordinateSystem.getRoamTransform) {
 
-        invert(this._viewTransform, coordinateSystem.getRoamTransform());
+        matrix_invert(this._viewTransform, coordinateSystem.getRoamTransform());
 
         this._setCameraTransform(this._viewTransform);
 
@@ -62016,7 +59984,7 @@ GLViewHelper.prototype.dataToPoint = function (coordSys, data, pt) {
     pt = coordSys.dataToPoint(data, null, pt);
     var viewTransform = this._viewTransform;
     if (viewTransform) {
-        vector_applyTransform(pt, pt, viewTransform);
+        applyTransform(pt, pt, viewTransform);
     }
 };
 
@@ -62025,7 +59993,7 @@ GLViewHelper.prototype.dataToPoint = function (coordSys, data, pt) {
  */
 GLViewHelper.prototype.removeTransformInPoint = function (pt) {
     if (this._viewTransform) {
-        vector_applyTransform(pt, pt, this._viewTransform);
+        applyTransform(pt, pt, this._viewTransform);
     }
     return pt;
 };
@@ -62722,8 +60690,8 @@ function createGraphDataProxyMixin(hostName, dataName) {
 ;
 ;
 ;
-util_mixin(GraphNode, createGraphDataProxyMixin('hostGraph', 'data'));
-util_mixin(GraphEdge, createGraphDataProxyMixin('hostGraph', 'edgeData'));
+mixin(GraphNode, createGraphDataProxyMixin('hostGraph', 'data'));
+mixin(GraphEdge, createGraphDataProxyMixin('hostGraph', 'edgeData'));
 /* harmony default export */ const data_Graph = (Graph_Graph);
 
 ;// CONCATENATED MODULE: ./node_modules/echarts/lib/data/helper/linkList.js
@@ -62794,26 +60762,26 @@ function linkList(opt) {
   opt.datas = opt.mainData = null;
   linkAll(mainData, datas, opt); // Porxy data original methods.
 
-  util_each(datas, function (data) {
-    util_each(mainData.TRANSFERABLE_METHODS, function (methodName) {
-      data.wrapMethod(methodName, util_curry(transferInjection, opt));
+  each(datas, function (data) {
+    each(mainData.TRANSFERABLE_METHODS, function (methodName) {
+      data.wrapMethod(methodName, curry(transferInjection, opt));
     });
   }); // Beyond transfer, additional features should be added to `cloneShallow`.
 
-  mainData.wrapMethod('cloneShallow', util_curry(cloneShallowInjection, opt)); // Only mainData trigger change, because struct.update may trigger
+  mainData.wrapMethod('cloneShallow', curry(cloneShallowInjection, opt)); // Only mainData trigger change, because struct.update may trigger
   // another changable methods, which may bring about dead lock.
 
-  util_each(mainData.CHANGABLE_METHODS, function (methodName) {
-    mainData.wrapMethod(methodName, util_curry(changeInjection, opt));
+  each(mainData.CHANGABLE_METHODS, function (methodName) {
+    mainData.wrapMethod(methodName, curry(changeInjection, opt));
   }); // Make sure datas contains mainData.
 
-  util_assert(datas[mainData.dataType] === mainData);
+  assert(datas[mainData.dataType] === mainData);
 }
 
 function transferInjection(opt, res) {
   if (isMainData(this)) {
     // Transfer datas to new main data.
-    var datas = core_util_extend({}, inner(this).datas);
+    var datas = util_extend({}, inner(this).datas);
     datas[this.dataType] = res;
     linkAll(res, datas, opt);
   } else {
@@ -62834,7 +60802,7 @@ function cloneShallowInjection(opt, res) {
   // to be exposed as an API. So for implementation simplicity we can make
   // the restriction that cloneShallow of not-mainData should not be invoked
   // outside, but only be invoked here.
-  util_each(inner(res).datas, function (data, dataType) {
+  each(inner(res).datas, function (data, dataType) {
     data !== res && linkSingle(data.cloneShallow(), dataType, res, opt);
   });
   return res;
@@ -62860,7 +60828,7 @@ function getLinkedDataAll() {
   var mainData = inner(this).mainData;
   return mainData == null ? [{
     data: mainData
-  }] : util_map(util_keys(inner(mainData).datas), function (type) {
+  }] : map(keys(inner(mainData).datas), function (type) {
     return {
       type: type,
       data: inner(mainData).datas[type]
@@ -62874,7 +60842,7 @@ function isMainData(data) {
 
 function linkAll(mainData, datas, opt) {
   inner(mainData).datas = {};
-  util_each(datas, function (data, dataType) {
+  each(datas, function (data, dataType) {
     linkSingle(data, dataType, mainData, opt);
   });
 }
@@ -66235,7 +64203,10 @@ function graphGL_install_install(registers) {
     visualStyleAccessPath: 'itemStyle',
 
     getInitialData: function (option, ecModel) {
-        var coordSysDimensions = external_echarts_.getCoordinateSystemDimensions(this.get('coordinateSystem')) || ['x', 'y'];
+        var coordType = this.get('coordinateSystem');
+        // TODO hotfix for the bug in echarts that get coord dimensions is undefined.
+        var coordSysDimensions = coordType === 'geo' ? ['lng', 'lat']
+            : (external_echarts_.getCoordinateSystemDimensions(coordType) || ['x', 'y']);
         if (true) {
             if (coordSysDimensions.length > 2) {
                 throw new Error('flowGL can only be used on 2d coordinate systems.');
