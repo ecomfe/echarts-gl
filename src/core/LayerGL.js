@@ -9,9 +9,6 @@
  *    (renderer) (renderer)
  *      /     \
  *  ViewGL   ViewGL
- *
- * @module echarts-gl/core/LayerGL
- * @author Yi Shen(http://github.com/pissang)
  */
 
 import * as echarts from 'echarts/lib/echarts';
@@ -103,6 +100,8 @@ var LayerGL = function (id, zr) {
     });
 
     this._backgroundColor = null;
+
+    this._disposed = false;
 };
 
 LayerGL.prototype.setUnpainted = function () {};
@@ -419,10 +418,18 @@ function collectResources(scene, textureResourceList, geometryResourceList) {
  * Dispose the layer
  */
 LayerGL.prototype.dispose = function () {
+    if (this._disposed) {
+        return;
+    }
     this._stopAccumulating();
-    this.renderer.disposeScene(this.scene);
-
+    if (this._textureList) {
+        markUnused(this._textureList);
+        markUnused(this._geometriesList);
+        checkAndDispose(this.renderer, this._textureList);
+        checkAndDispose(this.renderer, this._geometriesList);
+    }
     this.zr.off('globalout', this.onglobalout);
+    this._disposed = true;
 };
 
 // Event handlers

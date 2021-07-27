@@ -173,4 +173,8 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
     this._labelsMesh.geometry.dirty();
 };
 
+LabelsBuilder.prototype.dispose = function () {
+    this._labelTextureSurface.dispose();
+}
+
 export default LabelsBuilder;

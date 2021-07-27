@@ -91,5 +91,6 @@ export default echarts.ComponentView.extend({
 
     dispose: function () {
         this._control.dispose();
+        this._geo3DBuilder.dispose();
     }
 });

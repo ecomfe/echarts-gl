@@ -110,6 +110,9 @@ export default echarts.ChartView.extend({
 
     dispose: function () {
         this.groupGL.removeAll();
+        this._pointsBuilderList.forEach(function (pointsBuilder) {
+            pointsBuilder.dispose();
+        });
     },
 
     remove: function () {

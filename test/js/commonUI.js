@@ -16,6 +16,7 @@
     btn.onclick = function () {
         (typeof myChart !== 'undefined') && myChart.dispose();
         (typeof chart !== 'undefined') && chart.dispose();
+        window.onresize = null;
     }
 
     document.body.appendChild(btn);

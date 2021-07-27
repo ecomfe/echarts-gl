@@ -217,6 +217,10 @@ PointsBuilder.prototype = {
         this.rootNode.add(this._labelsBuilder.getMesh());
     },
 
+    dispose: function () {
+        this._labelsBuilder.dispose();
+    },
+
     _updateSymbolSprite: function (seriesModel, itemStyle, symbolInfo, dpr) {
         symbolInfo.maxSize = Math.min(symbolInfo.maxSize * 2, 200);
         var symbolSize = [];

@@ -106,5 +106,6 @@ export default echarts.ChartView.extend({
     dispose: function () {
         this.groupGL.removeAll();
         this._control.dispose();
+        this._geo3DBuilder.dispose();
     }
 });

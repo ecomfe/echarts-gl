@@ -750,6 +750,10 @@ Geo3DBuilder.prototype = {
         this._setColorOfDataIndex(data, dataIndex, colorArr);
     },
 
+    dispose: function () {
+        this._labelsBuilder.dispose();
+    },
+
     _setColorOfDataIndex: function (data, dataIndex, colorArr) {
         if (dataIndex < this._startIndex && dataIndex > this._endIndex) {
             return;

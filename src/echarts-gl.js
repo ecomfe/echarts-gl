@@ -169,7 +169,18 @@ EChartsGL.prototype.update = function (ecModel, api) {
 // TODO
 
 echarts.registerPostInit(function (chart) {
-    chart.getZr().painter.getRenderedCanvas = function (opts) {
+    var zr = chart.getZr();
+    var oldDispose = zr.painter.dispose;
+
+    zr.painter.dispose = function () {
+        this.eachOtherLayer(function (layer) {
+            if (layer instanceof LayerGL) {
+                layer.dispose();
+            }
+        });
+        oldDispose.call(this);
+    }
+    zr.painter.getRenderedCanvas = function (opts) {
         opts = opts || {};
         if (this._singleCanvas) {
             return this._layers[0].dom;

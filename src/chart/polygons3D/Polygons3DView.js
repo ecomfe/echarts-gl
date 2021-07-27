@@ -88,5 +88,8 @@ export default echarts.ChartView.extend({
 
     dispose: function () {
         this.groupGL.removeAll();
+        this._geo3DBuilderList.forEach(function (geo3DBuilder) {
+            geo3DBuilder.dispose();
+        })
     }
 });

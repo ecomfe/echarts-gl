@@ -720,6 +720,8 @@ export default echarts.ChartView.extend({
 
         // Stop layout.
         this._layoutId = -1;
+
+        this._pointsBuilder.dispose();
     },
 
     remove: function () {
