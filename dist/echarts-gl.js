@@ -25638,9 +25638,6 @@ requestAnimationFrame = (typeof window !== 'undefined'
  *    (renderer) (renderer)
  *      /     \
  *  ViewGL   ViewGL
- *
- * @module echarts-gl/core/LayerGL
- * @author Yi Shen(http://github.com/pissang)
  */
 
 
@@ -25732,6 +25729,8 @@ var LayerGL = function (id, zr) {
     });
 
     this._backgroundColor = null;
+
+    this._disposed = false;
 };
 
 LayerGL.prototype.setUnpainted = function () {};
@@ -26048,10 +26047,18 @@ function collectResources(scene, textureResourceList, geometryResourceList) {
  * Dispose the layer
  */
 LayerGL.prototype.dispose = function () {
+    if (this._disposed) {
+        return;
+    }
     this._stopAccumulating();
-    this.renderer.disposeScene(this.scene);
-
+    if (this._textureList) {
+        markUnused(this._textureList);
+        markUnused(this._geometriesList);
+        checkAndDispose(this.renderer, this._textureList);
+        checkAndDispose(this.renderer, this._geometriesList);
+    }
     this.zr.off('globalout', this.onglobalout);
+    this._disposed = true;
 };
 
 // Event handlers
@@ -26533,7 +26540,18 @@ EChartsGL.prototype.update = function (ecModel, api) {
 // TODO
 
 external_echarts_.registerPostInit(function (chart) {
-    chart.getZr().painter.getRenderedCanvas = function (opts) {
+    var zr = chart.getZr();
+    var oldDispose = zr.painter.dispose;
+
+    zr.painter.dispose = function () {
+        this.eachOtherLayer(function (layer) {
+            if (layer instanceof core_LayerGL) {
+                layer.dispose();
+            }
+        });
+        oldDispose.call(this);
+    }
+    zr.painter.getRenderedCanvas = function (opts) {
         opts = opts || {};
         if (this._singleCanvas) {
             return this._layers[0].dom;
@@ -40363,6 +40381,10 @@ ZRTextureAtlasSurface.prototype = {
      */
     getCoords: function (id) {
         return this._coords[id];
+    },
+
+    dispose: function () {
+        this._zr.dispose();
     }
 };
 
@@ -41833,6 +41855,8 @@ var Grid3DView_dimIndicesMap = {
     dispose: function () {
         this.groupGL.removeAll();
         this._control.dispose();
+        this._axisLabelSurface.dispose();
+        this._axisPointerLabelsSurface.dispose();
     }
 }));
 ;// CONCATENATED MODULE: ./node_modules/echarts/lib/coord/cartesian/Cartesian.js
@@ -51528,6 +51552,10 @@ LabelsBuilder.prototype.updateLabels = function (highlightDataIndices) {
     this._labelsMesh.geometry.dirty();
 };
 
+LabelsBuilder.prototype.dispose = function () {
+    this._labelTextureSurface.dispose();
+}
+
 /* harmony default export */ const common_LabelsBuilder = (LabelsBuilder);
 ;// CONCATENATED MODULE: ./src/component/common/Geo3DBuilder.js
 
@@ -52282,6 +52310,10 @@ Geo3DBuilder.prototype = {
         this._setColorOfDataIndex(data, dataIndex, colorArr);
     },
 
+    dispose: function () {
+        this._labelsBuilder.dispose();
+    },
+
     _setColorOfDataIndex: function (data, dataIndex, colorArr) {
         if (dataIndex < this._startIndex && dataIndex > this._endIndex) {
             return;
@@ -52390,6 +52422,7 @@ Geo3DBuilder.prototype = {
 
     dispose: function () {
         this._control.dispose();
+        this._geo3DBuilder.dispose();
     }
 }));
 ;// CONCATENATED MODULE: ./node_modules/echarts/lib/coord/geo/fix/textCoord.js
@@ -56328,6 +56361,7 @@ var Bar3DView_vec3 = dep_glmatrix.vec3;
     },
 
     dispose: function () {
+        this._labelsBuilder.dispose();
         this.groupGL.removeAll();
     }
 }));
@@ -57453,6 +57487,10 @@ PointsBuilder.prototype = {
         this.rootNode.add(this._labelsBuilder.getMesh());
     },
 
+    dispose: function () {
+        this._labelsBuilder.dispose();
+    },
+
     _updateSymbolSprite: function (seriesModel, itemStyle, symbolInfo, dpr) {
         symbolInfo.maxSize = Math.min(symbolInfo.maxSize * 2, 200);
         var symbolSize = [];
@@ -57941,6 +57979,9 @@ PointsBuilder.prototype = {
     },
 
     dispose: function () {
+        this._pointsBuilderList.forEach(function (pointsBuilder) {
+            pointsBuilder.dispose();
+        });
         this.groupGL.removeAll();
     },
 
@@ -58822,6 +58863,9 @@ external_echarts_.util.merge(Polygons3DSeries.prototype, componentShadingMixin);
 
     dispose: function () {
         this.groupGL.removeAll();
+        this._geo3DBuilderList.forEach(function (geo3DBuilder) {
+            geo3DBuilder.dispose();
+        })
     }
 }));
 ;// CONCATENATED MODULE: ./src/chart/polygons3D/install.js
@@ -59854,6 +59898,7 @@ external_echarts_.util.merge(Map3DSeries.prototype, componentShadingMixin);
     dispose: function () {
         this.groupGL.removeAll();
         this._control.dispose();
+        this._geo3DBuilder.dispose();
     }
 }));
 ;// CONCATENATED MODULE: ./src/chart/map3D/install.js
@@ -60147,6 +60192,9 @@ GLViewHelper.prototype._updateCamera = function (width, height, dpr) {
 
     dispose: function () {
         this.groupGL.removeAll();
+        this._pointsBuilderList.forEach(function (pointsBuilder) {
+            pointsBuilder.dispose();
+        });
     },
 
     remove: function () {
@@ -64010,6 +64058,8 @@ var globalLayoutId = 1;
 
         // Stop layout.
         this._layoutId = -1;
+
+        this._pointsBuilder.dispose();
     },
 
     remove: function () {
