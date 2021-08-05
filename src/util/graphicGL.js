@@ -191,8 +191,15 @@ graphicGL.BoundingBox = BoundingBox;
 graphicGL.Frustum = Frustum;
 
 // Texture utilities
+var blankImage = null;
 
-var blankImage = textureUtil.createBlank('rgba(255,255,255,0)').image;
+function getBlankImage() {
+    if (blankImage !== null) {
+        return blankImage;
+    }
+    blankImage = textureUtil.createBlank('rgba(255,255,255,0)').image;
+    return blankImage;
+}
 
 
 function nearestPowerOfTwo(val) {
@@ -340,7 +347,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
                 originalImage.crossOrigin = 'Anonymous';
                 originalImage.src = imgValue;
                 // Use blank image as place holder.
-                texture.image = blankImage;
+                texture.image = getBlankImage();
 
                 textureCache.put(prefix + imgValue, textureObj);
             }
