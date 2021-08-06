@@ -25130,8 +25130,15 @@ graphicGL.BoundingBox = math_BoundingBox;
 graphicGL.Frustum = math_Frustum;
 
 // Texture utilities
+var blankImage = null;
 
-var blankImage = util_texture.createBlank('rgba(255,255,255,0)').image;
+function getBlankImage() {
+    if (blankImage !== null) {
+        return blankImage;
+    }
+    blankImage = util_texture.createBlank('rgba(255,255,255,0)').image;
+    return blankImage;
+}
 
 
 function graphicGL_nearestPowerOfTwo(val) {
@@ -25279,7 +25286,7 @@ graphicGL.loadTexture = function (imgValue, api, textureOpts, cb) {
                 originalImage.crossOrigin = 'Anonymous';
                 originalImage.src = imgValue;
                 // Use blank image as place holder.
-                texture.image = blankImage;
+                texture.image = getBlankImage();
 
                 textureCache.put(prefix + imgValue, textureObj);
             }
@@ -25615,6 +25622,7 @@ graphicGL.updateVertexAnimation = function (
 };
 
 /* harmony default export */ const util_graphicGL = (graphicGL);
+
 ;// CONCATENATED MODULE: ./node_modules/zrender/lib/animation/requestAnimationFrame.js
 var requestAnimationFrame;
 requestAnimationFrame = (typeof window !== 'undefined'
