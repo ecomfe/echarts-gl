@@ -258,7 +258,7 @@ Geo3DBuilder.prototype = {
                 itemStyleModel.get('color'),
                 '#fff'
             );
-            var opacity = retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), 1);
+            var opacity = retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), itemStyleModel.get('opacity'), 1);
 
             var colorArr = graphicGL.parseColor(color);
             var borderColorArr = graphicGL.parseColor(itemStyleModel.get('borderColor'));
@@ -737,12 +737,14 @@ Geo3DBuilder.prototype = {
             return;
         }
 
+        var itemStyleModel = data.getItemModel(dataIndex);
         var color = retrieve.firstNotNull(
             getItemVisualColor(data, dataIndex),
-            data.getItemModel(dataIndex).get(['itemStyle', 'color']),
+            itemStyleModel.get(['itemStyle', 'color']),
             '#fff'
         );
-        var opacity = retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), 1);
+
+        var opacity = retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), itemStyleModel.get(['itemStyle', 'opacity']), 1);
 
         var colorArr = graphicGL.parseColor(color);
         colorArr[3] *= opacity;
