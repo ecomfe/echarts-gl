@@ -78,9 +78,6 @@ function updateGeo3D(ecModel, api) {
         var scale = echarts.helper.createScale(
             altitudeDataExtent, {
                 type: 'value',
-                // PENDING
-                min: 'dataMin',
-                max: 'dataMax'
             }
         );
         this.altitudeAxis = new echarts.Axis('altitude', scale);
