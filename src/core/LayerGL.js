@@ -46,16 +46,7 @@ var LayerGL = function (id, zr) {
      * @type {clay.Renderer}
      */
     try {
-        if (!_LayerGL_global_renderer) {
-                _LayerGL_global_renderer = new src_Renderer({
-                    clearBit: 0,
-                    devicePixelRatio: zr.painter.dpr,
-                    preserveDrawingBuffer: true,
-                    // PENDING
-                    premultipliedAlpha: true
-                });
-        }
-        this.renderer = _LayerGL_global_renderer;
+        this.resetRenderer();
         this.renderer.resize(zr.painter.getWidth(), zr.painter.getHeight());
     }
     catch (e) {
@@ -112,6 +103,20 @@ var LayerGL = function (id, zr) {
     this._backgroundColor = null;
 
     this._disposed = false;
+};
+
+LayerGL.prototype.resetRenderer = function () {
+    if (!_LayerGL_global_renderer || _LayerGL_global_renderer.gl.isContextLost()) {
+        console.log('creating new renderer')
+        _LayerGL_global_renderer = new Renderer({
+            clearBit: 0,
+            devicePixelRatio: this.zr.painter.dpr,
+            preserveDrawingBuffer: true,
+            // PENDING
+            premultipliedAlpha: true
+        });
+    }
+    this.renderer = _LayerGL_global_renderer;
 };
 
 LayerGL.prototype.setUnpainted = function () {};
@@ -204,21 +209,6 @@ LayerGL.prototype.resize = function (width, height) {
  * @return {[type]} [description]
  */
 LayerGL.prototype.clear = function () {
-    if (this.renderer.gl.isContextLost()) {
-        console.log('context lost, recreating renderer')
-	if (_LayerGL_global_renderer.gl.isContextLost()) {
-            this.renderer = new Renderer({
-              clearBit: 0,
-              devicePixelRatio: this.zr.painter.dpr,
-              preserveDrawingBuffer: true,
-              // PENDING
-              premultipliedAlpha: true
-            });
-        }
-        this.renderer = _LayerGL_global_renderer;
-    }
-    this.renderer.resize(this.zr.painter.getWidth(), this.zr.painter.getHeight());
-
     var gl = this.renderer.gl;
     var clearColor = this._backgroundColor || [0, 0, 0, 0];
     gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
@@ -255,6 +245,13 @@ LayerGL.prototype.needsRefresh = function () {
  * Refresh the layer, will be invoked by zrender
  */
 LayerGL.prototype.refresh = function (bgColor) {
+    if (this.renderer.gl.isContextLost()) {
+        console.log('context lost, resetting renderer')
+        this.resetRenderer();
+    }
+
+    // make sure global renderer canvas size matches this layer
+    this.renderer.resize(this.zr.painter.getWidth(), this.zr.painter.getHeight());
 
     this._backgroundColor = bgColor ? graphicGL.parseColor(bgColor) : [0, 0, 0, 0];
     this.renderer.clearColor = this._backgroundColor;
