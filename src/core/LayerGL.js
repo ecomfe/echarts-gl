@@ -283,12 +283,17 @@ LayerGL.prototype.renderToCanvas = function (ctx) {
 
 LayerGL.prototype._doRender = function (accumulating) {
     if (this.renderer.gl.isContextLost()) {
-        console.log('context lost, resetting renderer')
+        console.log('context lost, resetting renderer and refreshing')
         this.resetRenderer();
+
+        // Context lost in the "middle" of rendering/accumulating; trigger full rerender
+        this.needsRefresh();
+        return;
     }
 
     // Needed in case we are not directly called from render()
     this.renderer.clearColor = this._backgroundColor;
+    this.renderer.resize(this.zr.painter.getWidth(), this.zr.painter.getHeight());
 
     this.clear();
     this.renderer.saveViewport();
