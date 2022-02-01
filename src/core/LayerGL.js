@@ -21,6 +21,8 @@ import graphicGL from '../util/graphicGL';
 import notifier from 'claygl/src/core/mixin/notifier';
 import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
 
+var _LayerGL_global_renderer = undefined;
+
 /**
  * @constructor
  * @alias module:echarts-gl/core/LayerGL
@@ -44,13 +46,16 @@ var LayerGL = function (id, zr) {
      * @type {clay.Renderer}
      */
     try {
-        this.renderer = new Renderer({
-            clearBit: 0,
-            devicePixelRatio: zr.painter.dpr,
-            preserveDrawingBuffer: true,
-            // PENDING
-            premultipliedAlpha: true
-        });
+        if (!_LayerGL_global_renderer) {
+                _LayerGL_global_renderer = new src_Renderer({
+                    clearBit: 0,
+                    devicePixelRatio: zr.painter.dpr,
+                    preserveDrawingBuffer: true,
+                    // PENDING
+                    premultipliedAlpha: true
+                });
+        }
+        this.renderer = _LayerGL_global_renderer;
         this.renderer.resize(zr.painter.getWidth(), zr.painter.getHeight());
     }
     catch (e) {
@@ -71,7 +76,12 @@ var LayerGL = function (id, zr) {
      * Canvas dom for webgl rendering
      * @type {HTMLCanvasElement}
      */
-    this.dom = this.renderer.canvas;
+    this.dom = document.createElement('canvas');
+    this.domCanvasContext = this.dom.getContext('2d')
+    this.dom.style.width = this.renderer.canvas.style.width;
+    this.dom.style.height = this.renderer.canvas.style.height;
+    this.dom.width = this.renderer.canvas.width;
+    this.dom.height = this.renderer.canvas.height;
     var style = this.dom.style;
     style.position = 'absolute';
     style.left = '0';
@@ -182,6 +192,11 @@ LayerGL.prototype.removeViewsAll = function () {
 LayerGL.prototype.resize = function (width, height) {
     var renderer = this.renderer;
     renderer.resize(width, height);
+
+    this.dom.style.width = this.renderer.canvas.style.width;
+    this.dom.style.height = this.renderer.canvas.style.height;
+    this.dom.width = this.renderer.canvas.width;
+    this.dom.height = this.renderer.canvas.height;
 };
 
 /**
@@ -189,6 +204,21 @@ LayerGL.prototype.resize = function (width, height) {
  * @return {[type]} [description]
  */
 LayerGL.prototype.clear = function () {
+    if (this.renderer.gl.isContextLost()) {
+        console.log('context lost, recreating renderer')
+	if (_LayerGL_global_renderer.gl.isContextLost()) {
+            this.renderer = new Renderer({
+              clearBit: 0,
+              devicePixelRatio: this.zr.painter.dpr,
+              preserveDrawingBuffer: true,
+              // PENDING
+              premultipliedAlpha: true
+            });
+        }
+        this.renderer = _LayerGL_global_renderer;
+    }
+    this.renderer.resize(this.zr.painter.getWidth(), this.zr.painter.getHeight());
+
     var gl = this.renderer.gl;
     var clearColor = this._backgroundColor || [0, 0, 0, 0];
     gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
@@ -261,6 +291,9 @@ LayerGL.prototype._doRender = function (accumulating) {
         this.views[i].render(this.renderer, accumulating);
     }
     this.renderer.restoreViewport();
+
+    this.domCanvasContext.clearRect(0,0,this.dom.width,this.dom.height)
+    this.domCanvasContext.drawImage(this.renderer.canvas, 0, 0, this.renderer.canvas.width, this.renderer.canvas.height);
 };
 
 /**
