@@ -173,11 +173,13 @@ echarts.registerPostInit(function (chart) {
     var oldDispose = zr.painter.dispose;
 
     zr.painter.dispose = function () {
-        this.eachOtherLayer(function (layer) {
-            if (layer instanceof LayerGL) {
-                layer.dispose();
-            }
-        });
+        if (typeof this.eachOtherLayer === 'function') {
+            this.eachOtherLayer(function (layer) {
+                if (layer instanceof LayerGL) {
+                    layer.dispose();
+                }
+            });
+        }
         oldDispose.call(this);
     }
     zr.painter.getRenderedCanvas = function (opts) {
