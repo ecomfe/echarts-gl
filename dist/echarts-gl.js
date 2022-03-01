@@ -26552,11 +26552,13 @@ external_echarts_.registerPostInit(function (chart) {
     var oldDispose = zr.painter.dispose;
 
     zr.painter.dispose = function () {
-        this.eachOtherLayer(function (layer) {
-            if (layer instanceof core_LayerGL) {
-                layer.dispose();
-            }
-        });
+        if (typeof this.eachOtherLayer === 'function') {
+            this.eachOtherLayer(function (layer) {
+                if (layer instanceof core_LayerGL) {
+                    layer.dispose();
+                }
+            });
+        }
         oldDispose.call(this);
     }
     zr.painter.getRenderedCanvas = function (opts) {
@@ -51826,7 +51828,7 @@ Geo3DBuilder.prototype = {
                 itemStyleModel.get('color'),
                 '#fff'
             );
-            var opacity = util_retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), 1);
+            var opacity = util_retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), itemStyleModel.get('opacity'), 1);
 
             var colorArr = util_graphicGL.parseColor(color);
             var borderColorArr = util_graphicGL.parseColor(itemStyleModel.get('borderColor'));
@@ -52305,12 +52307,14 @@ Geo3DBuilder.prototype = {
             return;
         }
 
+        var itemStyleModel = data.getItemModel(dataIndex);
         var color = util_retrieve.firstNotNull(
             getItemVisualColor(data, dataIndex),
-            data.getItemModel(dataIndex).get(['itemStyle', 'color']),
+            itemStyleModel.get(['itemStyle', 'color']),
             '#fff'
         );
-        var opacity = util_retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), 1);
+
+        var opacity = util_retrieve.firstNotNull(getItemVisualOpacity(data, dataIndex), itemStyleModel.get(['itemStyle', 'opacity']), 1);
 
         var colorArr = util_graphicGL.parseColor(color);
         colorArr[3] *= opacity;
