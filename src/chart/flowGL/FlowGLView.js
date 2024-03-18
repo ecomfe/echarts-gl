@@ -64,6 +64,9 @@ export default echarts.ChartView.extend({
                 __percent: 1
             })
             .during(function () {
+                if (self._renderer && self._renderer.gl.isContextLost()) {
+                    self._renderer = self._layerGL.renderer;
+                }
                 var timeNow = + (new Date());
                 var dTime = Math.min(timeNow - time, 20);
                 time = time + dTime;
@@ -94,6 +97,7 @@ export default echarts.ChartView.extend({
     afterRender: function (globeModel, ecModel, api, layerGL) {
         var renderer = layerGL.renderer;
         this._renderer = renderer;
+        this._layerGL = layerGL;
     },
 
     _updateData: function (seriesModel, api) {
