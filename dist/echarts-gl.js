@@ -2204,7 +2204,7 @@ var Material = core_Base.extend(function () {
 },
 /** @lends clay.Material.prototype */
 {
-    precision: 'highp',
+    precision: 'mediump',
 
     /**
      * Set material uniform
