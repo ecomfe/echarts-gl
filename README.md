@@ -7,8 +7,6 @@ ECharts-GL is an extension pack of [Apache ECharts](http://echarts.apache.org/),
 
 + [Option Manual](https://echarts.apache.org/zh/option-gl.html)
 
-+ [Gallery](https://www.makeapie.com/explore.html#tags=echarts-gl)
-
 ## Installing
 
 ###  npm and webpack
