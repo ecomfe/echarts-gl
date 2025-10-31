@@ -15,10 +15,10 @@
   },
   "dependencies": {
     "claygl": "^1.2.1",
-    "zrender": "^5.1.1"
+    "zrender": "^6.0.0"
   },
   "peerDependencies": {
-    "echarts": "^5.1.2"
+    "echarts": "^6.0.0"
   },
   "main": "dist/echarts-gl.js",
   "module": "index.js",
