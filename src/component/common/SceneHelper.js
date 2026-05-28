@@ -80,7 +80,10 @@ SceneHelper.prototype = {
                             self._skybox.setEnvironmentMap(lights.specular.cubemap);
                         }
 
-                        api.getZr().refresh();
+                        var zr = api.getZr();
+                        if (zr) {
+                          zr.refresh();
+                        }
                     });
             }
             this._lightRoot.add(lights.diffuse);
