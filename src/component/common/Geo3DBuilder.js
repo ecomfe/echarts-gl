@@ -132,7 +132,7 @@ Geo3DBuilder.prototype = {
         this._updateDebugWireframe(componentModel);
 
         // Reset some state.
-        this._lastHoverDataIndex = 0;
+        this._lastHoverDataIndex = -1;
     },
 
     _initMeshes: function () {
