@@ -71,6 +71,12 @@ function cartesian3DLayout(seriesModel, coordSys) {
             height = 0.1;
         }
         var size = [barSize[0], height, barSize[1]];
+        var rawDataItem = data.getRawDataItem(idx);
+        if(rawDataItem.size) {
+            const sizeIsArray = echarts.util.isArray(rawDataItem.size);
+            size[0] = sizeIsArray ? rawDataItem.size[0]:rawDataItem.size;
+            size[2] = sizeIsArray ? rawDataItem.size[1]:rawDataItem.size;
+        }
         data.setItemLayout(idx, [start, dir, size]);
     });
 
