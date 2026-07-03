@@ -1,7 +1,7 @@
 // TODO ECharts GL must be imported whatever component,charts is imported.
 import '../../echarts-gl';
 
-import * as echartsNS from 'echarts/lib/echarts';
+import * as echartsNS from 'echarts/lib/echarts.js';
 
 import GraphGLSeries from './GraphGLSeries';
 import GraphGLView from './GraphGLView';

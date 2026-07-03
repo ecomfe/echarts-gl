@@ -1,6 +1,6 @@
 import Globe from './globe/Globe';
-import * as echarts from 'echarts/lib/echarts';
-import {getLayoutRect} from 'echarts/lib/util/layout';
+import * as echarts from 'echarts/lib/echarts.js';
+import {getLayoutRect} from 'echarts/lib/util/layout.js';
 import ViewGL from '../core/ViewGL';
 import retrieve from '../util/retrieve';
 import graphicGL from '../util/graphicGL';

@@ -1,6 +1,6 @@
 
-import * as matrix from 'zrender/lib/core/matrix';
-import * as vector from 'zrender/lib/core/vector';
+import * as matrix from 'zrender/lib/core/matrix.js';
+import * as vector from 'zrender/lib/core/vector.js';
 
 function GLViewHelper(viewGL) {
     this.viewGL = viewGL;

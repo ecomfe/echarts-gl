@@ -1,12 +1,12 @@
-import * as echarts from 'echarts/lib/echarts';
-import {getLayoutRect} from 'echarts/lib/util/layout';
+import * as echarts from 'echarts/lib/echarts.js';
+import {getLayoutRect} from 'echarts/lib/util/layout.js';
 import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';
 import Lines2DGeometry from '../../util/geometry/Lines2D';
 import retrieve from '../../util/retrieve';
 import ForceAtlas2GPU from './ForceAtlas2GPU';
 import ForceAtlas2 from './ForceAtlas2';
-import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame';
+import requestAnimationFrame from 'zrender/lib/animation/requestAnimationFrame.js';
 import glmatrix from 'claygl/src/dep/glmatrix';
 import { getItemVisualColor, getItemVisualOpacity } from '../../util/visual';
 

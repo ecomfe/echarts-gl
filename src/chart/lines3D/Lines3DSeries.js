@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 import { ensureDataProvider } from '../../util/compatHelper';
 
 export default echarts.SeriesModel.extend({

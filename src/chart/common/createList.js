@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 
 export default function (seriesModel, dims, source) {
     source = source || seriesModel.getSource();
