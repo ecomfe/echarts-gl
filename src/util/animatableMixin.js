@@ -1,4 +1,4 @@
-import Animator from 'zrender/lib/animation/Animator';
+import Animator from 'zrender/lib/animation/Animator.js';
 
 var animatableMixin = {
 

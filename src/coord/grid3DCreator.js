@@ -1,7 +1,7 @@
 import Cartesian3D from './grid3D/Cartesian3D';
 import Axis3D from './grid3D/Axis3D';
-import * as echarts from 'echarts/lib/echarts';
-import {getLayoutRect} from 'echarts/lib/util/layout';
+import * as echarts from 'echarts/lib/echarts.js';
+import {getLayoutRect} from 'echarts/lib/util/layout.js';
 import ViewGL from '../core/ViewGL';
 import retrieve from '../util/retrieve';
 

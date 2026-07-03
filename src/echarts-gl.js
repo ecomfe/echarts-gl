@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import * as echartsNS from 'echarts/lib/echarts';
+import * as echartsNS from 'echarts/lib/echarts.js';
 import graphicGL from './util/graphicGL';
 import LayerGL from './core/LayerGL';
 import backwardCompat from './preprocessor/backwardCompat';

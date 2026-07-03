@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 import createGraphFromNodeEdge from './createGraphFromNodeEdge';
 import formatUtil from '../../util/format';
 

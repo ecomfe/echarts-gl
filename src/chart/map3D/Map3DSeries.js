@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 import { ensureDataProvider } from '../../util/compatHelper';
 import componentViewControlMixin from '../../component/common/componentViewControlMixin';
 import componentPostEffectMixin from '../../component/common/componentPostEffectMixin';
