@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 import graphicGL from '../../util/graphicGL';
 import ViewGL from '../../core/ViewGL';
 import Lines2DGeometry from '../../util/geometry/Lines2D';

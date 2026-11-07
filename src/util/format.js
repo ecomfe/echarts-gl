@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 
 var formatUtil = {};
 formatUtil.getFormattedLabel = function (seriesModel, dataIndex, status, dataType, dimIndex) {

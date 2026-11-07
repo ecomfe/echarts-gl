@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 import graphicGL from '../../util/graphicGL';
 import LinesGeometry from '../../util/geometry/Lines3D';
 // import TrailMesh from './TrailMesh';

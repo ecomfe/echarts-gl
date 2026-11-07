@@ -1,4 +1,4 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 
 var Axis3DModel = echarts.ComponentModel.extend({
 

@@ -5,7 +5,7 @@
  */
 
 // TODO Expand.
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 import Texture2D from 'claygl/src/Texture2D';
 import {zrRefreshMonkeyPatch} from './compatHelper';
 

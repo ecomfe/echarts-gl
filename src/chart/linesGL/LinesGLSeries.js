@@ -1,6 +1,6 @@
-import * as echarts from 'echarts/lib/echarts';
+import * as echarts from 'echarts/lib/echarts.js';
 import { ensureDataProvider } from '../../util/compatHelper';
-import { concatArray } from 'zrender/lib/core/util';
+import { concatArray } from 'zrender/lib/core/util.js';
 
 var LinesGLSeries = echarts.SeriesModel.extend({
 
